@@ -1,4 +1,4 @@
-if [ -e redis-stable ];
+if [ -e ./redis-stable ];
 then
 	echo "redis already installed."
 else
@@ -10,5 +10,5 @@ else
 	echo "redis installed"
 	cd ..
 fi
-cd redis-stable
-src/redis-server
+cd ./redis-stable
+./src/redis-server
