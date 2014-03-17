@@ -2,7 +2,9 @@
 , "version": "0.0.1"
 , "author": "Mark Nadal"
 , "description": "Graph engine."
-, "engines": ["node >= 0.6.6"]
+, "engines": {
+	"node": "~>0.6.6"
+}
 , "dependencies": {
     "theory": "~>0.2.5",
     "coalesce": "~>0.1.9b",
