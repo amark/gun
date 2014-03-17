@@ -7,8 +7,6 @@ module.exports = require('theory')
 		redis = a.redis
 		, client = redis.createClient();
 		client.on('error', function(e){
-			client.set("string key", "string val", redis.print);
-			client.get("string key", redis.print);
 			if(!(/ECONNREFUSED/).test(e)){ return }
 			if(redis.none){ return }
 			redis.path = path || '/usr/local/bin/redis-server';
