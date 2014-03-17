@@ -1,7 +1,7 @@
 module.exports = require('theory')
 ('shot',function(a){
 	var redis, client;
-	require('./redis').deploy(__dirname, function(path){
+	require('./redis').deploy('/tmp', function(path){
 		console.log('>>>>>>>>>>>>>>>>>>>>>>>> DONE <<<<<<<<<<<<<<<<<<<<');
 		console.log(path);
 		redis = a.redis
