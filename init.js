@@ -1,5 +1,5 @@
 process.env.rootdir = __dirname;
-var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production') || process.env.PORT;
+var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production') || process.env.PORT
 , web = require(process.env.COALESCEPATH = LIVE?'coalesce':process.env.rootdir+'/../coalesce/coalesce')
 , opt = {};
 opt.port = !LIVE? 8888 : process.env.PORT? process.env.PORT : 80;
