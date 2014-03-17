@@ -70,9 +70,10 @@ module.exports = require('theory')
 			client.on('error', function(e){
 				if(!(/ECONNREFUSED/).test(e)){ return }
 				console.log("gun starting redis");
-				var path = 'redis-server';
-				if(!(require('fs').existsSync||require('path').existsSync)('/usr/local/bin/redis-server')){
-					path = 
+				if(!opt.redis.path){
+					if(!(require('fs').existsSync||require('path').existsSync)('/usr/local/bin/redis-server')){
+						//path = 
+					}
 				}
 			});
 		};
