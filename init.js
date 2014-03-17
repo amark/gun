@@ -1,5 +1,5 @@
 process.env.rootdir = __dirname;
-console.log(">>>>>>>>>>>>>>>>>>>> environment", process.env.NODE_ENV);
+console.log(">>>>>>>>>>>>>>>>>>>> environment", process.env.NODE_ENV, process.env.PORT);
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require(process.env.COALESCEPATH = LIVE?'coalesce':process.env.rootdir+'/../coalesce/coalesce')
 , opt = {};
