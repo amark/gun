@@ -1,14 +1,14 @@
 module.exports = require('theory')
 ('shot',function(a){
 	var redis, client;
-	require('./redis').install(function(){
+	require('./redis').install('/tmp', function(path){
 		console.log('>>>>>>>>>>>>>>>>>>>>>>>> DONE <<<<<<<<<<<<<<<<<<<<');
 		redis = a.redis
 		, client = redis.createClient();
 		client.on('error', function(e){
 			if(!(/ECONNREFUSED/).test(e)){ return }
 			if(redis.none){ return }
-			redis.path = '/usr/local/bin/redis-server';
+			redis.path = path || '/usr/local/bin/redis-server';
 			if(!(require('fs').existsSync||require('path').existsSync)(redis.path)){
 				redis.none = true;
 				return;
