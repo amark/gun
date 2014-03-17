@@ -13,7 +13,7 @@ opt.hook = {
 	})
 };
 
-opt.run = [];
+opt.run = ['./test/server'];
 
 web(opt);
 console.log("Gun @ "+ opt.port);

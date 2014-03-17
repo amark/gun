@@ -1,7 +1,29 @@
 module.exports = require('theory')
 ('shot',function(a){
+	require('child_process').exec('redis.sh', function(e, r){
+		console.log(e,r);
+	});
+	/*
 	var redis = a.redis
 	, client = redis.createClient();
+	client.on('error', function(e){
+		if(!(/ECONNREFUSED/).test(e)){ return }
+		if(redis.none){ return }
+		redis.path = '/usr/local/bin/redis-server';
+		if(!(require('fs').existsSync||require('path').existsSync)(redis.path)){
+			redis.none = true;
+			return;
+		}
+		if(process.env.gun_redis_lock){ return }
+		process.env.gun_redis_lock = process.pid;
+		console.log('gun', process.pid, 'starting redis');
+		require('child_process').spawn(redis.path).on('exit',function(c,s){
+			if(process.env.gun_redis_lock == process.pid){
+				process.env.gun_redis_lock = ''; // 0 and false don't work, cause they are cast to strings!
+			}
+		});
+	});
+	*/
 	return function(opt){
 		opt = opt || {};
 		opt.src = opt.src || '';
@@ -67,15 +89,7 @@ module.exports = require('theory')
 			else { return 0 }
 		}
 		shot.start = function(){
-			client.on('error', function(e){
-				if(!(/ECONNREFUSED/).test(e)){ return }
-				console.log("gun starting redis");
-				if(!opt.redis.path){
-					if(!(require('fs').existsSync||require('path').existsSync)('/usr/local/bin/redis-server')){
-						//path = 
-					}
-				}
-			});
+			
 		};
 		shot.start();
 		return {gun: a.gun};

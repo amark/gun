@@ -9,8 +9,9 @@
     "theory": "~>0.2.5",
     "coalesce": "~>0.1.9b",
     "aws-sdk": "~>2.0.0",
+    "hiredis": "",
     "redis": "~>0.10.1",
     "mime": "~>1.2.11"
   }
-, "main": "gun"
+, "main": "shots"
 }
