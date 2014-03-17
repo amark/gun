@@ -1,11 +1,14 @@
 module.exports = require('theory')
 ('shot',function(a){
 	var redis, client;
-	require('./redis').install('/tmp', function(path){
+	require('./redis').deploy(__dirname, function(path){
 		console.log('>>>>>>>>>>>>>>>>>>>>>>>> DONE <<<<<<<<<<<<<<<<<<<<');
+		console.log(path);
 		redis = a.redis
 		, client = redis.createClient();
 		client.on('error', function(e){
+			client.set("string key", "string val", redis.print);
+			client.get("string key", redis.print);
 			if(!(/ECONNREFUSED/).test(e)){ return }
 			if(redis.none){ return }
 			redis.path = path || '/usr/local/bin/redis-server';
@@ -20,10 +23,8 @@ module.exports = require('theory')
 				if(process.env.gun_redis_lock == process.pid){
 					process.env.gun_redis_lock = ''; // 0 and false don't work, cause they are cast to strings!
 				}
-			});
+			});			
 		});
-		client.set("string key", "string val", redis.print);
-		client.get("string key", redis.print);
 	});
 	return function(opt){
 		opt = opt || {};
