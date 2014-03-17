@@ -1,4 +1,4 @@
-module.exports = {install: function(path, done){
+module.exports = {deploy: function(path, done){
 	var fs = require('fs')
 	, child = require('child_process')
 	, check = (fs.existsSync||require('path').existsSync)
