@@ -2,8 +2,9 @@ module.exports=require('theory')
 ({name: 'echo'
 , state: {way:'state', flow:-1}
 , invincible: true
-//, dep: ['../gun']
+, dep: ['../shots']
 , init: function(a){
+	console.log("ECHO");
 	var echo = {};
 	echo.put = function(m){
 		console.log('stream', m);
