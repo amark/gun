@@ -1,29 +1,30 @@
 module.exports = require('theory')
 ('shot',function(a){
-	require('child_process').exec(__dirname+'/redis.sh', function(e, r){
-		console.log(e,r);
-	});
-	/*
-	var redis = a.redis
-	, client = redis.createClient();
-	client.on('error', function(e){
-		if(!(/ECONNREFUSED/).test(e)){ return }
-		if(redis.none){ return }
-		redis.path = '/usr/local/bin/redis-server';
-		if(!(require('fs').existsSync||require('path').existsSync)(redis.path)){
-			redis.none = true;
-			return;
-		}
-		if(process.env.gun_redis_lock){ return }
-		process.env.gun_redis_lock = process.pid;
-		console.log('gun', process.pid, 'starting redis');
-		require('child_process').spawn(redis.path).on('exit',function(c,s){
-			if(process.env.gun_redis_lock == process.pid){
-				process.env.gun_redis_lock = ''; // 0 and false don't work, cause they are cast to strings!
+	var redis, client;
+	require('./redis').install(function(){
+		console.log('>>>>>>>>>>>>>>>>>>>>>>>> DONE <<<<<<<<<<<<<<<<<<<<');
+		redis = a.redis
+		, client = redis.createClient();
+		client.on('error', function(e){
+			if(!(/ECONNREFUSED/).test(e)){ return }
+			if(redis.none){ return }
+			redis.path = '/usr/local/bin/redis-server';
+			if(!(require('fs').existsSync||require('path').existsSync)(redis.path)){
+				redis.none = true;
+				return;
 			}
+			if(process.env.gun_redis_lock){ return }
+			process.env.gun_redis_lock = process.pid;
+			console.log('gun', process.pid, 'starting redis');
+			require('child_process').spawn(redis.path).on('exit',function(c,s){
+				if(process.env.gun_redis_lock == process.pid){
+					process.env.gun_redis_lock = ''; // 0 and false don't work, cause they are cast to strings!
+				}
+			});
 		});
+		client.set("string key", "string val", redis.print);
+		client.get("string key", redis.print);
 	});
-	*/
 	return function(opt){
 		opt = opt || {};
 		opt.src = opt.src || '';
