@@ -1,4 +1,5 @@
 process.env.rootdir = __dirname;
+console.log(">>>>>>>>>>>>>>>>>>>> environment", process.env.NODE_ENV);
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require(process.env.COALESCEPATH = LIVE?'coalesce':process.env.rootdir+'/../coalesce/coalesce')
 , opt = {};
@@ -9,7 +10,7 @@ process.env.domain = LIVE? 'http://gunjs.herokuapp.com' :
 	})})();
 opt.hook = {
 	pre: (function(req,res){
-		console.log("--------- "+req.flow+" : "+req.url.pathname +" ---------------");
+		//console.log("--------- "+req.flow+" : "+req.url.pathname +" ---------------");
 	})
 };
 
