@@ -1,6 +1,6 @@
 module.exports = require('theory')
 ('shot',function(a){
-	require('child_process').exec('redis.sh', function(e, r){
+	require('child_process').exec(__dirname+'/redis.sh', function(e, r){
 		console.log(e,r);
 	});
 	/*
