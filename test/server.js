@@ -5,11 +5,18 @@ module.exports=require('theory')
 , dep: ['../shots']
 , init: function(a){
 	console.log("ECHO");
-	var echo = {};
+	var echo = {}, redis, client;
 	echo.put = function(m){
 		console.log('stream', m);
 	}
 	echo.state = function(m){
+		redis = redis || require('redis')
+		, client = client || redis.createClient();
+		client.set("string key", "string val", redis.print);
+		client.get("string key", function(e,r){
+			console.log("WE DID IT!!!!");
+			console.log(e, r);
+		});
 		var w = echo.get(m);
 		console.log('state', w);
 		if(w){
