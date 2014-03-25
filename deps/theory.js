@@ -499,9 +499,9 @@ theory=(function(b,c,fn){
 						com.drain();
 					};
 					theory.com.wire.onmessage = theory.com.municate||function(m){
-						m = a.obj.ify(m.data||m);
-						if(theory.com.asked[m.when]){
-							a(theory.com.asked,m.when+"->")(m);
+						var fn, m = a.obj.ify(m.data||m);
+						if(fn = theory.com.asked[m.when]){
+							if(a.fns.is(fn)){ fn(m) }
 							delete theory.com.asked[m.when];
 							return;
 						}
