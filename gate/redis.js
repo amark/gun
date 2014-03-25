@@ -19,7 +19,7 @@ module.exports = (function(){
 	r.start = function(){
 		if(process.env[install]){
 			if(!check(process.env[server])){
-				return r.deploy(r.check);
+				return r.deploy(r.start);
 			}
 		}
 		if(!check(process.env[server])){
