@@ -1,7 +1,6 @@
 module.exports=require('theory')
 ('tests',function(a){
 	if(root.node){
-		require('../../../lushly/keys');
 		var shot = require('../shots')({src: a.com}).pump(function(g, m, done){
 			done();
 		});
@@ -93,7 +92,7 @@ module.exports=require('theory')
 		it('tests',function(){
 			//return;
 			//var s = theory.shot({src: '/test/server.js'})
-			var s = shot.shell('lushly.org/tests/package.json',function(g){
+			var s = shot.shell('gunjs.herokuapp.com/tests/package.json',function(g){
 				if(!g){ return }
 				console.log('graph', g());
 				var p = g('packageson');
@@ -103,7 +102,7 @@ module.exports=require('theory')
 				console.log(val);
 				p('version',val);
 				a.time.wait(function(){
-					shot.shell('lushly.org/tests/package.json',function(gg){
+					shot.shell('gunjs.herokuapp.com/tests/package.json',function(gg){
 						var pp = gg('packageson');
 						console.log('graph prime', gg());
 						expect(val).to.be(pp('version'));
