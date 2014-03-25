@@ -6,6 +6,7 @@ module.exports=require('theory')
 , init: function(a){
 	console.log("ECHO");
 	var echo = {}, redis, client;
+	echo.shot = a.shots();
 	echo.put = function(m){
 		console.log('stream', m);
 	}
@@ -17,17 +18,12 @@ module.exports=require('theory')
 			console.log("WE DID IT!!!!");
 			console.log(e, r);
 		});
-		var w = echo.get(m);
-		console.log('state', w);
-		if(w){
-			m.what.body = 1;
-		}
+		if(echo.shot.server(m,a.com.reply)){ return }
+		m.what.body = '';
 		a.com.reply(m);
 	};
-	echo.get = function(m){	
-		return !a.obj.empty(a(m,'what.form'))? a(m,'what.form')
-			: !a.obj.empty(a(m,'what.url.query'))? a(m,'what.url.query')
-			: false ;
-	};
+	/*echo.shot.stream.on(function(m){
+		console.log('stream on!', m);
+	});*/
 	return echo;
 }});

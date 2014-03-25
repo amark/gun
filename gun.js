@@ -11,274 +11,327 @@ a relationship is a reference and a value is embedded.
 *****/
 module.exports = require('theory')
 ('gun',function(a){
-	function gun(url){
-		var u
-		, db = {_id: url || gun.id() }
-		, g = function(n,p,v,w){
+	a.gun = (function(){
+		function gun(p,v,w){
 			var args = arguments.length
-			, bd = this._db || db, t;
-			w = w || a.time.now();
-			if(this._id){
-				v = p;
-				p = n;
+			, cb = a.fns.is(v)? v : null
+			, g, n, w = w || a.time.now();
+			if(gun.is(this)){
 				n = this;
-				args += 1;
-			}
-			if(n){
-				if(n._id && a.obj(bd).has(n._id)){
-					if(p === u){
-						console.log('gun delete', n._id);
-						delete bd[n._id];
-						theory.on(gun.event).emit({n:n._id,d:1,w:w}, bd._id);
-						return;
+				g = n._.graph || function(){ return {} };
+				if(a.text.is(p)){					
+					if(p === '' && (v === u || v === null)){
+						var del = {_:{'#':a.time.now()}};
+						delete g[n._.$];
+						del[n._.$] = n = null;
+						theory.on(gun.event).emit(del, g.$);
+						return null;
 					}
-					if(args >= 3){
-						var o = {ref:n};
-						o.p = a.text(p).clip('.',0,-1);
-						t = o.p? g.at.call(o,n,o.p) : n;
-						o.p = a.text(p).clip('.',-1);
-						p = o.path? o.path+'.'+o.p : o.p;
-						n = o.ref;
-						o.q = n._id+'.'+p;
-						if(gun.ham && gun.ham.call(g,n,p,v,w,g.at(n,p))){
+					if(args >= 2){ // set
+						var ref = {}
+						, val = gun.at(n,p,ref);
+						if(!ref.node || !ref.node._ || !ref.node._.$){
+							return;
+						} ref.id = ref.node._.$ +'.'+ ref.path;
+						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
 							return;
 						}
-						if(t){
-							if(v === u){
-								if(a.list.is(t)){
+						if(ref.at){
+							if(v === u || v === null){				
+								if(a.list.is(ref.at)){
 									t = o.val || t;
-									var j = t.indexOf(o.p);
+									var j = ref.at.indexOf(ref.prop);
 									if(0 <= j){
-										t.splice(j,1);
+										ref.at.splice(j,1);
 									} else {
-										j = a.list(t).find({_ref: o.p});
+										j = a.list(ref.at).find({$:ref.prop});
 										if(j){
-											t.splice(--j,1);
+											ref.at.splice(--j,1);
 										}
 									}
 								} else {
-									delete t[o.p];
+									delete ref.at[ref.prop];
 								}
-								theory.on(gun.event).emit({d:o.q,w:w});
+								var del = {_:{'#':w}}; del[ref.id] = null;
+								theory.on(gun.event).emit(del, g.$);
+								v = ref.at;
 							} else {
-								v = g.at(v);
-								if(v._id){
-									v = {_ref: v._id};
+								v = gun.at(v);
+								if(gun.is(v)){
+									v = {$:v._.$};
 								} else {
-									v = g.ify.be(v);
-								}
-								var j;
+									v = gun.ify.be(v);
+								} var j;
 								if(a.list.is(v)){
-									t = o.val || t;
-									j = a.list.is(t[o.p])? t[o.p].concat(v) : v;
+									j = a.list.is(ref.at[ref.prop])? ref.at[ref.prop].concat(v) : v;
 									j = a.list(j).each(function(r,i,t){t(r,1)})||{};
-									t[o.p] = j = a.obj(j).each(function(w,r,t){t(r)})||[];
+									ref.at[ref.prop] = j = a.obj(j).each(function(w,r,t){t(r)})||[];
 								} else {
-									t[o.p] = v;
+									ref.at[ref.prop] = v;
 								}
-								theory.on(gun.event).emit({p:o.q,v:v,w:w}, bd._id);
+								var diff = {_:{'#':w}}; diff[ref.id] = v;
+								theory.on(gun.event).emit(diff, g.$);
 								v = j || v;
 							}
 						}
 						return v;
-					} else 
-					if(args >= 2){
-						v = g.at(n,p);
+					}
+					if(args >= 1){ // get		
+						v = gun.at(n,p);
 						return v;
 					}
-					return;
 				}
-				if(a.obj.is(n)){
-					n._id = n._id || gun.id();
-				} else
-				if(a.text.is(n)){
-					n = {_id: n};
-				}
-				if(n._id){
-					if(a.obj(bd).has(n._id)){
-						n = bd[n._id];
-					} else {
-						bd[n._id] = n;
-						theory.on(gun.event).emit({n:n,w:w}, bd._id);
-					}
-					return function(p,v,w){
-						var args = a.list.slit.call(arguments);
-						return !args.length? n : g.apply(n,args);
-					}
-				}
-			} else {
-				return bd;
+				return;
 			}
+			n = a.obj.is(v)? v : a.obj.is(p)? p : null;
+			p = a.text.is(p)? p : gun.id();
+			if(a.obj.is(n)){ // create a new graph from this object
+				g = gun.ify(n);
+				var graph = gun.clip[p] = function(n){
+					if(gun.is(this)){
+						var args = a.list.slit.call(arguments);
+						n = this;
+						n._.graph = n._.graph || graph;
+						return gun.apply(n, args);
+					}
+					var fn = function(p,v,w){
+						if(!n){ return }
+						var args = a.list.slit.call(arguments);
+						return !args.length? n : gun.apply(n,args);
+					}
+					if(a.text.is(n)){
+						if(a.obj(g).has(n) && (n = g[n]) && gun.is(n)){
+							n._.graph = graph;
+							return fn;
+						}
+						n = {_:{$:n}};
+					}
+					if(a.obj.is(n)){
+						n = gun.ify(n,u,{}); // can only add one node with this method!
+						n._ = n._ || {$: gun.id()};
+						n._.graph = graph // JSONifying excludes functions.
+						var add = {_:{'#':a.time.now()}}; 
+						add[n._.$] = g[n._.$] = n;
+						theory.on(gun.event).emit(add, graph.$);
+						return fn;
+					}
+					return g;
+				}
+				graph.$ = p;
+				return graph;
+			}
+		} var u;
+		gun.is = function(o){
+			return (o && o._ && o._.$)? true : false;
 		}
-		g.at = function(n,p,o){
-			if(n === u) return db;
-			if(p === u) return a.fns.is(n)? n() : n;
-			var c = this.ref || this.db? this : {}
-			, pp = a.list.is(p)? p : p.split('.')
-			, i = 0, l = pp.length, t
-			, v = a.fns.is(n)? n() : n;
-			c.db = c.db||db; c.ref = n; c.path = p;
+		gun.id = function(){
+			return a.text.r(9);
+		}
+		gun.at = function(n,p,ref){
+			if(a.fns.is(n)){
+				n = n();
+			}
+			if(!p){
+				return n;
+			}
+			ref = ref || {};
+			var pp = a.list.is(p)? p : (p||'').split('.')
+			, g = a.fns.is(n._.graph)? n._.graph() : this
+			, i = 0, l = pp.length, v = n
+			, x, y, z;
+			ref.node = n;
+			ref.prop = pp[l-1];
+			ref.path = pp.slice(i).join('.');
 			while(i < l && v !== u){
-				t = pp[i++];
-				if(a.obj.is(v) && a.obj(v).has(t)){
-					v = v[t];
-					if(v && v._ref){
-						v = a.obj(c.db).has(v._ref)? c.db[v._ref] : u;
-						c.ref = n; c.path = pp.slice(i).join('.');
+				x = pp[i++];
+				if(a.obj.is(v) && a.obj(v).has(x)){
+					ref.at = v;
+					v = v[x];
+					if(v && v.$){
+						v = a.obj(g).has(v.$)? g[v.$] : u;
+						if(v){
+							return gun.at.call(g,v,pp.slice(i),ref);
+						}
 					}
 				} else
 				if(a.list.is(v)){
+					ref.at = v;
 					return a.list(v).each(function(w,j){
 						if(!w) return;
 						if(!p) return;
-						w = a.obj(c.db).has(w._ref||w)? c.db[w._ref||w] : u;
+						w = a.obj(g).has(w.$||w)? g[w.$||w] : u;
 						if(!w) return;
-						if(t === w._id){
+						if(w._ && x === w._.$){
 							i += 1;
 							p = false;
 						}
-						return g.at.call(c,g.at(w),pp.slice(i-1));
+						return gun.at.call(g,w,pp.slice(i-1),ref);
 					});
 				} else {
+					ref.at = v;
 					v = u;
 				}
 			}
 			if(a.list.is(v)){
-				c.val = v;
+				ref.at = v;
 				v = a.list(v).each(function(w,j,t){
 					if(w){
-						if(a.obj(c.db).has(w._ref||w)) t(c.db[w._ref||w]);
+						if(a.obj(g).has(w.$||w)) t(g[w.$||w]);
 					}
 				}) || [];
 			}
 			return i < l? u : v;
 		}
-		g.ify = function(o, h, k){
-			if(!a.obj.is(o)) return;
-			var hold = h || {}, know = k || [], t;
-			var n = {_id: o._id || gun.id()};
-			function assign(o,i,f){
-				if(a.list.is(f)){
-					f.push(o);
-				} else {
-					f[i] = o;
-				}
-			}
-			function absorb(o,i,f,p,hold,know){
-				var n = g.ify(o, hold, know);
-				if(!n._id){
-					n = n.n;
-					if(n === p){
-						hold[f._id = f._id || gun.id()] = f;
-					}
-				}
-				return {_ref: n._id};
-			}
-			function be(o,i,f,p){
+		gun.ify = function(o, opt, n){
+			var g = {};
+			opt = opt || {};
+			opt.seen = opt.seen || [];
+			if(!a.obj.is(o)){ return g }
+			function ify(o,i,f,n,p){
 				if(a.obj.is(o)){
-					if(o._id) return;
-					if(t=a.list(know).each(function(v,j){
-						if(v.o===o){
-							v.at = j;
-							return v;
-						}
-					})){
-						var r = absorb(o,i,f,p,hold,know);
-						assign(r,i,f);
-						assign(r,t.i,t.f); 
+					var seen;
+					if(seen = ify.seen(o)){
+						ify.be(seen);
 						return;
 					}
-					f[i] = {};
-					know.push({f:f,i:i,o:o,n:f[i]});
+					if(gun.is(o)){
+						f[i] = {$: o._.$};
+						g[o._.$] = n;
+					} else {
+						f[i] = n;
+					}
+					opt.seen.push({node: n, prop: i, from: f, src: o});
 					a.obj(o).each(function(v,j){
-						be(v,j,f[i],f);
+						ify(v,j,n,{},f);
 					});
-					if(f[i]._id){
-						f[i] = {_ref: f[i]._id};
+					if(gun.is(n)){
+						g[n._.$] = n;
+						f[i] = {$: n._.$};
 					}
 					return;
 				}
 				if(a.list.is(o)){
-					f[i] = [];
-					a.list(o).each(function(v,j){
-						if(a.obj.is(v)){
-							t = absorb(v,--j,f[i],p,hold,know);
-							assign(t, --j, f[i]);
-						} else {
-							be(v,--j,f[i]);
+					f[i] = a.list(o).each(function(v,j,t){
+						var seen;
+						if(a.fns.is(v)){
+							v = gun.at(v);
 						}
-					});
+						if(a.obj.is(v)){
+							if(seen = ify.seen(v)){
+								ify.be(seen);
+								if(gun.is(seen.node)){ t(seen.node._.$) }
+							} else {
+								gun.ify(v, opt, n);
+								if(gun.is(n)){
+									t(n._.$);
+								}
+							}
+						} else
+						if(a.text.is(v)){
+							if(a.obj(g).has(v)){
+								t(v);
+							} else {
+								t(v); // same as above :/ because it could be that this ID just hasn't been indexed yet.
+							}
+						}
+					}) || [];
 					return;
 				}
-				if(g.ify.is(o)){
-					assign(o,i,f);
+				if(gun.ify.is(o)){
+					f[i] = o;
 				}
-			};
-			if(t=a.list(know).each(function(v,j){
-				if(v.o===o){
-					return v;
+			}
+			ify.be = function(seen){
+				var n = seen.node;
+				n._ = n._||{};
+				n._.$ = n._.$||gun.id();
+				g[n._.$] = n;
+				if(seen.from){
+					seen.from[seen.prop] = {$: n._.$};
 				}
-			})){
-				return t;
-			};
-			know.push({f:know,i:n._id,o:o,n:n});
-			hold[n._id] = n;
+			}
+			ify.seen = function(o){
+				return a.list(opt.seen).each(function(v){
+					if(v && v.src === o){ return v }
+				}) || false;
+			}
+			var is = true, node = n || {};
 			a.obj(o).each(function(v,i){
-				be(v,i,n);
+				if(!gun.is(v)){ is = false }
+				ify(v, i, node, {});
 			});
-			return h && k? n : hold;
+			if(!is){
+				ify.be({node: node});
+				g[node._.$] = node;
+			}
+			if(n){
+				return n;
+			}
+			return g;
 		}
-		g.ify.be = function(v,bd){
+		gun.ify.be = function(v,g){
 			var r;
-			bd = bd || db;
 			if(a.obj.is(v)){
 				r = {};
 				a.obj(v).each(function(w,i){
-					w = g.ify.be(w);
-					if(w === u){ return }
+					w = gun.ify.be(w);
+					if(w === u || w === null){ return }
 					r[i] = w;
 				});
 			} else
 			if(a.list.is(v)){ // references only
 				r = a.list(v).each(function(w,i,t){
-					w = g.at(w);
-					if(w._id){
-						t(w._id);
+					if(!w){ return }
+					w = gun.at(w);
+					if(gun.is(w)){
+						t(w._.$);
 					} else
-					if(w._ref){
-						t(w._ref);
+					if(w.$){
+						t(w.$);
 					} else 
-					if(a.obj(bd).has(w)){
+					if(a.obj(g).has(w)){
 						t(w);
 					}
 				}) || [];
 			} else
-			if(g.ify.is(v)){
+			if(gun.ify.is(v)){
 				r = v;
 			}
 			return r;
 		}
-		g.ify.is = function(v){ // inull, binary, number (!Infinity), or text.
+		gun.ify.is = function(v){ // binary, number (!Infinity), or text.
 			if(v === Infinity) return false;
-			if(v === null 
-			|| a.bi.is(v) 
+			if(a.bi.is(v) 
 			|| a.num.is(v) 
 			|| a.text.is(v)){
 				return true;
 			}
 			return false;
 		}
-		g.ify.path = function(p){
-			return !(/[\.\_\$]/ig).test(p);
-		}
-		g.on = function(p){
-		
-		}
-		return g;
-	}; gun.event = 'gun';
-	gun.id = function(){
-		return a.text.r(9);
-	}
+		gun.event = 'gun';
+		gun.clip = {};
+		theory.on(gun.event+'.shot').event(function(m,g){
+			if(!m || !m._ || !g || !a.fns.is(g)){ return }
+			var graph = g()
+			, when = m._['#'];
+			if(!when){ return }
+			a.obj(m).each(function(v,i){
+				if(i==='_'){ return }
+				var op = {};
+				op.w = when[i] || when;
+				op.id = a.text(i).clip('.',0,1);
+				op.p = a.text(i).clip('.',1);
+				op.n = graph[op.id];
+				if(!gun.is(op.n)){
+					if(op.p || !a.obj.is(v)){ return }
+					g(op.id, v);
+					return;
+				}
+				g.call(op.n, op.p, v, op.w);
+			});
+		});
+		return gun;
+	})();
 	/* 	Hypothetical Amnesia Machine 
 	
 		A thought experiment in efficient cause, linear time, and knowledge.
@@ -314,31 +367,32 @@ module.exports = require('theory')
 		all conscious actors are agreed upon in a unified spot, synchronized in the
 		capacity to realize such beautiful information.
 	*/
-	gun.ham = function(n,p,v,w,cv){
-		// console.log('ham',cv,v);
-		var g = a.fns.is(this)? this : {}, now, u;
+	a.gun.ham = function(n,p,v,w,val){
+		if(!n){ return true }
+		var now, u;
 		p = p.replace('.',':');
-		n._age = n._age || {};
-		if(w < (n._age[p]||0)){
+		n._ = n._ || {};
+		n._['#'] = n._['#'] || {};
+		if(w < (n._['#'][p]||0)){
 			return true;
 		} else
-		if(w === (n._age[p]||0)){
-			if(cv === v || a.test.is(cv,v) || a.text.ify(cv) < a.text.ify(v)){
+		if(w === (n._['#'][p]||0)){
+			if(val === v || a.test.is(val,v) || a.text.ify(val) < a.text.ify(v)){
 				return true;
 			}
 		} else
 		if((now = a.time.now() + 1) < w){ // tolerate a threshold of 1ms.
 			/* Amnesia Quarantine */
 			a.time.wait(function(){
-				g(n,p,v,w);
+				a.gun.call(n,p,v,w);
 			}, Math.ceil(w - now)); // crude implementation for now.
 			return true;
 		}
-		if(v === u){
-			delete n._age[p];
+		if(v === u || v === null){
+			delete n._['#'][p];
 		} else {
-			n._age[p] = w;
+			n._['#'][p] = w;
 		}
 	}
-	return gun;
+	return a.gun;
 });
