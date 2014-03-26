@@ -168,6 +168,7 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
+			console.log('spray', m);
 			if(!m || !m.how){ return }
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
@@ -188,7 +189,7 @@ module.exports = require('theory')
 				var done = function(){
 					theory.on(a.gun.event+'.shot').emit(m.what,g);
 					g = a.fns.is(g)? g : function(){ return a.gun.clip[where] || {} }
-					store.set(where, g(), null, function(){
+					store.set(where, g(), null, function(){ // TODO: Only save to S3 if there is a change in data after HAM.
 						if(opt.src && opt.src.reply){
 							m.when = a.num.is(a(m,'what._.#'))? m.what._['#'] : m.when;
 							m.how.gun = -(m.how.gun||1);
