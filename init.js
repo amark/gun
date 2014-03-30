@@ -18,7 +18,7 @@ if(LIVE){
 }
 
 opt.run = ['./test/server'];
-opt.node = {key: "temp gun key"};
+opt.node = {key: "temp gun key", src:["http://gunjs.herokuapp.com/com","http://marknadal.kd.io/com"]};
 
 web(opt);
 console.log("Gun @ "+ opt.port);
