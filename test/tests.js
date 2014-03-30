@@ -6,7 +6,8 @@ module.exports=require('theory')
 		});
 		return shot.spray(function(g, m, done){
 			console.log('>>>>>>>>>> gun');
-			done();
+			var gPrime = {};
+			done(gPrime); // allow me to send custom modified filtered version
 			console.log(g());
 		});
 	}

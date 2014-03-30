@@ -18,6 +18,7 @@ if(LIVE){
 }
 
 opt.run = ['./test/server'];
+opt.node = {key: "temp gun key"};
 
 web(opt);
 console.log("Gun @ "+ opt.port);
