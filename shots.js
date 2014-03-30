@@ -173,7 +173,7 @@ module.exports = require('theory')
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
 				shot.shell(m.what._['%']||where, function(g,e){
-					shot.pump.action(g, m, function(){
+					shot.pump.action(g, m, function(){ // receive custom edited copy here and send it down instead.
 						if(opt.src && opt.src.reply){
 							m.what = a.fns.is(g)? g() : {};
 							m.how.gun = -(m.how.gun||3);
