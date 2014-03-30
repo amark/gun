@@ -14,7 +14,7 @@ opt.hook = {
 };
 
 if(LIVE){
-	process.env['redis-install'] = '/tmp';
+	//process.env['redis-install'] = '/tmp';
 }
 
 opt.run = ['./test/server'];
