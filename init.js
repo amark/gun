@@ -17,7 +17,7 @@ if(LIVE){
 	//process.env['redis-install'] = '/tmp';
 }
 
-opt.run = ['./test/server'];
+opt.run = ['./test/server', './test/tests'];
 opt.node = {key: "temp gun key", src:["http://gunjs.herokuapp.com/com","http://marknadal.kd.io/com"]};
 
 web(opt); 
