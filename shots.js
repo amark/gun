@@ -183,7 +183,6 @@ module.exports = require('theory')
 				return;
 			}
 			if(!where){ return }
-			if(m.where
 			store.add(m);
 			shot.shell(where, function(g,e){
 				var done = function(){
