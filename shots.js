@@ -167,8 +167,7 @@ module.exports = require('theory')
 		shot.spray.action = function(m){
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
-				console.log("echo echo echo");
-				console.log(m); 
+				console.log("servers chats:", m); 
 				if(opt.src && opt.src.send){
 					m.what.count += 1;
 					if(22 < m.what.count){ return }
@@ -180,7 +179,6 @@ module.exports = require('theory')
 				if(opt.src && opt.src.send){
 					var m = {count: 1, how:{gun: 9}};
 					opt.src.send(m); 
-					console.log("send that dumping message!", m);
 				}
 			})();
 			var where = a.text.is(m.where)? m.where : m.where.at;
