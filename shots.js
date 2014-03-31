@@ -208,7 +208,7 @@ module.exports = require('theory')
 			(function(){
 				if(opt.src && opt.src.send){
 					var m = {count: 1};
-					opt.src.send({count: 1});
+					opt.src.send(m);
 					console.log("send that pumping message!", m);
 				}
 			})();
