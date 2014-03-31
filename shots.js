@@ -103,6 +103,7 @@ module.exports = require('theory')
 			opt.redis.config();
 			var val = a.text.is(value)? value : a.text.ify(value);
 			if(a.fns.is(fn)){ store.stay(key, value, fn) }
+			console.log("potential setex:", key, opt.redis.expire, val);
 			if(opt.redis.max){
 				store.client.set(key, val, function(e,r){
 					if(e){
@@ -203,10 +204,10 @@ module.exports = require('theory')
 				shot.spray.transform(g, m, done, e);
 			});
 			if(m.where && !m.where.mid && opt.src.send){
-				var who = m.who, env = m.where;
-				m.who = {}; m.where.at = null;
+				var who = m.who;
+				m.who = {};
 				opt.src.send(m);
-				m.who = who; m.where.at = (env||{}).at;
+				m.who = who;
 			}
 		}
 		shot.pump = function(fn){
