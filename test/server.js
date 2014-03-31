@@ -10,8 +10,6 @@ module.exports=require('theory')
 		console.log('stream', m);
 	}
 	echo.state = function(m){
-		console.log(m, 'yay server');
-		console.log(a(m,'what.url'));
 		if(echo.shot.server(m,a.com.reply)){ return }
 		m.what.body = 'module.exports = {boo: "yay"};';
 		m.what.type = 'js';

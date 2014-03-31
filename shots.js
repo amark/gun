@@ -87,9 +87,9 @@ module.exports = require('theory')
 			store.batching = 0;
 			a.time.stop(store.wait);
 			store.wait = null;
-			console.log('*************** save', where, '*******************');
 			a.obj(store.batch).each(function(g,where){
 				if(!g || !where){ return }
+				console.log('*************** save', where, '*******************');
 				s3(opt.s3.bucket(where)).put(opt.s3.key(where),g,function(e,r){
 					a.list(store.batched[where]).each(function(cb){
 						if(a.fns.is(cb)){ cb(e,r) }
