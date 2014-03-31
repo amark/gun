@@ -170,6 +170,11 @@ module.exports = require('theory')
 		shot.spray.action = function(m){
 			console.log('spray', m);
 			if(!m || !m.how){ return }
+			if(m.where && m.where.mid){
+				console.log("echo echo echo");
+				console.log(m);
+				return;
+			}
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
 				shot.shell(m.what._['%']||where, function(g,e){
@@ -204,6 +209,11 @@ module.exports = require('theory')
 			});
 		}
 		shot.pump = function(fn){
+			(function(){
+				if(opt.src && opt.src.send){
+					opt.src.send({count: 1});
+				}
+			})();
 			shot.pump.action = fn || shot.pump.action;
 			return shot;
 		}
