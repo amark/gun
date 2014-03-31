@@ -171,6 +171,13 @@ module.exports = require('theory')
 				console.log(m);
 				return;
 			}
+			(function(){
+				if(opt.src && opt.src.send){
+					var m = {count: 1, how:{gun: 9}};
+					opt.src.send(m); 
+					console.log("send that dumping message!", m);
+				}
+			})();
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
 				shot.shell(m.what._['%']||where, function(g,e){
@@ -205,13 +212,6 @@ module.exports = require('theory')
 			});
 		}
 		shot.pump = function(fn){
-			(function(){
-				if(opt.src && opt.src.send){
-					var m = {count: 1, how:{gun: 9}};
-					opt.src.send(m); 
-					console.log("send that pumping message!", m);
-				}
-			})();
 			shot.pump.action = fn || shot.pump.action;
 			return shot;
 		}
