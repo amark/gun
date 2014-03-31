@@ -168,19 +168,7 @@ module.exports = require('theory')
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
 				console.log("servers chats:", m); 
-				if(opt.src && opt.src.send){
-					m.what.count += 1;
-					if(22 < m.what.count){ return }
-					opt.src.send(m); 
-				}
-				return;
 			}
-			(function(){
-				if(opt.src && opt.src.send){
-					var m = {count: 1, how:{gun: 9}};
-					opt.src.send(m); 
-				}
-			})();
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
 				shot.shell(m.what._['%']||where, function(g,e){
@@ -195,6 +183,7 @@ module.exports = require('theory')
 				return;
 			}
 			if(!where){ return }
+			if(m.where
 			store.add(m);
 			shot.shell(where, function(g,e){
 				var done = function(){
@@ -213,6 +202,12 @@ module.exports = require('theory')
 				done.end = function(){};
 				shot.spray.transform(g, m, done, e);
 			});
+			if(m.where && !m.where.mid && opt.src.send){
+				var who = m.who, env = m.where;
+				m.who = {}; m.where.at = null;
+				opt.src.send(m);
+				m.who = who; m.where.at = (env||{}).at;
+			}
 		}
 		shot.pump = function(fn){
 			shot.pump.action = fn || shot.pump.action;

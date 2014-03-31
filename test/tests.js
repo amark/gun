@@ -98,10 +98,13 @@ module.exports=require('theory')
 				console.log('graph', g());
 				var p = g('packageson');
 				var val = p('version');
-				console.log(val);
+				var ran = p('random');
+				console.log(val, ran);
 				val = a.num.is(val)? (val + 1) : 0;
-				console.log(val);
+				ran = a.text.r();
+				console.log(val, 'and total randomness ---->', ran);
 				p('version',val);
+				p('random',ran);
 				a.time.wait(function(){
 					shot.shell('gunjs.herokuapp.com/tests/package.json',function(gg){
 						var pp = gg('packageson');
