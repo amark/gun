@@ -207,7 +207,7 @@ module.exports = require('theory')
 		shot.pump = function(fn){
 			(function(){
 				if(opt.src && opt.src.send){
-					var m = {count: 1};
+					var m = {count: 1, how:{gun: 9}};
 					opt.src.send(m);
 					console.log("send that pumping message!", m);
 				}
