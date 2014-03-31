@@ -5,10 +5,10 @@ module.exports=require('theory')
 			done();
 		});
 		return shot.spray(function(g, m, done){
-			console.log('>>>>>>>>>> gun');
+			//console.log('>>>>>>>>>> gun');
 			var gPrime = {};
 			done(gPrime); // allow me to send custom modified filtered version
-			console.log(g());
+			//console.log(g());
 		});
 	}
 	var shot = a.shot();

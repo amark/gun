@@ -87,19 +87,17 @@ module.exports = require('theory')
 			store.batching = 0;
 			a.time.stop(store.wait);
 			store.wait = null;
-			console.log('*************** chug chug chug *******************');
+			console.log('*************** save', where, '*******************');
 			a.obj(store.batch).each(function(g,where){
 				if(!g || !where){ return }
-				console.log('save', where, (g && g.packageson && g.packageson._));
 				s3(opt.s3.bucket(where)).put(opt.s3.key(where),g,function(e,r){
 					a.list(store.batched[where]).each(function(cb){
 						if(a.fns.is(cb)){ cb(e,r) }
-						console.log('batch save s3 done', where);
+						console.log('*** end ***');
 					});
 					delete store.batched[where];
 				});
 			});
-			console.log('*** end ***');
 		}
 		store.set = function(key, value, cb, fn){
 			opt.redis.config();
@@ -142,7 +140,6 @@ module.exports = require('theory')
 				if(e || !r){
 					return s3(opt.s3.bucket(where)).get(opt.s3.key(where),function(e,r,t){
 						console.log('via s3', where);
-						console.log(e,r, t);
 						if(e || !r){ return cb(null, e) }
 						store.set(where, (t || a.text.ify(r)));
 						r = a.gun(where,r);
@@ -168,7 +165,6 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
-			console.log('spray', m);
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
 				console.log("echo echo echo");
@@ -211,7 +207,9 @@ module.exports = require('theory')
 		shot.pump = function(fn){
 			(function(){
 				if(opt.src && opt.src.send){
+					var m = {count: 1};
 					opt.src.send({count: 1});
+					console.log("send that pumping message!", m);
 				}
 			})();
 			shot.pump.action = fn || shot.pump.action;
