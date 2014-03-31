@@ -169,10 +169,10 @@ module.exports = require('theory')
 			if(m.where && m.where.mid){
 				console.log("echo echo echo");
 				console.log(m); 
-				if(opt.src && opt.src.reply){
+				if(opt.src && opt.src.send){
 					m.what.count += 1;
-					if(87 < m.what.count){ return }
-					opt.src.send(m);
+					if(22 < m.what.count){ return }
+					opt.src.send(m); 
 				}
 				return;
 			}
