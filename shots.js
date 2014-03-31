@@ -168,7 +168,7 @@ module.exports = require('theory')
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
 				console.log("echo echo echo");
-				console.log(m);
+				console.log(m); 
 				if(opt.src && opt.src.reply){
 					m.what.count += 1;
 					if(87 < m.what.count){ return }
