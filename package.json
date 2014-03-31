@@ -1,5 +1,5 @@
 { "name": "gun"
-, "version": "0.0.1a"
+, "version": "0.0.1b"
 , "author": "Mark Nadal"
 , "description": "Graph engine."
 , "engines": {
