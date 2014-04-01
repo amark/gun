@@ -1,5 +1,15 @@
 (function(){
 
+
+var http = require('http');
+
+var server = http.createServer(function(req, res) {
+    res.writeHead(200);
+    res.end('Hello Shift');
+});
+server.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+console.log(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+return;
 process.env.rootdir = __dirname;
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')

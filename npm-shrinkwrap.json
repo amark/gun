@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.0.1-z",
+  "version": "0.0.1-zb",
   "dependencies": {
     "aws-sdk": {
       "version": "2.0.0-rc13",
@@ -29,9 +29,9 @@
       }
     },
     "coalesce": {
-      "version": "0.1.9-bs",
-      "from": "coalesce@0.1.9-bs",
-      "resolved": "https://registry.npmjs.org/coalesce/-/coalesce-0.1.9-bs.tgz",
+      "version": "0.1.9-bt",
+      "from": "coalesce@0.1.9-bt",
+      "resolved": "https://registry.npmjs.org/coalesce/-/coalesce-0.1.9-bt.tgz",
       "dependencies": {
         "node-static": {
           "version": "0.7.1",
