@@ -1,5 +1,9 @@
 (function(){
 
+console.log("RHC GO FOR THIS");
+console.log(process.env.OPENSHIFT_NODEJS_IP);
+console.log(process.env.OPENSHIFT_NODEJS_PORT, process.env.PORT, process.env.VCAP_APP_PORT);
+
 process.env.rootdir = __dirname;
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')
