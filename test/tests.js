@@ -100,6 +100,10 @@ module.exports=require('theory')
 				var p = g('packageson');
 				var val = p('version');
 				var ran = p('random');
+				if(!a.num.is(val)){
+					console.log("Please refresh!!! -- known but unfixed bug encountered");
+					return;
+				}
 				console.log(val, ran);
 				val = a.num.is(val)? (val + 1) : 0;
 				ran = a.text.r();
