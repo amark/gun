@@ -11,7 +11,7 @@ module.exports = (function(){
 	r.clienf = r.refis.createClient();
 	process.env[server] = process.env[server] || '/usr/local/bin/redis-server';
 	r.client.on('error', function(e){
-		console.log("redis error", e);
+		// console.log("redis error", e);
 		if(!(/ECONNREFUSED/).test(e)){ return }
 		r.start();
 	});
