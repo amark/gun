@@ -1,23 +1,11 @@
 (function(){
 
-
-var http = require('http');
-
-var server = http.createServer(function(req, res) {
-    res.writeHead(200);
-    res.end('Hello Shift');
-});
-server.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
-
-return;
-
-
 process.env.rootdir = __dirname;
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')
 , opt = {};
-opt.port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || process.env.VCAP_APP_PORT || 8888;
-opt.host = process.env.OPENSHIFT_NODEJS_IP || '';
+opt.port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
+opt.host = process.env.OPENSHIFT_NODEJS_IP || 'localhost';
 
 
 opt.hook = {
