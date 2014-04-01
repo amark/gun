@@ -4,7 +4,7 @@ process.env.rootdir = __dirname;
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')
 , opt = {};
-opt.port = process.env.PORT || process.env.OPENSHIFT_NODEJS_POR || process.env.VCAP_APP_PORT || 8888;
+opt.port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || 8888;
 
 opt.hook = {
 	pre: (function(req,res){

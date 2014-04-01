@@ -1,6 +1,7 @@
 module.exports=require('theory')
 ('tests',function(a){
 	if(root.node){
+		console.log("tests live!");
 		var shot = require('../shots')({src: a.com}).pump(function(g, m, done){
 			done();
 		});

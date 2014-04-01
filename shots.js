@@ -166,6 +166,7 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
+			console.log("spray", m);
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
 				console.log("servers chats:", m); 
