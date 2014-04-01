@@ -1,5 +1,5 @@
 { "name": "gun"
-, "version": "0.0.1y"
+, "version": "0.0.1z"
 , "author": "Mark Nadal"
 , "description": "Graph engine."
 , "engines": {
@@ -15,4 +15,7 @@
 	"hiredis": ""
   }
 , "main": "shots"
+, "scripts": {
+        "start": "node init.js"
+    }
 }

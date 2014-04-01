@@ -1,0 +1,1335 @@
+{
+  "format": "json",
+  "apiVersion": "2013-06-30",
+  "endpointPrefix": "storagegateway",
+  "jsonVersion": "1.1",
+  "serviceFullName": "AWS Storage Gateway",
+  "signatureVersion": "v4",
+  "targetPrefix": "StorageGateway_20130630",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "activateGateway": {
+      "name": "ActivateGateway",
+      "input": {
+        "type": "structure",
+        "members": {
+          "ActivationKey": {
+            "required": true
+          },
+          "GatewayName": {
+            "required": true
+          },
+          "GatewayTimezone": {
+            "required": true
+          },
+          "GatewayRegion": {
+            "required": true
+          },
+          "GatewayType": {},
+          "TapeDriveType": {},
+          "MediumChangerType": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "addCache": {
+      "name": "AddCache",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "DiskIds": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "addUploadBuffer": {
+      "name": "AddUploadBuffer",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "DiskIds": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "addWorkingStorage": {
+      "name": "AddWorkingStorage",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "DiskIds": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "cancelArchival": {
+      "name": "CancelArchival",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "TapeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "cancelRetrieval": {
+      "name": "CancelRetrieval",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "TapeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "createCachediSCSIVolume": {
+      "name": "CreateCachediSCSIVolume",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "VolumeSizeInBytes": {
+            "type": "integer",
+            "required": true
+          },
+          "SnapshotId": {},
+          "TargetName": {
+            "required": true
+          },
+          "NetworkInterfaceId": {
+            "required": true
+          },
+          "ClientToken": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {},
+          "TargetARN": {}
+        }
+      }
+    },
+    "createSnapshot": {
+      "name": "CreateSnapshot",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          },
+          "SnapshotDescription": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {},
+          "SnapshotId": {}
+        }
+      }
+    },
+    "createSnapshotFromVolumeRecoveryPoint": {
+      "name": "CreateSnapshotFromVolumeRecoveryPoint",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          },
+          "SnapshotDescription": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SnapshotId": {},
+          "VolumeARN": {},
+          "VolumeRecoveryPointTime": {}
+        }
+      }
+    },
+    "createStorediSCSIVolume": {
+      "name": "CreateStorediSCSIVolume",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "DiskId": {
+            "required": true
+          },
+          "SnapshotId": {},
+          "PreserveExistingData": {
+            "type": "boolean",
+            "required": true
+          },
+          "TargetName": {
+            "required": true
+          },
+          "NetworkInterfaceId": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {},
+          "VolumeSizeInBytes": {
+            "type": "integer"
+          },
+          "TargetARN": {}
+        }
+      }
+    },
+    "createTapes": {
+      "name": "CreateTapes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "TapeSizeInBytes": {
+            "type": "integer",
+            "required": true
+          },
+          "ClientToken": {
+            "required": true
+          },
+          "NumTapesToCreate": {
+            "type": "integer",
+            "required": true
+          },
+          "TapeBarcodePrefix": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARNs": {
+            "type": "list",
+            "members": {}
+          }
+        }
+      }
+    },
+    "deleteBandwidthRateLimit": {
+      "name": "DeleteBandwidthRateLimit",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "BandwidthType": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "deleteChapCredentials": {
+      "name": "DeleteChapCredentials",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TargetARN": {
+            "required": true
+          },
+          "InitiatorName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TargetARN": {},
+          "InitiatorName": {}
+        }
+      }
+    },
+    "deleteGateway": {
+      "name": "DeleteGateway",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "deleteSnapshotSchedule": {
+      "name": "DeleteSnapshotSchedule",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {}
+        }
+      }
+    },
+    "deleteTape": {
+      "name": "DeleteTape",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "TapeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "deleteTapeArchive": {
+      "name": "DeleteTapeArchive",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "deleteVolume": {
+      "name": "DeleteVolume",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {}
+        }
+      }
+    },
+    "describeBandwidthRateLimit": {
+      "name": "DescribeBandwidthRateLimit",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "AverageUploadRateLimitInBitsPerSec": {
+            "type": "integer"
+          },
+          "AverageDownloadRateLimitInBitsPerSec": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "describeCache": {
+      "name": "DescribeCache",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "DiskIds": {
+            "type": "list",
+            "members": {}
+          },
+          "CacheAllocatedInBytes": {
+            "type": "integer"
+          },
+          "CacheUsedPercentage": {
+            "type": "float"
+          },
+          "CacheDirtyPercentage": {
+            "type": "float"
+          },
+          "CacheHitPercentage": {
+            "type": "float"
+          },
+          "CacheMissPercentage": {
+            "type": "float"
+          }
+        }
+      }
+    },
+    "describeCachediSCSIVolumes": {
+      "name": "DescribeCachediSCSIVolumes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARNs": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "CachediSCSIVolumes": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "VolumeARN": {},
+                "VolumeId": {},
+                "VolumeType": {},
+                "VolumeStatus": {},
+                "VolumeSizeInBytes": {
+                  "type": "integer"
+                },
+                "VolumeProgress": {
+                  "type": "float"
+                },
+                "SourceSnapshotId": {},
+                "VolumeiSCSIAttributes": {
+                  "type": "structure",
+                  "members": {
+                    "TargetARN": {},
+                    "NetworkInterfaceId": {},
+                    "NetworkInterfacePort": {
+                      "type": "integer"
+                    },
+                    "LunNumber": {
+                      "type": "integer"
+                    },
+                    "ChapEnabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "describeChapCredentials": {
+      "name": "DescribeChapCredentials",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TargetARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ChapCredentials": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "TargetARN": {},
+                "SecretToAuthenticateInitiator": {},
+                "InitiatorName": {},
+                "SecretToAuthenticateTarget": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "describeGatewayInformation": {
+      "name": "DescribeGatewayInformation",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "GatewayId": {},
+          "GatewayTimezone": {},
+          "GatewayState": {},
+          "GatewayNetworkInterfaces": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Ipv4Address": {},
+                "MacAddress": {},
+                "Ipv6Address": {}
+              }
+            }
+          },
+          "GatewayType": {},
+          "NextUpdateAvailabilityDate": {}
+        }
+      }
+    },
+    "describeMaintenanceStartTime": {
+      "name": "DescribeMaintenanceStartTime",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "HourOfDay": {
+            "type": "integer"
+          },
+          "MinuteOfHour": {
+            "type": "integer"
+          },
+          "DayOfWeek": {
+            "type": "integer"
+          },
+          "Timezone": {}
+        }
+      }
+    },
+    "describeSnapshotSchedule": {
+      "name": "DescribeSnapshotSchedule",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {},
+          "StartAt": {
+            "type": "integer"
+          },
+          "RecurrenceInHours": {
+            "type": "integer"
+          },
+          "Description": {},
+          "Timezone": {}
+        }
+      }
+    },
+    "describeStorediSCSIVolumes": {
+      "name": "DescribeStorediSCSIVolumes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARNs": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "StorediSCSIVolumes": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "VolumeARN": {},
+                "VolumeId": {},
+                "VolumeType": {},
+                "VolumeStatus": {},
+                "VolumeSizeInBytes": {
+                  "type": "integer"
+                },
+                "VolumeProgress": {
+                  "type": "float"
+                },
+                "VolumeDiskId": {},
+                "SourceSnapshotId": {},
+                "PreservedExistingData": {
+                  "type": "boolean"
+                },
+                "VolumeiSCSIAttributes": {
+                  "type": "structure",
+                  "members": {
+                    "TargetARN": {},
+                    "NetworkInterfaceId": {},
+                    "NetworkInterfacePort": {
+                      "type": "integer"
+                    },
+                    "LunNumber": {
+                      "type": "integer"
+                    },
+                    "ChapEnabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "describeTapeArchives": {
+      "name": "DescribeTapeArchives",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TapeARNs": {
+            "type": "list",
+            "members": {}
+          },
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeArchives": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "TapeARN": {},
+                "TapeBarcode": {},
+                "TapeSizeInBytes": {
+                  "type": "integer"
+                },
+                "CompletionTime": {
+                  "type": "timestamp"
+                },
+                "RetrievedTo": {},
+                "TapeStatus": {}
+              }
+            }
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "describeTapeRecoveryPoints": {
+      "name": "DescribeTapeRecoveryPoints",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "TapeRecoveryPointInfos": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "TapeARN": {},
+                "TapeRecoveryPointTime": {
+                  "type": "timestamp"
+                },
+                "TapeSizeInBytes": {
+                  "type": "integer"
+                },
+                "TapeStatus": {}
+              }
+            }
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "describeTapes": {
+      "name": "DescribeTapes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "TapeARNs": {
+            "type": "list",
+            "members": {}
+          },
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Tapes": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "TapeARN": {},
+                "TapeBarcode": {},
+                "TapeSizeInBytes": {
+                  "type": "integer"
+                },
+                "TapeStatus": {},
+                "VTLDevice": {},
+                "Progress": {
+                  "type": "float"
+                }
+              }
+            }
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "describeUploadBuffer": {
+      "name": "DescribeUploadBuffer",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "DiskIds": {
+            "type": "list",
+            "members": {}
+          },
+          "UploadBufferUsedInBytes": {
+            "type": "integer"
+          },
+          "UploadBufferAllocatedInBytes": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "describeVTLDevices": {
+      "name": "DescribeVTLDevices",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "VTLDeviceARNs": {
+            "type": "list",
+            "members": {}
+          },
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "VTLDevices": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "VTLDeviceARN": {},
+                "VTLDeviceType": {},
+                "VTLDeviceVendor": {},
+                "VTLDeviceProductIdentifier": {},
+                "DeviceiSCSIAttributes": {
+                  "type": "structure",
+                  "members": {
+                    "TargetARN": {},
+                    "NetworkInterfaceId": {},
+                    "NetworkInterfacePort": {
+                      "type": "integer"
+                    },
+                    "ChapEnabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "describeWorkingStorage": {
+      "name": "DescribeWorkingStorage",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "DiskIds": {
+            "type": "list",
+            "members": {}
+          },
+          "WorkingStorageUsedInBytes": {
+            "type": "integer"
+          },
+          "WorkingStorageAllocatedInBytes": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "disableGateway": {
+      "name": "DisableGateway",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "listGateways": {
+      "name": "ListGateways",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Gateways": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "GatewayARN": {},
+                "GatewayType": {},
+                "GatewayOperationalState": {}
+              }
+            }
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listLocalDisks": {
+      "name": "ListLocalDisks",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "Disks": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "DiskId": {},
+                "DiskPath": {},
+                "DiskNode": {},
+                "DiskSizeInBytes": {
+                  "type": "integer"
+                },
+                "DiskAllocationType": {},
+                "DiskAllocationResource": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "listVolumeRecoveryPoints": {
+      "name": "ListVolumeRecoveryPoints",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "VolumeRecoveryPointInfos": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "VolumeARN": {},
+                "VolumeSizeInBytes": {
+                  "type": "integer"
+                },
+                "VolumeUsageInBytes": {
+                  "type": "integer"
+                },
+                "VolumeRecoveryPointTime": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "listVolumes": {
+      "name": "ListVolumes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "Marker": {},
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {},
+          "Marker": {},
+          "VolumeInfos": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "VolumeARN": {},
+                "VolumeType": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "retrieveTapeArchive": {
+      "name": "RetrieveTapeArchive",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {
+            "required": true
+          },
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "retrieveTapeRecoveryPoint": {
+      "name": "RetrieveTapeRecoveryPoint",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {
+            "required": true
+          },
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TapeARN": {}
+        }
+      }
+    },
+    "shutdownGateway": {
+      "name": "ShutdownGateway",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "startGateway": {
+      "name": "StartGateway",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "updateBandwidthRateLimit": {
+      "name": "UpdateBandwidthRateLimit",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "AverageUploadRateLimitInBitsPerSec": {
+            "type": "integer"
+          },
+          "AverageDownloadRateLimitInBitsPerSec": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "updateChapCredentials": {
+      "name": "UpdateChapCredentials",
+      "input": {
+        "type": "structure",
+        "members": {
+          "TargetARN": {
+            "required": true
+          },
+          "SecretToAuthenticateInitiator": {
+            "required": true
+          },
+          "InitiatorName": {
+            "required": true
+          },
+          "SecretToAuthenticateTarget": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "TargetARN": {},
+          "InitiatorName": {}
+        }
+      }
+    },
+    "updateGatewayInformation": {
+      "name": "UpdateGatewayInformation",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "GatewayName": {},
+          "GatewayTimezone": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "updateGatewaySoftwareNow": {
+      "name": "UpdateGatewaySoftwareNow",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "updateMaintenanceStartTime": {
+      "name": "UpdateMaintenanceStartTime",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {
+            "required": true
+          },
+          "HourOfDay": {
+            "type": "integer",
+            "required": true
+          },
+          "MinuteOfHour": {
+            "type": "integer",
+            "required": true
+          },
+          "DayOfWeek": {
+            "type": "integer",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GatewayARN": {}
+        }
+      }
+    },
+    "updateSnapshotSchedule": {
+      "name": "UpdateSnapshotSchedule",
+      "input": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {
+            "required": true
+          },
+          "StartAt": {
+            "type": "integer",
+            "required": true
+          },
+          "RecurrenceInHours": {
+            "type": "integer",
+            "required": true
+          },
+          "Description": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VolumeARN": {}
+        }
+      }
+    }
+  },
+  "pagination": {
+    "describeCachediSCSIVolumes": {
+      "resultKey": "CachediSCSIVolumes"
+    },
+    "describeStorediSCSIVolumes": {
+      "resultKey": "StorediSCSIVolumes"
+    },
+    "describeTapeArchives": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "TapeArchives"
+    },
+    "describeTapeRecoveryPoints": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "TapeRecoveryPointInfos"
+    },
+    "describeTapes": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "Tapes"
+    },
+    "describeVTLDevices": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "VTLDevices"
+    },
+    "listGateways": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "Gateways"
+    },
+    "listLocalDisks": {
+      "resultKey": "Disks"
+    },
+    "listVolumeRecoveryPoints": {
+      "resultKey": "VolumeRecoveryPointInfos"
+    },
+    "listVolumes": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "limitKey": "Limit",
+      "resultKey": "VolumeInfos"
+    }
+  }
+}

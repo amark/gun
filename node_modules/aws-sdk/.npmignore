@@ -1,0 +1,17 @@
+.yard*
+.jshintrc
+.travis.yml
+apis/source
+configuration
+configuration.sample
+dist
+dist-tools
+doc
+doc-src
+Gemfile
+Gemfile.lock
+features
+Rakefile
+test
+tasks
+vendor

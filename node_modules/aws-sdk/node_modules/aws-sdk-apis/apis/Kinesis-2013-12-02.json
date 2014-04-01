@@ -1,0 +1,275 @@
+{
+  "format": "json",
+  "apiVersion": "2013-12-02",
+  "endpointPrefix": "kinesis",
+  "jsonVersion": "1.1",
+  "serviceAbbreviation": "Kinesis",
+  "serviceFullName": "Amazon Kinesis",
+  "signatureVersion": "v4",
+  "targetPrefix": "Kinesis_20131202",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "createStream": {
+      "name": "CreateStream",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "ShardCount": {
+            "type": "integer",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteStream": {
+      "name": "DeleteStream",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "describeStream": {
+      "name": "DescribeStream",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "Limit": {
+            "type": "integer"
+          },
+          "ExclusiveStartShardId": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "StreamDescription": {
+            "type": "structure",
+            "members": {
+              "StreamName": {},
+              "StreamARN": {},
+              "StreamStatus": {},
+              "Shards": {
+                "type": "list",
+                "members": {
+                  "type": "structure",
+                  "members": {
+                    "ShardId": {},
+                    "ParentShardId": {},
+                    "AdjacentParentShardId": {},
+                    "HashKeyRange": {
+                      "type": "structure",
+                      "members": {
+                        "StartingHashKey": {},
+                        "EndingHashKey": {}
+                      }
+                    },
+                    "SequenceNumberRange": {
+                      "type": "structure",
+                      "members": {
+                        "StartingSequenceNumber": {},
+                        "EndingSequenceNumber": {}
+                      }
+                    }
+                  }
+                }
+              },
+              "HasMoreShards": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRecords": {
+      "name": "GetRecords",
+      "input": {
+        "type": "structure",
+        "members": {
+          "ShardIterator": {
+            "required": true
+          },
+          "Limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Records": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "SequenceNumber": {},
+                "Data": {
+                  "type": "base64"
+                },
+                "PartitionKey": {}
+              }
+            }
+          },
+          "NextShardIterator": {}
+        }
+      }
+    },
+    "getShardIterator": {
+      "name": "GetShardIterator",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "ShardId": {
+            "required": true
+          },
+          "ShardIteratorType": {
+            "required": true
+          },
+          "StartingSequenceNumber": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ShardIterator": {}
+        }
+      }
+    },
+    "listStreams": {
+      "name": "ListStreams",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Limit": {
+            "type": "integer"
+          },
+          "ExclusiveStartStreamName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "StreamNames": {
+            "type": "list",
+            "members": {}
+          },
+          "HasMoreStreams": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "mergeShards": {
+      "name": "MergeShards",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "ShardToMerge": {
+            "required": true
+          },
+          "AdjacentShardToMerge": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "putRecord": {
+      "name": "PutRecord",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "Data": {
+            "type": "base64",
+            "required": true
+          },
+          "PartitionKey": {
+            "required": true
+          },
+          "ExplicitHashKey": {},
+          "SequenceNumberForOrdering": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ShardId": {},
+          "SequenceNumber": {}
+        }
+      }
+    },
+    "splitShard": {
+      "name": "SplitShard",
+      "input": {
+        "type": "structure",
+        "members": {
+          "StreamName": {
+            "required": true
+          },
+          "ShardToSplit": {
+            "required": true
+          },
+          "NewStartingHashKey": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    }
+  },
+  "pagination": {
+    "describeStream": {
+      "inputToken": "ExclusiveStartShardId",
+      "limitKey": "Limit",
+      "moreResults": "StreamDescription.HasMoreShards",
+      "outputToken": "StreamDescription.Shards[-1].ShardId",
+      "resultKey": "StreamDescription.Shards"
+    },
+    "getRecords": {
+      "inputToken": "ShardIterator",
+      "limitKey": "Limit",
+      "outputToken": "NextShardIterator",
+      "resultKey": "Records"
+    },
+    "listStreams": {
+      "inputToken": "ExclusiveStartStreamName",
+      "limitKey": "Limit",
+      "moreResults": "HasMoreStreams",
+      "outputToken": "StreamNames[-1]",
+      "resultKey": "StreamNames"
+    }
+  }
+}

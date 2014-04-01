@@ -34,6 +34,7 @@ module.exports = require('theory')
 							return;
 						} ref.id = ref.node._.$ +'.'+ ref.path;
 						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
+							console.log("HAM REJECTION", p, v, val);
 							return;
 						}
 						if(ref.at){
