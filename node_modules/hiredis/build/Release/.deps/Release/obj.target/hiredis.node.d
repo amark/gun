@@ -1,0 +1,1 @@
+cmd_Release/obj.target/hiredis.node := flock ./Release/linker.lock g++ -shared -pthread -rdynamic -m64  -Wl,-soname=hiredis.node -o Release/obj.target/hiredis.node -Wl,--start-group Release/obj.target/hiredis/src/hiredis.o Release/obj.target/hiredis/src/reader.o Release/obj.target/deps/hiredis.a -Wl,--end-group 

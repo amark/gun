@@ -1,0 +1,490 @@
+{
+  "format": "query",
+  "apiVersion": "2010-12-01",
+  "endpointPrefix": "email",
+  "resultWrapped": true,
+  "serviceAbbreviation": "Amazon SES",
+  "serviceFullName": "Amazon Simple Email Service",
+  "signatureVersion": "v4",
+  "signingName": "ses",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "deleteIdentity": {
+      "name": "DeleteIdentity",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identity": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteVerifiedEmailAddress": {
+      "name": "DeleteVerifiedEmailAddress",
+      "input": {
+        "type": "structure",
+        "members": {
+          "EmailAddress": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "getIdentityDkimAttributes": {
+      "name": "GetIdentityDkimAttributes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identities": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "DkimAttributes": {
+            "type": "map",
+            "keys": {},
+            "members": {
+              "type": "structure",
+              "members": {
+                "DkimEnabled": {
+                  "type": "boolean"
+                },
+                "DkimVerificationStatus": {},
+                "DkimTokens": {
+                  "type": "list",
+                  "members": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getIdentityNotificationAttributes": {
+      "name": "GetIdentityNotificationAttributes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identities": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "NotificationAttributes": {
+            "type": "map",
+            "keys": {},
+            "members": {
+              "type": "structure",
+              "members": {
+                "BounceTopic": {},
+                "ComplaintTopic": {},
+                "ForwardingEnabled": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getIdentityVerificationAttributes": {
+      "name": "GetIdentityVerificationAttributes",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identities": {
+            "type": "list",
+            "members": {},
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VerificationAttributes": {
+            "type": "map",
+            "keys": {},
+            "members": {
+              "type": "structure",
+              "members": {
+                "VerificationStatus": {},
+                "VerificationToken": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "getSendQuota": {
+      "name": "GetSendQuota",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Max24HourSend": {
+            "type": "float"
+          },
+          "MaxSendRate": {
+            "type": "float"
+          },
+          "SentLast24Hours": {
+            "type": "float"
+          }
+        }
+      }
+    },
+    "getSendStatistics": {
+      "name": "GetSendStatistics",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SendDataPoints": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Timestamp": {
+                  "type": "timestamp"
+                },
+                "DeliveryAttempts": {
+                  "type": "integer"
+                },
+                "Bounces": {
+                  "type": "integer"
+                },
+                "Complaints": {
+                  "type": "integer"
+                },
+                "Rejects": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "listIdentities": {
+      "name": "ListIdentities",
+      "input": {
+        "type": "structure",
+        "members": {
+          "IdentityType": {},
+          "NextToken": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Identities": {
+            "type": "list",
+            "members": {}
+          },
+          "NextToken": {}
+        }
+      }
+    },
+    "listVerifiedEmailAddresses": {
+      "name": "ListVerifiedEmailAddresses",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VerifiedEmailAddresses": {
+            "type": "list",
+            "members": {}
+          }
+        }
+      }
+    },
+    "sendEmail": {
+      "name": "SendEmail",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Source": {
+            "required": true
+          },
+          "Destination": {
+            "type": "structure",
+            "members": {
+              "ToAddresses": {
+                "type": "list",
+                "members": {}
+              },
+              "CcAddresses": {
+                "type": "list",
+                "members": {}
+              },
+              "BccAddresses": {
+                "type": "list",
+                "members": {}
+              }
+            },
+            "required": true
+          },
+          "Message": {
+            "type": "structure",
+            "members": {
+              "Subject": {
+                "type": "structure",
+                "members": {
+                  "Data": {
+                    "required": true
+                  },
+                  "Charset": {}
+                },
+                "required": true
+              },
+              "Body": {
+                "type": "structure",
+                "members": {
+                  "Text": {
+                    "type": "structure",
+                    "members": {
+                      "Data": {
+                        "required": true
+                      },
+                      "Charset": {}
+                    }
+                  },
+                  "Html": {
+                    "type": "structure",
+                    "members": {
+                      "Data": {
+                        "required": true
+                      },
+                      "Charset": {}
+                    }
+                  }
+                },
+                "required": true
+              }
+            },
+            "required": true
+          },
+          "ReplyToAddresses": {
+            "type": "list",
+            "members": {}
+          },
+          "ReturnPath": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "MessageId": {}
+        }
+      }
+    },
+    "sendRawEmail": {
+      "name": "SendRawEmail",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Source": {},
+          "Destinations": {
+            "type": "list",
+            "members": {}
+          },
+          "RawMessage": {
+            "type": "structure",
+            "members": {
+              "Data": {
+                "type": "base64",
+                "required": true
+              }
+            },
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "MessageId": {}
+        }
+      }
+    },
+    "setIdentityDkimEnabled": {
+      "name": "SetIdentityDkimEnabled",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identity": {
+            "required": true
+          },
+          "DkimEnabled": {
+            "type": "boolean",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "setIdentityFeedbackForwardingEnabled": {
+      "name": "SetIdentityFeedbackForwardingEnabled",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identity": {
+            "required": true
+          },
+          "ForwardingEnabled": {
+            "type": "boolean",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "setIdentityNotificationTopic": {
+      "name": "SetIdentityNotificationTopic",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Identity": {
+            "required": true
+          },
+          "NotificationType": {
+            "required": true
+          },
+          "SnsTopic": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "verifyDomainDkim": {
+      "name": "VerifyDomainDkim",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Domain": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "DkimTokens": {
+            "type": "list",
+            "members": {}
+          }
+        }
+      }
+    },
+    "verifyDomainIdentity": {
+      "name": "VerifyDomainIdentity",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Domain": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VerificationToken": {}
+        }
+      }
+    },
+    "verifyEmailAddress": {
+      "name": "VerifyEmailAddress",
+      "input": {
+        "type": "structure",
+        "members": {
+          "EmailAddress": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "verifyEmailIdentity": {
+      "name": "VerifyEmailIdentity",
+      "input": {
+        "type": "structure",
+        "members": {
+          "EmailAddress": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    }
+  },
+  "pagination": {
+    "listIdentities": {
+      "inputToken": "NextToken",
+      "outputToken": "NextToken",
+      "limitKey": "MaxItems",
+      "resultKey": "Identities"
+    },
+    "listVerifiedEmailAddresses": {
+      "resultKey": "VerifiedEmailAddresses"
+    }
+  },
+  "waiters": {
+    "__default__": {
+      "interval": 3,
+      "maxAttempts": 20
+    },
+    "identityExists": {
+      "operation": "GetIdentityVerificationAttributes",
+      "successType": "output",
+      "successPath": "VerificationAttributes[].VerificationStatus",
+      "successValue": true
+    }
+  }
+}

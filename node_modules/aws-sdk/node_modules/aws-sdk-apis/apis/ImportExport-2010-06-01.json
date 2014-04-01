@@ -1,0 +1,192 @@
+{
+  "format": "query",
+  "apiVersion": "2010-06-01",
+  "endpointPrefix": "importexport",
+  "globalEndpoint": "importexport.amazonaws.com",
+  "resultWrapped": true,
+  "serviceFullName": "AWS Import/Export",
+  "signatureVersion": "v2",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "cancelJob": {
+      "name": "CancelJob",
+      "http": {
+        "method": "POST",
+        "uri": "/?Operation=CancelJob"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "JobId": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Success": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "createJob": {
+      "name": "CreateJob",
+      "http": {
+        "method": "POST",
+        "uri": "/?Operation=CreateJob"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "JobType": {
+            "required": true
+          },
+          "Manifest": {
+            "required": true
+          },
+          "ManifestAddendum": {},
+          "ValidateOnly": {
+            "type": "boolean",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "JobId": {},
+          "JobType": {},
+          "AwsShippingAddress": {},
+          "Signature": {},
+          "SignatureFileContents": {},
+          "WarningMessage": {}
+        }
+      }
+    },
+    "getStatus": {
+      "name": "GetStatus",
+      "http": {
+        "method": "POST",
+        "uri": "/?Operation=GetStatus"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "JobId": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "JobId": {},
+          "JobType": {},
+          "AwsShippingAddress": {},
+          "LocationCode": {},
+          "LocationMessage": {},
+          "ProgressCode": {},
+          "ProgressMessage": {},
+          "Carrier": {},
+          "TrackingNumber": {},
+          "LogBucket": {},
+          "LogKey": {},
+          "ErrorCount": {
+            "type": "integer"
+          },
+          "Signature": {},
+          "SignatureFileContents": {},
+          "CurrentManifest": {},
+          "CreationDate": {
+            "type": "timestamp"
+          }
+        }
+      }
+    },
+    "listJobs": {
+      "name": "ListJobs",
+      "http": {
+        "method": "POST",
+        "uri": "/?Operation=ListJobs"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "MaxJobs": {
+            "type": "integer"
+          },
+          "Marker": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Jobs": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "JobId": {},
+                "CreationDate": {
+                  "type": "timestamp"
+                },
+                "IsCanceled": {
+                  "type": "boolean"
+                },
+                "JobType": {}
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "updateJob": {
+      "name": "UpdateJob",
+      "http": {
+        "method": "POST",
+        "uri": "/?Operation=UpdateJob"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "JobId": {
+            "required": true
+          },
+          "Manifest": {
+            "required": true
+          },
+          "JobType": {
+            "required": true
+          },
+          "ValidateOnly": {
+            "type": "boolean",
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Success": {
+            "type": "boolean"
+          },
+          "WarningMessage": {}
+        }
+      }
+    }
+  },
+  "pagination": {
+    "listJobs": {
+      "inputToken": "Marker",
+      "outputToken": "Jobs[-1].JobId",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxJobs",
+      "resultKey": "Jobs"
+    }
+  }
+}

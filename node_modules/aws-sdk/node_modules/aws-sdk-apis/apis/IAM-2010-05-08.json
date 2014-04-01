@@ -1,0 +1,2041 @@
+{
+  "format": "query",
+  "apiVersion": "2010-05-08",
+  "endpointPrefix": "iam",
+  "globalEndpoint": "iam.amazonaws.com",
+  "resultWrapped": true,
+  "serviceAbbreviation": "IAM",
+  "serviceFullName": "AWS Identity and Access Management",
+  "signatureVersion": "v4",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "addRoleToInstanceProfile": {
+      "name": "AddRoleToInstanceProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "InstanceProfileName": {
+            "required": true
+          },
+          "RoleName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "addUserToGroup": {
+      "name": "AddUserToGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "changePassword": {
+      "name": "ChangePassword",
+      "input": {
+        "type": "structure",
+        "members": {
+          "OldPassword": {
+            "required": true
+          },
+          "NewPassword": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "createAccessKey": {
+      "name": "CreateAccessKey",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "AccessKey": {
+            "type": "structure",
+            "members": {
+              "UserName": {},
+              "AccessKeyId": {},
+              "Status": {},
+              "SecretAccessKey": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "createAccountAlias": {
+      "name": "CreateAccountAlias",
+      "input": {
+        "type": "structure",
+        "members": {
+          "AccountAlias": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "createGroup": {
+      "name": "CreateGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Path": {},
+          "GroupName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Group": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "GroupName": {},
+              "GroupId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "createInstanceProfile": {
+      "name": "CreateInstanceProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "InstanceProfileName": {
+            "required": true
+          },
+          "Path": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "InstanceProfile": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "InstanceProfileName": {},
+              "InstanceProfileId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              },
+              "Roles": {
+                "type": "list",
+                "members": {
+                  "type": "structure",
+                  "members": {
+                    "Path": {},
+                    "RoleName": {},
+                    "RoleId": {},
+                    "Arn": {},
+                    "CreateDate": {
+                      "type": "timestamp"
+                    },
+                    "AssumeRolePolicyDocument": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "createLoginProfile": {
+      "name": "CreateLoginProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "Password": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "LoginProfile": {
+            "type": "structure",
+            "members": {
+              "UserName": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "createRole": {
+      "name": "CreateRole",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Path": {},
+          "RoleName": {
+            "required": true
+          },
+          "AssumeRolePolicyDocument": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Role": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "RoleName": {},
+              "RoleId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              },
+              "AssumeRolePolicyDocument": {}
+            }
+          }
+        }
+      }
+    },
+    "createSAMLProvider": {
+      "name": "CreateSAMLProvider",
+      "input": {
+        "type": "structure",
+        "members": {
+          "SAMLMetadataDocument": {
+            "required": true
+          },
+          "Name": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SAMLProviderArn": {}
+        }
+      }
+    },
+    "createUser": {
+      "name": "CreateUser",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Path": {},
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "User": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "UserName": {},
+              "UserId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "createVirtualMFADevice": {
+      "name": "CreateVirtualMFADevice",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Path": {},
+          "VirtualMFADeviceName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VirtualMFADevice": {
+            "type": "structure",
+            "members": {
+              "SerialNumber": {},
+              "Base32StringSeed": {
+                "type": "base64"
+              },
+              "QRCodePNG": {
+                "type": "base64"
+              },
+              "User": {
+                "type": "structure",
+                "members": {
+                  "Path": {},
+                  "UserName": {},
+                  "UserId": {},
+                  "Arn": {},
+                  "CreateDate": {
+                    "type": "timestamp"
+                  }
+                }
+              },
+              "EnableDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deactivateMFADevice": {
+      "name": "DeactivateMFADevice",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "SerialNumber": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteAccessKey": {
+      "name": "DeleteAccessKey",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "AccessKeyId": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteAccountAlias": {
+      "name": "DeleteAccountAlias",
+      "input": {
+        "type": "structure",
+        "members": {
+          "AccountAlias": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteAccountPasswordPolicy": {
+      "name": "DeleteAccountPasswordPolicy",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteGroup": {
+      "name": "DeleteGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteGroupPolicy": {
+      "name": "DeleteGroupPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteInstanceProfile": {
+      "name": "DeleteInstanceProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "InstanceProfileName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteLoginProfile": {
+      "name": "DeleteLoginProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteRole": {
+      "name": "DeleteRole",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteRolePolicy": {
+      "name": "DeleteRolePolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteSAMLProvider": {
+      "name": "DeleteSAMLProvider",
+      "input": {
+        "type": "structure",
+        "members": {
+          "SAMLProviderArn": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteServerCertificate": {
+      "name": "DeleteServerCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "ServerCertificateName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteSigningCertificate": {
+      "name": "DeleteSigningCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "CertificateId": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteUser": {
+      "name": "DeleteUser",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteUserPolicy": {
+      "name": "DeleteUserPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "deleteVirtualMFADevice": {
+      "name": "DeleteVirtualMFADevice",
+      "input": {
+        "type": "structure",
+        "members": {
+          "SerialNumber": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "enableMFADevice": {
+      "name": "EnableMFADevice",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "SerialNumber": {
+            "required": true
+          },
+          "AuthenticationCode1": {
+            "required": true
+          },
+          "AuthenticationCode2": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "getAccountPasswordPolicy": {
+      "name": "GetAccountPasswordPolicy",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "PasswordPolicy": {
+            "type": "structure",
+            "members": {
+              "MinimumPasswordLength": {
+                "type": "integer"
+              },
+              "RequireSymbols": {
+                "type": "boolean"
+              },
+              "RequireNumbers": {
+                "type": "boolean"
+              },
+              "RequireUppercaseCharacters": {
+                "type": "boolean"
+              },
+              "RequireLowercaseCharacters": {
+                "type": "boolean"
+              },
+              "AllowUsersToChangePassword": {
+                "type": "boolean"
+              },
+              "ExpirePasswords": {
+                "type": "boolean"
+              },
+              "MaxPasswordAge": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "getAccountSummary": {
+      "name": "GetAccountSummary",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SummaryMap": {
+            "type": "map",
+            "keys": {},
+            "members": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "getGroup": {
+      "name": "GetGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Group": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "GroupName": {},
+              "GroupId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          },
+          "Users": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "UserName": {},
+                "UserId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "getGroupPolicy": {
+      "name": "GetGroupPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "GroupName": {},
+          "PolicyName": {},
+          "PolicyDocument": {}
+        }
+      }
+    },
+    "getInstanceProfile": {
+      "name": "GetInstanceProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "InstanceProfileName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "InstanceProfile": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "InstanceProfileName": {},
+              "InstanceProfileId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              },
+              "Roles": {
+                "type": "list",
+                "members": {
+                  "type": "structure",
+                  "members": {
+                    "Path": {},
+                    "RoleName": {},
+                    "RoleId": {},
+                    "Arn": {},
+                    "CreateDate": {
+                      "type": "timestamp"
+                    },
+                    "AssumeRolePolicyDocument": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getLoginProfile": {
+      "name": "GetLoginProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "LoginProfile": {
+            "type": "structure",
+            "members": {
+              "UserName": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRole": {
+      "name": "GetRole",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Role": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "RoleName": {},
+              "RoleId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              },
+              "AssumeRolePolicyDocument": {}
+            }
+          }
+        }
+      }
+    },
+    "getRolePolicy": {
+      "name": "GetRolePolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "RoleName": {},
+          "PolicyName": {},
+          "PolicyDocument": {}
+        }
+      }
+    },
+    "getSAMLProvider": {
+      "name": "GetSAMLProvider",
+      "input": {
+        "type": "structure",
+        "members": {
+          "SAMLProviderArn": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SAMLMetadataDocument": {},
+          "CreateDate": {
+            "type": "timestamp"
+          },
+          "ValidUntil": {
+            "type": "timestamp"
+          }
+        }
+      }
+    },
+    "getServerCertificate": {
+      "name": "GetServerCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "ServerCertificateName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ServerCertificate": {
+            "type": "structure",
+            "members": {
+              "ServerCertificateMetadata": {
+                "type": "structure",
+                "members": {
+                  "Path": {},
+                  "ServerCertificateName": {},
+                  "ServerCertificateId": {},
+                  "Arn": {},
+                  "UploadDate": {
+                    "type": "timestamp"
+                  }
+                }
+              },
+              "CertificateBody": {},
+              "CertificateChain": {}
+            }
+          }
+        }
+      }
+    },
+    "getUser": {
+      "name": "GetUser",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "User": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "UserName": {},
+              "UserId": {},
+              "Arn": {},
+              "CreateDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "getUserPolicy": {
+      "name": "GetUserPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "PolicyName": {},
+          "PolicyDocument": {}
+        }
+      }
+    },
+    "listAccessKeys": {
+      "name": "ListAccessKeys",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "AccessKeyMetadata": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "UserName": {},
+                "AccessKeyId": {},
+                "Status": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listAccountAliases": {
+      "name": "ListAccountAliases",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "AccountAliases": {
+            "type": "list",
+            "members": {}
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listGroupPolicies": {
+      "name": "ListGroupPolicies",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "PolicyNames": {
+            "type": "list",
+            "members": {}
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listGroups": {
+      "name": "ListGroups",
+      "input": {
+        "type": "structure",
+        "members": {
+          "PathPrefix": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Groups": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "GroupName": {},
+                "GroupId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listGroupsForUser": {
+      "name": "ListGroupsForUser",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Groups": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "GroupName": {},
+                "GroupId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listInstanceProfiles": {
+      "name": "ListInstanceProfiles",
+      "input": {
+        "type": "structure",
+        "members": {
+          "PathPrefix": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "InstanceProfiles": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "InstanceProfileName": {},
+                "InstanceProfileId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                },
+                "Roles": {
+                  "type": "list",
+                  "members": {
+                    "type": "structure",
+                    "members": {
+                      "Path": {},
+                      "RoleName": {},
+                      "RoleId": {},
+                      "Arn": {},
+                      "CreateDate": {
+                        "type": "timestamp"
+                      },
+                      "AssumeRolePolicyDocument": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listInstanceProfilesForRole": {
+      "name": "ListInstanceProfilesForRole",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "InstanceProfiles": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "InstanceProfileName": {},
+                "InstanceProfileId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                },
+                "Roles": {
+                  "type": "list",
+                  "members": {
+                    "type": "structure",
+                    "members": {
+                      "Path": {},
+                      "RoleName": {},
+                      "RoleId": {},
+                      "Arn": {},
+                      "CreateDate": {
+                        "type": "timestamp"
+                      },
+                      "AssumeRolePolicyDocument": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listMFADevices": {
+      "name": "ListMFADevices",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "MFADevices": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "UserName": {},
+                "SerialNumber": {},
+                "EnableDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listRolePolicies": {
+      "name": "ListRolePolicies",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "PolicyNames": {
+            "type": "list",
+            "members": {}
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listRoles": {
+      "name": "ListRoles",
+      "input": {
+        "type": "structure",
+        "members": {
+          "PathPrefix": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Roles": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "RoleName": {},
+                "RoleId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                },
+                "AssumeRolePolicyDocument": {}
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listSAMLProviders": {
+      "name": "ListSAMLProviders",
+      "input": {
+        "type": "structure",
+        "members": {}
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SAMLProviderList": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Arn": {},
+                "ValidUntil": {
+                  "type": "timestamp"
+                },
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "listServerCertificates": {
+      "name": "ListServerCertificates",
+      "input": {
+        "type": "structure",
+        "members": {
+          "PathPrefix": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ServerCertificateMetadataList": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "ServerCertificateName": {},
+                "ServerCertificateId": {},
+                "Arn": {},
+                "UploadDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listSigningCertificates": {
+      "name": "ListSigningCertificates",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Certificates": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "UserName": {},
+                "CertificateId": {},
+                "CertificateBody": {},
+                "Status": {},
+                "UploadDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listUserPolicies": {
+      "name": "ListUserPolicies",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "PolicyNames": {
+            "type": "list",
+            "members": {}
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listUsers": {
+      "name": "ListUsers",
+      "input": {
+        "type": "structure",
+        "members": {
+          "PathPrefix": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Users": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Path": {},
+                "UserName": {},
+                "UserId": {},
+                "Arn": {},
+                "CreateDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "listVirtualMFADevices": {
+      "name": "ListVirtualMFADevices",
+      "input": {
+        "type": "structure",
+        "members": {
+          "AssignmentStatus": {},
+          "Marker": {},
+          "MaxItems": {
+            "type": "integer"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "VirtualMFADevices": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "SerialNumber": {},
+                "Base32StringSeed": {
+                  "type": "base64"
+                },
+                "QRCodePNG": {
+                  "type": "base64"
+                },
+                "User": {
+                  "type": "structure",
+                  "members": {
+                    "Path": {},
+                    "UserName": {},
+                    "UserId": {},
+                    "Arn": {},
+                    "CreateDate": {
+                      "type": "timestamp"
+                    }
+                  }
+                },
+                "EnableDate": {
+                  "type": "timestamp"
+                }
+              }
+            }
+          },
+          "IsTruncated": {
+            "type": "boolean"
+          },
+          "Marker": {}
+        }
+      }
+    },
+    "putGroupPolicy": {
+      "name": "PutGroupPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          },
+          "PolicyDocument": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "putRolePolicy": {
+      "name": "PutRolePolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          },
+          "PolicyDocument": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "putUserPolicy": {
+      "name": "PutUserPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "PolicyName": {
+            "required": true
+          },
+          "PolicyDocument": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "removeRoleFromInstanceProfile": {
+      "name": "RemoveRoleFromInstanceProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "InstanceProfileName": {
+            "required": true
+          },
+          "RoleName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "removeUserFromGroup": {
+      "name": "RemoveUserFromGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "UserName": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "resyncMFADevice": {
+      "name": "ResyncMFADevice",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "SerialNumber": {
+            "required": true
+          },
+          "AuthenticationCode1": {
+            "required": true
+          },
+          "AuthenticationCode2": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateAccessKey": {
+      "name": "UpdateAccessKey",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "AccessKeyId": {
+            "required": true
+          },
+          "Status": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateAccountPasswordPolicy": {
+      "name": "UpdateAccountPasswordPolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "MinimumPasswordLength": {
+            "type": "integer"
+          },
+          "RequireSymbols": {
+            "type": "boolean"
+          },
+          "RequireNumbers": {
+            "type": "boolean"
+          },
+          "RequireUppercaseCharacters": {
+            "type": "boolean"
+          },
+          "RequireLowercaseCharacters": {
+            "type": "boolean"
+          },
+          "AllowUsersToChangePassword": {
+            "type": "boolean"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateAssumeRolePolicy": {
+      "name": "UpdateAssumeRolePolicy",
+      "input": {
+        "type": "structure",
+        "members": {
+          "RoleName": {
+            "required": true
+          },
+          "PolicyDocument": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateGroup": {
+      "name": "UpdateGroup",
+      "input": {
+        "type": "structure",
+        "members": {
+          "GroupName": {
+            "required": true
+          },
+          "NewPath": {},
+          "NewGroupName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateLoginProfile": {
+      "name": "UpdateLoginProfile",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "Password": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateSAMLProvider": {
+      "name": "UpdateSAMLProvider",
+      "input": {
+        "type": "structure",
+        "members": {
+          "SAMLMetadataDocument": {
+            "required": true
+          },
+          "SAMLProviderArn": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "SAMLProviderArn": {}
+        }
+      }
+    },
+    "updateServerCertificate": {
+      "name": "UpdateServerCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "ServerCertificateName": {
+            "required": true
+          },
+          "NewPath": {},
+          "NewServerCertificateName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateSigningCertificate": {
+      "name": "UpdateSigningCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "CertificateId": {
+            "required": true
+          },
+          "Status": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateUser": {
+      "name": "UpdateUser",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {
+            "required": true
+          },
+          "NewPath": {},
+          "NewUserName": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "uploadServerCertificate": {
+      "name": "UploadServerCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Path": {},
+          "ServerCertificateName": {
+            "required": true
+          },
+          "CertificateBody": {
+            "required": true
+          },
+          "PrivateKey": {
+            "required": true
+          },
+          "CertificateChain": {}
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "ServerCertificateMetadata": {
+            "type": "structure",
+            "members": {
+              "Path": {},
+              "ServerCertificateName": {},
+              "ServerCertificateId": {},
+              "Arn": {},
+              "UploadDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "uploadSigningCertificate": {
+      "name": "UploadSigningCertificate",
+      "input": {
+        "type": "structure",
+        "members": {
+          "UserName": {},
+          "CertificateBody": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Certificate": {
+            "type": "structure",
+            "members": {
+              "UserName": {},
+              "CertificateId": {},
+              "CertificateBody": {},
+              "Status": {},
+              "UploadDate": {
+                "type": "timestamp"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "pagination": {
+    "getGroup": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Users"
+    },
+    "listAccessKeys": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "AccessKeyMetadata"
+    },
+    "listAccountAliases": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "AccountAliases"
+    },
+    "listGroupPolicies": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "PolicyNames"
+    },
+    "listGroups": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Groups"
+    },
+    "listGroupsForUser": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Groups"
+    },
+    "listInstanceProfiles": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "InstanceProfiles"
+    },
+    "listInstanceProfilesForRole": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "InstanceProfiles"
+    },
+    "listMFADevices": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "MFADevices"
+    },
+    "listRolePolicies": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "PolicyNames"
+    },
+    "listRoles": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Roles"
+    },
+    "listSAMLProviders": {
+      "resultKey": "SAMLProviderList"
+    },
+    "listServerCertificates": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "ServerCertificateMetadataList"
+    },
+    "listSigningCertificates": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Certificates"
+    },
+    "listUserPolicies": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "PolicyNames"
+    },
+    "listUsers": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "Users"
+    },
+    "listVirtualMFADevices": {
+      "inputToken": "Marker",
+      "outputToken": "Marker",
+      "moreResults": "IsTruncated",
+      "limitKey": "MaxItems",
+      "resultKey": "VirtualMFADevices"
+    }
+  }
+}

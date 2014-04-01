@@ -1,0 +1,231 @@
+{
+  "format": "json",
+  "apiVersion": "2013-11-01",
+  "endpointPrefix": "cloudtrail",
+  "jsonVersion": "1.1",
+  "serviceAbbreviation": "CloudTrail",
+  "serviceFullName": "AWS CloudTrail",
+  "signatureVersion": "v4",
+  "targetPrefix": "com.amazonaws.cloudtrail.v20131101.CloudTrail_20131101",
+  "timestampFormat": "iso8601",
+  "operations": {
+    "createTrail": {
+      "name": "CreateTrail",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {},
+          "S3BucketName": {},
+          "S3KeyPrefix": {},
+          "SnsTopicName": {},
+          "IncludeGlobalServiceEvents": {
+            "type": "boolean"
+          },
+          "trail": {
+            "type": "structure",
+            "members": {
+              "Name": {},
+              "S3BucketName": {},
+              "S3KeyPrefix": {},
+              "SnsTopicName": {},
+              "IncludeGlobalServiceEvents": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Name": {},
+          "S3BucketName": {},
+          "S3KeyPrefix": {},
+          "SnsTopicName": {},
+          "IncludeGlobalServiceEvents": {
+            "type": "boolean"
+          },
+          "trail": {
+            "type": "structure",
+            "members": {
+              "Name": {},
+              "S3BucketName": {},
+              "S3KeyPrefix": {},
+              "SnsTopicName": {},
+              "IncludeGlobalServiceEvents": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deleteTrail": {
+      "name": "DeleteTrail",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "describeTrails": {
+      "name": "DescribeTrails",
+      "input": {
+        "type": "structure",
+        "members": {
+          "trailNameList": {
+            "type": "list",
+            "members": {}
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "trailList": {
+            "type": "list",
+            "members": {
+              "type": "structure",
+              "members": {
+                "Name": {},
+                "S3BucketName": {},
+                "S3KeyPrefix": {},
+                "SnsTopicName": {},
+                "IncludeGlobalServiceEvents": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getTrailStatus": {
+      "name": "GetTrailStatus",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "IsLogging": {
+            "type": "boolean"
+          },
+          "LatestDeliveryError": {},
+          "LatestNotificationError": {},
+          "LatestDeliveryTime": {
+            "type": "timestamp"
+          },
+          "LatestNotificationTime": {
+            "type": "timestamp"
+          },
+          "StartLoggingTime": {
+            "type": "timestamp"
+          },
+          "StopLoggingTime": {
+            "type": "timestamp"
+          },
+          "LatestDeliveryAttemptTime": {},
+          "LatestNotificationAttemptTime": {},
+          "LatestNotificationAttemptSucceeded": {},
+          "LatestDeliveryAttemptSucceeded": {},
+          "TimeLoggingStarted": {},
+          "TimeLoggingStopped": {}
+        }
+      }
+    },
+    "startLogging": {
+      "name": "StartLogging",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "stopLogging": {
+      "name": "StopLogging",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {
+            "required": true
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {}
+      }
+    },
+    "updateTrail": {
+      "name": "UpdateTrail",
+      "input": {
+        "type": "structure",
+        "members": {
+          "Name": {},
+          "S3BucketName": {},
+          "S3KeyPrefix": {},
+          "SnsTopicName": {},
+          "IncludeGlobalServiceEvents": {
+            "type": "boolean"
+          },
+          "trail": {
+            "type": "structure",
+            "members": {
+              "Name": {},
+              "S3BucketName": {},
+              "S3KeyPrefix": {},
+              "SnsTopicName": {},
+              "IncludeGlobalServiceEvents": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "Name": {},
+          "S3BucketName": {},
+          "S3KeyPrefix": {},
+          "SnsTopicName": {},
+          "IncludeGlobalServiceEvents": {
+            "type": "boolean"
+          },
+          "trail": {
+            "type": "structure",
+            "members": {
+              "Name": {},
+              "S3BucketName": {},
+              "S3KeyPrefix": {},
+              "SnsTopicName": {},
+              "IncludeGlobalServiceEvents": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

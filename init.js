@@ -1,8 +1,8 @@
 process.env.rootdir = __dirname;
-var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production') || process.env.PORT
-, web = require(process.env.COALESCEPATH = LIVE?'coalesce':process.env.rootdir+'/../coalesce/coalesce')
+var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
+, web = require('coalesce')
 , opt = {};
-opt.port = !LIVE? 8888 : process.env.PORT? process.env.PORT : 80;
+opt.port = process.env.PORT || process.env.OPENSHIFT_NODEJS_POR || process.env.VCAP_APP_PORT || 8888;
 process.env.domain = LIVE? 'http://gunjs.herokuapp.com' : 
 	(function(){require('child_process').exec('ifconfig',function(e,r){
 		console.log('on',process.env.domain='http://'+ r.match(/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/)[0] +':'+opt.port)

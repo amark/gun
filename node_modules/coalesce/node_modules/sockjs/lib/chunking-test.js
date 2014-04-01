@@ -1,0 +1,78 @@
+(function() {
+  var utils;
+
+  utils = require('./utils');
+
+  exports.app = {
+    chunking_test: function(req, res, _, next_filter) {
+      var write,
+        _this = this;
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+      res.writeHead(200);
+      write = function(payload) {
+        try {
+          return res.write(payload + '\n');
+        } catch (x) {
+
+        }
+      };
+      utils.timeout_chain([
+        [
+          0, function() {
+            return write('h');
+          }
+        ], [
+          1, function() {
+            return write(Array(2049).join(' ') + 'h');
+          }
+        ], [
+          5, function() {
+            return write('h');
+          }
+        ], [
+          25, function() {
+            return write('h');
+          }
+        ], [
+          125, function() {
+            return write('h');
+          }
+        ], [
+          625, function() {
+            return write('h');
+          }
+        ], [
+          3125, function() {
+            write('h');
+            return res.end();
+          }
+        ]
+      ]);
+      return true;
+    },
+    info: function(req, res, _) {
+      var info;
+      info = {
+        websocket: this.options.websocket,
+        origins: ['*:*'],
+        cookie_needed: !!this.options.jsessionid,
+        entropy: utils.random32()
+      };
+      if (typeof this.options.base_url === 'function') {
+        info.base_url = this.options.base_url();
+      } else if (this.options.base_url) {
+        info.base_url = this.options.base_url;
+      }
+      res.setHeader('Content-Type', 'application/json; charset=UTF-8');
+      res.writeHead(200);
+      return res.end(JSON.stringify(info));
+    },
+    info_options: function(req, res) {
+      res.statusCode = 204;
+      res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+      res.setHeader('Access-Control-Max-Age', res.cache_for);
+      return '';
+    }
+  };
+
+}).call(this);
