@@ -14,8 +14,8 @@
     "redis": "~>0.10.1",
 	"hiredis": ""
   }
-, "main": "init.js"
 , "scripts": {
         "start": "node init.js"
     }
+, "main": "shots"
 }
