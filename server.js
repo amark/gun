@@ -1,7 +1,9 @@
 /*
 	THIS IS FOR OPENSHIFT ONLY
 */
-console.log("RHC ONLY");
+console.log("OPENSHIFT ONLY");
+require('./init');
+/*
 var http = require('http');
 
 var server = http.createServer(function(req, res) {
@@ -9,4 +11,4 @@ var server = http.createServer(function(req, res) {
     res.end('Hello Shift');
 });
 server.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
-console.log(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+console.log(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);*/
