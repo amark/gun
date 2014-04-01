@@ -140,7 +140,7 @@ module.exports = require('theory')
 			store.get(where, function(e,r){
 				if(e || !r){
 					return s3(opt.s3.bucket(where)).get(opt.s3.key(where),function(e,r,t){
-						console.log('via s3', where);
+						console.log('via s3', where); if(e){ console.log(e) }
 						if(e || !r){ return cb(null, e) }
 						store.set(where, (t || a.text.ify(r)));
 						r = a.gun(where,r);
@@ -166,7 +166,6 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
-			console.log("spray", m);
 			if(!m || !m.how){ return }
 			if(m.where && m.where.mid){
 				console.log("servers chats:", m); 

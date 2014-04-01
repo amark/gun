@@ -1,2 +1,2 @@
-console.log("OPENSHIFT ONLY");
+console.log("!!! OPENSHIFT ONLY !!!");
 require('./init');
