@@ -1,3 +1,5 @@
+(function(){
+
 process.env.rootdir = __dirname;
 var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')
@@ -18,7 +20,9 @@ if(LIVE){
 }
 
 opt.run = ['./test/server', './test/tests'];
-opt.node = {key: "temp gun key", src:["http://gunjs.herokuapp.com/com","http://marknadal.kd.io/com"]};
+opt.node = {key: "temp gun key", src:["http://gunjs.herokuapp.com/com","http://marknadal.kd.io/com","http://gunjs.aws.af.cm/com"]};
 
 web(opt); 
 console.log("Gun @ "+ opt.port);
+
+})();
