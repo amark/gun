@@ -5,7 +5,7 @@ var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
 , web = require('coalesce')
 , opt = {};
 opt.port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
-opt.host = process.env.OPENSHIFT_NODEJS_IP || 'localhost';
+opt.host = process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0';
 
 
 opt.hook = {
