@@ -23,5 +23,6 @@ opt.node = {key: "temp gun key", src:["http://gunjs.herokuapp.com/com","http://g
 
 web(opt); 
 console.log("Gun @ "+ opt.port);
+console.log("meow");
 
 })();
