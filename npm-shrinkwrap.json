@@ -29,9 +29,8 @@
       }
     },
     "coalesce": {
-      "version": "0.1.9-bt",
-      "from": "coalesce@0.1.9-bt",
-      "resolved": "https://registry.npmjs.org/coalesce/-/coalesce-0.1.9-bt.tgz",
+      "version": "0.1.9-bu",
+      "from": "coalesce@0.1.9-bu",
       "dependencies": {
         "node-static": {
           "version": "0.7.1",

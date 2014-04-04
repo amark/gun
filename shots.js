@@ -38,9 +38,6 @@ module.exports = require('theory')
 			if(opt.s3.Bucket){ return key }
 			return a.text(key).clip('/',1);
 		}
-		theory.on(a.gun.event).event(function(m, db){
-			return;
-		});
 		store.batch = [];
 		store.last = a.time.now();
 		store.push = function(key, score, val, cb){
@@ -52,12 +49,12 @@ module.exports = require('theory')
 				if(cb){ cb(e,r) }
 			});
 		}
-		store.add = function(m, db){
+		store.add = function(m, g){
 			if(!m){ return }
-			db = '_' + (db || a(m,'where.at') || m.where);
-			store.push(db, a(m,'what._.#') || m.when || 0, a.text.ify(m));
+			g = '_' + (g || a(m,'where.at') || m.where);
+			store.push(g, (m.when || a(m,'what._.'+a.gun._.ham) || 0), a.text.ify(m));
 		}
-		store.del = function(m, db){
+		store.del = function(m, g){
 			
 		}
 		store.sort = function(A,B){
@@ -128,15 +125,18 @@ module.exports = require('theory')
 				if(cb){ cb(e,r) }
 			});
 		}
-		shot.shell = function(where,cb,o){
+		shot.load = function(where,cb,o){
+			console.log("shot.load >", where);
 			if(!where){ return }
 			where = a.text.is(where)? where : (where.at || where);
+			console.log("shot.load?", where);
 			if(!a.text.is(where)){ return }
 			if(a.fns.is(a.gun.clip[where])){
 				console.log('via memory', where);
 				cb(a.gun.clip[where]); // TODO: Need to delete these at some point, too!
 				return;
 			}
+			console.log("from external...");
 			store.get(where, function(e,r){
 				if(e || !r){
 					return s3(opt.s3.bucket(where)).get(opt.s3.key(where),function(e,r,t){
@@ -167,38 +167,43 @@ module.exports = require('theory')
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
 			if(!m || !m.how){ return }
-			if(m.where && m.where.mid){
-				console.log("servers chats:", m); 
-			}
 			var where = a.text.is(m.where)? m.where : m.where.at;
+			console.log("spray", where, m);
 			if(m.how.gun === 3){
-				shot.shell(m.what._['%']||where, function(g,e){
+				console.log("load...");
+				shot.load(m.what, function(g,e){
+					console.log("got it!");
 					shot.pump.action(g, m, function(){ // receive custom edited copy here and send it down instead.
-						if(opt.src && opt.src.reply){
-							m.what = a.fns.is(g)? g() : {};
-							m.how.gun = -(m.how.gun||3);
-							opt.src.reply(m);
-						}
+						console.log("reply");
+						if(!opt.src || !opt.src.reply){ return }
+						m.what = a.fns.is(g)? g() : {};
+						m.how.gun = -(m.how.gun||3);
+						opt.src.reply(m);
 					}, e);
 				});
 				return;
 			}
 			if(!where){ return }
 			store.add(m);
-			shot.shell(where, function(g,e){
+			shot.load(where, function(g,e){
 				var done = function(){
-					theory.on(a.gun.event+'.shot').emit(m.what,g);
-					g = a.fns.is(g)? g : function(){ return a.gun.clip[where] || {} }
-					console.log("updated:", g());
-					store.set(where, g(), null, function(){ // TODO: Only save to S3 if there is a change in data after HAM.
-						if(opt.src && opt.src.reply && !m.where.mid){
-							m.when = a.num.is(a(m,'what._.#'))? m.what._['#'] : m.when;
-							m.how.gun = -(m.how.gun||1);
-							m.what = where;
-							m.where = null;
-							opt.src.reply(m);
-						}
+					var u, s, w = m.when || 0, r = {}, cb;
+					m.how.gun = -(m.how.gun||1);
+					g = a.fns.is(g)? g : (a.gun.clip[where] || function(){});
+					a.obj(m.what).each(function(v,p){
+						if(g(p,v,w) === u){
+							r[p] = 0; // Error code
+							return;
+						} s = true;
 					});
+					m.what = r;
+					cb = function(){
+						if(!opt.src || !opt.src.reply || m.where.mid){ return }
+						opt.src.reply(m);
+						console.log('reply', m);
+					}
+					if(!s){ return cb() }
+					store.set(where, g(), null, cb);
 				};
 				done.end = function(){};
 				shot.spray.transform(g, m, done, e);

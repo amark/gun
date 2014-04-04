@@ -19,33 +19,27 @@ module.exports = require('theory')
 			if(gun.is(this)){
 				n = this;
 				g = n._.graph || function(){ return {} };
-				if(a.text.is(p)){					
-					if(p === '' && (v === u || v === null)){
-						var del = {_:{'#':a.time.now()}};
-						delete g[n._.$];
-						del[n._.$] = n = null;
-						theory.on(gun.event).emit(del, g.$);
-						return null;
-					}
+				if(a.text.is(p)){
 					if(args >= 2){ // set
 						var ref = {}
 						, val = gun.at(n,p,ref);
-						if(!ref.node || !ref.node._ || !ref.node._.$){
+						if(!ref.node || !ref.node._ || !ref.node._[gun._.id]){
 							return;
-						} ref.id = ref.node._.$ +'.'+ ref.path;
+						} ref.id = ref.node._[gun._.id] +'.'+ ref.path;
 						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
 							console.log("HAM REJECTION", p, v, val);
 							return;
 						}
+						console.log("HAM set", p, v);
 						if(ref.at){
-							if(v === u || v === null){				
+							if(v === null){	
 								if(a.list.is(ref.at)){
 									t = o.val || t;
 									var j = ref.at.indexOf(ref.prop);
 									if(0 <= j){
 										ref.at.splice(j,1);
 									} else {
-										j = a.list(ref.at).find({$:ref.prop});
+										j = a.list(ref.at).find(gun.id(ref.prop));
 										if(j){
 											ref.at.splice(--j,1);
 										}
@@ -53,13 +47,13 @@ module.exports = require('theory')
 								} else {
 									delete ref.at[ref.prop];
 								}
-								var del = {_:{'#':w}}; del[ref.id] = null;
-								theory.on(gun.event).emit(del, g.$);
+								var del = {}; del[ref.id] = null;
+								theory.on(gun.event).emit(w, del, g[gun._.id]);
 								v = ref.at;
 							} else {
 								v = gun.at(v);
 								if(gun.is(v)){
-									v = {$:v._.$};
+									v = gun.id(v._[gun._.id]);
 								} else {
 									v = gun.ify.be(v);
 								} var j;
@@ -70,14 +64,15 @@ module.exports = require('theory')
 								} else {
 									ref.at[ref.prop] = v;
 								}
-								var diff = {_:{'#':w}}; diff[ref.id] = v;
-								theory.on(gun.event).emit(diff, g.$);
+								var diff = {}; diff[ref.id] = v;
+								theory.on(gun.event).emit(w, diff, g[gun._.id]);
 								v = j || v;
 							}
+							return v;
 						}
-						return v;
+						return;
 					}
-					if(args >= 1){ // get		
+					if(args >= 1){ // get	
 						v = gun.at(n,p);
 						return v;
 					}
@@ -88,44 +83,76 @@ module.exports = require('theory')
 			p = a.text.is(p)? p : gun.id();
 			if(a.obj.is(n)){ // create a new graph from this object
 				g = gun.ify(n);
-				var graph = gun.clip[p] = function(n){
-					if(gun.is(this)){
-						var args = a.list.slit.call(arguments);
-						n = this;
-						n._.graph = n._.graph || graph;
-						return gun.apply(n, args);
+				var graph = gun.clip[p] = function(p,v,w){
+					var args, id, path, n, w = w || a.time.now();
+					if(a.text.is(p)){
+						id = a.text(p).clip('.',0,1);
+						path = a.text(p).clip('.',1);
+						if(a.obj(g).has(id) && gun.is(g[id])){
+							n = g[id];
+							p = path;
+						}
+					}
+					args = a.list.slit.call(arguments);
+					if(!args.length){
+						return g;
+					}
+					if(path){
+						if(n){
+							n._.graph = n._.graph || graph;
+							return gun.apply(n, args);
+						}
+						return;
 					}
 					var fn = function(p,v,w){
 						if(!n){ return }
 						var args = a.list.slit.call(arguments);
 						return !args.length? n : gun.apply(n,args);
 					}
-					if(a.text.is(n)){
-						if(a.obj(g).has(n) && (n = g[n]) && gun.is(n)){
-							n._.graph = graph;
+					if(n){
+						if(args.length === 1){
+							n._.graph = n._.graph || graph;
 							return fn;
 						}
-						n = {_:{$:n}};
+						if(v === null){
+							delete g[n._[gun._.id]];
+							var del = {}; del[n._[gun._.id]] = n = null;
+							theory.on(gun.event).emit(w, del, g[gun._.id]);
+							return null;
+						}
+						return;
 					}
-					if(a.obj.is(n)){
-						n = gun.ify(n,u,{}); // can only add one node with this method!
-						n._ = n._ || {$: gun.id()};
-						n._.graph = graph // JSONifying excludes functions.
-						var add = {_:{'#':a.time.now()}}; 
-						add[n._.$] = g[n._.$] = n;
-						theory.on(gun.event).emit(add, graph.$);
+					if(a.text.is(p)){
+						v = a.obj.is(v)? v : {};
+						v._ = gun.id(p);
+					} else
+					if(a.obj.is(p)){
+						v = p;
+					}
+					if(a.obj.is(v)){
+						n = gun.ify(v,u,{}); // can only add one node with this method! 
+						n._ = n._ || gun.id({});
+						n._.graph = graph; // JSONifying excludes functions.
+						var add = {}; add[n._[gun._.id]] = g[n._[gun._.id]] = n;
+						theory.on(gun.event).emit(w, add, graph[gun._.id]);
 						return fn;
 					}
-					return g;
 				}
-				graph.$ = p;
+				graph[gun._.id] = p;
 				return graph;
 			}
 		} var u;
-		gun.is = function(o){
-			return (o && o._ && o._.$)? true : false;
+		gun._ = {
+			id: '#' // do not change this!
 		}
-		gun.id = function(){
+		gun.is = function(o){
+			return (o && o._ && o._[gun._.id])? true : false;
+		}
+		gun.id = function(t){
+			if(t){
+				var _ = {};_[gun._.id] = a.text.is(t)? t : gun.id();
+				return _;
+			}
 			return a.text.r(9);
 		}
 		gun.at = function(n,p,ref){
@@ -148,8 +175,8 @@ module.exports = require('theory')
 				if(a.obj.is(v) && a.obj(v).has(x)){
 					ref.at = v;
 					v = v[x];
-					if(v && v.$){
-						v = a.obj(g).has(v.$)? g[v.$] : u;
+					if(v && v[gun._.id]){
+						v = a.obj(g).has(v[gun._.id])? g[v[gun._.id]] : u;
 						if(v){
 							return gun.at.call(g,v,pp.slice(i),ref);
 						}
@@ -160,9 +187,9 @@ module.exports = require('theory')
 					return a.list(v).each(function(w,j){
 						if(!w) return;
 						if(!p) return;
-						w = a.obj(g).has(w.$||w)? g[w.$||w] : u;
+						w = a.obj(g).has(w[gun._.id]||w)? g[w[gun._.id]||w] : u;
 						if(!w) return;
-						if(w._ && x === w._.$){
+						if(w._ && x === w._[gun._.id]){
 							i += 1;
 							p = false;
 						}
@@ -177,7 +204,7 @@ module.exports = require('theory')
 				ref.at = v;
 				v = a.list(v).each(function(w,j,t){
 					if(w){
-						if(a.obj(g).has(w.$||w)) t(g[w.$||w]);
+						if(a.obj(g).has(w[gun._.id]||w)) t(g[w[gun._.id]||w]);
 					}
 				}) || [];
 			}
@@ -196,8 +223,8 @@ module.exports = require('theory')
 						return;
 					}
 					if(gun.is(o)){
-						f[i] = {$: o._.$};
-						g[o._.$] = n;
+						f[i] = gun.id(o._[gun._.id]);
+						g[o._[gun._.id]] = n;
 					} else {
 						f[i] = n;
 					}
@@ -206,8 +233,8 @@ module.exports = require('theory')
 						ify(v,j,n,{},f);
 					});
 					if(gun.is(n)){
-						g[n._.$] = n;
-						f[i] = {$: n._.$};
+						g[n._[gun._.id]] = n;
+						f[i] = gun.id(n._[gun._.id]);
 					}
 					return;
 				}
@@ -220,11 +247,11 @@ module.exports = require('theory')
 						if(a.obj.is(v)){
 							if(seen = ify.seen(v)){
 								ify.be(seen);
-								if(gun.is(seen.node)){ t(seen.node._.$) }
+								if(gun.is(seen.node)){ t(seen.node._[gun._.id]) }
 							} else {
 								gun.ify(v, opt, n);
 								if(gun.is(n)){
-									t(n._.$);
+									t(n._[gun._.id]);
 								}
 							}
 						} else
@@ -245,10 +272,10 @@ module.exports = require('theory')
 			ify.be = function(seen){
 				var n = seen.node;
 				n._ = n._||{};
-				n._.$ = n._.$||gun.id();
-				g[n._.$] = n;
+				n._[gun._.id] = n._[gun._.id]||gun.id();
+				g[n._[gun._.id]] = n;
 				if(seen.from){
-					seen.from[seen.prop] = {$: n._.$};
+					seen.from[seen.prop] = gun.id(n._[gun._.id]);
 				}
 			}
 			ify.seen = function(o){
@@ -263,7 +290,7 @@ module.exports = require('theory')
 			});
 			if(!is){
 				ify.be({node: node});
-				g[node._.$] = node;
+				g[node._[gun._.id]] = node;
 			}
 			if(n){
 				return n;
@@ -272,6 +299,7 @@ module.exports = require('theory')
 		}
 		gun.ify.be = function(v,g){
 			var r;
+			g = g || {};
 			if(a.obj.is(v)){
 				r = {};
 				a.obj(v).each(function(w,i){
@@ -285,10 +313,10 @@ module.exports = require('theory')
 					if(!w){ return }
 					w = gun.at(w);
 					if(gun.is(w)){
-						t(w._.$);
+						t(w._[gun._.id]);
 					} else
-					if(w.$){
-						t(w.$);
+					if(w[gun._.id]){
+						t(w[gun._.id]);
 					} else 
 					if(a.obj(g).has(w)){
 						t(w);
@@ -311,26 +339,6 @@ module.exports = require('theory')
 		}
 		gun.event = 'gun';
 		gun.clip = {};
-		theory.on(gun.event+'.shot').event(function(m,g){
-			if(!m || !m._ || !g || !a.fns.is(g)){ return }
-			var graph = g()
-			, when = m._['#'];
-			if(!when){ return }
-			a.obj(m).each(function(v,i){
-				if(i==='_'){ return }
-				var op = {};
-				op.w = when[i] || when;
-				op.id = a.text(i).clip('.',0,1);
-				op.p = a.text(i).clip('.',1);
-				op.n = graph[op.id];
-				if(!gun.is(op.n)){
-					if(op.p || !a.obj.is(v)){ return }
-					g(op.id, v);
-					return;
-				}
-				g.call(op.n, op.p, v, op.w);
-			});
-		});
 		return gun;
 	})();
 	/* 	Hypothetical Amnesia Machine 
@@ -368,31 +376,37 @@ module.exports = require('theory')
 		all conscious actors are agreed upon in a unified spot, synchronized in the
 		capacity to realize such beautiful information.
 	*/
+	a.gun._.ham = '>';
 	a.gun.ham = function(n,p,v,w,val){
 		if(!n){ return true }
-		var now, u;
-		p = p.replace('.',':');
+		var now, u, q;
+		q = p.replace('.',a.gun._.ham);
 		n._ = n._ || {};
-		n._['#'] = n._['#'] || {};
-		if(w < (n._['#'][p]||0)){
+		n._[a.gun._.ham] = n._[a.gun._.ham] || {};
+		console.log("HAM:");
+		if(w < (n._[a.gun._.ham][q]||0)){
+			console.log("new < old");
 			return true;
 		} else
-		if(w === (n._['#'][p]||0)){
+		if(w === (n._[a.gun._.ham][q]||0)){
 			if(val === v || a.test.is(val,v) || a.text.ify(val) < a.text.ify(v)){
+				console.log("new === old");
 				return true;
 			}
 		} else
 		if((now = a.time.now() + 1) < w){ // tolerate a threshold of 1ms.
+			console.log("amnesia", Math.ceil(w - now));
 			/* Amnesia Quarantine */
 			a.time.wait(function(){
+				console.log("run again");
 				a.gun.call(n,p,v,w);
 			}, Math.ceil(w - now)); // crude implementation for now.
 			return true;
 		}
 		if(v === u || v === null){
-			delete n._['#'][p];
+			delete n._[a.gun._.ham][q];
 		} else {
-			n._['#'][p] = w;
+			n._[a.gun._.ham][q] = w;
 		}
 	}
 	return a.gun;
