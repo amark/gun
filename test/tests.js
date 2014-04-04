@@ -94,7 +94,7 @@ module.exports=require('theory')
 		it('tests',function(){
 			//return;
 			//var s = theory.shot({src: '/test/server.js'})
-			var s = shot.shell('gunjs.herokuapp.com/tests/package.json',function(g){
+			var s = shot.load('gunjs.herokuapp.com/tests/package.json',function(g){
 				if(!g){ return }
 				console.log('graph', g());
 				var p = g('packageson');
@@ -111,7 +111,7 @@ module.exports=require('theory')
 				p('version',val);
 				p('random',ran);
 				a.time.wait(function(){
-					shot.shell('gunjs.herokuapp.com/tests/package.json',function(gg){
+					shot.load('gunjs.herokuapp.com/tests/package.json',function(gg){
 						var pp = gg('packageson');
 						console.log('graph prime', gg());
 						expect(val).to.be(pp('version'));

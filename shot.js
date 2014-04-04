@@ -14,22 +14,33 @@ module.exports = require('theory')
 			return store[src] = data;
 		}
 		store.reply = {};
-		shot.meta = function(m, g){
-			if(!m || !g){ return }
-			if(m._ && m._['#']){ m.when = m._['#'] }
-			if(!m.where){ m.where = g }
-			if(!m.how){ m.how = {gun:1} }
+		shot.meta = function(m, w, g){
+			if(!m){ return }
+			if(m.when && m.where){ return m }
+			if(!w || !g){ return }
+			m.when = w;
+			m.where = g;
+			m.how = {gun:1};
 			return m;
 		}
-		theory.on(a.gun.event).event(shot.fire = function(m, g){
-			var w;
-			if(m){ shot.add(m, g, shot.batch) }
-			if(m && opt.src && opt.src.send){
-				if(!(m = shot.meta(m, g))){ return }
+		theory.on(a.gun.event).event(shot.fire = function(w, m, g){
+			if(m){
+				m = shot.meta(m, w, g);
+			}
+			if(!m){ return }
+			if(w && g){
+				if(shot.add(m, g, shot.batch) === 2){
+					return;
+				}
+			}
+			if(opt.src && opt.src.send){
+				if(!shot.meta(m)){ return }
+				console.log("to server!", m);
 				return opt.src.send(m);
-			} // below is fallback
+			} // below is fallback. TODO: Unfinished!
 			if(shot.lock){ return }
-			if((w = a.time.now()) - shot.last < opt.throttle
+			var now = a.time.now();
+			if(now - shot.last < opt.throttle // this entire if satement is probably wrong. Redo entirely.
 			&& shot.batch.length < opt.batch){ return }
 			console.log('sending!', shot.batch);
 			$.post(opt.src, {b:a.text.ify(shot.batch)}, function(e,r){
@@ -41,25 +52,31 @@ module.exports = require('theory')
 		});
 		shot.batch = [];
 		shot.last = a.time.now();
-		shot.list = function(m){
-			var g = store(a.gun.event) || {};
+		shot.list = function(){
+			var g = store(a.gun.event) || {}
+			, z = function(l,g,i){
+				if(i !== 0 && !i){ return }
+				if(!l || !l[i]){ return }
+				shot.fire(null, l[i]);
+				console.log("re-sent", l[i]);
+				a.time.wait(function(){ z(l,g,i+1) },1);
+			}
 			a.obj(g).each(function(l,g){
-				a.list(l).each(function(v,i,t){
-					theory.on(a.gun.event).emit(v, g);
-				});
+				z(l,g,0);
 			});
 		}
 		shot.add = function(m, g, b){
 			if(!m){ return }
-			if(a.list.is(b)) b.push(m);
 			var gs = store(a.gun.event) || {}
-			, when = a(m,'what._.#') || m.when || m.what
+			, when = m.when || a(m,'_.'+a.gun._.ham) || a(m,'what._.'+a.gun._.ham);
 			gs[g] = gs[g] || [];
 			if(a.list(gs[g]).each(function(v){
-				if(v && v._ && v._['#'] === when){
+				var w = v.when || a(v,'_.'+a.gun._.ham) || a(v,'what._.'+a.gun._.ham);
+				if(w === when){
 					return true;
 				}
-			})){ return gs[g]; } // already
+			})){ return 2; } // already
+			if(opt.batch && a.list.is(b)){ b.push(m) }
 			gs[g].push(m);
 			store(a.gun.event, gs);
 			return gs[g];
@@ -67,10 +84,13 @@ module.exports = require('theory')
 		shot.del = function(m, g){
 			if(!m){ return }
 			var gs = store(a.gun.event) || {}
-			, when = a(m,'what._.#') || m.when;
+			, when = m.when || a(m,'_.'+a.gun._.ham) || a(m,'what._.'+a.gun._.ham);
+			g = m.where.at || m.where;
+			console.log("clear queue", g, m);
 			gs[g] = gs[g] || [];
 			gs[g] = a.list(gs[g]).each(function(v,i,t){
-				if(v && v._ && v._['#'] === when){
+				var w = v.when || a(v,'_.'+a.gun._.ham) || a(v,'what._.'+a.gun._.ham);
+				if(w === when){
 					return; 
 				}
 				t(v);
@@ -79,17 +99,16 @@ module.exports = require('theory')
 		}
 		shot.sort = function(A,B){
 			if(!A || !B){ return 0 }
-			A = ((A||{})._||{})['#']; B = ((B||{})._||{})['#'];
+			A = ((A||{})._||{})[a.gun._.ham]; B = ((B||{})._||{})[a.gun._.ham];
 			if(A < B){ return -1 }
 			else if(A > B){ return  1 }
 			else { return 0 }
 		}
-		shot.list();
-		shot.shell = function(where,cb){
+		shot.load = function(where,cb,o){
 			if(!where){ return }
-			var m = {_:{'%':where}};
+			o = o || {};
+			var m = {what: where, how: {gun:3}};
 			if(opt.src && opt.src.ask){
-				if(!m.how){ m.how = {gun:3} }
 				opt.src.ask(m,function(m){
 					if(!m || !m.what){ cb(null) }
 					m = a.gun(where, m.what);
@@ -111,13 +130,13 @@ module.exports = require('theory')
 		shot.spray.action = function(m){
 			if(!m || !m.how || !m.how.gun){ return }
 			if(m.how.gun === -1){
-				console.log('clear queue', m);
-				shot.del(m, m.what);
+				shot.del(m);
 			}
 		}
+		shot.list();
 		return {gun: a.gun
 			,spray: shot.spray
-			,shell: shot.shell
+			,load: shot.load
 			,fire: shot.fire
 			,wait: function(){
 				shot.lock = 1;
