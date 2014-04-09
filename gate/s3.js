@@ -9,7 +9,6 @@ module.exports=require('theory')
 		AWS.config.sslEnabled = conf.sslEnabled = false;
 	}
 	AWS.config.update(conf);
-	
 	function s3(db){
 		db = db || conf.s3Bucket || (conf.s3Bucket = process.env.s3Bucket);
 		if(dev){
@@ -73,7 +72,7 @@ module.exports=require('theory')
 			,Key: key
 		};
 		if(S3.batch(m,cb)){ console.log('no!', m.Bucket + m.Key); return }
-		console.log('YES!', m.Bucket + m.Key);
+		console.log("s3 info:", m);
 		S3().getObject(m, function(e,r){
 			var d, t, r = r || (this && this.httpResponse);
 			if(e || !r){ return S3.batch.reply(m,e) }

@@ -3,6 +3,7 @@ module.exports = require('theory')
 	var s3 = require(__dirname+'/gate/s3')
 	, store = require(__dirname+'/gate/redis');
 	return function(opt){
+		console.log("***** SHOTS *****");
 		opt = opt || {};
 		var u, shot = {};
 		opt.path = opt.path || '.'
@@ -30,17 +31,23 @@ module.exports = require('theory')
 			}
 		}
 		opt.s3 = opt.s3 || {};
-		opt.s3.Bucket = a.text.is(opt.s3.bucket)? opt.s3.bucket : '';
+		opt.s3.Bucket = a.text.is(opt.s3.bucket)? opt.s3.bucket : (process.env.s3Bucket || '');
 		opt.s3.bucket = a.fns.is(opt.s3.bucket)? opt.s3.bucket : function(key){
 			return opt.s3.Bucket || a.text(key).clip('/',0,1);
 		}
 		opt.s3.key = a.fns.is(opt.s3.key)? opt.s3.key : function(key){
-			if(opt.s3.Bucket){ return key }
-			return a.text(key).clip('/',1);
+			if(key.slice(0, opt.s3.Bucket.length) === opt.s3.Bucket){
+				key = key.slice(opt.s3.Bucket.length)||'';
+				if(key.charAt(0) === '/'){
+					key = key.slice(1);
+				}
+			}
+			return key;
 		}
 		store.batch = [];
 		store.last = a.time.now();
 		store.push = function(key, score, val, cb){
+			if(!val){ return }
 			store.client.zadd(key, score, val, function(e,r){
 				if(e){
 					store.clienf.zadd(key, score, val, cb);
@@ -49,10 +56,11 @@ module.exports = require('theory')
 				if(cb){ cb(e,r) }
 			});
 		}
+		store.when = function(m){ return a(m,'what._.'+a.gun._.ham) || a(m,'_.'+a.gun._.ham) || m.when }
 		store.add = function(m, g){
 			if(!m){ return }
 			g = '_' + (g || a(m,'where.at') || m.where);
-			store.push(g, (m.when || a(m,'what._.'+a.gun._.ham) || 0), a.text.ify(m));
+			store.push(g, store.when(m) || 0, a.text.ify(m));
 		}
 		store.del = function(m, g){
 			
@@ -86,12 +94,13 @@ module.exports = require('theory')
 			store.wait = null;
 			a.obj(store.batch).each(function(g,where){
 				if(!g || !where){ return }
-				console.log('*************** save', where, '*******************');
+				//console.log('*************** save', where, '*******************');
 				s3(opt.s3.bucket(where)).put(opt.s3.key(where),g,function(e,r){
 					a.list(store.batched[where]).each(function(cb){
 						if(a.fns.is(cb)){ cb(e,r) }
-						console.log('*** end ***');
+						console.log('*** saved ***');
 					});
+					console.log(store.batched[where]);
 					delete store.batched[where];
 				});
 			});
@@ -100,7 +109,7 @@ module.exports = require('theory')
 			opt.redis.config();
 			var val = a.text.is(value)? value : a.text.ify(value);
 			if(a.fns.is(fn)){ store.stay(key, value, fn) }
-			console.log("potential setex:", key, opt.redis.expire, val);
+			//console.log("potential setex:", key, opt.redis.expire, val);
 			if(opt.redis.max){
 				store.client.set(key, val, function(e,r){
 					if(e){
@@ -126,17 +135,15 @@ module.exports = require('theory')
 			});
 		}
 		shot.load = function(where,cb,o){
-			console.log("shot.load >", where);
+			//console.log("shot.load >", where);
 			if(!where){ return }
 			where = a.text.is(where)? where : (where.at || where);
-			console.log("shot.load?", where);
 			if(!a.text.is(where)){ return }
-			if(a.fns.is(a.gun.clip[where])){
+			if(a.fns.is(a.gun.magazine[where])){
 				console.log('via memory', where);
-				cb(a.gun.clip[where]); // TODO: Need to delete these at some point, too!
+				cb(a.gun.magazine[where]); // TODO: Need to delete these at some point, too!
 				return;
 			}
-			console.log("from external...");
 			store.get(where, function(e,r){
 				if(e || !r){
 					return s3(opt.s3.bucket(where)).get(opt.s3.key(where),function(e,r,t){
@@ -154,6 +161,7 @@ module.exports = require('theory')
 			});
 		}
 		shot.spray = function(m){
+			console.log(">> shot.spray");
 			if(m && m.how){
 				shot.spray.action(m);
 				return shot;
@@ -166,15 +174,12 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
+			console.log(">>> shot.spray.action");
 			if(!m || !m.how){ return }
 			var where = a.text.is(m.where)? m.where : m.where.at;
-			console.log("spray", where, m);
 			if(m.how.gun === 3){
-				console.log("load...");
 				shot.load(m.what, function(g,e){
-					console.log("got it!");
 					shot.pump.action(g, m, function(){ // receive custom edited copy here and send it down instead.
-						console.log("reply");
 						if(!opt.src || !opt.src.reply){ return }
 						m.what = a.fns.is(g)? g() : {};
 						m.how.gun = -(m.how.gun||3);
@@ -187,9 +192,9 @@ module.exports = require('theory')
 			store.add(m);
 			shot.load(where, function(g,e){
 				var done = function(){
-					var u, s, w = m.when || 0, r = {}, cb;
+					var u, s, w = store.when(m) || 0, r = {}, cb;
 					m.how.gun = -(m.how.gun||1);
-					g = a.fns.is(g)? g : (a.gun.clip[where] || function(){});
+					g = a.fns.is(g)? g : (a.gun.magazine[where] || function(){});
 					a.obj(m.what).each(function(v,p){
 						if(g(p,v,w) === u){
 							r[p] = 0; // Error code
@@ -243,6 +248,18 @@ module.exports = require('theory')
 				: !a.obj.empty(a(m,'what.url.query'))? a(m,'what.url.query')
 				: false ;
 		};
+		shot.chamber = function(){
+			var index = process.env.gun_chamber;
+			if(!index){
+				index = process.env.gun_chamber = a.text.r(12);
+			}
+			s3(opt.s3.bucket(index)).get(opt.s3.key(index),function(e,r,t){
+				if(!r){
+					
+				}
+			});
+		}
+		shot.gun = a.gun;
 		return shot;
 	}
 },[__dirname+'/gun'])

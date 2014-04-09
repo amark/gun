@@ -18,14 +18,14 @@ module.exports = require('theory')
 			, g, n, w = w || a.time.now();
 			if(gun.is(this)){
 				n = this;
-				g = n._.graph || function(){ return {} };
+				g = n._.clip || function(){ return {} };
 				if(a.text.is(p)){
 					if(args >= 2){ // set
 						var ref = {}
 						, val = gun.at(n,p,ref);
-						if(!ref.node || !ref.node._ || !ref.node._[gun._.id]){
+						if(!ref.cartridge || !ref.cartridge._ || !ref.cartridge._[gun._.id]){
 							return;
-						} ref.id = ref.node._[gun._.id] +'.'+ ref.path;
+						} ref.id = ref.cartridge._[gun._.id] +'.'+ ref.path;
 						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
 							console.log("HAM REJECTION", p, v, val);
 							return;
@@ -48,7 +48,7 @@ module.exports = require('theory')
 									delete ref.at[ref.prop];
 								}
 								var del = {}; del[ref.id] = null;
-								theory.on(gun.event).emit(w, del, g[gun._.id]);
+								gun.fire(del, g[gun._.id], w);
 								v = ref.at;
 							} else {
 								v = gun.at(v);
@@ -65,7 +65,7 @@ module.exports = require('theory')
 									ref.at[ref.prop] = v;
 								}
 								var diff = {}; diff[ref.id] = v;
-								theory.on(gun.event).emit(w, diff, g[gun._.id]);
+								gun.fire(diff, g[gun._.id], w);
 								v = j || v;
 							}
 							return v;
@@ -81,9 +81,9 @@ module.exports = require('theory')
 			}
 			n = a.obj.is(v)? v : a.obj.is(p)? p : null;
 			p = a.text.is(p)? p : gun.id();
-			if(a.obj.is(n)){ // create a new graph from this object
+			if(a.obj.is(n)){ // create a clip from this object
 				g = gun.ify(n);
-				var graph = gun.clip[p] = function(p,v,w){
+				var clip = gun.magazine[p] = function(p,v,w){
 					var args, id, path, n, w = w || a.time.now();
 					if(a.text.is(p)){
 						id = a.text(p).clip('.',0,1);
@@ -99,7 +99,7 @@ module.exports = require('theory')
 					}
 					if(path){
 						if(n){
-							n._.graph = n._.graph || graph;
+							n._.clip = n._.clip || clip;
 							return gun.apply(n, args);
 						}
 						return;
@@ -111,13 +111,13 @@ module.exports = require('theory')
 					}
 					if(n){
 						if(args.length === 1){
-							n._.graph = n._.graph || graph;
+							n._.clip = n._.clip || clip;
 							return fn;
 						}
 						if(v === null){
 							delete g[n._[gun._.id]];
 							var del = {}; del[n._[gun._.id]] = n = null;
-							theory.on(gun.event).emit(w, del, g[gun._.id]);
+							gun.fire(del, g[gun._.id], w);
 							return null;
 						}
 						return;
@@ -130,16 +130,16 @@ module.exports = require('theory')
 						v = p;
 					}
 					if(a.obj.is(v)){
-						n = gun.ify(v,u,{}); // can only add one node with this method! 
+						n = gun.ify(v,u,{}); // a clip cannot be created from this, only a single cartridge
 						n._ = n._ || gun.id({});
-						n._.graph = graph; // JSONifying excludes functions.
+						n._.clip = clip; // JSONifying excludes functions.
 						var add = {}; add[n._[gun._.id]] = g[n._[gun._.id]] = n;
-						theory.on(gun.event).emit(w, add, graph[gun._.id]);
+						gun.fire(add, clip[gun._.id], w);
 						return fn;
 					}
 				}
-				graph[gun._.id] = p;
-				return graph;
+				clip[gun._.id] = p;
+				return clip;
 			}
 		} var u;
 		gun._ = {
@@ -164,10 +164,10 @@ module.exports = require('theory')
 			}
 			ref = ref || {};
 			var pp = a.list.is(p)? p : (p||'').split('.')
-			, g = a.fns.is(n._.graph)? n._.graph() : this
+			, g = a.fns.is(n._.clip)? n._.clip() : this
 			, i = 0, l = pp.length, v = n
 			, x, y, z;
-			ref.node = n;
+			ref.cartridge = n;
 			ref.prop = pp[l-1];
 			ref.path = pp.slice(i).join('.');
 			while(i < l && v !== u){
@@ -228,7 +228,7 @@ module.exports = require('theory')
 					} else {
 						f[i] = n;
 					}
-					opt.seen.push({node: n, prop: i, from: f, src: o});
+					opt.seen.push({cartridge: n, prop: i, from: f, src: o});
 					a.obj(o).each(function(v,j){
 						ify(v,j,n,{},f);
 					});
@@ -247,7 +247,7 @@ module.exports = require('theory')
 						if(a.obj.is(v)){
 							if(seen = ify.seen(v)){
 								ify.be(seen);
-								if(gun.is(seen.node)){ t(seen.node._[gun._.id]) }
+								if(gun.is(seen.cartridge)){ t(seen.cartridge._[gun._.id]) }
 							} else {
 								gun.ify(v, opt, n);
 								if(gun.is(n)){
@@ -270,7 +270,7 @@ module.exports = require('theory')
 				}
 			}
 			ify.be = function(seen){
-				var n = seen.node;
+				var n = seen.cartridge;
 				n._ = n._||{};
 				n._[gun._.id] = n._[gun._.id]||gun.id();
 				g[n._[gun._.id]] = n;
@@ -283,14 +283,14 @@ module.exports = require('theory')
 					if(v && v.src === o){ return v }
 				}) || false;
 			}
-			var is = true, node = n || {};
+			var is = true, cartridge = n || {};
 			a.obj(o).each(function(v,i){
 				if(!gun.is(v)){ is = false }
-				ify(v, i, node, {});
+				ify(v, i, cartridge, {});
 			});
 			if(!is){
-				ify.be({node: node});
-				g[node._[gun._.id]] = node;
+				ify.be({cartridge: cartridge});
+				g[cartridge._[gun._.id]] = cartridge;
 			}
 			if(n){
 				return n;
@@ -337,8 +337,21 @@ module.exports = require('theory')
 			}
 			return false;
 		}
+		gun.fire = function(bullet,c,w,op){
+			bullet = bullet.what? bullet : {what: bullet};
+			bullet.where = c || bullet.where;
+			bullet.when = w || bullet.when;
+			if(!a.obj.is(bullet.what)){ return gun.fire.jam("No ammo.", bullet) }
+			if(!a.num.is(bullet.when)){ return gun.fire.jam("No time.", bullet) }
+			if(!a.text.is(bullet.where)){ return gun.fire.jam("No location.", bullet) }
+			bullet.how = bullet.how || {};
+			bullet.how.gun = op || 1;
+			theory.on(gun.event).emit(bullet);
+		}
+		gun.fire.jam = function(s,b){ if(b){ return console.log("Gun jam:",s,b) } console.log("Gun jam:",s) }
+		gun.shots = function(hear,s){ return theory.on(gun.event+(s?'.'+s:'')).event(hear) }
 		gun.event = 'gun';
-		gun.clip = {};
+		gun.magazine = {};
 		return gun;
 	})();
 	/* 	Hypothetical Amnesia Machine 
