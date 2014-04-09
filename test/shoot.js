@@ -2,10 +2,11 @@ module.exports=require('theory')
 ('shoot',function(a){
 	if(root.node){
 		var shot = require('../shots')({src: a.com, batch: 999}).pump(function(g, m, done){
+			console.log('>>> pump!');
 			done();
 		});
 		return shot.spray(function(g, m, done){
-			//console.log('>>>>>>>>>> gun');
+			console.log('>>> shoot!');
 			var gPrime = {};
 			done(gPrime); // allow me to send custom modified filtered version
 			//console.log(g());
@@ -21,6 +22,44 @@ module.exports=require('theory')
 	, $sub = $("#model-obj")
 	, $url = $('body>.id')
 	, g;
+	shoot.clone = function($e, $to, id, name){
+		var $r = $e.clone().attr('id',id).appendTo($to);
+		name = name || id;
+		if(name){ $r.attr('name', name) }
+		return $r;
+	}
+	shoot.graph = function(g, url){
+		if(url){ $url.text(url) }
+		a.obj(g).each(function(n,id){
+			var $n = $node.clone().attr('id',id).attr('name',id).appendTo($graph);
+			$('.id', $n).text(id);
+			shoot.field($('.sub', $n), n);
+		});
+		$('.node .sub .sub').slideUp();
+	}
+	shoot.field = function($n, n, p){
+		a.obj(n).each(function(val,key){
+			if(key === '_'){ return }
+			if(a.obj.is(val)){
+				var $val = shoot.clone($sub, $n, key);
+				$('.key', $val).text(key);
+				shoot.field($('.sub', $val), val);
+			} else {
+				var $val = shoot.clone($has, $n, key)
+				, $v = $('.val', $val).text(val);
+				$('.key', $val).text(key);
+				if(a.bi.is(val)){
+					$v.addClass('binary');
+				} else
+				if(a.num.is(val)){
+					$v.addClass('number');
+				} else
+				if(a.text.is(val)){
+					$v.addClass('text');
+				}
+			}
+		});
+	}
 	shot.load('gunjs.herokuapp.com/tests/package.json',function(graph){
 		if(!graph){ return $url.text("Something went wrong :( please reload.") }
 		g = graph;
@@ -132,11 +171,13 @@ module.exports=require('theory')
 				if(shoot.nav.out){
 					return $('.val',on).trigger('blur');
 				}
-				var s = window.getSelection()
-				, r = s.getRangeAt(0);
-				if(!r.startOffset){
-					shoot.nav.out = true;
-				}
+				a.test(function(){
+					var s = window.getSelection()
+					, r = s.getRangeAt(0);
+					if(!r.startOffset){
+						shoot.nav.out = true;
+					}
+				})();
 				return;
 			}
 			if(on.find('.field:visible').length){
@@ -153,43 +194,5 @@ module.exports=require('theory')
 			$(e.where).closest('.field').addClass('on');
 		},'.field');
 	});
-	shoot.clone = function($e, $to, id, name){
-		var $r = $e.clone().attr('id',id).appendTo($to);
-		name = name || id;
-		if(name){ $r.attr('name', name) }
-		return $r;
-	}
-	shoot.graph = function(g, url){
-		if(url){ $url.text(url) }
-		a.obj(g).each(function(n,id){
-			var $n = $node.clone().attr('id',id).attr('name',id).appendTo($graph);
-			$('.id', $n).text(id);
-			shoot.field($('.sub', $n), n);
-		});
-		$('.node .sub .sub').slideUp();
-	}
-	shoot.field = function($n, n, p){
-		a.obj(n).each(function(val,key){
-			if(key === '_'){ return }
-			if(a.obj.is(val)){
-				var $val = shoot.clone($sub, $n, key);
-				$('.key', $val).text(key);
-				shoot.field($('.sub', $val), val);
-			} else {
-				var $val = shoot.clone($has, $n, key)
-				, $v = $('.val', $val).text(val);
-				$('.key', $val).text(key);
-				if(a.bi.is(val)){
-					$v.addClass('binary');
-				} else
-				if(a.num.is(val)){
-					$v.addClass('number');
-				} else
-				if(a.text.is(val)){
-					$v.addClass('text');
-				}
-			}
-		});
-	}
 	return shot.spray;
 },['../shot']);

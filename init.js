@@ -1,17 +1,12 @@
 (function(){
 
 process.env.rootdir = __dirname;
-var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production')
-, web, opt = {}
-opt.port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
-opt.host = process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0';
-
-
-opt.hook = {
-	pre: (function(req,res){
-		//console.log("--------- "+req.flow+" : "+req.url.pathname +" ---------------");
-	})
-};
+var LIVE = process.env.LIVE || (process.env.NODE_ENV === 'production'), web, opt = {};
+opt.port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT;
+opt.host = process.env.OPENSHIFT_NODEJS_IP;
+if(opt.port || opt.host){ LIVE = true }
+opt.port = opt.port || 8888;
+opt.host = opt.host || '0.0.0.0';
 
 if(LIVE){
 	//process.env['redis-install'] = '/tmp';
