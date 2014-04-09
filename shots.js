@@ -189,6 +189,7 @@ module.exports = require('theory')
 			}
 			if(!where){ return }
 			store.add(m);
+			var n = a.obj.copy(m);
 			shot.load(where, function(g,e){
 				var done = function(){
 					var u, s, w = store.when(m) || 0, r = {}, cb;
@@ -212,12 +213,10 @@ module.exports = require('theory')
 				done.end = function(){};
 				shot.spray.transform(g, m, done, e);
 			});
-			if(m.where && !m.where.mid && opt.src.send){
-				var who = m.who;
-				m.who = {};
-				opt.src.send(m);
-				m.who = who;
-				console.log("sending to other servers!");
+			if(n.where && !n.where.mid && opt.src.send){
+				n.who = {};
+				opt.src.send(n);
+				console.log("sending to other servers!", n);
 			}
 		}
 		shot.pump = function(fn){
