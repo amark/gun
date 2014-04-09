@@ -161,7 +161,6 @@ module.exports = require('theory')
 			});
 		}
 		shot.spray = function(m){
-			console.log(">> shot.spray");
 			if(m && m.how){
 				shot.spray.action(m);
 				return shot;
@@ -174,7 +173,7 @@ module.exports = require('theory')
 		}
 		shot.spray.transform = function(g,m,d){if(d){d()}}
 		shot.spray.action = function(m){
-			console.log(">>> shot.spray.action");
+			console.log(">>> shot.spray.action", m);
 			if(!m || !m.how){ return }
 			var where = a.text.is(m.where)? m.where : m.where.at;
 			if(m.how.gun === 3){
@@ -218,6 +217,7 @@ module.exports = require('theory')
 				m.who = {};
 				opt.src.send(m);
 				m.who = who;
+				console.log("sending to other servers!");
 			}
 		}
 		shot.pump = function(fn){
