@@ -1,0 +1,168 @@
+<html>
+	<head>
+		<title>gun</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+		<style>
+			body {
+				background-image: url(./img/kimber.jpg);
+				background-repeat: no-repeat;
+				background-position: left top;
+				font-family: Arial;
+				font-size: 18pt;
+				text-shadow: 0px 0px 7px #DDD;
+				line-height: 20pt;
+			}
+			#main {
+				min-width: 250px;
+				max-width: 700px;
+				width: 75%;
+				margin: 7% auto;
+				padding: 2% 5%;
+				background: white;
+				background: rgba(100%,100%,100%,.6);
+			}
+			#main p {
+				text-indent: 2em;
+			}
+			form input {
+				font-size: 18pt;
+				padding: .75em;
+				text-align: center;
+			}
+		</style>
+	  </head>
+	</head>
+	<body>
+		<div id="main">
+			<h1><i>gun</i></h1>
+			<h3>Massively distributed, embedded graph engine.</h3>
+			<p>
+				Gun is a persisted distributed cache, part of a NoDB movement.
+			It requires zero maintenance and runs on your own infrastructure.
+			Think of it as <i>"Dropbox for Databases"</i> or a <i>"Self-hosted Firebase"</i>.
+			This is an early preview, so check out the quick demo below and then read on.
+			</p>
+			<center><iframe src="https://www.screenr.com/embed/ZDdN" width="80%" height="396" frameborder="0"></iframe></center>
+			<!--
+			<center><a href="http://www.screenr.com/ZDdN"><img src="./img/screenr.png" height="396" frameborder="0"></img></a></center>
+			-->
+			<p>
+				As a reminder, this is running entirely without any database.
+			Everything gets cached, so your users experience lightning fast response times.
+			Since gun can be embedded anywhere javascript can run,
+			that cache can optionally be right inside your user's browser using localstorage fallbacks.
+			Updates are then pushed up to the servers when the network is available.
+			</p>
+			<p>
+				All conflict resolution happens locally in each peer using a deterministic algorithm.
+			Such that eventual consistency is guaranteed across all writes within the mesh,
+			with fault tolerant retries built in at each step.
+			Gun will even automatically use, configure, and optionally install Redis as a cache on your server nodes for you.
+			Data integrity is now a breeze.
+			</p>
+			<p>
+				Gun also establishes and repairs server to server communication across geographically separated machines,
+			with just the help of an initial IP from you.
+			It bridges the distance with a realtime connection,
+			so updates propagate at the speed of the raw pipes linking them.
+			However each server is intelligent enough to only subscribe to the necessary subsection of your data set that is in its working memory,
+			keeping things nimble for its connected users.
+			</p>
+			<p>
+				Data is then persisted to any S3 like service,
+			allowing you to save a truly webscale amount of "big data" without breaking your wallet.
+			Consistency across concurrency is achieved at this layer
+			by each parallel snapshot going through an idempotent transformation that is agreed upon.
+			The granularity and frequency of these snapshots can be tweaked by you,
+			easily tailor fitting it to your data needs and budget concerns.
+			</p>
+			<p>
+				<b>In summary,</b> this marks an important progression in web technologies.
+			Memory is getting cheap enough that we can now front load each connected user's active data
+			right into the application layer and manipulate it directly.
+			Networks are fast enough that if we get too many connected users we can just horizontally
+			redistribute them across different machines.
+			Conflict resolution algorithms are sophisticated enough to handle things immediately
+			in the majority of data cases, with the remaining few as transactions performed ontop.
+			<p>
+				This is will be a win for both developers and users,
+			because it makes things easier to build and faster to respond.
+			We are excited about this and working hard to finish the first release.
+			</p>
+			<p>
+				If you would like to learn more, please let us know...
+			</p>
+			<center><form class="signup" target="_self" onsubmit="" action="javascript: submitForm()">
+				<input class="email" value="email@example.org">
+				<input class="submit" type="button" value="I'm interested!">
+			</form></center>
+			<h2>FAQ</h2>
+			<h4>Why did you build this thing?</h4>
+			<p>
+				1. I love databases, especially new ones that keep the working set in memory.
+				But I was horrified to realize that if I use a Database as a Service (DaaS)
+				then I would have to rely on a network call to get that data, which is horribly slow.
+				I wanted something faster, and if possible, cheaper - because they start charging you
+				outrageous prices if you get past their incredibly tiny free tier.
+			</p>
+			<p>
+				2. Hosting your own database is a pain because you have to maintain the hard drives.
+				Even the basic setup and configuration is nasty...
+				having to create a bunch of EBS volumes, attaching them, then mounting, formatting,
+				MDADM and LVM, striping, mirroring, and keeping fstab from locking on boot.
+				This is ignoring having to figure out how to resize them.
+				Even with SSDs you have problems that they are bound to one instance and
+				you get charged for the total volume size, not the amount used.
+			</p>
+			<p>
+				I wanted something easy, needing no maintenance and be extremely portable
+				- allowing me to spin up an ephemeral server anywhere, on any cloud,
+				and my data "just work" there.
+			</p>
+			<h4>How are you different from every other database that is trying to reinvent the wheel?</h4>
+			<p>
+				1. Because gun is not a database (NoDB), it is a persisted distributed cache.
+				The fatal flaw with databases is that they assume some centralized authority.
+				While this may be the case initially when you are small,
+				it always ceases to be true when you become large enough that concurrency is unavoidable.
+				No amount of leader election and consensus algorithms can patch this
+				without facing an unjustified amount of complexity.
+				Gun resolves all this by biting the bullet -
+				it solves the hard problems first, not last.
+				It gets data synchronization and conflict resolution right from the beginning,
+				so it never has to rely on vulnerable leader election or consensus locking.
+			</p>
+			<p>
+				2. Plus it embeds directly into your application,
+				so you can do your own custom queries with just pure programming logic.
+				Meaning you never have to learn some silly separate query language again.
+				A query language which just attempts to be some DSL to RPC another machine
+				into doing the same query you could have already written in half the time
+				it took to learn the query language. Because face it, any sufficiently capable
+				query language has to be Turing complete, and at that point -
+				why aren't you just writing your entire application logic in it?
+				Your app is nothing without your data.
+			</p>
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+		<script>
+			function submitForm(e){
+				var google = {"entry.294216585": $('.email').val()}
+				, done = function(){ 
+					$("form").slideUp();
+				};
+				$.post(
+					"https://docs.google.com/forms/d/1uhl2W1wdj70LaZu1Zkf94SQioxERTtrJAM_UIWAZNdE/formResponse"
+				,$.param(google), done).error(done);
+				console.log(google, $.param(google));
+				if(e){
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			}
+			$(function(){
+				$(document).on('click','.submit',submitForm);
+			})
+		</script>
+	</body>
+</html>

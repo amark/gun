@@ -1,0 +1,50 @@
+Earth													Mars
+thing = {}														
+														thing = {}
+														
+														
+														thing.a = 'hello'
+
+thing.z = 'cool'
+
+
+														----> thing
+														----> thing.z = 'cool'
+														thing = {a: 'hello', z: 'cool'}
+thing = {z: 'cool'} <----
+thing.a = 'hello' <----
+thing = {a: 'hello', z: 'cool'}
+
+------------------------------------------------------------------------------------
+Earth															Mars
+thing = 5														thing = 5
+
+thing = {a: 'yay'}
+
+																thing = {b: 'cool'}
+																
+																
+																22 -> thing = {a: 'yay', b: 'cool'}
+
+thing = {a: 'yay', b:'cool'} <- 24
+------------------------------------------------------------------------------------
+Earth															Mars
+thing = 5														thing = 5
+
+thing = {a: 'yay'}
+
+																thing = {b: 'cool'}
+thing = 9
+thing = {z: 1}															
+thing.j = 'how?'
+
+																thing.k = 'lol'
+thing = {z: 1, j: 'how?'} <- 36
+thing = {z: 1, j: 'how?', k: 'lol'} <- 41								// wrong! need to send thing when also
+
+																thing.c = 20
+																34 -> thing = {a: 'yay', b: 'cool'}
+																38 -> thing = 9
+																39 -> thing = {z:1}
+																40 -> thing = {j: 'how?', z: 1}
+thing = {z: 1, j: 'how?'} <- 45
