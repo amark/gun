@@ -1,118 +1,114 @@
-module.exports=require('theory')
-('s3', function(a){
-	var AWS = a['aws-sdk'], conf = {}, dev = process.env.fakes3;
-	AWS.config.region = conf.region = process.env.AWS_REGION || "us-east-1";
-	AWS.config.accessKeyId = conf.accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'abc';
-	AWS.config.secretAccessKey = conf.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'a1b2c3';
-	if(dev){
-		AWS.config.endpoint = conf.endpoint = dev;
-		AWS.config.sslEnabled = conf.sslEnabled = false;
-	}
-	AWS.config.update(conf);
-	function s3(db){
-		db = db || conf.s3Bucket || (conf.s3Bucket = process.env.s3Bucket);
-		if(dev){
-			db = db.replace('.','p');
+;module.exports = (function(a, own){
+
+	function s3(opt){
+		if(!(a.fns.is(this) || this instanceof s3)){
+			return new s3(opt);
 		}
-		s3.bucket = db;
-		return s3;
-	}; var S3 = function(){
-		var s = new AWS.S3();
-		if(dev){
-			s.endpoint = conf.endpoint;
+		var s = this;
+		s.own = a.on.split();
+		s.mime = require('mime');
+		s.AWS = require('aws-sdk');
+		s.config = {};
+		opt = opt || {};
+		s.AWS.config.bucket = s.config.bucket = opt.bucket || opt.Bucket || s.config.bucket || process.env.AWS_S3_BUCKET;
+		s.AWS.config.region = s.config.region = opt.region || s.config.region || process.env.AWS_REGION || "us-east-1";
+		s.AWS.config.accessKeyId = s.config.accessKeyId = opt.key || opt.accessKeyId || s.config.accessKeyId || process.env.AWS_ACCESS_KEY_ID;
+		s.AWS.config.secretAccessKey = s.config.secretAccessKey = opt.secret || opt.secretAccessKey || s.config.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY;
+		if(s.config.fakes3 = s.config.fakes3 || opt.fakes3 || process.env.fakes3){
+			s.AWS.config.endpoint = s.config.endpoint = opt.fakes3 || s.config.fakes3 || process.env.fakes3;
+			s.AWS.config.sslEnabled = s.config.sslEnabled = false;
+			s.AWS.config.bucket = s.config.bucket = s.config.bucket.replace('.','p');
+		}
+		s.AWS.config.update(s.config);
+		s.S3 = function(){
+			var s = new this.AWS.S3();
+			if(this.config.fakes3){
+				s.endpoint = config.endpoint;
+			}
+			return s;
 		}
 		return s;
-	}
-	S3.batch = function(m, cb){
-		var id = S3.batch.id(m);
-		if(a.list.is(S3.batch.list[id])){
-			S3.batch.list[id].push(cb);
-			return true;
-		}
-		S3.batch.list[id] = [cb];
-	}
-	S3.batch.list = {};
-	S3.batch.id = function(m){ return m.Bucket +'/'+ m.Key }
-	S3.batch.reply = function(m,e,d,t,r){
-		var id = S3.batch.id(m);
-		a.list(S3.batch.list[id]).each(function(cb){
-			if(a.fns.is(cb)){
-				try{
-					cb(e,d,t,r);
-				}catch(e){}
-			}
-		});
-		S3.batch.list[id] = null;
-		delete S3.batch.list[id];
-	}
-	
-	s3.put = function(key, o, cb, m){
-		if(!key) return;
-		var m = m || {
-			Bucket: s3.bucket
-			,Key: key
-		}
+	};
+	s3.id = function(m){ return m.Bucket +'/'+ m.Key }
+	s3.chain = s3.prototype;
+	s3.chain.put = function(key, o, cb, m){
+		if(!key){ return }
+		var m = m || {}
+		m.Bucket = m.Bucket || this.config.bucket;
+		m.Key = m.Key || key;
 		if(a.obj.is(o) || a.list.is(o)){
 			m.Body = a.text.ify(o);
-			m.ContentType = a.mime.lookup('json')
+			m.ContentType = this.mime.lookup('json')
 		} else {
-			m.Body = a.text.ify(o);
+			m.Body = a.text.is(o)? o : a.text.ify(o);
 		}
-		S3().putObject(m, function(e,r){
+		this.S3().putObject(m, function(e,r){
 			//console.log('saved', e,r);
-			if(!cb) return;
+			if(!cb){ return }
 			cb(e,r);
 		});
-		return s3;
+		return this;
 	}
-	s3.get = function(key, cb, o){
-		if(!key) return;
-		var m = {
-			Bucket: s3.bucket
+	s3.chain.get = function(key, cb, o){
+		if(!key){ return }
+		var s = this
+		, m = {
+			Bucket: s.config.bucket
 			,Key: key
-		};
-		if(S3.batch(m,cb)){ console.log('no!', m.Bucket + m.Key); return }
-		console.log("s3 info:", m);
-		S3().getObject(m, function(e,r){
-			var d, t, r = r || (this && this.httpResponse);
-			if(e || !r){ return S3.batch.reply(m,e) }
+		}, id = s3.id(m);
+		s.own.on(id).once(function(e,d,t,m,r){
+			delete s.batch[id];
+			if(!a.fns.is(cb)){ return }
+			try{ cb(e,d,t,m,r);
+			}catch(e){
+				console.log(e)
+			}
+		});
+		s.batch = s.batch || {};
+		if(s.batch[id]){ return s }
+		s.batch[id] = (s.batch[id] || 0) + 1;
+		console.log("no batch!", id);
+		s.S3().getObject(m, function(e,r){
+			var d, t, m, r = r || (this && this.httpResponse);
+			if(e || !r){ return s.own.on(id).emit(e) }
 			r.Text = r.text = t = (r.Body||r.body||'').toString('utf8');
 			r.Type = r.type = r.ContentType || (r.headers||{})['content-type'];
-			if(r.type && 'json' === a.mime.extension(r.type)){
+			if(r.type && 'json' === s.mime.extension(r.type)){
 				d = a.obj.ify(t);
 			}
-			S3.batch.reply(m, e, d, t, r); // Warning about the r parameter, is is the raw response and may result in stupid SAX errors.
+			m = r.Metadata;
+			s.own.on(id).emit(e, d, t, m, r); // Warning about the r parameter, is is the raw response and may result in stupid SAX errors.
 		});
-		return s3;
+		return s;
 	}
-	s3.del = function(key, cb){
-		if(!key) return;
+	s3.chain.del = function(key, cb){
+		if(!key){ return }
 		var m = {
-			Bucket: s3.bucket
+			Bucket: this.config.bucket
 			,Key: key
 		}
-		S3().deleteObject(m, function(e,r){
-			if(!cb) return;
+		this.S3().deleteObject(m, function(e,r){
+			if(!cb){ return }
 			cb(e, r);
 		});
-		return s3;
+		return this;
 	}
-	s3.dbs = function(o, cb){
+	s3.chain.dbs = function(o, cb){
 		cb = cb || o;
 		var m = {}
-		S3().listBuckets(m, function(e,r){
+		this.S3().listBuckets(m, function(e,r){
 			//console.log('dbs',e);
-			a.list((r||{}).Contents).each(function(v){console.log(v);});
+			a.list.map((r||{}).Contents, function(v){console.log(v);});
 			//console.log('---end list---');
 			if(!a.fns.is(cb)) return;
 			cb(e,r);
 		});
-		return s3;
+		return this;
 	}
-	s3.keys = function(from, upto, cb){
+	s3.chain.keys = function(from, upto, cb){
 		cb = cb || upto || from;
 		var m = {
-			Bucket: s3.bucket
+			Bucket: this.config.bucket
 		}
 		if(a.text.is(from)){
 			m.Prefix = from;
@@ -120,14 +116,14 @@ module.exports=require('theory')
 		if(a.text.is(upto)){
 			m.Delimiter = upto;
 		}
-		S3().listObjects(m, function(e,r){
+		this.S3().listObjects(m, function(e,r){
 			//console.log('list',e);
-			a.list((r||{}).Contents).each(function(v){console.log(v);});
+			a.list.each((r||{}).Contents, function(v){console.log(v);});
 			//console.log('---end list---');
 			if(!a.fns.is(cb)) return;
 			cb(e,r);
 		});
-		return s3;
+		return this;
 	}
 	return s3;
-},['aws-sdk','mime']);
+})(require('../gun2'), {});

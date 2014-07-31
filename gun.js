@@ -15,24 +15,30 @@ module.exports = require('theory')
 		function gun(p,v,w){
 			var args = arguments.length
 			, cb = a.fns.is(v)? v : null
-			, g, n, w = w || a.time.now();
+			, g, n, b, w = w || a.time.now();
 			if(gun.is(this)){
 				n = this;
 				g = n._.clip || function(){ return {} };
 				if(a.text.is(p)){
 					if(args >= 2){ // set
-						var ref = {}
+						var u, ref = {}
 						, val = gun.at(n,p,ref);
 						if(!ref.cartridge || !ref.cartridge._ || !ref.cartridge._[gun._.id]){
 							return;
 						} ref.id = ref.cartridge._[gun._.id] +'.'+ ref.path;
-						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
-							console.log("HAM REJECTION", p, v, val);
-							return;
+						v = gun.ify.be(v);
+						b = gun.bullet(ref.path,v,w);
+						console.log("after:", v, b);
+						if(a.gun.ham){ 
+							v = a.gun.ham(ref.cartridge,b,v,w); // TODO: BUG! Need to update when also!
+							if(v === u){
+								console.log("HAM REJECTION", p, v, val);
+								return;
+							}
 						}
 						console.log("HAM set", p, v);
 						if(ref.at){
-							if(v === null){	
+							if(v === null){
 								if(a.list.is(ref.at)){
 									t = o.val || t;
 									var j = ref.at.indexOf(ref.prop);
@@ -51,22 +57,27 @@ module.exports = require('theory')
 								gun.fire(del, g[gun._.id], w);
 								v = ref.at;
 							} else {
+								if(a.fns.is(v) && v[gun._.id]){ // then it is a clip!
+									v = {};
+								}
 								v = gun.at(v);
 								if(gun.is(v)){
-									v = gun.id(v._[gun._.id]);
+									v = gun.id(v._[gun._.id]); // update this to handle clip#cart
 								} else {
 									v = gun.ify.be(v);
-								} var j;
+								}
+								if(a.obj.is(v)){
+									ref.at[ref.prop] = v;
+									//ref.tmp = ref.at[ref.prop] = gun.ify.obj(v, val);
+								} else
 								if(a.list.is(v)){
-									j = a.list.is(ref.at[ref.prop])? ref.at[ref.prop].concat(v) : v;
-									j = a.list(j).each(function(r,i,t){t(r,1)})||{};
-									ref.at[ref.prop] = j = a.obj(j).each(function(w,r,t){t(r)})||[];
+									ref.tmp = ref.at[ref.prop] = gun.ify.list(v, val);
 								} else {
 									ref.at[ref.prop] = v;
 								}
 								var diff = {}; diff[ref.id] = v;
 								gun.fire(diff, g[gun._.id], w);
-								v = j || v;
+								v = ref.tmp || v;
 							}
 							return v;
 						}
@@ -82,7 +93,16 @@ module.exports = require('theory')
 			n = a.obj.is(v)? v : a.obj.is(p)? p : null;
 			p = a.text.is(p)? p : gun.id();
 			if(a.obj.is(n)){ // create a clip from this object
+				var c;
 				g = gun.ify(n);
+				if((c = gun.magazine[p]) && a.fns.is(c)){
+					console.log("clip already exists in magazine,", p);
+					a.obj(g).each(function(n,id){
+						if(!gun.is(n)){ return }
+						c(id,n);
+					});
+					return gun.magazine[p];
+				}
 				var clip = gun.magazine[p] = function(p,v,w){
 					var args, id, path, n, w = w || a.time.now();
 					if(a.text.is(p)){
@@ -114,16 +134,25 @@ module.exports = require('theory')
 							n._.clip = n._.clip || clip;
 							return fn;
 						}
+						if(gun.is(v) && gun.ham){
+							var h = v._[gun._.ham] || {};
+							a.obj(v).each(function(v,p){
+								if(p === '_'){ return }
+								console.log('-------------->', p, h[p], h, 1); // Wait! This isn't correct because it should be '>' not '.'!
+								fn(p, v, h[p] || (a.num.is(h)? h : 1)); // Wait! This isn't correct because it should be '>' not '.'!
+							});
+							return fn;
+						}
 						if(v === null){
 							delete g[n._[gun._.id]];
 							var del = {}; del[n._[gun._.id]] = n = null;
-							gun.fire(del, g[gun._.id], w);
+							gun.fire(del, g[gun._.id], w); // TODO: BUG! HAM UPDATES!
 							return null;
 						}
 						return;
 					}
-					if(a.text.is(p)){
-						v = a.obj.is(v)? v : {};
+					if(a.text.is(p) && a.obj.is(v)){
+						v = v;
 						v._ = gun.id(p);
 					} else
 					if(a.obj.is(p)){
@@ -134,7 +163,7 @@ module.exports = require('theory')
 						n._ = n._ || gun.id({});
 						n._.clip = clip; // JSONifying excludes functions.
 						var add = {}; add[n._[gun._.id]] = g[n._[gun._.id]] = n;
-						gun.fire(add, clip[gun._.id], w);
+						gun.fire(add, clip[gun._.id], w); // TODO: BUG! HAM UPDATES!
 						return fn;
 					}
 				}
@@ -216,6 +245,10 @@ module.exports = require('theory')
 			opt.seen = opt.seen || [];
 			if(!a.obj.is(o)){ return g }
 			function ify(o,i,f,n,p){
+				if(gun.ify.is(o)){
+					f[i] = o;
+					return
+				}
 				if(a.obj.is(o)){
 					var seen;
 					if(seen = ify.seen(o)){
@@ -265,9 +298,6 @@ module.exports = require('theory')
 					}) || [];
 					return;
 				}
-				if(gun.ify.is(o)){
-					f[i] = o;
-				}
 			}
 			ify.be = function(seen){
 				var n = seen.cartridge;
@@ -297,14 +327,17 @@ module.exports = require('theory')
 			}
 			return g;
 		}
-		gun.ify.be = function(v,g){
+		gun.ify.be = function(v,g){ // update this to handle externals!
 			var r;
 			g = g || {};
+			if(gun.ify.is(v)){
+				r = v;
+			} else
 			if(a.obj.is(v)){
 				r = {};
 				a.obj(v).each(function(w,i){
 					w = gun.ify.be(w);
-					if(w === u || w === null){ return }
+					if(w === u){ return }
 					r[i] = w;
 				});
 			} else
@@ -322,20 +355,60 @@ module.exports = require('theory')
 						t(w);
 					}
 				}) || [];
-			} else
-			if(gun.ify.is(v)){
-				r = v;
 			}
 			return r;
 		}
-		gun.ify.is = function(v){ // binary, number (!Infinity), or text.
-			if(v === Infinity) return false;
+		gun.ify.is = function(v){ // null, binary, number (!Infinity), text, or a ref.
+			if(v === null){ return true } // deletes
+			if(v === Infinity){ return false }
 			if(a.bi.is(v) 
 			|| a.num.is(v) 
 			|| a.text.is(v)){
+				return true; // simple values
+			}
+			if(a.obj.is(v) && a.text.is(v[gun._.id])){ // ref
 				return true;
 			}
 			return false;
+		}
+		gun.ify.obj = function(v, val){
+			if(a.obj.is(val) && a.obj.is(v)){
+				a.obj(v).each(function(d, i){
+						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
+						
+						}
+				});
+			}
+			return v;
+		}
+		gun.ify.list = function(v, val){
+			var r;
+			r = a.list.is(val)? val.concat(v) : v;
+			r = a.list(r).each(function(r,i,t){t(r,1)})||{};
+			r = a.obj(r).each(function(w,r,t){t(r)})||[]; // idempotency of this over latency? TODO! INVESTIGATE!!
+			return r;
+		}
+		gun.duel = function(old,now){
+			a.obj(now).each(function(g,id){
+				if(!gun.is(g)){ return }
+				var c;
+				if(a.obj(old).has(id) && gun.is(c = old[id])){
+					a.obj(g).each(function(v,i){
+						
+					});
+				} else {
+					old[id] = g;
+				}
+			});
+		}
+		gun.bullet = function(p,v,w){
+			var b = {};
+			b[p] = v;
+			if(gun.ham && gun._.ham){
+				b._ = {};
+				b._[gun._.ham] = w || a.time.now();
+			}
+			return b;
 		}
 		gun.fire = function(bullet,c,w,op){
 			bullet = bullet.what? bullet : {what: bullet};
@@ -390,21 +463,81 @@ module.exports = require('theory')
 		capacity to realize such beautiful information.
 	*/
 	a.gun._.ham = '>';
-	a.gun.ham = function(n,p,v,w,val){
-		if(!n){ return true }
-		var now, u, q;
+	a.gun.ham = function(n,p,v,w){
+		if(!n){ return }
+		console.log("HAM:", n, p, v, w);
+		if(!a.text.is(p)){
+			if(a.obj.is(p) && p._){
+				a.obj(p).each(function(sv,i){
+					if(i === '_'){ return }
+					v = sv = a.gun.ham(n,i,sv, a.gun.ham.when(p._, i) || w); // works for now, but may not on other non-bullet objects
+					if(sv === u){
+						delete p[i];
+					} else {
+						p[i] = sv;
+					}
+				});
+				return v;
+			}
+			return;
+		}
+		var val = a.gun.at(n,p)
+		, when, age, now, u, q;
 		q = p.replace('.',a.gun._.ham);
 		n._ = n._ || {};
 		n._[a.gun._.ham] = n._[a.gun._.ham] || {};
-		console.log("HAM:");
-		if(w < (n._[a.gun._.ham][q]||0)){
+		age = function(q){
+			if(!q){ return 0 }
+			var when = n._[a.gun._.ham][q];
+			if(when || when === 0){
+				return when;
+			}
+			return age(a.text(q).clip(a.gun._.ham,0,-1));
+		}
+		when = age(q);
+		v = (function(){
+			if(a.gun.ify.is(v)){ // simple values are directly resolved
+				return v;
+			} else
+			if(a.obj.is(v)){
+				if(a.obj.is(val)){ // resolve sub-values
+					var change = false;
+					a.obj(v).each(function(sv,i){
+						sv = a.gun.ham(n, (p+'.'+i), sv, w, val[i]); // TODO: BUG! Still need to deal with sub-value bullets resolving to container's age.
+						if(sv === u){ return }
+						change = true;
+						val[i] = sv;
+					});
+					if(change){
+						return v = val;
+					} else {
+						return;; // nothing new
+					}
+				}
+				a.obj(v).each(function(sv,i){
+					sv = a.gun.ham(n, (p+'.'+i), sv, w, (val||{})[i]);
+					if(sv === u){ delete v[i] }
+				});
+				return v;
+			} else 
+			if(a.list.is(v)){
+				if(!a.list.is(val)){ // TODO: deal with this later.
+					return v;
+				}
+				return v;
+			} else { // unknown matches are directly resolved
+				return;
+			}
+		})();
+		if(v === u){ return }
+		if(w < when){
 			console.log("new < old");
-			return true;
+			return;
 		} else
-		if(w === (n._[a.gun._.ham][q]||0)){
+		if(w === when){ // this needs to be updated also!
 			if(val === v || a.test.is(val,v) || a.text.ify(val) < a.text.ify(v)){
 				console.log("new === old");
-				return true;
+				return;
 			}
 		} else
 		if((now = a.time.now() + 1) < w){ // tolerate a threshold of 1ms.
@@ -414,12 +547,30 @@ module.exports = require('theory')
 				console.log("run again");
 				a.gun.call(n,p,v,w);
 			}, Math.ceil(w - now)); // crude implementation for now.
-			return true;
+			return;
 		}
-		if(v === u || v === null){
-			delete n._[a.gun._.ham][q];
-		} else {
-			n._[a.gun._.ham][q] = w;
+		v = (function(){
+			if(a.obj.is(v)){
+				w = when; // objects are resolved relative to their previous values.
+			}
+			return v;
+		})();
+		n._[a.gun._.ham][q] = w; // if properties get deleted it may be nice to eventually delete the HAM, but that could cause problems so we don't for now.
+		// ps. It may be possible to delete simple values if they are not proceeded by an object?
+		return v;
+	}
+	a.gun.ham.when = function(w, i){
+		var h;
+		if(w && w._){
+			w = w._;
+		}
+		if(w && (h = w[a.gun._.ham])){
+			if(a.obj(h).has(i)){
+				return h[i];
+			}
+			if(a.num.is(h)){
+				return h;
+			}
 		}
 	}
 	return a.gun;
