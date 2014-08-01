@@ -1,7 +1,0 @@
-{
-    "name": "sockjs-test-server",
-    "version": "0.0.0-unreleasable",
-    "dependencies": {
-        "sockjs": "*"
-    }
-}
