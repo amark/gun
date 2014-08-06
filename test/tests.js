@@ -1,4 +1,4 @@
-module.exports=require('theory')
+module.exports=require('theory');
 ('tests',function(a){
 	if(root.node){
 		console.log("tests live!");

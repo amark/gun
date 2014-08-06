@@ -13,9 +13,13 @@
 	Gun.chain._.opt = {};
 	Gun.chain._.nodes = {};
 	Gun.chain._.chain = {};
+	Gun.chain._.trace = [];
 	Gun.chain._.indices = {};
 	Gun.chain.init = function(opt, stun){ // idempotently update or set options
 		var gun = this;
+		gun._.events = gun._.events || Gun.on.split(); // we may not want it global for each gun instance?
+		gun._.events.trace = gun._.events.trace || 0;
+		gun._.events.at = gun._.events.at || 0;
 		if(Gun.text.is(opt)){ opt = {peers: opt} }
 		if(Gun.list.is(opt)){ opt = {peers: opt} }
 		if(Gun.text.is(opt.peers)){ opt.peers = [opt.peers] }
@@ -30,11 +34,11 @@
 		if(!stun){ Gun.on('init').emit(gun, opt) }
 		return gun;
 	}
-	Gun.chain.load = function(index, cb){
+	Gun.chain.load = function(index, cb, opt){
 		var gun = this;
 		cb = cb || function(){};
 		if(cb.node = gun._.indices[index]){ // set this to the current node, too!
-			console.log("from gun");
+			console.log("from gun"); // remember to do all the same stack stuff here also!
 			return cb(cb.node), gun;
 		}
 		cb.fn = function(){}
@@ -45,10 +49,13 @@
 				gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
 				if(err){ return (gun._.chain.dud||cb.fn)(err) }
 				if(!data){ return (gun._.chain.blank||cb.fn)() }
-				var nodes = {}; nodes[data._[own.sym.id]] = data;// missing: transform data, merging it! NO, THIS IS DONE WRONG, do a real check.
+				var nodes = {}, node;
+				nodes[data._[own.sym.id]] = data;// missing: transform data, merging it! NO, THIS IS DONE WRONG, do a real check.
 				Gun.union(gun._.nodes, nodes);
-				return cb(gun._.indices[index] = gun._.nodes[data._[own.sym.id]]);
-			});
+				node = gun._.indices[index] = gun._.nodes[data._[own.sym.id]];
+				cb(node); // WARNING: Need to return a frozen copy of the object! But now the internal system is using this too... :/
+				gun._.events.on(gun._.events.at += 1).emit(node);
+			}, opt);
 		} else {
 			console.log("Warning! You have no persistence layer to load from!");
 		}
@@ -60,7 +67,7 @@
 		this._.indices[index] = this._.node;
 		if(Gun.fns.is(this._.opt.hook.index)){
 			this._.opt.hook.index(index, this._.node, function(err, data){
-				console.log("index made");
+				console.log("index made", index);
 				if(err){ return cb(err) }
 				return cb(null);
 			});
@@ -70,20 +77,51 @@
 		return this;
 	}
 	Gun.chain.path = function(path){ // The focal point follows the path
-	
+		var gun = this;
+		path = path.split('.');
+		console.log("PATH stack trace", gun._.events.trace + 1);
+		gun._.events.on(gun._.events.trace += 1).event(function trace(node){
+			console.log("stack at", gun._.events.at);
+			if(!path.length){ // if the path resolves to another node, we finish here
+				console.log("PATH resolved with node");
+				gun._.events.on(gun._.events.at += 1).emit(node);
+				return;
+			}
+			var key = path.shift()
+			, val = node[key];
+			if(key = Gun.ify.is.id(val)){ // we might end on a link, so we must resolve
+				gun.load(key, trace, {id: true}).blank(function(){ }).dud(function(){ }); // TODO: Need to map these to the real blank/dud
+			} else {
+				if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist
+					console.log("PATH failed to resolve");
+					gun._.events.on(gun._.events.at += 1).emit();
+				} else { // we are done, and this should be the value we wanted.
+					console.log("PATH resolved", val);
+					gun._.events.on(gun._.events.at += 1).emit(val);
+				}
+			}
+		});
+		return gun;
 	}
-	Gun.chain.get = function(cb){
+	Gun.chain.get = function(cb){ // WARNING! Need to return a frozen copy of the object.
+		var gun = this;
+		console.log("GET stack trace", gun._.events.trace + 1);
+		gun._.events.on(gun._.events.trace += 1).event(function(node){
+			console.log("GOT", node);
+			cb(node);
+		});
 		return this;
 	}
 	/*
-		ACID compliant, unfortunately ACID's vocabulary is confusing:
+		ACID compliant, unfortunately the vocabulary is vague, as such the following is an explicit definition:
 		A - Atomic, if you set a full node, or nodes of nodes, if any value is in error then nothing will be set.
-			If you want sets to be independent of each other, you need to set individual keys with their value.
-		C - Consistency, if you use any reserved symbols or similar, the operation will be rejected.
-		I - Isolation, the hypothetical amnesia machine guarantees the relative state of each transaction, across every peer.
-		D - Durability, if the acknowledgement receipt is received, then the data is guaranteed to have persisted.
-			However, by the time it is received, the data that was set may already be out of date.
-			The current data is already available to be checked and compared if need be.
+			If you want sets to be independent of each other, you need to set each piece of the data individually.
+		C - Consistency, if you use any reserved symbols or similar, the operation will be rejected as it could lead to an invalid read and thus an invalid state.
+		I - Isolation, the conflict resolution algorithm guarantees idempotent transactions, across every peer, regardless of any partition,
+			including a peer acting by itself or one having been disconnected from the network.
+		D - Durability, if the acknowledgement receipt is received, then the state at which the final persistence hook was called on is guaranteed to have been written.
+			The live state at point of confirmation may or may not be different than when it was called.
+			If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 	*/
 	Gun.chain.set = function(val, cb){
 		var gun = this, set;
@@ -218,7 +256,7 @@
 	Gun.on = (function(){
 		function On(on){
 			var e = On.is(this)? this : events;
-			return e._ = e._ || {}, e._.on = on, e;
+			return e._ = e._ || {}, e._.on = Gun.text.ify(on), e;
 		}
 		On.is = function(on){ return (on instanceof On)? true : false }
 		On.split = function(){ return new On() }
@@ -238,11 +276,11 @@
 			}))){ delete this._.events[on] }
 		}
 		On.echo.event = function(as, i){
-			var on = this._.on;
+			var on = this._.on, e;
 			if(!on || !as){ return }
 			this._.events = this._.events || {};
-			on = this._.events[on] = this._.events[on] || (this._.events[on] = [])
-			, e = {as: as, i: i || 0, off: function(){ return !(e.as = false) }};
+			on = this._.events[on] = this._.events[on] || (this._.events[on] = []);
+			e = {as: as, i: i || 0, off: function(){ return !(e.as = false) }};
 			return on.push(e), on.sort(On.sort), e;
 		}
 		On.echo.once = function(as, i){
@@ -294,10 +332,17 @@
 				return {converge: true, incoming: true};
 			}
 			if(incomingState === currentState){
-				if(incomingValue === currentValue){
-					// Note: while these are practically the same, the deltas could be technically different
+				if(incomingValue === currentValue){ // Note: while these are practically the same, the deltas could be technically different
 					return {state: true};
 				}
+				/*
+					The following is a naive implementation, but will always work.
+					Never change it unless you have specific needs that absolutely require it.
+					If changed, your data will diverge unless you guarantee every peer's algorithm has also been changed to be the same.
+					As a result, it is highly discouraged to modify despite the fact that it is naive,
+					because convergence (data integrity) is generally more important.
+					Any difference in this algorithm must be given a new and different name.
+				*/
 				if(String(incomingValue) < String(currentValue)){ // String only works on primitive values!
 					return {converge: true, current: true};
 				}
@@ -479,6 +524,13 @@
 			|| Gun.text.is(v)){
 				return true; // simple values
 			}
+			var yes;
+			if(yes = Gun.ify.is.id(v)){
+				return yes;
+			}
+			return false;
+		}
+		Gun.ify.is.id = function(v){
 			if(Gun.obj.is(v)){
 				var yes;
 				Gun.obj.map(v, function(id, key){

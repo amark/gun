@@ -1,7 +1,7 @@
 var fs = require('fs');
 var http = require('http');
 var qs = require('querystring');
-var sync = require('./shotgun');
+var sync = require('../../test/shotgun');
 
 http.route = function(url){
 	console.log(url);
