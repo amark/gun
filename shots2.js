@@ -11,15 +11,20 @@
 		s3.nodes = s3.nodes || opt.s3.nodes || '_/nodes/';
 		gun._.opt.batch = opt.batch || gun._.opt.batch || 10;
 		gun._.opt.throttle = opt.throttle || gun._.opt.throttle || 2;
-		if(!gun._.opt.keepDefaultMaxSockets){ require('http').globalAgent.maxSockets = 999 } // because the default is 5, sad face.
+		if(!gun._.opt.keepDefaultMaxSockets){ require('http').globalAgent.maxSockets = 999 } // we shouldn't do this globally! But because the default is 5, sad face.
 		
-		s3.load = s3.load || function(index, cb, direct){
+		s3.load = s3.load || function(index, cb, opt){
 			cb = cb || function(){};
-			s3.get(direct? index : s3.path + s3.indices + index, function(err, data, text, meta){
+			opt = opt || {};
+			if(opt.id){ 
+				index = s3.path + s3.nodes + index;
+			} else { 
+				index = s3.path + s3.indices + index;
+			}
+			s3.get(index, function(err, data, text, meta){
 				console.log('via s3', index);
 				if(meta && (index = meta[Gun.sym.id])){
-					console.log("fetch pointer");
-					return s3.load(s3.path + s3.nodes + index, cb, true);
+					return s3.load(index, cb, {id: true});
 				}
 				if(err && err.statusCode == 404){
 					err = null; // we want a difference between 'unfound' (data is null) and 'error' (keys are wrong)

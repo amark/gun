@@ -1,5 +1,5 @@
 var sign = {};
-var gun = require('./shotgun');
+var gun = require('../../test/shotgun');
 
 sign.user = {}
 sign.user.create = function(form, cb, shell){ // TODO: REDO THIS TO MATCH GUN
@@ -7,13 +7,30 @@ sign.user.create = function(form, cb, shell){ // TODO: REDO THIS TO MATCH GUN
 		if(err || !user){ return cb(err) }
 		user = {key: user.key, salt: user.salt};
 		user.account = {email: form.email, registered: new Date().getTime()};
-		shell.set(user, function(){
-			console.log("yo bro, that user creation totally worked.");
-		}).index('email/' + user.account.email);
+		gun.set(user).index('email/' + user.account.email);
 		cb(null, user);
 	});
 };
 
+/*
+gun.load('email/mark@accelsor.com')
+	.path('friends')
+	.match({name: "David Oliveros"})
+	.path('friends')
+	.match({activity: 'surfer'})
+	.get(function(surfer){
+		sendEmail("Mark wants to leanr how ot surf, and you are a friend of a friend");
+	});
+*/
+
+/*
+gun.load()
+
+here is a bunch of node indices
+now for each combinatoric pair
+find all possible paths between them
+*/
+	
 sign.server = function(req, res){
 	console.log("sign.server", req.body);
 	if(!req.body || !req.body.email){ return res.emit('end', {err: "That email does not exist."}) }

@@ -1,7 +1,7 @@
 describe('Gun', function(){
 	var Gun = require('../gun2');
 	
-	it('ify', function(){return;
+	it('ify', function(){
 		var data, test;
 		
 		data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
@@ -51,13 +51,25 @@ describe('Gun', function(){
 		console.log(test.nodes);
 	});
 	
-	it('ify', function(){
+	it('union', function(){
 		var graph, prime;
 		
 		graph = Gun.ify({a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null}).nodes;
 		prime = Gun.ify({h: 9, i: 'foo', j: 'k', l: 'bar', m: 'Mark', n: 'Nadal'}).nodes;
 		
 		Gun.union(graph, prime);
+	});
+	
+	it('path', function(done){
+		this.timeout(9000);
+		var gun = require('./shotgun');
+		gun.load('email/mark@accelsor.com')
+			.path('account.email')
+		.get(function(val){
+			console.log("val!", val);
+			done();
+		});
+		console.log("________________________");
 	});
 	
 });
