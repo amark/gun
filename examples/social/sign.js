@@ -25,14 +25,14 @@ gun.load('email/mark@accelsor.com')
 	
 sign.server = function(req, res){
 	console.log("sign.server", req.headers, req.body);
-	res.emit('data', {ok: 1});
+	/*res.emit('data', {ok: 1});
 	res.emit('data', {ok: 2});
 	res.emit('data', {ok: 3});
 	res.emit('data', {ok: 4});
 	setTimeout(function(){
 		res.emit('end', {ok: 5});
 	}, 5000);
-	return;
+	return;*/
 	if(!req.body || !req.body.email){ return res.emit('end', {err: "That email does not exist."}) }
 	var user = gun.load('email/' + req.body.email, function(data){ // this callback is called the magazine, since it holds the clip
 		console.log("data from key", data);
