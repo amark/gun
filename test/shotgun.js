@@ -9,7 +9,7 @@ if(process.env.LIVE || (process.env.NODE_ENV === 'production')){
 	}
 }
 
-var Gun = require('../shots2');
+var Gun = require('../shots');
 var gun = Gun({
 	peers: 'http://localhost:8888/gun'
 	,s3: keys

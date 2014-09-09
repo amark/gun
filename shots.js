@@ -1,305 +1,183 @@
-module.exports = require('theory')
-('shot',function(a){
-	var s3 = require(__dirname+'/gate/s3')
-	, store = require(__dirname+'/gate/redis');
-	function shot(opt){
-		opt = opt || {};
-		var u, shot = {};
-		opt.path = opt.path || '.'
-		opt.batch = opt.batch || 10;
-		opt.throttle = opt.throttle || 15;
-		opt.src = opt.src || (this && this.com) || '';
-		opt.redis = opt.redis || {};
-		opt.redis.max = a.num.is(opt.redis.max)? opt.redis.max : .8;
-		opt.redis.Max = Math.floor(require('os').totalmem() * opt.redis.max);
-		opt.redis.append = a.obj(opt.redis).has('append')? opt.redis.append : true;
-		opt.redis.expire = opt.redis.expire || 60*15;
-		opt.redis.config = function(){
-			if(opt.redis.config.done === 0){ return }
-			opt.redis.config.done = 3;
-			var reply = function(e,r){ 
-				if(e){ return }
-				opt.redis.config.done -= 1;
-			};
-			if(opt.redis.max){
-				store.client.config('set','maxmemory',opt.redis.Max, reply);
-				store.client.config('set','maxmemory-policy','allkeys-lru', reply);
-			}
-			if(opt.redis.append){
-				store.client.config('set','appendonly','yes', reply);
-			}
-		}
-		opt.s3 = opt.s3 || {};
-		opt.s3.Bucket = a.text.is(opt.s3.bucket)? opt.s3.bucket : (process.env.s3Bucket || '');
-		opt.s3.bucket = a.fns.is(opt.s3.bucket)? opt.s3.bucket : function(key){
-			return opt.s3.Bucket || a.text(key).clip('/',0,1);
-		}
-		opt.s3.key = a.fns.is(opt.s3.key)? opt.s3.key : function(key){
-			if(key.slice(0, opt.s3.Bucket.length) === opt.s3.Bucket){
-				key = key.slice(opt.s3.Bucket.length)||'';
-				if(key.charAt(0) === '/'){
-					key = key.slice(1);
-				}
-			}
-			return key;
-		}
-		store.batch = [];
-		store.last = a.time.now();
-		store.push = function(key, score, val, cb){
-			if(!val){ return }
-			store.client.zadd(key, score, val, function(e,r){
-				if(e){
-					store.clienf.zadd(key, score, val, cb);
-					return;
-				}
-				if(cb){ cb(e,r) }
-			});
-		}
-		store.when = function(m){ return a(m,'what._.'+a.gun._.ham) || a(m,'_.'+a.gun._.ham) || m.when }
-		store.where = function(m){ return a.text.is(m)? m : a.text.is(m.where)? m.where : m.where.at }
-		store.add = function(m, g){
-			if(!m){ return }
-			g = '_' + (g || a(m,'where.at') || m.where);
-			store.push(g, store.when(m) || 0, a.text.ify(m));
-		}
-		store.del = function(m, g){
-			
-		}
-		store.sort = function(A,B){
-			if(!A || !B){ return 0 }
-			A = A.w; B = B.w;
-			if(A < B){ return -1 }
-			else if(A > B){ return  1 }
-			else { return 0 }
-		}
-		store.batching = 0;
-		store.batched = {};
-		store.batch = {};
-		store.persisted = {};
-		store.wait = null;
-		store.stay = function(key, val, cb){
-			store.batching += 1;
-			store.batch[key] = val;
-			(store.batched[key] = store.batched[key]||[]).push(cb);
-			if(opt.batch < store.batching){
-				return store.stay.now();
-			}
-			if(!opt.throttle){
-				return store.stay.now();
-			}
-			store.wait = store.wait || a.time.wait(store.stay.now, opt.throttle * 1000); // to seconds
-		}
-		store.stay.now = function(){
-			store.batching = 0;
-			a.time.stop(store.wait);
-			store.wait = null;
-			a.obj(store.batch).each(function(g,where){
-				if(!g || !where){ return }
-				//console.log('*************** save', where, '*******************');
-				store.stay.put(where,g,function(e,r){
-					a.list(store.batched[where]).each(function(cb){
-						if(a.fns.is(cb)){ cb(e,r) }
-						console.log('*** saved ***');
-					});
-					console.log(store.batched[where]);
-					delete store.batched[where];
-				});
-			});
-		}
-		store.stay.put = function(where,obj,cb){
-			s3(opt.s3.bucket(where)).put(opt.s3.key(where),obj,function(e,r){
-				if(!e){ store.persisted[where] = 's3' }
-				if(a.fns.is(cb)){ cb(e,r) }
-			});
-		}
-		store.set = function(key, value, cb, fn){
-			opt.redis.config();
-			var val = a.text.is(value)? value : a.text.ify(value);
-			if(a.fns.is(fn)){ store.stay(key, value, fn) }
-			//console.log("potential setex:", key, opt.redis.expire, val);
-			if(opt.redis.max){
-				store.client.set(key, val, function(e,r){
-					if(e){
-						store.clienf.setex(key, opt.redis.expire, val, cb);
-						return;
-					}
-					if(cb){ cb(e,r) }
-				});
-			} else {
-				store.client.setex(key, opt.redis.expire, val, function(e,r){
-					if(e){
-						store.clienf.setex(key, opt.redis.expire, val, cb);
-						return;
-					}
-					if(cb){ cb(e,r) }
-				});
-			}
-		}
-		store.get = function(key, cb){
-			store.clienf.get(key, function(e,r){
-				if(e || !r){ return store.client.get(key, cb) }
-				if(cb){ cb(e,r) }
-			});
-		}
-		shot.load = function(where,cb,o){
-			//console.log("shot.load >", where);
-			if(!where){ return }
-			where = store.where(where);
-			if(!a.text.is(where)){ return }
-			if(a.fns.is(a.gun.magazine[where])){
-				console.log('via memory', where);
-				cb(a.gun.magazine[where], null); // TODO: Need to clear queue these at some point, too!
-				return;
-			}
-			if(opt.src && opt.src.send){ 
-				//console.log("Getting and subscribe");
-				opt.src.send({where:{on: where}, how: {gun: 2}});
-			}
-			store.get(where, function(e,r){
-				if(e || !r){
-					return s3(opt.s3.bucket(where)).get(opt.s3.key(where),function(e,r,t){
-						console.log('via s3', where); if(e){ console.log(e) }
-						if(e || !r){ return cb(null, e) }
-						store.persisted[where] = 's3';
-						store.set(where, (t || a.text.ify(r)));
-						r = shot.load.action(where,r); //a.gun(where,r);
-						cb(r, e);
-					},o);
-				}
-				console.log('via redis', where);
-				r = a.obj.ify(r);
-				r = shot.load.action(where,r); //a.gun(where,r);
-				cb(r,e);
-			});
-		}
-		shot.load.action = function(w,o){
-			if(!w || !o){ return }
-			return a.gun(w,o);
-		}
-		shot.spray = function(m){
-			if(m && m.how){
-				shot.spray.action(m);
-				return shot;
-			}
-			if(a.fns.is(m)){
-				shot.spray.transform = m;
-				return shot.spray.action;
-			}
-			return shot.spray.action;
-		}
-		shot.spray.transform = function(g,m,d){if(d){d()}}
-		shot.spray.action = function(m){
-			console.log("gun spray ---->", m, (opt.src && opt.src.way? opt.src.way : null));
-			if(!m || !m.how){ return }
-			var where = store.where(m);
-			if(m.how.gun === -2){
-				console.log("gun data from others", m);
-				if(m && m.what && m.what.session){ console.log(m.what.session) }
-				return;
-			}
-			if(m.how.gun === 2){
-				if(!a.fns.is(a.gun.magazine[where])){
-					return;
-				}
-				if(opt.src && opt.src.send){
-					console.log("gun subscribe sync", m);
-					opt.src.send({what: a.gun.magazine[where](), where: where, how: {gun: -(m.how.gun||2)}});
-				}
-				return;
-			}
-			if(m.how.gun === 3){
-				shot.load(m.what, function(g,e){
-					shot.pump.action(g, m, function(){ // receive custom edited copy here and send it down instead.
-						if(!opt.src || !opt.src.reply){ return }
-						m.what = a.fns.is(g)? g() : {};
-						m.how.gun = -(m.how.gun||3);
-						opt.src.reply(m);
-					}, e);
-				});
-				return;
-			}
-			if(!where){ return }
-			store.add(m);
-			var n = a.obj.copy(m);
-			shot.load(where, function(g,e){
-				var done = function(){
-					var u, s, w = store.when(m) || 0, r = {}, cb;
-					m.how.gun = -(m.how.gun||1);
-					g = a.fns.is(g)? g : (a.gun.magazine[where] || function(){});
-					a.obj(m.what).each(function(v,p){
-						if(g(p,v,w) === u){
-							r[p] = 0; // Error code
-							return;
-						} s = true;
-					});
-					m.what = r;
-					cb = function(){
-						if(!opt.src || !opt.src.reply || m.where.mid){ return }
-						opt.src.reply(m);
-						console.log('reply', m);
-					}
-					if(!s){ return cb() }
-					store.set(where, g(), null, cb);
-				};
-				done.end = function(){};
-				shot.spray.transform(g, m, done, e);
-			});
-			if(n.where && !n.where.mid && opt.src.send){
-				n.who = {};
-				opt.src.send(n);
-			}
-		}
-		if(opt.src && opt.src.on){
-			opt.src.on(shot.spray.action);
-		}
-		shot.pump = function(fn){
-			shot.pump.action = fn || shot.pump.action;
-			return shot;
-		}
-		shot.pump.action = function(g,m,d){if(d){d()}}
-		shot.server = function(req,res){
-			console.log('shot server', req);
+;(function(){
+	var Gun = require(__dirname+'/gun')
+	, S3 = require(__dirname+'/gate/s3') // redis has been removed, can be replaced with a disk system
+	, url = require('url')
+	, meta = {};
+	Gun.on('init').event(function(gun, opt){
+		gun.server = gun.server || function(req, res){ // where is the data? is it JSON? declare contentType=JSON from client?
+			console.log("gun server has requests!", req.headers, req.body, req.url, req.method);
+			/*meta.CORS(req, res);
+			res.emit('data', {way: 'cool'});
+			res.emit('data', {shish: 'kabob'});
+			res.emit('data', {I: 'love'});
+			res.end();
+			return;*/
 			if(!req || !res){ return }
-			var b = shot.server.get(req);
-			if(!b || !b.b){ return }
-			b = a.obj.ify((b||{}).b);
-			if(a.obj.is(b)){ b = [b] }
-			if(!a.list.is(b)){ return }
-			//console.log('gun >>>>>>');
-			a.list(b).each(function(v,i){
-				//console.log(v);
-			});
-			//console.log('<<<<<< gun');
-			if(req.how && req.when && req.who && a.fns.is(res)){
-				req.what.body = {ok:1};
-				res(req);
+			if(!req.url){ return }
+			if(!req.method){ return }
+			var tmp = {};
+			tmp.url = url.parse(req.url, true);
+			if(!gun.server.regex.test(tmp.url.pathname)){ return }
+			tmp.key = tmp.url.pathname.replace(gun.server.regex,'').replace(/^\//i,''); // strip the base
+			if(!tmp.key){
+				return meta.JSON(res, {gun: true});
 			}
+			if('get' === req.method.toLowerCase()){ // get is used as subscribe
+				// raw test for now:
+				s3.load(tmp.key, function(err, data){
+					console.log("gun subscribed!", err, data);
+					meta.CORS(req, res);
+					return meta.JSON(res, data || err);
+				})
+			} else
+			if('post' === req.method.toLowerCase()){ // post is used as patch, sad that patch has such poor support
+				
+			}
+		}
+		gun.server.regex = /^\/gun/i;
+		var s3 = gun._.opt.s3 = gun._.opt.s3 || S3(opt && opt.s3);
+		s3.path = s3.path || opt.s3.path || '';
+		s3.keyed = s3.keyed || opt.s3.keyed || '';
+		s3.nodes = s3.nodes || opt.s3.nodes || '_/nodes/';
+		gun._.opt.batch = opt.batch || gun._.opt.batch || 10;
+		gun._.opt.throttle = opt.throttle || gun._.opt.throttle || 2;
+		if(!gun._.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
+		
+		s3.load = s3.load || function(key, cb, opt){
+			cb = cb || function(){};
+			opt = opt || {};
+			if(opt.id){ 
+				key = s3.path + s3.nodes + key;
+			} else { 
+				key = s3.path + s3.keyed + key;
+			}
+			s3.get(key, function(err, data, text, meta){
+				console.log('via s3', key);
+				if(meta && (key = meta[Gun.sym.id])){
+					return s3.load(key, cb, {id: true});
+				}
+				if(err && err.statusCode == 404){
+					err = null; // we want a difference between 'unfound' (data is null) and 'error' (auth is wrong).
+				}
+				cb(err, data);
+			});
+		}
+		s3.set = s3.set || function(nodes, cb){
+			s3.batching += 1;
+			cb = cb || function(){};
+			cb.count = 0;
+			var next = s3.next
+			, ack = Gun.text.random(8)
+			, batch = s3.batch[next] = s3.batch[next] || {};
+			s3.event.on(ack).once(cb);
+			Gun.obj.map(nodes, function(node, id){
+				cb.count += 1;
+				batch[id] = (batch[id] || 0) + 1;
+				console.log("set listener for", next + ':' + id, batch[id], cb.count);
+				s3.event.on(next + ':' + id).event(function(){
+					cb.count -= 1;
+					console.log("transaction", cb.count);
+					if(!cb.count){
+						s3.event.on(ack).emit();
+						this.off(); // MEMORY LEAKS EVERYWHERE!!!!!!!!!!!!!!!! FIX THIS!!!!!!!!!
+					}
+				});
+			});
+			if(gun._.opt.batch < s3.batching){
+				return s3.set.now();
+			}
+			if(!gun._.opt.throttle){
+				return s3.set.now();
+			}
+			s3.wait = s3.wait || setTimeout(s3.set.now, gun._.opt.throttle * 1000); // in seconds
+		}
+		s3.set.now = s3.set.now || function(){
+			clearTimeout(s3.wait);
+			s3.batching = 0;
+			s3.wait = null;
+			var now = s3.next
+			, batch = s3.batch[s3.next];
+			s3.next = Gun.time.is();	
+			Gun.obj.map(batch, function put(exists, id){
+				var node = gun._.nodes[id]; // the batch does not actually have the nodes, but what happens when we do cold data? Could this be gone?
+				s3.put(s3.path + s3.nodes + id, node, function(err, reply){
+					console.log("s3 put reply", id, err, reply);
+					if(err || !reply){
+						put(exists, id); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
+						return;
+					}
+					s3.event.on(now + ':' + id).emit(200);
+				});
+			});
+		}
+		s3.next = s3.next || Gun.time.is();
+		s3.event = s3.event || Gun.on.split();
+		s3.batching = s3.batching || 0;
+		s3.batched = s3.batched || {};
+		s3.batch = s3.batch || {};
+		s3.persisted = s3.persisted || {};
+		s3.wait = s3.wait || null;
+		
+		s3.key = s3.key || function(key, node, cb){
+			var id = node._[Gun.sym.id];
+			if(!id){
+				return cb({err: "No ID!"});
+			}
+			s3.put(s3.path + s3.keyed + key, '', function(err, reply){ // key is 2 bytes??? Should be smaller
+				console.log("s3 put reply", id, err, reply);
+				if(err || !reply){
+					s3.key(key, node, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
+					return;
+				}
+				cb();
+			}, {Metadata: {'#': id}});
+		}
+		
+		gun.init({hook: {load: s3.load, set: s3.set, key: s3.key}}, true);
+	});
+	meta.json = 'application/json';
+	meta.JSON = function(res, data){
+		if(!res || res._headerSent){ return }
+		res.setHeader('Content-Type', meta.json);
+		return res.end(JSON.stringify(data||''));
+	};
+	meta.CORS = function(req, res){
+		if(!res || res.CORSHeader || res._headerSent){ return }
+		res.setHeader("Access-Control-Allow-Origin", "*");
+		res.setHeader("Access-Control-Allow-Methods", ["POST", "GET", "PUT", "DELETE", "OPTIONS"]);
+		res.setHeader("Access-Control-Allow-Credentials", true);
+		res.setHeader("Access-Control-Max-Age", 1000 * 60 * 60 * 24);
+		res.setHeader("Access-Control-Allow-Headers", ["X-Requested-With", "X-HTTP-Method-Override", "Content-Type", "Accept"]);
+		res.CORSHeader = true;
+		if(req && req.method === 'OPTIONS'){
+			res.end();
 			return true;
 		}
-		shot.server.get = function(m){
-			return !a.obj.empty(a(m,'what.form'))? a(m,'what.form')
-				: !a.obj.empty(a(m,'what.url.query'))? a(m,'what.url.query')
-				: false ;
-		};
-		a.gun.shots(function(m){
-			var w;
-			if(!store.persisted[w = store.where(m)]){
-				if(opt.src && opt.src.send){ 
-					//console.log("made and subscribed", m);
-					opt.src.send({where:{on: w}, how: {gun: 2}}) 
-				}
-				store.stay.put(w, m.what, function(e,r){
-					//console.log("---> gun shots", m, "new graph saved!");
-				});
-				return;
-			}
-			if(opt.src && opt.src.send){
-				opt.src.send(m);
-			}
-		});
-		shot.gun = a.gun;
-		return shot;
-	}
-	shot.gun = a.gun;
-	return shot;
-},[__dirname+'/gun'])
+	};
+	module.exports = Gun;
+}());
+/**
+Knox S3 Config is:
+knox.createClient({
+    key: ''
+  , secret: ''
+  , bucket: ''
+  , endpoint: 'us-standard'
+  , port: 0
+  , secure: true
+  , token: ''
+  , style: ''
+  , agent: ''
+});
+
+aws-sdk for s3 is:
+{ "accessKeyId": "akid", "secretAccessKey": "secret", "region": "us-west-2" }
+AWS.config.loadFromPath('./config.json');
+ {
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID = ''
+	,secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY = ''
+	,Bucket: process.env.s3Bucket = ''
+	,region: process.env.AWS_REGION = "us-east-1"
+	,sslEnabled: ''
+}
+**/

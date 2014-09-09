@@ -7,13 +7,12 @@
 }
 , "dependencies": {
     "mime": "~>1.2.11",
-    "theory": "~>0.2.6",
-    "coalesce": "~>0.1.9-bv",
     "aws-sdk": "~>2.0.0",
-    "fakeredis": "~>0.1.3",
-    "redis": "~>0.10.1",
-	"hiredis": ""
+	"request": "~>2.39.0"
   }
+, "devDependencies": {
+	"chance": "~>2.39.0"
+}
 , "scripts": {
         "start": "node init.js"
     }

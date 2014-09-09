@@ -1,577 +1,719 @@
-/**** The Abstact Structure
-
-A JSON graph structure that is lightweight and flexible to describe anything.
-The current goal, however, is limited to encompassing HTML and CSS for starters.
-Immediately after that is describing code as a state.
-
-A node is something which has relationships and or value.
-Relationships and values aren't any different, other than that
-a relationship is a reference and a value is embedded.
-
-*****/
-module.exports = require('theory')
-('gun',function(a){
-	a.gun = (function(){
-		function gun(p,v,w){
-			var args = arguments.length
-			, cb = a.fns.is(v)? v : null
-			, g, n, b, w = w || a.time.now();
-			if(gun.is(this)){
-				n = this;
-				g = n._.clip || function(){ return {} };
-				if(a.text.is(p)){
-					if(args >= 2){ // set
-						var u, ref = {}
-						, val = gun.at(n,p,ref);
-						if(!ref.cartridge || !ref.cartridge._ || !ref.cartridge._[gun._.id]){
-							return;
-						} ref.id = ref.cartridge._[gun._.id] +'.'+ ref.path;
-						v = gun.ify.be(v);
-						b = gun.bullet(ref.path,v,w);
-						console.log("after:", v, b);
-						if(a.gun.ham){ 
-							v = a.gun.ham(ref.cartridge,b,v,w); // TODO: BUG! Need to update when also!
-							if(v === u){
-								console.log("HAM REJECTION", p, v, val);
-								return;
-							}
-						}
-						console.log("HAM set", p, v);
-						if(ref.at){
-							if(v === null){
-								if(a.list.is(ref.at)){
-									t = o.val || t;
-									var j = ref.at.indexOf(ref.prop);
-									if(0 <= j){
-										ref.at.splice(j,1);
-									} else {
-										j = a.list(ref.at).find(gun.id(ref.prop));
-										if(j){
-											ref.at.splice(--j,1);
-										}
-									}
-								} else {
-									delete ref.at[ref.prop];
-								}
-								var del = {}; del[ref.id] = null;
-								gun.fire(del, g[gun._.id], w);
-								v = ref.at;
-							} else {
-								if(a.fns.is(v) && v[gun._.id]){ // then it is a clip!
-									v = {};
-								}
-								v = gun.at(v);
-								if(gun.is(v)){
-									v = gun.id(v._[gun._.id]); // update this to handle clip#cart
-								} else {
-									v = gun.ify.be(v);
-								}
-								if(a.obj.is(v)){
-									ref.at[ref.prop] = v;
-									//ref.tmp = ref.at[ref.prop] = gun.ify.obj(v, val);
-								} else
-								if(a.list.is(v)){
-									ref.tmp = ref.at[ref.prop] = gun.ify.list(v, val);
-								} else {
-									ref.at[ref.prop] = v;
-								}
-								var diff = {}; diff[ref.id] = v;
-								gun.fire(diff, g[gun._.id], w);
-								v = ref.tmp || v;
-							}
-							return v;
-						}
-						return;
-					}
-					if(args >= 1){ // get	
-						v = gun.at(n,p);
-						return v;
-					}
-				}
+;(function(own){
+	function Gun(opt){
+		var gun = this;
+		if(!Gun.is(gun)){
+			return new Gun(opt);
+		}
+		gun.init(opt);
+	}
+	Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
+	Gun._ = {};
+	Gun.chain = Gun.prototype;
+	Gun.chain._ = {};
+	Gun.chain._.opt = {};
+	Gun.chain._.nodes = {};
+	Gun.chain._.chain = {};
+	Gun.chain._.trace = [];
+	Gun.chain._.keys = {};
+	Gun.chain.init = function(opt, stun){ // idempotently update or set options
+		var gun = this;
+		gun._.events = gun._.events || Gun.on.split(); // we may not want it global for each gun instance?
+		gun._.events.trace = gun._.events.trace || 0;
+		gun._.events.at = gun._.events.at || 0;
+		if(Gun.text.is(opt)){ opt = {peers: opt} }
+		if(Gun.list.is(opt)){ opt = {peers: opt} }
+		if(Gun.text.is(opt.peers)){ opt.peers = [opt.peers] }
+		if(Gun.list.is(opt.peers)){ opt.peers = Gun.obj.map(opt.peers, function(n,f,m){ m(n,{}) }) }
+		gun._.opt.peers = opt.peers || gun._.opt.peers || {};
+		gun._.opt.uuid = opt.uuid || gun._.opt.uuid || {};
+		gun._.opt.hook = gun._.opt.hook || {};
+		Gun.obj.map(opt.hook, function(h, f){
+			if(!Gun.fns.is(h)){ return }
+			gun._.opt.hook[f] = h;
+		});
+		if(!stun){ Gun.on('init').emit(gun, opt) }
+		return gun;
+	}
+	Gun.chain.load = function(key, cb, opt){
+		var gun = this;
+		cb = cb || function(){};
+		if(cb.node = gun._.keys[key]){ // set this to the current node, too!
+			Gun.log("from gun"); // remember to do all the same stack stuff here also!
+			return cb(Gun.obj.copy(gun._.node = cb.node)), gun; // TODO: BUG: This needs to be frozen/copied, and react the same as below!
+		}
+		cb.fn = function(){}
+		gun._.key = key;
+		// missing: hear shots!
+		if(Gun.fns.is(gun._.opt.hook.load)){
+			gun._.opt.hook.load(key, function(err, data){
+				gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
+				if(err){ return (gun._.chain.dud||cb.fn)(err) }
+				if(!data){ return (gun._.chain.blank||cb.fn)() }
+				var nodes = {}, node;
+				nodes[data._[own.sym.id]] = data;// missing: transform data, merging it! NO, THIS IS DONE WRONG, do a real check.
+				Gun.union(gun._.nodes, nodes);
+				node = gun._.keys[key] = gun._.nodes[data._[own.sym.id]];
+				cb(Gun.obj.copy(gun._.node = node));
+				gun._.events.on(gun._.events.at += 1).emit(node);
+				gun._.events.at = 0; // ???? reset it back once everything is done?
+			}, opt);
+		} else {
+			Gun.log("Warning! You have no persistence layer to load from!");
+		}
+		return gun;
+	}
+	Gun.chain.key = function(key, cb){ // TODO: Need to setImmediate if not loaded yet?
+		Gun.log("make key", key);
+		cb = cb || function(){};
+		this._.keys[key] = this._.node;
+		if(Gun.fns.is(this._.opt.hook.key)){
+			this._.opt.hook.key(key, this._.node, function(err, data){
+				Gun.log("key made", key);
+				if(err){ return cb(err) }
+				return cb(null);
+			});
+		} else {
+			Gun.log("Warning! You have no key hook!");
+		}
+		return this;
+	}
+	Gun.chain.path = function(path){ // The focal point follows the path
+		var gun = this;
+		path = path.split('.');
+		Gun.log("PATH stack trace", gun._.events.trace + 1);
+		gun._.events.on(gun._.events.trace += 1).event(function trace(node){
+			Gun.log("stack at", gun._.events.at);
+			if(!path.length){ // if the path resolves to another node, we finish here
+				Gun.log("PATH resolved with node");
+				gun._.events.on(gun._.events.at += 1).emit(node);
 				return;
 			}
-			n = a.obj.is(v)? v : a.obj.is(p)? p : null;
-			p = a.text.is(p)? p : gun.id();
-			if(a.obj.is(n)){ // create a clip from this object
-				var c;
-				g = gun.ify(n);
-				if((c = gun.magazine[p]) && a.fns.is(c)){
-					console.log("clip already exists in magazine,", p);
-					a.obj(g).each(function(n,id){
-						if(!gun.is(n)){ return }
-						c(id,n);
-					});
-					return gun.magazine[p];
+			var field = path.shift()
+			, val = node[field];
+			gun._.field = field;
+			if(field = Gun.ify.is.id(val)){ // we might end on a link, so we must resolve
+				gun._.events.at -= 1; // take a step back because we need to be the next step again
+				gun.load(field, trace, {id: true}).blank(function(){ }).dud(function(){ }); // TODO: Need to map these to the real blank/dud
+			} else {
+				if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist
+					Gun.log("PATH failed to resolve");
+					gun._.events.on(gun._.events.at += 1).emit();
+				} else { // we are done, and this should be the value we wanted.
+					Gun.log("PATH resolved", val);
+					gun._.events.on(gun._.events.at += 1).emit(val);
 				}
-				var clip = gun.magazine[p] = function(p,v,w){
-					var args, id, path, n, w = w || a.time.now();
-					if(a.text.is(p)){
-						id = a.text(p).clip('.',0,1);
-						path = a.text(p).clip('.',1);
-						if(a.obj(g).has(id) && gun.is(g[id])){
-							n = g[id];
-							p = path;
-						}
-					}
-					args = a.list.slit.call(arguments);
-					if(!args.length){
-						return g;
-					}
-					if(path){
-						if(n){
-							n._.clip = n._.clip || clip;
-							return gun.apply(n, args);
-						}
-						return;
-					}
-					var fn = function(p,v,w){
-						if(!n){ return }
-						var args = a.list.slit.call(arguments);
-						return !args.length? n : gun.apply(n,args);
-					}
-					if(n){
-						if(args.length === 1){
-							n._.clip = n._.clip || clip;
-							return fn;
-						}
-						if(gun.is(v) && gun.ham){
-							var h = v._[gun._.ham] || {};
-							a.obj(v).each(function(v,p){
-								if(p === '_'){ return }
-								console.log('-------------->', p, h[p], h, 1); // Wait! This isn't correct because it should be '>' not '.'!
-								fn(p, v, h[p] || (a.num.is(h)? h : 1)); // Wait! This isn't correct because it should be '>' not '.'!
-							});
-							return fn;
-						}
-						if(v === null){
-							delete g[n._[gun._.id]];
-							var del = {}; del[n._[gun._.id]] = n = null;
-							gun.fire(del, g[gun._.id], w); // TODO: BUG! HAM UPDATES!
-							return null;
-						}
-						return;
-					}
-					if(a.text.is(p) && a.obj.is(v)){
-						v = v;
-						v._ = gun.id(p);
-					} else
-					if(a.obj.is(p)){
-						v = p;
-					}
-					if(a.obj.is(v)){
-						n = gun.ify(v,u,{}); // a clip cannot be created from this, only a single cartridge
-						n._ = n._ || gun.id({});
-						n._.clip = clip; // JSONifying excludes functions.
-						var add = {}; add[n._[gun._.id]] = g[n._[gun._.id]] = n;
-						gun.fire(add, clip[gun._.id], w); // TODO: BUG! HAM UPDATES!
-						return fn;
-					}
-				}
-				clip[gun._.id] = p;
-				return clip;
 			}
-		} var u;
-		gun._ = {
-			id: '#' // do not change this!
+		});
+		if(gun._.loaded){
+			console.log("Send off!", gun._.events.at + 1);
+			gun._.events.on(gun._.events.at += 1).emit(gun._.node);
 		}
-		gun.is = function(o){
-			return (o && o._ && o._[gun._.id])? true : false;
+		return gun;
+	}
+	Gun.chain.get = function(cb){
+		var gun = this;
+		Gun.log("GET stack trace", gun._.events.trace + 1);
+		gun._.events.on(gun._.events.trace += 1).event(function(node){
+			Gun.log("GOT", node);
+			cb(Gun.obj.copy(node));
+		});
+		return this;
+	}
+	/*
+		ACID compliant, unfortunately the vocabulary is vague, as such the following is an explicit definition:
+		A - Atomic, if you set a full node, or nodes of nodes, if any value is in error then nothing will be set.
+			If you want sets to be independent of each other, you need to set each piece of the data individually.
+		C - Consistency, if you use any reserved symbols or similar, the operation will be rejected as it could lead to an invalid read and thus an invalid state.
+		I - Isolation, the conflict resolution algorithm guarantees idempotent transactions, across every peer, regardless of any partition,
+			including a peer acting by itself or one having been disconnected from the network.
+		D - Durability, if the acknowledgement receipt is received, then the state at which the final persistence hook was called on is guaranteed to have been written.
+			The live state at point of confirmation may or may not be different than when it was called.
+			If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
+	*/
+	Gun.chain.set = function(val, cb){ // TODO: set failed miserably to catch depth references in social tests
+		var gun = this, set;
+		if(gun._.field){ // a field cannot be 0!
+			set = {}; // in case we are doing a set on a field, not on a node
+			set[gun._.field] = val; // we create a blank node with the field/value to be set
+			set._ = Gun.ify.id.call(gun, {}, gun._.node); // and then set their ids to be the same
+			val = set; // that way they will merge correctly for us during the union!
 		}
-		gun.id = function(t){
-			if(t){
-				var _ = {};_[gun._.id] = a.text.is(t)? t : gun.id();
-				return _;
-			}
-			return a.text.r(9);
-		}
-		gun.at = function(n,p,ref){
-			if(a.fns.is(n)){
-				n = n();
-			}
-			if(!p){
-				return n;
-			}
-			ref = ref || {};
-			var pp = a.list.is(p)? p : (p||'').split('.')
-			, g = a.fns.is(n._.clip)? n._.clip() : this
-			, i = 0, l = pp.length, v = n
-			, x, y, z;
-			ref.cartridge = n;
-			ref.prop = pp[l-1];
-			ref.path = pp.slice(i).join('.');
-			while(i < l && v !== u){
-				x = pp[i++];
-				if(a.obj.is(v) && a.obj(v).has(x)){
-					ref.at = v;
-					v = v[x];
-					if(v && v[gun._.id]){
-						v = a.obj(g).has(v[gun._.id])? g[v[gun._.id]] : u;
-						if(v){
-							return gun.at.call(g,v,pp.slice(i),ref);
-						}
-					}
-				} else
-				if(a.list.is(v)){
-					ref.at = v;
-					return a.list(v).each(function(w,j){
-						if(!w) return;
-						if(!p) return;
-						w = a.obj(g).has(w[gun._.id]||w)? g[w[gun._.id]||w] : u;
-						if(!w) return;
-						if(w._ && x === w._[gun._.id]){
-							i += 1;
-							p = false;
-						}
-						return gun.at.call(g,w,pp.slice(i-1),ref);
-					});
-				} else {
-					ref.at = v;
-					v = u;
-				}
-			}
-			if(a.list.is(v)){
-				ref.at = v;
-				v = a.list(v).each(function(w,j,t){
-					if(w){
-						if(a.obj(g).has(w[gun._.id]||w)) t(g[w[gun._.id]||w]);
-					}
-				}) || [];
-			}
-			return i < l? u : v;
-		}
-		gun.ify = function(o, opt, n){
-			var g = {};
-			opt = opt || {};
-			opt.seen = opt.seen || [];
-			if(!a.obj.is(o)){ return g }
-			function ify(o,i,f,n,p){
-				if(gun.ify.is(o)){
-					f[i] = o;
-					return
-				}
-				if(a.obj.is(o)){
-					var seen;
-					if(seen = ify.seen(o)){
-						ify.be(seen);
-						return;
-					}
-					if(gun.is(o)){
-						f[i] = gun.id(o._[gun._.id]);
-						g[o._[gun._.id]] = n;
-					} else {
-						f[i] = n;
-					}
-					opt.seen.push({cartridge: n, prop: i, from: f, src: o});
-					a.obj(o).each(function(v,j){
-						ify(v,j,n,{},f);
-					});
-					if(gun.is(n)){
-						g[n._[gun._.id]] = n;
-						f[i] = gun.id(n._[gun._.id]);
-					}
-					return;
-				}
-				if(a.list.is(o)){
-					f[i] = a.list(o).each(function(v,j,t){
-						var seen;
-						if(a.fns.is(v)){
-							v = gun.at(v);
-						}
-						if(a.obj.is(v)){
-							if(seen = ify.seen(v)){
-								ify.be(seen);
-								if(gun.is(seen.cartridge)){ t(seen.cartridge._[gun._.id]) }
-							} else {
-								gun.ify(v, opt, n);
-								if(gun.is(n)){
-									t(n._[gun._.id]);
-								}
-							}
-						} else
-						if(a.text.is(v)){
-							if(a.obj(g).has(v)){
-								t(v);
-							} else {
-								t(v); // same as above :/ because it could be that this ID just hasn't been indexed yet.
-							}
-						}
-					}) || [];
-					return;
-				}
-			}
-			ify.be = function(seen){
-				var n = seen.cartridge;
-				n._ = n._||{};
-				n._[gun._.id] = n._[gun._.id]||gun.id();
-				g[n._[gun._.id]] = n;
-				if(seen.from){
-					seen.from[seen.prop] = gun.id(n._[gun._.id]);
-				}
-			}
-			ify.seen = function(o){
-				return a.list(opt.seen).each(function(v){
-					if(v && v.src === o){ return v }
-				}) || false;
-			}
-			var is = true, cartridge = n || {};
-			a.obj(o).each(function(v,i){
-				if(!gun.is(v)){ is = false }
-				ify(v, i, cartridge, {});
+		cb = Gun.fns.is(cb)? cb : function(){};
+		set = Gun.ify.call(gun, val);
+		cb.root = set.root;
+		if(set.err){ return cb(set.err), gun }
+		set = gun.set.now(set.nodes, Gun.time.is()); // set time state on nodes?
+		if(set.err){ return cb(set.err), gun }
+		Gun.union(gun._.nodes, set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
+		gun._.node = gun._.nodes[cb.root._[own.sym.id]] || cb.root; // TODO? Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
+		if(Gun.fns.is(gun._.opt.hook.set)){
+			gun._.opt.hook.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+				Gun.log("gun set hook callback called");
+				if(err){ return cb(err) }
+				return cb(null);
 			});
-			if(!is){
-				ify.be({cartridge: cartridge});
-				g[cartridge._[gun._.id]] = cartridge;
-			}
-			if(n){
-				return n;
-			}
-			return g;
+		} else {
+			Gun.log("Warning! You have no persistence layer to save to!");
 		}
-		gun.ify.be = function(v,g){ // update this to handle externals!
-			var r;
-			g = g || {};
-			if(gun.ify.is(v)){
-				r = v;
-			} else
-			if(a.obj.is(v)){
-				r = {};
-				a.obj(v).each(function(w,i){
-					w = gun.ify.be(w);
-					if(w === u){ return }
-					r[i] = w;
-				});
-			} else
-			if(a.list.is(v)){ // references only
-				r = a.list(v).each(function(w,i,t){
-					if(!w){ return }
-					w = gun.at(w);
-					if(gun.is(w)){
-						t(w._[gun._.id]);
-					} else
-					if(w[gun._.id]){
-						t(w[gun._.id]);
-					} else 
-					if(a.obj(g).has(w)){
-						t(w);
+		return gun;
+	}
+	Gun.chain.set.now = function(nodes, now){
+		var context = {};
+		context.nodes = nodes;
+		context.now = now = (now === 0)? now : now || Gun.time.is();
+		Gun.obj.map(context.nodes, function(node, id){
+			if(!node || !id || !node._ || !node._[own.sym.id] || node._[own.sym.id] !== id){
+				return context.err = {err: "There is a corruption of nodes and or their ids", corrupt: true};
+			}
+			var states = node._[own.sym.HAM] = node._[own.sym.HAM] || {};
+			Gun.obj.map(node, function(val, field){
+				if(field == own.sym.meta){ return }
+				val = states[field];
+				states[field] = (val === 0)? val : val || now;
+			});
+		});
+		return context;
+	}
+	Gun.chain.match = function(){ // same as path, except using objects
+		return this;
+	}
+	Gun.chain.blank = function(blank){
+		this._.chain.blank = Gun.fns.is(blank)? blank : function(){};
+		return this;
+	}
+	Gun.chain.dud = function(dud){
+		this._.chain.dud = Gun.fns.is(dud)? dud : function(){};
+		return this;
+	}
+	Gun.fns = {};
+	Gun.fns.is = function(fn){ return (fn instanceof Function)? true : false }
+	Gun.bi = {};
+	Gun.bi.is = function(b){ return (b instanceof Boolean || typeof b == 'boolean')? true : false }
+	Gun.num = {};
+	Gun.num.is = function(n){
+		return ((n===0)? true : (!isNaN(n) && !Gun.bi.is(n) && !Gun.list.is(n) && !Gun.text.is(n))? true : false );
+	}
+	Gun.text = {};
+	Gun.text.is = function(t){ return typeof t == 'string'? true : false }
+	Gun.text.ify = function(t){
+		if(JSON){ return JSON.stringify(t) }
+		return (t && t.toString)? t.toString() : t;
+	}
+	Gun.text.random = function(l, c){
+		var s = '';
+		l = l || 24; // you are not going to make a 0 length random number, so no need to check type
+		c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghiklmnopqrstuvwxyz';
+		while(l > 0){ s += c.charAt(Math.floor(Math.random() * c.length)); l-- }
+		return s;
+	}
+	Gun.list = {};
+	Gun.list.is = function(l){ return (l instanceof Array)? true : false }
+	Gun.list.slit = Array.prototype.slice;
+	Gun.list.sort = function(k){ // create a new sort function
+		return function(A,B){
+			if(!A || !B){ return 0 } A = A[k]; B = B[k];
+			if(A < B){ return -1 }else if(A > B){ return 1 }
+			else { return 0 }
+		}
+	}
+	Gun.list.map = function(l, c, _){ return Gun.obj.map(l, c, _) }
+	Gun.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
+	Gun.obj = {};
+	Gun.obj.is = function(o){ return (o instanceof Object && !Gun.list.is(o) && !Gun.fns.is(o))? true : false }
+	Gun.obj.ify = function(o){
+		if(Gun.obj.is(o)){ return o }
+		try{o = JSON.parse(o);
+		}catch(e){o={}};
+		return o;
+	}
+	Gun.obj.copy = function(o){ // because http://web.archive.org/web/20140328224025/http://jsperf.com/cloning-an-object/2
+		return !o? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
+	}
+	Gun.obj.has = function(o, t){ return Object.prototype.hasOwnProperty.call(o, t) }
+	Gun.obj.map = function(l, c, _){
+		var u, i = 0, ii = 0, x, r, rr, f = Gun.fns.is(c),
+		t = function(k,v){
+			if(v !== u){
+				rr = rr || {};
+				rr[k] = v;
+				return;
+			} rr = rr || [];
+			rr.push(k);
+		};
+		if(Gun.list.is(l)){
+			x = l.length;
+			for(;i < x; i++){
+				ii = (i + Gun.list.index);
+				if(f){
+					r = _? c.call(_, l[i], ii, t) : c(l[i], ii, t);
+					if(r !== u){ return r }
+				} else {
+					//if(gun.test.is(c,l[i])){ return ii } // should implement deep equality testing!
+					if(c === l[i]){ return ii } // use this for now
+				}
+			}
+		} else {
+			for(i in l){
+				if(f){
+					if(Gun.obj.has(l,i)){
+						r = _? c.call(_, l[i], i, t) : c(l[i], i, t);
+						if(r !== u){ return r }
 					}
-				}) || [];
+				} else {
+					//if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
+					if(c === l[i]){ return i }
+				}
 			}
-			return r;
 		}
-		gun.ify.is = function(v){ // null, binary, number (!Infinity), text, or a ref.
+		return f? rr : Gun.list.index? 0 : -1;
+	}
+	Gun.time = {};
+	Gun.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
+	Gun.on = (function(){
+		function On(on){
+			var e = On.is(this)? this : events;
+			return e._ = e._ || {}, e._.on = Gun.text.ify(on), e;
+		}
+		On.is = function(on){ return (on instanceof On)? true : false }
+		On.split = function(){ return new On() }
+		On.sort = Gun.list.sort('i');
+		On.echo = On.prototype;
+		On.echo.on = On;
+		On.echo.emit = function(what){
+			var on = this._.on;
+			if(!on){ return }
+			this._.events = this._.events || {};
+			var e = this._.events[on] = this._.events[on] || (this._.events[on] = [])
+			, args = arguments;
+			if(!(this._.events[on] = Gun.list.map(e, function(hear, i, map){
+				if(!hear.as){ return }
+				map(hear);
+				hear.as.apply(hear, args);
+			}))){ delete this._.events[on] }
+		}
+		On.echo.event = function(as, i){
+			var on = this._.on, e;
+			if(!on || !as){ return }
+			this._.events = this._.events || {};
+			on = this._.events[on] = this._.events[on] || (this._.events[on] = []);
+			e = {as: as, i: i || 0, off: function(){ return !(e.as = false) }};
+			return on.push(e), on.sort(On.sort), e;
+		}
+		On.echo.once = function(as, i){
+			var on = this._.on, once = function(){
+				this.off();
+				as.apply(this, arguments);
+			}
+			return this.event(once, i);
+		}
+		var events = On.split();
+		return On;
+	}());
+	Gun.roulette = function(l, c){
+		var gun = Gun.is(this)? this : {};
+		if(gun._ && gun._.opt && gun._.opt.uuid){
+			if(Gun.fns.is(gun._.opt.uuid)){
+				return gun._.opt.uuid(l, c);
+			}
+			l = l || gun._.opt.uuid.length;
+		}
+		return Gun.text.random(l, c);
+	}
+	Gun.union = function(graph, prime){
+		var context = { nodes: {}};
+		Gun.obj.map(prime, function(node, id){
+			var vertex = graph[id];
+			if(!vertex){ // disjoint
+				context.nodes[node._[own.sym.id]] = graph[node._[own.sym.id]] = node;
+				return;
+			}
+			Gun.HAM(vertex, node, function(current, field, deltaValue){ // partial
+				vertex[field] = deltaValue; // vertex and current are the same
+				vertex._[own.sym.HAM][field] = node._[own.sym.HAM][field];
+			});
+		});
+	}
+	Gun.HAM = function(current, delta, some){ // TODO: BUG! HAM on sub-graphs has not yet been put into code, thus divergences could occur - this is alpha!
+		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){
+			if(machineState < incomingState){
+				// the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
+				return {amnesiaQuarantine: true}; 
+			}
+			if(incomingState < currentState){
+				// the incoming value is within the boundary of the machine's state, but not within the range.
+				return {quarantineState: true};
+			}
+			if(currentState < incomingState){
+				// the incoming value is within both the boundary and the range of the machine's state.
+				return {converge: true, incoming: true};
+			}
+			if(incomingState === currentState){
+				if(incomingValue === currentValue){ // Note: while these are practically the same, the deltas could be technically different
+					return {state: true};
+				}
+				/*
+					The following is a naive implementation, but will always work.
+					Never change it unless you have specific needs that absolutely require it.
+					If changed, your data will diverge unless you guarantee every peer's algorithm has also been changed to be the same.
+					As a result, it is highly discouraged to modify despite the fact that it is naive,
+					because convergence (data integrity) is generally more important.
+					Any difference in this algorithm must be given a new and different name.
+				*/
+				if(String(incomingValue) < String(currentValue)){ // String only works on primitive values!
+					return {converge: true, current: true};
+				}
+				if(String(currentValue) < String(incomingValue)){ // String only works on primitive values!
+					return {converge: true, incoming: true};
+				}
+			}
+			return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
+		}
+		var states = current._[own.sym.HAM] = current._[own.sym.HAM] || {} // TODO: need to cover the state of the node itself, not just the fields?
+		, deltaStates = delta._[own.sym.HAM];
+		Gun.obj.map(delta, function update(deltaValue, field){
+			if(field === Gun.sym.meta){ return }
+			if(!Gun.obj.has(current, field)){
+				some(current, field, deltaValue);
+				return;
+			}
+			var serverState = Gun.time.is();
+			// add more checks?
+			var state = HAM(serverState, deltaStates[field], states[field], deltaValue, current[field]);
+			if(state.err){
+				Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
+				return;
+			}
+			if(state.state || state.quarantineState || state.current){ return }
+			if(state.incoming){
+				some(current, field, deltaValue);
+				return;
+			}
+			if(state.amnesiaQuarantine){
+				Gun.schedule(deltaStates[field], function(){
+					update(deltaValue, field);
+				});
+			}
+		});
+	}
+	;(function(schedule){
+		schedule.waiting = [];
+		schedule.soonest = Infinity;
+		schedule.sort = Gun.list.sort('when');
+		schedule.set = function(future){
+			var now = Gun.time.is();
+			future = (future <= now)? 0 : (future - now);
+			clearTimeout(schedule.id);
+			schedule.id = setTimeout(schedule.check, future);
+		}
+		schedule.check = function(){
+			var now = Gun.time.is(), soonest = Infinity;
+			schedule.waiting.sort(schedule.sort);
+			schedule.waiting = Gun.list.map(schedule.waiting, function(wait, i, map){
+				if(!wait){ return }
+				if(wait.when <= now){
+					if(Gun.fns.is(wait.event)){
+						wait.event();
+					}
+				} else {
+					soonest = (soonest < wait.when)? soonest : wait.when;
+					map(wait);
+				}
+			}) || [];
+			schedule.set(soonest);
+		}
+		Gun.schedule = function(state, cb){
+			schedule.waiting.push({when: state, event: cb});
+			if(schedule.soonest < state){ return }
+			schedule.set(state);
+		}
+	}({}));
+	;(function(Serializer){
+		Gun.ify = function(data, gun){ // TODO: BUG: Modify lists to include HAM state
+			var gun = Gun.is(this)? this : {}
+			, context = {
+				nodes: {}
+				,seen: []
+				,_seen: []
+			}, nothing;
+			function ify(data, context, sub){
+				sub = sub || {};
+				sub.path = sub.path || '';
+				context = context || {};
+				context.nodes = context.nodes || {};
+				if((sub.simple = Gun.ify.is(data)) && !(sub._ && Gun.text.is(sub.simple))){
+					return data;
+				} else
+				if(Gun.obj.is(data)){
+					var value = {}, symbol = {}, seen
+					, err = {err: "Metadata does not support external or circular references at " + sub.path, meta: true};
+					context.root = context.root || value;
+					if(seen = ify.seen(context._seen, data)){
+						//Gun.log("seen in _", sub._, sub.path, data);
+						context.err = err;
+						return;
+					} else
+					if(seen = ify.seen(context.seen, data)){
+						//Gun.log("seen in data", sub._, sub.path, data);
+						if(sub._){
+							context.err = err;
+							return;
+						}
+						symbol = Gun.ify.id.call(gun, symbol, seen);
+						return symbol;
+					} else {
+						//Gun.log("seen nowhere", sub._, sub.path, data);
+						if(sub._){
+							context.seen.push({data: data, node: value});
+						} else {
+							value._ = Gun.ify.id.call(gun, {}, data);
+							context.seen.push({data: data, node: value});
+							context.nodes[value._[own.sym.id]] = value;
+						}
+					}
+					Gun.obj.map(data, function(val, field){
+						var subs = {path: sub.path + field + '.', _: sub._ || (field == own.sym.meta)? true : false };
+						val = ify(val, context, subs);
+						//Gun.log('>>>>', sub.path + field, 'is', val);
+						if(context.err){ return true }
+						if(nothing === val){ return }
+						// TODO: check field validity
+						value[field] = val;
+					});
+					if(sub._){ return value }
+					if(!value._ || !value._[own.sym.id]){ return }
+					symbol[own.sym.id] = value._[own.sym.id];
+					return symbol;
+				} else
+				if(Gun.list.is(data)){
+					var unique = {}, edges
+					, err = {err: "Arrays cause data corruption at " + sub.path, array: true}
+					edges = Gun.list.map(data, function(val, i, map){
+						val = ify(val, context, sub);
+						if(context.err){ return true }
+						if(!Gun.obj.is(val)){
+							context.err = err;
+							return true;
+						}
+						return Gun.obj.map(val, function(id, field){
+							if(field !== own.sym.id){
+								context.err = err;
+								return true;
+							}					
+							if(unique[id]){ return }
+							unique[id] = 1;
+							map(val);
+						});
+					});
+					if(context.err){ return }
+					return edges;
+				} else {
+					context.err = {err: "Data type not supported at " + sub.path, invalid: true};
+				}
+			}
+			ify.seen = function(seen, data){
+				// unfortunately, using seen[data] = true will cause false-positives for data's children
+				return Gun.list.map(seen, function(check){
+					if(check.data === data){ return check.node }
+				});
+			}
+			ify(data, context);
+			return context;
+		}
+		Gun.ify.id = function(to, from){
+			var gun = this;
+			to = to || {};
+			if(Gun.ify.id.is(from)){
+				to[own.sym.id] = from._[own.sym.id];
+				return to;
+			}
+			to[own.sym.id] = Gun.roulette.call(gun);
+			return to;
+		}		
+		Gun.ify.id.is = function(o){
+			if(o && o._ && o._[own.sym.id]){
+				return true;
+			}
+		}
+		Gun.ify.is = function(v){ // null, binary, number (!Infinity), text, or a ref.
 			if(v === null){ return true } // deletes
 			if(v === Infinity){ return false }
-			if(a.bi.is(v) 
-			|| a.num.is(v) 
-			|| a.text.is(v)){
+			if(Gun.bi.is(v) 
+			|| Gun.num.is(v) 
+			|| Gun.text.is(v)){
 				return true; // simple values
 			}
-			if(a.obj.is(v) && a.text.is(v[gun._.id])){ // ref
-				return true;
+			var yes;
+			if(yes = Gun.ify.is.id(v)){
+				return yes;
 			}
 			return false;
 		}
-		gun.ify.obj = function(v, val){
-			if(a.obj.is(val) && a.obj.is(v)){
-				a.obj(v).each(function(d, i){
-						if(a.gun.ham && a.gun.ham.call(g,n,p,v,w,val)){
-						
-						}
+		Gun.ify.is.id = function(v){
+			if(Gun.obj.is(v)){
+				var yes;
+				Gun.obj.map(v, function(id, field){
+					if(yes){ return yes = false }
+					if(field === own.sym.id && Gun.text.is(id)){
+						yes = id;
+					}
 				});
-			}
-			return v;
-		}
-		gun.ify.list = function(v, val){
-			var r;
-			r = a.list.is(val)? val.concat(v) : v;
-			r = a.list(r).each(function(r,i,t){t(r,1)})||{};
-			r = a.obj(r).each(function(w,r,t){t(r)})||[]; // idempotency of this over latency? TODO! INVESTIGATE!!
-			return r;
-		}
-		gun.duel = function(old,now){
-			a.obj(now).each(function(g,id){
-				if(!gun.is(g)){ return }
-				var c;
-				if(a.obj(old).has(id) && gun.is(c = old[id])){
-					a.obj(g).each(function(v,i){
-						
-					});
-				} else {
-					old[id] = g;
+				if(yes){
+					return yes;
 				}
+			}
+			return false;
+		}
+	}());
+	Gun.log = function(s, l){ 
+		console.log.apply(console, arguments);
+	}
+	own.sym = Gun.sym = {
+		id: '#'
+		,meta: '_'
+		,HAM: '>'
+	}
+	if(typeof window !== "undefined"){
+		window.Gun = Gun;
+	} else {
+		module.exports = Gun;
+	}
+}({}));
+
+;(function(Page){
+	if(!this.Gun){ return }
+	if(!window.JSON){ Gun.log("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
+	Gun.on('init').event(function(gun, opt){
+		Page.load = function(key, cb, opt){
+			cb = cb || function(){};
+			opt = opt || {};
+			Gun.obj.map(gun._.opt.peers, function(peer, url){
+				Page.ajax(url + '/' + key, null, function(data){
+					Gun.log('via', url, key, data);
+					// alert(data + data.hello + data.from + data._);
+					cb(null, data);
+				});
 			});
 		}
-		gun.bullet = function(p,v,w){
-			var b = {};
-			b[p] = v;
-			if(gun.ham && gun._.ham){
-				b._ = {};
-				b._[gun._.ham] = w || a.time.now();
+		Page.ajax = 
+		this.ajax = 
+		function(url, data, cb, opt){
+			/*
+				via Sockjs@1.0.0
+				Parts of the code are derived from various open source projects.
+				For code derived from Socket.IO by Guillermo Rauch see https://github.com/LearnBoost/socket.io/tree/0.6.17#readme.
+				Snippets derived from JSON-js by Douglas Crockford are public domain.
+				Snippets derived from jQuery-JSONP by Julian Aubourg, generic MIT license.
+				All other code is released on MIT license, see LICENSE.
+			*/
+			var u;
+			opt = opt || {};
+			if(data === u || data === null){
+				data = u;
+			} else {
+				try{data = JSON.stringify(data);
+				}catch(e){}
 			}
-			return b;
-		}
-		gun.fire = function(bullet,c,w,op){
-			bullet = bullet.what? bullet : {what: bullet};
-			bullet.where = c || bullet.where;
-			bullet.when = w || bullet.when;
-			if(!a.obj.is(bullet.what)){ return gun.fire.jam("No ammo.", bullet) }
-			if(!a.num.is(bullet.when)){ return gun.fire.jam("No time.", bullet) }
-			if(!a.text.is(bullet.where)){ return gun.fire.jam("No location.", bullet) }
-			bullet.how = bullet.how || {};
-			bullet.how.gun = op || 1;
-			theory.on(gun.event).emit(bullet);
-		}
-		gun.fire.jam = function(s,b){ if(b){ return console.log("Gun jam:",s,b) } console.log("Gun jam:",s) }
-		gun.shots = function(hear,s){ return theory.on(gun.event+(s?'.'+s:'')).event(hear) }
-		gun.event = 'gun';
-		gun.magazine = {};
-		return gun;
-	})();
-	/* 	Hypothetical Amnesia Machine 
-	
-		A thought experiment in efficient cause, linear time, and knowledge.
-		Suppose everything you will ever know in your life was already be stored
-		in your brain. Now suppose we have some machine, which delicately traverses
-		your mind and gives you amnesia about all these facts. You now no longer can
-		recall any of this knowledge because that information is disconnected from
-		all other pieces of knowledge - making it impossible for your mind to then
-		associate and thus remember things. But the curious fact is that all this
-		knowledge is still stored within your mind, it is just inaccessible.
-		
-		Now suppose, this amnesia machine is designed to unlock various bits of
-		that knowledge, making it connected again to other related tidbits and thus
-		making it accessible to you. This unlocking process is activated at some pre-
-		determined value, such as a timestamp. Can it really be said that this is
-		indistinguishable from the supposed flow of past, present, and future?
-		
-		Such that future information is not just unknown, but fundamentally does
-		not exist, and then by actions taken in the present is caused to be. As a
-		result of your senses, you then experience this effect, and thus 'learning'
-		that knowledge. Could we truly build a proof that reality is one way or the
-		other? But if we did, wouldn't that scurrying little machine just race across
-		our minds and assure it induces amnesia into our remembrance of its existence?
-		Nay, we cannot. We can only hypothesize about the existence of this crafty
-		device. For the blindness that it does shed upon us captivates our perception
-		of how the world really is, us forever duped into thinking time is linear.
-		
-		And here, in write and code, is this machine used and exploited. Holding
-		in its power the ability to quarantine and keep secret, until upon some
-		value, some condition, some scheme or rendition, does it raise its mighty
-		clutch of deception and expose the truth, shining in its radiance and glory,
-		all at the ease of making a single connection. Whereupon we do assure that
-		all conscious actors are agreed upon in a unified spot, synchronized in the
-		capacity to realize such beautiful information.
-	*/
-	a.gun._.ham = '>';
-	a.gun.ham = function(n,p,v,w){
-		if(!n){ return }
-		console.log("HAM:", n, p, v, w);
-		if(!a.text.is(p)){
-			if(a.obj.is(p) && p._){
-				a.obj(p).each(function(sv,i){
-					if(i === '_'){ return }
-					v = sv = a.gun.ham(n,i,sv, a.gun.ham.when(p._, i) || w); // works for now, but may not on other non-bullet objects
-					if(sv === u){
-						delete p[i];
-					} else {
-						p[i] = sv;
+			opt.method = (data? 'POST' : 'GET');
+			// unload?
+			opt.close = function(){
+				opt.done(true);
+			}
+			opt.done = opt.done || function(abort){
+				if(!opt.xhr){ return }
+				// unload?
+				try{opt.xhr.onreadystatechange = function(){};
+					opt.xhr.ontimeout = opt.xhr.onerror = 
+					opt.xhr.onprogress = opt.xhr.onload = null;
+				}catch(e){}
+				if(abort){
+					try{opt.xhr.abort();
+					}catch(e){}
+				}
+				opt.xhr = null;
+			}
+			opt.data = opt.data || function(d){
+				var t;
+				try{t = JSON.parse(d) || d;
+				}catch(e){
+					t = d;
+				}
+				if(cb){ cb(t) }
+			}
+			opt.chunk = function(status, text, force){
+				if(status !== 200){ return }
+				var d, b, p = 1;
+				while(p || force){
+					if(u !== d){ 
+						opt.data(d);
+						force = false;
 					}
-				});
-				return v;
+					b = text.slice(opt.i = opt.i || 0);
+					p = b.indexOf('\n') + 1;
+					d = p? b.slice(0, p - 1) : b;
+					opt.i += p;
+				}
 			}
-			return;
-		}
-		var val = a.gun.at(n,p)
-		, when, age, now, u, q;
-		q = p.replace('.',a.gun._.ham);
-		n._ = n._ || {};
-		n._[a.gun._.ham] = n._[a.gun._.ham] || {};
-		age = function(q){
-			if(!q){ return 0 }
-			var when = n._[a.gun._.ham][q];
-			if(when || when === 0){
-				return when;
+			opt.finish = function(status, text) {
+				opt.chunk(status, text, true);
+				opt.close(status === 200 ? 'network' : 'permanent');
 			}
-			return age(a.text(q).clip(a.gun._.ham,0,-1));
-		}
-		when = age(q);
-		v = (function(){
-			if(a.gun.ify.is(v)){ // simple values are directly resolved
-				return v;
-			} else
-			if(a.obj.is(v)){
-				if(a.obj.is(val)){ // resolve sub-values
-					var change = false;
-					a.obj(v).each(function(sv,i){
-						sv = a.gun.ham(n, (p+'.'+i), sv, w, val[i]); // TODO: BUG! Still need to deal with sub-value bullets resolving to container's age.
-						if(sv === u){ return }
-						change = true;
-						val[i] = sv;
-					});
-					if(change){
-						return v = val;
-					} else {
-						return;; // nothing new
+			opt.error = function(){
+				opt.finish(0, '');
+				opt.done();
+			}
+			opt.xhr = opt.xhr || (function(xhr){
+				try{xhr = new(window.XDomainRequest || window.XMLHttpRequest || window.ActiveXObject)('Microsoft.XMLHTTP');
+				}catch(e){}
+				if(window.ActiveXObject || window.XDomainRequest){
+					url += ((url.indexOf('?') === -1) ? '?' : '&') + 't='+(+new Date());
+				}
+				if(xhr && window.XDomainRequest){
+					xhr.ontimeout = xhr.onerror = opt.error;
+					xhr.onprogress = function(){
+						opt.chunk(200, (xhr || {}).responseText);
+					}
+					xhr.onload = function(){
+						opt.finish(200, (xhr || {}).responseText);
+						opt.done();
 					}
 				}
-				a.obj(v).each(function(sv,i){
-					sv = a.gun.ham(n, (p+'.'+i), sv, w, (val||{})[i]);
-					if(sv === u){ delete v[i] }
-				});
-				return v;
-			} else 
-			if(a.list.is(v)){
-				if(!a.list.is(val)){ // TODO: deal with this later.
-					return v;
+				return xhr;
+			}());
+			if(!opt.xhr){
+				opt.error();
+				return;
+			}
+			if(opt.cookies || opt.credentials || opt.withCredentials){
+				opt.xhr.withCredentials = true;
+			}
+			try{opt.xhr.open(opt.method, url, true);
+			} catch(e) {
+				opt.error();
+				return;
+			}
+			opt.xhr.onreadystatechange = function(){
+				if(!opt.xhr){ return }
+				var reply, status;
+				try{reply = opt.xhr.responseText;
+					status = opt.xhr.status;
+				}catch(e){}
+				if(status === 1223){ status = 204 }
+				if(opt.xhr.readyState === 3){
+					if(reply && 0 < reply.length){
+						opt.chunk(status, reply);
+					}
+				} else
+				if(opt.xhr.readyState === 4){
+					opt.finish(status, reply);
+					opt.done(false);
 				}
-				return v;
-			} else { // unknown matches are directly resolved
-				return;
 			}
-		})();
-		if(v === u){ return }
-		if(w < when){
-			console.log("new < old");
-			return;
-		} else
-		if(w === when){ // this needs to be updated also!
-			if(val === v || a.test.is(val,v) || a.text.ify(val) < a.text.ify(v)){
-				console.log("new === old");
-				return;
+			try{opt.xhr.send(data);
+			}catch(e){
+				opt.error();
 			}
-		} else
-		if((now = a.time.now() + 1) < w){ // tolerate a threshold of 1ms.
-			console.log("amnesia", Math.ceil(w - now));
-			/* Amnesia Quarantine */
-			a.time.wait(function(){
-				console.log("run again");
-				a.gun.call(n,p,v,w);
-			}, Math.ceil(w - now)); // crude implementation for now.
-			return;
+			return opt;
 		}
-		v = (function(){
-			if(a.obj.is(v)){
-				w = when; // objects are resolved relative to their previous values.
-			}
-			return v;
-		})();
-		n._[a.gun._.ham][q] = w; // if properties get deleted it may be nice to eventually delete the HAM, but that could cause problems so we don't for now.
-		// ps. It may be possible to delete simple values if they are not proceeded by an object?
-		return v;
-	}
-	a.gun.ham.when = function(w, i){
-		var h;
-		if(w && w._){
-			w = w._;
-		}
-		if(w && (h = w[a.gun._.ham])){
-			if(a.obj(h).has(i)){
-				return h[i];
-			}
-			if(a.num.is(h)){
-				return h;
-			}
-		}
-	}
-	return a.gun;
-});
+		gun._.opt.hook.load = gun._.opt.hook.load || Page.load;
+	});
+}({}));

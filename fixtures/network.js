@@ -5,9 +5,24 @@ var users = require('./users.json').results
   , chance = new Chance(1234)
   , b
   , d = Date.now()
-  , num = 10000
+  , num = 50
   ;
 
+users = users.map(function(user){
+	user = user.user;
+	user._ = user._ || {};
+	user._['#'] = user.sha1;
+	user.first = user.name.first;
+	user.last = user.name.last;
+	user.title = user.name.title;
+	delete user.name;
+	user.zip = user.location.zip;
+	user.street = user.location.street;
+	user.city = user.location.city;
+	user.state = user.location.state;
+	delete user.location;
+	return user;
+})  
 users = chance.shuffle(users).slice(0, num);
 b = chance.shuffle(users.slice(0));
 b.forEach(function (user, i) {
@@ -15,6 +30,12 @@ b.forEach(function (user, i) {
     console.log((Date.now() - d) / 1000, i);
     d = Date.now();
   }
-  user.friends = chance.shuffle(users).slice(chance.integer({ min: 20, max: 120 }));
+  user.friends = chance.shuffle(users).slice(chance.integer({ min: 20, max: (num < 120)? num : 120 }));
 });
+
+var gun = require('../test/shotgun');
+
+gun.set(b[0]);
+
+console.log(b[1], b[1].friends.length);
 console.log((Date.now() - d) / 1000, num);
