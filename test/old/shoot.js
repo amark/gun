@@ -1,7 +1,7 @@
 module.exports=require('theory')
 ('shoot',function(a){
 	if(root.node){
-		var shot = require('../shots')({src: a.com, batch: 999}).pump(function(g, m, done){
+		var shot = require('../../shots0')({src: a.com, batch: 999}).pump(function(g, m, done){
 			console.log('>>> pump!');
 			done();
 		});
@@ -195,4 +195,4 @@ module.exports=require('theory')
 		},'.field');
 	});
 	return shot.spray;
-},['../shot']);
+},['../../shot0']);

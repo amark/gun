@@ -61,7 +61,7 @@
 			if(!a.fns.is(cb)){ return }
 			try{ cb(e,d,t,m,r);
 			}catch(e){
-				console.log(e)
+				console.log(e);
 			}
 		});
 		s.batch = s.batch || {};
@@ -118,7 +118,7 @@
 		}
 		this.S3().listObjects(m, function(e,r){
 			//console.log('list',e);
-			a.list.each((r||{}).Contents, function(v){console.log(v);});
+			a.list.each((r||{}).Contents, function(v){console.log(v)});
 			//console.log('---end list---');
 			if(!a.fns.is(cb)) return;
 			cb(e,r);
@@ -126,4 +126,4 @@
 		return this;
 	}
 	return s3;
-})(require('../gun2'), {});
+})(require('../gun'), {});

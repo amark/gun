@@ -7,7 +7,7 @@ sign.user.create = function(form, cb, shell){ // TODO: REDO THIS TO MATCH GUN
 		if(err || !user){ return cb(err) }
 		user = {key: user.key, salt: user.salt};
 		user.account = {email: form.email, registered: new Date().getTime()};
-		gun.set(user).index('email/' + user.account.email);
+		gun.set(user).key('email/' + user.account.email);
 		cb(null, user);
 	});
 };
@@ -22,20 +22,20 @@ gun.load('email/mark@accelsor.com')
 		sendEmail("Mark wants to leanr how ot surf, and you are a friend of a friend");
 	});
 */
-
-/*
-gun.load()
-
-here is a bunch of node indices
-now for each combinatoric pair
-find all possible paths between them
-*/
 	
 sign.server = function(req, res){
-	console.log("sign.server", req.body);
+	console.log("sign.server", req.headers, req.body);
+	res.emit('data', {ok: 1});
+	res.emit('data', {ok: 2});
+	res.emit('data', {ok: 3});
+	res.emit('data', {ok: 4});
+	setTimeout(function(){
+		res.emit('end', {ok: 5});
+	}, 5000);
+	return;
 	if(!req.body || !req.body.email){ return res.emit('end', {err: "That email does not exist."}) }
 	var user = gun.load('email/' + req.body.email, function(data){ // this callback is called the magazine, since it holds the clip
-		console.log("data from index", data);
+		console.log("data from key", data);
 		if(!req.body.password){
 			return res.emit('end', {ok: 'sign in'});
 		}

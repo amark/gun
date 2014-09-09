@@ -1,5 +1,5 @@
 describe('Gun', function(){
-	var Gun = require('../gun2');
+	var Gun = require('../gun');
 	
 	it('ify', function(){
 		var data, test;
@@ -63,8 +63,8 @@ describe('Gun', function(){
 	it('path', function(done){
 		this.timeout(9000);
 		var gun = require('./shotgun');
-		gun.load('email/mark@accelsor.com')
-			.path('account.email')
+		gun.load('d1ed426098eae2bba8c60605e1e4552f66281770', null, {id: true}) // get Rodney Morris
+			.path('parent.parent.first') // Rodney's parent is Juan Colon, whose parent is Francis Peters
 		.get(function(val){
 			console.log("val!", val);
 			done();
