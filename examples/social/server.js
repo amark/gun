@@ -1,7 +1,11 @@
 var fs = require('fs');
 var http = require('http');
 var qs = require('querystring');
-var gun = require('../../test/shotgun');
+var Gun = require('gun');
+var gun = Gun({
+	peers: 'http://localhost:8888/gun'
+	,s3: require('../../test/shotgun') // replace this with your own keys!
+});
 
 http.route = function(url){
 	console.log(url);

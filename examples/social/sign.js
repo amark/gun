@@ -1,8 +1,12 @@
 var sign = {};
-var gun = require('../../test/shotgun');
+var Gun = require('gun');
+var gun = Gun({
+	peers: 'http://localhost:8888/gun'
+	,s3: require('../../test/shotgun') // replace this with your own keys!
+});
 
 sign.user = {}
-sign.user.create = function(form, cb, shell){ // TODO: REDO THIS TO MATCH GUN
+sign.user.create = function(form, cb, shell){
 	sign.crypto(form, function(err, user){
 		if(err || !user){ return cb(err) }
 		user = {key: user.key, salt: user.salt};
@@ -11,28 +15,9 @@ sign.user.create = function(form, cb, shell){ // TODO: REDO THIS TO MATCH GUN
 		cb(null, user);
 	});
 };
-
-/*
-gun.load('email/mark@accelsor.com')
-	.path('friends')
-	.match({name: "David Oliveros"})
-	.path('friends')
-	.match({activity: 'surfer'})
-	.get(function(surfer){
-		sendEmail("Mark wants to leanr how ot surf, and you are a friend of a friend");
-	});
-*/
 	
 sign.server = function(req, res){
 	console.log("sign.server", req.headers, req.body);
-	/*res.emit('data', {ok: 1});
-	res.emit('data', {ok: 2});
-	res.emit('data', {ok: 3});
-	res.emit('data', {ok: 4});
-	setTimeout(function(){
-		res.emit('end', {ok: 5});
-	}, 5000);
-	return;*/
 	if(!req.body || !req.body.email){ return res.emit('end', {err: "That email does not exist."}) }
 	var user = gun.load('email/' + req.body.email, function(data){ // this callback is called the magazine, since it holds the clip
 		console.log("data from key", data);

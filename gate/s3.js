@@ -67,7 +67,7 @@
 		s.batch = s.batch || {};
 		if(s.batch[id]){ return s }
 		s.batch[id] = (s.batch[id] || 0) + 1;
-		console.log("no batch!", id);
+		console.log("no batch!");
 		s.S3().getObject(m, function(e,r){
 			var d, t, m, r = r || (this && this.httpResponse);
 			if(e || !r){ return s.own.on(id).emit(e) }

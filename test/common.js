@@ -62,7 +62,9 @@ describe('Gun', function(){
 	
 	it('path', function(done){
 		this.timeout(9000);
-		var gun = require('./shotgun');
+		var gun = require('gun')({
+			s3: require('./shotgun') // replace this with your own keys!
+		});
 		gun.load('d1ed426098eae2bba8c60605e1e4552f66281770', null, {id: true}) // get Rodney Morris
 			.path('parent.parent.first') // Rodney's parent is Juan Colon, whose parent is Francis Peters
 		.get(function(val){

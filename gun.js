@@ -9,53 +9,64 @@
 	Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
 	Gun._ = {};
 	Gun.chain = Gun.prototype;
-	Gun.chain._ = {};
-	Gun.chain._.opt = {};
-	Gun.chain._.nodes = {};
-	Gun.chain._.chain = {};
-	Gun.chain._.trace = [];
-	Gun.chain._.keys = {};
 	Gun.chain.init = function(opt, stun){ // idempotently update or set options
 		var gun = this;
-		gun._.events = gun._.events || Gun.on.split(); // we may not want it global for each gun instance?
-		gun._.events.trace = gun._.events.trace || 0;
-		gun._.events.at = gun._.events.at || 0;
+		gun._ = gun._ || {};
+		gun.__ = gun.__ || {};
+		if(!opt){ return gun }
+		gun.__.opt = gun.__.opt || {};
+		gun.__.keys = gun.__.keys || {};
+		gun.__.nodes = gun.__.nodes || {};
 		if(Gun.text.is(opt)){ opt = {peers: opt} }
 		if(Gun.list.is(opt)){ opt = {peers: opt} }
 		if(Gun.text.is(opt.peers)){ opt.peers = [opt.peers] }
 		if(Gun.list.is(opt.peers)){ opt.peers = Gun.obj.map(opt.peers, function(n,f,m){ m(n,{}) }) }
-		gun._.opt.peers = opt.peers || gun._.opt.peers || {};
-		gun._.opt.uuid = opt.uuid || gun._.opt.uuid || {};
-		gun._.opt.hook = gun._.opt.hook || {};
+		gun.__.opt.peers = opt.peers || gun.__.opt.peers || {};
+		gun.__.opt.uuid = opt.uuid || gun.__.opt.uuid || {};
+		gun.__.opt.hook = gun.__.opt.hook || {};
 		Gun.obj.map(opt.hook, function(h, f){
 			if(!Gun.fns.is(h)){ return }
-			gun._.opt.hook[f] = h;
+			gun.__.opt.hook[f] = h;
 		});
 		if(!stun){ Gun.on('init').emit(gun, opt) }
 		return gun;
 	}
+	Gun.chain.chain = function(from){
+		var gun = Gun();
+		from = from || this;
+		gun.__ = from.__;
+		gun._ = {};
+		Gun.obj.map(from._, function(val, field){
+			gun._[field] = val;
+		});
+		gun._.events = Gun.on.split(); // we want events per chain
+		gun._.events.trace = gun._.events.trace || 0;
+		gun._.events.at = gun._.events.at || 0;
+		return gun;
+	}
 	Gun.chain.load = function(key, cb, opt){
-		var gun = this;
+		var gun = this.chain();
 		cb = cb || function(){};
-		if(cb.node = gun._.keys[key]){ // set this to the current node, too!
+		if(cb.node = gun.__.keys[key]){ // set this to the current node, too!
 			Gun.log("from gun"); // remember to do all the same stack stuff here also!
 			return cb(Gun.obj.copy(gun._.node = cb.node)), gun; // TODO: BUG: This needs to be frozen/copied, and react the same as below!
 		}
 		cb.fn = function(){}
 		gun._.key = key;
 		// missing: hear shots!
-		if(Gun.fns.is(gun._.opt.hook.load)){
-			gun._.opt.hook.load(key, function(err, data){
+		if(Gun.fns.is(gun.__.opt.hook.load)){
+			gun.__.opt.hook.load(key, function(err, data){
 				gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
-				if(err){ return (gun._.chain.dud||cb.fn)(err) }
-				if(!data){ return (gun._.chain.blank||cb.fn)() }
-				var nodes = {}, node;
-				nodes[data._[own.sym.id]] = data;// missing: transform data, merging it! NO, THIS IS DONE WRONG, do a real check.
-				Gun.union(gun._.nodes, nodes);
-				node = gun._.keys[key] = gun._.nodes[data._[own.sym.id]];
-				cb(Gun.obj.copy(gun._.node = node));
-				gun._.events.on(gun._.events.at += 1).emit(node);
-				gun._.events.at = 0; // ???? reset it back once everything is done?
+				if(err){ return (gun._.dud||cb.fn)(err) }
+				if(!data){ return (gun._.blank||cb.fn)() }
+				var context = {nodes: {}};
+				context.nodes[data._[own.sym.id]] = data;
+				context = Gun.chain.set.now.union.call(gun, context.nodes); // data safely transformed
+				if(context.err){ return (gun._.dud||cb.fn)(context.err) }
+				gun._.node = gun.__.keys[key] = gun.__.nodes[data._[own.sym.id]];
+				cb(Gun.obj.copy(gun._.node));
+				gun._.events.on(gun._.events.at += 1).emit(gun._.node);
+				gun._.events.at = 0; // ???? reset it back once everything is done? the returns above don't allow for this.
 			}, opt);
 		} else {
 			Gun.log("Warning! You have no persistence layer to load from!");
@@ -65,9 +76,9 @@
 	Gun.chain.key = function(key, cb){ // TODO: Need to setImmediate if not loaded yet?
 		Gun.log("make key", key);
 		cb = cb || function(){};
-		this._.keys[key] = this._.node;
-		if(Gun.fns.is(this._.opt.hook.key)){
-			this._.opt.hook.key(key, this._.node, function(err, data){
+		this.__.keys[key] = this._.node;
+		if(Gun.fns.is(this.__.opt.hook.key)){
+			this.__.opt.hook.key(key, this._.node, function(err, data){
 				Gun.log("key made", key);
 				if(err){ return cb(err) }
 				return cb(null);
@@ -78,9 +89,9 @@
 		return this;
 	}
 	Gun.chain.path = function(path){ // The focal point follows the path
-		var gun = this;
+		var gun = this.chain();
 		path = path.split('.');
-		Gun.log("PATH stack trace", gun._.events.trace + 1);
+		Gun.log("PATH stack trace", gun._.events.trace + 1, 'was it before loaded?', this._);
 		gun._.events.on(gun._.events.trace += 1).event(function trace(node){
 			Gun.log("stack at", gun._.events.at);
 			if(!path.length){ // if the path resolves to another node, we finish here
@@ -104,9 +115,9 @@
 				}
 			}
 		});
-		if(gun._.loaded){
+		if(this._.loaded){ // this was the previous chain, gun is the new one
 			console.log("Send off!", gun._.events.at + 1);
-			gun._.events.on(gun._.events.at += 1).emit(gun._.node);
+			gun._.events.on(gun._.events.at += 1).emit(this._.node);
 		}
 		return gun;
 	}
@@ -130,7 +141,8 @@
 			The live state at point of confirmation may or may not be different than when it was called.
 			If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 	*/
-	Gun.chain.set = function(val, cb){ // TODO: set failed miserably to catch depth references in social tests
+	Gun.chain.set = function(val, cb, opt){ // TODO: set failed miserably to catch depth references in social tests
+		opt = opt || {};
 		var gun = this, set;
 		if(gun._.field){ // a field cannot be 0!
 			set = {}; // in case we are doing a set on a field, not on a node
@@ -144,10 +156,10 @@
 		if(set.err){ return cb(set.err), gun }
 		set = gun.set.now(set.nodes, Gun.time.is()); // set time state on nodes?
 		if(set.err){ return cb(set.err), gun }
-		Gun.union(gun._.nodes, set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
-		gun._.node = gun._.nodes[cb.root._[own.sym.id]] || cb.root; // TODO? Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
-		if(Gun.fns.is(gun._.opt.hook.set)){
-			gun._.opt.hook.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+		Gun.union(gun.__.nodes, set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
+		gun._.node = gun.__.nodes[cb.root._[own.sym.id]] || cb.root; // TODO? Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
+		if(Gun.fns.is(gun.__.opt.hook.set)){
+			gun.__.opt.hook.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
 				Gun.log("gun set hook callback called");
 				if(err){ return cb(err) }
 				return cb(null);
@@ -174,15 +186,34 @@
 		});
 		return context;
 	}
+	Gun.chain.set.now.union = function(prime){
+		var gun = Gun.is(this)? this : null
+		,	context = {nodes: {}};
+		if(!gun){
+			context.err = {err: "No gun instance!", corrupt: true};
+			return context;
+		}
+		Gun.obj.map(prime, function(node){
+			var set = Gun.ify.call(gun, node);
+			if(set.err){ return context.err = set.err }
+			Gun.obj.map(set.nodes, function(node, id){
+				context.nodes[id] = node;
+				console.log("Gun set.now.union ----->", node);
+			});
+		});
+		if(context.err){ return context }
+		Gun.union(gun.__.nodes, context.nodes); // need to move good primes onto context.nodes;
+		return context;
+	}
 	Gun.chain.match = function(){ // same as path, except using objects
 		return this;
 	}
 	Gun.chain.blank = function(blank){
-		this._.chain.blank = Gun.fns.is(blank)? blank : function(){};
+		this._.blank = Gun.fns.is(blank)? blank : function(){};
 		return this;
 	}
 	Gun.chain.dud = function(dud){
-		this._.chain.dud = Gun.fns.is(dud)? dud : function(){};
+		this._.dud = Gun.fns.is(dud)? dud : function(){};
 		return this;
 	}
 	Gun.fns = {};
@@ -311,11 +342,11 @@
 	}());
 	Gun.roulette = function(l, c){
 		var gun = Gun.is(this)? this : {};
-		if(gun._ && gun._.opt && gun._.opt.uuid){
-			if(Gun.fns.is(gun._.opt.uuid)){
-				return gun._.opt.uuid(l, c);
+		if(gun._ && gun.__.opt && gun.__.opt.uuid){
+			if(Gun.fns.is(gun.__.opt.uuid)){
+				return gun.__.opt.uuid(l, c);
 			}
-			l = l || gun._.opt.uuid.length;
+			l = l || gun.__.opt.uuid.length;
 		}
 		return Gun.text.random(l, c);
 	}
@@ -379,6 +410,7 @@
 			var serverState = Gun.time.is();
 			// add more checks?
 			var state = HAM(serverState, deltaStates[field], states[field], deltaValue, current[field]);
+			console.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
 			if(state.err){
 				Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
 				return;
@@ -428,7 +460,7 @@
 		}
 	}({}));
 	;(function(Serializer){
-		Gun.ify = function(data, gun){ // TODO: BUG: Modify lists to include HAM state
+		Gun.ify = function(data){ // TODO: BUG: Modify lists to include HAM state
 			var gun = Gun.is(this)? this : {}
 			, context = {
 				nodes: {}
@@ -586,7 +618,7 @@
 		Page.load = function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
-			Gun.obj.map(gun._.opt.peers, function(peer, url){
+			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				Page.ajax(url + '/' + key, null, function(data){
 					Gun.log('via', url, key, data);
 					// alert(data + data.hello + data.from + data._);
@@ -594,8 +626,18 @@
 				});
 			});
 		}
+		Page.set = function(nodes, cb){
+			cb = cb || function(){};
+			// TODO: batch and throttle later.
+			console.log('ajax set', nodes);
+			Gun.obj.map(gun.__.opt.peers, function(peer, url){
+				Page.ajax(url, nodes, function(reply){
+					console.log("set confirmed?", reply);
+				});
+			});
+		}
 		Page.ajax = 
-		this.ajax = 
+		window.ajax = 
 		function(url, data, cb, opt){
 			/*
 				via Sockjs@1.0.0
@@ -611,6 +653,8 @@
 				data = u;
 			} else {
 				try{data = JSON.stringify(data);
+					opt.headers = opt.headers || {};
+					opt.headers["Content-Type"] = "application/json;charset=utf-8";
 				}catch(e){}
 			}
 			opt.method = (data? 'POST' : 'GET');
@@ -686,11 +730,6 @@
 			if(opt.cookies || opt.credentials || opt.withCredentials){
 				opt.xhr.withCredentials = true;
 			}
-			try{opt.xhr.open(opt.method, url, true);
-			} catch(e) {
-				opt.error();
-				return;
-			}
 			opt.xhr.onreadystatechange = function(){
 				if(!opt.xhr){ return }
 				var reply, status;
@@ -708,12 +747,29 @@
 					opt.done(false);
 				}
 			}
+			try{opt.xhr.open(opt.method, url, true);
+			} catch(e) {
+				opt.error();
+				return;
+			}
+			if(opt.headers){
+				try{for(var i in opt.headers){
+					  if(opt.headers.hasOwnProperty(i)){
+						opt.xhr.setRequestHeader(i, opt.headers[i]);
+					  }
+					}
+				} catch(e) {
+					opt.error();
+					return;
+				}
+			}
 			try{opt.xhr.send(data);
 			}catch(e){
 				opt.error();
 			}
 			return opt;
 		}
-		gun._.opt.hook.load = gun._.opt.hook.load || Page.load;
+		gun.__.opt.hook.load = gun.__.opt.hook.load || Page.load;
+		gun.__.opt.hook.set = gun.__.opt.hook.set || Page.set;
 	});
 }({}));
