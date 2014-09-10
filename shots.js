@@ -83,7 +83,7 @@
 				key = s3.prefix + s3.prekey + key;
 			}
 			s3.get(key, function(err, data, text, meta){
-				console.log('via s3', key);
+				console.log('via s3', key, (err || data));
 				if(meta && (key = meta[Gun.sym.id])){
 					return s3.load(key, cb, {id: true});
 				}
