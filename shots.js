@@ -4,52 +4,83 @@
 	, url = require('url')
 	, meta = {};
 	Gun.on('init').event(function(gun, opt){
-		gun.server = gun.server || function(req, res){ // where is the data? is it JSON? declare contentType=JSON from client?
-			console.log("gun server has requests!", req.headers, req.body, req.url, req.method);
+		gun.server = gun.server || function(req, res, next){ // where is the data? is it JSON? declare contentType=JSON from client?
 			/*meta.CORS(req, res);
 			res.emit('data', {way: 'cool'});
 			res.emit('data', {shish: 'kabob'});
 			res.emit('data', {I: 'love'});
 			res.end();
 			return;*/
-			if(!req || !res){ return }
-			if(!req.url){ return }
-			if(!req.method){ return }
+			next = next || function(){};
+			if(!req || !res){ return next() }
+			if(!req.url){ return next() }
+			if(!req.method){ return next() }
 			var tmp = {};
 			tmp.url = url.parse(req.url, true);
-			if(!gun.server.regex.test(tmp.url.pathname)){ return }
-			tmp.key = tmp.url.pathname.replace(gun.server.regex,'').replace(/^\//i,''); // strip the base
-			if(!tmp.key){
-				return meta.JSON(res, {gun: true});
+			if(!gun.server.regex.test(tmp.url.pathname)){ return next() }
+			tmp.key = tmp.url.pathname.replace(gun.server.regex,'') || '';
+			if(tmp.key.toLowerCase() === '.js'){
+				res.writeHead(200, {'Content-Type': 'text/javascript'});
+				res.end(gun.server.js = gun.server.js || require('fs').readFileSync(__dirname + '/gun.js'));
+				return;
 			}
-			if('get' === req.method.toLowerCase()){ // get is used as subscribe
-				// raw test for now:
-				s3.load(tmp.key, function(err, data){
+			console.log("\ngun server has requests!", req.method, req.url, req.headers, req.body);
+			tmp.key = tmp.key.replace(/^\//i,'') || ''; // strip the base
+			tmp.method = (req.method||'').toLowerCase();
+			if('get' === tmp.method){ // get is used as subscribe
+				if(!tmp.key){
+					return meta.JSON(res, {gun: true});
+				}
+				// raw test for now, no auth:
+				gun.load(tmp.key, function(err, data){
 					console.log("gun subscribed!", err, data);
 					meta.CORS(req, res);
 					return meta.JSON(res, data || err);
 				})
 			} else
-			if('post' === req.method.toLowerCase()){ // post is used as patch, sad that patch has such poor support
-				
+			if('post' === tmp.method || 'patch' === tmp.method){ // post is used as patch, sad that patch has such poor support
+				if(!req.body){
+					console.log("Warn: No body on POST?");
+				}
+				// raw test for now, no auth:
+				// should probably load all the nodes first?
+				var context = Gun.chain.set.now.union.call(gun, req.body); // data safely transformed
+				if(context.err){
+					return meta.JSON(res, context.err); // need to standardize errors more
+				}
+				console.log("-------- union ---------");Gun.obj.map(gun.__.nodes, function(node){ console.log(node); });console.log("------------------------");
+				/*
+					WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
+				*/
+				if(Gun.fns.is(gun.__.opt.hook.set)){
+					gun.__.opt.hook.set(context.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+						if(err){ 
+							return meta.JSON(res, {err: err}); // server should handle the error for the client first! Not force client to re-attempt.
+						}
+						meta.JSON(res, {ok: 1}); // need to standardize OKs, OK:1 not good.
+					});
+				} else {
+					context.err = "Warning! You have no persistence layer to save to!";
+					Gun.log(context.err);
+				}
 			}
 		}
 		gun.server.regex = /^\/gun/i;
-		var s3 = gun._.opt.s3 = gun._.opt.s3 || S3(opt && opt.s3);
-		s3.path = s3.path || opt.s3.path || '';
-		s3.keyed = s3.keyed || opt.s3.keyed || '';
-		s3.nodes = s3.nodes || opt.s3.nodes || '_/nodes/';
-		gun._.opt.batch = opt.batch || gun._.opt.batch || 10;
-		gun._.opt.throttle = opt.throttle || gun._.opt.throttle || 2;
-		if(!gun._.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
+		var s3 = gun.__.opt.s3 = gun.__.opt.s3 || S3(opt && opt.s3);
+		s3.prefix = s3.prefix || opt.s3.prefix || '';
+		s3.prekey = s3.prekey || opt.s3.prekey || '';
+		s3.prenode = s3.prenode || opt.s3.prenode || '_/nodes/';
+		gun.__.opt.batch = opt.batch || gun.__.opt.batch || 10;
+		gun.__.opt.throttle = opt.throttle || gun.__.opt.throttle || 2;
+		if(!gun.__.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
 		
 		s3.load = s3.load || function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
 			if(opt.id){ 
-				key = s3.path + s3.nodes + key;
+				key = s3.prefix + s3.prenode + key;
 			} else { 
-				key = s3.path + s3.keyed + key;
+				key = s3.prefix + s3.prekey + key;
 			}
 			s3.get(key, function(err, data, text, meta){
 				console.log('via s3', key);
@@ -83,13 +114,13 @@
 					}
 				});
 			});
-			if(gun._.opt.batch < s3.batching){
+			if(gun.__.opt.batch < s3.batching){
 				return s3.set.now();
 			}
-			if(!gun._.opt.throttle){
+			if(!gun.__.opt.throttle){
 				return s3.set.now();
 			}
-			s3.wait = s3.wait || setTimeout(s3.set.now, gun._.opt.throttle * 1000); // in seconds
+			s3.wait = s3.wait || setTimeout(s3.set.now, gun.__.opt.throttle * 1000); // in seconds
 		}
 		s3.set.now = s3.set.now || function(){
 			clearTimeout(s3.wait);
@@ -99,8 +130,8 @@
 			, batch = s3.batch[s3.next];
 			s3.next = Gun.time.is();	
 			Gun.obj.map(batch, function put(exists, id){
-				var node = gun._.nodes[id]; // the batch does not actually have the nodes, but what happens when we do cold data? Could this be gone?
-				s3.put(s3.path + s3.nodes + id, node, function(err, reply){
+				var node = gun.__.nodes[id]; // the batch does not actually have the nodes, but what happens when we do cold data? Could this be gone?
+				s3.put(s3.prefix + s3.prenode + id, node, function(err, reply){
 					console.log("s3 put reply", id, err, reply);
 					if(err || !reply){
 						put(exists, id); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
@@ -123,7 +154,7 @@
 			if(!id){
 				return cb({err: "No ID!"});
 			}
-			s3.put(s3.path + s3.keyed + key, '', function(err, reply){ // key is 2 bytes??? Should be smaller
+			s3.put(s3.prefix + s3.prekey + key, '', function(err, reply){ // key is 2 bytes??? Should be smaller
 				console.log("s3 put reply", id, err, reply);
 				if(err || !reply){
 					s3.key(key, node, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!

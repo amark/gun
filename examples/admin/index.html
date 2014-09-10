@@ -3,9 +3,6 @@
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.js"></script>
-		<!--
-		<script src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
-		-->
 		<script src="../../gun.js"></script>
 	</head>
 	<body ng-controller="editor">
@@ -37,9 +34,6 @@
 				<div ng-if="key != '_'">
 					<b>{{key}}</b>:
 					<span contenteditable="true" gun>{{val}}</span>
-					<!--
-					<br>{{key}}: {{val}}
-					-->
 				</div>
 			</li>
 			<li>
@@ -53,31 +47,32 @@
 			</li>
 		</ul>
 		<script>
-		gun = Gun('http://localhost:8888/gun');
-		angular.module('admin', [
-		
-		]).controller('editor', function($scope){
-			$scope.data = {};
-			$scope.$data = gun.load('blob/data', function(data){
-				console.log("got it", data);
-				$scope.data = data;
-				$scope.$apply();
-			});
-			$scope.add = function(a,b,c){
-				$scope.$data.path($scope.field).set(
-					$scope.data[$scope.field] = 'value'
-				);
-				$scope.field = '';
-			};
-			window.$data = $scope.$data;
-		}).directive('gun', function(){
-			return function(scope, elem){
-				elem.on('keyup', function(){
-					scope.data[scope.key] = elem.text();
-					scope.$apply();
+			gun = Gun(['http://localhost:8888/gun', 'http://gunjs.herokuapp.com/gun']);
+			angular.module('admin', [
+			
+			]).controller('editor', function($scope){
+				$scope.data = {};
+				$scope.$data = gun.load('blob/data', function(data){
+					$scope.data = data;
+					$scope.$apply();
 				});
-			};
-		});
+				$scope.add = function(a,b,c){
+					$scope.$data.path($scope.field).set(
+						$scope.data[$scope.field] = 'value'
+					);
+					$scope.field = '';
+				};
+				window.$data = $scope.$data;
+			}).directive('gun', function(){
+				return function(scope, elem){
+					elem.on('keyup', function(){
+						scope.$data.path(scope.key).set(
+							scope.data[scope.key] = elem.text()
+						);
+						scope.$apply();
+					});
+				};
+			});
 		</script>
 	</body>
 </html>

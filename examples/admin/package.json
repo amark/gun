@@ -1,0 +1,9 @@
+{
+	"name": "admin",
+	"main": "app.js",
+	"dependencies": {
+		"express": "~>4.9.0",
+		"body-parser": "~>1.8.1",
+		"gun": "~>0.0.2b"
+	}
+}

@@ -33,7 +33,9 @@ b.forEach(function (user, i) {
   user.friends = chance.shuffle(users).slice(chance.integer({ min: 20, max: (num < 120)? num : 120 }));
 });
 
-var gun = require('../test/shotgun');
+var gun = require('gun')({
+	s3: require('../test/shotgun') // replace this with your own keys!
+});
 
 gun.set(b[0]);
 
