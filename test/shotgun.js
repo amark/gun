@@ -8,6 +8,9 @@ if(process.env.LIVE || (process.env.NODE_ENV === 'production')){
 	}
 }
 
+keys = keys || {};
+keys.bucket = keys.bucket || 'gunjs.herokuapp.com';
+
 module.exports = keys || {};
 /*
 var Gun = require('../shots');
