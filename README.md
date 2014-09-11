@@ -40,7 +40,7 @@ var gun = Gun({
   	secret: '', // AWS Secret Token
   	bucket: '' // The bucket you want to save into
 }});
-gun.set({ hello: 'world' }).key('my/first/data')
+gun.set({ hello: 'world' }).key('my/first/data');
 
 var http = require('http');
 http.createServer(function (req, res) {
