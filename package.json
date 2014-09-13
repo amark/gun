@@ -10,9 +10,6 @@
     "aws-sdk": "~>2.0.0",
 	"request": "~>2.39.0"
   }
-, "devDependencies": {
-	"chance": "~>2.39.0"
-}
 , "scripts": {
         "start": "node init.js",
         "test": "mocha"
