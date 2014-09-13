@@ -4,13 +4,7 @@
 	, url = require('url')
 	, meta = {};
 	Gun.on('init').event(function(gun, opt){
-		gun.server = gun.server || function(req, res, next){ // where is the data? is it JSON? declare contentType=JSON from client?
-			/*meta.CORS(req, res);
-			res.emit('data', {way: 'cool'});
-			res.emit('data', {shish: 'kabob'});
-			res.emit('data', {I: 'love'});
-			res.end();
-			return;*/
+		gun.server = gun.server || function(req, res, next){ // this whole function needs refactoring and modularization
 			next = next || function(){};
 			if(!req || !res){ return next() }
 			if(!req.url){ return next() }
@@ -21,19 +15,35 @@
 			tmp.key = tmp.url.pathname.replace(gun.server.regex,'') || '';
 			if(tmp.key.toLowerCase() === '.js'){
 				res.writeHead(200, {'Content-Type': 'text/javascript'});
-				res.end(gun.server.js = gun.server.js || require('fs').readFileSync(__dirname + '/gun.js'));
+				res.end(gun.server.js = gun.server.js || require('fs').readFileSync(__dirname + '/gun.js')); // gun server is caching the gun library for the client
 				return;
 			}
 			console.log("\ngun server has requests!", req.method, req.url, req.headers, req.body);
 			tmp.key = tmp.key.replace(/^\//i,'') || ''; // strip the base
 			tmp.method = (req.method||'').toLowerCase();
 			if('get' === tmp.method){ // get is used as subscribe
+				console.log("URL?", tmp.url);
+				if(tmp.url && tmp.url.query){
+					/*
+						long polling! Idea: On data-flush or res.end, issue a timeout token,
+						that keeps the 'connection' alive even while disconnected.
+						Subsequent requests use the timeout token and thus continue off as before, seamlessly.
+						If after the timeout no follow up has been made, we assume the client has dropped / disconnected.
+					*/
+					Gun.obj.map(tmp.url.query, function(){
+						tmp.query = true;
+						// subscribe this req/res to the ids, then make POSTS publish to them and reply!
+						// MARK! COME BACK HERE
+					});
+					if(tmp.query){
+						return; // we'll wait until we get updates before we reply.  Long polling (should probably be implemented as a hook itself! so websockets can replace it)
+					}
+				}
 				if(!tmp.key){
 					return meta.JSON(res, {gun: true});
 				}
 				// raw test for now, no auth:
 				gun.load(tmp.key, function(err, data){
-					console.log("gun subscribed!", err, data);
 					meta.CORS(req, res);
 					return meta.JSON(res, data || err);
 				})
@@ -48,7 +58,7 @@
 				if(context.err){
 					return meta.JSON(res, context.err); // need to standardize errors more
 				}
-				console.log("-------- union ---------");Gun.obj.map(gun.__.nodes, function(node){ console.log(node); });console.log("------------------------");
+				// console.log("-------- union ---------");Gun.obj.map(gun.__.nodes, function(node){ console.log(node); });console.log("------------------------");
 				/*
 					WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
 				*/
@@ -83,7 +93,7 @@
 				key = s3.prefix + s3.prekey + key;
 			}
 			s3.get(key, function(err, data, text, meta){
-				console.log('via s3', key, (err || data));
+				console.log('via s3', key, err);
 				if(meta && (key = meta[Gun.sym.id])){
 					return s3.load(key, cb, {id: true});
 				}
@@ -104,10 +114,10 @@
 			Gun.obj.map(nodes, function(node, id){
 				cb.count += 1;
 				batch[id] = (batch[id] || 0) + 1;
-				console.log("set listener for", next + ':' + id, batch[id], cb.count);
+				//console.log("set listener for", next + ':' + id, batch[id], cb.count);
 				s3.event.on(next + ':' + id).event(function(){
 					cb.count -= 1;
-					console.log("transaction", cb.count);
+					//console.log("transaction", cb.count);
 					if(!cb.count){
 						s3.event.on(ack).emit();
 						this.off(); // MEMORY LEAKS EVERYWHERE!!!!!!!!!!!!!!!! FIX THIS!!!!!!!!!
@@ -164,7 +174,12 @@
 			}, {Metadata: {'#': id}});
 		}
 		
-		gun.init({hook: {load: s3.load, set: s3.set, key: s3.key}}, true);
+		opt.hook = opt.hook || {};
+		gun.init({hook: {
+			load: opt.hook.load || s3.load
+			,set: opt.hook.set || s3.set
+			,key: opt.hook.key || s3.key
+		}}, true);
 	});
 	meta.json = 'application/json';
 	meta.JSON = function(res, data){

@@ -125,7 +125,6 @@
 		var gun = this;
 		Gun.log("GET stack trace", gun._.events.trace + 1);
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
-			Gun.log("GOT", node);
 			cb(Gun.obj.copy(node));
 		});
 		return this;
@@ -160,7 +159,7 @@
 		gun._.node = gun.__.nodes[cb.root._[own.sym.id]] || cb.root; // TODO? Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
 		if(Gun.fns.is(gun.__.opt.hook.set)){
 			gun.__.opt.hook.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
-				Gun.log("gun set hook callback called");
+				//Gun.log("gun set hook callback called");
 				if(err){ return cb(err) }
 				return cb(null);
 			});
@@ -198,7 +197,6 @@
 			if(set.err){ return context.err = set.err }
 			Gun.obj.map(set.nodes, function(node, id){
 				context.nodes[id] = node;
-				console.log("Gun set.now.union ----->", node);
 			});
 		});
 		if(context.err){ return context }
@@ -410,7 +408,7 @@
 			var serverState = Gun.time.is();
 			// add more checks?
 			var state = HAM(serverState, deltaStates[field], states[field], deltaValue, current[field]);
-			console.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
+			// console.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
 			if(state.err){
 				Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
 				return;
@@ -623,6 +621,8 @@
 					Gun.log('via', url, key, data);
 					// alert(data + data.hello + data.from + data._);
 					cb(null, data);
+					if(!data || !data._){ return }
+					Page.subscribe(data._[Gun.sym.id]);
 				});
 			});
 		}
@@ -635,6 +635,25 @@
 					console.log("set confirmed?", reply);
 				});
 			});
+		}
+		Page.query = function(params){
+			var s = '?'
+			,	uri = encodeURIComponent;
+			Gun.obj.map(params, function(val, field){
+				s += uri(field) + '=' + uri(val || '') + '&';
+			});
+			return s;
+		}
+		Page.subscribe = function(id){
+			Page.subscribe.to = Page.subscribe.to || {};
+			Page.subscribe.to[id] = 1;
+			var query = Page.query(Page.subscribe.to) || '';
+			Gun.obj.map(gun.__.opt.peers, function(peer, url){
+				Page.ajax(url + query, null, function(data){
+					console.log("subscribe reply!", data);
+				});
+			});
+			console.log("live", query);
 		}
 		Page.ajax = 
 		window.ajax = 
@@ -657,7 +676,7 @@
 					opt.headers["Content-Type"] = "application/json;charset=utf-8";
 				}catch(e){}
 			}
-			opt.method = (data? 'POST' : 'GET');
+			opt.method = opt.method || (data? 'POST' : 'GET');
 			// unload?
 			opt.close = function(){
 				opt.done(true);

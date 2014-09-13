@@ -9,13 +9,12 @@
     "mime": "~>1.2.11",
     "aws-sdk": "~>2.0.0",
 	"request": "~>2.39.0"
-	
-	,"express": "~>4.9.0","body-parser": "~>1.8.1"
   }
 , "devDependencies": {
 	"chance": "~>2.39.0"
 }
 , "scripts": {
-        "start": "node init.js"
+        "start": "node init.js",
+        "test": "mocha"
     }
 }
