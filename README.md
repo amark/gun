@@ -1,4 +1,4 @@
-gun
+gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
 Quick getting started guide.
@@ -60,5 +60,6 @@ Now fire up your browser and hit that URL - you'll see your data, plus some gun 
 - Authorization callbacks
 - Graph manipulation
 - Server to server communication
+- Test more
 - Bug fixes
 - More via additional module hooks (schema, queries, etc.)
