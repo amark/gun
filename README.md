@@ -53,3 +53,12 @@ console.log('Server running at http://127.0.0.1:1337/');
 ```
 
 Now fire up your browser and hit that URL - you'll see your data, plus some gun specific metadata.
+
+## Ahead
+- Realtime push to the browser
+- Persistence in the browser
+- Authorization callbacks
+- Graph manipulation
+- Server to server communication
+- Bug fixes
+- More via additional module hooks (schema, queries, etc.)
