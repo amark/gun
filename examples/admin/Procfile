@@ -1,1 +1,1 @@
-web: node app.js
+admin: node app.js
