@@ -55,6 +55,12 @@
 				$scope.$data = gun.load('blob/data', function(data){
 					$scope.data = data;
 					$scope.$apply();
+					Gun.on(data._[Gun.sym.id]).event(function(node){ // one liner-ify this!
+						Gun.obj.map(node, function(val, field){
+							$scope.data[field] = val;
+						});
+						$scope.$apply();
+					});
 				});
 				$scope.add = function(a,b,c){
 					$scope.$data.path($scope.field).set(
