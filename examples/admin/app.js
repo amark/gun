@@ -1,3 +1,4 @@
+console.log("HEY YOU");
 console.log("If modules not found, run `npm install` in example/admin folder!");
 
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
