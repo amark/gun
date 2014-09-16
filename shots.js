@@ -3,62 +3,56 @@
 	, S3 = require(__dirname+'/gate/s3') // redis has been removed, can be replaced with a disk system
 	, url = require('url')
 	, meta = {};
-	Gun.on('init').event(function(gun, opt){
+	Gun.on('opt').event(function(gun, opt){
 		gun.server = gun.server || function(req, res, next){ // this whole function needs refactoring and modularization
 			next = next || function(){};
 			if(!req || !res){ return next() }
 			if(!req.url){ return next() }
 			if(!req.method){ return next() }
-			var tmp = {};
-			tmp.url = url.parse(req.url, true);
-			if(!gun.server.regex.test(tmp.url.pathname)){ return next() }
-			tmp.key = tmp.url.pathname.replace(gun.server.regex,'') || '';
-			if(tmp.key.toLowerCase() === '.js'){
+			var msg = {};
+			msg.url = url.parse(req.url, true);
+			if(!gun.server.regex.test(msg.url.pathname)){ return next() }
+			msg.url.key = msg.url.pathname.replace(gun.server.regex,'') || '';
+			if(msg.url.key.toLowerCase() === '.js'){
 				res.writeHead(200, {'Content-Type': 'text/javascript'});
 				res.end(gun.server.js = gun.server.js || require('fs').readFileSync(__dirname + '/gun.js')); // gun server is caching the gun library for the client
 				return;
 			}
-			console.log("\ngun server has requests!", req.method, req.url, req.headers, req.body);
-			tmp.key = tmp.key.replace(/^\//i,'') || ''; // strip the base
-			tmp.method = (req.method||'').toLowerCase();
-			if('get' === tmp.method){ // get is used as subscribe
-				console.log("URL?", tmp.url);
-				if(tmp.url && tmp.url.query){
-					/*
-						long polling! Idea: On data-flush or res.end, issue a timeout token,
-						that keeps the 'connection' alive even while disconnected.
-						Subsequent requests use the timeout token and thus continue off as before, seamlessly.
-						If after the timeout no follow up has been made, we assume the client has dropped / disconnected.
-					*/
-					Gun.obj.map(tmp.url.query, function(){
-						tmp.query = true;
-						// subscribe this req/res to the ids, then make POSTS publish to them and reply!
-						// MARK! COME BACK HERE
-					});
-					if(tmp.query){
-						return; // we'll wait until we get updates before we reply.  Long polling (should probably be implemented as a hook itself! so websockets can replace it)
+			msg.url.key = msg.url.key.replace(/^\//i,'') || ''; // strip the base
+			msg.method = (req.method||'').toLowerCase();
+			msg.headers = req.headers;
+			msg.body = req.body; // TODO: include body-parser here?
+			if('get' === msg.method){ // get is used as subscribe
+				gun.__.opt.hook.sub(msg, function(reply){
+					if(!res){ return }
+					if(!reply){ return res.end() }
+					if(reply.headers){
+						if(!res._headerSent){
+							Gun.obj.map(reply.headers, function(val, field){
+								res.setHeader(field, val);
+							});
+						}
 					}
-				}
-				if(!tmp.key){
-					return meta.JSON(res, {gun: true});
-				}
-				// raw test for now, no auth:
-				gun.load(tmp.key, function(err, data){
-					meta.CORS(req, res);
-					return meta.JSON(res, data || err);
-				})
+					meta.CORS(req, res); // add option to disable this
+					if(reply.chunk){
+						res.write(Gun.text.ify(reply.chunk));
+					}
+					if(reply.body){
+						res.end(Gun.text.ify(reply.body));
+					}
+				});
+				return;
 			} else
-			if('post' === tmp.method || 'patch' === tmp.method){ // post is used as patch, sad that patch has such poor support
-				if(!req.body){
+			if('post' === msg.method || 'patch' === msg.method){ // post is used as patch, sad that patch has such poor support
+				if(!msg.body){
 					console.log("Warn: No body on POST?");
 				}
 				// raw test for now, no auth:
 				// should probably load all the nodes first?
-				var context = Gun.chain.set.now.union.call(gun, req.body); // data safely transformed
+				var context = Gun.chain.set.now.union.call(gun, msg.body); // data safely transformed
 				if(context.err){
-					return meta.JSON(res, context.err); // need to standardize errors more
+					return meta.JSON(res, context.err); // need to use the now standardized errors
 				}
-				// console.log("-------- union ---------");Gun.obj.map(gun.__.nodes, function(node){ console.log(node); });console.log("------------------------");
 				/*
 					WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
 				*/
@@ -73,15 +67,26 @@
 					context.err = "Warning! You have no persistence layer to save to!";
 					Gun.log(context.err);
 				}
+				
+				var diff = msg.body
+				msg.body = null;
+				Gun.obj.map(context.nodes, function(node, id){
+					var req = Gun.obj.copy(msg);
+					msg.body = node;
+					gun.server.push.on(id).emit(msg); 
+				});
+				msg.body = diff;
 			}
 		}
 		gun.server.regex = /^\/gun/i;
+		gun.server.clients = {};
+		gun.server.push = Gun.on.split();
 		var s3 = gun.__.opt.s3 = gun.__.opt.s3 || S3(opt && opt.s3);
 		s3.prefix = s3.prefix || opt.s3.prefix || '';
 		s3.prekey = s3.prekey || opt.s3.prekey || '';
 		s3.prenode = s3.prenode || opt.s3.prenode || '_/nodes/';
 		gun.__.opt.batch = opt.batch || gun.__.opt.batch || 10;
-		gun.__.opt.throttle = opt.throttle || gun.__.opt.throttle || 2;
+		gun.__.opt.throttle = opt.throttle || gun.__.opt.throttle || 15;
 		if(!gun.__.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
 		
 		s3.load = s3.load || function(key, cb, opt){
@@ -174,17 +179,104 @@
 			}, {Metadata: {'#': id}});
 		}
 		
+		gun.server.sub = (function(){
+			function sub(req, cb){
+				//console.log("\n\n\n", req);
+				req.sub = req.headers['gun-sub'];
+				req.transport = req.headers['gun-transport'];
+				if(req.transport === 'XHR-SLP'){ return sub.SLP(req, cb) }
+				if(!req.url.key){ return sub.keyless(req, cb) }
+				// raw test for now, no auth:
+				req.tab = sub.s[req.sub] || {};
+				cb.header = {'Content-Type': sub.json};
+				cb.header['Gun-Sub'] = req.tab.sub =
+					req.sub = req.tab.sub || req.sub || Gun.text.random();
+				gun.load(req.url.key, function(node){
+					sub.scribe(req.tab, node._[Gun.sym.id]);
+					cb({
+						headers: cb.header
+						,body: Gun.text.ify(node)
+					});
+				}).blank(function(){
+					cb({
+						headers: cb.header
+						,body: Gun.text.ify(null)
+					});
+				}).dud(function(err){
+					cb({
+						headers: cb.header
+						,body: Gun.text.ify({err: err || "Unknown error."})
+					});
+				});
+			}
+			sub.s = {};
+			sub.scribe = function(tab, id){
+				sub.s[tab.sub] = tab;
+				tab.subs = tab.subs || {};
+				tab.subs[id] = tab.subs[id] || gun.server.push.on(id).event(function(req){
+					if(!req){ return }
+					if(!tab){ return this.off() } // resolve any dangling callbacks
+					req.sub = req.sub || req.headers['gun-sub'];
+					if(req.sub === tab.sub){ return } // do not send back to the tab that sent it
+					if(Gun.fns.is(tab.reply)){
+						tab.reply({
+							headers: {'Content-Type': sub.json, 'Gun-Sub': tab.sub}
+							,body: Gun.text.ify(req.body)
+						})
+						tab.reply = null;
+						return;
+					}
+					(tab.queue = tab.queue || []).push(req.body);
+				});
+			}
+			sub.SLP = function(req, cb){ // Streaming Long Polling
+				//console.log("<-- ", req.sub, req.transport ," -->");
+				req.tab = sub.s[req.sub];
+				if(!req.tab){
+					cb({
+						headers: {'Content-Type': sub.json, 'Gun-Sub': ''}
+						,body: Gun.text.ify({err: "Please re-initialize sub."})
+					});
+					return;
+				}
+				req.tab.sub = req.tab.sub || req.sub;
+				if(req.tab.queue && req.tab.queue.length){
+					cb({ headers: {'Content-Type': sub.json, 'Gun-Sub': req.sub} });
+					while(1 < req.tab.queue.length){
+						cb({ chunk: Gun.text.ify(req.tab.queue.shift() + '\n') });
+					}
+					cb({ body: Gun.text.ify(req.tab.queue.shift()) });					
+				} else {
+					req.tab.reply = cb;
+				}
+			}
+			sub.keyless = function(req, cb){
+				cb({
+					headers: {'Content-Type': sub.json}
+					,body: {gun: true}
+				});
+			}
+			sub.json = 'application/json';
+			return sub;
+		}());
+		
 		opt.hook = opt.hook || {};
-		gun.init({hook: {
+		gun.opt({hook: {
 			load: opt.hook.load || s3.load
 			,set: opt.hook.set || s3.set
 			,key: opt.hook.key || s3.key
+			,sub: opt.hook.sub || gun.server.sub
 		}}, true);
 	});
 	meta.json = 'application/json';
-	meta.JSON = function(res, data){
-		if(!res || res._headerSent){ return }
-		res.setHeader('Content-Type', meta.json);
+	meta.JSON = function(res, data, multi){
+		if(res && !res._headerSent){
+			res.setHeader('Content-Type', meta.json);
+		}
+		if(!data && multi){
+			res.write(JSON.stringify(multi||'')+'\n');
+			return;
+		}
 		return res.end(JSON.stringify(data||''));
 	};
 	meta.CORS = function(req, res){

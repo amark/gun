@@ -4,12 +4,12 @@
 		if(!Gun.is(gun)){
 			return new Gun(opt);
 		}
-		gun.init(opt);
+		gun.opt(opt);
 	}
 	Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
 	Gun._ = {};
 	Gun.chain = Gun.prototype;
-	Gun.chain.init = function(opt, stun){ // idempotently update or set options
+	Gun.chain.opt = function(opt, stun){ // idempotently update or set options
 		var gun = this;
 		gun._ = gun._ || {};
 		gun.__ = gun.__ || {};
@@ -28,7 +28,7 @@
 			if(!Gun.fns.is(h)){ return }
 			gun.__.opt.hook[f] = h;
 		});
-		if(!stun){ Gun.on('init').emit(gun, opt) }
+		if(!stun){ Gun.on('opt').emit(gun, opt) }
 		return gun;
 	}
 	Gun.chain.chain = function(from){
@@ -225,6 +225,7 @@
 	Gun.text = {};
 	Gun.text.is = function(t){ return typeof t == 'string'? true : false }
 	Gun.text.ify = function(t){
+		if(Gun.text.is(t)){ return t }
 		if(JSON){ return JSON.stringify(t) }
 		return (t && t.toString)? t.toString() : t;
 	}
@@ -363,7 +364,7 @@
 		});
 	}
 	Gun.HAM = function(current, delta, some){ // TODO: BUG! HAM on sub-graphs has not yet been put into code, thus divergences could occur - this is alpha!
-		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){
+		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){ // TODO: Lester's comments on roll backs could be vulnerable to divergence, investigate!
 			if(machineState < incomingState){
 				// the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
 				return {amnesiaQuarantine: true}; 
@@ -609,34 +610,94 @@
 	}
 }({}));
 
-;(function(Page){
+;(function(tab){
 	if(!this.Gun){ return }
 	if(!window.JSON){ Gun.log("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
-	Gun.on('init').event(function(gun, opt){
-		Page.load = function(key, cb, opt){
+	Gun.on('opt').event(function(gun, opt){
+		tab.server = tab.server || function(req, res, next){
+			
+		}
+		tab.load = tab.load || function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				Page.ajax(url + '/' + key, null, function(data){
-					Gun.log('via', url, key, data);
-					// alert(data + data.hello + data.from + data._);
-					cb(null, data);
-					if(!data || !data._){ return }
-					Page.subscribe(data._[Gun.sym.id]);
-				});
+				tab.ajax(url + '/' + key, null, function(reply){
+					Gun.log('via', url, key, reply);
+					if(!reply){ return } // handle reconnect?
+					if(reply.body && reply.body.err){
+						cb(reply.body.err);
+					} else {
+						cb(null, reply.body);
+					}
+					
+					(function(){
+						tab.subscribe.sub = (reply.headers || {})['Gun-Sub'];
+						var data = reply.body;
+						if(!data || !data._){ return }
+						tab.subscribe(data._[Gun.sym.id]);
+					}());
+				}, {head: {'Gun-Sub': 1}});
 			});
 		}
-		Page.set = function(nodes, cb){
+		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
 			console.log('ajax set', nodes);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				Page.ajax(url, nodes, function(reply){
+				tab.ajax(url, nodes, function(reply){
 					console.log("set confirmed?", reply);
 				});
 			});
 		}
-		Page.query = function(params){
+		tab.subscribe = function(id){
+			tab.subscribe.to = tab.subscribe.to || {};
+			if(id){
+				tab.subscribe.to[id] = 1;
+			}
+			var opt = {
+				//head: {'Gun-Sub': 1},
+				headers: {
+					'Gun-Transport': 'XHR-SLP',
+					'Gun-Sub': tab.subscribe.sub || ''
+				}
+			},	query = tab.subscribe.sub? '' :	tab.subscribe.query(tab.subscribe.to);
+			console.log("SUB", tab.subscribe.sub);
+			Gun.obj.map(gun.__.opt.peers, function(peer, url){
+				tab.ajax(url + query, null, function(reply){
+					tab.subscribe.poll();
+					if(!reply){ return } // do anything?
+					if(reply.headers){
+						tab.subscribe.sub = reply.headers['Gun-Sub'] || tab.subscribe.sub;
+					}
+					var data = reply.body
+					,	union = function(node){ // maybe we shouldn't have this type of logic, below, in a hook?
+						// should we pass it off to a gun API? same with everywhere else this shows up then.
+						if(!node || !node._ || !node._[Gun.sym.id]){ return } // do anything?
+						var context = {nodes: {}};
+						context.nodes[node._[Gun.sym.id]] = node;
+						context = Gun.chain.set.now.union.call(gun, context.nodes);
+						if(context.err){ return } // do anything?
+						Gun.obj.map(context.nodes, function(node, id){
+							Gun.on(id).emit(node); // TODO: we shouldn't use Gun's global event namespace like this, change to local
+						});
+					}
+					if(!data){ return } // do anything?
+					if(data.err){ return } // do anything?
+					if(data._){
+						union(data);
+					} else {
+						Gun.obj.map(data, function(node, id){
+							union(node);
+						});
+					}
+				}, opt);
+			});
+		}
+		tab.subscribe.poll = function(){
+			clearTimeout(tab.subscribe.poll.id);
+			tab.subscribe.poll.id = setTimeout(tab.subscribe, 1); // 1000 * 10); // should enable some server-side control of this.
+		}
+		tab.subscribe.query = function(params){
 			var s = '?'
 			,	uri = encodeURIComponent;
 			Gun.obj.map(params, function(val, field){
@@ -644,18 +705,7 @@
 			});
 			return s;
 		}
-		Page.subscribe = function(id){
-			Page.subscribe.to = Page.subscribe.to || {};
-			Page.subscribe.to[id] = 1;
-			var query = Page.query(Page.subscribe.to) || '';
-			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				Page.ajax(url + query, null, function(data){
-					console.log("subscribe reply!", data);
-				});
-			});
-			console.log("live", query);
-		}
-		Page.ajax = 
+		tab.ajax = 
 		window.ajax = 
 		function(url, data, cb, opt){
 			/*
@@ -668,11 +718,13 @@
 			*/
 			var u;
 			opt = opt || {};
+			opt.head = opt.head || {};
+			opt.reshead = {};
+			opt.headers = opt.headers || {};
 			if(data === u || data === null){
 				data = u;
 			} else {
 				try{data = JSON.stringify(data);
-					opt.headers = opt.headers || {};
 					opt.headers["Content-Type"] = "application/json;charset=utf-8";
 				}catch(e){}
 			}
@@ -694,20 +746,24 @@
 				}
 				opt.xhr = null;
 			}
-			opt.data = opt.data || function(d){
-				var t;
-				try{t = JSON.parse(d) || d;
+			opt.data = opt.data || function(d, head){
+				var reply = {};
+				reply.headers = head;
+				try{reply.body = JSON.parse(d) || d;
 				}catch(e){
-					t = d;
+					reply.body = d;
 				}
-				if(cb){ cb(t) }
+				if(cb){ cb(reply) }
 			}
 			opt.chunk = function(status, text, force){
 				if(status !== 200){ return }
+				opt.each(opt.head, function(val, i){
+					opt.reshead[i] = opt.xhr.getResponseHeader(i);
+				});
 				var d, b, p = 1;
 				while(p || force){
 					if(u !== d){ 
-						opt.data(d);
+						opt.data(d, opt.reshead);
 						force = false;
 					}
 					b = text.slice(opt.i = opt.i || 0);
@@ -771,12 +827,18 @@
 				opt.error();
 				return;
 			}
-			if(opt.headers){
-				try{for(var i in opt.headers){
-					  if(opt.headers.hasOwnProperty(i)){
-						opt.xhr.setRequestHeader(i, opt.headers[i]);
-					  }
+			opt.each = function(obj, cb){
+				if(!obj || !cb){ return }
+				for(var i in obj){
+					if(obj.hasOwnProperty(i)){
+						cb(obj[i], i);
 					}
+				}
+			}
+			if(opt.headers){
+				try{opt.each(opt.headers, function(val, i){
+						opt.xhr.setRequestHeader(i, val);
+					});
 				} catch(e) {
 					opt.error();
 					return;
@@ -788,7 +850,7 @@
 			}
 			return opt;
 		}
-		gun.__.opt.hook.load = gun.__.opt.hook.load || Page.load;
-		gun.__.opt.hook.set = gun.__.opt.hook.set || Page.set;
+		gun.__.opt.hook.load = gun.__.opt.hook.load || tab.load;
+		gun.__.opt.hook.set = gun.__.opt.hook.set || tab.set;
 	});
 }({}));
