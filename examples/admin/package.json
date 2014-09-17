@@ -9,7 +9,7 @@
 ,	"dependencies": {
 		"express": "~>4.9.0",
 		"body-parser": "~>1.8.1",
-		"gun": "~>0.0.3"
+		"gun": "~>0.0.4"
 	}
 ,	"scripts": {
         "start": "node app.js",
