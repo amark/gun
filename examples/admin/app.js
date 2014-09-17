@@ -1,6 +1,6 @@
 console.log("HEY YOU please work?");
 console.log("If modules not found, run `npm install` in example/admin folder!");
-/*
+
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -23,4 +23,3 @@ gun.load('blob/data').blank(function(){
 		from: "Mark Nadal"
 	}).key('blob/data');
 });
-*/
