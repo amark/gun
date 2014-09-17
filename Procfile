@@ -1,1 +1,1 @@
-web: node examples/admin/app.js
+web: node init.js
