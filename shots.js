@@ -81,6 +81,7 @@
 		gun.server.regex = /^\/gun/i;
 		gun.server.clients = {};
 		gun.server.push = Gun.on.split();
+		opt.s3 = opt.s3 || {};
 		var s3 = gun.__.opt.s3 = gun.__.opt.s3 || S3(opt && opt.s3);
 		s3.prefix = s3.prefix || opt.s3.prefix || '';
 		s3.prekey = s3.prekey || opt.s3.prekey || '';
