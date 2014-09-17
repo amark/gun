@@ -23,7 +23,7 @@
 			msg.headers = req.headers;
 			msg.body = req.body; // TODO: include body-parser here?
 			if('get' === msg.method){ // get is used as subscribe
-				gun.__.opt.hook.sub(msg, function(reply){
+				gun.__.opt.hooks.sub(msg, function(reply){
 					if(!res){ return }
 					if(!reply){ return res.end() }
 					if(reply.headers){
@@ -56,8 +56,8 @@
 				/*
 					WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
 				*/
-				if(Gun.fns.is(gun.__.opt.hook.set)){
-					gun.__.opt.hook.set(context.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+				if(Gun.fns.is(gun.__.opt.hooks.set)){
+					gun.__.opt.hooks.set(context.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
 						if(err){ 
 							return meta.JSON(res, {err: err}); // server should handle the error for the client first! Not force client to re-attempt.
 						}
@@ -261,12 +261,12 @@
 			return sub;
 		}());
 		
-		opt.hook = opt.hook || {};
-		gun.opt({hook: {
-			load: opt.hook.load || s3.load
-			,set: opt.hook.set || s3.set
-			,key: opt.hook.key || s3.key
-			,sub: opt.hook.sub || gun.server.sub
+		opt.hooks = opt.hooks || {};
+		gun.opt({hooks: {
+			load: opt.hooks.load || s3.load
+			,set: opt.hooks.set || s3.set
+			,key: opt.hooks.key || s3.key
+			,sub: opt.hooks.sub || gun.server.sub
 		}}, true);
 	});
 	meta.json = 'application/json';
@@ -275,10 +275,10 @@
 			res.setHeader('Content-Type', meta.json);
 		}
 		if(!data && multi){
-			res.write(JSON.stringify(multi||'')+'\n');
+			res.write(Gun.text.ify(multi||'')+'\n');
 			return;
 		}
-		return res.end(JSON.stringify(data||''));
+		return res.end(Gun.text.ify(data||''));
 	};
 	meta.CORS = function(req, res){
 		if(!res || res.CORSHeader || res._headerSent){ return }

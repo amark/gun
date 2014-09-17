@@ -23,10 +23,10 @@
 		if(Gun.list.is(opt.peers)){ opt.peers = Gun.obj.map(opt.peers, function(n,f,m){ m(n,{}) }) }
 		gun.__.opt.peers = opt.peers || gun.__.opt.peers || {};
 		gun.__.opt.uuid = opt.uuid || gun.__.opt.uuid || {};
-		gun.__.opt.hook = gun.__.opt.hook || {};
-		Gun.obj.map(opt.hook, function(h, f){
+		gun.__.opt.hooks = gun.__.opt.hooks || {};
+		Gun.obj.map(opt.hooks, function(h, f){
 			if(!Gun.fns.is(h)){ return }
-			gun.__.opt.hook[f] = h;
+			gun.__.opt.hooks[f] = h;
 		});
 		if(!stun){ Gun.on('opt').emit(gun, opt) }
 		return gun;
@@ -54,8 +54,8 @@
 		cb.fn = function(){}
 		gun._.key = key;
 		// missing: hear shots!
-		if(Gun.fns.is(gun.__.opt.hook.load)){
-			gun.__.opt.hook.load(key, function(err, data){
+		if(Gun.fns.is(gun.__.opt.hooks.load)){
+			gun.__.opt.hooks.load(key, function(err, data){
 				gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
 				if(err){ return (gun._.dud||cb.fn)(err) }
 				if(!data){ return (gun._.blank||cb.fn)() }
@@ -77,8 +77,8 @@
 		Gun.log("make key", key);
 		cb = cb || function(){};
 		this.__.keys[key] = this._.node;
-		if(Gun.fns.is(this.__.opt.hook.key)){
-			this.__.opt.hook.key(key, this._.node, function(err, data){
+		if(Gun.fns.is(this.__.opt.hooks.key)){
+			this.__.opt.hooks.key(key, this._.node, function(err, data){
 				Gun.log("key made", key);
 				if(err){ return cb(err) }
 				return cb(null);
@@ -157,8 +157,8 @@
 		if(set.err){ return cb(set.err), gun }
 		Gun.union(gun.__.nodes, set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
 		gun._.node = gun.__.nodes[cb.root._[own.sym.id]] || cb.root; // TODO? Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
-		if(Gun.fns.is(gun.__.opt.hook.set)){
-			gun.__.opt.hook.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+		if(Gun.fns.is(gun.__.opt.hooks.set)){
+			gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
 				//Gun.log("gun set hook callback called");
 				if(err){ return cb(err) }
 				return cb(null);
@@ -850,7 +850,7 @@
 			}
 			return opt;
 		}
-		gun.__.opt.hook.load = gun.__.opt.hook.load || tab.load;
-		gun.__.opt.hook.set = gun.__.opt.hook.set || tab.set;
+		gun.__.opt.hooks.load = gun.__.opt.hooks.load || tab.load;
+		gun.__.opt.hooks.set = gun.__.opt.hooks.set || tab.set;
 	});
 }({}));
