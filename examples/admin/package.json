@@ -1,9 +1,18 @@
 {
 	"name": "admin",
 	"main": "app.js",
-	"dependencies": {
+	"description": "Example gun app, using Express & Angular."
+,	"version": "0.0.1"
+,	"engines": {
+		"node": "~>0.6.6"
+	}
+,	"dependencies": {
 		"express": "~>4.9.0",
 		"body-parser": "~>1.8.1",
-		"gun": "~>0.0.2b"
+		"gun": "~>0.0.3"
 	}
+,	"scripts": {
+        "start": "node app.js",
+        "test": "mocha"
+    }
 }
