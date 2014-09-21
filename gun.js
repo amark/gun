@@ -39,13 +39,17 @@
 		Gun.obj.map(from._, function(val, field){
 			gun._[field] = val;
 		});
+		Gun.chain.chain.events(gun);
+		return gun;
+	}
+	Gun.chain.chain.events = function(gun){
 		gun._.events = Gun.on.split(); // we want events per chain
 		gun._.events.trace = gun._.events.trace || 0;
 		gun._.events.at = gun._.events.at || 0;
-		return gun;
 	}
 	Gun.chain.load = function(key, cb, opt){
-		var gun = this.chain();
+		var gun = this; // this.chain();
+		Gun.chain.chain.events(gun);
 		cb = cb || function(){};
 		if(cb.node = gun.__.keys[key]){ // set this to the current node, too!
 			Gun.log("from gun"); // remember to do all the same stack stuff here also!
@@ -64,6 +68,7 @@
 				context = Gun.chain.set.now.union.call(gun, context.nodes); // data safely transformed
 				if(context.err){ return (gun._.dud||cb.fn)(context.err) }
 				gun._.node = gun.__.keys[key] = gun.__.nodes[data._[own.sym.id]];
+				//console.log("compare", gun._, gun.__);
 				cb(Gun.obj.copy(gun._.node));
 				gun._.events.on(gun._.events.at += 1).emit(gun._.node);
 				gun._.events.at = 0; // ???? reset it back once everything is done? the returns above don't allow for this.
@@ -110,23 +115,30 @@
 					Gun.log("PATH failed to resolve");
 					gun._.events.on(gun._.events.at += 1).emit();
 				} else { // we are done, and this should be the value we wanted.
-					Gun.log("PATH resolved", val);
+					Gun.log("PATH resolved", node, val);
 					gun._.events.on(gun._.events.at += 1).emit(val);
 				}
 			}
 		});
 		if(this._.loaded){ // this was the previous chain, gun is the new one
-			console.log("Send off!", gun._.events.at + 1);
+			Gun.log("Send off!", gun._.events.at + 1, path);
 			gun._.events.on(gun._.events.at += 1).emit(this._.node);
 		}
 		return gun;
 	}
 	Gun.chain.get = function(cb){
 		var gun = this;
-		Gun.log("GET stack trace", gun._.events.trace + 1);
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
+			console.log("shabam", node);
+			if(gun._.field){
+				return cb((node||{})[gun._.field]);
+			}
 			cb(Gun.obj.copy(node));
 		});
+		if(gun._.loaded){
+			Gun.log("GET stack trace", gun._.events.trace, gun._.events.at, gun);
+			gun._.events.on(gun._.events.at += 1).emit(this._.node);
+		}
 		return this;
 	}
 	/*
@@ -250,6 +262,12 @@
 	Gun.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 	Gun.obj = {};
 	Gun.obj.is = function(o){ return (o instanceof Object && !Gun.list.is(o) && !Gun.fns.is(o))? true : false }
+	Gun.obj.del = function(o, k){
+		if(!o){ return }
+		o[k] = null;
+		delete o[k]; 
+		return true;
+	}
 	Gun.obj.ify = function(o){
 		if(Gun.obj.is(o)){ return o }
 		try{o = JSON.parse(o);
@@ -319,7 +337,7 @@
 				if(!hear.as){ return }
 				map(hear);
 				hear.as.apply(hear, args);
-			}))){ delete this._.events[on] }
+			}))){ Gun.obj.del(this._.events,on) }
 		}
 		On.echo.event = function(as, i){
 			var on = this._.on, e;
@@ -409,7 +427,7 @@
 			var serverState = Gun.time.is();
 			// add more checks?
 			var state = HAM(serverState, deltaStates[field], states[field], deltaValue, current[field]);
-			// console.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
+			// Gun.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
 			if(state.err){
 				Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
 				return;
@@ -595,8 +613,9 @@
 			return false;
 		}
 	}());
-	Gun.log = function(s, l){ 
-		console.log.apply(console, arguments);
+	Gun.log = function(a, b, c, d, e, f){ //s, l){
+		//console.log(a, b, c, d, e, f);
+		//console.log.apply(console, arguments);
 	}
 	own.sym = Gun.sym = {
 		id: '#'
@@ -617,12 +636,13 @@
 		tab.server = tab.server || function(req, res, next){
 			
 		}
+		//window.tab = tab; //window.XMLHttpRequest = null; // for debugging purposes
 		tab.load = tab.load || function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				tab.ajax(url + '/' + key, null, function(reply){
-					Gun.log('via', url, key, reply);
+				tab.ajax(url + '/' + key, null, function(err, reply){
+					console.log('via', url, key, reply);
 					if(!reply){ return } // handle reconnect?
 					if(reply.body && reply.body.err){
 						cb(reply.body.err);
@@ -631,43 +651,64 @@
 					}
 					
 					(function(){
-						tab.subscribe.sub = (reply.headers || {})['Gun-Sub'];
+						tab.subscribe.sub = (reply.headers || {})['gun-sub'];
+						//console.log("We are sub", tab.subscribe.sub);
 						var data = reply.body;
 						if(!data || !data._){ return }
 						tab.subscribe(data._[Gun.sym.id]);
 					}());
-				}, {head: {'Gun-Sub': 1}});
+				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}, header: {'Gun-Sub': 1}});
 			});
 		}
 		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
-			console.log('ajax set', nodes);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				tab.ajax(url, nodes, function(reply){
-					console.log("set confirmed?", reply);
-				});
+				tab.ajax(url, nodes, function respond(err, reply, id){
+					if(reply && reply.body){
+						if(reply.body.defer){
+							tab.set.defer[reply.body.defer] = respond;
+						}
+						if(reply.body.refed || reply.body.reply){
+							//console.log("-------post-reply-all--------->", reply, err);
+							respond(null, {headers: reply.headers, body: reply});
+							Gun.obj.map(reply.body.refed, function(r, id){
+								var cb;
+								if(cb = tab.set.defer[id]){
+									cb(null, {headers: reply.headers, body: r}, id);
+								}
+							});
+							// TODO: should be able to do some type of "checksum" that every request cleared, and if not, figure out what is wrong/wait for finish.
+							return;
+						}
+						tab.sent(reply.body);
+					}
+					Gun.obj.del(tab.set.defer, id);
+				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
 			});
 		}
-		tab.subscribe = function(id){
+		tab.set.defer = {};
+		tab.sent = function(){
+			// remove set from unsure queue.
+		}
+		tab.subscribe = function(id){ // TODO: BUG!!! ERROR! Unexpected end of input!!!! Fix!
 			tab.subscribe.to = tab.subscribe.to || {};
 			if(id){
 				tab.subscribe.to[id] = 1;
 			}
 			var opt = {
-				//head: {'Gun-Sub': 1},
+				header: {'Gun-Sub': 1},
 				headers: {
-					'Gun-Transport': 'XHR-SLP',
 					'Gun-Sub': tab.subscribe.sub || ''
 				}
 			},	query = tab.subscribe.sub? '' :	tab.subscribe.query(tab.subscribe.to);
-			console.log("SUB", tab.subscribe.sub);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				tab.ajax(url + query, null, function(reply){
+				tab.ajax(url + query, null, function(err, reply){
+					//console.log("poll", err, reply);
 					tab.subscribe.poll();
 					if(!reply){ return } // do anything?
 					if(reply.headers){
-						tab.subscribe.sub = reply.headers['Gun-Sub'] || tab.subscribe.sub;
+						tab.subscribe.sub = reply.headers['gun-sub'] || tab.subscribe.sub;
 					}
 					var data = reply.body
 					,	union = function(node){ // maybe we shouldn't have this type of logic, below, in a hook?
@@ -682,7 +723,6 @@
 						});
 					}
 					if(!data){ return } // do anything?
-					if(data.err){ return } // do anything?
 					if(data._){
 						union(data);
 					} else {
@@ -695,7 +735,7 @@
 		}
 		tab.subscribe.poll = function(){
 			clearTimeout(tab.subscribe.poll.id);
-			tab.subscribe.poll.id = setTimeout(tab.subscribe, 1); // 1000 * 10); // should enable some server-side control of this.
+			tab.subscribe.poll.id = setTimeout(tab.subscribe, 1); //1000 * 10); // should enable some server-side control of this.
 		}
 		tab.subscribe.query = function(params){
 			var s = '?'
@@ -705,129 +745,153 @@
 			});
 			return s;
 		}
-		tab.ajax = 
-		window.ajax = 
-		function(url, data, cb, opt){
-			/*
-				via Sockjs@1.0.0
-				Parts of the code are derived from various open source projects.
-				For code derived from Socket.IO by Guillermo Rauch see https://github.com/LearnBoost/socket.io/tree/0.6.17#readme.
-				Snippets derived from JSON-js by Douglas Crockford are public domain.
-				Snippets derived from jQuery-JSONP by Julian Aubourg, generic MIT license.
-				All other code is released on MIT license, see LICENSE.
-			*/
-			var u;
-			opt = opt || {};
-			opt.head = opt.head || {};
-			opt.reshead = {};
-			opt.headers = opt.headers || {};
-			if(data === u || data === null){
-				data = u;
-			} else {
-				try{data = JSON.stringify(data);
-					opt.headers["Content-Type"] = "application/json;charset=utf-8";
-				}catch(e){}
-			}
-			opt.method = opt.method || (data? 'POST' : 'GET');
-			// unload?
-			opt.close = function(){
-				opt.done(true);
-			}
-			opt.done = opt.done || function(abort){
-				if(!opt.xhr){ return }
-				// unload?
-				try{opt.xhr.onreadystatechange = function(){};
-					opt.xhr.ontimeout = opt.xhr.onerror = 
-					opt.xhr.onprogress = opt.xhr.onload = null;
-				}catch(e){}
-				if(abort){
-					try{opt.xhr.abort();
+		tab.ajax = (function(){
+			function ajax(url, data, cb, opt){
+				var u;
+				opt = opt || {};
+				opt.header = opt.header || {};
+				opt.header["Content-Type"] = 1;
+				opt.headers = opt.headers || {};
+				if(data === u || data === null){
+					data = u;
+				} else {
+					try{data = JSON.stringify(data);
+						opt.headers["Content-Type"] = "application/json";
 					}catch(e){}
 				}
-				opt.xhr = null;
-			}
-			opt.data = opt.data || function(d, head){
-				var reply = {};
-				reply.headers = head;
-				try{reply.body = JSON.parse(d) || d;
-				}catch(e){
-					reply.body = d;
+				opt.method = opt.method || (data? 'POST' : 'GET');
+				var xhr = ajax.xhr() || ajax.jsonp() // TODO: BUG: JSONP push is working, but not post
+				, clean = function(){
+					if(!xhr){ return }
+					xhr.onreadystatechange = xhr.onerror = null;
+					try{xhr.abort();
+					}catch(e){}
+					xhr = null;
 				}
-				if(cb){ cb(reply) }
-			}
-			opt.chunk = function(status, text, force){
-				if(status !== 200){ return }
-				opt.each(opt.head, function(val, i){
-					opt.reshead[i] = opt.xhr.getResponseHeader(i);
-				});
-				var d, b, p = 1;
-				while(p || force){
-					if(u !== d){ 
-						opt.data(d, opt.reshead);
-						force = false;
+				xhr.onerror = function(){
+					if(cb){
+						cb({err: err || 'Unknown error.', status: xhr.status });
 					}
-					b = text.slice(opt.i = opt.i || 0);
-					p = b.indexOf('\n') + 1;
-					d = p? b.slice(0, p - 1) : b;
-					opt.i += p;
-				}
-			}
-			opt.finish = function(status, text) {
-				opt.chunk(status, text, true);
-				opt.close(status === 200 ? 'network' : 'permanent');
-			}
-			opt.error = function(){
-				opt.finish(0, '');
-				opt.done();
-			}
-			opt.xhr = opt.xhr || (function(xhr){
-				try{xhr = new(window.XDomainRequest || window.XMLHttpRequest || window.ActiveXObject)('Microsoft.XMLHTTP');
-				}catch(e){}
-				if(window.ActiveXObject || window.XDomainRequest){
-					url += ((url.indexOf('?') === -1) ? '?' : '&') + 't='+(+new Date());
-				}
-				if(xhr && window.XDomainRequest){
-					xhr.ontimeout = xhr.onerror = opt.error;
-					xhr.onprogress = function(){
-						opt.chunk(200, (xhr || {}).responseText);
+					clean(xhr.status === 200 ? 'network' : 'permanent');
+				};
+				xhr.onreadystatechange = function(){
+					if(!xhr){ return }
+					var reply, status;
+					try{reply = xhr.responseText;
+						status = xhr.status;
+					}catch(e){}
+					if(status === 1223){ status = 204 }
+					if(xhr.readyState === 3){
+						if(reply && 0 < reply.length){
+							opt.ondata(status, reply);
+						}
+					} else
+					if(xhr.readyState === 4){						
+						opt.ondata(status, reply, true);
+						clean(status === 200? 'network' : 'permanent');
 					}
-					xhr.onload = function(){
-						opt.finish(200, (xhr || {}).responseText);
-						opt.done();
+				};
+				opt.ondata = opt.ondata || function(status, chunk, end){
+					if(status !== 200){ return }
+					try{ajax.each(opt.header, function(val, i){
+							(xhr.responseHeader = xhr.responseHeader||{})[i.toLowerCase()] = xhr.getResponseHeader(i);
+						});
+					}catch(e){}
+					var data, buf, pos = 1;
+					while(pos || end){ // in order to end
+						if(u !== data){ // we need at least one loop
+							opt.onload({
+								headers: xhr.responseHeader || {}
+								,body: data
+							});
+							end = false; // now both pos and end will be false
+						}
+						if(ajax.string(chunk)){
+							buf = chunk.slice(xhr.index = xhr.index || 0);
+							pos = buf.indexOf('\n') + 1;
+							data = pos? buf.slice(0, pos - 1) : buf;
+							xhr.index += pos;
+						} else {
+							data = chunk;
+							pos = 0;
+						}
 					}
 				}
+				opt.onload = opt.onload || function(reply){
+					if(!reply){ return }
+					if( reply.headers
+					&& ("application/json" === reply.headers["content-type"])
+					&& (ajax.string(reply.body))
+					){
+						reply.body = (reply.body === String(u))? u : JSON.parse(reply.body);
+					}
+					if(cb){
+						cb(null, reply);
+					}
+				}
+				if(opt.cookies || opt.credentials || opt.withCredentials){
+					xhr.withCredentials = true;
+				}
+				opt.headers["X-Requested-With"] = xhr.transport || "XMLHttpRequest";
+				try{xhr.open(opt.method, url, true);
+				}catch(e){ return xhr.onerror("Open failed.") }
+				if(opt.headers){
+					try{ajax.each(opt.headers, function(val, i){
+							xhr.setRequestHeader(i, val);
+						});
+					}catch(e){ return xhr.onerror("Invalid headers.") }
+				}
+				try{xhr.send(data);
+				}catch(e){ return xhr.onerror("Failed to send request.") }
+			}
+			ajax.xhr = function(xhr){
+				return (window.XMLHttpRequest && "withCredentials" in (xhr = new XMLHttpRequest()))? xhr : null;
+			}
+			ajax.jsonp = function(xhr){
+				xhr = {};
+				xhr.transport = "jsonp";
+				xhr.open = function(method, url){
+					xhr.url = url;
+				}
+				xhr.send = function(){
+					xhr.url += ((xhr.url.indexOf('?') + 1)? '&' : '?') + 'jsonp=' + xhr.js.id;
+					ajax.each(xhr.headers, function(val, i){
+						xhr.url += '&' + encodeURIComponent(i) + "=" + encodeURIComponent(val);
+					});
+					xhr.js.src = xhr.url = xhr.url.replace(/%20/g, "+");
+					document.getElementsByTagName('head')[0].appendChild(xhr.js);
+				}
+				xhr.setRequestHeader = function(i, val){
+					(xhr.headers = xhr.headers||{})[i] = val;
+				}
+				xhr.getResponseHeader = function(i){ return (xhr.responseHeaders||{})[i] }
+				xhr.js = document.createElement('script');
+				window[xhr.js.id = 'P'+Math.floor((Math.random()*65535)+1)] = function(reply){
+					xhr.status = 200;
+					if(reply.chunks && reply.chunks.length){
+						xhr.readyState = 3
+						while(0 < reply.chunks.length){
+							xhr.responseText = reply.chunks.shift();
+							xhr.onreadystatechange();
+						}
+					}
+					xhr.responseHeaders = reply.headers || {};
+					xhr.readyState = 4;
+					xhr.responseText = reply.body;
+					xhr.onreadystatechange();
+					xhr.id = xhr.js.id;
+					xhr.js.parentNode.removeChild(xhr.js);
+					window[xhr.id] = null;
+					try{delete window[xhr.id];
+					}catch(e){}
+					
+				}
+				xhr.abort = function(){} // clean up?
+				xhr.js.async = true;
 				return xhr;
-			}());
-			if(!opt.xhr){
-				opt.error();
-				return;
 			}
-			if(opt.cookies || opt.credentials || opt.withCredentials){
-				opt.xhr.withCredentials = true;
-			}
-			opt.xhr.onreadystatechange = function(){
-				if(!opt.xhr){ return }
-				var reply, status;
-				try{reply = opt.xhr.responseText;
-					status = opt.xhr.status;
-				}catch(e){}
-				if(status === 1223){ status = 204 }
-				if(opt.xhr.readyState === 3){
-					if(reply && 0 < reply.length){
-						opt.chunk(status, reply);
-					}
-				} else
-				if(opt.xhr.readyState === 4){
-					opt.finish(status, reply);
-					opt.done(false);
-				}
-			}
-			try{opt.xhr.open(opt.method, url, true);
-			} catch(e) {
-				opt.error();
-				return;
-			}
-			opt.each = function(obj, cb){
+			ajax.string = function(s){ return (typeof s == 'string') }
+			ajax.each = function(obj, cb){
 				if(!obj || !cb){ return }
 				for(var i in obj){
 					if(obj.hasOwnProperty(i)){
@@ -835,21 +899,8 @@
 					}
 				}
 			}
-			if(opt.headers){
-				try{opt.each(opt.headers, function(val, i){
-						opt.xhr.setRequestHeader(i, val);
-					});
-				} catch(e) {
-					opt.error();
-					return;
-				}
-			}
-			try{opt.xhr.send(data);
-			}catch(e){
-				opt.error();
-			}
-			return opt;
-		}
+			return ajax;
+		}());
 		gun.__.opt.hooks.load = gun.__.opt.hooks.load || tab.load;
 		gun.__.opt.hooks.set = gun.__.opt.hooks.set || tab.set;
 	});

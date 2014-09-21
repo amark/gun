@@ -2,6 +2,9 @@
 <html ng-app="admin">
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+		<!--
+		-->
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.js"></script>
 		<script src="../../gun.js"></script>
 	</head>
@@ -13,6 +16,7 @@
 			a {
 				color: skyblue;
 				text-decoration: none;
+				cursor: poiner;
 			}
 			ul, li {
 				list-style-type: none;
@@ -30,6 +34,13 @@
 		</style>
 		<h3>Admin Data Editor</h3>
 		This is a live view of your JSON data, you can edit it in realtime or add new key/values.
+		<!--
+		<form method="post" action="http://localhost:8888/gun">
+			First name: <input type="text" name="firstname"><br>
+			Last name: <input type="text" name="lastname">
+			<input type="submit" value="Submit">
+		</form>
+		-->
 		<ul name="list">
 			<li ng-repeat="(key, val) in data">
 				<div ng-if="key != '_'">
@@ -41,17 +52,26 @@
 				<form ng-submit="add()">
 					<label>
 						<input ng-model="field" placeholder="key" ng-submit="add()">
-						<a href="#" ng-click="add()">add</a>
+						<a ng-click="add()">add</a>
 						<input type="submit" class="none"/>
 					</label>
 				</form>
 			</li>
 		</ul>
+		<div id="debug">SUP</div>
 		<script>
-			gun = Gun([location.origin + '/gun']);
-			angular.module('admin', [
-			
-			]).controller('editor', function($scope){
+			function debug(s){
+				document.getElementById('debug').innerHTML = s;
+			}
+			//var gun = Gun([location + 'gun']);
+			var gun = Gun(['http://localhost:8888/' + 'gun']);
+			/*
+			(function(){
+				debug('meow ');// + tab.com.toString());
+				tab.com.jsonp();
+			})();
+			*/
+			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
 				$scope.$data = gun.load('blob/data', function(data){
 					$scope.data = data;
@@ -64,19 +84,13 @@
 					});
 				});
 				$scope.add = function(a,b,c){
-					$scope.$data.path($scope.field).set(
-						$scope.data[$scope.field] = 'value'
-					);
+					$scope.$data.path($scope.field).set( $scope.data[$scope.field] = 'value' );
 					$scope.field = '';
 				};
-				window.$data = $scope.$data;
 			}).directive('gun', function(){
 				return function(scope, elem){
 					elem.on('keyup', function(){
-						scope.$data.path(scope.key).set(
-							scope.data[scope.key] = elem.text()
-						);
-						// scope.$apply();
+						scope.$data.path(scope.key).set( scope.data[scope.key] = elem.text() );
 					});
 				};
 			});
