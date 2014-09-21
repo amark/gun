@@ -1,5 +1,5 @@
 { "name": "gun"
-, "version": "0.0.4"
+, "version": "0.0.5"
 , "author": "Mark Nadal"
 , "description": "Graph engine."
 , "engines": {
@@ -8,6 +8,7 @@
 , "dependencies": {
     "mime": "~>1.2.11",
     "aws-sdk": "~>2.0.0",
+	"formidable": "~>1.0.15",
 	"request": "~>2.39.0"
   }
 , "devDependencies": {

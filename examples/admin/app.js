@@ -8,13 +8,11 @@ var gun = Gun({
 	s3: (process.env.NODE_ENV === 'production')? null : require('../../test/shotgun') // replace this with your own keys!
 });
 
-app.use(express.static(__dirname))
-   .use(bodyParser.json())
-   .use(gun.server);
+app.use(gun.server)
+	.use(express.static(__dirname))
 app.listen(port);
 
 console.log('Express started on port ' + port + ' with /gun');
-
-gun.load('blob/data').blank(function(){
-	gun.set({ hello: "world", from: "Mark Nadal" }).key('blob/data');
+gun.load('blob/data').blank(function(){ // in case there is no data on this key
+	gun.set({ hello: "world", from: "Mark Nadal" }).key('blob/data'); // save some sample data
 });

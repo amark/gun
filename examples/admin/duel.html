@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html ng-app="admin">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="../../gun.js"></script>
+	</head>
+	<body ng-controller="editor">
+		<style>
+			html, body {
+				font-family: Verdana, Geneva, sans-serif;
+			}
+			a {
+				color: skyblue;
+				text-decoration: none;
+				cursor: poiner;
+			}
+			ul, li {
+				list-style-type: none;
+			}
+			ul:hover, li:hover {
+				list-style-type: inherit;
+			}
+			input {
+				border: none;
+				border-bottom: dashed 1px gainsboro;
+			}
+			.none {
+				display: none;
+			}
+		</style>
+		<form id="p1" class="assign-player" onsubmit="return false;">
+			Player 1: <input type="text" name="p1" placeholder="nickname">
+			<input type="submit" value="Join!">
+		</form>
+		<form id="p2" class="assign-player" onsubmit="return false;">
+			Player 2: <input type="text" name="p2" placeholder="nickname">
+			<input type="submit" value="Join!">
+		</form>
+		<script>
+			(function(){
+				var gun = Gun(['http://localhost:8888/' + 'gun'])
+				.load('game/duel', function(game){
+					console.log(game);
+					$(document).on('submit', '.assign-player', function(e){
+						e.preventDefault();
+						console.log("Choosing player!");
+						var nick = $(this).find('input').val();
+						if(!nick){ return }
+						gun.path(this.id).get(function(val){
+							console.log(val, nick, 'oh?');
+							if(val){ return }
+							gun.path('p1').set(nick);
+						});
+					})
+					Gun.on(game._[Gun.sym.id]).event(function(node){
+						console.log("change!", node);
+					});
+				});
+			}());
+		</script>
+	</body>
+</html>
