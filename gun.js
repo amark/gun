@@ -129,7 +129,6 @@
 	Gun.chain.get = function(cb){
 		var gun = this;
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
-			console.log("shabam", node);
 			if(gun._.field){
 				return cb((node||{})[gun._.field]);
 			}
@@ -636,7 +635,7 @@
 		tab.server = tab.server || function(req, res, next){
 			
 		}
-		//window.tab = tab; //window.XMLHttpRequest = null; // for debugging purposes
+		window.tab = tab; //window.XMLHttpRequest = null; // for debugging purposes
 		tab.load = tab.load || function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
@@ -705,8 +704,8 @@
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				tab.ajax(url + query, null, function(err, reply){
 					//console.log("poll", err, reply);
+					if(!reply || !reply.body){ return } // not interested in any null/0/''/undefined values
 					tab.subscribe.poll();
-					if(!reply){ return } // do anything?
 					if(reply.headers){
 						tab.subscribe.sub = reply.headers['gun-sub'] || tab.subscribe.sub;
 					}
@@ -819,11 +818,11 @@
 				}
 				opt.onload = opt.onload || function(reply){
 					if(!reply){ return }
-					if( reply.headers
-					&& ("application/json" === reply.headers["content-type"])
-					&& (ajax.string(reply.body))
-					){
-						reply.body = (reply.body === String(u))? u : JSON.parse(reply.body);
+					if( reply.headers && ("application/json" === reply.headers["content-type"])){
+						var body;
+						try{body = JSON.parse(reply.body);
+						}catch(e){body = reply.body}
+						reply.body = body;
 					}
 					if(cb){
 						cb(null, reply);

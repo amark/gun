@@ -38,10 +38,10 @@
 					}
 					meta.CORS(req, res); // add option to disable this
 					if(reply.chunk){
-						res.write(Gun.text.ify(reply.chunk));
+						res.write(Gun.text.ify(reply.chunk) || '');
 					}
 					if(reply.body){
-						res.end(Gun.text.ify(reply.body));
+						res.end(Gun.text.ify(reply.body) || '');
 					}
 				});
 			}
@@ -240,7 +240,10 @@
 							return;
 						}
 						var next = tran.post.s[req.sub];
-						if(!next){ return tran.post.s[req.sub] = cb } // was there a previous POST? If not, we become the previous POST.
+						if(!next){ // was there a previous POST? If not, we become the previous POST.
+							//cb({chunk: ''}); // because on some services (heroku) you need to reply starting a stream to keep the connection open.
+							return tran.post.s[req.sub] = cb;
+						}
 						next.count = (next.count || 1) + 1; // start counting how many we accumulate
 						//console.log("Counting up", next.count);
 						next.body = next.body || {}; // this becomes the polyfill for all the posts
@@ -291,6 +294,7 @@
 					}
 					cb({ body: req.tab.queue.shift() });					
 				} else {
+					cb({chunk: ''}); // same thing as the defer code, initialize a stream to support some services (heroku).
 					req.tab.reply = cb;
 					console.log("_____ STANDING BY, WAITING FOR DATA ______", req.sub);
 				}
@@ -330,7 +334,7 @@
 					if(res.chunk){
 						cb({
 							headers: reply.headers
-							,body:  Gun.text.ify(res.body) + '\n'
+							,chunk:  Gun.text.ify(res.chunk) + '\n'
 						})
 					}
 					if(res.body){
@@ -364,10 +368,9 @@
 						(reply.chunks = reply.chunks || []).push(res.chunk);
 					}
 					if(res.body){
-						reply.body = res.body;
-						reply.body = ';'+ cb.jsonp + '(' + Gun.text.ify(reply) + ');';
+						reply.body = res.body; // self-reference yourself so on the client we can get the headers and body.
+						reply.body = ';'+ cb.jsonp + '(' + Gun.text.ify(reply) + ');'; // javascriptify it! can't believe the client trusts us.
 						cb(reply);
-						console.log("replied with jsonp!!!!!!");
 					}
 				}
 			}
