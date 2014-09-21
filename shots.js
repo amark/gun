@@ -245,7 +245,6 @@
 							return tran.post.s[req.sub] = cb;
 						}
 						next.count = (next.count || 1) + 1; // start counting how many we accumulate
-						//console.log("Counting up", next.count);
 						next.body = next.body || {}; // this becomes the polyfill for all the posts
 						next.body.refed = next.body.refed || {}; // where we refeed the responses for the deferred POSTs.
 						req.wait = Gun.text.random(); // generate an random id for this deferred POST.
