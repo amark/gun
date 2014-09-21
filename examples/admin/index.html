@@ -58,19 +58,8 @@
 				</form>
 			</li>
 		</ul>
-		<div id="debug">SUP</div>
 		<script>
-			function debug(s){
-				document.getElementById('debug').innerHTML = s;
-			}
-			//var gun = Gun([location + 'gun']);
-			var gun = Gun(['http://localhost:8888/' + 'gun']);
-			/*
-			(function(){
-				debug('meow ');// + tab.com.toString());
-				tab.com.jsonp();
-			})();
-			*/
+			var gun = Gun([location + 'gun']);
 			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
 				$scope.$data = gun.load('blob/data', function(data){
