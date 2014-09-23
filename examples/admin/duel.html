@@ -30,34 +30,51 @@
 				display: none;
 			}
 		</style>
+		<h2>Gun Duel!</h2>
+		<span>Old western cowboy style! Two players are needed, whoever can shoot the other first wins!</span>
+		<span><b>Fastest gun in the west, <span name="fastest">nut'n</span> by <span name="slinger">nobody</span>.</b></span>
 		<form id="p1" class="assign-player" onsubmit="return false;">
-			Player 1: <input type="text" name="p1" placeholder="nickname">
-			<input type="submit" value="Join!">
+			Player 1: <input type="text" name="p1" class="player" placeholder="nickname">
+			<input type="submit" class="take" value="Join!">
 		</form>
 		<form id="p2" class="assign-player" onsubmit="return false;">
-			Player 2: <input type="text" name="p2" placeholder="nickname">
-			<input type="submit" value="Join!">
+			Player 2: <input type="text" name="p2" class="player" placeholder="nickname">
+			<input type="submit" class="take" value="Join!">
 		</form>
+		<div id="duel">
+			
+		</div>
 		<script>
 			(function(){
-				var gun = Gun(['http://localhost:8888/' + 'gun'])
+				var me = {},
+				gun = Gun(['http://localhost:8888/' + 'gun'])
 				.load('game/duel', function(game){
 					console.log(game);
 					$(document).on('submit', '.assign-player', function(e){
 						e.preventDefault();
-						console.log("Choosing player!");
 						var nick = $(this).find('input').val();
 						if(!nick){ return }
 						gun.path(this.id).get(function(val){
-							console.log(val, nick, 'oh?');
 							if(val){ return }
-							gun.path('p1').set(nick);
+							gun.path(this.id).set(me.player = nick);
 						});
 					})
 					Gun.on(game._[Gun.sym.id]).event(function(node){
 						console.log("change!", node);
 					});
+					Gun.obj.map(game, me.set);
 				});
+				me.set = function(val, name){
+					$("[name='" + name + "']").text(val).val(val);
+					Gun.on("duel-" + name).emit(val, name);
+				}
+				me.plock = function(val, id){
+					console.log("OH?", val, id);
+					$("#" + id).find('.player').attr("readonly", val? true : false);
+					$("#" + id).find('.take').val(val? "Taken!" : "Join!").attr("disabled", val? true : false);
+				}
+				Gun.on("duel-p1").event(me.plock);
+				Gun.on("duel-p2").event(me.plock);
 			}());
 		</script>
 	</body>
