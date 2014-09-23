@@ -129,12 +129,14 @@
 	Gun.chain.get = function(cb){
 		var gun = this;
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
+			console.log("BOOM got it", node);
 			if(gun._.field){
-				return cb((node||{})[gun._.field]);
+				return cb((node||{})[gun._.field]); // copy data first?
 			}
-			cb(Gun.obj.copy(node));
+			cb(Gun.obj.copy(node)); // we do here.
 		});
 		if(gun._.loaded){
+			gun._.events.at -= 1; // IDK why we are doing this, just trying to get something to work.
 			Gun.log("GET stack trace", gun._.events.trace, gun._.events.at, gun);
 			gun._.events.on(gun._.events.at += 1).emit(this._.node);
 		}
@@ -613,7 +615,7 @@
 		}
 	}());
 	Gun.log = function(a, b, c, d, e, f){ //s, l){
-		//console.log(a, b, c, d, e, f);
+		console.log(a, b, c, d, e, f);
 		//console.log.apply(console, arguments);
 	}
 	own.sym = Gun.sym = {
@@ -636,6 +638,13 @@
 			
 		}
 		window.tab = tab; //window.XMLHttpRequest = null; // for debugging purposes
+		(function(){
+			tab.store = {};
+			var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
+			tab.store.set = function(key, val){console.log('setting', key); return store.setItem(key, Gun.text.ify(val)) }
+			tab.store.get = function(key){ return Gun.obj.ify(store.getItem(key)) }
+			tab.store.del = function(key){ return store.removeItem(key) }
+		}());
 		tab.load = tab.load || function(key, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
@@ -662,35 +671,36 @@
 		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
+			tab.store.set(respond.id = 'send/' + Gun.text.random(), nodes);
+			//console.log("localStorage the DELTA", nodes);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				tab.ajax(url, nodes, function respond(err, reply, id){
-					if(reply && reply.body){
-						if(reply.body.defer){
-							tab.set.defer[reply.body.defer] = respond;
-						}
-						if(reply.body.refed || reply.body.reply){
-							//console.log("-------post-reply-all--------->", reply, err);
-							respond(null, {headers: reply.headers, body: reply});
-							Gun.obj.map(reply.body.refed, function(r, id){
-								var cb;
-								if(cb = tab.set.defer[id]){
-									cb(null, {headers: reply.headers, body: r}, id);
-								}
-							});
-							// TODO: should be able to do some type of "checksum" that every request cleared, and if not, figure out what is wrong/wait for finish.
-							return;
-						}
-						tab.sent(reply.body);
-					}
-					Gun.obj.del(tab.set.defer, id);
-				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
+				tab.ajax(url, nodes, respond, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
 			});
+			function respond(err, reply, id){
+				if(reply && reply.body){
+					if(reply.body.defer){
+						tab.set.defer[reply.body.defer] = respond;
+					}
+					if(reply.body.refed || reply.body.reply){
+						//console.log("-------post-reply-all--------->", reply, err);
+						respond(null, {headers: reply.headers, body: reply});
+						Gun.obj.map(reply.body.refed, function(r, id){
+							var cb;
+							if(cb = tab.set.defer[id]){
+								cb(null, {headers: reply.headers, body: r}, id);
+							}
+						});
+						// TODO: should be able to do some type of "checksum" that every request cleared, and if not, figure out what is wrong/wait for finish.
+						return;
+					}
+					console.log('callback complete, now respond', respond.id);
+					tab.store.del(respond.id);
+				}
+				Gun.obj.del(tab.set.defer, id);
+			}
 		}
 		tab.set.defer = {};
-		tab.sent = function(){
-			// remove set from unsure queue.
-		}
-		tab.subscribe = function(id){ // TODO: BUG!!! ERROR! Unexpected end of input!!!! Fix!
+		tab.subscribe = function(id){ // TODO: BUG!!! ERROR! Handle disconnection (onerror)!!!!
 			tab.subscribe.to = tab.subscribe.to || {};
 			if(id){
 				tab.subscribe.to[id] = 1;
