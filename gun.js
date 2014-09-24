@@ -129,7 +129,6 @@
 	Gun.chain.get = function(cb){
 		var gun = this;
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
-			console.log("BOOM got it", node);
 			if(gun._.field){
 				return cb.call(gun, (node||{})[gun._.field]); // copy data first?
 			}
@@ -697,14 +696,14 @@
 					Gun.obj.del(tab.set.defer, id); // handle err with a retry? Or make a system auto-do it?
 					if(!body){ return }
 					if(body.defer){
-						console.log("deferring post", body.defer);
+						//console.log("deferring post", body.defer);
 						tab.set.defer[body.defer] = respond;
 					}
 					if(body.reply){
 						respond(null, {headers: reply.headers, body: body.reply });
 					}
 					if(body.refed){
-						console.log("-------post-reply-all--------->", reply, err);
+						console.log("-------post-reply-all--------->", 1 || reply, err);
 						Gun.obj.map(body.refed, function(r, id){
 							var cb;
 							if(cb = tab.set.defer[id]){
@@ -741,7 +740,7 @@
 						console.log(err, reply);
 						return;
 					}
-					console.log("poll", reply);
+					console.log("poll", 1 || reply);
 					tab.subscribe.poll();
 					if(reply.headers){
 						tab.subscribe.sub = reply.headers['gun-sub'] || tab.subscribe.sub;
