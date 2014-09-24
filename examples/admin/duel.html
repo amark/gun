@@ -123,6 +123,7 @@
 					});
 				}
 				game.fire = function(){
+					alert("bang!");
 					if(!me.started || me.fired){ return }
 					me.fired = (+ new Date());
 					if(me.fired < me.scheduled){ // DQ
