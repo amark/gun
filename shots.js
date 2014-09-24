@@ -5,7 +5,8 @@
 	, url = require('url')
 	, meta = {};
 	Gun.on('opt').event(function(gun, opt){
-		gun.server = gun.server || function(req, res, next){ // this whole function needs refactoring and modularization			
+		gun.server = gun.server || function(req, res, next){ // this whole function needs refactoring and modularization	
+			//console.log("\n\n GUN SERVER!");
 			next = next || function(){};
 			if(!req || !res){ return next() }
 			if(!req.url){ return next() }
@@ -66,6 +67,7 @@
 		s3.prenode = s3.prenode || opt.s3.prenode || '_/nodes/';
 		gun.__.opt.batch = opt.batch || gun.__.opt.batch || 10;
 		gun.__.opt.throttle = opt.throttle || gun.__.opt.throttle || 15;
+		gun.__.opt.disconnect = opt.disconnect || gun.__.opt.disconnect || 5;
 		if(!gun.__.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
 		
 		s3.load = s3.load || function(key, cb, opt){
@@ -160,11 +162,12 @@
 		
 		gun.server.transport = (function(){
 			function tran(req, cb){
-				//console.log("\n\n\n", req);
+				//console.log(req);
 				req.sub = req.headers['gun-sub']; // grab the sub
 				req.tab = tran.sub.s[req.sub] || {}; // check to see if there already is a tab associated with it, or create one
 				req.tab.sub = req.sub = req.sub || Gun.text.random(); // Generate a session id if we don't already have one
 				req.tran = tran.xhr(req, cb) || tran.jsonp(req, cb); // polyfill transport layer
+				clearTimeout(req.tab.timeout);
 				// raw test for now, no auth:
 				if(!req.tran){ return cb({headers: {"Content-Type": tran.json}, body: {err: "No transport layer!"}}) }
 				if('post' === req.method || 'patch' === req.method){ return tran.post(req, req.tran) } // TODO: Handle JSONP emulated POST via GET
@@ -204,7 +207,7 @@
 				if(context.err){ return cb({body: {err: context.err}}) }
 				// WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
 				if(Gun.fns.is(gun.__.opt.hooks.set)){
-					gun.__.opt.hooks.set(context.nodes, function(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+					gun.__.opt.hooks.set(context.nodes, function saved(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
 						var body = {};
 						if(err){ 
 							body.err = err ;
@@ -217,6 +220,7 @@
 						}
 						var now = tran.post.s[req.sub]; // begin our stupid Chrome fix, we should abstract this out into defer (where it belogns) to keep things clean.
 						if(!now){ return } // utoh we've lost our reply to the tab!
+						clearTimeout(now.timeout);
 						now.body = now.body || {}; // make sure we have a body for our multi-response in a single response.
 						if(req.wait){ // did this request get deferred?
 							(now.body.refed = now.body.refed || {})[req.wait] = err? {err: err} : defer.map({}, context.nodes, 1); // then reply to it "here".
@@ -224,7 +228,7 @@
 							now.body.reply = err? {err: err} : defer.map({}, context.nodes, 1); // else this is the original POST that had to be upgraded.
 						}
 						if(0 < (now.count = ((now.count || 0) - 1))){ // Don't reply till all deferred POSTs have successfully heard back from S3. (Sarcasm: Like counting guarantees that)
-							return; // TODO: BUG!!! Memory leak, we have no guarantee we'll ever get a reply! So time it out, maybe some multiple of the S3 throttle.
+							return now.timeout = setTimeout(saved, gun.__.opt.throttle * 2 * 1000); // reply not guaranteed, so time it out, in seconds.
 						}
 						if(Gun.fns.is(now)){
 							now({body: now.body}); // FINALLY reply for ALL the POSTs for that session that accumulated.
@@ -278,6 +282,7 @@
 				//console.log("<-- ", req.sub, req.tran ," -->");
 				req.tab = tran.sub.s[req.sub];
 				if(!req.tab){
+					console.log(req.url.query);
 					cb({
 						headers: {'Gun-Sub': ''}
 						,body: {err: "Please re-initialize sub."}
@@ -286,6 +291,7 @@
 				}
 				//console.log("\n\n\n THE CURRENT STATUS IS");console.log(req.tab);
 				if(req.tab.queue && req.tab.queue.length){
+					tran.clean(req.tab); // We flush their data now, if they don't come back for more within timeout, we remove their session
 					console.log("_____ NOW PUSHING YOUR DATA ______", req.sub);
 					cb({ headers: {'Gun-Sub': req.sub} });
 					while(1 < req.tab.queue.length){
@@ -299,7 +305,18 @@
 				}
 			}
 			tran.sub.s = {};
-			tran.sub.scribe = function(tab, id){ // TODO: BUG!!! Memory leaks, remember to destroy sessions via timeout.
+			tran.clean = function(tab, mult){
+				if(!tab){ return }
+				mult = mult || 1;
+				clearTimeout(tab.timeout);
+				tab.timeout = setTimeout(function(){
+					if(!tab){ return }
+					if(tab.reply){ tab.reply({body: {err: "Connection timed out"}}) }
+					console.log("!!!! DISCONNECTING CLIENT !!!!!", tab.sub);
+					Gun.obj.del(tran.sub.s, tab.sub)
+				}, gun.__.opt.disconnect * mult * 1000); // in seconds
+			}
+			tran.sub.scribe = function(tab, id){
 				tran.sub.s[tab.sub] = tab;
 				tab.subs = tab.subs || {};
 				tab.subs[id] = tab.subs[id] || tran.push.on(id).event(function(req){
@@ -307,7 +324,8 @@
 					if(!tab){ return this.off() } // resolve any dangling callbacks
 					req.sub = req.sub || req.headers['gun-sub'];
 					if(req.sub === tab.sub){ return } // do not send back to the tab that sent it
-					console.log('FROM:', req.sub, "TO:", tab);
+					console.log('FROM:', req.sub, "TO:", tab.sub);
+					tran.clean(tab);
 					if(tab.reply){
 						tab.reply({
 							headers: {'Gun-Sub': tab.sub}
@@ -318,6 +336,7 @@
 					}
 					(tab.queue = tab.queue || []).push(req.body);
 				});
+				tran.clean(tab, 2);
 			}
 			tran.xhr = function(req, cb){ // Streaming Long Polling
 				return req.tran || (req.headers['x-requested-with'] === 'XMLHttpRequest'? transport : null);
