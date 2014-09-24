@@ -71,6 +71,7 @@
 				.load('game/duel', function(data){
 					console.log(data);
 					$(document).on('submit', '.player', function(e){
+						alert("WORK");	
 						e.preventDefault();
 						var nick = $(this).find('input').val(), id = this.id;
 						if(!nick || me.player){ return }
