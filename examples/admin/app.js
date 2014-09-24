@@ -1,6 +1,6 @@
 console.log("If modules not found, run `npm install` in example/admin folder!"); // git subtree push -P examples/admin heroku master
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
-var express = require('connect');
+var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var Gun = require('gun');
@@ -12,8 +12,7 @@ app.use(function(req, res, next){
 		next();
 	})
 	.use(gun.server)
-	.use(require('serve-static')(__dirname))
-	//.use(express.static(__dirname))
+	.use(express.static(__dirname))
 app.listen(port);
 
 console.log('Express started on port ' + port + ' with /gun');
