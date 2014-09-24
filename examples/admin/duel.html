@@ -9,6 +9,8 @@
 	<body ng-controller="editor">
 		<style>
 			html, body {
+				margin: 0;
+				padding: 0;
 				font-family: Verdana, Geneva, sans-serif;
 			}
 			a {
@@ -34,10 +36,13 @@
 				background: brown;
 				color: white;
 				width: 100%;
-				height: 100%;
+				height: 1024px;
 			}
 			.player input, .player button {
 				font-size: 18pt;
+			}
+			.hold {
+				padding: .2em;
 			}
 		</style>
 		
@@ -50,16 +55,18 @@
 			</center>
 		</div>
 		
-		<h2><i>GUNSLINGER</i></h2>
-		<span>Old West Duel! Two players are needed, whoever can tap the screen first to draw their pistol and shoot wins!</span><br>
-		<span><b>Fastest gun in the west, <span name="fastest">nut'n</span> seconds, by <span name="slinger">nobody</span>.</b></span>
-		<form id="p1" class="player" onsubmit="return false;">
-			Player 1: <input type="text" name="p1" placeholder="nickname"> <button type="submit">Join!</button>
-		</form>
-		<form id="p2" class="player" onsubmit="return false;">
-			Player 2: <input type="text" name="p2" placeholder="nickname"> <button type="submit">Join!</button>
-		</form>
-		<span><b>Last duel won by <span name="last">no one</span> in <span name="ended">0</span> seconds against <span name="loser">nobody</span>.</b></span>
+		<div class="hold">
+			<h2><i>GUNSLINGER</i></h2>
+			<span>Old West Duel! Two players are needed, whoever can tap the screen first to draw their pistol and shoot wins!</span><br>
+			<span><b>Fastest gun in the west, <span name="fastest">nut'n</span> seconds, by <span name="slinger">nobody</span>.</b></span>
+			<form id="p1" class="player" onsubmit="return false;">
+				Player 1: <input type="text" name="p1" placeholder="nickname"> <button type="submit">Join!</button>
+			</form>
+			<form id="p2" class="player" onsubmit="return false;">
+				Player 2: <input type="text" name="p2" placeholder="nickname"> <button type="submit">Join!</button>
+			</form>
+			<span><b>Last duel won by <span name="last">no one</span> in <span name="ended">0</span> seconds against <span name="loser">nobody</span>.</b></span>
+		</div>
 		<script>
 			$(function(){
 				var me = window.me = {},
