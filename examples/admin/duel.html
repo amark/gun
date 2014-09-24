@@ -29,52 +29,183 @@
 			.none {
 				display: none;
 			}
+			.fight {
+				z-index: 9999;
+				background: brown;
+				color: white;
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+			}
+			.player input, .player button {
+				font-size: 18pt;
+			}
 		</style>
-		<h2>Gun Duel!</h2>
-		<span>Old western cowboy style! Two players are needed, whoever can shoot the other first wins!</span>
-		<span><b>Fastest gun in the west, <span name="fastest">nut'n</span> by <span name="slinger">nobody</span>.</b></span>
-		<form id="p1" class="assign-player" onsubmit="return false;">
-			Player 1: <input type="text" name="p1" class="player" placeholder="nickname">
-			<input type="submit" class="take" value="Join!">
+		<h2><i>GUNSLINGER</i></h2>
+		<span>Old West Duel! Two players are needed, whoever can tap the screen first to draw their pistol and shoot wins!</span><br>
+		<span><b>Fastest gun in the west, <span name="fastest">nut'n</span> seconds, by <span name="slinger">nobody</span>.</b></span>
+		<form id="p1" class="player" onsubmit="return false;">
+			Player 1: <input type="text" name="p1" placeholder="nickname"> <button type="submit">Join!</button>
 		</form>
-		<form id="p2" class="assign-player" onsubmit="return false;">
-			Player 2: <input type="text" name="p2" class="player" placeholder="nickname">
-			<input type="submit" class="take" value="Join!">
+		<form id="p2" class="player" onsubmit="return false;">
+			Player 2: <input type="text" name="p2" placeholder="nickname"> <button type="submit">Join!</button>
 		</form>
-		<div id="duel">
-			
+		<div id="duel" class="none fight">
+			<center>
+				<h2>GET READY!</h2>
+				<button id="reset" class="none">
+					Reset the game!
+				</button>
+			</center>
 		</div>
+		<span><b>Last duel won by <span name="last">no one</span> in <span name="ended">0</span> seconds against <span name="loser">nobody</span>.</b></span>
 		<script>
-			(function(){
-				var me = {},
-				gun = Gun(['http://localhost:8888/' + 'gun'])
-				.load('game/duel', function(game){
-					console.log(game);
-					$(document).on('submit', '.assign-player', function(e){
+			$(function(){
+				var me = window.me = {},
+					game = window.game = {},
+				//gun = window.gun = Gun(['http://localhost:8888/' + 'gun'])
+				gun = window.gun = Gun(['http://gunduel.t.proxylocal.com/' + 'gun'])
+				.load('game/duel', function(data){
+					console.log(data);
+					$(document).on('submit', '.player', function(e){
 						e.preventDefault();
-						var nick = $(this).find('input').val();
-						if(!nick){ return }
-						gun.path(this.id).get(function(val){
+						var nick = $(this).find('input').val(), id = this.id;
+						if(!nick || me.player){ return }
+						gun.path(id).get(function(val){
 							if(val){ return }
-							gun.path(this.id).set(me.player = nick);
+							this.set(me.player = nick);
+							me.took = id;
 						});
 					})
-					Gun.on(game._[Gun.sym.id]).event(function(node){
+					Gun.on(data._[Gun.sym.id]).event(function(node, local){
+						if(!node){ return }
 						console.log("change!", node);
+						if(node.start){ game.schedule(node.start) }
+						if(node.dqed){ game.dq(node.dqed) }
+						if(node.sling){ game.sling(node.sling, local) }
+						Gun.obj.map(node, game.set);
+						if(node.p1 || node.p2){
+							gun.path('p1').get(function(p1){ // start game?
+								if(!p1){ return }
+								gun.path('p2').get(function(p2){
+									if(!p2){ return }
+									game.play(p2);
+								})
+							});
+						}
+						game.timeout(true);
 					});
-					Gun.obj.map(game, me.set);
+					Gun.obj.map(data, game.set);
+					game.timeout(20);
 				});
-				me.set = function(val, name){
+				game.$duel = $("#duel");
+				game.$duelm = game.$duel.clone();
+				game.play = function(p2){
+					if(!me.player){ return }				
+					game.$duel.removeClass("none");
+					if(me.player == p2){ return }
+					me.scheduled = (+new Date()) + Math.round(Math.random() * 2000 + 2700); // MIN is the right number, and MAX is the SUM of both numbers.
+					gun.path('start').set(me.scheduled);
+				}
+				game.schedule = function(at){
+					console.log(" ------------------ START", at);
+					if(me.started){ return }
+					me.started = true;
+					me.scheduled = at;
+					Gun.schedule(at, function(){
+						me.shoot = true;
+						if(me.dqed){ return }
+						game.$duel.css({background: 'lime'}).find('h2').text("FIRE!");
+					});
+				}
+				game.fire = function(){
+					if(!me.started || me.fired){ return }
+					me.fired = (+ new Date());
+					if(me.fired < me.scheduled){ // DQ
+						me.dqed = me.player;
+						gun.path('dqed').set(me.player);
+						return;
+					}
+					gun.path('dqed').get(function(yes){
+						if(yes){ return }
+						game.$duel.css({background: 'gold'}).find('h2').text("STOP!");
+						gun.path('sling').set(me.player);
+						me.time = (me.fired - me.scheduled) / 1000; // in seconds
+					});
+				}
+				game.sling = function(){
+					me.count = (me.count || 0) + 1;
+					if(me.count < 2){ return }
+					$('#reset').removeClass('none');
+					gun.path('sling').get(function(sling){
+						if(!sling){ return }
+						if(sling == me.player){
+							game.$duel.css({background: 'red'}).find('h2').text("YOU DIED!!!");
+							gun.path('loser').set(me.player);
+							return;
+						}
+						game.$duel.css({background: 'skyblue'}).find('h2').text("YOU WON!!!");
+						if(!me.time || me.fired < me.scheduled || me.time < 0){ return }
+						gun.path('last').set(me.player);
+						gun.path('ended').set(me.time);
+						gun.path('fastest').get(function(time){
+							if(time <= me.time){ return }
+							gun.path('fastest').set(me.time);
+							gun.path('slinger').set(me.player);
+						});
+					});
+				}
+				game.dq = function(who){
+					$('#reset').removeClass('none');
+					if(who == me.player){
+						return game.$duel.css({background: 'gray'}).find('h2').text("DISQUALIFIED!!!");
+					}
+					if(me.dqed){
+						return game.$duel.find('h2').text("BOTH DISQUALIFIED!");
+					}
+					game.$duel.css({background: 'skyblue'}).find('h2').text("YOU WON!!!");
+				}
+				game.clear = function(){
+					me = {};
+					game.$duel.replaceWith(game.$duel = game.$duelm.clone());
+					gun.path('p1').set("");
+					gun.path('p2').set("");
+					gun.path('sling').set(null);
+					gun.path('start').set(null);
+					gun.path('dq').set(null);
+					game.$duel.addClass('none');
+				}
+				game.timeout = function(wait){
+					if(true === wait){ return clearTimeout(me.timeout) }
+					wait = wait || 15;
+					clearTimeout(me.timeout);
+					me.timeout = setTimeout(game.clear, wait * 1000);
+				}
+				game.set = function(val, name){
+					if(val == game.nothing){ return }
 					$("[name='" + name + "']").text(val).val(val);
 					Gun.on("duel-" + name).emit(val, name);
 				}
-				me.plock = function(val, id){
-					console.log("OH?", val, id);
-					$("#" + id).find('.player').attr("readonly", val? true : false);
-					$("#" + id).find('.take').val(val? "Taken!" : "Join!").attr("disabled", val? true : false);
+				game.plock = function(val, id){
+					$("#" + id).find('input').attr("readonly", val? true : false);
+					$("#" + id).find('button').text(val? "Taken!" : "Join!").attr("disabled", val? true : false);
 				}
-				Gun.on("duel-p1").event(me.plock);
-				Gun.on("duel-p2").event(me.plock);
+				Gun.on("duel-p1").event(game.plock);
+				Gun.on("duel-p2").event(game.plock);
+				$(document).on('click', '#duel', game.fire);
+				$(document).on('click', '#reset', game.clear);
+			}());
+		</script>
+		<script>
+			(function(){
+				return;
+				var game = Gun(location + 'gun').load('game/duel');
+				game.on('change').path('p1').or.path('p2').get(function(val){
+					$("#" + this.field).find('input').val(val? "Taken!" : "Join!").attr("disabled", val? true : false);
+					$("#" + this.field).find('button').val(val? "Taken!" : "Join!").attr("disabled", val? true : false);
+				});
 			}());
 		</script>
 	</body>

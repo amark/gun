@@ -95,8 +95,8 @@
 	}
 	Gun.chain.path = function(path){ // The focal point follows the path
 		var gun = this.chain();
-		path = path.split('.');
-		Gun.log("PATH stack trace", gun._.events.trace + 1, 'was it before loaded?', this._);
+		path = (path||'').split('.');
+		Gun.log("PATH stack trace", path, gun._.events.trace + 1, 'was it before loaded?', this._);
 		gun._.events.on(gun._.events.trace += 1).event(function trace(node){
 			Gun.log("stack at", gun._.events.at);
 			if(!path.length){ // if the path resolves to another node, we finish here
@@ -131,9 +131,9 @@
 		gun._.events.on(gun._.events.trace += 1).event(function(node){
 			console.log("BOOM got it", node);
 			if(gun._.field){
-				return cb((node||{})[gun._.field]); // copy data first?
+				return cb.call(gun, (node||{})[gun._.field]); // copy data first?
 			}
-			cb(Gun.obj.copy(node)); // we do here.
+			cb.call(gun, Gun.obj.copy(node)); // we do here.
 		});
 		if(gun._.loaded){
 			gun._.events.at -= 1; // IDK why we are doing this, just trying to get something to work.
@@ -428,7 +428,7 @@
 			var serverState = Gun.time.is();
 			// add more checks?
 			var state = HAM(serverState, deltaStates[field], states[field], deltaValue, current[field]);
-			// Gun.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
+			//console.log("HAM:", field, deltaValue, deltaStates[field], current[field], 'the', state, (deltaStates[field] - serverState));
 			if(state.err){
 				Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
 				return;
@@ -615,7 +615,7 @@
 		}
 	}());
 	Gun.log = function(a, b, c, d, e, f){ //s, l){
-		console.log(a, b, c, d, e, f);
+		//console.log(a, b, c, d, e, f);
 		//console.log.apply(console, arguments);
 	}
 	own.sym = Gun.sym = {
@@ -637,7 +637,7 @@
 		tab.server = tab.server || function(req, res, next){
 			
 		}
-		window.tab = tab; //window.XMLHttpRequest = null; // for debugging purposes
+		window.tab = tab; // window.XMLHttpRequest = null; // for debugging purposes
 		(function(){
 			tab.store = {};
 			var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
@@ -659,7 +659,7 @@
 					}
 					
 					(function(){
-						tab.subscribe.sub = (reply.headers || {})['gun-sub'];
+						tab.subscribe.sub = (reply.headers || {})['gun-sub'] || tab.subscribe.sub;
 						//console.log("We are sub", tab.subscribe.sub);
 						var data = reply.body;
 						if(!data || !data._){ return }
@@ -668,23 +668,44 @@
 				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}, header: {'Gun-Sub': 1}});
 			});
 		}
+		tab.url = function(nodes){
+			return;
+			console.log("urlify delta", nodes);
+			var s = ''
+			,	uri = encodeURIComponent;
+			Gun.obj.map(nodes, function(delta, id){
+				var ham;
+				if(!delta || !delta._ || !(ham = delta._[Gun.sym.HAM])){ return }
+				s += uri('#') + '=' + uri(id) + '&';
+				Gun.obj.map(delta, function(val, field){
+					if(field === Gun.sym.meta){ return }
+					s += uri(field) + '=' + uri(Gun.text.ify(val)) + uri('>') + uri(ham[field]) + '&';
+				})
+			});
+			console.log(s);
+			return s;
+		}
 		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
-			tab.store.set(respond.id = 'send/' + Gun.text.random(), nodes);
-			//console.log("localStorage the DELTA", nodes);
+			tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
+			//tab.url(nodes);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				tab.ajax(url, nodes, respond, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
-			});
-			function respond(err, reply, id){
-				if(reply && reply.body){
-					if(reply.body.defer){
-						tab.set.defer[reply.body.defer] = respond;
+				tab.ajax(url, nodes, function respond(err, reply, id){
+					var body = reply && reply.body;
+					respond.id = respond.id || cb.id;
+					Gun.obj.del(tab.set.defer, id); // handle err with a retry? Or make a system auto-do it?
+					if(!body){ return }
+					if(body.defer){
+						console.log("deferring post", body.defer);
+						tab.set.defer[body.defer] = respond;
 					}
-					if(reply.body.refed || reply.body.reply){
-						//console.log("-------post-reply-all--------->", reply, err);
-						respond(null, {headers: reply.headers, body: reply});
-						Gun.obj.map(reply.body.refed, function(r, id){
+					if(body.reply){
+						respond(null, {headers: reply.headers, body: body.reply });
+					}
+					if(body.refed){
+						console.log("-------post-reply-all--------->", reply, err);
+						Gun.obj.map(body.refed, function(r, id){
 							var cb;
 							if(cb = tab.set.defer[id]){
 								cb(null, {headers: reply.headers, body: r}, id);
@@ -693,11 +714,13 @@
 						// TODO: should be able to do some type of "checksum" that every request cleared, and if not, figure out what is wrong/wait for finish.
 						return;
 					}
-					console.log('callback complete, now respond', respond.id);
+					if(body.reply || body.defer || body.refed){ return }
 					tab.store.del(respond.id);
-				}
-				Gun.obj.del(tab.set.defer, id);
-			}
+				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
+			});
+			Gun.obj.map(nodes, function(node, id){
+				Gun.on(id).emit(node, true); // TODO: Temporary hack, I want to rebroadcast back to ourselves. IDK if this is always useful, and we shouldn't use global.
+			});
 		}
 		tab.set.defer = {};
 		tab.subscribe = function(id){ // TODO: BUG!!! ERROR! Handle disconnection (onerror)!!!!
@@ -711,10 +734,14 @@
 					'Gun-Sub': tab.subscribe.sub || ''
 				}
 			},	query = tab.subscribe.sub? '' :	tab.subscribe.query(tab.subscribe.to);
+			console.log("subscribing poll", tab.subscribe.sub);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				tab.ajax(url + query, null, function(err, reply){
-					//console.log("poll", err, reply);
-					if(!reply || !reply.body){ return } // not interested in any null/0/''/undefined values
+					if(err || !reply || !reply.body || reply.body.err){ // not interested in any null/0/''/undefined values
+						console.log(err, reply);
+						return;
+					}
+					console.log("poll", reply);
 					tab.subscribe.poll();
 					if(reply.headers){
 						tab.subscribe.sub = reply.headers['gun-sub'] || tab.subscribe.sub;
