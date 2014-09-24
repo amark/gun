@@ -73,7 +73,7 @@
 					$(document).on('submit', '.player', function(e){
 						e.preventDefault();
 						var nick = $(this).find('input').val(), id = this.id;
-						alert(nick);
+						console.log(nick, me.player);
 						if(!nick || me.player){ return }
 						gun.path(id).get(function(val){
 							alert(val);
