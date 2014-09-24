@@ -133,9 +133,11 @@
 					if(me.fired < me.scheduled){ // DQ
 						me.dqed = me.player;
 						gun.path('dqed').set(me.player);
+						alert('DQing you');
 						return;
 					}
 					gun.path('dqed').get(function(yes){
+						alert('dqed ' + yes);
 						if(yes){ return }
 						game.$duel.css({background: 'gold'}).find('h2').text("STOP!");
 						gun.path('sling').set(me.player);
