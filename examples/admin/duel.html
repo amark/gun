@@ -65,7 +65,7 @@
 			$(function(){
 				var me = window.me = {},
 					game = window.game = {},
-				gun = window.gun = Gun([location + 'gun'])
+				gun = window.gun = Gun([location.origin + '/gun'])
 				//gun = window.gun = Gun(['http://localhost:8888/' + 'gun'])
 				//gun = window.gun = Gun(['http://gunduel.t.proxylocal.com/' + 'gun'])
 				.load('game/duel', function(data){
