@@ -132,7 +132,6 @@
 						return;
 					}
 					gun.path('dqed').get(function(yes){
-						alert("DQed! " + yes);
 						if(yes){ return }
 						game.$duel.css({background: 'gold'}).find('h2').text("STOP!");
 						gun.path('sling').set(me.player);
@@ -178,7 +177,7 @@
 					gun.path('p2').set("");
 					gun.path('sling').set(null);
 					gun.path('start').set(null);
-					gun.path('dq').set(null);
+					gun.path('dqed').set(null);
 					game.$duel.addClass('none');
 				}
 				game.timeout = function(wait){
