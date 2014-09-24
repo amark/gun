@@ -35,8 +35,9 @@
 				z-index: 9999;
 				background: brown;
 				color: white;
+				position: absolute;
 				width: 100%;
-				height: 1024px;
+				height: 100%;
 			}
 			.player input, .player button {
 				font-size: 18pt;
@@ -45,7 +46,6 @@
 				padding: .2em;
 			}
 		</style>
-		
 		<div id="duel" class="none fight">
 			<center>
 				<h2>GET READY!</h2>
@@ -67,13 +67,16 @@
 			</form>
 			<span><b>Last duel won by <span name="last">no one</span> in <span name="ended">0</span> seconds against <span name="loser">nobody</span>.</b></span>
 		</div>
+		<textarea id="debug" style="position: fixed; bottom: 0; width: 100%; height: 5em; z-index: 99999999999;"></textarea>
 		<script>
+			console._log = console.log;console.log = function(a,s,d,f){ var arg = arguments, s = '';
+				for(var i in arg){ var val = arg[i]; if(typeof val == 'string'){ s += val + ' ' } else { s += JSON.stringify(val) + ' ' } }; $("#debug").prepend(s + '\n\n') }
 			$(function(){
 				var me = window.me = {},
 					game = window.game = {},
-				gun = window.gun = Gun([location.origin + '/gun'])
+				//gun = window.gun = Gun([location.origin + '/gun'])
 				//gun = window.gun = Gun(['http://localhost:8888/' + 'gun'])
-				//gun = window.gun = Gun(['http://gunduel.t.proxylocal.com/' + 'gun'])
+				gun = window.gun = Gun(['https://gunjs.herokuapp.com/gun'])
 				.load('game/duel', function(data){
 					console.log(data);
 					$(document).on('submit', '.player', function(e){
