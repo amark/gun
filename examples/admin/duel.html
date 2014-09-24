@@ -71,11 +71,12 @@
 				.load('game/duel', function(data){
 					console.log(data);
 					$(document).on('submit', '.player', function(e){
-						alert("WORK");	
 						e.preventDefault();
 						var nick = $(this).find('input').val(), id = this.id;
+						alert(nick);
 						if(!nick || me.player){ return }
 						gun.path(id).get(function(val){
+							alert(val);
 							if(val){ return }
 							this.set(me.player = nick);
 							me.took = id;
