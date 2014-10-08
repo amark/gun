@@ -38,10 +38,10 @@
 						}
 					}
 					meta.CORS(req, res); // add option to disable this
-					if(reply.chunk){
+					if(Gun.obj.has(reply,'chunk')){
 						res.write(Gun.text.ify(reply.chunk) || '');
 					}
-					if(reply.body){
+					if(Gun.obj.has(reply,'body')){
 						res.end(Gun.text.ify(reply.body) || '');
 					}
 				});
@@ -71,17 +71,18 @@
 		if(!gun.__.opt.keepMaxSockets){ require('https').globalAgent.maxSockets = require('http').globalAgent.maxSockets = Infinity } // WARNING: Document this!
 		
 		s3.load = s3.load || function(key, cb, opt){
+			if(!key){ return }
 			cb = cb || function(){};
 			opt = opt || {};
-			if(opt.id){ 
-				key = s3.prefix + s3.prenode + key;
+			if(key[Gun._.soul]){ 
+				key = s3.prefix + s3.prenode + key[Gun._.soul];
 			} else { 
 				key = s3.prefix + s3.prekey + key;
 			}
 			s3.get(key, function(err, data, text, meta){
 				console.log('via s3', key, err);
-				if(meta && (key = meta[Gun.sym.id])){
-					return s3.load(key, cb, {id: true});
+				if(meta && meta[Gun._.soul]){
+					return s3.load(meta, cb);
 				}
 				if(err && err.statusCode == 404){
 					err = null; // we want a difference between 'unfound' (data is null) and 'error' (auth is wrong).
@@ -96,16 +97,16 @@
 			var next = s3.next
 			, ack = Gun.text.random(8)
 			, batch = s3.batch[next] = s3.batch[next] || {};
-			s3.event.on(ack).once(cb);
-			Gun.obj.map(nodes, function(node, id){
+			s3.on(ack).once(cb);
+			Gun.obj.map(nodes, function(node, soul){
 				cb.count += 1;
-				batch[id] = (batch[id] || 0) + 1;
-				//console.log("set listener for", next + ':' + id, batch[id], cb.count);
-				s3.event.on(next + ':' + id).event(function(){
+				batch[soul] = (batch[soul] || 0) + 1;
+				//console.log("set listener for", next + ':' + soul, batch[soul], cb.count);
+				s3.on(next + ':' + soul).event(function(){
 					cb.count -= 1;
 					//console.log("transaction", cb.count);
 					if(!cb.count){
-						s3.event.on(ack).emit();
+						s3.on(ack).emit();
 						this.off(); // MEMORY LEAKS EVERYWHERE!!!!!!!!!!!!!!!! FIX THIS!!!!!!!!!
 					}
 				});
@@ -125,39 +126,40 @@
 			var now = s3.next
 			, batch = s3.batch[s3.next];
 			s3.next = Gun.time.is();	
-			Gun.obj.map(batch, function put(exists, id){
-				var node = gun.__.nodes[id]; // the batch does not actually have the nodes, but what happens when we do cold data? Could this be gone?
-				s3.put(s3.prefix + s3.prenode + id, node, function(err, reply){
-					console.log("s3 put reply", id, err, reply);
+			Gun.obj.map(batch, function put(exists, soul){
+				var node = gun.__.graph[soul]; // the batch does not actually have the nodes, but what happens when we do cold data? Could this be gone?
+				s3.put(s3.prefix + s3.prenode + soul, node, function(err, reply){
+					console.log("s3 put reply", soul, err, reply);
 					if(err || !reply){
-						put(exists, id); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
+						put(exists, soul); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
 						return;
 					}
-					s3.event.on(now + ':' + id).emit(200);
+					s3.on(now + ':' + soul).emit(200);
 				});
 			});
 		}
 		s3.next = s3.next || Gun.time.is();
-		s3.event = s3.event || Gun.on.split();
+		s3.on = s3.on || Gun.on.create();
 		s3.batching = s3.batching || 0;
 		s3.batched = s3.batched || {};
 		s3.batch = s3.batch || {};
 		s3.persisted = s3.persisted || {};
 		s3.wait = s3.wait || null;
 		
-		s3.key = s3.key || function(key, node, cb){
-			var id = node._[Gun.sym.id];
-			if(!id){
-				return cb({err: "No ID!"});
+		s3.key = s3.key || function(key, soul, cb){
+			var meta = {};
+			meta[Gun._.soul] = soul = Gun.text.is(soul)? soul : (soul||{})[Gun._.soul];
+			if(!soul){
+				return cb({err: "No soul!"});
 			}
 			s3.put(s3.prefix + s3.prekey + key, '', function(err, reply){ // key is 2 bytes??? Should be smaller
-				console.log("s3 put reply", id, err, reply);
+				console.log("s3 put reply", soul, err, reply);
 				if(err || !reply){
-					s3.key(key, node, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
+					s3.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
 					return;
 				}
 				cb();
-			}, {Metadata: {'#': id}});
+			}, {Metadata: meta});
 		}
 		
 		gun.server.transport = (function(){
@@ -176,12 +178,13 @@
 				return tran.load(req, req.tran); // else load the state for the tab!
 			}
 			tran.load = function(req, cb){
-				var reply = {};
+				var reply = {}, key;
 				reply.headers = {'Content-Type': tran.json};
 				reply.headers['Gun-Sub'] = req.tab.sub = req.sub;
-				gun.load(req.url.key, function(node){
-					console.log("Loading for", req.tab);
-					tran.sub.scribe(req.tab, node._[Gun.sym.id]);
+				key = (Gun._.meta == req.url.key)? req.url.query : req.url.key;
+				console.log("Loading", req.url.key, 'for', req.tab);
+				gun.load(key, function(node){
+					tran.sub.scribe(req.tab, node._[Gun._.soul]);
 					cb({
 						headers: reply.headers
 						,body: node
@@ -202,79 +205,84 @@
 				if(!req.body){ return cb({body: {err: "No body"}}) }
 				// raw test for now, no auth:
 				// should probably load all the nodes first? YES.
-				var context = Gun.chain.set.now.union.call(gun, req.body); // data safely transformed
-				//console.log("body?", req.body, context.err);
-				if(context.err){ return cb({body: {err: context.err}}) }
-				// WARNING! TODO: BUG! Do not send OK confirmation if amnesiaQuaratine is activated! Not until after it has actually been processed!!!
-				if(Gun.fns.is(gun.__.opt.hooks.set)){
-					gun.__.opt.hooks.set(context.nodes, function saved(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
-						var body = {};
-						if(err){ 
-							body.err = err ;
-						}
-						if(!req.sub){
-							if(!err){
-								body = defer.map({}, context.nodes, 1);
+				var context = gun.union(req.body, function(err, context){ // data safely transformed
+					cb = cb || function(){};
+					if(err || context.err){ return cb({body: {err: context.err}}) }
+					if(Gun.fns.is(gun.__.opt.hooks.set)){
+						gun.__.opt.hooks.set(context.nodes, function saved(err, data){ // now iterate through those nodes to S3 and get a callback once all are saved
+							var body = {};
+							if(err){ 
+								body.err = err ;
 							}
-							return cb({body: body});
-						}
-						var now = tran.post.s[req.sub]; // begin our stupid Chrome fix, we should abstract this out into defer (where it belogns) to keep things clean.
-						if(!now){ return } // utoh we've lost our reply to the tab!
-						clearTimeout(now.timeout);
-						now.body = now.body || {}; // make sure we have a body for our multi-response in a single response.
-						if(req.wait){ // did this request get deferred?
-							(now.body.refed = now.body.refed || {})[req.wait] = err? {err: err} : defer.map({}, context.nodes, 1); // then reply to it "here".
-						} else {
-							now.body.reply = err? {err: err} : defer.map({}, context.nodes, 1); // else this is the original POST that had to be upgraded.
-						}
-						if(0 < (now.count = ((now.count || 0) - 1))){ // Don't reply till all deferred POSTs have successfully heard back from S3. (Sarcasm: Like counting guarantees that)
-							return now.timeout = setTimeout(saved, gun.__.opt.throttle * 2 * 1000); // reply not guaranteed, so time it out, in seconds.
-						}
-						if(Gun.fns.is(now)){
-							now({body: now.body}); // FINALLY reply for ALL the POSTs for that session that accumulated.
-						} else {
-							// console.log("Error! We deleted our response!");
-						}
-						Gun.obj.del(tran.post.s, req.sub); // clean up our memory.
-						// need to rewrite that if Stream is enabled that both Stream + State save are guaranteed before replying.
-					});
-					// stuff past this point is just stupid implementation optimizations.
-					function defer(nodes, req){ // because Chrome can only handle 4 requests at a time, sad face.
-						if(!req.sub){
-							return;
-						}
-						var next = tran.post.s[req.sub];
-						if(!next){ // was there a previous POST? If not, we become the previous POST.
-							//cb({chunk: ''}); // because on some services (heroku) you need to reply starting a stream to keep the connection open.
-							return tran.post.s[req.sub] = cb;
-						}
-						next.count = (next.count || 1) + 1; // start counting how many we accumulate
-						next.body = next.body || {}; // this becomes the polyfill for all the posts
-						next.body.refed = next.body.refed || {}; // where we refeed the responses for the deferred POSTs.
-						req.wait = Gun.text.random(); // generate an random id for this deferred POST.
-						next.body.refed[req.wait] = false; // establish that we are incomplete.
-						cb({body: {defer: req.wait}}); // end this POST immediately so Chrome only ever uses a couple connections.
-						cb = null; // null it out so we don't accidentally reply to it once we hear back from S3.
-					}
-					defer.map = function(now, nodes, val){ // shortcut for maping which nodes were saved successfully
-						if(!now){ return }
-						Gun.obj.map(nodes, function(node, id, map){
-							now[id] = val;
+							if(!req.sub){
+								if(!err){
+									body = defer.map({}, context.nodes, 1);
+								}
+								return cb({body: body});
+							}
+							var now = tran.post.s[req.sub]; // begin our stupid Chrome fix, we should abstract this out into defer (where it belogns) to keep things clean.
+							if(!now){ return } // utoh we've lost our reply to the tab!
+							clearTimeout(now.timeout);
+							now.body = now.body || {}; // make sure we have a body for our multi-response in a single response.
+							if(req.wait){ // did this request get deferred?
+								(now.body.refed = now.body.refed || {})[req.wait] = err? {err: err} : defer.map({}, context.nodes, 1); // then reply to it "here".
+							} else {
+								now.body.reply = err? {err: err} : defer.map({}, context.nodes, 1); // else this is the original POST that had to be upgraded.
+							}
+							if(0 < (now.count = ((now.count || 0) - 1))){ 
+								// Don't reply till all deferred POSTs have successfully heard back from S3. (Sarcasm: Like counting guarantees that)
+								return now.timeout = setTimeout(saved, gun.__.opt.throttle * 2 * 1000); // reply not guaranteed, so time it out, in seconds.
+							}
+							if(Gun.fns.is(now)){
+								now({body: now.body}); // FINALLY reply for ALL the POSTs for that session that accumulated.
+							} else {
+								// console.log("Error! We deleted our response!");
+							}
+							Gun.obj.del(tran.post.s, req.sub); // clean up our memory.
+							// need to rewrite that if Stream is enabled that both Stream + State save are guaranteed before replying.
 						});
-						return now;
+						// stuff past this point is just stupid implementation optimizations.
+						function defer(nodes, req){ // because Chrome can only handle 4 requests at a time, sad face.
+							if(!req.sub){
+								return;
+							}
+							var next = tran.post.s[req.sub];
+							if(!next){ // was there a previous POST? If not, we become the previous POST.
+								//cb({chunk: ''}); // because on some services (heroku) you need to reply starting a stream to keep the connection open.
+								return tran.post.s[req.sub] = cb;
+							}
+							next.count = (next.count || 1) + 1; // start counting how many we accumulate
+							next.body = next.body || {}; // this becomes the polyfill for all the posts
+							next.body.refed = next.body.refed || {}; // where we refeed the responses for the deferred POSTs.
+							req.wait = Gun.text.random(); // generate an random id for this deferred POST.
+							next.body.refed[req.wait] = false; // establish that we are incomplete.
+							cb({body: {defer: req.wait}}); // end this POST immediately so Chrome only ever uses a couple connections.
+							cb = null; // null it out so we don't accidentally reply to it once we hear back from S3.
+						}
+						defer.map = function(now, nodes, val){ // shortcut for maping which nodes were saved successfully
+							if(!now){ return }
+							Gun.obj.map(nodes, function(node, soul, map){
+								now[soul] = val;
+							});
+							return now;
+						}
+						defer(context.nodes, req); // actually do the weird stuff to make Chrome not be slow
+					} else {
+						context.err = "Warning! You have no persistence layer to save to!";
+						Gun.log(context.err);
+						cb({body: {err: "Server has no persistence layer!"}});
 					}
-					defer(context.nodes, req); // actually do the weird stuff to make Chrome not be slow
-				} else {
-					context.err = "Warning! You have no persistence layer to save to!";
-					Gun.log(context.err);
-					cb({body: {err: "Server has no persistence layer!"}});
+				});
+				if(context.err){ 
+					cb({body: {err: context.err}});
+					return cb = null;
 				}
-				Gun.obj.map(context.nodes, function(node, id){ // live push the stream out in realtime to every tab subscribed
+				Gun.obj.map(context.nodes, function(node, soul){ // live push the stream out in realtime to every tab subscribed
 					var msg = {};
 					msg.headers = req.headers; // polyfill the delta as its own message.
 					msg.body = node;
-					//console.log("emit delta", id);
-					tran.push.on(id).emit(msg); 
+					console.log("emit delta", soul);
+					tran.push(soul).emit(msg); 
 				});
 			}
 			tran.post.s = {};
@@ -282,7 +290,6 @@
 				//console.log("<-- ", req.sub, req.tran ," -->");
 				req.tab = tran.sub.s[req.sub];
 				if(!req.tab){
-					console.log(req.url.query);
 					cb({
 						headers: {'Gun-Sub': ''}
 						,body: {err: "Please re-initialize sub."}
@@ -316,10 +323,10 @@
 					Gun.obj.del(tran.sub.s, tab.sub)
 				}, gun.__.opt.disconnect * mult * 1000); // in seconds
 			}
-			tran.sub.scribe = function(tab, id){
+			tran.sub.scribe = function(tab, soul){
 				tran.sub.s[tab.sub] = tab;
 				tab.subs = tab.subs || {};
-				tab.subs[id] = tab.subs[id] || tran.push.on(id).event(function(req){
+				tab.subs[soul] = tab.subs[soul] || tran.push(soul).event(function(req){
 					if(!req){ return }
 					if(!tab){ return this.off() } // resolve any dangling callbacks
 					req.sub = req.sub || req.headers['gun-sub'];
@@ -349,13 +356,13 @@
 						});
 					}
 					reply.headers["Content-Type"] = tran.json;
-					if(res.chunk){
+					if(Gun.obj.has(res,'chunk')){
 						cb({
 							headers: reply.headers
 							,chunk:  Gun.text.ify(res.chunk) + '\n'
 						})
 					}
-					if(res.body){
+					if(Gun.obj.has(res,'body')){
 						cb({
 							headers: reply.headers
 							,body: Gun.text.ify(res.body)
@@ -382,10 +389,10 @@
 							reply.headers[field] = val;
 						});
 					}
-					if(res.chunk && (!reply.body || Gun.list.is(reply.chunks))){
+					if(Gun.obj.has(res,'chunk') && (!reply.body || Gun.list.is(reply.chunks))){
 						(reply.chunks = reply.chunks || []).push(res.chunk);
 					}
-					if(res.body){
+					if(Gun.obj.has(res,'body')){
 						reply.body = res.body; // self-reference yourself so on the client we can get the headers and body.
 						reply.body = ';'+ cb.jsonp + '(' + Gun.text.ify(reply) + ');'; // javascriptify it! can't believe the client trusts us.
 						cb(reply);
@@ -393,7 +400,7 @@
 				}
 			}
 			tran.json = 'application/json';
-			tran.push = Gun.on.split();
+			tran.push = Gun.on.create();
 			return tran;
 		}());
 		

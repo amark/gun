@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="../../gun.js"></script>
+	</head>
+	<body><center>
+		<style>
+			html, body {
+				font-family: Papyrus, fantasy;
+				font-size: 18pt;
+			}
+			.start .player {
+				color: white;
+				border: none;
+				padding: 1.5em;
+				background: skyblue;
+				font-family: Papyrus, fantasy;
+			}
+			.screen {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.off {
+				display: none;
+			}
+			.white {
+				color: white;
+			}
+		</style>
+		<div class="start screen">
+			<!--<pre>
+ ¦¦¦¦¦¦+  ¦¦+   ¦¦+ ¦¦¦+   ¦¦+    ¦¦¦¦¦¦¦+ ¦¦+      ¦¦+ ¦¦¦+   ¦¦+  ¦¦¦¦¦¦+  ¦¦¦¦¦¦¦+ ¦¦¦¦¦¦+ 
+¦¦+----+  ¦¦¦   ¦¦¦ ¦¦¦¦+  ¦¦¦    ¦¦+----+ ¦¦¦      ¦¦¦ ¦¦¦¦+  ¦¦¦ ¦¦+----+  ¦¦+----+ ¦¦+--¦¦+
+¦¦¦  ¦¦¦+ ¦¦¦   ¦¦¦ ¦¦+¦¦+ ¦¦¦    ¦¦¦¦¦¦¦+ ¦¦¦      ¦¦¦ ¦¦+¦¦+ ¦¦¦ ¦¦¦  ¦¦¦+ ¦¦¦¦¦+   ¦¦¦¦¦¦++
+¦¦¦   ¦¦¦ ¦¦¦   ¦¦¦ ¦¦¦+¦¦+¦¦¦    +----¦¦¦ ¦¦¦      ¦¦¦ ¦¦¦+¦¦+¦¦¦ ¦¦¦   ¦¦¦ ¦¦+--+   ¦¦+--¦¦+
++¦¦¦¦¦¦++ +¦¦¦¦¦¦++ ¦¦¦ +¦¦¦¦¦    ¦¦¦¦¦¦¦¦ ¦¦¦¦¦¦¦+ ¦¦¦ ¦¦¦ +¦¦¦¦¦ +¦¦¦¦¦¦++ ¦¦¦¦¦¦¦+ ¦¦¦  ¦¦¦
+ +-----+   +-----+  +-+  +---+    +------+ +------+ +-+ +-+  +---+  +-----+  +------+ +-+  +-+
+			</pre>-->
+			<h1>GUN SLINGER</h1>
+			<h3>Select!</h3>
+			<button id="one" class="player">Player 1</button>
+			<button id="two" class="player">Player 2</button>
+			<h5>Next game available in 15 seconds or less...<h5>
+		</div>
+		<div class="shoot screen off white" style="background: tan;">
+			<h3>GET READY!</h3>
+		</div>
+		<div class="fire screen off" style="background: lime;">
+			<h3>FIRE!</h3>
+			<h5>by tapping this screen</h5>
+		</div>
+		<div class="stop screen off" style="background: yellow;">
+			<h3>STOP!</h3>
+			<h5>...waiting for the other player...</h5>
+		</div>
+		<div class="disqualified screen off white" style="background: red;">
+			<h3>DISQUALIFIED!</h3>
+		</div>
+		<div class="loser screen off white" style="background: red;">
+			<h3>YOU DIED!</h3>
+		</div>
+		<div class="draw screen off white" style="background: red;">
+			<h3>YOU BOTH DIED!</h3>
+			<button onclick="game.reset()">Reset Game</button>
+		</div>
+		<div class="winner screen off white" style="background: skyblue;">
+			<h3>YOU WON!</h3>
+			<button onclick="game.reset()">Reset Game</button>
+		</div>
+		<script>
+			$(function(){
+				var game = window.game = {me:{}}
+				//, gun = Gun(location.origin + '/gun')
+				, gun = window.gun = Gun('http://localhost:8888' + '/gun')
+					.load('game/duel')
+				;
+				gun.path('name').get(function(val){
+					console.log('gunslinger has results', val);
+				});
+				gun.get(function(player){
+					console.log("Game update", player);
+					if(game.timeout){
+						clearTimeout(game.timeout);
+					} else {
+						game.timeout = setTimeout(game.reset, 15 * 1000);
+					}
+					$('.start').find('#one').text(player.one? 'Taken!' : 'Player 1').attr('disabled', player.one? true : false);
+					$('.start').find('#two').text(player.two? 'Taken!' : 'Player 2').attr('disabled', player.two? true : false);
+					game.start(player);
+					game.compare(player);
+				});
+				gun.path('dqed').get(function(){
+					if(!game.me.player || game.me.dqed){ return }
+					game.me.default = true;
+					game.screen('winner');
+				});
+				gun.path('one').get(function(val){
+					console.log('gun player one', val);
+					if(null === val){
+						game.cancel();
+					}
+				})
+				game.start = function(player){
+					if(game.me.started){ return }
+					if(!player.one || !player.two){ return }
+					if(!player || !game.me || !game.me.player){ return }
+					console.log("start?", player, game.me);
+					if(player[game.me.player] == game.me[game.me.player]){
+						game.screen('shoot');
+						game.coordinate();
+					} else {
+						game.cancel();
+					}
+				}
+				gun.path('coordinate').get(game.coordinate = function(at){
+					if(!game.me.player){ return }
+					var started = game.me.started = Gun.roulette();
+					if(at){
+						Gun.schedule(at, function(){
+							if(game.me.dqed || game.me.default || started != game.me.started){ return }
+							game.screen('fire');
+							game.me.draw = (+new Date());
+						});
+						return;
+					}
+					if(game.me.player != 'two'){ return }
+					game.me.coordinate = (+new Date()) + Math.round(Math.random() * 2000 + 2700); // MIN is the right number, and MAX is the SUM of both numbers.
+					gun.path('coordinate').set(game.me.coordinate);
+				});
+				game.compare = function(score){
+					if(!game.me.player || !score.onespeed || !score.twospeed){ return }
+					if(score.onespeed < score.twospeed){
+						if(game.me.one){
+							game.screen('winner');
+						} else {
+							game.screen('loser');
+						}
+					} else
+					if(score.twospeed < score.onespeed){
+						if(game.me.two){
+							game.screen('winner');
+						} else {
+							game.screen('loser');
+						}
+					} else {
+						game.screen('draw');
+					}
+				}
+				game.reset = function(){
+					console.log("Resetting game");
+					gun.path('one').set(null);
+					gun.path('two').set(null);
+					gun.path('dqed').set(null);
+					gun.path('coordinate').set(null);
+					gun.path('onespeed').set(null);
+					gun.path('twospeed').set(null);
+					game.cancel();
+				}
+				game.cancel = function(){
+					game.screen();
+					game.me = {};
+				}
+				game.screen = function(screen){
+					$('.screen').addClass('off').filter('.' + (screen || 'start')).removeClass('off');
+				}
+				$('.player').on('click', function(){
+					if(game.me.player){ return }
+					game.me = {};
+					gun.path(game.me.player = this.id).set(game.me[game.me.player] = Gun.roulette());
+				});
+				$('.shoot').on('click', function(){
+					if(!game.me.player){ return }
+					game.me.dqed = true;
+					game.screen('disqualified');
+					gun.path('dqed').set(game.me[game.me.player]);
+				});
+				$('.fire').on('click', function(){
+					if(!game.me.player || game.me.fired){ return }
+					game.me.fired = (+new Date());
+					game.me.speed = game.me.fired - game.me.draw;
+					gun.path(game.me.player + 'speed').set(game.me.speed);
+					game.screen('stop');
+				});
+			})
+		</script>
+	</center></body>
+</html>

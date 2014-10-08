@@ -5,7 +5,7 @@
 			return new s3(opt);
 		}
 		var s = this;
-		s.own = a.on.split();
+		s.on = a.on.create();
 		s.mime = require('mime');
 		s.AWS = require('aws-sdk');
 		s.config = {};
@@ -33,7 +33,7 @@
 	s3.chain = s3.prototype;
 	s3.chain.put = function(key, o, cb, m){
 		if(!key){ return }
-		var m = m || {}
+		m = m || {}
 		m.Bucket = m.Bucket || this.config.bucket;
 		m.Key = m.Key || key;
 		if(a.obj.is(o) || a.list.is(o)){
@@ -56,7 +56,7 @@
 			Bucket: s.config.bucket
 			,Key: key
 		}, id = s3.id(m);
-		s.own.on(id).once(function(e,d,t,m,r){
+		s.on(id).once(function(e,d,t,m,r){
 			delete s.batch[id];
 			if(!a.fns.is(cb)){ return }
 			try{ cb(e,d,t,m,r);
@@ -69,15 +69,16 @@
 		s.batch[id] = (s.batch[id] || 0) + 1;
 		console.log("no batch!");
 		s.S3().getObject(m, function(e,r){
-			var d, t, m, r = r || (this && this.httpResponse);
-			if(e || !r){ return s.own.on(id).emit(e) }
+			var d, t, m;
+			r = r || (this && this.httpResponse);
+			if(e || !r){ return s.on(id).emit(e) }
 			r.Text = r.text = t = (r.Body||r.body||'').toString('utf8');
 			r.Type = r.type = r.ContentType || (r.headers||{})['content-type'];
 			if(r.type && 'json' === s.mime.extension(r.type)){
 				d = a.obj.ify(t);
 			}
 			m = r.Metadata;
-			s.own.on(id).emit(e, d, t, m, r); // Warning about the r parameter, is is the raw response and may result in stupid SAX errors.
+			s.on(id).emit(e, d, t, m, r); // Warning about the r parameter, is is the raw response and may result in stupid SAX errors.
 		});
 		return s;
 	}

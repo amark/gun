@@ -17,5 +17,6 @@ app.listen(port);
 
 console.log('Express started on port ' + port + ' with /gun');
 gun.load('blob/data').blank(function(){ // in case there is no data on this key
-	gun.set({ hello: "world", from: "Mark Nadal" }).key('blob/data'); // save some sample data
+	console.log("blankety blank");
+	gun.set({ hello: "world", from: "Mark Nadal",_:{'#':'0DFXd0ckJ9cXGczusNf1ovrE'}}).key('blob/data'); // save some sample data
 });
