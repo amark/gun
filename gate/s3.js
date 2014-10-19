@@ -128,3 +128,28 @@
 	}
 	return s3;
 })(require('../gun'), {});
+/**
+Knox S3 Config is:
+knox.createClient({
+    key: ''
+  , secret: ''
+  , bucket: ''
+  , endpoint: 'us-standard'
+  , port: 0
+  , secure: true
+  , token: ''
+  , style: ''
+  , agent: ''
+});
+
+aws-sdk for s3 is:
+{ "accessKeyId": "akid", "secretAccessKey": "secret", "region": "us-west-2" }
+AWS.config.loadFromPath('./config.json');
+ {
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID = ''
+	,secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY = ''
+	,Bucket: process.env.s3Bucket = ''
+	,region: process.env.AWS_REGION = "us-east-1"
+	,sslEnabled: ''
+}
+**/

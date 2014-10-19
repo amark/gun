@@ -90,8 +90,8 @@
 		<script>
 			$(function(){
 				var game = window.game = {me:{}}
-				, gun = Gun('https://gunjs.herokuapp.com/gun')
-				//, gun = window.gun = Gun('http://localhost:8888' + '/gun')
+				//, gun = Gun('https://gunjs.herokuapp.com/gun')
+				, gun = window.gun = Gun('http://localhost:8888' + '/gun')
 					.load('game/duel')
 				;
 				gun.path('name').get(function(val){

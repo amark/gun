@@ -34,9 +34,6 @@
 			.white {
 				color: white;
 			}
-			.winner input, .winner button {
-				font-size: 18pt;
-			}
 		</style>
 		<div class="start screen">
 			<!--<pre>
@@ -52,8 +49,6 @@
 			<button id="one" class="player">Player 1</button>
 			<button id="two" class="player">Player 2</button>
 			<h5>Next game available in 15 seconds or less...<h5>
-			<h4>Fastest draw in the west, <span id="fastest">no</span> seconds, by <span id="slinger">nobody</span>.</h4>
-			<h5>Previous duel won in <span id="previous">no</span> seconds, by <span id="last">no one</span>.</h5>
 		</div>
 		<div class="shoot screen off white" style="background: tan;">
 			<h3>GET READY!</h3>
@@ -76,16 +71,9 @@
 			<h3>YOU BOTH DIED!</h3>
 			<button onclick="game.reset()">Reset Game</button>
 		</div>
-		<div class="default screen off white" style="background: skyblue;">
-			<h3>YOU WON!</h3>
-			<button onclick="game.reset()">Reset</button>
-		</div>
 		<div class="winner screen off white" style="background: skyblue;">
 			<h3>YOU WON!</h3>
-			<form onsubmit="game.rank()">
-				<input placeholder="nickname">
-				<button onclick="game.rank()">Rank</button>
-			</form>
+			<button onclick="game.reset()">Reset Game</button>
 		</div>
 		<script>
 			$(function(){
@@ -106,17 +94,13 @@
 					}
 					$('.start').find('#one').text(player.one? 'Taken!' : 'Player 1').attr('disabled', player.one? true : false);
 					$('.start').find('#two').text(player.two? 'Taken!' : 'Player 2').attr('disabled', player.two? true : false);
-					$('.start').find('#fastest').text(player.fastest || 'no');
-					$('.start').find('#slinger').text(player.slinger || 'nobody');
-					$('.start').find('#previous').text(player.previous || 'no');
-					$('.start').find('#last').text(player.last || 'no one');
 					game.start(player);
 					game.compare(player);
 				});
 				gun.path('dqed').get(function(){
 					if(!game.me.player || game.me.dqed){ return }
 					game.me.default = true;
-					game.screen('default');
+					game.screen('winner');
 				});
 				gun.path('one').get(function(val){
 					console.log('gun player one', val);
@@ -152,41 +136,23 @@
 					gun.path('coordinate').set(game.me.coordinate);
 				});
 				game.compare = function(score){
-					if(!game.me.player || game.me.over || !score.onespeed || !score.twospeed){ return }
+					if(!game.me.player || !score.onespeed || !score.twospeed){ return }
 					if(score.onespeed < score.twospeed){
 						if(game.me.one){
-							win(score.onespeed);
+							game.screen('winner');
 						} else {
 							game.screen('loser');
 						}
 					} else
 					if(score.twospeed < score.onespeed){
 						if(game.me.two){
-							win(score.twospeed);
+							game.screen('winner');
 						} else {
 							game.screen('loser');
 						}
 					} else {
 						game.screen('draw');
 					}
-					function win(speed){
-						game.me.over = true;
-						game.screen('winner');
-						speed = speed / 1000; // convert to seconds
-						if(score.fastest && speed < score.fastest){
-							gun.path('fastest').set(speed);
-							game.me.fastest = true;
-						}
-						gun.path('previous').set(speed);
-					}
-				}
-				game.rank = function(){
-					var nick = $(".winner").find('input').val() || 'Masked Cowboy';
-					gun.path('last').set(nick);
-					if(game.me.fastest){
-						gun.path('slinger').set(nick);
-					}
-					game.reset();
 				}
 				game.reset = function(){
 					console.log("Resetting game");
