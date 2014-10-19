@@ -149,7 +149,7 @@ gun.load('mark@gunDB.io', function(Mark){
 	console.log("Hello ", Mark.name);
 	this.path('username').set('amark'); // because we hadn't specified this yet!
 	this.path('cat').get(function(Hobbes){ // `this` is a gun context of the node.
-		this.set({ servant: Mark, coat: "tabby" }); // oh no! Hobbes has become Mark's master.
+		this.set({ servant: Mark, coat: "tabby" }); // Hobbes has become Mark's master!
 		this.key('kitten/hobbes'); // index cats that are taking over the internet!
 	});
 });
