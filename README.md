@@ -114,6 +114,64 @@ $('#page')
 	});
 ```
 
+#### Commands
+- **set** `gun.set(stuff, function(err){})`
+	- `gun.set({ name: "Mark Nadal", email: "mark@gunDB.io", cat: { name: "Hobbes", species: "kitty" } })`
+ 	- Just pass in whatever you want to save and gun will automatically deconstruct it into a graph for you. Magical? Yes.
+ 	However, there are some sad disclaimers, the current version of gun does not support arrays,
+	but it can handle circular references and partials! We'll go over this more later.
+	- `function`, this callback will return with an error if gun failed to serialize the data.
+	Please report any bugs!
+- **key** `gun.set(stuff).key(index)`
+	- `gun.set(Mark).key('mark@gunDB.io') // where Mark is the object from above`
+	- Imagine the whole big universe out there, your app has to _start_ somewhere.
+	That is exactly what keys do, they open the door to your data.
+	Like a house with many entrances, we want to begin our experience from a certain perspective.
+	And so we step into our graph from a key, entering onto the node that we made it reference.
+	This beginning node is probably usually the user of your app,
+	so our key should be something easily uniquely rememberable -
+	like their email, phone number, or username.
+	Just index all of them by chaining many keys together `gun.set(Mark).key('mark@gunDB.io').key('username/amark)`!
+- **load** `gun.load(key).get(function(data){})`
+	- Now, without further ado, let us begin our journey.
+	Load will retrieve the top layer of our data in the fastest possible way.
+	If we have it in memory, it'll come to us instantly.
+	If not, we'll pull it in from your closest gun peers (probably your server) that have it
+	and then cache it for future use. GUN handles all this data synchronization for you,
+	so that way you can focus on what you love - building awesome apps.
+- **path** `gun.load(key).path('cat').get(function(data){})`
+	- To keep things blazing fast, we only return partials.
+	In fact, everything is composed of partials - that is how we construct our graph.
+	Now we want to start exploring it, like getting Mark's cat.
+	Let's get fancy with partials and circular references!
+```javascript
+gun.load('mark@gunDB.io', function(Mark){
+	console.log("Hello ", Mark.name);
+	this.path('username').set('amark'); // because we hadn't saved it yet!
+	this.path('cat').get(function(Hobbes){ // `this` is context of the nodes you explore via path
+		this.set({ servant: Mark, coat: "tabby" }); // oh no! Hobbes has become Mark's master.
+		this.key('kitten/hobbes'); // cats are taking over the internet! Better make an index for them.
+	});
+});
+```
+- 
+	- Note how we were able to use path to navigate into a field and set its value.
+	We are also able to use path to follow relations into other nodes, like Hobbes.
+	Notice how we performed a set directly on Hobbes -
+	gun handled the complexity of merging the new data into the existing data.
+	Partials won't overwrite anything unless we explicitly reuse the same field,
+	in which case it just becomes an update.
+	The cool thing is, gun will handle conflicts on concurrent updates for you!
+- **get** `gun.load('kitten/hobbes').path('servant.cat.servant.name').get(function(name){ console.log(name) })`
+	- Now let us invert our perspective. Because we made a key to open our graph with Hobbes
+	we can now start with him. From that point of view,
+	we can then trace our path out into Hobbes' servant,
+	whom has a cat (named Hobbes),
+	whom has a servant, whose name we want to know.
+	Just who might it be? Well, after a fun circular trip, it is `"Mark Nadal"` of course!
+
+Now send me an email before Hobbes takes over! I want to hear from you, and help you any way I can. <3
+
 ## Ahead
 - ~~Realtime push to the browser~~
 - Persistence in the browser
