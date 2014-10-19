@@ -13,6 +13,7 @@
 	}
 	;(function(Gun){
 		Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
+		Gun.version = 0.8;
 		Gun.union = function(graph, prime){
 			var context = Gun.shot();
 			context.nodes = {};
@@ -178,7 +179,8 @@
 		}
 		Chain.load = function(key, cb, opt){
 			var gun = this.chain();
-			gun.shot.then(cb = cb || function(){});
+			cb = cb || function(){};
+			gun.shot.then(function(){ cb.apply(gun, arguments) });
 			cb.soul = (key||{})[Gun._.soul];
 			if(cb.soul){
 				cb.node = gun.__.graph[cb.soul];
@@ -250,7 +252,7 @@
 			gun.back.shot.then(function trace(node){ // should handle blank and err! Err already handled?
 				//console.log("shot path", path, node);
 				gun.field = null;
-				gun._.node = gun.back._.node;
+				gun._.node = node;
 				if(!path.length){ // if the path resolves to another node, we finish here
 					return gun.shot('then').fire(node); // already frozen from loaded.
 				}
@@ -301,16 +303,16 @@
 				The live state at point of confirmation may or may not be different than when it was called.
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
-		Chain.set = function(val, cb, opt){ // TODO: set failed miserably to catch depth references in social tests
+		Chain.set = function(val, cb, opt){ // TODO: need to turn deserializer into a trampolining function so stackoverflow doesn't happen.
 			opt = opt || {};
 			var gun = this, set;
 			gun.shot.then(function(){
 				if(gun.field){ // a field cannot be 0!
 					set = {}; // in case we are doing a set on a field, not on a node
 					set[gun.field] = val; // we create a blank node with the field/value to be set
-					set._ = Gun.ify.soul.call(gun, {}, gun._.node); // and then set their souls to be the same
-					val = set; // that way they will merge correctly for us during the union!
-				}
+					val = set;
+				} // TODO: should be able to handle val being a relation or a gun context or a gun promise.
+				val._ = Gun.ify.soul.call(gun, {}, gun._.node); // and then set their souls to be the same that way they will merge correctly for us during the union!
 				cb = Gun.fns.is(cb)? cb : function(){};
 				set = Gun.ify.call(gun, val);
 				cb.root = set.root;
@@ -823,7 +825,7 @@
 		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
-			tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
+			//tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
 			//tab.url(nodes);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				tab.ajax(url, nodes, function respond(err, reply, id){
@@ -850,7 +852,7 @@
 						return;
 					}
 					if(body.reply || body.defer || body.refed){ return }
-					tab.store.del(respond.id);
+					//tab.store.del(respond.id);
 				}, {headers: {'Gun-Sub': tab.subscribe.sub || ''}});
 			});
 			Gun.obj.map(nodes, function(node, soul){

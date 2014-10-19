@@ -7,11 +7,7 @@ var Gun = require('gun');
 var gun = Gun({
 	s3: (process.env.NODE_ENV === 'production')? null : require('../../test/shotgun') // replace this with your own keys!
 });
-app.use(function(req, res, next){
-		console.log("THIS HIT SEEEERVER", req.url);
-		next();
-	})
-	.use(gun.server)
+app.use(gun.server)
 	.use(express.static(__dirname))
 app.listen(port);
 

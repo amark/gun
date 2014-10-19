@@ -1,4 +1,5 @@
 ;(function(){
+	console.log("Hello wonderful person! :) I'm mark@gunDB.io, message me for help or with hatemail. I want to hear from you! <3");
 	var Gun = require(__dirname+'/gun')
 	, S3 = require(__dirname+'/gate/s3') // redis has been removed, can be replaced with a disk system
 	, formidable = require('formidable')
@@ -439,28 +440,3 @@
 	};
 	module.exports = Gun;
 }());
-/**
-Knox S3 Config is:
-knox.createClient({
-    key: ''
-  , secret: ''
-  , bucket: ''
-  , endpoint: 'us-standard'
-  , port: 0
-  , secure: true
-  , token: ''
-  , style: ''
-  , agent: ''
-});
-
-aws-sdk for s3 is:
-{ "accessKeyId": "akid", "secretAccessKey": "secret", "region": "us-west-2" }
-AWS.config.loadFromPath('./config.json');
- {
-	accessKeyId: process.env.AWS_ACCESS_KEY_ID = ''
-	,secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY = ''
-	,Bucket: process.env.s3Bucket = ''
-	,region: process.env.AWS_REGION = "us-east-1"
-	,sslEnabled: ''
-}
-**/
