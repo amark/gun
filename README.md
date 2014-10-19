@@ -131,7 +131,7 @@ $('#page')
 	This beginning node is probably usually the user of your app,
 	so our key should be something easily uniquely rememberable -
 	like their email, phone number, or username.
-	Just index all of them by chaining many keys together `gun.set(Mark).key('mark@gunDB.io').key('username/amark)`!
+	Just index all of them by chaining many keys together `gun.set(Mark).key('mark@gunDB.io').key('username/amark')`!
 - **load** `gun.load(key).get(function(data){})`
 	- Now, without further ado, let us begin our journey.
 	Load will retrieve the top layer of our data in the fastest possible way.
@@ -147,10 +147,10 @@ $('#page')
 ```javascript
 gun.load('mark@gunDB.io', function(Mark){
 	console.log("Hello ", Mark.name);
-	this.path('username').set('amark'); // because we hadn't saved it yet!
-	this.path('cat').get(function(Hobbes){ // `this` is context of the nodes you explore via path
+	this.path('username').set('amark'); // because we hadn't specified this yet!
+	this.path('cat').get(function(Hobbes){ // `this` is a gun context of the node.
 		this.set({ servant: Mark, coat: "tabby" }); // oh no! Hobbes has become Mark's master.
-		this.key('kitten/hobbes'); // cats are taking over the internet! Better make an index for them.
+		this.key('kitten/hobbes'); // index cats that are taking over the internet!
 	});
 });
 ```
@@ -168,9 +168,9 @@ gun.load('mark@gunDB.io', function(Mark){
 	we can then trace our path out into Hobbes' servant,
 	whom has a cat (named Hobbes),
 	whom has a servant, whose name we want to know.
-	Just who might it be? Well, after a fun circular trip, it is `"Mark Nadal"` of course!
+	Just who might it be? Well, `"Mark Nadal"` of course!
 
-Now send me an email before Hobbes takes over! I want to hear from you, and help you any way I can. <3
+Send me an email before Hobbes takes over! I want to hear from you, and help. <3
 
 ## Ahead
 - ~~Realtime push to the browser~~
