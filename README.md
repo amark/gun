@@ -44,7 +44,7 @@ gun.set({ hello: 'world' }).key('my/first/data');
 
 var http = require('http');
 http.createServer(function (req, res) {
-	gun.load('my/first/data', function(data){
+	gun.load('my/first/data', function(err, data){
 		res.writeHead(200, {'Content-Type': 'application/json'});
 		res.end(JSON.stringify(data));
 	});
@@ -145,7 +145,7 @@ $('#page')
 	Now we want to start exploring it, like getting Mark's cat.
 	Let's get fancy with partials and circular references!
 ```javascript
-gun.load('mark@gunDB.io', function(Mark){
+gun.load('mark@gunDB.io').get(function(Mark){
 	console.log("Hello ", Mark.name);
 	this.path('username').set('amark'); // because we hadn't specified this yet!
 	this.path('cat').get(function(Hobbes){ // `this` is a gun context of the node.
