@@ -147,6 +147,114 @@ describe('Gun', function(){
 				expect(Gun.obj.map({a:'z',b:3,c:'x'},function(v,i,t){ if(v===3){ return 0 }})).to.be(0);
 			});
 		});
+		describe('Functions', function(){
+			it('sum',function(done){
+				var obj = {a:2, b:2, c:3, d: 9};
+				Gun.obj.map(obj, function(num, key){
+					setTimeout(this.add(function(){
+						this.sum(null, num * num);
+					}, key), parseInt((""+Math.random()).substring(2,5)));
+				}, Gun.fns.sum(function(err, val){
+					expect(val.a).to.eql(4);
+					expect(val.b).to.eql(4);
+					expect(val.c).to.eql(9);
+					expect(val.d).to.eql(81);
+					done();
+				}));
+			});
+		});
+		
+		describe('Gun Safety', function(){
+			var gun = Gun();
+			it('is',function(){
+				expect(Gun.is(gun)).to.be(true);
+				expect(Gun.is(true)).to.be(false);
+				expect(Gun.is(false)).to.be(false);
+				expect(Gun.is(0)).to.be(false);
+				expect(Gun.is(1)).to.be(false);
+				expect(Gun.is('')).to.be(false);
+				expect(Gun.is('a')).to.be(false);
+				expect(Gun.is(Infinity)).to.be(false);
+				expect(Gun.is(NaN)).to.be(false);
+				expect(Gun.is([])).to.be(false);
+				expect(Gun.is([1])).to.be(false);
+				expect(Gun.is({})).to.be(false);
+				expect(Gun.is({a:1})).to.be(false);
+				expect(Gun.is(function(){})).to.be(false);
+			});
+			it('is value',function(){
+				expect(Gun.is.value(false)).to.be(true);
+				expect(Gun.is.value(true)).to.be(true);
+				expect(Gun.is.value(0)).to.be(true);
+				expect(Gun.is.value(1)).to.be(true);
+				expect(Gun.is.value('')).to.be(true);
+				expect(Gun.is.value('a')).to.be(true);
+				expect(Gun.is.value({'#':'somesoulidhere'})).to.be('somesoulidhere');
+				expect(Gun.is.value({'#':'somesoulidhere', and: 'nope'})).to.be(false);
+				expect(Gun.is.value(Infinity)).to.be(false); // boohoo :(
+				expect(Gun.is.value(NaN)).to.be(false);
+				expect(Gun.is.value([])).to.be(false);
+				expect(Gun.is.value([1])).to.be(false);
+				expect(Gun.is.value({})).to.be(false);
+				expect(Gun.is.value({a:1})).to.be(false);
+				expect(Gun.is.value(function(){})).to.be(false);
+			});
+			it('is soul',function(){
+				expect(Gun.is.soul({'#':'somesoulidhere'})).to.be('somesoulidhere');
+				expect(Gun.is.soul({'#':'somethingelsehere'})).to.be('somethingelsehere');
+				expect(Gun.is.soul({'#':'somesoulidhere', and: 'nope'})).to.be(false);
+				expect(Gun.is.soul({or: 'nope', '#':'somesoulidhere'})).to.be(false);
+				expect(Gun.is.soul(false)).to.be(false);
+				expect(Gun.is.soul(true)).to.be(false);
+				expect(Gun.is.soul('')).to.be(false);
+				expect(Gun.is.soul('a')).to.be(false);
+				expect(Gun.is.soul(0)).to.be(false);
+				expect(Gun.is.soul(1)).to.be(false);
+				expect(Gun.is.soul(Infinity)).to.be(false); // boohoo :(
+				expect(Gun.is.soul(NaN)).to.be(false);
+				expect(Gun.is.soul([])).to.be(false);
+				expect(Gun.is.soul([1])).to.be(false);
+				expect(Gun.is.soul({})).to.be(false);
+				expect(Gun.is.soul({a:1})).to.be(false);
+				expect(Gun.is.soul(function(){})).to.be(false);
+			});
+			it('is node',function(){
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}})).to.be(true);
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}})).to.be(true);
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}, g: Infinity})).to.be(false);
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, z: NaN, c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, y: {_: 'cool'}, c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, x: [], c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.node({})).to.be(false);
+				expect(Gun.is.node({a:1})).to.be(false);
+				expect(Gun.is.node({_:{}})).to.be(false);
+				expect(Gun.is.node({_:{}, a:1})).to.be(false);
+				expect(Gun.is.node({'#':'somesoulidhere'})).to.be(false);
+			});
+			it('is graph',function(){
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}}})).to.be(true);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(true);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(true);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}})).to.be(true);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, foo: 1, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, foo: {}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, foo: {_:{'#':'FOO'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, foo: {_:{}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: Infinity, c: '', d: 'e', f: {'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: Infinity, c: '', d: 'e', f: {'#':'somethingelsehere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}, g: Infinity})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}, a:0, b: 1, z: NaN, c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}, a:0, b: 1, y: {_: 'cool'}, c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.graph({_:{'#':'somesoulidhere'}, a:0, b: 1, x: [], c: '', d: 'e'})).to.be(false);
+				expect(Gun.is.graph({})).to.be(false); // Empty graph is not a graph :(
+				expect(Gun.is.graph({a:1})).to.be(false);
+				expect(Gun.is.graph({_:{}})).to.be(false);
+				expect(Gun.is.graph({_:{}, a:1})).to.be(false);
+				expect(Gun.is.graph({'#':'somesoulidhere'})).to.be(false);
+			});
+		});
 	});
 	
 	it('ify', function(){

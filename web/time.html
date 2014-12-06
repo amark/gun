@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="../gun.js"></script>
+		<link id="style" rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/sunburst.min.css">
+		<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+		<script src="https://dl.dropboxusercontent.com/u/4374976/random/phrase.js"></script>
+	</head>
+	<body>
+		<style>
+			@import url(http://fonts.googleapis.com/css?family=Dosis|Poiret+One|Oxygen);
+			html, body {
+				font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+			}
+			.center {
+				text-align: center;
+			}
+			.lean {
+				font-family: 'Poiret One', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+			}
+			.clean {
+				font-family: 'Dosis', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+			}
+			.crisp {
+				font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+			}
+			pre {
+				background-color: black; 
+				border: 1px dashed white;
+				color: white;
+				line-height: 1.5em;
+				padding: 1em;
+				overflow: hidden;
+			}
+			button {
+				border: none;
+				color: white;
+				background: skyblue;
+				padding: 1em;
+				cursor: pointer;
+			}
+			input {
+				background: transparent;
+				border: 2px dashed grey;
+				padding: 1em;
+			}
+			.step {
+				display: none;
+			}
+			.step:target {
+				display: block;
+			}
+			.grid {
+				text-align: center;
+			}
+			.unit {
+				display: inline-block;
+			}
+			.learn {
+				min-width: 250px;
+				max-width: 400px;
+				width: 30%;
+				padding: 2em;
+			}
+		</style>
+		<div class="center">
+			<h1 class="lean">Easiest . Database . Ever</h1>
+			<h2 class="lean">Scale without pain, because it is decentralized.</h2>
+		</div>
+		<div id="steps">
+			<div id="step1">
+				As easy as 1, 2, 3!
+				<ol>
+					<li>Connect to a gun server.</li>
+					<li>Save some data.</li>
+					<li>Create a key to open it up later.</li>
+				</ol>
+				<pre>var gun = Gun('http://localhost:8888/gun');
+gun.set({hello: 'world'}).key('<span class="random">my/first/data</span>');</pre>
+				<a href="#step2" class="run"><button>
+					Try it Now!
+				</button></a>
+				<small>Disclaimer: This is a demo only! Data is deleted every 24 hours.</small>
+				<!--
+				<div>
+				Already have a key? Then
+				<input placeholder="copy and paste it into here!">
+				</div>
+				-->
+			</div>
+			
+			<div id="step2" class="step">
+				Let's test to see if the data got saved.
+				<ol>
+					<li><a id="parallel" href="?key=" target="_blank">Open this page</a> in another browser tab.</li>
+					<li>Now you'll see <b class="random" style="color: crimson;">my/first/data</b> load over there.
+					<li>Meanwhile, this textarea will wait for realtime updates from the other tab:</li>
+				</ol>
+				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
+				The next level will be unlocked when you complete the realtime sync between tabs.
+			</div>
+			
+			<div id="step3" class="step">
+				<pre>var gun = Gun('http://localhost:8888/gun');
+gun.load('<span class="random">my/first/data</span>', function(data){
+	$('textarea').text(demo.print(data));
+});</pre>
+				<a href="#step4" class="run"><button>
+					Run the Code!
+				</button></a> Does the key match from the previous tab?
+				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
+			</div>
+			
+			<div id="step4" class="step">
+				Now let's listen to realtime updates, and change the value on the 'hello' field.
+				<pre>gun.load('<span class="random">my/first/data</span>')
+.on(function(updates){
+	$('textarea').text(demo.print(updates));
+}).path('hello').set('You!');</pre>
+				<a class="run"><button>
+					Let's do This!
+				</button></a>
+				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
+			</div>
+			
+		</div>
+		
+		
+		<div class="grid">
+			<div class="learn unit center">
+				<h1 class="lean">Did you know?</h1>
+				<h2 class="lean">GUN is lightning fast, cause it runs in memory.</h2>
+				Click to <a href="#step2" class="run"><button>
+					See How
+				</button></a> persistence works.
+			</div>
+			<div class="learn unit center">
+				<h1 class="lean">Guess what!</h1>
+				<h2 class="lean">GUN is the only database with realtime push notifications.</h2>
+				Learn <a href="#step2" class="run"><button>
+					How it Works
+				</button></a>.
+			</div>
+			<div class="learn unit center">
+				<h1 class="lean">Have Big Data?</h1>
+				<h2 class="lean">GUN tranforms it into <i>meaningful data</i>, with regular JS.</h2>
+				Discover <a href="#step2" class="run"><button>
+					How To
+				</button></a> do a graph search.
+			</div>
+		</div>
+		<script>
+			$(function(){
+				var demo = {}, gun;
+				window.demo = demo;
+				demo.key = location.search.split('=')[1];
+				demo.random = demo.key || random_phrase.noun() +'/'+ random_phrase.verb() +'/'+ random_phrase.adjective() +'/'+ random_phrase.noun() +'/'+ random_phrase.adverb();
+				$(".random").text(demo.random);
+				$('pre').each(function(){
+					$(this).html(hljs.highlight('javascript', $(this).text()).value);
+				});
+				$('#step1').addClass((demo.key || location.hash)? 'step' : '').find('a').first().click(function(){
+					$('#step1').addClass('step');
+				});
+				$('#parallel').attr('href', '?key=' + demo.random + '#step3');
+				$(".run").click(function(){
+					var code = $(this).closest('.step').attr('id');
+					if(!code || !demo[code]){ return } // something went wrong!
+					demo[code]();
+				});
+				demo.step0 = function(){
+					gun = window.gun = window.gun || Gun('http://localhost:8888/gun');
+				}
+				demo.step1 = function(){
+					demo.step0();
+					gun.set({hello: 'world'}).key(demo.random);
+					
+					// and also do this, so we can unlock!
+					gun.load(demo.random)
+					.on(function(updates){
+						$('textarea').text(demo.print(updates));
+						// unlock level 5!
+					});
+				}
+				demo.step2 = function(){} // no step 2
+				demo.step3 = function(){
+					demo.step0();
+					gun.load(demo.random, function(data){
+						$('textarea').text(demo.print(data));
+					});
+				}
+				demo.step4 = function(){
+					demo.step0();
+					gun.load(demo.random)
+					.on(function(updates){
+						$('textarea').text(demo.print(updates));
+					}).path('hello').set('You!');
+				}
+				demo.print = function(data){
+					if(!data){ return }
+					delete data._; // this is gun specific metadata that we don't want to print.
+					return JSON.stringify(data, null, 2);
+				}
+			});
+		</script>
+		<a href="https://github.com/amark/gun"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+	</body>
+</html>

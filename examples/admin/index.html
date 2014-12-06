@@ -59,7 +59,7 @@
 			</li>
 		</ul>
 		<script>
-			var gun = Gun([location + 'gun']);
+			var gun = Gun([location.origin + '/gun']);
 			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
 				$scope.$data = gun.load('blob/data').get(function(data){
