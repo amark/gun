@@ -1,0 +1,17 @@
+{
+	"name": "examples",
+	"main": "all.js",
+	"description": "Example gun apps"
+,	"version": "0.0.1"
+,	"engines": {
+		"node": "~>0.6.6"
+	}
+,	"dependencies": {
+		"express": "~>4.9.0",
+		"gun": "~>0.0.8"
+	}
+,	"scripts": {
+        "start": "node all.js",
+        "test": "mocha"
+    }
+}

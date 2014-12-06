@@ -1,0 +1,1 @@
+web: node all.js

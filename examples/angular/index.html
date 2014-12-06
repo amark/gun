@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html ng-app="admin">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.js"></script>
+		<script src="../../gun.js"></script>
+	</head>
+	<body ng-controller="editor">
+		<style>
+			html, body {
+				font-family: Verdana, Geneva, sans-serif;
+			}
+			a {
+				color: skyblue;
+				text-decoration: none;
+				cursor: poiner;
+			}
+			ul, li {
+				list-style-type: none;
+			}
+			ul:hover, li:hover {
+				list-style-type: inherit;
+			}
+			input {
+				border: none;
+				border-bottom: dashed 1px gainsboro;
+			}
+			.none {
+				display: none;
+			}
+		</style>
+		<h3>Admin JSON Editor</h3>
+		This is a live view of your data, you can edit it in realtime or add new key/values.
+		<ul name="list">
+			<li ng-repeat="(key, val) in data">
+				<div ng-if="key != '_'">
+					<b>{{key}}</b>:
+					<span contenteditable="true" gun>{{val}}</span>
+				</div>
+			</li>
+			<li>
+				<form ng-submit="add()">
+					<label>
+						<input ng-model="field" placeholder="key" ng-submit="add()">
+						<a ng-click="add()">add</a>
+						<input type="submit" class="none"/>
+					</label>
+				</form>
+			</li>
+		</ul>
+		<script>
+			var gun = Gun(location.origin + '/gun');
+			angular.module('admin', []).controller('editor', function($scope){
+				$scope.data = {};
+				$scope.$data = gun.load('blob/data').on(function(data){
+					Gun.obj.map(data, function(val, field){
+						if(val === $scope.data[field]){ return }
+						$scope.data[field] = val;
+					});
+					$scope.$apply();
+				});
+				$scope.add = function(a,b,c){
+					$scope.$data.path($scope.field).set( $scope.data[$scope.field] = 'value' );
+					$scope.field = '';
+				};
+			}).directive('gun', function(){
+				return function(scope, elem){
+					elem.on('keyup', function(){
+						scope.$data.path(scope.key).set( scope.data[scope.key] = elem.text() );
+					});
+				};
+			});
+		</script>
+	</body>
+</html>
