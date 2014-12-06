@@ -152,7 +152,7 @@ describe('Gun', function(){
 				var obj = {a:2, b:2, c:3, d: 9};
 				Gun.obj.map(obj, function(num, key){
 					setTimeout(this.add(function(){
-						this.sum(null, num * num);
+						this.done(null, num * num);
 					}, key), parseInt((""+Math.random()).substring(2,5)));
 				}, Gun.fns.sum(function(err, val){
 					expect(val.a).to.eql(4);
