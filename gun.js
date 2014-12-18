@@ -237,9 +237,9 @@
 		}
 		Chain.load = function(key, cb, opt){
 			var gun = this.chain();
-			cb = cb || {};
 			gun.shot('done');
 			gun.shot.done(function(){
+				cb = cb || function(){};
 				cb.soul = (key||{})[Gun._.soul];
 				if(cb.soul){
 					cb.node = gun.__.graph[cb.soul];
@@ -282,10 +282,14 @@
 			gun.shot.then(function(){
 				//Gun.log.call(gun, "make key", key);
 				cb = cb || function(){};
-				cb.node = gun.__.keys[key] = gun._.node;
-				if(!cb.node){ return gun }
+				if(Gun.obj.is(key)){ // if key is an object then we get the soul directly from it because the node might not exist in cache.
+					Gun.obj.map(key, function(soul, field){ return key = field, cb.soul = soul });
+				} else { // else the node does exist in cache and we will get the soul from it instead, plus link the key.
+					cb.node = gun.__.keys[key] = gun._.node;
+				}
 				if(Gun.fns.is(gun.__.opt.hooks.key)){
-					gun.__.opt.hooks.key(key, cb.node._[Gun._.soul], function(err, data){
+					console.log("UGLY UGLY UGLY UGLY", key, cb.soul, cb.node);
+					gun.__.opt.hooks.key(key, cb.soul || (cb.node||{_:{}})._[Gun._.soul], function(err, data){
 						//Gun.log.call(gun, "key made", key);
 						if(err){ return cb(err) }
 						return cb(null);
@@ -954,6 +958,7 @@
 			var ws = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
 			if(!ws){ return }
 			if(ws = r.ws.peers[opt.base]){
+				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
 				var req = {};
 				if(opt.headers){ req.headers = opt.headers }
 				if(opt.body){ req.body = opt.body }
