@@ -104,7 +104,7 @@ gun.set({hello: 'world'}).key('<span class="random">my/first/data</span>');</pre
 			
 			<div id="step3" class="step">
 				<pre>var gun = Gun('http://localhost:8888/gun');
-gun.load('<span class="random">my/first/data</span>', function(data){
+gun.load('<span class="random">my/first/data</span>', function(err, data){
 	$('textarea').text(demo.print(data));
 });</pre>
 				<a href="#step4" class="run"><button>
@@ -187,7 +187,7 @@ gun.load('<span class="random">my/first/data</span>', function(data){
 				demo.step2 = function(){} // no step 2
 				demo.step3 = function(){
 					demo.step0();
-					gun.load(demo.random, function(data){
+					gun.load(demo.random, function(err, data){
 						$('textarea').text(demo.print(data));
 					});
 				}

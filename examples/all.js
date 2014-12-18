@@ -1,5 +1,5 @@
 console.log("If modules not found, run `npm install` in /example folder!"); // git subtree push -P examples heroku master
-var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || 8888;
+var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 80;
 
 var express = require('express');
 var app = express();
