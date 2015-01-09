@@ -17,8 +17,8 @@
 		Gun.is.value = function(v){ // null, binary, number (!Infinity), text, or a rel.
 			if(v === null){ return true } // deletes
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
-			if(Gun.bi.is(v) 
-			|| Gun.num.is(v) 
+			if(Gun.bi.is(v)
+			|| Gun.num.is(v)
 			|| Gun.text.is(v)){
 				return true; // simple values
 			}
@@ -105,7 +105,7 @@
 			function HAM(machineState, incomingState, currentState, incomingValue, currentValue){ // TODO: Lester's comments on roll backs could be vulnerable to divergence, investigate!
 				if(machineState < incomingState){
 					// the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
-					return {amnesiaQuarantine: true}; 
+					return {amnesiaQuarantine: true};
 				}
 				if(incomingState < currentState){
 					// the incoming value is within the boundary of the machine's state, but not within the range.
@@ -239,6 +239,7 @@
 			var gun = this.chain();
 			gun.shot('done');
 			gun.shot.done(function(){
+				opt = opt || {};
 				cb = cb || function(){};
 				cb.soul = (key||{})[Gun._.soul];
 				if(cb.soul){
@@ -247,7 +248,7 @@
 					gun._.key = key;
 					cb.node = gun.__.keys[key];
 				}
-				if(cb.node){ // set this to the current node, too!
+				if(!opt.force && cb.node){ // set this to the current node, too!
 					Gun.log.call(gun, "load via gun"); // remember to do all the same stack stuff here also!
 					gun._.node = cb.node;
 					if(Gun.fns.is(cb)){ cb.call(gun, null, Gun.obj.copy(gun._.node)) } // frozen copy
@@ -284,11 +285,11 @@
 				cb = cb || function(){};
 				if(Gun.obj.is(key)){ // if key is an object then we get the soul directly from it because the node might not exist in cache.
 					Gun.obj.map(key, function(soul, field){ return key = field, cb.soul = soul });
+					cb.node = gun.__.keys[key] = gun.__.graph[cb.soul]; // if it is cached, then it is important to reference it.
 				} else { // else the node does exist in cache and we will get the soul from it instead, plus link the key.
 					cb.node = gun.__.keys[key] = gun._.node;
 				}
 				if(Gun.fns.is(gun.__.opt.hooks.key)){
-					console.log("UGLY UGLY UGLY UGLY", key, cb.soul, cb.node);
 					gun.__.opt.hooks.key(key, cb.soul || (cb.node||{_:{}})._[Gun._.soul], function(err, data){
 						//Gun.log.call(gun, "key made", key);
 						if(err){ return cb(err) }
@@ -300,16 +301,16 @@
 			});
 			if(!gun.back){ gun.shot('then').fire() }
 			return gun;
-		}		
+		}
 		/*
 			how many different ways can we get something?
-			Find via a singular path 
+			Find via a singular path
 				.path('blah').get(blah);
 			Find via multiple paths with the callback getting called many times
 				.path('foo', 'bar').get(foorOrBar);
 			Find via multiple paths with the callback getting called once with matching arguments
 				.path('foo', 'bar').get(foo, bar)
-			Find via multiple paths with the result aggregated into an object of pre-given fields 
+			Find via multiple paths with the result aggregated into an object of pre-given fields
 				.path('foo', 'bar').get({foo: foo, bar: bar}) || .path({a: 'foo', b: 'bar'}).get({a: foo, b: bar})
 			Find via multiple paths where the fields and values must match
 				.path({foo: val, bar: val}).get({})
@@ -515,7 +516,7 @@
 		Util.obj.del = function(o, k){
 			if(!o){ return }
 			o[k] = null;
-			delete o[k]; 
+			delete o[k];
 			return true;
 		}
 		Util.obj.ify = function(o){
@@ -609,7 +610,7 @@
 				return me;
 			}
 			return Chain;
-		}()); 
+		}());
 		return Flow;
 	}());Gun.shot.chain.chain.fire=Gun.shot.chain.chain.pipe;
 	;Gun.on=(function(){
@@ -772,7 +773,7 @@
 							if(field !== Gun._.soul){
 								context.err = err;
 								return true;
-							}					
+							}
 							if(unique[soul]){ return }
 							unique[soul] = 1;
 							map(val);
@@ -873,7 +874,7 @@
 			}
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, meta, function(err, reply){
-					console.log("gun key done", soul, err, reply);
+					//console.log("gun key done", soul, err, reply);
 					if(err || !reply){
 						Gun.log.call(gun, err = err || "Error: Key failed to be made on " + url);
 						// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
@@ -888,11 +889,11 @@
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
 			//tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
-			console.log("gun set start");
+			//console.log("gun set start");
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function respond(err, reply, id){
-					console.log("gun set done", err, reply, id);
-					
+					//console.log("gun set done", err, reply, id);
+
 					return;
 					var body = reply && reply.body;
 					respond.id = respond.id || cb.id;
@@ -1018,7 +1019,7 @@
 				js.parentNode.removeChild(js);
 				window[cb.id] = null; // TODO! BUG: This needs to handle chunking!
 				try{delete window[cb.id];
-				}catch(e){}	
+				}catch(e){}
 			}
 			js.async = true;
 			document.getElementsByTagName('head')[0].appendChild(js);

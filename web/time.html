@@ -27,7 +27,7 @@
 				font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
 			}
 			pre {
-				background-color: black; 
+				background-color: black;
 				border: 1px dashed white;
 				color: white;
 				line-height: 1.5em;
@@ -64,7 +64,26 @@
 				width: 30%;
 				padding: 2em;
 			}
+			.svg {
+				background: white url('./img/devices.svg') no-repeat 50% 50%;
+				height: 40em;
+			}
 		</style>
+		<div class="html" style="width: 100%; height: 40em; margin:0;padding:0;">
+
+			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 40%; left: 20%;">
+				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
+					<div class="monitor" style="height: 100%; width: 100%; background: #999;">
+					</div>
+				</div>
+				<center><img src="./img/stand.svg" style="margin-top: 1px;"></img></center>
+			</div>
+
+		</div>
+		<div class="svg">
+			AWESOME SAUCE COLOR SYNCING
+		</div>
+
 		<div class="center">
 			<h1 class="lean">Easiest . Database . Ever</h1>
 			<h2 class="lean">Scale without pain, because it is decentralized.</h2>
@@ -90,7 +109,7 @@ gun.set({hello: 'world'}).key('<span class="random">my/first/data</span>');</pre
 				</div>
 				-->
 			</div>
-			
+
 			<div id="step2" class="step">
 				Let's test to see if the data got saved.
 				<ol>
@@ -101,7 +120,7 @@ gun.set({hello: 'world'}).key('<span class="random">my/first/data</span>');</pre
 				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
 				The next level will be unlocked when you complete the realtime sync between tabs.
 			</div>
-			
+
 			<div id="step3" class="step">
 				<pre>var gun = Gun('http://localhost:8888/gun');
 gun.load('<span class="random">my/first/data</span>', function(err, data){
@@ -112,7 +131,7 @@ gun.load('<span class="random">my/first/data</span>', function(err, data){
 				</button></a> Does the key match from the previous tab?
 				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
 			</div>
-			
+
 			<div id="step4" class="step">
 				Now let's listen to realtime updates, and change the value on the 'hello' field.
 				<pre>gun.load('<span class="random">my/first/data</span>')
@@ -124,10 +143,10 @@ gun.load('<span class="random">my/first/data</span>', function(err, data){
 				</button></a>
 				<textarea style="width: 100%; height: 100px;">// Your data will log here!</textarea>
 			</div>
-			
+
 		</div>
-		
-		
+
+
 		<div class="grid">
 			<div class="learn unit center">
 				<h1 class="lean">Did you know?</h1>
@@ -176,7 +195,7 @@ gun.load('<span class="random">my/first/data</span>', function(err, data){
 				demo.step1 = function(){
 					demo.step0();
 					gun.set({hello: 'world'}).key(demo.random);
-					
+
 					// and also do this, so we can unlock!
 					gun.load(demo.random)
 					.on(function(updates){
