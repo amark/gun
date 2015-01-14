@@ -3,15 +3,20 @@
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<!--
 		<script src="../gun.js"></script>
 		<link id="style" rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/sunburst.min.css">
 		<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
 		<script src="https://dl.dropboxusercontent.com/u/4374976/random/phrase.js"></script>
+		-->
 	</head>
 	<body>
 		<style>
-			@import url(http://fonts.googleapis.com/css?family=Dosis|Poiret+One|Oxygen);
+			@import url(https://fonts.googleapis.com/css?family=Dosis|Poiret+One|Oxygen);
 			html, body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
 				font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
 			}
 			.center {
@@ -68,25 +73,296 @@
 				background: white url('./img/devices.svg') no-repeat 50% 50%;
 				height: 40em;
 			}
+			.GUN {
+				background: transparent url('./img/gun.svg') no-repeat 50% 50%;
+				background-size: 60%;
+			}
+			.dull {
+				background-color: #EEE;
+				-webkit-transition: background-color 600ms linear;
+				-moz-transition: background-color 600ms linear;
+				transition: background-color 600ms linear;
+			}
+			.blue {
+				background-color: skyblue;
+				-webkit-transition: background-color 600ms linear;
+				-moz-transition: background-color 600ms linear;
+				transition: background-color 600ms linear;
+			}
+			.red {
+				background-color: red;
+				-webkit-transition: background-color 600ms linear;
+				-moz-transition: background-color 600ms linear;
+				transition: background-color 600ms linear;
+			}
+			.green {
+				background-color: MediumSpringGreen;
+				-webkit-transition: background-color 600ms linear;
+				-moz-transition: background-color 600ms linear;
+				transition: background-color 600ms linear;
+			}
+			.fold {
+				width: 100%;
+				height: 100%;
+				min-height: 450px;
+				position: relative;
+			}
+			.grid {
+				display: inline-block;
+			}
+			@media (max-width: 760px) {
+				body {
+					font-siz----e: 10pt;
+				}
+			}
+			@media (max-width: 1279px) {
+				.wide {
+					display: none;
+				}
+			}
 		</style>
-		<div class="html" style="width: 100%; height: 40em; margin:0;padding:0;">
 
-			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 40%; left: 20%;">
-				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
-					<div class="monitor" style="height: 100%; width: 100%; background: #999;">
+		<div class="fold">
+
+			<div class="behold" style="overflow: hidden; position: relative; width: 100%; min-height 400px; margin: -200px 0 0; padding:0; top: 40%; text-align: center;">
+
+				<div class="graphic grid" style="min-width: 300px; max-width: 600px; height: 400px;
+				 	position: relative; margin:0 auto; padding:0;">
+
+					<img src="./img/server.png" class="server" style="position: absolute; top: 2%; left: 35%; wid-th: 50%;">
+
+					<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; left: 3%;">
+						<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
+							<div class="dull screen GUN" style="height: 100%; width: 100%;">
+							</div>
+						</div>
+							<div class="stand" style="margin: 1px auto 0px;
+								border-bottom: 2.75em solid #888;
+								border-left: .5em solid transparent;
+								border-right: .5em solid transparent;
+								height: 0;
+								width: 3.2em;">
+							</div>
+							<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
+					</div>
+
+					<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; left: 48%;">
+						<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
+							<div class="dull screen GUN" style="height: 100%; width: 100%;">
+							</div>
+						</div>
+						<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
+						</div>
+					</div>
+
+					<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; left: 70%;">
+						<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
+							<div class="dull screen GUN" style="height: 100%; width: 100%;">
+							</div>
+						</div>
+					</div>
+
+					<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 50px 0 0 0;
+						position: absolute; left: 20%; top: 15%; border-width: 3px 0px 0px 3px;">
+							<div class="rarr" style="position: absolute; top: -.59em; right: -.7em;
+								width: 0;
+								height: 0;
+								border-top: .5em solid transparent;
+								border-left: 1em solid FireBrick;
+								border-bottom: .5em solid transparent;">
+							</div>
+							<div class="darr" style="position: absolute; bottom: -.75em; left: -.59em;
+								width: 0;
+								height: 0;
+								border-left: .5em solid transparent;
+								border-right: .5em solid transparent;
+								border-top: 1em solid FireBrick;">
+							</div>
+					</div>
+
+					<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 50px 0;
+						position: absolute; left: 80%; top: 35%; border-width: 0px 3px 3px 0px;">
+						<div class="uarr" style="position: absolute; top: -.9em; right: -.59em;
+							width: 0;
+							height: 0;
+							border-left: .5em solid transparent;
+							border-right: .5em solid transparent;
+							border-bottom: 1em solid FireBrick;">
+						</div>
+						<div class="larr" style="position: absolute; bottom: -.55em; left: -.59em;
+							width: 0;
+							height: 0;
+							border-top: .5em solid transparent;
+							border-right: 1em solid FireBrick;
+							border-bottom: .5em solid transparent;">
+						</div>
+					</div>
+
+					<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
+						position: absolute; left: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
+						<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
+							width: 0;
+							height: 0;
+							border-left: .5em solid transparent;
+							border-right: .5em solid transparent;
+							border-bottom: 1em solid FireBrick;">
+						</div>
+						<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
+							width: 0;
+							height: 0;
+							border-left: .5em solid transparent;
+							border-right: .5em solid transparent;
+							border-top: 1em solid FireBrick;">
+						</div>
+					</div>
+
+					<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
+				</div>
+				<div class="graphic wide grid" style="min-width: 300px; max-width: 600px; height: 400px;
+					position: relative; margin:0 auto; padding:0;">
+
+					<div class="arrow server-server" style="width: 100px; height: 0px; border: dashed 0px FireBrick; border-radius: 0;
+						position: absolute; left: -9%; top: 15%; border-width: 3px 0px 0px 0px;">
+						<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
+							width: 0;
+							height: 0;
+							border-top: .5em solid transparent;
+							border-right: 1em solid FireBrick;
+							border-bottom: .5em solid transparent;">
+						</div>
+						<div class="larr" style="position: absolute; top: -.59em; right: -.6em;
+							width: 0;
+							height: 0;
+							border-left: 1em solid FireBrick;
+							border-bottom: .5em solid transparent;
+							border-top: .5em solid transparent;">
+						</div>
+					</div>
+
+					<img src="./img/server.png" class="server" style="position: absolute; top: 2%; right: 35%;">
+
+					<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; right: 3%;">
+						<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
+							<div class="dull screen GUN" style="height: 100%; width: 100%;">
+							</div>
+						</div>
+						<div class="stand" style="margin: 1px auto 0px;
+						border-bottom: 2.75em solid #888;
+						border-left: .5em solid transparent;
+						border-right: .5em solid transparent;
+						height: 0;
+						width: 3.2em;">
+					</div>
+					<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
+				</div>
+
+				<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; right: 48%;">
+					<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
+						<div class="dull screen GUN" style="height: 100%; width: 100%;">
+						</div>
+					</div>
+					<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
 					</div>
 				</div>
-				<center><img src="./img/stand.svg" style="margin-top: 1px;"></img></center>
+
+				<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; right: 70%;">
+					<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
+						<div class="dull screen GUN" style="height: 100%; width: 100%;">
+						</div>
+					</div>
+				</div>
+
+				<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 50px 0 0;
+					position: absolute; right: 20%; top: 15%; border-width: 3px 3px 0px 0px;">
+					<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
+						width: 0;
+						height: 0;
+						border-top: .5em solid transparent;
+						border-right: 1em solid FireBrick;
+						border-bottom: .5em solid transparent;">
+					</div>
+					<div class="darr" style="position: absolute; bottom: -.75em; right: -.59em;
+						width: 0;
+						height: 0;
+						border-left: .5em solid transparent;
+						border-right: .5em solid transparent;
+						border-top: 1em solid FireBrick;">
+					</div>
+				</div>
+
+
+				<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 0px 50px;
+					position: absolute; right: 80.3%; top: 34.3%; border-width: 0px 0px 3px 3px;">
+					<div class="uarr" style="position: absolute; top: -.8em; left: -.59em;
+						width: 0;
+						height: 0;
+						border-left: .5em solid transparent;
+						border-right: .5em solid transparent;
+						border-bottom: 1em solid FireBrick;">
+					</div>
+					<div class="rarr" style="position: absolute; bottom: -.55em; right: -.7em;
+						width: 0;
+						height: 0;
+						border-top: .5em solid transparent;
+						border-left: 1em solid FireBrick;
+						border-bottom: .5em solid transparent;">
+					</div>
+				</div>
+
+				<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
+					position: absolute; right: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
+					<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
+						width: 0;
+						height: 0;
+						border-left: .5em solid transparent;
+						border-right: .5em solid transparent;
+						border-bottom: 1em solid FireBrick;">
+					</div>
+					<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
+						width: 0;
+						height: 0;
+						border-left: .5em solid transparent;
+						border-right: .5em solid transparent;
+						border-top: 1em solid FireBrick;">
+					</div>
+				</div>
+
+				<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
 			</div>
 
-		</div>
+				<script>
+					$(function(){
+						var c = ['dull', 'blue', 'green']
+						, a = 'dull blue red green';
+						$(".screen").click(function(){
+							c.push(c.shift());
+							var to = c[0];
+							$(this).removeClass(a).addClass(to);
+							$('.screen').not(this).each(function(){
+								var t = $(this);
+								setTimeout(function(){
+									t.removeClass(a).addClass(to);
+								}, rand(400,700));
+							});
+						});
+						function rand(min, max) {
+							return Math.floor(Math.random() * (max - min + 1)) + min;
+						}
+					})
+				</script>
+
+				<div class="center" style="margin-top: 2%;">
+					<div class="lean" style="font-size: 400%;">Easiest Database Ever</div>
+					<div class="lean" style="font-size: 225%;">Sync state in a cinch at a distributed system scale.</div>
+				</div>
+
+			</div>
+
+		</div> <!-- END FOLD -->
+
+<div style="display: none;">
 		<div class="svg">
 			AWESOME SAUCE COLOR SYNCING
-		</div>
-
-		<div class="center">
-			<h1 class="lean">Easiest . Database . Ever</h1>
-			<h2 class="lean">Scale without pain, because it is decentralized.</h2>
 		</div>
 		<div id="steps">
 			<div id="step1">
@@ -224,6 +500,7 @@ gun.load('<span class="random">my/first/data</span>', function(err, data){
 				}
 			});
 		</script>
-		<a href="https://github.com/amark/gun"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+</div>
+<a href="https://github.com/amark/gun" target="_blank" class="wide"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
 	</body>
 </html>
