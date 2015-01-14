@@ -292,6 +292,7 @@
 				if(Gun.fns.is(gun.__.opt.hooks.key)){
 					gun.__.opt.hooks.key(key, cb.soul || (cb.node||{_:{}})._[Gun._.soul], function(err, data){
 						//Gun.log.call(gun, "key made", key);
+						gun.__.keys[key] = cb.node; // once more for good luck.
 						if(err){ return cb(err) }
 						return cb(null);
 					});
