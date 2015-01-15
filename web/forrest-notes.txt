@@ -1,0 +1,14 @@
+NOTES FROM FORREST:
+
+ 1 make raw HTTP work and document it, document that attach needs to be BEFORE listen. (talk to AJ)
+ 2 make sure you SUPPRESS your comments, Mark.
+ 3 .get doesn't work on subsequent closures. WHYYY??
+ 4 HOW DO I DELETE? Mark: delete the actual field from the data, but not the stream/meta.
+ 5 security ideas: have gun KEY regexs that are whitelist/blacklist. Off the keys.
+ 6 Forrest says, "arrays".
+ 7 get VAL without gun meta-data.
+ 8 make it work with just Gun('/gun');
+
+
+gun.js
+gun-bundle.js
