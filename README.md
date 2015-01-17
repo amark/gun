@@ -185,7 +185,7 @@ Send me an email before Hobbes takes over! I want to hear from you, and help. <3
 ## YOU
 We're just getting started and gun is foremost designed to be accessible and modular, because the database industry will never make any progress unless we can be more open and approachable. Our goal is to make everybody experts by actually explaining concepts rather than being dismissive with "its complicated hard low level stuff, let the experts handle it." So join the community, learn cool things, and contribute modules and plugins!
 
-`Gun.on('opt').event(function(gun, opt){ /* You're module here! */  })`
+`Gun.on('opt').event(function(gun, opt){ /* Your module here! */  })`
 
 Google Group: https://groups.google.com/forum/#!forum/g-u-n
 
