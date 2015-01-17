@@ -66,7 +66,7 @@ console.log('Server running at http://127.0.0.1:1337/');
 Now fire up your browser and hit that URL - you'll see your data, plus some gun specific metadata.
 
 ## API
-At its core, gun is just a synchronization protocol - but that is boring and useless by itself. So I've implemented a really exciting and easy API for you to use. If you don't like my approach or naming convention, you can simply rename things yourself or better yet fork the project and build a beautifully custom API and everything will still work via the protocol.
+At its core, gun is just a synchronization protocol - but that is boring and useless by itself. So I've implemented a really exciting and easy API for you to use. If you don't like my approach or naming convention, you can simply rename things yourself or better yet fork the project and build a beautifully custom API and everything will still work via the protocol. Read more about this approach at [the wiki](https://github.com/amark/gun/wiki/API-Design-Philosophy:-Reactive-&-Chainable).
 
 #### Approach
 - If you are unfamiliar with **reactive** programming, it is a code structure that emphasizes vertical readability by avoiding nested loops and callbacks. Instead of doing
