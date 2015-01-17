@@ -7,7 +7,8 @@ I'll be filling this in with help for you in just a moment!
 
 If you need any help with HTML/CSS/JS just text me 760.689.2468 or email mark@gunDB.io
 
-PRIZE: 2 Adult Electric Scooters! To help you zip around town. :)
+PRIZE: Win 2 Adult Electric Scooters! To help you zip around town. :)
+![WIN THIS!](http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg)
 
 Getting Started
 ===
