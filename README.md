@@ -7,6 +7,8 @@ I'll be filling this in with help for you in just a moment!
 
 If you need any help with HTML/CSS/JS just text me 760.689.2468 or email mark@gunDB.io
 
+PRIZE: 2 Adult Electric Scooters! To help you zip around town. :)
+
 Getting Started
 ===
 Quick getting started guide.
