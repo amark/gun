@@ -1,6 +1,14 @@
 gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
+FOR MHACKS!
+===
+I'll be filling this in with help for you in just a moment!
+
+If you need any help with HTML/CSS/JS just text me 760.689.2468 or email mark@gunDB.io
+
+Getting Started
+===
 Quick getting started guide.
 
 Make sure you already have node and npm installed.
