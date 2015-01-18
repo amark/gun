@@ -398,6 +398,7 @@
 				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // and then set their souls to be the same that way they will merge correctly for us during the union!
 				cb = Gun.fns.is(cb)? cb : function(){};
 				set = Gun.ify.call(gun, val);
+				if (!set.hasOwnProperty("root")){ return cb(new Error('Value must be an object, not a primative.'), gun) }
 				cb.root = set.root;
 				if(set.err){ return cb(set.err), gun }
 				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
