@@ -3,7 +3,8 @@ gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https:/
 
 ## Getting Started
 
-If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), get started [here](https://github.com/amark/gun/blob/master/examples/start.sh) first. Then run this in your terminal:
+If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/start.sh) first.
+Then run this in your terminal:
 
 ```bash
 npm install gun
