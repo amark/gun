@@ -1,6 +1,7 @@
 describe('Gun', function(){
 	var Gun = require('../gun')
 	,	t = {};
+	require('../lib/file');
 	describe('Utility', function(){
 		describe('Type Check', function(){
 			it('binary', function(){
@@ -253,6 +254,13 @@ describe('Gun', function(){
 				expect(Gun.is.graph({_:{}})).to.be(false);
 				expect(Gun.is.graph({_:{}, a:1})).to.be(false);
 				expect(Gun.is.graph({'#':'somesoulidhere'})).to.be(false);
+			});
+		});
+		describe('Error Handling', function(){
+			var gun = Gun();
+			it('load object',function(){
+				gun.set("val", function(err, val) { expect(err).to.be.ok(); });
+				gun.set({foo:'bar'}, function(err, val) { expect(err).to.not.be.ok(); });
 			});
 		});
 	});
