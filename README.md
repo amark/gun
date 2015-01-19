@@ -118,7 +118,7 @@ I want to help you, because my goal is for GUN to be the easiest database ever.
 That means if you ever get stuck on something for longer than 5 minutes,
 you should talk to me so I can help you solve it.
 Your input will then help me improve gun.
-We also really open to contributions! GUN is easy to extend and customize:
+We are also really open to contributions! GUN is easy to extend and customize:
 
 `Gun.on('opt').event(function(gun, opt){ /* Your module here! */  })`
 
