@@ -126,7 +126,7 @@ It is also important to us that your database is not a magical black box.
 So often our questions get dismissed with "its complicated hard low level stuff, let the experts handle it."
 And we do not think that attitude will generate any progress for people.
 Instead, we want to make everyone an expert by actually getting really good at explaining the concepts.
-So join our community, in the quest of learning cool things and helping yourself and others build awesome technology.
+So join our community, in the quest of learning cool things and helping yourself and others build awesome technology. 
 
 Google Group: https://groups.google.com/forum/#!forum/g-u-n
 
