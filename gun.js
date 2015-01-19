@@ -281,7 +281,6 @@
 		Chain.key = function(key, cb){
 			var gun = this;
 			gun.shot.then(function(){
-				//Gun.log.call(gun, "make key", key);
 				cb = cb || function(){};
 				if(Gun.obj.is(key)){ // if key is an object then we get the soul directly from it because the node might not exist in cache.
 					Gun.obj.map(key, function(soul, field){ return key = field, cb.soul = soul });
@@ -300,7 +299,7 @@
 					Gun.log.call(gun, "Warning! You have no key hook!");
 				}
 			});
-			if(!gun.back){ gun.shot('then').fire() }
+			if(!gun.back){ gun.shot('then').fire(gun._.node) }
 			return gun;
 		}
 		/*
@@ -350,6 +349,8 @@
 		Chain.get = function(cb){
 			var gun = this;
 			gun.shot.then(function(val){
+				console.log("did I get it?", val, gun);
+				cb = cb || function(){};
 				cb.call(gun, Gun.obj.is(val)? Gun.obj.copy(val) : val); // frozen copy
 			});
 			return gun;
@@ -387,36 +388,82 @@
 		Chain.set = function(val, cb, opt){ // TODO: need to turn deserializer into a trampolining function so stackoverflow doesn't happen.
 			opt = opt || {};
 			var gun = this, set;
+			if(gun.field){ // field is always a string
+				set = {}; // in case we are doing a set on a field, not on a node
+				set[gun.field] = val; // we create a blank node with the field/value to be set
+				val = set;
+			} else
+			if(!Gun.obj.is(val)){
+				return cb({err: "No field exists to set the " + (typeof val) + " on."}), cb.root;
+			}
+			// TODO: should be able to handle val being a relation or a gun context or a gun promise.
+			// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
+			val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
+			cb = Gun.fns.is(cb)? cb : function(){};
+			set = Gun.ify.call(gun, val);
+			cb.root = set.root;
+			console.log("chain.set root", cb.root);
+			if(set.err){ return cb(set.err), gun }
+			set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
+			if(set.err){ return cb(set.err), gun }
+			gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
+			gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
+			console.log("still rolling", gun._.node);
+			// TODO? ^ Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
+			if(Gun.fns.is(gun.__.opt.hooks.set)){
+				gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
+					if(err){ return cb(err) }
+					return cb(null);
+				});
+			} else {
+				Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
+			}
 			gun.shot.then(function(){ // set/key should cause a subscription, is this working yet?
-				//console.log("chain.set", gun, gun.field, val, gun._.node);
-				if(gun.field){ // field is always a string
-					set = {}; // in case we are doing a set on a field, not on a node
-					set[gun.field] = val; // we create a blank node with the field/value to be set
-					val = set;
-				} // TODO: should be able to handle val being a relation or a gun context or a gun promise.
-				// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
-				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // and then set their souls to be the same that way they will merge correctly for us during the union!
-				cb = Gun.fns.is(cb)? cb : function(){};
-				set = Gun.ify.call(gun, val);
-				cb.root = set.root;
-				if(set.err){ return cb(set.err), gun }
-				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
-				if(set.err){ return cb(set.err), gun }
-				gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
-				gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
-				// TODO? ^ Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
-				if(Gun.fns.is(gun.__.opt.hooks.set)){
-					gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
-						if(err){ return cb(err) }
-						return cb(null);
-					});
-				} else {
-					Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
-				}
+
 			});
-			if(!gun.back){ gun.shot('then').fire() }
+			if(!gun.back){
+				gun.shot('then').fire();
+				console.log("gun.set() !gun.back fire()");
+			}
 			return gun;
 		}
+
+		Chain.insert = function(obj, cb, opt){
+			var gun = this;
+			if(!gun.back){
+				console.log("no back!");
+				gun = gun.set({});
+			}
+			console.log("back!!", gun);
+			gun.shot.then(function(){
+				opt = opt || {};
+				cb = cb || function(){};
+				var item = gun.chain().set(obj).get(function(val){
+					var list = {}, soul = Gun.is.soul.on(val);
+					console.log(val, 'has', soul);
+					if(!soul){ return } // TODO: BUG!!! Handle this edge case!!!
+					list[soul] = val;
+					gun.set(list);
+				});
+			});
+			return gun;
+		}
+		/*
+		Chain.map = function(cb, opt){
+			var gun = this;
+			gun.shot.then(function(val){
+				cb = cb || function(){};
+				opt = opt || {};
+				Gun.obj.map(val, function(obj, soul){
+					if(!Gun.is.soul(obj) && !opt.all){ return }
+					gun.load(obj).get(function(val){ // should map have support for blank?
+						cb.call(this, obj, soul);
+					});
+				});
+			});
+			return gun;
+		}
+		*/
 		// Union is different than set. Set casts non-gun style of data into a gun compatible data.
 		// Union takes already gun compatible data and validates it for a merge.
 		// Meaning it is more low level, such that even set uses union internally.
@@ -459,22 +506,6 @@
 			this._.dud = Gun.fns.is(dud)? dud : function(){};
 			return this;
 		}
-    Chain.map = function(cb){
-      var gun = this;
-      gun.shot.then(function(val){
-        cb = cb || function(){};
-        //console.log("map module is loading", val);
-        Gun.obj.map(val, function(obj, soul){
-          //console.log(obj, Gun.is.soul(obj));
-          if(!Gun.is.soul(obj)){ return; }
-          gun.load(obj).get(function(obj){
-            delete obj._;
-            cb.call(this, obj, soul);
-          });
-        });
-      });
-      return gun;
-    }
 	}(Gun.chain = Gun.prototype));
 	;(function(Util){
 		Util.fns = {};
