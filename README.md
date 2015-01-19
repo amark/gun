@@ -67,7 +67,7 @@ Below is a really basic overview of how the gun API works. For a more detailed e
 
 ## Setting Data
 
-In gun, it can be helpful to think of everything as a field/value pairs. For example, let's say we have a `user` object that looks like this:
+In gun, it can be helpful to think of everything as field/value pairs. For example, let's say we have a `user` object that looks like this:
 
 ```json
 {
