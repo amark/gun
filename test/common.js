@@ -324,7 +324,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		/*
+		
 		it('load', function(done){
 			gun.load('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
@@ -345,7 +345,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		*/
+
 		it('load path set', function(done){
 			gun.load('hello/world').path('hello').set('World').get(function(val){
 				expect(val).to.be('World');

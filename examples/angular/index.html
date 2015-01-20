@@ -51,11 +51,12 @@
 		</ul>
 		<script>
 			var gun = Gun(location.origin + '/gun');
-			angular.module('admin', []).controller('editor', function($scope){ //return;
+			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
 				$scope.$data = gun.load('example/angular/todo').blank(function(){
-					console.log("Initializing Data!")
-					gun.set({}).key('example/angular/todo');
+					console.log("Initializing Data!", this);
+					this.set({}).key('example/angular/todo');
+					window.location = window.location;
 				}).on(function(data){
 					Gun.obj.map(data, function(val, field){
 						if(val === $scope.data[field]){ return }
