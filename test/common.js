@@ -1,7 +1,6 @@
 describe('Gun', function(){
 	var Gun = require('../gun')
 	,	t = {};
-	require(__dirname + '/../lib/file');
 	describe('Utility', function(){
 		describe('Type Check', function(){
 			it('binary', function(){
@@ -304,8 +303,6 @@ describe('Gun', function(){
 		data = {c: function(){}, d: 'hi'};
 		test = Gun.ify(data);
 		expect(test.err.invalid).to.be.ok();
-
-		console.log(test.nodes);
 	});
 
 	it('union', function(){
@@ -317,32 +314,61 @@ describe('Gun', function(){
 		Gun.union(graph, prime); // TODO: BUG! Where is the expect???
 	});
 
-	it('path', function(done){
-		console.log("fix path!");
-		return done(); // TODO: FIX! This is broken because of API changes, fix it!
+	describe('API', function(){
 
-		this.timeout(9000);
-		var gun = require('gun')({
-			s3: require('./shotgun') // replace this with your own keys!
-		});
-		gun.load('d1ed426098eae2bba8c60605e1e4552f66281770', null, {id: true}) // get Rodney Morris
-			.path('parent.parent.first') // Rodney's parent is Juan Colon, whose parent is Francis Peters
-		.get(function(val){
-			console.log("val!", val);
-			done();
-		});
-		console.log("________________________");
-	});
+		var gun = Gun();
 
-	it('set key get', function(done){
-		var gun = require('gun/gun')();
-
-		gun.set({hello: "world"}).key('hello/world').get(function(val){
-				console.log("?", val);
+		it('set key get', function(done){
+			gun.set({hello: "world"}).key('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
 				done();
-		}).blank(function(){ console.log("nothing"); })
-		.err(function(){ console.log("err"); })
-	});
+			});
+		});
+		/*
+		it('load', function(done){
+			gun.load('hello/world').get(function(val){
+				expect(val.hello).to.be('world');
+				done();
+			});
+		});
 
+		it('load path', function(done){
+			gun.load('hello/world').path('hello').get(function(val){
+				expect(val).to.be('world');
+				done();
+			});
+		});
+
+		it('load set path', function(done){
+			gun.load('hello/world').set({hello: 'Mark'}).path('hello').get(function(val){
+				expect(val).to.be('Mark');
+				done();
+			});
+		});
+		*/
+		it('load path set', function(done){
+			gun.load('hello/world').path('hello').set('World').get(function(val){
+				expect(val).to.be('World');
+				done();
+			});
+		});
+
+		it('path', function(done){
+			console.log("fix path!");
+			return done(); // TODO: FIX! This is broken because of API changes, fix it!
+
+			this.timeout(9000);
+			var gun = require('gun')({
+				s3: require('./shotgun') // replace this with your own keys!
+			});
+			gun.load('d1ed426098eae2bba8c60605e1e4552f66281770', null, {id: true}) // get Rodney Morris
+				.path('parent.parent.first') // Rodney's parent is Juan Colon, whose parent is Francis Peters
+			.get(function(val){
+				console.log("val!", val);
+				done();
+			});
+			console.log("________________________");
+		});
+
+	});
 });

@@ -25,4 +25,4 @@ cd ./node_modules/gun/examples
 
 npm install .
 
-sudo /usr/local/bin/node ./all.js
+sudo /usr/local/bin/node ./express.js
