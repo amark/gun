@@ -3,7 +3,7 @@ gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https:/
 
 ## Getting Started
 
-If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/start.sh) first.
+If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 Then in your terminal, run:
 
 ```bash
@@ -16,11 +16,12 @@ Now you can require it in the app you want to build.
 var Gun = require('gun');
 ```
 
-Once included, initialize a gun instance with your AWS S3 credentials.
+Once included, initialize a gun instance with a file path or your AWS S3 credentials.
 
 ```javascript
 var gun = Gun({
-	s3: {
+	file: 'data.json',
+	s3: { // Optional!
 		key: '', // AWS Access Key
 		secret: '', // AWS Secret Token
 		bucket: '' // The bucket you want to save into
@@ -28,7 +29,9 @@ var gun = Gun({
 });
 ```
 
-S3 is the default persistence layer, it can be replaced with others.
+These are the default persistence layers, they are modular and can be replaced others.
+
+Using S3 is recommended for deployment, and using a file is recommended for local development.
 
 Now you can save your first object, and create a reference to it.
 
@@ -40,13 +43,7 @@ Altogether, try it with the node hello world web server which will reply with yo
 
 ```javascript
 var Gun = require('gun');
-var gun = Gun({
-	s3: {
-	  	key: '', // AWS Access Key
-	  	secret: '', // AWS Secret Token
-	  	bucket: '' // The bucket you want to save into
-	}
-});
+var gun = Gun({ file: 'data.json' });
 gun.set({ hello: 'world' }).key('my/first/data');
 
 var http = require('http');
