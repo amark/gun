@@ -280,18 +280,17 @@
 		}
 		Chain.key = function(key, cb){
 			var gun = this;
+			cb = cb || function(){};
 			gun.shot.then(function(){
-				cb = cb || function(){};
-				if(Gun.obj.is(key)){ // if key is an object then we get the soul directly from it because the node might not exist in cache.
+				if(Gun.obj.is(key)){ // if key is an object then we get the soul directly from it.
 					Gun.obj.map(key, function(soul, field){ return key = field, cb.soul = soul });
 					cb.node = gun.__.keys[key] = gun.__.graph[cb.soul]; // if it is cached, then it is important to reference it.
-				} else { // else the node does exist in cache and we will get the soul from it instead, plus link the key.
+				} else { // else let's get the soul directly from the node, plus link the key.
 					cb.node = gun.__.keys[key] = gun._.node;
 				}
 				if(Gun.fns.is(gun.__.opt.hooks.key)){
 					gun.__.opt.hooks.key(key, cb.soul || (cb.node||{_:{}})._[Gun._.soul], function(err, data){
-						//Gun.log.call(gun, "key made", key);
-						gun.__.keys[key] = cb.node; // once more for good luck.
+						gun.__.keys[key] = cb.node || gun._.node; // once more for good luck.
 						if(err){ return cb(err) }
 						return cb(null);
 					});
@@ -299,7 +298,9 @@
 					Gun.log.call(gun, "Warning! You have no key hook!");
 				}
 			});
-			if(!gun.back){ gun.shot('then').fire(gun._.node) }
+			if(!gun.back){
+				cb({err: "There exists nothing for the key to reference."});
+			}
 			return gun;
 		}
 		/*
@@ -321,7 +322,7 @@
 			var gun = this.chain();
 			path = (path || '').split('.');
 			gun.back.shot.then(function trace(node){ // should handle blank and err! Err already handled?
-				//console.log("shot path", path, node);
+				console.log("path happening"); // MARK COME BACK HERE!!!
 				gun.field = null;
 				gun._.node = node;
 				if(!path.length){ // if the path resolves to another node, we finish here.
@@ -339,8 +340,8 @@
 					gun.shot('then').fire(val); // internals use this thus not frozen yet, but primitive values are passed as copies anyways in js.
 				}
 			});
-			// if(!gun.back){ gun.shot('then').fire() } // replace below with this? maybe???
-			if(gun.back && gun.back._ && gun.back._.loaded){
+			if(gun.back && gun.back._ && gun.back._.loaded){ // is this causing a double trigger?
+				console.log("path back");
 				gun._.node = gun.back._.node;
 				gun.back.shot('then').fire(gun.back._.node);
 			}
@@ -349,7 +350,8 @@
 		Chain.get = function(cb){
 			var gun = this;
 			gun.shot.then(function(val){
-				console.log("did I get it?", val, gun);
+				console.log("get happening", val);
+				if(!gun._.node){ return } // I think this is safe?
 				cb = cb || function(){};
 				cb.call(gun, Gun.obj.is(val)? Gun.obj.copy(val) : val); // frozen copy
 			});
@@ -358,8 +360,9 @@
 		Chain.on = function(cb){
 			var gun = this;
 			gun.get(function(node){
-				var get = this; // I'm not sure what state we're in, or which (get or gun) we should this-ify.
-				cb.call(gun, Gun.obj.copy(node)); // frozen copy
+				var get = this;
+				cb = cb || function(){};
+				cb.call(get, Gun.obj.copy(node)); // frozen copy
 				get.__.on(get._.node._[Gun._.soul]).event(function(delta){
 					if(!delta){ return }
 					if(!get.field){
@@ -387,75 +390,67 @@
 		*/
 		Chain.set = function(val, cb, opt){ // TODO: need to turn deserializer into a trampolining function so stackoverflow doesn't happen.
 			opt = opt || {};
-			var gun = this, set;
-			if(gun.field){ // field is always a string
-				set = {}; // in case we are doing a set on a field, not on a node
-				set[gun.field] = val; // we create a blank node with the field/value to be set
-				val = set;
-			} else
-			if(!Gun.obj.is(val)){
-				return cb({err: "No field exists to set the " + (typeof val) + " on."}), cb.root;
-			}
-			// TODO: should be able to handle val being a relation or a gun context or a gun promise.
-			// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
-			val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
-			cb = Gun.fns.is(cb)? cb : function(){};
-			set = Gun.ify.call(gun, val);
-			cb.root = set.root;
-			console.log("chain.set root", cb.root);
-			if(set.err){ return cb(set.err), gun }
-			set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
-			if(set.err){ return cb(set.err), gun }
-			gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
-			gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
-			console.log("still rolling", gun._.node);
-			// TODO? ^ Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
-			if(Gun.fns.is(gun.__.opt.hooks.set)){
-				gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
-					if(err){ return cb(err) }
-					return cb(null);
-				});
-			} else {
-				Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
-			}
-			gun.shot.then(function(){ // set/key should cause a subscription, is this working yet?
-
+			var gun = this, set = {};
+			gun.shot.then(function(){
+				cb = Gun.fns.is(cb)? cb : function(){};
+				if(gun.field){ // if a field exists, it should always be a string
+					var partial = {}; // in case we are doing a set on a field, not on a node
+					partial[gun.field] = val; // we create a blank node with the field/value to be set
+					val = partial;
+				} else
+				if(!Gun.obj.is(val)){
+					return cb({err: "No field exists to set the " + (typeof val) + " on."}), gun;
+				}
+				// TODO: should be able to handle val being a relation or a gun context or a gun promise.
+				// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
+				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
+				set = Gun.ify.call(gun, val, set);
+				cb.root = set.root;
+				if(set.err || !cb.root){ return cb(set.err || {err: "No root object!"}), gun }
+				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
+				if(set.err){ return cb(set.err), gun }
+				gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
+				console.log(cb.root);
+				gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
+				// TODO? ^ Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
+				if(Gun.fns.is(gun.__.opt.hooks.set)){
+					gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
+						if(err){ return cb(err) }
+						return cb(null);
+					});
+				} else {
+					Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
+				}
 			});
 			if(!gun.back){
-				gun.shot('then').fire();
-				console.log("gun.set() !gun.back fire()");
+				gun.shot('then').fire(set);
 			}
 			return gun;
 		}
-
 		Chain.insert = function(obj, cb, opt){
 			var gun = this;
-			if(!gun.back){
-				console.log("no back!");
-				gun = gun.set({});
-			}
-			console.log("back!!", gun);
-			gun.shot.then(function(){
-				opt = opt || {};
-				cb = cb || function(){};
-				var item = gun.chain().set(obj).get(function(val){
-					var list = {}, soul = Gun.is.soul.on(val);
-					console.log(val, 'has', soul);
-					if(!soul){ return } // TODO: BUG!!! Handle this edge case!!!
-					list[soul] = val;
-					gun.set(list);
-				});
+			opt = opt || {};
+			cb = cb || function(){};
+			gun = gun.set({}); // insert assumes a graph node. So either create it or merge with the existing one.
+			var error, item = Gun(null).set(obj, function(err){ // create the new item in its own context.
+				error = err; // if this happens, it should get called before the .get
+			}).get(function(val){
+				if(error){ return cb(error) } // which in case it is, allows us to fail fast.
+				var list = {}, soul = Gun.is.soul.on(val);
+				console.log(val, 'has', soul);
+				if(!soul){ return cb({err: "No soul!"}) }
+				list[soul] = val; // other wise, let's then
+				gun.set(list, cb); // merge with the graph node.
 			});
 			return gun;
 		}
-		/*
 		Chain.map = function(cb, opt){
 			var gun = this;
 			gun.shot.then(function(val){
 				cb = cb || function(){};
 				opt = opt || {};
-				Gun.obj.map(val, function(obj, soul){
-					if(!Gun.is.soul(obj) && !opt.all){ return }
+				Gun.obj.map(val, function(obj, soul){  // by default it only maps over nodes
+					if(!Gun.is.soul(obj) && !opt.all){ return } // {all: true} maps over everything
 					gun.load(obj).get(function(val){ // should map have support for blank?
 						cb.call(this, obj, soul);
 					});
@@ -463,7 +458,6 @@
 			});
 			return gun;
 		}
-		*/
 		// Union is different than set. Set casts non-gun style of data into a gun compatible data.
 		// Union takes already gun compatible data and validates it for a merge.
 		// Meaning it is more low level, such that even set uses union internally.
@@ -499,10 +493,15 @@
 			return context;
 		}
 		Chain.blank = function(blank){
-			this._.blank = Gun.fns.is(blank)? blank : function(){};
-			return this;
+			var gun = this;
+			gun._.blank = Gun.fns.is(blank)? blank : function(){};
+			gun.shot.then(function(val){
+				if(val === 0){ return }
+				if(!val){ gun._.blank() }
+			});
+			return gun;
 		}
-		Chain.err = Chain.dud = function(dud){ // WARNING: dud will be depreciated in favor of err.
+		Chain.err = function(dud){ // WARNING: dud was depreciated.
 			this._.dud = Gun.fns.is(dud)? dud : function(){};
 			return this;
 		}
@@ -751,7 +750,8 @@
 		}
 	}({}));
 	;(function(Serializer){
-		Gun.ify = function(data){ // TODO: BUG: Modify lists to include HAM state
+		Gun.ify = function(data, bind){ // TODO: BUG: Modify lists to include HAM state
+			if(Gun.obj.map(bind, function(){ return true })){ return {err: "Bind must be an empty object."} }
 			var gun = Gun.is(this)? this : {}
 			, context = {
 				nodes: {}
@@ -767,9 +767,10 @@
 					return data;
 				} else
 				if(Gun.obj.is(data)){
-					var value = {}, symbol = {}, seen
+					var value = bind || {}, symbol = {}, seen
 					, err = {err: "Metadata does not support external or circular references at " + sub.path, meta: true};
 					context.root = context.root || value;
+					bind = null;
 					if(seen = ify.seen(context._seen, data)){
 						//Gun.log.call(gun, "seen in _", sub._, sub.path, data);
 						context.err = err;
@@ -899,7 +900,7 @@
 			console.log("gun load", key);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
-					console.log('via', url, key, reply);
+					//console.log('via', url, key, reply);
 					if(err || !reply){ return } // handle reconnect?
 					if(reply.body && reply.body.err){
 						cb(reply.body.err);
@@ -975,14 +976,14 @@
 		}
 		tab.set.defer = {};
 		request.createServer(function(req, res){
-			console.log("client server received request", req);
+			//console.log("client server received request", req);
 			if(!req.body){ return }
 			gun.union(req.body);
 		});
 		(function(){
 			tab.store = {};
 			var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
-			tab.store.set = function(key, val){console.log('setting', key); return store.setItem(key, Gun.text.ify(val)) }
+			tab.store.set = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
 			tab.store.get = function(key){ return Gun.obj.ify(store.getItem(key)) }
 			tab.store.del = function(key){ return store.removeItem(key) }
 		}());
@@ -1038,7 +1039,7 @@
 				}catch(e){ return }
 				if(!res){ return }
 				if(res.wsrid){ (r.ws.cbs[res.wsrid]||function(){})(null, res) }
-				console.log("We have a pushed message!", res);
+				//console.log("We have a pushed message!", res);
 				if(res.body){ r.createServer(res, function(){}) } // emit extra events.
 			};
 			ws.onerror = function(e){ console.log(e); };

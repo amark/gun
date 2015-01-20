@@ -51,9 +51,12 @@
 		</ul>
 		<script>
 			var gun = Gun(location.origin + '/gun');
-			angular.module('admin', []).controller('editor', function($scope){
+			angular.module('admin', []).controller('editor', function($scope){ //return;
 				$scope.data = {};
-				$scope.$data = gun.load('blob/data').on(function(data){
+				$scope.$data = gun.load('example/angular/todo').blank(function(){
+					console.log("Initializing Data!")
+					gun.set({chicken: 'feet'}).key('example/angular/todo');
+				}).on(function(data){
 					Gun.obj.map(data, function(val, field){
 						if(val === $scope.data[field]){ return }
 						$scope.data[field] = val;
