@@ -1,6 +1,7 @@
 describe('Gun', function(){
 	var Gun = require('../gun')
 	,	t = {};
+	require(__dirname + '/../lib/file');
 	describe('Utility', function(){
 		describe('Type Check', function(){
 			it('binary', function(){
@@ -43,7 +44,7 @@ describe('Gun', function(){
 				expect(Gun.text.is({})).to.be(false);
 				expect(Gun.text.is({a:1})).to.be(false);
 				expect(Gun.text.is(function(){})).to.be(false);
-			});		
+			});
 			it('list',function(){
 				expect(Gun.list.is([])).to.be(true);
 				expect(Gun.list.is([1])).to.be(true);
@@ -140,7 +141,7 @@ describe('Gun', function(){
 			it('ify',function(){
 				expect(Gun.obj.ify('[0,1]')).to.eql([0,1]);
 				expect(Gun.obj.ify('{"a":false,"b":1,"c":"d","e":[0,1],"f":{"g":"h"}}')).to.eql({"a":false,"b":1,"c":"d","e":[0,1],"f":{"g":"h"}});
-			});			
+			});
 			it('map',function(){
 				expect(Gun.obj.map({a:'z',b:'y',c:'x'},function(v,i,t){ t(v,i) })).to.eql({x:'c',y:'b',z:'a'});
 				expect(Gun.obj.map({a:'z',b:false,c:'x'},function(v,i,t){ if(!v){ return } t(i,v) })).to.eql({a:'z',c:'x'});
@@ -163,7 +164,7 @@ describe('Gun', function(){
 				}));
 			});
 		});
-		
+
 		describe('Gun Safety', function(){
 			var gun = Gun();
 			it('is',function(){
@@ -256,14 +257,14 @@ describe('Gun', function(){
 			});
 		});
 	});
-	
+
 	it('ify', function(){
 		var data, test;
-		
+
 		data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
 		test = Gun.ify(data);
 		expect(test.err).to.not.be.ok();
-		
+
 		data = {};
 		data.a = {x: 1, y: 2, z: 3}
 		data.b = {m: 'n', o: 'p', q: 'r', s: 't'};
@@ -272,54 +273,54 @@ describe('Gun', function(){
 		data.loop = [data.b, data.a.kid, data];
 		test = Gun.ify(data);
 		expect(test.err).to.not.be.ok();
-		
+
 		data = {_: {'#': 'shhh', meta: {yay: 1}}, sneak: true};
 		test = Gun.ify(data);
 		expect(test.err).to.not.be.ok(); // metadata needs to be stored, but it can't be used for data.
-		
+
 		data = {};
 		data.sneak = false;
 		data.both = {inside: 'meta data'};
 		data._ = {'#': 'shhh', data: {yay: 1}, spin: data.both};
 		test = Gun.ify(data);
 		expect(test.err.meta).to.be.ok(); // TODO: Fail: this passes, somehow? Fix ify code!
-		
+
 		data = {one: {two: [9, 8, 7, 6, 5]}};
 		test = Gun.ify(data);
 		expect(test.err.array).to.be.ok();
-		
+
 		data = {z: undefined, x: 'bye'};
 		test = Gun.ify(data);
 		expect(test.err.invalid).to.be.ok();
-		
+
 		data = {a: NaN, b: 2};
 		test = Gun.ify(data);
 		expect(test.err.invalid).to.be.ok();
-		
+
 		data = {a: 1, b: Infinity};
 		test = Gun.ify(data);
 		expect(test.err.invalid).to.be.ok();
-		
+
 		data = {c: function(){}, d: 'hi'};
 		test = Gun.ify(data);
 		expect(test.err.invalid).to.be.ok();
-		
+
 		console.log(test.nodes);
 	});
-	
+
 	it('union', function(){
 		var graph, prime;
-		
+
 		graph = Gun.ify({a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null}).nodes;
 		prime = Gun.ify({h: 9, i: 'foo', j: 'k', l: 'bar', m: 'Mark', n: 'Nadal'}).nodes;
-		
-		Gun.union(graph, prime);
+
+		Gun.union(graph, prime); // TODO: BUG! Where is the expect???
 	});
-	
+
 	it('path', function(done){
 		console.log("fix path!");
 		return done(); // TODO: FIX! This is broken because of API changes, fix it!
-		
+
 		this.timeout(9000);
 		var gun = require('gun')({
 			s3: require('./shotgun') // replace this with your own keys!
@@ -332,5 +333,16 @@ describe('Gun', function(){
 		});
 		console.log("________________________");
 	});
-	
+
+	it('set key get', function(done){
+		var gun = require('gun/gun')();
+
+		gun.set({hello: "world"}).key('hello/world').get(function(val){
+				console.log("?", val);
+				expect(val.hello).to.be('world');
+				done();
+		}).blank(function(){ console.log("nothing"); })
+		.err(function(){ console.log("err"); })
+	});
+
 });
