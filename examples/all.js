@@ -6,7 +6,12 @@ var app = express();
 
 var Gun = require('gun');
 var gun = Gun({
-	s3: (process.env.NODE_ENV === 'production')? null : require('../test/shotgun') // replace this with your own keys!
+	file: 'data.json',
+	s3: {
+		key: '', // AWS Access Key
+		secret: '', // AWS Secret Token
+		bucket: '' // The bucket you want to save into
+	}
 });
 
 gun.attach(app);
