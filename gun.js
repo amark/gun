@@ -322,7 +322,6 @@
 			var gun = this.chain();
 			path = (path || '').split('.');
 			gun.back.shot.then(function trace(node){ // should handle blank and err! Err already handled?
-				console.log("path happening"); // MARK COME BACK HERE!!!
 				gun.field = null;
 				gun._.node = node;
 				if(!path.length){ // if the path resolves to another node, we finish here.
@@ -331,13 +330,14 @@
 				var field = Gun.text.ify(path.shift())
 				, val = node[field];
 				gun.field = field;
+				console.log('path');
 				if(Gun.is.soul(val)){ // we might end on a link, so we must resolve
 					return gun.load(val).shot.then(trace);
 				} else
 				if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist.
 					gun.shot('then').fire();
 				} else { // we are done, and this should be the value we wanted.
-					gun.shot('then').fire(val); // internals use this thus not frozen yet, but primitive values are passed as copies anyways in js.
+					gun.shot('then').fire(node, field); // js copies primitive values, thus we must pass by reference.
 				}
 			});
 			if(gun.back && gun.back._ && gun.back._.loaded){ // is this causing a double trigger?
@@ -349,11 +349,10 @@
 		}
 		Chain.get = function(cb){
 			var gun = this;
-			gun.shot.then(function(val){
-				console.log("get happening", val);
-				if(!gun._.node){ return } // I think this is safe?
+			gun.shot.then(function(node, field){
 				cb = cb || function(){};
-				cb.call(gun, Gun.obj.is(val)? Gun.obj.copy(val) : val); // frozen copy
+				cb.call(gun, field? node[field] : Gun.obj.copy(node)); // frozen copy
+				// TODO! BUG! Maybe? Should a field that is null trigger a blank instead?
 			});
 			return gun;
 		}
@@ -372,6 +371,7 @@
 					if(Gun.obj.has(delta, get.field)){
 						delta = delta[get.field];
 						cb.call(get, Gun.obj.is(delta)? Gun.obj.copy(delta) : delta); // frozen copy
+						// TODO: BUG! Maybe? Interesting, if delta is an object, I might have to .load!
 					}
 				})
 			})
@@ -404,13 +404,13 @@
 				// TODO: should be able to handle val being a relation or a gun context or a gun promise.
 				// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
 				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
+				console.log("what do you want to set?", val);
 				set = Gun.ify.call(gun, val, set);
 				cb.root = set.root;
 				if(set.err || !cb.root){ return cb(set.err || {err: "No root object!"}), gun }
 				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
 				if(set.err){ return cb(set.err), gun }
 				gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
-				console.log(cb.root);
 				gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
 				// TODO? ^ Maybe BUG! if val is a new node on a field, _.node should now be that! Or will that happen automatically?
 				if(Gun.fns.is(gun.__.opt.hooks.set)){
@@ -418,7 +418,9 @@
 						if(err){ return cb(err) }
 						return cb(null);
 					});
-				});
+				} else {
+					Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
+				}
 			});
 			if(!gun.back){
 				gun.shot('then').fire(set);
@@ -447,16 +449,20 @@
 			gun.shot.then(function(val){
 				cb = cb || function(){};
 				opt = opt || {};
-				Gun.obj.map(val, function(obj, soul){  // by default it only maps over nodes
-					if(!Gun.is.soul(obj) && !opt.all){ return } // {all: true} maps over everything
-					gun.load(obj).get(function(val){ // should map have support for blank?
-						cb.call(this, obj, soul);
-					});
+				Gun.obj.map(val, function(val, field){  // by default it only maps over nodes
+					if(Gun._.meta == field){ return }
+					if(Gun.is.soul(val)){
+						gun.load(val).get(function(val){ // should map have support for blank?
+							cb.call(this, val, field);
+						});
+					} else {
+						if(!opt.all){ return } // {all: true} maps over everything
+						cb.call(this, val, field);
+					}
 				});
 			});
 			return gun;
 		}
-		*/
 		// Union is different than set. Set casts non-gun style of data into a gun compatible data.
 		// Union takes already gun compatible data and validates it for a merge.
 		// Meaning it is more low level, such that even set uses union internally.

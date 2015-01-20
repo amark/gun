@@ -55,7 +55,7 @@
 				$scope.data = {};
 				$scope.$data = gun.load('example/angular/todo').blank(function(){
 					console.log("Initializing Data!")
-					gun.set({chicken: 'feet'}).key('example/angular/todo');
+					gun.set({}).key('example/angular/todo');
 				}).on(function(data){
 					Gun.obj.map(data, function(val, field){
 						if(val === $scope.data[field]){ return }
