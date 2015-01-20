@@ -1,5 +1,9 @@
 NOTES FROM FORREST:
 
+-3. `gun.path('players').path(id).set({x:0, y:0});` doesn't trigger `gun.path('players').on()`
+-2. gun.on() needs to be chainable with map and stuff.
+-1. Maybe make the map module core to gun?
+
  1 make raw HTTP work and document it, document that attach needs to be BEFORE listen. (talk to AJ)
  2 make sure you SUPPRESS your comments, Mark.
  3 .get doesn't work on subsequent closures. WHYYY??

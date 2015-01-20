@@ -418,9 +418,7 @@
 						if(err){ return cb(err) }
 						return cb(null);
 					});
-				} else {
-					Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
-				}
+				});
 			});
 			if(!gun.back){
 				gun.shot('then').fire(set);
@@ -458,6 +456,7 @@
 			});
 			return gun;
 		}
+		*/
 		// Union is different than set. Set casts non-gun style of data into a gun compatible data.
 		// Union takes already gun compatible data and validates it for a merge.
 		// Meaning it is more low level, such that even set uses union internally.
