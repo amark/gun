@@ -323,7 +323,7 @@
 		Chain.path = function(path){ // The focal point follows the path
 			var gun = this.chain();
 			path = (path || '').split('.');
-			gun.back.shot.then(function(node){ // should handle blank and err! Err already handled?
+			gun.back.shot.then(function trace(node){ // should handle blank and err! Err already handled?
 					if(!node){ return gun.shot('then').fire() } // TODO: BUG? ERROR? MAYBE? MARK?
 					gun.field = null;
 					gun._.node = node;

@@ -324,7 +324,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('load', function(done){
 			gun.load('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
@@ -352,6 +352,29 @@ describe('Gun', function(){
 				done();
 			});
 		});
+		it.skip('var set key path', function(done){ // contexts should be able to be saved to a variable
+			var foo = gun.set({foo: 'bar'}).key('foo/bar');
+			foo.path('hello.world.nowhere')// this should only change the context temporarily
+			setTimeout(function(){
+				foo.path('foo').get(function(val){ // and then be reused from the same original context
+					console.log('?', val);
+					expect(val).to.be('bar'); // this should work
+					done();
+				});
+			}, 100);
+		});
+
+		it.skip('var load path', function(done){ // contexts should be able to be saved to a variable
+			var foo = gun.load('foo/bar');
+			foo.path('hello.world.nowhere')// this should only change the context temporarily
+			setTimeout(function(){
+				foo.path('foo').get(function(val){ // and then be reused from the same original context
+					expect(val).to.be('bar'); // this should work
+					done();
+				});
+			}, 100);
+		});
+
 
 		it('path', function(done){
 			console.log("fix path!");

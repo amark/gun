@@ -2,10 +2,9 @@
   "name": "gun",
   "main": "gun.js",
   "version": "0.0.9",
-  "homepage": "http://gundb.io",
+  "homepage": "http://gunDB.io",
   "authors": [
     { "name": "Mark Nadal",     "email": "mark@accelsor.com"    },
-    { "name": "AJ ONeal",       "email": "awesome@coolaj86.com" },
     { "name": "Alex LaFroscia", "email": "alex@lafroscia.com"   }
   ],
   "repository": {
