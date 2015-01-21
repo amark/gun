@@ -505,6 +505,12 @@
 			this._.err = Gun.fns.is(dud)? dud : function(){};
 			return this;
 		}
+    Chain.then = function(cb) {
+      var gun = this;
+      cb = cb || function() { }
+      cb();
+      return gun;
+    }
 	}(Gun.chain = Gun.prototype));
 	;(function(Util){
 		Util.fns = {};
