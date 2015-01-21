@@ -260,9 +260,11 @@
 				// We need to subscribe early? Or the transport layer handle this for us?
 				if(Gun.fns.is(gun.__.opt.hooks.load)){
 					gun.__.opt.hooks.load(key, function(err, data){
-						// console.log('loaded', err, data);
+						//console.log('loaded', err, data, gun);
 						gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
 						if(err){ return cb(err), (gun._.err||cb.fn).call(gun, err) }
+						if(!data){ return gun.shot('then').fire() }
+
 						if(!data){ return cb(null), (gun._.blank||cb.fn).call(gun) }
 						var context = gun.union(data); // safely transform the data
 						if(context.err){ return cb(context.err), (gun._.err||cb.fn).call(gun, context.err) }
@@ -347,9 +349,9 @@
 		}
 		Chain.get = function(cb){
 			var gun = this;
-			gun.shot.then(function(node, field){
+			gun.shot.then(function(node){
 				cb = cb || function(){};
-				cb.call(gun, field? node[field] : Gun.obj.copy(node)); // frozen copy
+				cb.call(gun, gun.field? node[gun.field] : Gun.obj.copy(node)); // frozen copy
 				// TODO! BUG! Maybe? Should a field that is null trigger a blank instead?
 			});
 			return gun;
@@ -360,7 +362,6 @@
 				var get = this;
 				cb = cb || function(){};
 				cb.call(get, Gun.obj.copy(node)); // frozen copy
-				//console.log('bug?', get);
 				get.__.on(get._.node._[Gun._.soul]).event(function(delta){
 					if(!delta){ return }
 					if(!get.field){
@@ -391,6 +392,7 @@
 			opt = opt || {};
 			var gun = this, set = {};
 			gun.shot.then(function(){
+				console.log("meow?", val);
 				cb = Gun.fns.is(cb)? cb : function(){};
 				if(gun.field){ // if a field exists, it should always be a string
 					var partial = {}; // in case we are doing a set on a field, not on a node
@@ -497,8 +499,17 @@
 			return context;
 		}
 		Chain.blank = function(blank){
-			var gun = this;
-			gun._.blank = Gun.fns.is(blank)? blank : function(){};
+			var tmp = this.chain();
+			var gun = this.chain();
+			gun.back.shot.then(function(node){
+				if(node){ return gun.shot('then').fire(node); }
+				console.log("WE GOT BLANKNESS!!!");
+				blank.call(tmp);
+				tmp.shot.then(function(val){
+					console.log("tmp after blank", val);
+				});
+				tmp.shot('then').fire();
+			});
 			return gun;
 		}
 		Chain.err = function(dud){ // WARNING: dud was depreciated.
