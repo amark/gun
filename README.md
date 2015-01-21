@@ -125,9 +125,8 @@ And we do not think that attitude will generate any progress for people.
 Instead, we want to make everyone an expert by actually getting really good at explaining the concepts.
 So join our community, in the quest of learning cool things and helping yourself and others build awesome technology. 
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (all chats relating to GUN and development should be here! IRC style)
-
-Google Group: https://groups.google.com/forum/#!forum/g-u-n (for slower threaded discussions)
+ - [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (all chats relating to GUN and development should be here! IRC style)
+ - Google Group: https://groups.google.com/forum/#!forum/g-u-n (for slower threaded discussions)
 
 ## Ahead
 - ~~Realtime push to the browser~~
