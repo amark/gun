@@ -382,7 +382,7 @@ describe('Gun', function(){
       });
 
 
-      it.skip('should run after all iterations of .map() complete', function(done) {
+      it('should run after all iterations of .map() complete', function(done) {
         var mappings = 3;
         var callback = function() {
           if (mappings === 0) {
