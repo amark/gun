@@ -376,7 +376,7 @@ describe('Gun', function(){
 		});
 
 
-		it('path', function(done){
+		it.skip('path', function(done){
 			console.log("fix path!");
 			return done(); // TODO: FIX! This is broken because of API changes, fix it!
 
@@ -392,6 +392,40 @@ describe('Gun', function(){
 			});
 			console.log("________________________");
 		});
+
+    describe('.then', function() {
+
+      it('should run the callback after other .chain methods', function(done) {
+        var callback = function() {
+          done();
+        };
+        gun.load('hello/world')
+            .path('hello')
+            .then(callback);
+      });
+
+
+      it('should run after all iterations of .map() complete', function(done) {
+        var mappings = 3;
+        var callback = function() {
+          if (mappings === 0) {
+            done();
+          }
+        };
+        gun.load('hello/world')
+            .path('mappings')
+            .insert({ id: 1 })
+            .insert({ id: 2 })
+            .insert({ id: 3 })
+            .get(function() {
+              this.map(function(obj) {
+                mappings--;
+              });
+            })
+            .then(callback);
+      });
+
+    });
 
 	});
 });
