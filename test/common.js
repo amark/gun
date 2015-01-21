@@ -316,8 +316,9 @@ describe('Gun', function(){
 
 	describe('API', function(){
 
-		var gun = Gun();
-
+		require('../lib/file');
+		var gun = Gun({file: 'data.json'});
+		/*
 		it('set key get', function(done){
 			gun.set({hello: "world"}).key('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
@@ -352,6 +353,21 @@ describe('Gun', function(){
 				done();
 			});
 		});
+		*/
+		it('load blank kick get', function(done){ // it would be cool with GUN
+			console.log("test blank kicking");
+			gun.load("some/empty/thing").blank(function(){ // that if you call blank first
+				console.log("blank happened");
+				this.set({now: 'exists'}); // you can set stuff
+			}).get(function(val){ // and THEN still retrieve it.
+				console.log("get happened");
+				expect(val.now).to.be('exists');
+				done();
+			});
+
+		});
+
+		/*
 		it.skip('var set key path', function(done){ // contexts should be able to be saved to a variable
 			var foo = gun.set({foo: 'bar'}).key('foo/bar');
 			foo.path('hello.world.nowhere')// this should only change the context temporarily
@@ -375,7 +391,6 @@ describe('Gun', function(){
 			}, 100);
 		});
 
-
 		it('path', function(done){
 			console.log("fix path!");
 			return done(); // TODO: FIX! This is broken because of API changes, fix it!
@@ -392,6 +407,6 @@ describe('Gun', function(){
 			});
 			console.log("________________________");
 		});
-
+		*/
 	});
 });
