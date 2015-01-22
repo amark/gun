@@ -316,7 +316,8 @@ describe('Gun', function(){
 
 	describe('API', function(){
 
-		var gun = Gun();
+		require('../lib/file');
+		var gun = Gun({file: 'data.json'});
 
 		it('set key get', function(done){
 			gun.set({hello: "world"}).key('hello/world').get(function(val){
@@ -352,45 +353,73 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		it.skip('var set key path', function(done){ // contexts should be able to be saved to a variable
-			var foo = gun.set({foo: 'bar'}).key('foo/bar');
-			foo.path('hello.world.nowhere')// this should only change the context temporarily
-			setTimeout(function(){
-				foo.path('foo').get(function(val){ // and then be reused from the same original context
-					console.log('?', val);
-					expect(val).to.be('bar'); // this should work
-					done();
-				});
-			}, 100);
-		});
 
-		it.skip('var load path', function(done){ // contexts should be able to be saved to a variable
-			var foo = gun.load('foo/bar');
-			foo.path('hello.world.nowhere')// this should only change the context temporarily
-			setTimeout(function(){
-				foo.path('foo').get(function(val){ // and then be reused from the same original context
-					expect(val).to.be('bar'); // this should work
-					done();
-				});
-			}, 100);
-		});
-
-
-		it('path', function(done){
-			console.log("fix path!");
-			return done(); // TODO: FIX! This is broken because of API changes, fix it!
-
-			this.timeout(9000);
-			var gun = require('gun')({
-				s3: require('./shotgun') // replace this with your own keys!
-			});
-			gun.load('d1ed426098eae2bba8c60605e1e4552f66281770', null, {id: true}) // get Rodney Morris
-				.path('parent.parent.first') // Rodney's parent is Juan Colon, whose parent is Francis Peters
-			.get(function(val){
-				console.log("val!", val);
+		it('load path empty set', function(done){
+			gun.load('hello/world').path('earth').set('mars').get(function(val){
+				expect(val).to.be('mars');
 				done();
 			});
-			console.log("________________________");
+		});
+
+		it('load path get', function(done){
+			gun.load('hello/world').path('earth').get(function(val){
+				expect(val).to.be('mars');
+				done();
+			});
+		});
+
+		it('key set get', function(done){
+			gun.key('world/hello').set({world: "hello"}).get(function(val){
+				expect(val.world).to.be('hello');
+				done();
+			});
+		});
+
+		it('load', function(done){
+			gun.load('world/hello').get(function(val){
+				expect(val.world).to.be('hello');
+				done();
+			});
+		});
+
+		it('load blank kick get', function(done){ // it would be cool with GUN
+			gun.load("some/empty/thing").blank(function(){ // that if you call blank first
+				this.set({now: 'exists'}); // you can set stuff
+			}).get(function(val){ // and THEN still retrieve it.
+				expect(val.now).to.be('exists');
+				done();
+			});
+		});
+
+		it('load blank kick get when it already exists', function(done){
+			gun.load("some/empty/thing").blank(function(){
+				this.set({now: 'THIS SHOULD NOT HAPPEN'});
+			}).get(function(val){
+				expect(val.now).to.be('exists');
+				done();
+			});
+		});
+
+		it('var set key path', function(done){ // contexts should be able to be saved to a variable
+			var foo = gun.set({foo: 'bar'}).key('foo/bar');
+			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
+			setTimeout(function(){
+				foo.path('foo').get(function(val){ // and then the original should be able to be reused later
+					expect(val).to.be('bar'); // this should work
+					done();
+				});
+			}, 100);
+		});
+
+		it('var load path', function(done){ // contexts should be able to be saved to a variable
+			var foo = gun.load('foo/bar');
+			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
+			setTimeout(function(){
+				foo.path('foo').get(function(val){ // and then the original should be able to be reused later
+					expect(val).to.be('bar'); // this should work
+					done();
+				});
+			}, 100);
 		});
 
 	});
