@@ -258,10 +258,10 @@
 				// We need to subscribe early? Or the transport layer handle this for us?
 				if(Gun.fns.is(gun.__.opt.hooks.load)){
 					gun.__.opt.hooks.load(key, function(err, data){
-						if(err){ return cb(err), (gun._.err||cb.fn).call(gun, err) }
-						if(!data){ return gun.shot('then').fire() } // if no data, emit without any contexxt change
+						if(err){ return cb.call(gun, err), (gun._.err||cb.fn).call(gun, err) }
+						if(!data){ return cb.call(gun, err, data), gun.shot('then').fire() } // if no data, emit without any contexxt change
 						var context = gun.union(data); // safely transform the data into the current context
-						if(context.err){ return cb(context.err), (gun._.err||cb.fn).call(gun, context.err) } // but validate it in case of errors
+						if(context.err){ return cb.call(gun, context.err), (gun._.err||cb.fn).call(gun, context.err) } // but validate it in case of errors
 						gun._.node = gun.__.graph[data._[Gun._.soul]]; // immediately use the state in cache, no waiting for union to be done.
 						if(!cb.soul){ // and if we had loaded with a key rather than a soul
 							gun._.keys[key] = 1; // then set a marker that this key matches
@@ -295,8 +295,8 @@
 				}
 				if(Gun.fns.is(gun.__.opt.hooks.key)){
 					gun.__.opt.hooks.key(cb.key, cb.soul, function(err, data){
-						if(err){ return cb(err) }
-						return cb(null);
+						if(err){ return cb.call(gun, err) }
+						return cb.call(gun, null);
 					});
 				} else {
 					Gun.log.call(gun, "Warning! You have no key hook!");
@@ -323,23 +323,23 @@
 			var gun = this.chain();
 			path = (path || '').split('.');
 			gun.back.shot.then(function trace(){ // should handle blank and err! Err already handled?
-					if(!gun._.node && !gun.back._.node){ return gun.shot('then').fire() } // TODO: BUG? ERROR? MAYBE? MARK?
-					gun._.field = null;
-					gun._.node = gun._.node || gun.back._.node;
-					if(!path.length){ // if the path resolves to another node, we finish here.
-						return gun.shot('then').fire(); // this is not frozen yet, but it is still used for internals so keep it unfrozen.
-					}
-					var field = Gun.text.ify(path.shift())
-					, val = gun._.node[field];
-					gun._.field = field;
-					if(Gun.is.soul(val)){ // we might end on a link, so we must resolve
-						return gun.load(val).shot.then(trace);
-					} else
-					if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist.
-						gun.shot('then').fire();
-					} else { // we are done, and this should be the value we wanted.
-						gun.shot('then').fire();
-					}
+				if(!gun._.node && !gun.back._.node){ return gun.shot('then').fire() } // TODO: BUG? ERROR? MAYBE? MARK?
+				gun._.field = null;
+				gun._.node = gun._.node || gun.back._.node;
+				if(!path.length){ // if the path resolves to another node, we finish here.
+					return gun.shot('then').fire(); // this is not frozen yet, but it is still used for internals so keep it unfrozen.
+				}
+				var field = Gun.text.ify(path.shift())
+				, val = gun._.node[field];
+				gun._.field = field;
+				if(Gun.is.soul(val)){ // we might end on a link, so we must resolve
+					return gun.load(val).shot.then(trace);
+				} else
+				if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist.
+					gun.shot('then').fire();
+				} else { // we are done, and this should be the value we wanted.
+					gun.shot('then').fire();
+				}
 			});
 			return gun;
 		}
@@ -386,38 +386,38 @@
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
 		Chain.set = function(val, cb, opt){ // TODO: need to turn deserializer into a trampolining function so stackoverflow doesn't happen.
-			opt = opt || {};
 			var gun = this, set = {};
 			gun.shot.then(function(){
-				cb = Gun.fns.is(cb)? cb : function(){};
+				opt = opt || {};
+				cb = cb || function(){};
 				if(gun._.field){ // if a field exists, it should always be a string
 					var partial = {}; // in case we are doing a set on a field, not on a node
 					partial[gun._.field] = val; // we create a blank node with the field/value to be set
 					val = partial;
 				} else
 				if(!Gun.obj.is(val)){
-					return cb({err: "No field exists to set the " + (typeof val) + " on."}), gun;
+					return cb.call(gun, {err: "No field exists to set the " + (typeof val) + " on."});
 				}
 				// TODO: should be able to handle val being a relation or a gun context or a gun promise.
 				// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
 				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
 				set = Gun.ify.call(gun, val, set);
 				cb.root = set.root;
-				if(set.err || !cb.root){ return cb(set.err || {err: "No root object!"}) }
+				if(set.err || !cb.root){ return cb.call(gun, set.err || {err: "No root object!"}) }
 				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
-				if(set.err){ return cb(set.err) }
+				if(set.err){ return cb.call(gun, set.err) }
 				gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
 				gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
 				if(!gun._.field){
 					Gun.obj.map(gun._.keys, function(yes, key){
 						if(yes){ return }
-						gun.key(key);
+						gun.key(key); // TODO: Feature? what about these callbacks?
 					});
 				}
 				if(Gun.fns.is(gun.__.opt.hooks.set)){
 					gun.__.opt.hooks.set(set.nodes, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
-						if(err){ return cb(err) }
-						return cb(null);
+						if(err){ return cb.call(gun, err) }
+						return cb.call(gun, null);
 					});
 				} else {
 					Gun.log.call(gun, "Warning! You have no persistence layer to save to!");
@@ -436,9 +436,9 @@
 			var error, item = Gun(null).set(obj, function(err){ // create the new item in its own context.
 				error = err; // if this happens, it should get called before the .get
 			}).get(function(val){
-				if(error){ return cb(error) } // which in case it is, allows us to fail fast.
+				if(error){ return cb.call(gun, error) } // which in case it is, allows us to fail fast.
 				var list = {}, soul = Gun.is.soul.on(val);
-				if(!soul){ return cb({err: "No soul!"}) }
+				if(!soul){ return cb.call(gun, {err: "No soul!"}) }
 				list[soul] = val; // other wise, let's then
 				gun.set(list, cb); // merge with the graph node.
 			});
