@@ -263,8 +263,7 @@
 						//console.log('loaded', err, data, gun);
 						gun._.loaded = (gun._.loaded || 0) + 1; // TODO: loading should be idempotent even if we got an err or no data
 						if(err){ return cb(err), (gun._.err||cb.fn).call(gun, err) }
-						if(!data){ return gun.shot('then').fire() }
-
+						//if(!data){ return gun.shot('then').fire() } // branch blank-kick will be using this, will merge when done.
 						if(!data){ return cb(null), (gun._.blank||cb.fn).call(gun) }
 						var context = gun.union(data); // safely transform the data
 						if(context.err){ return cb(context.err), (gun._.err||cb.fn).call(gun, context.err) }
@@ -498,18 +497,9 @@
 			});
 			return context;
 		}
-		Chain.blank = function(blank){
-			var tmp = this.chain();
-			var gun = this.chain();
-			gun.back.shot.then(function(node){
-				if(node){ return gun.shot('then').fire(node); }
-				console.log("WE GOT BLANKNESS!!!");
-				blank.call(tmp);
-				tmp.shot.then(function(val){
-					console.log("tmp after blank", val);
-				});
-				tmp.shot('then').fire();
-			});
+		Chain.blank = function(blank){ // master should have this old version, blank-kick WILL be upgrading this.
+			var gun = this;
+			gun._.blank = Gun.fns.is(blank)? blank : function(){};
 			return gun;
 		}
 		Chain.err = function(dud){ // WARNING: dud was depreciated.
