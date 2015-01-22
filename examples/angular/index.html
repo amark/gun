@@ -54,9 +54,8 @@
 			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
 				$scope.$data = gun.load('example/angular/todo').blank(function(){
-					console.log("Initializing Data!", this);
-					this.set({}).key('example/angular/todo');
-					window.location = window.location;
+					console.log("Initializing Data!");
+					this.set({});
 				}).on(function(data){
 					Gun.obj.map(data, function(val, field){
 						if(val === $scope.data[field]){ return }
