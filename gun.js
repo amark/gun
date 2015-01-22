@@ -411,7 +411,6 @@
 				if(!gun._.field){
 					Gun.obj.map(gun._.keys, function(yes, key){
 						if(yes){ return }
-						console.log("setting fields", key, yes);
 						gun.key(key);
 					});
 				}
@@ -640,7 +639,6 @@
 				(chain._ = chain._ || {})[where] = chain._[where] || [];
 				chain.$[where] = chain.$[where] || function(fn){
 					if(chain.args){
-						//console.log("shoot!", chain.args);
 						fn.apply(chain, chain.args);
 					} else {
 						(chain._[where]||[]).push(fn);
