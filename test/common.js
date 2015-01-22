@@ -354,6 +354,20 @@ describe('Gun', function(){
 			});
 		});
 
+		it('load path empty set', function(done){
+			gun.load('hello/world').path('earth').set('mars').get(function(val){
+				expect(val).to.be('mars');
+				done();
+			});
+		});
+
+		it('load path get', function(done){
+			gun.load('hello/world').path('earth').get(function(val){
+				expect(val).to.be('mars');
+				done();
+			});
+		});
+
 		it('key set get', function(done){
 			gun.key('world/hello').set({world: "hello"}).get(function(val){
 				expect(val.world).to.be('hello');
