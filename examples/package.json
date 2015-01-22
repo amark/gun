@@ -8,7 +8,7 @@
 	}
 ,	"dependencies": {
 		"express": "~>4.9.0",
-		"gun": "~>0.0.9a"
+		"gun": "~>0.0.9g"
 	}
 ,	"scripts": {
         "start": "node express.js",
