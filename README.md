@@ -58,6 +58,12 @@ console.log('Server running at http://127.0.0.1:1337/');
 
 Fire up your browser and hit that URL - you'll see your data, plus some gun specific metadata.
 
+Try out the [examples](http://gunjs.herokuapp.com/) or run them yourself with the following command,
+and then visit [http://localhost:8080](http://localhost:8080).
+
+`git clone http://github.com/amark/gun && cd gun/examples && npm install && node express.js 8080`
+
+
 ## API
 
 Below is a really basic overview of how the gun API works. For a more detailed explanation with many more examples, [check out the wiki](https://github.com/amark/gun/wiki).
