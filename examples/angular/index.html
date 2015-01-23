@@ -53,7 +53,7 @@
 			var gun = Gun(location.origin + '/gun');
 			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
-				$scope.$data = gun.load('example/angular/todo').blank(function(){
+				$scope.$data = gun.load('example/angular/data').blank(function(){
 					console.log("Initializing Data!");
 					this.set({});
 				}).on(function(data){
@@ -63,7 +63,7 @@
 					});
 					$scope.$apply();
 				});
-				$scope.add = function(a,b,c){
+				$scope.add = function(){
 					$scope.$data.path($scope.field).set( $scope.data[$scope.field] = 'value' );
 					$scope.field = '';
 				};
