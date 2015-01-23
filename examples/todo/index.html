@@ -1,15 +1,39 @@
 <html>
-	<head>
-		<title>ToDo</title>
-	</head>
-	<body>
-		<h1>
-			Todo List
-		</h1>
-		<form name="sign" action="http://localhost:8888/gun">
-			<input name="email" placeholder="email">
-			<input name="password" type="password" placeholder="password">
-			<input type="submit" name="it" value="sign in or up">
-		</form>
+	<body onload="ready()">
+		<h2>ToDo List</h2>
+
+		<form id="addToDo"><input id="todoItem" /><button>Add</button></form>
+		<ul id="todos"></ul>
+
+		<script src="../../gun.js"></script>
+		<script>
+		// by Forrest Tait! Edited by Mark Nadal.
+		function ready(){
+			var $ = document.querySelector.bind(document);
+			var gun = Gun(location.origin + '/gun').load('example/todo/data').set({});
+			gun.on(function renderToDo(val){
+				var todoHTML = '';
+				for(key in val) {
+					if(!val[key] || key == '_') continue;
+					todoHTML += '<li style="width:400px;height:2em;">' + val[key] +
+					'<button style="float:right;" onclick=removeToDo("'+key+'")>X</button></li>';
+				}
+				$("#todos").innerHTML = todoHTML;
+			});
+			$("#addToDo").onsubmit = function(){
+				var id = randomId();
+				gun.path(id).set($("#todoItem").value);
+				$("#todos").innerHTML += "<li>"+$("#todoItem").value+"</li>";
+				$("#todoItem").value = "";
+				return false;
+			};
+			window.removeToDo = function(id){
+				gun.path(id).set(null);
+			}
+		}
+		function randomId(){
+			return ''+(new Date()).getTime()+Math.round((Math.random()*1000));
+		}
+		</script>
 	</body>
 </html>
