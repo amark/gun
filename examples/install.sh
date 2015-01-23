@@ -24,4 +24,4 @@ npm install gun
 # to run the gun examples:
 cd ./node_modules/gun/examples
 npm install .
-sudo /usr/local/bin/node ./express.js 80 # change `80` to `8080` for local testing.
+sudo /usr/local/bin/node ./express.js 80 # change `80` to `8080` for development purposes.
