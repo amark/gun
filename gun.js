@@ -193,7 +193,7 @@
 			if(!gun || !gun.__ || !gun.__.opt){
 				return console.log.apply(console, arguments);
 			}
-			if(gun.__.opt.quiet){ return }
+			if(!gun.__.opt.verbose){ return }
 			return console.log.apply(console, arguments);
 		}
 	}(Gun));
