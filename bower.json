@@ -1,7 +1,7 @@
 {
   "name": "gun",
   "main": "gun.js",
-  "version": "0.0.9i",
+  "version": "0.0.9-i",
   "homepage": "http://gunDB.io",
   "authors": [
     { "name": "Mark Nadal",     "email": "mark@accelsor.com"    },
