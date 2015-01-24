@@ -191,6 +191,7 @@
 		Gun.log = function(a, b, c, d, e, f){
 			var gun = this;
 			if(!gun || !gun.__ || !gun.__.opt){
+        console.log(gun.__);
 				return console.log.apply(console, arguments);
 			}
 			if(!gun.__.opt.verbose){ return }
