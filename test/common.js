@@ -319,6 +319,30 @@ describe('Gun', function(){
 		require('../lib/file');
 		var gun = Gun({file: 'data.json'});
 
+    it('verbose mode works properly', function(done) {
+      gun.load('hello/world').get(function() {
+        var counter = 2;
+        var originalLog = console.log;
+
+        /*
+         *console.log = function() {
+         *  counter--;
+         *};
+         */
+
+        Gun.log('this is a test');
+        gun.opt({verbose: true});
+        Gun.log('this is a test');
+
+        // Restore original console.log
+        console.log = originalLog;
+        expect(counter).to.be(1);
+
+        // Finish asynchronous mocha test
+        done();
+      });
+    });
+
 		it('set key get', function(done){
 			gun.set({hello: "world"}).key('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
