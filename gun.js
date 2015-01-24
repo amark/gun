@@ -151,9 +151,9 @@
 				var serverState = Gun.time.is();
 				// add more checks?
 				var state = HAM(serverState, context.states.delta[field], context.states.current[field], deltaValue, current[field]);
-				//console.log("HAM:", field, deltaValue, context.states.delta[field], context.states.current[field], 'the', state, (context.states.delta[field] - serverState));
+				//Gun.log("HAM:", field, deltaValue, context.states.delta[field], context.states.current[field], 'the', state, (context.states.delta[field] - serverState));
 				if(state.err){
-					console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
+					Gun.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err);
 					return;
 				}
 				if(state.state || state.quarantineState || state.current){
@@ -914,10 +914,10 @@
 			} else {
 				opt.url.pathname = '/' + key;
 			}
-			console.log("gun load", key);
+			Gun.log("gun load", key);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
-					//console.log('via', url, key, reply);
+					//Gun.log('via', url, key, reply);
 					if(err || !reply){ return } // handle reconnect?
 					if(reply.body && reply.body.err){
 						cb(reply.body.err);
@@ -940,7 +940,7 @@
 			}
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, meta, function(err, reply){
-					//console.log("gun key done", soul, err, reply);
+					//Gun.log("gun key done", soul, err, reply);
 					if(err || !reply){
 						Gun.log.call(gun, err = err || "Error: Key failed to be made on " + url);
 						// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
@@ -955,10 +955,10 @@
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
 			//tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
-			//console.log("gun set start");
+			//Gun.log("gun set start");
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function respond(err, reply, id){
-					//console.log("gun set done", err, reply, id);
+					//Gun.log("gun set done", err, reply, id);
 
 					return;
 					var body = reply && reply.body;
@@ -966,14 +966,14 @@
 					Gun.obj.del(tab.set.defer, id); // handle err with a retry? Or make a system auto-do it?
 					if(!body){ return }
 					if(body.defer){
-						//console.log("deferring post", body.defer);
+						//Gun.log("deferring post", body.defer);
 						tab.set.defer[body.defer] = respond;
 					}
 					if(body.reply){
 						respond(null, {headers: reply.headers, body: body.reply });
 					}
 					if(body.refed){
-						console.log("-------post-reply-all--------->", 1 || reply, err);
+						Gun.log("-------post-reply-all--------->", 1 || reply, err);
 						Gun.obj.map(body.refed, function(r, id){
 							var cb;
 							if(cb = tab.set.defer[id]){
@@ -993,7 +993,7 @@
 		}
 		tab.set.defer = {};
 		request.createServer(function(req, res){
-			//console.log("client server received request", req);
+			//.log("client server received request", req);
 			if(!req.body){ return }
 			gun.union(req.body);
 		});
@@ -1056,7 +1056,7 @@
 				}catch(e){ return }
 				if(!res){ return }
 				if(res.wsrid){ (r.ws.cbs[res.wsrid]||function(){})(null, res) }
-				//console.log("We have a pushed message!", res);
+				//Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer(res, function(){}) } // emit extra events.
 			};
 			ws.onerror = function(e){ console.log(e); };
@@ -1065,12 +1065,12 @@
 		r.ws.peers = {};
 		r.ws.cbs = {};
 		r.jsonp = function(opt, cb){
-			//console.log("jsonp send", opt);
+			//Gun.log("jsonp send", opt);
 			r.jsonp.ify(opt, function(url){
-				//console.log(url);
+				//Gun.log(url);
 				if(!url){ return }
 				r.jsonp.send(url, function(reply){
-					//console.log("jsonp reply", reply);
+					//Gun.log("jsonp reply", reply);
 					cb(null, reply);
 					r.jsonp.poll(opt, reply);
 				}, opt.jsonp);
@@ -1094,15 +1094,15 @@
 		r.jsonp.poll = function(opt, res){
 			if(!opt || !opt.base || !res || !res.headers || !res.headers.poll){ return }
 			(r.jsonp.poll.s = r.jsonp.poll.s || {})[opt.base] = r.jsonp.poll.s[opt.base] || setTimeout(function(){ // TODO: Need to optimize for Chrome's 6 req limit?
-				//console.log("polling again");
+				//Gun.log("polling again");
 				var o = {base: opt.base, headers: {pull: 1}};
 				r.each(opt.headers, function(v,i){ o.headers[i] = v })
 				r.jsonp(o, function(err, reply){
 					delete r.jsonp.poll.s[opt.base];
-					//console.log(' ');
+					//Gun.log(' ');
 					while(reply.body && reply.body.length && reply.body.shift){ // we're assuming an array rather than chunk encoding. :(
 						var res = reply.body.shift();
-						//console.log("-- go go go", res);
+						//Gun.log("-- go go go", res);
 						if(res && res.body){ r.createServer(res, function(){}) } // emit extra events.
 					}
 				});
@@ -1112,7 +1112,7 @@
 			var uri = encodeURIComponent, q = '?';
 			if(opt.url && opt.url.pathname){ q = opt.url.pathname + q; }
 			q = opt.base + q;
-			//console.log("what up doc?", opt);
+			//Gun.log("what up doc?", opt);
 			r.each((opt.url||{}).query, function(v, i){ q += uri(i) + '=' + uri(v) + '&' });
 			if(opt.headers){ q += uri('`') + '=' + uri(JSON.stringify(opt.headers)) + '&' }
 			if(r.jsonp.max < q.length){ return cb() }
