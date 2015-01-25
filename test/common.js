@@ -2,6 +2,29 @@ describe('Gun', function(){
 	var Gun = require('../gun')
 	,	t = {};
 	describe('Utility', function(){
+
+		it('verbose console.log debugging', function(done) {
+
+			var gun = Gun();
+			var log = root.console.log, counter = 1;
+			root.console.log = function(a,b,c){
+				--counter;
+				//log(a,b,c);
+			}
+			Gun.log.verbose = true;
+			gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+				expect(counter).to.be(0);
+
+				Gun.log.verbose = false;
+				gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+					expect(counter).to.be(0);
+
+					root.console.log = log;
+					done();
+				});
+			});
+		});
+
 		describe('Type Check', function(){
 			it('binary', function(){
 				expect(Gun.bi.is(false)).to.be(true);
