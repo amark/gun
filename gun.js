@@ -913,28 +913,25 @@
 				opt.url.pathname = '/' + key;
 			}
 			Gun.log("gun load", key);
-			(function(){
+			(function local(key, cb){
 				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
 					: tab.prefix + tab.prekey + key
-				if((node = store.get(lkey)) && node[Gun._.soul]){ return tab.load(node, cb) }
-				setTimeout(function(){cb(null, node)},0);
-			}());
+				if((node = store.get(lkey)) && node[Gun._.soul]){ return local(node, cb) }
+				if(node){ setTimeout(function(){cb(null, node)},0) }
+			}(key, cb));
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
 					Gun.log('via', url, key, reply.body);
 					if(err || !reply){ return } // handle reconnect?
 					if(reply.body && reply.body.err){
 						cb(reply.body.err);
-					} else
-					if(Gun.is.node(reply.body) || Gun.is.graph(reply.body)){
+					} else {
 						if(!key[Gun._.soul] && Gun.is.soul(reply.body)){
 							var meta = {};
 							meta[Gun._.soul] = Gun.is.soul(reply.body);
-							store.set(tab.prefix + tab.prekey + key, meta)
+							store.set(tab.prefix + tab.prekey + key, meta);
 						}
 						cb(null, reply.body);
-					} else {
-						Gun.log(reply.body);
 					}
 				}, opt);
 				cb.peers = true;
