@@ -134,7 +134,7 @@
 						return {converge: true, incoming: true};
 					}
 				}
-				return {err: console.log("you have not properly handled recursion through your data or filtered it as JSON")};
+				return {err: Gun.log("you have not properly handled recursion through your data or filtered it as JSON")};
 			}
 			var context = Gun.shot();
 			context.HAM = {};
@@ -263,7 +263,7 @@
 						gun.shot('then').fire();
 					}, opt);
 				} else {
-					cb.call(gun, {err: console.log("Warning! You have no persistence layer to load from!")});
+					cb.call(gun, {err: Gun.log("Warning! You have no persistence layer to load from!")});
 				}
 			});
 			gun.shot('done').fire(); // because we are loading, we always fire!
@@ -291,7 +291,7 @@
 						return cb.call(gun, null);
 					});
 				} else {
-					cb.call(gun, {err: console.log("Warning! You have no key hook!")});
+					cb.call(gun, {err: Gun.log("Warning! You have no key hook!")});
 				}
 			});
 			return gun;
@@ -388,14 +388,14 @@
 					val = partial;
 				} else
 				if(!Gun.obj.is(val)){
-					return cb.call(gun, {err: console.log("No field exists to set the " + (typeof val) + " on.")});
+					return cb.call(gun, {err: Gun.log("No field exists to set the " + (typeof val) + " on.")});
 				}
 				// TODO: should be able to handle val being a relation or a gun context or a gun promise.
 				// TODO: BUG: IF we are setting an object, doing a partial merge, and they are reusing a frozen copy, we need to do a DIFF to update the HAM! Or else we'll get "old" HAM.
 				val._ = Gun.ify.soul.call(gun, {}, gun._.node || val); // set their souls to be the same that way they will merge correctly for us during the union!
 				set = Gun.ify.call(gun, val, set);
 				cb.root = set.root;
-				if(set.err || !cb.root){ return cb.call(gun, set.err || {err: console.log("No root object!")}) }
+				if(set.err || !cb.root){ return cb.call(gun, set.err || {err: Gun.log("No root object!")}) }
 				set = Gun.ify.state(set.nodes, Gun.time.is()); // set time state on nodes?
 				if(set.err){ return cb.call(gun, set.err) }
 				gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
@@ -412,7 +412,7 @@
 						return cb.call(gun, null);
 					});
 				} else {
-					cb.call(gun, {err: console.log("Warning! You have no persistence layer to save to!")})
+					cb.call(gun, {err: Gun.log("Warning! You have no persistence layer to save to!")})
 				}
 			});
 			if(!gun.back){
@@ -430,7 +430,7 @@
 			}).get(function(val){
 				if(error){ return cb.call(gun, error) } // which in case it is, allows us to fail fast.
 				var list = {}, soul = Gun.is.soul.on(val);
-				if(!soul){ return cb.call(gun, {err: console.log("No soul!")}) }
+				if(!soul){ return cb.call(gun, {err: Gun.log("No soul!")}) }
 				list[soul] = val; // other wise, let's then
 				gun.set(list, cb); // merge with the graph node.
 			});
@@ -463,20 +463,20 @@
 			cb = cb || function(){}
 			context.nodes = {};
 			if(!prime){
-				context.err = {err: console.log("No data to merge!")};
+				context.err = {err: Gun.log("No data to merge!")};
 			} else
 			if(Gun.is.soul.on(prime)){
 				tmp[prime._[Gun._.soul]] = prime;
 				prime = tmp;
 			}
 			if(!gun || context.err){
-				cb(context.err = context.err || {err: console.log("No gun instance!"), corrupt: true}, context);
+				cb(context.err = context.err || {err: Gun.log("No gun instance!"), corrupt: true}, context);
 				return context;
 			}
 			if(!Gun.is.graph(prime, function(node, soul){
 				context.nodes[soul] = node;
 			})){
-				cb(context.err = context.err || {err: console.log("Invalid graph!"), corrupt: true}, context);
+				cb(context.err = context.err || {err: Gun.log("Invalid graph!"), corrupt: true}, context);
 				return context;
 			}
 			if(context.err){ return cb(context.err, context), context } // if any errors happened in the previous steps, then fail.
@@ -760,7 +760,7 @@
 	}({}));
 	;(function(Serializer){
 		Gun.ify = function(data, bind){ // TODO: BUG: Modify lists to include HAM state
-			if(Gun.obj.map(bind, function(){ return true })){ return {err: console.log("Bind must be an empty object.")} }
+			if(Gun.obj.map(bind, function(){ return true })){ return {err: Gun.log("Bind must be an empty object.")} }
 			var gun = Gun.is(this)? this : {}
 			, context = {
 				nodes: {}
@@ -777,18 +777,18 @@
 				} else
 				if(Gun.obj.is(data)){
 					var value = bind || {}, symbol = {}, seen
-					, err = {err: console.log("Metadata does not support external or circular references at " + sub.path), meta: true};
+					, err = {err: "Metadata does not support external or circular references at " + sub.path, meta: true};
 					context.root = context.root || value;
 					bind = null;
 					if(seen = ify.seen(context._seen, data)){
 						//console.log("seen in _", sub._, sub.path, data);
-						context.err = err;
+						Gun.log(context.err = err);
 						return;
 					} else
 					if(seen = ify.seen(context.seen, data)){
 						//console.log("seen in data", sub._, sub.path, data);
 						if(sub._){
-							context.err = err;
+							Gun.log(context.err = err);
 							return;
 						}
 						symbol = Gun.ify.soul.call(gun, symbol, seen);
@@ -819,17 +819,17 @@
 				} else
 				if(Gun.list.is(data)){
 					var unique = {}, edges
-					, err = {err: console.log("Arrays cause data corruption at " + sub.path), array: true}
+					, err = {err: "Arrays cause data corruption at " + sub.path, array: true}
 					edges = Gun.list.map(data, function(val, i, map){
 						val = ify(val, context, sub);
 						if(context.err){ return true }
 						if(!Gun.obj.is(val)){
-							context.err = err;
+							Gun.log(context.err = err);
 							return true;
 						}
 						return Gun.obj.map(val, function(soul, field){
 							if(field !== Gun._.soul){
-								context.err = err;
+								Gun.log(context.err = err);
 								return true;
 							}
 							if(unique[soul]){ return }
@@ -840,7 +840,7 @@
 					if(context.err){ return }
 					return edges;
 				} else {
-					context.err = {err: console.log("Data type not supported at " + sub.path), invalid: true};
+					context.err = {err: Gun.log("Data type not supported at " + sub.path), invalid: true};
 				}
 			}
 			ify.seen = function(seen, data){
@@ -858,7 +858,7 @@
 			context.now = now = (now === 0)? now : now || Gun.time.is();
 			Gun.obj.map(context.nodes, function(node, soul){
 				if(!node || !soul || !node._ || !node._[Gun._.soul] || node._[Gun._.soul] !== soul){
-					return context.err = {err: console.log("There is a corruption of nodes and or their souls"), corrupt: true};
+					return context.err = {err: Gun.log("There is a corruption of nodes and or their souls"), corrupt: true};
 				}
 				var states = node._[Gun._.HAM] = node._[Gun._.HAM] || {};
 				Gun.obj.map(node, function(val, field){
@@ -898,6 +898,9 @@
 		opt = opt || {};
 		tab.headers = opt.headers || {};
 		tab.headers['gun-tid'] = tab.headers['gun-tid'] || Gun.text.random();
+		tab.prefix = tab.prefix || opt.prefix || 'gun/';
+		tab.prekey = tab.prekey || opt.prekey || '';
+		tab.prenode = tab.prenode || opt.prenode || '_/nodes/';
 		tab.load = tab.load || function(key, cb, opt){
 			if(!key){ return }
 			cb = cb || function(){};
@@ -909,99 +912,93 @@
 			} else {
 				opt.url.pathname = '/' + key;
 			}
-			console.log("gun load", key);
+			Gun.log("gun load", key);
+			(function(){
+				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
+					: tab.prefix + tab.prekey + key
+				if((node = store.get(lkey)) && node[Gun._.soul]){ return tab.load(node, cb) }
+				setTimeout(function(){cb(null, node)},0);
+			}());
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
-					//console.log('via', url, key, reply);
+					Gun.log('via', url, key, reply.body);
 					if(err || !reply){ return } // handle reconnect?
 					if(reply.body && reply.body.err){
 						cb(reply.body.err);
-					} else {
+					} else
+					if(Gun.is.node(reply.body) || Gun.is.graph(reply.body)){
+						if(!key[Gun._.soul] && Gun.is.soul(reply.body)){
+							var meta = {};
+							meta[Gun._.soul] = Gun.is.soul(reply.body);
+							store.set(tab.prefix + tab.prekey + key, meta)
+						}
 						cb(null, reply.body);
+					} else {
+						Gun.log(reply.body);
 					}
 				}, opt);
 				cb.peers = true;
-			});
-			if(!cb.peers){ // there are no peers! this is a local only instance
-				setTimeout(function(){cb({err: console.log("Warning! You have no peers to connect to!")})},0);
-			}
+			}); tab.peers(cb);
 		}
 		tab.key = function(key, soul, cb){
 			var meta = {};
 			meta[Gun._.soul] = soul = Gun.text.is(soul)? soul : (soul||{})[Gun._.soul];
-			if(!soul){
-				return cb({err: console.log("No soul!")});
-			}
+			if(!soul){ return cb({err: Gun.log("No soul!")}) }
+			store.set(tab.prefix + tab.prekey + key, meta);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, meta, function(err, reply){
-					//console.log("gun key done", soul, err, reply);
 					if(err || !reply){
-						console.log(err = err || "Error: Key failed to be made on " + url);
 						// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
-						cb(err);
+						cb({err: Gun.log(err || "Error: Key failed to be made on " + url) });
 					} else {
 						cb();
 					}
 				}, {url: {pathname: '/' + key }, headers: tab.headers});
-			});
+				cb.peers = true;
+			}); tab.peers(cb);
 		}
 		tab.set = tab.set || function(nodes, cb){
 			cb = cb || function(){};
 			// TODO: batch and throttle later.
-			//tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes);
-			//console.log("gun set start");
+			// tab.store.set(cb.id = 'send/' + Gun.text.random(), nodes); // TODO: store SENDS until SENT.
+			Gun.obj.map(nodes, function(node, soul){
+				if(!gun || !gun.__ || !gun.__.graph || !gun.__.graph[soul]){ return }
+				store.set(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
+			});
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function respond(err, reply, id){
-					//console.log("gun set done", err, reply, id);
-
-					return;
-					var body = reply && reply.body;
-					respond.id = respond.id || cb.id;
-					Gun.obj.del(tab.set.defer, id); // handle err with a retry? Or make a system auto-do it?
-					if(!body){ return }
-					if(body.defer){
-						//console.log("deferring post", body.defer);
-						tab.set.defer[body.defer] = respond;
-					}
-					if(body.reply){
-						respond(null, {headers: reply.headers, body: body.reply });
-					}
-					if(body.refed){
-						console.log("-------post-reply-all--------->", 1 || reply, err);
-						Gun.obj.map(body.refed, function(r, id){
-							var cb;
-							if(cb = tab.set.defer[id]){
-								cb(null, {headers: reply.headers, body: r}, id);
-							}
-						});
-						// TODO: should be able to do some type of "checksum" that every request cleared, and if not, figure out what is wrong/wait for finish.
-						return;
-					}
-					if(body.reply || body.defer || body.refed){ return }
-					//tab.store.del(respond.id);
 				}, {headers: tab.headers});
-			});
+				cb.peers = true;
+			}); tab.peers(cb);
 			Gun.obj.map(nodes, function(node, soul){
-				gun.__.on(soul).emit(node, true); // should we emit difference between local and not?
+				gun.__.on(soul).emit(node);
 			});
+		}
+		tab.peers = function(cb){
+			if(cb && !cb.peers){ // there are no peers! this is a local only instance
+				setTimeout(function(){cb({err: Gun.log("Warning! You have no peers to connect to!")})},1);
+			}
 		}
 		tab.set.defer = {};
 		request.createServer(function(req, res){
-			//.log("client server received request", req);
+			// Gun.log("client server received request", req);
 			if(!req.body){ return }
-			gun.union(req.body);
+			if(Gun.is.node(req.body) || Gun.is.graph(req.body)){
+				gun.union(req.body); // TODO: BUG? Interesting, this won't update localStorage because .set isn't called?
+			}
 		});
-		(function(){
-			tab.store = {};
-			var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
-			tab.store.set = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-			tab.store.get = function(key){ return Gun.obj.ify(store.getItem(key)) }
-			tab.store.del = function(key){ return store.removeItem(key) }
-		}());
 		gun.__.opt.hooks.load = gun.__.opt.hooks.load || tab.load;
 		gun.__.opt.hooks.set = gun.__.opt.hooks.set || tab.set;
 		gun.__.opt.hooks.key = gun.__.opt.hooks.key || tab.key;
 	});
+	var store = (function(){
+		function s(){}
+		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
+		s.set = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
+		s.get = function(key){ return Gun.obj.ify(store.getItem(key)) }
+		s.del = function(key){ return store.removeItem(key) }
+		return s;
+	}());
 	var request = (function(){
 		function r(base, body, cb, opt){
 			opt = opt || (base.length? {base: base} : base);
@@ -1050,21 +1047,21 @@
 				}catch(e){ return }
 				if(!res){ return }
 				if(res.wsrid){ (r.ws.cbs[res.wsrid]||function(){})(null, res) }
-				//console.log("We have a pushed message!", res);
+				//Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer(res, function(){}) } // emit extra events.
 			};
-			ws.onerror = function(e){ console.log(e); };
+			ws.onerror = function(e){ Gun.log(e); };
 			return true;
 		}
 		r.ws.peers = {};
 		r.ws.cbs = {};
 		r.jsonp = function(opt, cb){
-			//console.log("jsonp send", opt);
+			//Gun.log("jsonp send", opt);
 			r.jsonp.ify(opt, function(url){
-				//console.log(url);
+				//Gun.log(url);
 				if(!url){ return }
 				r.jsonp.send(url, function(reply){
-					//console.log("jsonp reply", reply);
+					//Gun.log("jsonp reply", reply);
 					cb(null, reply);
 					r.jsonp.poll(opt, reply);
 				}, opt.jsonp);
@@ -1088,15 +1085,14 @@
 		r.jsonp.poll = function(opt, res){
 			if(!opt || !opt.base || !res || !res.headers || !res.headers.poll){ return }
 			(r.jsonp.poll.s = r.jsonp.poll.s || {})[opt.base] = r.jsonp.poll.s[opt.base] || setTimeout(function(){ // TODO: Need to optimize for Chrome's 6 req limit?
-				//console.log("polling again");
+				//Gun.log("polling again");
 				var o = {base: opt.base, headers: {pull: 1}};
 				r.each(opt.headers, function(v,i){ o.headers[i] = v })
 				r.jsonp(o, function(err, reply){
 					delete r.jsonp.poll.s[opt.base];
-					//console.log(' ');
 					while(reply.body && reply.body.length && reply.body.shift){ // we're assuming an array rather than chunk encoding. :(
 						var res = reply.body.shift();
-						//console.log("-- go go go", res);
+						//Gun.log("-- go go go", res);
 						if(res && res.body){ r.createServer(res, function(){}) } // emit extra events.
 					}
 				});
@@ -1106,7 +1102,6 @@
 			var uri = encodeURIComponent, q = '?';
 			if(opt.url && opt.url.pathname){ q = opt.url.pathname + q; }
 			q = opt.base + q;
-			//console.log("what up doc?", opt);
 			r.each((opt.url||{}).query, function(v, i){ q += uri(i) + '=' + uri(v) + '&' });
 			if(opt.headers){ q += uri('`') + '=' + uri(JSON.stringify(opt.headers)) + '&' }
 			if(r.jsonp.max < q.length){ return cb() }
