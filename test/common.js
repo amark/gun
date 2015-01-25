@@ -2,6 +2,29 @@ describe('Gun', function(){
 	var Gun = require('../gun')
 	,	t = {};
 	describe('Utility', function(){
+
+		it('verbose console.log debugging', function(done) {
+
+			var gun = Gun();
+			var log = root.console.log, counter = 1;
+			root.console.log = function(a,b,c){
+				--counter;
+				//log(a,b,c);
+			}
+			Gun.log.verbose = true;
+			gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+				expect(counter).to.be(0);
+
+				Gun.log.verbose = false;
+				gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+					expect(counter).to.be(0);
+
+					root.console.log = log;
+					done();
+				});
+			});
+		});
+
 		describe('Type Check', function(){
 			it('binary', function(){
 				expect(Gun.bi.is(false)).to.be(true);
@@ -318,30 +341,6 @@ describe('Gun', function(){
 
 		require('../lib/file');
 		var gun = Gun({file: 'data.json'});
-
-    it('verbose mode works properly', function(done) {
-      gun.load('hello/world').get(function() {
-        var counter = 2;
-        var originalLog = console.log;
-
-        /*
-         *console.log = function() {
-         *  counter--;
-         *};
-         */
-
-        Gun.log('this is a test');
-        gun.opt({verbose: true});
-        Gun.log('this is a test');
-
-        // Restore original console.log
-        console.log = originalLog;
-        expect(counter).to.be(1);
-
-        // Finish asynchronous mocha test
-        done();
-      });
-    });
 
 		it('set key get', function(done){
 			gun.set({hello: "world"}).key('hello/world').get(function(val){
