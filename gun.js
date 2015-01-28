@@ -149,9 +149,12 @@
 					return;
 				}
 				var serverState = Gun.time.is();
+				var incomingValue = Gun.is.soul(deltaValue) || deltaValue;
+				var currentValue = Gun.is.soul(current[field]) || current[field];
 				// add more checks?
-				var state = HAM(serverState, context.states.delta[field], context.states.current[field], deltaValue, current[field]);
-				//console.log("HAM:", field, deltaValue, context.states.delta[field], context.states.current[field], 'the', state, (context.states.delta[field] - serverState));
+				var state = HAM(serverState, context.states.delta[field], context.states.current[field], incomingValue, currentValue);
+				//console.log("the server state is",serverState,"with delta:current",context.states.delta[field],context.states.current[field]);
+				//console.log("having incoming value of",deltaValue,'and',current[field]);
 				if(state.err){
 					root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err); // this error should never happen.
 					return;
