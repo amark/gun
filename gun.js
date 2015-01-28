@@ -134,7 +134,7 @@
 						return {converge: true, incoming: true};
 					}
 				}
-				return {err: Gun.log("you have not properly handled recursion through your data or filtered it as JSON")};
+				return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
 			}
 			var context = Gun.shot();
 			context.HAM = {};
@@ -325,7 +325,10 @@
 				, val = gun._.node[field];
 				gun._.field = field;
 				if(Gun.is.soul(val)){ // we might end on a link, so we must resolve
-					return gun.load(val).shot.then(trace);
+					return gun.load(val, function(){
+						gun._ = this._;
+						trace();
+					});
 				} else
 				if(path.length){ // we cannot go any further, despite the fact there is more path, which means the thing we wanted does not exist.
 					gun.shot('then').fire();

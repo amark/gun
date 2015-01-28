@@ -445,5 +445,19 @@ describe('Gun', function(){
 			}, 100);
 		});
 
+		it('load blank set get path get', function(done){ // stickies issue
+			gun.load("examples/list/foobar").blank(function(){
+					this.set({
+						id: 'foobar',
+						title: 'awesome title',
+						todos: {}
+					});
+			}).get(function(data){
+				expect(data.id).to.be('foobar');
+			}).path('todos').get(function(todos){
+				expect(todos).to.not.have.property('id');
+				done();
+			});
+		});
 	});
 });
