@@ -16,7 +16,7 @@
 	"mocha": "~>1.9.0"
 }
 , "scripts": {
-        "start": "node init.js",
+        "start": "node examples/express.js 8080",
         "test": "mocha"
     }
 }
