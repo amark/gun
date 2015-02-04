@@ -423,6 +423,16 @@ describe('Gun', function(){
 			});
 		});
 
+		it('load set null', function(done){
+			gun.set({last: {some: 'object'}}).path('last').get(function(val){
+				console.log("GET LAST FIRST", val, this._);
+			}).set(null, function(err){
+				console.log("ERR?", err);
+			}).get(function(val){
+				console.log('GET', val);
+			});
+		});
+
 		it('var set key path', function(done){ // contexts should be able to be saved to a variable
 			var foo = gun.set({foo: 'bar'}).key('foo/bar');
 			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
