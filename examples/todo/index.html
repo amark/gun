@@ -10,8 +10,10 @@
 		// by Forrest Tait! Edited by Mark Nadal.
 		function ready(){
 			var $ = document.querySelector.bind(document);
+			Gun.log.verbose = true;
 			var gun = Gun(location.origin + '/gun').load('example/todo/data').set({});
 			gun.on(function renderToDo(val){
+				console.log("TODO ON:", val);
 				var todoHTML = '';
 				for(key in val) {
 					if(!val[key] || key == '_') continue;
