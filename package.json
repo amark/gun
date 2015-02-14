@@ -1,5 +1,5 @@
 { "name": "gun"
-, "version": "0.0.9-n"
+, "version": "0.0.9-o"
 , "author": "Mark Nadal"
 , "description": "Graph engine."
 , "engines": {
@@ -17,6 +17,7 @@
 }
 , "scripts": {
         "start": "node examples/express.js 8080",
+        "prestart": "npm install ./examples",
         "test": "mocha"
     }
 }
