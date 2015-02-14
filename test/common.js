@@ -341,7 +341,7 @@ describe('Gun', function(){
 
 		require('../lib/file');
 		var gun = Gun({file: 'data.json'});
-
+		
 		it('set key get', function(done){
 			gun.set({hello: "world"}).key('hello/world').get(function(val){
 				expect(val.hello).to.be('world');
@@ -376,7 +376,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		
 		it('load path empty set', function(done){
 			gun.load('hello/world').path('earth').set('mars').get(function(val){
 				expect(val).to.be('mars');
@@ -398,13 +398,13 @@ describe('Gun', function(){
 			});
 		});
 
-		it('load', function(done){
+		it('load again', function(done){
 			gun.load('world/hello').get(function(val){
 				expect(val.world).to.be('hello');
 				done();
 			});
 		});
-
+		
 		it('load blank kick get', function(done){ // it would be cool with GUN
 			gun.load("some/empty/thing").blank(function(){ // that if you call blank first
 				this.set({now: 'exists'}); // you can set stuff
@@ -419,6 +419,24 @@ describe('Gun', function(){
 				this.set({now: 'THIS SHOULD NOT HAPPEN'});
 			}).get(function(val){
 				expect(val.now).to.be('exists');
+				done();
+			});
+		});
+
+		it('set path get sub', function(done){
+			gun.set({last: {some: 'object'}}).path('last').get(function(val){
+				expect(val.some).to.be('object');
+				done();
+			});
+		});
+		
+		it('load set null', function(done){
+			gun.set({last: {some: 'object'}}).path('last').get(function(val){
+				expect(val.some).to.be('object');
+			}).set(null, function(err){
+				//console.log("ERR?", err);
+			}).get(function(val){
+				expect(val).to.be(null);
 				done();
 			});
 		});
@@ -459,5 +477,29 @@ describe('Gun', function(){
 				done();
 			});
 		});
+
+		it('set partial sub merge', function(done){
+			var mark = gun.set({name: "Mark", wife: { name: "Amber" }}).key('person/mark').get(function(mark){
+				expect(mark.name).to.be("Mark");
+			});
+
+			mark.set({age: 23, wife: {age: 23}});
+			
+			setTimeout(function(){
+				mark.set({citizen: "USA", wife: {citizen: "USA"}}).get(function(mark){
+					expect(mark.name).to.be("Mark");
+					expect(mark.age).to.be(23);
+					expect(mark.citizen).to.be("USA");
+
+					this.path('wife').get(function(Amber){
+						expect(Amber.name).to.be("Amber");
+						expect(Amber.age).to.be(23);
+						expect(Amber.citizen).to.be("USA");
+						done();
+					});
+				});
+			}, 50);
+		});
+
 	});
 });
