@@ -376,7 +376,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		
 		it('load path empty set', function(done){
 			gun.load('hello/world').path('earth').set('mars').get(function(val){
 				expect(val).to.be('mars');
@@ -398,13 +398,13 @@ describe('Gun', function(){
 			});
 		});
 
-		it('load', function(done){
+		it('load again', function(done){
 			gun.load('world/hello').get(function(val){
 				expect(val.world).to.be('hello');
 				done();
 			});
 		});
-
+		
 		it('load blank kick get', function(done){ // it would be cool with GUN
 			gun.load("some/empty/thing").blank(function(){ // that if you call blank first
 				this.set({now: 'exists'}); // you can set stuff
@@ -416,7 +416,6 @@ describe('Gun', function(){
 
 		it('load blank kick get when it already exists', function(done){
 			gun.load("some/empty/thing").blank(function(){
-				console.log("OH NO!", this._);
 				this.set({now: 'THIS SHOULD NOT HAPPEN'});
 			}).get(function(val){
 				expect(val.now).to.be('exists');
@@ -430,7 +429,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		
 		it('load set null', function(done){
 			gun.set({last: {some: 'object'}}).path('last').get(function(val){
 				expect(val.some).to.be('object');
@@ -499,7 +498,7 @@ describe('Gun', function(){
 						done();
 					});
 				});
-			}, 100);
+			}, 50);
 		});
 
 	});
