@@ -453,8 +453,8 @@
 		}
 		Chain.map = function(cb, opt){
 			var gun = this;
+			opt = (Gun.obj.is(opt)? opt : (opt? {all: true} : {}));
 			gun.get(function(val){
-				opt = opt || {};
 				cb = cb || function(){};
 				Gun.obj.map(val, function(val, field){  // by default it only maps over nodes
 					if(Gun._.meta == field){ return }
