@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://gunjs.herokuapp.com/gun.js"></script>
+</head>
+<body style="white-space: pre;">
+	loading...
+	<script>
+		var key = decodeURIComponent((location.search.match(/key\=(.*?)(\&|$)/i)||[])[1]||'') || alert("Please provide a key in a query parameter, such as `?key=example/tutorial`.");
+
+		var gun = Gun('https://gunjs.herokuapp.com/gun');
+		var ref = gun.load(key);
+		ref.on(function(data){
+			delete data._;
+		  $('body').text(JSON.stringify(data,0,2));
+		});
+	</script>
+</body>
+</html>

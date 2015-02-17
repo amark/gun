@@ -27,11 +27,11 @@ html, body {
 	font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
 }
 .svg {
-	background: white url('./web/img/devices.svg') no-repeat 50% 50%;
+	background: white url('./img/devices.svg') no-repeat 50% 50%;
 	height: 40em;
 }
 .GUN {
-	background: transparent url('./web/img/gun.svg') no-repeat 50% 50%;
+	background: transparent url('./img/gun.svg') no-repeat 50% 50%;
 	background-size: 60%;
 }
 .dull {
@@ -100,12 +100,12 @@ html, body {
 
 		<div class="graphic grid" style="min-width: 300px; max-width: 600px; height: 400px; position: relative; margin:0 auto; padding:0;">
 
-			<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; left: 35%; wid-th: 50%;">
+			<img src="./img/server.png" class="server" style="position: absolute; top: 2%; left: 35%; wid-th: 50%;">
 
 			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; left: 3%;">
 				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
 					<div class="dull screen GUN" style="height: 100%; width: 100%;">
-						<img class="mouse" src="./web/img/mouse.png">
+						<img class="mouse" src="./img/mouse.png">
 					</div>
 				</div>
 				<div class="stand" style="margin: 1px auto 0px;
@@ -212,7 +212,7 @@ html, body {
 				</div>
 			</div>
 
-			<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; right: 35%;">
+			<img src="./img/server.png" class="server" style="position: absolute; top: 2%; right: 35%;">
 
 			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; right: 3%;">
 				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
@@ -594,7 +594,7 @@ ref.on(function(data){
 				gun.set({hello: "world"}).key(key);
 			});
 			$(".step2").find('button').on('click', function(e){
-				$(".browser").find("iframe").attr("src", "./web/tabs.html?key=" + key);
+				$(".browser").find("iframe").attr("src", "./tabs.html?key=" + key);
 			});
 			$(".step3").find('form').on('submit', function(e){
 				var val = $("#try-sync").val() || null;

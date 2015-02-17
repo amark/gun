@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://dl.dropboxusercontent.com/u/4374976/random/phrase.js"></script>
+</head>
+<body class="tutorial">
+	<script src="https://gunjs.herokuapp.com/gun.js"></script>
+	<link id="style" rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/ir_black.min.css">
+	<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+	<style>
+	@import url(https://fonts.googleapis.com/css?family=Dosis|Poiret+One|Oxygen);
+	.tutorial {
+		margin: 0;
+		padding: 0;
+		he-ight: 100%;
+		font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+		background: #222;
+		color: #eee;
+		overflow: auto;
+	}
+	.center {
+		text-align: center;
+	}
+	.lean {
+		font-family: 'Poiret One', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	.clean {
+		font-family: 'Dosis', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	.crisp {
+		font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	pre {
+		background-color: black;
+		border: 1px dashed white;
+		color: white;
+		line-height: 1.5em;
+		padding: .5em;
+		margin: 0em;
+		overflow: auto;
+	}
+	button {
+		border: none;
+		color: white;
+		background: skyblue;
+		padding: 1em;
+		cursor: pointer;
+	}
+	.hide {
+		display: none;
+	}
+	.show {
+		display: block;
+	}
+	.grid {
+		text-align: center;
+	}
+	.unit {
+		display: inline-block;
+	}
+	.main {
+		min-width: 250px;
+		max-width: 1024px;
+		width: 90%;
+		margin: 0% auto;
+		padding: 2% 5%;
+	}
+	div {
+		position: relative;
+	}
+	.left { float: left;}
+	.teft { text-align: left; }
+	.middle {
+		vertical-align: middle;
+	}
+	.full {
+		width: 100%;
+	}
+	</style>
+	<div class="main">
+	<div style="font-size: 18pt; margin: 0 0 .75em;">Try it now</div>
+	
+	<div class="step show step1">
+
+		<div class="full grid">
+			<div class="middle unit teft">
+<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var gun = Gun('https://gunjs.herokuapp.com/gun');
+gun.set({hello: "world"}).key('<span class="your-key">example/tutorial</span>');</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 20em; max-width: 28em; margin-bottom: 1em;">
+				<a href="#step2"><button class="left" style="margin-right: 1em;"><big>Run!</big></button></a>
+				In this <b>1 minute</b> tutorial, we will connect to a gun peer, create an object, and sync data in realtime.
+			</div>
+		</div>
+
+	</div>
+	
+	<div class="step hide step2">
+
+		<div class="full grid">
+			<div class="middle unit teft">
+<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var ref = gun.load('<span class="your-key">example/tutorial</span>');
+ref.on(function(data){
+  $('body').text(JSON.stringify(data));
+});</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 34em; max-width: 28em; margin-bottom: 1em;">
+				<a href="#step3"><button class="left" style="margin-right: 1em; background: MediumSpringGreen;"><big>Next</big></button></a>
+				Congratulations! You just made an object and saved a reference to it.
+				In two tabs, we'll load that key to open a shared reference.
+			</div>
+		</div>
+
+	</div>
+
+
+	<div class="step hide step3">
+
+		<div class="full grid">
+			<style>
+				.browser {
+					background: white;
+					border-radius: .25em;
+					width: 250px;
+					//height: 300px;
+					color: #222;
+					margin: .5em;
+					overflow: hidden;
+				}
+				.b-bar {
+					background: #EEE;
+					border-radius: .25em .25em 0 0;
+				}
+				.b-but {
+					float: left;
+					width: 1em;
+					height: 1em;
+				}
+				.browser a {
+					text-decoration: none;
+					background: white;
+					border-radius: .4em;
+					padding: 0 1em;
+					color: #555;
+				}
+				.browser iframe { border: none; }
+			</style>
+			<div class="browser unit teft">
+				<div class="b-bar">
+					<div class="b-but">&larr;</div>
+					<div class="b-but">&rarr;</div>
+					<div class="b-but"><small>&#8635;</small></div>
+					<small><small><span>
+						<a href="https://gunjs.herokuapp.com/" target="_blank">https://gunjs.herokuapp.com/</a>
+					</span></small></small>
+					<small class="center" style="position: relative; top: -.14em;">x</small>
+					<span class="center">&equiv;<span>
+				</div>
+				<iframe></iframe>
+			</div>
+			<div class="browser unit teft">
+				<div class="b-bar">
+					<div class="b-but">&larr;</div>
+					<div class="b-but">&rarr;</div>
+					<div class="b-but"><small>&#8635;</small></div>
+					<small><small><span>
+						<a href="https://gunjs.herokuapp.com/" target="_blank">https://gunjs.herokuapp.com/</a>
+					</span></small></small>
+					<small class="center" style="position: relative; top: -.14em;">x</small>
+					<span class="center">&equiv;<span>
+				</div>
+				<iframe></iframe>
+			</div>
+		</div>
+
+		<form action="#step3" onsubmit="return false;">
+		<style>
+			#step3 input {
+				width: 6em;
+			}
+		</style>
+		<div class="grid">
+			<div class="middle unit teft">
+<pre style="max-width: 40em; margin: 0 1em 1em 0;">ref.path('<input id="try-path" value="hello">').set("<input id="try-sync" value="sync">");</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 20em; max-width: 30em; margin-bottom: 1em;">
+				<button type="submit" class="left" style="margin-right: 1em;"><big>Update!</big></button>
+				Let's update the "hello" field with a different value.
+				We can path into any field, and set it directly.
+			</div>
+		</div>
+		</form>
+
+	</div>
+
+	<script>
+		$(function(){
+			var gun, key = "random/" + Gun.text.random(9),
+				hili = function(){
+				$("pre").each(function(){
+					hljs.highlightBlock(this);
+				})
+			}
+			$(".your-key").text(key);
+			hili();
+
+			location.hash = 'step1';
+			$(window).on('hashchange', function(){
+				$('.step').removeClass('show').addClass('hide')
+			  $(location.hash.replace('#','.')).addClass('show');
+			});
+
+			$(".step1").find('button').on('click', function(e){
+				if(gun){ return }
+				gun = Gun('https://gunjs.herokuapp.com/gun');
+				gun.set({hello: "world"}).key(key);
+			});
+			$(".step2").find('button').on('click', function(e){
+				$(".browser").find("iframe").attr("src", "./tabs.html?key=" + key);
+			});
+			$(".step3").find('form').on('submit', function(e){
+				var val = $("#try-sync").val() || null;
+				var path = $("#try-path").val();
+				gun.load(key).path(path).set(val);
+			});
+		})
+	</script>
+	</div>
+</body>
+</html>
