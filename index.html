@@ -3,12 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-	<!--
-	<script src="../gun.js"></script>
-	<link id="style" rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/sunburst.min.css">
-	<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
-	<script src="https://dl.dropboxusercontent.com/u/4374976/random/phrase.js"></script>
--->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
 </head>
 <body>
 <style>
@@ -30,44 +25,6 @@ html, body {
 }
 .crisp {
 	font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
-}
-pre {
-	background-color: black;
-	border: 1px dashed white;
-	color: white;
-	line-height: 1.5em;
-	padding: 1em;
-	overflow: hidden;
-}
-button {
-	border: none;
-	color: white;
-	background: skyblue;
-	padding: 1em;
-	cursor: pointer;
-}
-input {
-	background: transparent;
-	border: 2px dashed grey;
-	padding: 1em;
-}
-.step {
-	display: none;
-}
-.step:target {
-	display: block;
-}
-.grid {
-	text-align: center;
-}
-.unit {
-	display: inline-block;
-}
-.learn {
-	min-width: 250px;
-	max-width: 400px;
-	width: 30%;
-	padding: 2em;
 }
 .svg {
 	background: white url('./web/img/devices.svg') no-repeat 50% 50%;
@@ -103,16 +60,20 @@ input {
 }
 .fold {
 	width: 100%;
-	height: 800px;
-	min-height: 800px;
 	position: relative;
+	overflow: hidden;
+}
+.behold {
+	margin-top: 8%;
+	padding:0;
+	text-align: center;
 }
 .grid {
 	display: inline-block;
 }
 @media (max-width: 760px) {
 	body {
-		font-siz----e: 10pt;
+		font-size: 8pt;
 	}
 }
 @media (max-width: 1279px) {
@@ -120,248 +81,531 @@ input {
 		display: none;
 	}
 }
+
+.screen {
+	position: relative;
+	overflow: hidden;
+}
+.mouse {
+	display: block;
+	position: absolute;
+	top: 60%;
+	left: -6%;
+}
 </style>
 
 <div class="fold">
 
-	<div class="behold" style="overflow: hidden; position: relative; width: 100%; min-height 400px; margin: -200px 0 0; padding:0; top: 40%; text-align: center;">
+	<div class="behold">
 
-		<div class="graphic grid" style="min-width: 300px; max-width: 600px; height: 400px;
-		position: relative; margin:0 auto; padding:0;">
+		<div class="graphic grid" style="min-width: 300px; max-width: 600px; height: 400px; position: relative; margin:0 auto; padding:0;">
 
-		<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; left: 35%; wid-th: 50%;">
+			<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; left: 35%; wid-th: 50%;">
 
-		<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; left: 3%;">
-			<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
-				<div class="dull screen GUN" style="height: 100%; width: 100%;">
+			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; left: 3%;">
+				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+						<img class="mouse" src="./web/img/mouse.png">
+					</div>
+				</div>
+				<div class="stand" style="margin: 1px auto 0px;
+					border-bottom: 2.75em solid #888;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					height: 0;
+					width: 3.2em;">
+				</div>
+				<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
+			</div>
+
+			<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; left: 48%;">
+				<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+					</div>
+				</div>
+				<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
 				</div>
 			</div>
-			<div class="stand" style="margin: 1px auto 0px;
-			border-bottom: 2.75em solid #888;
-			border-left: .5em solid transparent;
-			border-right: .5em solid transparent;
-			height: 0;
-			width: 3.2em;">
-		</div>
-		<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
-	</div>
 
-	<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; left: 48%;">
-		<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
-			<div class="dull screen GUN" style="height: 100%; width: 100%;">
+			<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; left: 70%;">
+				<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+					</div>
+				</div>
 			</div>
-		</div>
-		<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
-		</div>
-	</div>
 
-	<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; left: 70%;">
-		<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
-			<div class="dull screen GUN" style="height: 100%; width: 100%;">
+			<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 50px 0 0 0;
+				position: absolute; left: 20%; top: 15%; border-width: 3px 0px 0px 3px;">
+				<div class="rarr" style="position: absolute; top: -.59em; right: -.7em;
+					width: 0;
+					height: 0;
+					border-top: .5em solid transparent;
+					border-left: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;">
+				</div>
+				<div class="darr" style="position: absolute; bottom: -.75em; left: -.59em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-top: 1em solid FireBrick;">
+				</div>
 			</div>
+
+			<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 50px 0;
+				position: absolute; left: 80%; top: 35%; border-width: 0px 3px 3px 0px;">
+				<div class="uarr" style="position: absolute; top: -.9em; right: -.59em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-bottom: 1em solid FireBrick;">
+				</div>
+				<div class="larr" style="position: absolute; bottom: -.55em; left: -.59em;
+					width: 0;
+					height: 0;
+					border-top: .5em solid transparent;
+					border-right: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;">
+				</div>
+			</div>
+
+			<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
+				position: absolute; left: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
+				<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-bottom: 1em solid FireBrick;">
+				</div>
+				<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-top: 1em solid FireBrick;">
+				</div>
+			</div>
+
+			<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
 		</div>
-	</div>
 
-	<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 50px 0 0 0;
-	position: absolute; left: 20%; top: 15%; border-width: 3px 0px 0px 3px;">
-	<div class="rarr" style="position: absolute; top: -.59em; right: -.7em;
-	width: 0;
-	height: 0;
-	border-top: .5em solid transparent;
-	border-left: 1em solid FireBrick;
-	border-bottom: .5em solid transparent;">
-</div>
-<div class="darr" style="position: absolute; bottom: -.75em; left: -.59em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-top: 1em solid FireBrick;">
-</div>
-</div>
+		<div class="graphic wide grid" style="min-width: 300px; max-width: 600px; height: 400px;
+			position: relative; margin:0 auto; padding:0;">
 
-<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 50px 0;
-position: absolute; left: 80%; top: 35%; border-width: 0px 3px 3px 0px;">
-<div class="uarr" style="position: absolute; top: -.9em; right: -.59em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-bottom: 1em solid FireBrick;">
-</div>
-<div class="larr" style="position: absolute; bottom: -.55em; left: -.59em;
-width: 0;
-height: 0;
-border-top: .5em solid transparent;
-border-right: 1em solid FireBrick;
-border-bottom: .5em solid transparent;">
-</div>
-</div>
+			<div class="arrow server-server" style="width: 100px; height: 0px; border: dashed 0px FireBrick; border-radius: 0;
+				position: absolute; left: -9%; top: 15%; border-width: 3px 0px 0px 0px;">
+				<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
+					width: 0;
+					height: 0;
+					border-top: .5em solid transparent;
+					border-right: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;">
+				</div>
+				<div class="larr" style="position: absolute; top: -.59em; right: -.6em;
+					width: 0;
+					height: 0;
+					border-left: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;
+					border-top: .5em solid transparent;">
+				</div>
+			</div>
 
-<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
-position: absolute; left: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
-<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-bottom: 1em solid FireBrick;">
-</div>
-<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-top: 1em solid FireBrick;">
-</div>
-</div>
+			<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; right: 35%;">
 
-<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
-</div>
-<div class="graphic wide grid" style="min-width: 300px; max-width: 600px; height: 400px;
-position: relative; margin:0 auto; padding:0;">
+			<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; right: 3%;">
+				<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+					</div>
+				</div>
+				<div class="stand" style="margin: 1px auto 0px;
+					border-bottom: 2.75em solid #888;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					height: 0;
+					width: 3.2em;">
+				</div>
+				<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
+			</div>
 
-<div class="arrow server-server" style="width: 100px; height: 0px; border: dashed 0px FireBrick; border-radius: 0;
-position: absolute; left: -9%; top: 15%; border-width: 3px 0px 0px 0px;">
-<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
-width: 0;
-height: 0;
-border-top: .5em solid transparent;
-border-right: 1em solid FireBrick;
-border-bottom: .5em solid transparent;">
-</div>
-<div class="larr" style="position: absolute; top: -.59em; right: -.6em;
-width: 0;
-height: 0;
-border-left: 1em solid FireBrick;
-border-bottom: .5em solid transparent;
-border-top: .5em solid transparent;">
-</div>
-</div>
+			<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; right: 48%;">
+				<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+					</div>
+				</div>
+				<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
+				</div>
+			</div>
 
-<img src="./web/img/server.png" class="server" style="position: absolute; top: 2%; right: 35%;">
+			<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; right: 70%;">
+				<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
+					<div class="dull screen GUN" style="height: 100%; width: 100%;">
+					</div>
+				</div>
+			</div>
 
-<div class="desktop" style="height: 10em; width: 17em; position: absolute; top: 36%; right: 3%;">
-	<div class="monitor" style="height: 100%; width: 100%; background: #222; padding: .75em; margin-left: -.75em; border-radius: 1em;">
-		<div class="dull screen GUN" style="height: 100%; width: 100%;">
+			<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 50px 0 0;
+				position: absolute; right: 20%; top: 15%; border-width: 3px 3px 0px 0px;">
+				<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
+					width: 0;
+					height: 0;
+					border-top: .5em solid transparent;
+					border-right: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;">
+				</div>
+				<div class="darr" style="position: absolute; bottom: -.75em; right: -.59em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-top: 1em solid FireBrick;">
+				</div>
+			</div>
+
+
+			<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 0px 50px;
+				position: absolute; right: 80.3%; top: 34.3%; border-width: 0px 0px 3px 3px;">
+				<div class="uarr" style="position: absolute; top: -.8em; left: -.59em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-bottom: 1em solid FireBrick;">
+				</div>
+				<div class="rarr" style="position: absolute; bottom: -.55em; right: -.7em;
+					width: 0;
+					height: 0;
+					border-top: .5em solid transparent;
+					border-left: 1em solid FireBrick;
+					border-bottom: .5em solid transparent;">
+				</div>
+			</div>
+
+			<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
+				position: absolute; right: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
+				<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-bottom: 1em solid FireBrick;">
+				</div>
+				<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
+					width: 0;
+					height: 0;
+					border-left: .5em solid transparent;
+					border-right: .5em solid transparent;
+					border-top: 1em solid FireBrick;">
+				</div>
+			</div>
+
+			<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
 		</div>
-	</div>
-	<div class="stand" style="margin: 1px auto 0px;
-	border-bottom: 2.75em solid #888;
-	border-left: .5em solid transparent;
-	border-right: .5em solid transparent;
-	height: 0;
-	width: 3.2em;">
-</div>
-<div class="stand" style="width: 6em; height: .5em; background: #888; margin: 0px auto"></div>
-</div>
 
-<div class="laptop" style="height: 7em; width: 12em; position: absolute; top: 60%; right: 48%;">
-	<div class="lid" style="height: 100%; width: 100%; background: #222; padding: .6em; margin-left: -.6em; border-radius: .6em .6em 0em 0em;">
-		<div class="dull screen GUN" style="height: 100%; width: 100%;">
-		</div>
-	</div>
-	<div class="case" style="height: .75em; width: 140%; margin-left: -20%; background: #999; border-radius: 0em 0em 5em 5em;">
-	</div>
-</div>
-
-<div class="phone" style="height: 3.75em; width: 2.25em; position: absolute; top: 35%; right: 70%;">
-	<div class="case" style="height: 100%; width: 100%; background: #222; padding: .5em .2em; margin-left: -.2em; border-radius: 0.25em;">
-		<div class="dull screen GUN" style="height: 100%; width: 100%;">
-		</div>
-	</div>
-</div>
-
-<div class="arrow desktop-server" style="width: 52px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 50px 0 0;
-position: absolute; right: 20%; top: 15%; border-width: 3px 3px 0px 0px;">
-<div class="rarr" style="position: absolute; top: -.59em; left: -.5em;
-width: 0;
-height: 0;
-border-top: .5em solid transparent;
-border-right: 1em solid FireBrick;
-border-bottom: .5em solid transparent;">
-</div>
-<div class="darr" style="position: absolute; bottom: -.75em; right: -.59em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-top: 1em solid FireBrick;">
-</div>
-</div>
-
-
-<div class="arrow phone-server" style="width: 26px; height: 52px; border: dashed 0px FireBrick; border-radius: 0 0 0px 50px;
-position: absolute; right: 80.3%; top: 34.3%; border-width: 0px 0px 3px 3px;">
-<div class="uarr" style="position: absolute; top: -.8em; left: -.59em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-bottom: 1em solid FireBrick;">
-</div>
-<div class="rarr" style="position: absolute; bottom: -.55em; right: -.7em;
-width: 0;
-height: 0;
-border-top: .5em solid transparent;
-border-left: 1em solid FireBrick;
-border-bottom: .5em solid transparent;">
-</div>
-</div>
-
-<div class="arrow updown laptop-server" style="height: 50px; border: dashed 0px FireBrick; border-radius: 0;
-position: absolute; right: 60%; top: 40%; border-width: 0px 3px 0px 0px;">
-<div class="uarr" style="position: absolute; top: -1em; left: -.45em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-bottom: 1em solid FireBrick;">
-</div>
-<div class="darr" style="position: absolute; bottom: -1em; left: -.45em;
-width: 0;
-height: 0;
-border-left: .5em solid transparent;
-border-right: .5em solid transparent;
-border-top: 1em solid FireBrick;">
-</div>
-</div>
-
-<span style="color: transparent">Distributed embedded graph database engine. The no pain, no cost, no backend, NoDB database, gun.</span>
-</div>
-
-<script>
-	console.log("hi!1");
-	$(function(){
-		var c = ['dull', 'blue', 'green']
-		, a = 'dull blue red green';
-		$(".screen").click(function(){
-			c.push(c.shift());
-			var to = c[0];
-			$(this).removeClass(a).addClass(to);
-			$('.screen').not(this).each(function(){
-				var t = $(this);
-				setTimeout(function(){
-					t.removeClass(a).addClass(to);
-				}, rand(400,700));
+		<script>
+			$(function(){
+				var c = ['dull', 'blue', 'green']
+				, a = 'dull blue red green', n = 0, to;
+				$(".screen").click(function(){
+					c.push(c.shift());
+					to = to || c[0];
+					$(this).removeClass(a).addClass(to);
+					$('.screen').not(this).each(function(){
+						var t = $(this); n++;
+						setTimeout(function(){
+							t.removeClass(a).addClass(to);
+							if(!(--n)){ to = null }
+						}, rand(400,700));
+					});
+				});
+				function rand(min, max) {
+					return Math.floor(Math.random() * (max - min + 1)) + min;
+				}
 			});
-		});
-		function rand(min, max) {
-			return Math.floor(Math.random() * (max - min + 1)) + min;
-		}
-	})
-</script>
+		</script>
+		<script>
+			$(function(){
+				var mouse = $('.mouse');
+				function show(i){
+					function to(){
+						mouse.animate({top: "60%", left: "55%"}, {
+							duration: 500, 
+							specialEasing: {top: 'easeInQuad', left: 'easeOutQuad'},
+							complete: click
+						});
+					}
+					function click(){
+						mouse.delay(230).animate({width: mouse.width() / 2}, {
+							duration: 60, 
+							complete: function(){
+								mouse.closest('.screen').trigger('click');
+								mouse.animate({width: mouse.width() * 2}, {
+									duration: 120, 
+									complete: fro
+								});
+							}
+						});
+					}
+					function fro(){
+						mouse.delay(900).animate({top: "87%", left: "110%"}, {
+							duration: 700, 
+							specialEasing: {top: 'easeOutQuad', left: 'easeInQuad'}, 
+							complete: function(){
+								setTimeout(show, 4 * 1000);
+							}
+						});
+					}
+					if(!i && $('.graphic').filter(function() { return $(this).is(":hover"); }).length){
+						setTimeout(show, 2000);
+					} else {
+						to();	
+					}
+				}; 
+				mouse.delay(1200).animate({top: "70%", left: "20%"}, {
+					duration: 400, 
+					specialEasing: {top: 'easeOutQuad', left: 'easeInQuad'}, 
+					complete: function(){ show(true) }
+				});
+			});
+		</script>
 
-<div class="center" style="margin-top: 2%;">
-	<div class="lean" style="font-size: 400%;">Easiest Database Ever</div>
-	<div class="lean" style="font-size: 225%;">Sync state in a cinch at a distributed system scale.</div>
-</div>
+		<div class="center" style="margin: 2% 0;">
+			<div class="lean" style="font-size: 400%;">Easiest Database Ever</div>
+			<div class="lean" style="font-size: 225%;">Sync state in a cinch at a distributed system scale.</div>
+		</div>
 
-</div>
+	</div>
 
-</div>
+</div> <!-- END FOLD -->
 <a href="https://github.com/amark/gun" target="_blank"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
-<!-- END FOLD -->
+
+<!-- BEGIN TUTORIAL -->
+<div class="tutorial">
+	<script src="https://gunjs.herokuapp.com/gun.js"></script>
+	<link id="style" rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/ir_black.min.css">
+	<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+	<style>
+	@import url(https://fonts.googleapis.com/css?family=Dosis|Poiret+One|Oxygen);
+	.tutorial {
+		margin: 0;
+		padding: 0;
+		he-ight: 100%;
+		font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+		background: #222;
+		color: #eee;
+		overflow: auto;
+	}
+	.center {
+		text-align: center;
+	}
+	.lean {
+		font-family: 'Poiret One', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	.clean {
+		font-family: 'Dosis', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	.crisp {
+		font-family: 'Oxygen', Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	}
+	pre {
+		background-color: black;
+		border: 1px dashed white;
+		color: white;
+		line-height: 1.5em;
+		padding: .5em;
+		margin: 0em;
+		overflow: auto;
+	}
+	button {
+		border: none;
+		color: white;
+		background: skyblue;
+		padding: 1em;
+		cursor: pointer;
+	}
+	.hide {
+		display: none;
+	}
+	.show {
+		display: block;
+	}
+	.grid {
+		text-align: center;
+	}
+	.unit {
+		display: inline-block;
+	}
+	.main {
+		min-width: 250px;
+		max-width: 1024px;
+		width: 90%;
+		margin: 0% auto;
+		padding: 2% 5%;
+	}
+	div {
+		position: relative;
+	}
+	.left { float: left;}
+	.teft { text-align: left; }
+	.middle {
+		vertical-align: middle;
+	}
+	.full {
+		width: 100%;
+	}
+	</style>
+	<div class="main">
+	<div style="font-size: 18pt; margin: 0 0 .75em;">Try it now</div>
+	
+	<div class="step show step1">
+
+		<div class="full grid">
+			<div class="middle unit teft">
+<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var gun = Gun('https://gunjs.herokuapp.com/gun');
+gun.set({hello: "world"}).key('<span class="your-key">example/tutorial</span>');</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 20em; max-width: 28em; margin-bottom: 1em;">
+				<a href="#step2"><button class="left" style="margin-right: 1em;"><big>Run!</big></button></a>
+				In this <b>1 minute</b> tutorial, we will connect to a gun peer, create an object, and sync data in realtime.
+			</div>
+		</div>
+
+	</div>
+	
+	<div class="step hide step2">
+
+		<div class="full grid">
+			<div class="middle unit teft">
+<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var ref = gun.load('<span class="your-key">example/tutorial</span>');
+ref.on(function(data){
+  $('body').text(JSON.stringify(data));
+});</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 34em; max-width: 28em; margin-bottom: 1em;">
+				<a href="#step3"><button class="left" style="margin-right: 1em; background: MediumSpringGreen;"><big>Next</big></button></a>
+				Congratulations! You just made an object and saved a reference to it.
+				In two tabs, we'll load that key to open a shared reference.
+			</div>
+		</div>
+
+	</div>
+
+
+	<div class="step hide step3">
+
+		<div class="full grid">
+			<style>
+				.browser {
+					background: white;
+					border-radius: .25em;
+					width: 250px;
+					//height: 300px;
+					color: #222;
+					margin: .5em;
+					overflow: hidden;
+				}
+				.b-bar {
+					background: #EEE;
+					border-radius: .25em .25em 0 0;
+				}
+				.b-but {
+					float: left;
+					width: 1em;
+					height: 1em;
+				}
+				.browser a {
+					text-decoration: none;
+					background: white;
+					border-radius: .4em;
+					padding: 0 1em;
+					color: #555;
+				}
+				.browser iframe { border: none; }
+			</style>
+			<div class="browser unit teft">
+				<div class="b-bar">
+					<div class="b-but">&larr;</div>
+					<div class="b-but">&rarr;</div>
+					<div class="b-but"><small>&#8635;</small></div>
+					<small><small><span>
+						<a href="https://gunjs.herokuapp.com/" target="_blank">https://gunjs.herokuapp.com/</a>
+					</span></small></small>
+					<small class="center" style="position: relative; top: -.14em;">x</small>
+					<span class="center">&equiv;<span>
+				</div>
+				<iframe></iframe>
+			</div>
+			<div class="browser unit teft">
+				<div class="b-bar">
+					<div class="b-but">&larr;</div>
+					<div class="b-but">&rarr;</div>
+					<div class="b-but"><small>&#8635;</small></div>
+					<small><small><span>
+						<a href="https://gunjs.herokuapp.com/" target="_blank">https://gunjs.herokuapp.com/</a>
+					</span></small></small>
+					<small class="center" style="position: relative; top: -.14em;">x</small>
+					<span class="center">&equiv;<span>
+				</div>
+				<iframe></iframe>
+			</div>
+		</div>
+
+		<form action="#step3" onsubmit="return false;">
+		<style>
+			#step3 input {
+				width: 6em;
+			}
+		</style>
+		<div class="grid">
+			<div class="middle unit teft">
+<pre style="max-width: 40em; margin: 0 1em 1em 0;">ref.path('<input id="try-path" value="hello">').set("<input id="try-sync" value="sync">");</pre>
+			</div>
+			<div class="middle unit teft" style="min-width: 20em; max-width: 30em; margin-bottom: 1em;">
+				<button type="submit" class="left" style="margin-right: 1em;"><big>Update!</big></button>
+				Let's update the "hello" field with a different value.
+				We can path into any field, and set it directly.
+			</div>
+		</div>
+		</form>
+
+	</div>
+
+	<script>
+		$(function(){
+			var gun, key = "random/" + Gun.text.random(9),
+				hili = function(){
+				$("pre").each(function(){
+					hljs.highlightBlock(this);
+				})
+			}
+			$(".your-key").text(key);
+			hili();
+
+			location.hash = 'step1';
+			$(window).on('hashchange', function(){
+				$('.step').removeClass('show').addClass('hide')
+			  $(location.hash.replace('#','.')).addClass('show');
+			});
+
+			$(".step1").find('button').on('click', function(e){
+				if(gun){ return }
+				gun = Gun('https://gunjs.herokuapp.com/gun');
+				gun.set({hello: "world"}).key(key);
+			});
+			$(".step2").find('button').on('click', function(e){
+				$(".browser").find("iframe").attr("src", "./web/tabs.html?key=" + key);
+			});
+			$(".step3").find('form').on('submit', function(e){
+				var val = $("#try-sync").val() || null;
+				var path = $("#try-path").val();
+				gun.load(key).path(path).set(val);
+			});
+		})
+	</script>
+	</div>
+</div>
+<!-- BEGIN TUTORIAL -->
 
 <! OLD BLOG POST HERE -->
 
@@ -384,6 +628,7 @@ border-top: 1em solid FireBrick;">
 	}
 </style>
 <div id="main">
+
 	<h3>The blog that started it all...</h3>
 	<p>
 		Gun is a persisted distributed cache, part of a NoDB movement.
