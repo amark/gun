@@ -963,7 +963,7 @@
 							meta[Gun._.soul] = Gun.is.soul(reply.body);
 							store.set(tab.prefix + tab.prekey + key, meta);
 						}
-						if(cb.node){ return gun.__.on(Gun.is.soul(reply.body)).emit(reply.body) }
+						if(cb.node){ gun.union(reply.body) }
 						cb(null, reply.body);
 					}
 				}, opt);
