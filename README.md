@@ -142,9 +142,9 @@ So join our community, in the quest of learning cool things and helping yourself
 
 ## Ahead
 - ~~Realtime push to the browser~~
-- Persistence in the browser
+- ~~Persistence in the browser~~
 - Authorization callbacks
-- Graph manipulation
+- ~~Graph manipulation~~
 - Server to server communication
 - Test more
 - Bug fixes
