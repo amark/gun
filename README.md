@@ -159,3 +159,8 @@ So join our community, in the quest of learning cool things and helping yourself
  - MongoDB Query Documents
  - Neo4j Cypher
  - Gremlin Query Language
+
+LICENSE
+=======
+
+Dual Licensed MIT and Apache2
