@@ -148,4 +148,14 @@ So join our community, in the quest of learning cool things and helping yourself
 - Server to server communication
 - Test more
 - Bug fixes
-- More via additional module hooks (schema, queries, etc.)
+- Data Structures:
+ - ~~Groups~~
+ - Linked Lists
+ - Collections (hybrid: linked-groups/paginated-lists)
+ - CRDTs
+ - OT
+- Query:
+ - SQL
+ - MongoDB Query Documents
+ - Neo4j Cypher
+ - Gremlin Query Language
