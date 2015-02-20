@@ -1,6 +1,11 @@
 gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
+Welcome Stanford Hackathon participants! We're giving away a prize of 2 Adult Electric Scooters! To help you zip around campus/town. :)
+
+<img width="300" src="http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg" alt="WIN THIS!"/>
+<img width="300" src="http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg" alt="WIN THIS!"/>
+
 ## Getting Started
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
