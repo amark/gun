@@ -351,14 +351,14 @@
 				next(); // continue with the chain.
 				cb = cb || function(){}; // fail safe our function.
 				if(!gun._.node){ return } // if no node, then abandon and let blank handle it.
-				var field = gun._.field, val = gun._.node[field]; // else attempt to get the value at the field, if we have a field.
+				var field = Gun.text.ify(gun._.field), val = gun._.node[field]; // else attempt to get the value at the field, if we have a field.
 				if(field && Gun.is.soul(val)){ // if we have a field, then check to see if it is a relation
-					return gun.load(val, function(err, val){ // and load it.
+					return gun.load(val, function(err, value){ // and load it.
 						if(err || !this._.node){ return } // handle error?
-						cb.call(this, val, field); // already frozen copy
+						cb.call(this, value, field); // already frozen copy
 					});
 				}
-				cb.call(gun, gun._.field? Gun.is.value.as(val) : Gun.obj.copy(gun._.node), gun._.field); // frozen copy
+				cb.call(gun, field? Gun.is.value.as(val) : Gun.obj.copy(gun._.node), field); // frozen copy
 			});
 			return gun;
 		}
@@ -368,13 +368,14 @@
 				cb = cb || function(){}; // fail safe our function.
 				cb.call(gun, val, field);
 				gun.__.on(Gun.is.soul.on(gun._.node)).event(function(delta){ // then subscribe to subsequent changes.
+					field = Gun.text.ify(gun._.field);
 					if(!delta || !gun._.node){ return }
-					if(!gun._.field){ // if we were listening to changes on the node as a whole
+					if(!field){ // if we were listening to changes on the node as a whole
 						return cb.call(gun, Gun.obj.copy(gun._.node)); // frozen copy
 					}
-					if(Gun.obj.has(delta, gun._.field)){ // else changes on an individual property
-						delta = delta[gun._.field]; // grab it and
-						cb.call(gun, Gun.obj.is(delta)? Gun.obj.copy(delta) : Gun.is.value.as(delta), gun._.field); // frozen copy
+					if(Gun.obj.has(delta, field)){ // else changes on an individual property
+						delta = delta[field]; // grab it and
+						cb.call(gun, Gun.obj.is(delta)? Gun.obj.copy(delta) : Gun.is.value.as(delta), field); // frozen copy
 						// TODO! BUG: If delta is an object, that would suggest it is a relation which needs to get loaded.
 					}
 				});
@@ -400,6 +401,7 @@
 			gun.shot.next(function(next){
 				opt = opt || {};
 				cb = cb || function(){};
+				gun._.field = Gun.text.ify(field);
 				if(!gun._.node){
 					if(Gun.is.value(val) || !Gun.obj.is(val)){
 						return cb.call(gun, {err: Gun.log("No field exists to set the " + (typeof val) + " on.")});
