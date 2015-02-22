@@ -401,7 +401,7 @@
 			gun.shot.next(function(next){
 				opt = opt || {};
 				cb = cb || function(){};
-				gun._.field = Gun.text.ify(field);
+				gun._.field = Gun.text.ify(gun._.field);
 				if(!gun._.node){
 					if(Gun.is.value(val) || !Gun.obj.is(val)){
 						return cb.call(gun, {err: Gun.log("No field exists to set the " + (typeof val) + " on.")});
