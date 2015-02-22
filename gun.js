@@ -12,7 +12,7 @@
 		,HAM: '>'
 	}
 	;(function(Gun){
-		Gun.version = 0.9;
+		Gun.version = 0.1;
 		Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
 		Gun.is.value = function(v){ // null, binary, number (!Infinity), text, or a rel.
 			if(v === null){ return true } // deletes
