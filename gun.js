@@ -328,8 +328,8 @@
 				cb = cb || function(){}; // fail safe our function.
 				(function trace(){ // create a recursive function, and immediately call it.
 					gun._.field = Gun.text.ify(path.shift()); // where are we at? Figure it out.
-					if(gun._.node && path.length && Gun.is.soul(gun._.node[gun._.field])){ // if we need to recurse more
-						return gun.load(val, function(err){ // and the recursion happens to be on a relation, then load it.
+					if(gun._.node && path.length && (cb.soul = Gun.is.soul(gun._.node[gun._.field]))) { // if we need to recurse more
+						return gun.load(cb.soul, function(err){ // and the recursion happens to be on a relation, then load it.
 							if(err){ return cb.call(gun, err) }
 							trace(gun._ = this._); // follow the context down the chain.
 						});
