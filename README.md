@@ -1,6 +1,11 @@
 gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
+Welcome Stanford Hackathon participants! We're giving away a prize of 2 Adult Electric Scooters! To help you zip around campus/town. :)
+
+<img width="300" src="http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg" alt="WIN THIS!"/>
+<img width="300" src="http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg" alt="WIN THIS!"/>
+
 ## Getting Started
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
@@ -142,10 +147,20 @@ So join our community, in the quest of learning cool things and helping yourself
 
 ## Ahead
 - ~~Realtime push to the browser~~
-- Persistence in the browser
+- ~~Persistence in the browser~~
 - Authorization callbacks
-- Graph manipulation
+- ~~Graph manipulation~~
 - Server to server communication
 - Test more
 - Bug fixes
-- More via additional module hooks (schema, queries, etc.)
+- Data Structures:
+ - ~~Groups~~
+ - Linked Lists
+ - Collections (hybrid: linked-groups/paginated-lists)
+ - CRDTs
+ - OT
+- Query:
+ - SQL
+ - MongoDB Query Documents
+ - Neo4j Cypher
+ - Gremlin Query Language
