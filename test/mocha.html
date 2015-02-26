@@ -3,23 +3,16 @@
 		<title>Gun Tests</title>
 		<link rel="stylesheet" href="./mocha.css"/>
 		<script src="./mocha.js"></script>
-		<script>mocha.setup({ui:'bdd',globals:['SockJS']});</script>
+		<script>mocha.setup({ui:'bdd',globals:[]});</script>
 		<script src="./expect.js"></script>
 		<script></script>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-		<script src="../gate/amplify.store.js"></script>
-		<!--
-		<script src="../gate/sock.js"></script>
-		<script src="../../jquery.js"></script>
-		-->
-		<script src="../deps/theory.js"></script>
-		<script src="./server.js"></script>
-		<script src="./tests.js"></script>
+		<script src="../gun.js"></script>
+		<script src="./common.js"></script>
 		<style>
 		</style>
 	  </head>
 	</head>
-	<body>
+	<body onload="mocha.run()">
 		Gun Tests
 		<div id="debug"></div>
 		<div id="mocha"></div>

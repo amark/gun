@@ -1,6 +1,7 @@
+var Gun = Gun || require('../gun');
+if(typeof window !== 'undefined'){ root = window }
 describe('Gun', function(){
-	var Gun = require('../gun')
-	,	t = {};
+	var t = {};
 	describe('Utility', function(){
 
 		it('verbose console.log debugging', function(done) {
@@ -339,7 +340,7 @@ describe('Gun', function(){
 
 	describe('API', function(){
 
-		require('../lib/file');
+		(typeof window === 'undefined') && require('../lib/file');
 		var gun = Gun({file: 'data.json'});
 		
 		it('set key get', function(done){
@@ -501,5 +502,74 @@ describe('Gun', function(){
 			}, 50);
 		});
 
+		it('path path', function(done){
+			var deep = gun.set({some: {deeply: {nested: 'value'}}});
+			deep.path('some.deeply.nested').get(function(val){
+				expect(val).to.be('value');
+			});
+			deep.path('some').path('deeply').path('nested').get(function(val){
+				expect(val).to.be('value');
+				done();
+			});
+		});
+
+		it('context null set value get error', function(done){
+			gun.set("oh yes",function(err){
+				expect(err).to.be.ok();
+				done();
+			});
+		});
+
+		var foo;
+		it('context null set node', function(done){
+			foo = gun.set({foo: 'bar'}).get(function(obj){
+				expect(obj.foo).to.be('bar');
+				done();
+			});
+		});
+
+		it('context node set val', function(done){
+			foo.set('banana', function(err){
+				expect(err).to.be.ok();
+				done();
+			});
+		});
+		
+		it('context node set node', function(done){
+			foo.set({bar: {zoo: 'who'}}).get(function(obj){
+				expect(obj.foo).to.be('bar');
+				expect(Gun.is.soul(obj.bar)).to.ok();
+				done();
+			});
+		});
+		
+		it('context node and field set value', function(done){
+			var tar = foo.path('tar');
+			tar.set('zebra').get(function(val){
+				expect(val).to.be('zebra');
+				done();
+			});
+		});
+
+		var bar;
+		it('context node and field of relation set node', function(done){
+			bar = foo.path('bar');
+			bar.set({combo: 'double'}).get(function(obj){
+				expect(obj.zoo).to.be('who');
+				expect(obj.combo).to.be('double');
+				done();
+			});
+		});
+
+		it('context node and field, set node', function(done){
+			bar.path('combo').set({another: 'node'}).get(function(obj){
+				expect(obj.another).to.be('node');
+				bar.get(function(node){
+					expect(Gun.is.soul(node.combo)).to.be.ok();
+					expect(Gun.is.soul(node.combo)).to.be(Gun.is.soul.on(obj));
+					done();
+				});
+			});
+		});
 	});
 });
