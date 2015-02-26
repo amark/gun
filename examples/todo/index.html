@@ -15,14 +15,14 @@
 				var todoHTML = '';
 				for(key in val) {
 					if(!val[key] || key == '_') continue;
-					todoHTML += '<li style="width:400px;height:2em;">' + val[key] +
+					todoHTML += '<li style="width:400px;height:2em;">' + (val[key]||'').toString().replace(/\</ig, '&lt;') +
 					'<button style="float:right;" onclick=removeToDo("'+key+'")>X</button></li>';
 				}
 				$("#todos").innerHTML = todoHTML;
 			});
 			$("#addToDo").onsubmit = function(){
 				var id = randomId();
-				gun.path(id).set($("#todoItem").value);
+				gun.path(id).set(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
 				$("#todos").innerHTML += "<li>"+$("#todoItem").value+"</li>";
 				$("#todoItem").value = "";
 				return false;
