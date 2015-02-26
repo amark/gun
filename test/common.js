@@ -571,5 +571,25 @@ describe('Gun', function(){
 				});
 			});
 		});
+
+
+		it('map', function(done){
+			var c = 0, map = gun.set({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
+			map.map(function(obj, soul){
+				c++;
+				if(soul === 'a'){
+					expect(obj.here).to.be('you');
+				}
+				if(soul === 'b'){
+					expect(obj.go).to.be('dear');	
+				}
+				if(soul === 'c'){
+					expect(obj.sir).to.be('!');
+				}
+				if(c === 3){
+					done();
+				}
+			})
+		});
 	});
 });
