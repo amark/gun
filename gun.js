@@ -237,7 +237,7 @@
 			var gun = this.chain();
 			gun.shot.next(function(next){
 				opt = opt || {};
-				cb = cb || function(){};
+				cb = cb || function(){}; cb.c = 0;
 				cb.soul = Gun.is.soul(key); // is this a key or a soul?
 				if(cb.soul){ // if a soul...
 					cb.node = gun.__.graph[cb.soul]; // then attempt to grab it directly from cache in the graph
@@ -248,12 +248,13 @@
 				if(!opt.force && cb.node){ // if it was in cache, then...
 					console.log("load via gun");
 					gun._.node = cb.node; // assign it to this context
-					return cb.call(gun, null, Gun.obj.copy(gun._.node)), next(); // frozen copy
+					return cb.call(gun, null, Gun.obj.copy(gun._.node)), cb.c++, next(); // frozen copy
 				}
 				// missing: hear shots! I now hook this up in other places, but we could get async/latency issues?
 				// We need to subscribe early? Or the transport layer handle this for us?
 				if(Gun.fns.is(gun.__.opt.hooks.load)){
 					gun.__.opt.hooks.load(key, function(err, data){
+						if(cb.c++){ return Gun.log("Warning: Load callback being called", cb.c, "times.") }
 						if(err){ return cb.call(gun, err) }
 						if(!data){ return cb.call(gun, null, data), next() }
 						var context = gun.union(data); // safely transform the data into the current context
@@ -267,7 +268,7 @@
 					}, opt);
 				} else {
 					root.console.log("Warning! You have no persistence layer to load from!");
-					return cb.call(gun), next();
+					return cb.call(gun), cb.c++, next();
 				}
 			});
 			return gun;
@@ -321,14 +322,14 @@
 		Chain.path = function(path, cb){ // Follow the path into the field.
 			var gun = this.chain(); // create a new context, changing the focal point.
 			cb = cb || function(){};
-			path = (path || '').split('.');
+			path = (Gun.text.ify(path) || '').split('.');
 			gun.shot.next(cb.done = function(next){ // let the previous promise resolve.
 				if(next){ cb.next = next }
 				if(!cb.next || !cb.back){ return }
 				cb = cb || function(){}; // fail safe our function.
 				(function trace(){ // create a recursive function, and immediately call it.
 					gun._.field = Gun.text.ify(path.shift()); // where are we at? Figure it out.
-					if(gun._.node && path.length && (cb.soul = Gun.is.soul(gun._.node[gun._.field]))) { // if we need to recurse more
+					if(gun._.node && path.length && Gun.is.soul(cb.soul = gun._.node[gun._.field])) { // if we need to recurse more
 						return gun.load(cb.soul, function(err){ // and the recursion happens to be on a relation, then load it.
 							if(err){ return cb.call(gun, err) }
 							trace(gun._ = this._); // follow the context down the chain.
@@ -339,6 +340,9 @@
 				}(gun._.node = gun.back._.node)); // immediately call trace, setting the new context with the previous node.
 			});
 			gun.back.shot.next(function(next){
+				if(gun.back && gun.back._ && gun.back._.field){ 
+					path = [gun.back._.field].concat(path);
+				}
 				cb.back = true;
 				cb.done();
 				next();
@@ -395,32 +399,71 @@
 		*/
 		Chain.set = function(val, cb, opt){ // TODO: need to turn deserializer into a trampolining function so stackoverflow doesn't happen.
 			var gun = this;
+			opt = opt || {};
+			cb = cb || function(){};
 			if(!gun.back){
 				gun = gun.chain(); // create a new context
 			}
-			gun.shot.next(function(next){
-				opt = opt || {};
-				cb = cb || function(){};
-				gun._.field = Gun.text.ify(gun._.field);
+			gun.shot.next(function(next){ // How many edge cases are there to a set?
 				if(!gun._.node){
-					if(Gun.is.value(val) || !Gun.obj.is(val)){
-						return cb.call(gun, {err: Gun.log("No field exists to set the " + (typeof val) + " on.")});
+					if(Gun.is.value(val) || !Gun.obj.is(val)){ // 1. Context: null, set: value. Error, no node exists.
+							return cb.call(gun, {err: Gun.log("No node exists to set " + (typeof val) + " in.")});
 					}
-				} else
-				if(gun._.field){ // if a field exists, it should always be a string
-					var partial = {}; // in case we are doing a set on a field, not on a node
-					partial[gun._.field] = val; // we create a blank node with the field/value to be set
-					val = partial;
+					if(Gun.obj.is(val)){ // 2. Context: null, set: node. Set.
+						return set(next);
+					}
+				} else {
+					if(!gun._.field){
+						if(Gun.is.value(val) || !Gun.obj.is(val)){ // 3. Context: node, set: value. Error, no field exists.
+							return cb.call(gun, {err: Gun.log("No field exists to set " + (typeof val) + " on.")});
+						}
+						if(Gun.obj.is(val)){ // 4. Context: node, set: node. Merge.
+							return set(next);
+						}
+					} else {
+						if(Gun.is.value(val) || !Gun.obj.is(val)){ // 5. Context: node and field, set: value. Merge and replace.
+							var partial = {}; // in case we are doing a set on a field, not on a node.
+							partial[gun._.field] = val; // we create a blank object with the field/value to be set
+							val = partial;
+							return set(next);
+						}
+						if(Gun.obj.is(val)){
+							if(Gun.is.soul(gun._.node[gun._.field])){ // 6. Context: node and field of relation, set: node. Merge.
+								return gun.load(gun._.node[gun._.field], function(err){
+									if(err){ return cb.call(gun, {err: Gun.log(err)}) } // use gun not this to preserve intent?
+									set(next, this);
+								});
+							} else { // 7. Context: node and field, set: node. Merge and replace.
+								var partial = {}; // in case we are doing a set on a field, not on a node.
+								partial[gun._.field] = val; // we create a blank object with the field/value to be set
+								val = partial;
+								return set(next);
+							}
+						}
+					}
 				}
+			});
+			function set(next, as){
+				as = as || gun;
 				cb.states = Gun.time.is();
 				Gun.ify(val, function(raw, context, sub, soul){
-					if(val === raw){ return soul(Gun.is.soul.on(gun._.node)) }
-					if(gun._.node && sub && sub.path){
-						return gun.path(sub.path, function(err, node, field){
+					if(val === raw){ return soul(Gun.is.soul.on(as._.node)) }
+					if(as._.node && sub && sub.path){
+						return as.path(sub.path, function(err, node, field){
 							if(err){ cb.err = err + " (while doing a set)" } // let .done handle calling this, it may be slower but is more consistent.
-							if(this._.node && (field = Gun.is.soul(this._.node[this._.field]))){
-								return soul(field);
-							} soul(); // else call it anyways
+							if(node = this._.node){
+								if(field = this._.field){
+									if(field = Gun.is.soul(node[field])){
+										return soul(field);
+									}
+								} else 
+								if(Gun.is.soul.on(node) !== Gun.is.soul.on(as._.node)){
+									if(field = Gun.is.soul.on(node)){
+										return soul(field);
+									}
+								}
+							}
+							soul(); // else call it anyways
 						});
 					} soul(); // else call it anyways
 				}).done(function(err, set){
@@ -432,11 +475,11 @@
 					set = Gun.ify.state(set.nodes, cb.states); // set time state on nodes?
 					if(set.err){ return cb.call(gun, set.err) }
 					gun.union(set.nodes); // while this maybe should return a list of the nodes that were changed, we want to send the actual delta
-					gun._.node = gun.__.graph[cb.root._[Gun._.soul]] || cb.root;
-					if(!gun._.field){
-						Gun.obj.map(gun._.keys, function(yes, key){
+					as._.node = as.__.graph[cb.root._[Gun._.soul]] || cb.root;
+					if(!as._.field){
+						Gun.obj.map(as._.keys, function(yes, key){
 							if(yes){ return }
-							gun.key(key); // TODO: Feature? what about these callbacks?
+							as.key(key); // TODO: Feature? what about these callbacks?
 						});
 					}
 					if(Gun.fns.is(gun.__.opt.hooks.set)){
@@ -450,7 +493,7 @@
 					}
 					next();
 				});
-			});
+			};
 			return gun;
 		}
 		Chain.map = function(cb, opt){
@@ -936,23 +979,23 @@
 		tab.prefix = tab.prefix || opt.prefix || 'gun/';
 		tab.prekey = tab.prekey || opt.prekey || '';
 		tab.prenode = tab.prenode || opt.prenode || '_/nodes/';
-		tab.load = tab.load || function(key, cb, opt){
+		tab.load = tab.load || function(key, cb, o){
 			if(!key){ return }
 			cb = cb || function(){};
-			opt = opt || {};
-			opt.url = opt.url || {};
-			opt.headers = tab.headers;
+			o = o || {};
+			o.url = o.url || {};
+			o.headers = Gun.obj.copy(tab.headers);
 			if(key[Gun._.soul]){
-				opt.url.query = key;
+				o.url.query = key;
 			} else {
-				opt.url.pathname = '/' + key;
+				o.url.pathname = '/' + key;
 			}
 			Gun.log("gun load", key);
 			(function local(key, cb){
 				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
 					: tab.prefix + tab.prekey + key
 				if((node = store.get(lkey)) && node[Gun._.soul]){ return local(node, cb) }
-				if(cb.node = node){  setTimeout(function(){cb(null, node)},0) }
+				if(cb.node = node){ Gun.log('via cache', key); setTimeout(function(){cb(null, node)},0) }
 			}(key, cb));
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
@@ -960,15 +1003,23 @@
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						cb({err: Gun.log(err || "Error: Load failed through " + url) });
 					} else {
-						if(!key[Gun._.soul] && Gun.is.soul(reply.body)){
+						if(!key[Gun._.soul] && (cb.soul = Gun.is.soul.on(reply.body))){
 							var meta = {};
-							meta[Gun._.soul] = Gun.is.soul(reply.body);
+							meta[Gun._.soul] = cb.soul;
 							store.set(tab.prefix + tab.prekey + key, meta);
 						}
-						if(cb.node){ gun.union(reply.body) }
+						if(cb.node){
+							if(!cb.graph && (cb.soul = Gun.is.soul.on(cb.node))){ // if we have a cache locally
+								cb.graph = {}; // we want to make sure we did not go offline while sending updates
+								cb.graph[cb.soul] = cb.node; // so turn the node into a graph, and sync the latest state.
+								tab.set(cb.graph, function(e,r){ Gun.log("Stateless handshake sync:", e, r) });
+								if(!key[Gun._.soul]){ tab.key(key, cb.soul, function(e,r){}) }//TODO! BUG: this is really bad implicit behavior!
+							}
+							return gun.union(reply.body);
+						}
 						cb(null, reply.body);
 					}
-				}, opt);
+				}, o);
 				cb.peers = true;
 			}); tab.peers(cb);
 		}
