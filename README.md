@@ -10,7 +10,7 @@ Welcome LAUNCH Hackathon participants! Use GUN and WIN:
 
 **3x**<img width="300" src="http://ecx.images-amazon.com/images/I/71JzJZ6RINL._SL1200_.jpg" alt="WIN THIS!"/> 
 **OR 1**
-<img width="300" src="http://compass.xbox.com/assets/b2/46/b246ecd9-3024-447b-a8c5-d3278dbf1675.jpg?n=xbox-one-console_hardware_hub_410x300.jpg" alt="WIN THIS!"/>
+<img width="400" src="http://compass.xbox.com/assets/b2/46/b246ecd9-3024-447b-a8c5-d3278dbf1675.jpg?n=xbox-one-console_hardware_hub_410x300.jpg" alt="WIN THIS!"/>
 
 ## Getting Started
 
