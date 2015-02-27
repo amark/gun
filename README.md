@@ -1,6 +1,17 @@
 gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
+Welcome LAUNCH Hackathon participants! Use GUN and WIN:
+
+<img width="300" src="http://ecx.images-amazon.com/images/I/71kVRVWvTxL._SL1500_.jpg" alt="WIN THIS!"/>
+<img width="400" src="http://demandware.edgesuite.net/sits_pod15/dw/image/v2/AASJ_PRD/on/demandware.static/Sites-GoPro-Site/Sites-gopro-products/default/v1424972465156/hi-res/CHDHE-302_main1.jpg?sw=670&sh=670&sm=fit" alt="WIN THIS!"/>
+
+**AND**
+
+**3x**<img width="300" src="http://ecx.images-amazon.com/images/I/71JzJZ6RINL._SL1200_.jpg" alt="WIN THIS!"/> 
+**OR 1**
+<img width="300" src="http://compass.xbox.com/assets/b2/46/b246ecd9-3024-447b-a8c5-d3278dbf1675.jpg?n=xbox-one-console_hardware_hub_410x300.jpg" alt="WIN THIS!"/>
+
 ## Getting Started
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
