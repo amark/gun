@@ -155,6 +155,9 @@ So join our community, in the quest of learning cool things and helping yourself
 - ~~Realtime push to the browser~~
 - ~~Persistence in the browser~~
 - Authorization callbacks
+- Security or ACLs
+- Schema Validation
+- Point of Entry Encryption
 - ~~Graph manipulation~~
 - Server to server communication
 - Test more
@@ -165,6 +168,7 @@ So join our community, in the quest of learning cool things and helping yourself
  - Collections (hybrid: linked-groups/paginated-lists)
  - CRDTs
  - OT
+ - Locking / Strong Consistency (sacrifices Availability)
 - Query:
  - SQL
  - MongoDB Query Documents
