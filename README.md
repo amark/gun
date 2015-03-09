@@ -150,6 +150,8 @@ So join our community, in the quest of learning cool things and helping yourself
 - ~~Graph manipulation~~
 - Server to server communication
 - Test more
+- WebRTC Transport
+- LRU or some Expiry (so RAM doesn't asplode)
 - Bug fixes
 - Data Structures:
  - ~~Groups~~
