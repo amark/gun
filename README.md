@@ -164,4 +164,5 @@ So join our community, in the quest of learning cool things and helping yourself
  - SQL
  - MongoDB Query Documents
  - Neo4j Cypher
+ - LINQ
  - Gremlin Query Language
