@@ -19,7 +19,6 @@
 	},
 	"devDependencies": {
 		"mocha": ">=1.9.0"
-=======
 		"node": ">0.6.6"
 	},
 	"dependencies": {
