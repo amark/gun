@@ -18,7 +18,7 @@
 		"request": ">=2.39.0"
 	},
 	"devDependencies": {
-		"mocha": ">=1.9.0"
+		"mocha": ">=1.9.0",
 		"node": ">0.6.6"
 	},
 	"dependencies": {
