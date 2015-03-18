@@ -15,21 +15,20 @@
 		"aws-sdk": ">=2.0.0",
 		"formidable": ">=1.0.15",
 		"ws": ">=0.4.32",
-		"request": ">=2.39.0"
+		"request": "^2.39.0"
 	},
 	"devDependencies": {
-		"mocha": "^1.9.0",
-		"node": ">0.6.6"
+		"mocha": ">=1.9.0",
+		"node": ">=0.6.6"
 	},
 	"dependencies": {
-		"mime": ">1.2.11",
-		"aws-sdk": ">2.0.0",
-		"formidable": ">1.0.15",
-		"ws": ">0.4.32",
-		"request": ">2.39.0"
+		"mime": ">=1.2.11",
+		"aws-sdk": ">=2.0.0",
+		"formidable": ">=1.0.15",
+		"ws": ">=0.4.32"
 	},
 	"devDependencies": {
-		"mocha": ">1.9.0"
+		"mocha": ">=1.9.0"
 	},
 	"scripts": {
 		"start": "node examples/express.js 8080",
