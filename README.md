@@ -166,3 +166,7 @@ So join our community, in the quest of learning cool things and helping yourself
  - Neo4j Cypher
  - LINQ
  - Gremlin Query Language
+
+LICENSE
+---
+Triple Licensed Zlib, MIT and Apache2. See LICENSE file
