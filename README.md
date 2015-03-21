@@ -143,6 +143,7 @@ So join our community, in the quest of learning cool things and helping yourself
 ## Ahead
 - ~~Realtime push to the browser~~
 - ~~Persistence in the browser~~
+- Efficient storage engine
 - Authorization callbacks
 - Security or ACLs
 - Schema Validation
