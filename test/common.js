@@ -13,11 +13,11 @@ describe('Gun', function(){
 				//log(a,b,c);
 			}
 			Gun.log.verbose = true;
-			gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+			gun.put('bar', function(err, yay){ // intentionally trigger an error that will get logged.
 				expect(counter).to.be(0);
 
 				Gun.log.verbose = false;
-				gun.set('bar', function(err, yay){ // intentionally trigger an error that will get logged.
+				gun.put('bar', function(err, yay){ // intentionally trigger an error that will get logged.
 					expect(counter).to.be(0);
 
 					root.console.log = log;
@@ -344,109 +344,109 @@ describe('Gun', function(){
 		var gun = Gun({file: 'data.json'});
 		
 		it('set key get', function(done){
-			gun.set({hello: "world"}).key('hello/world').get(function(val){
+			gun.put({hello: "world"}).key('hello/world').val(function(val){
 				expect(val.hello).to.be('world');
 				done();
 			});
 		});
 
 		it('load', function(done){
-			gun.load('hello/world').get(function(val){
+			gun.get('hello/world').val(function(val){
 				expect(val.hello).to.be('world');
 				done();
 			});
 		});
 
 		it('load path', function(done){
-			gun.load('hello/world').path('hello').get(function(val){
+			gun.get('hello/world').path('hello').val(function(val){
 				expect(val).to.be('world');
 				done();
 			});
 		});
 
 		it('load set path', function(done){
-			gun.load('hello/world').set({hello: 'Mark'}).path('hello').get(function(val){
+			gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val){
 				expect(val).to.be('Mark');
 				done();
 			});
 		});
 
 		it('load path set', function(done){
-			gun.load('hello/world').path('hello').set('World').get(function(val){
+			gun.get('hello/world').path('hello').put('World').val(function(val){
 				expect(val).to.be('World');
 				done();
 			});
 		});
 		
 		it('load path empty set', function(done){
-			gun.load('hello/world').path('earth').set('mars').get(function(val){
+			gun.get('hello/world').path('earth').put('mars').val(function(val){
 				expect(val).to.be('mars');
 				done();
 			});
 		});
 
 		it('load path get', function(done){
-			gun.load('hello/world').path('earth').get(function(val){
+			gun.get('hello/world').path('earth').val(function(val){
 				expect(val).to.be('mars');
 				done();
 			});
 		});
 
 		it('key set get', function(done){
-			gun.key('world/hello').set({world: "hello"}).get(function(val){
+			gun.key('world/hello').put({world: "hello"}).val(function(val){
 				expect(val.world).to.be('hello');
 				done();
 			});
 		});
 
 		it('load again', function(done){
-			gun.load('world/hello').get(function(val){
+			gun.get('world/hello').val(function(val){
 				expect(val.world).to.be('hello');
 				done();
 			});
 		});
 		
-		it('load blank kick get', function(done){ // it would be cool with GUN
-			gun.load("some/empty/thing").blank(function(){ // that if you call blank first
-				this.set({now: 'exists'}); // you can set stuff
-			}).get(function(val){ // and THEN still retrieve it.
+		it('load not kick get', function(done){ // it would be cool with GUN
+			gun.get("some/empty/thing").not(function(){ // that if you call blank first
+				this.put({now: 'exists'}); // you can set stuff
+			}).val(function(val){ // and THEN still retrieve it.
 				expect(val.now).to.be('exists');
 				done();
 			});
 		});
 
-		it('load blank kick get when it already exists', function(done){
-			gun.load("some/empty/thing").blank(function(){
-				this.set({now: 'THIS SHOULD NOT HAPPEN'});
-			}).get(function(val){
+		it('load not kick get when it already exists', function(done){
+			gun.get("some/empty/thing").not(function(){
+				this.put({now: 'THIS SHOULD NOT HAPPEN'});
+			}).val(function(val){
 				expect(val.now).to.be('exists');
 				done();
 			});
 		});
 
 		it('set path get sub', function(done){
-			gun.set({last: {some: 'object'}}).path('last').get(function(val){
+			gun.put({last: {some: 'object'}}).path('last').val(function(val){
 				expect(val.some).to.be('object');
 				done();
 			});
 		});
 		
 		it('load set null', function(done){
-			gun.set({last: {some: 'object'}}).path('last').get(function(val){
+			gun.put({last: {some: 'object'}}).path('last').val(function(val){
 				expect(val.some).to.be('object');
-			}).set(null, function(err){
+			}).put(null, function(err){
 				//console.log("ERR?", err);
-			}).get(function(val){
+			}).val(function(val){
 				expect(val).to.be(null);
 				done();
 			});
 		});
 
 		it('var set key path', function(done){ // contexts should be able to be saved to a variable
-			var foo = gun.set({foo: 'bar'}).key('foo/bar');
+			var foo = gun.put({foo: 'bar'}).key('foo/bar');
 			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
 			setTimeout(function(){
-				foo.path('foo').get(function(val){ // and then the original should be able to be reused later
+				foo.path('foo').val(function(val){ // and then the original should be able to be reused later
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
@@ -454,45 +454,45 @@ describe('Gun', function(){
 		});
 
 		it('var load path', function(done){ // contexts should be able to be saved to a variable
-			var foo = gun.load('foo/bar');
+			var foo = gun.get('foo/bar');
 			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
 			setTimeout(function(){
-				foo.path('foo').get(function(val){ // and then the original should be able to be reused later
+				foo.path('foo').val(function(val){ // and then the original should be able to be reused later
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
 			}, 100);
 		});
 
-		it('load blank set get path get', function(done){ // stickies issue
-			gun.load("examples/list/foobar").blank(function(){
-					this.set({
+		it('load not set get path get', function(done){ // stickies issue
+			gun.get("examples/list/foobar").not(function(){
+					this.put({
 						id: 'foobar',
 						title: 'awesome title',
 						todos: {}
 					});
-			}).get(function(data){
+			}).val(function(data){
 				expect(data.id).to.be('foobar');
-			}).path('todos').get(function(todos){
+			}).path('todos').val(function(todos){
 				expect(todos).to.not.have.property('id');
 				done();
 			});
 		});
 
 		it('set partial sub merge', function(done){
-			var mark = gun.set({name: "Mark", wife: { name: "Amber" }}).key('person/mark').get(function(mark){
+			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').val(function(mark){
 				expect(mark.name).to.be("Mark");
 			});
 
-			mark.set({age: 23, wife: {age: 23}});
+			mark.put({age: 23, wife: {age: 23}});
 			
 			setTimeout(function(){
-				mark.set({citizen: "USA", wife: {citizen: "USA"}}).get(function(mark){
+				mark.put({citizen: "USA", wife: {citizen: "USA"}}).val(function(mark){
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
 					expect(mark.citizen).to.be("USA");
 
-					this.path('wife').get(function(Amber){
+					this.path('wife').val(function(Amber){
 						expect(Amber.name).to.be("Amber");
 						expect(Amber.age).to.be(23);
 						expect(Amber.citizen).to.be("USA");
@@ -503,18 +503,18 @@ describe('Gun', function(){
 		});
 
 		it('path path', function(done){
-			var deep = gun.set({some: {deeply: {nested: 'value'}}});
-			deep.path('some.deeply.nested').get(function(val){
+			var deep = gun.put({some: {deeply: {nested: 'value'}}});
+			deep.path('some.deeply.nested').val(function(val){
 				expect(val).to.be('value');
 			});
-			deep.path('some').path('deeply').path('nested').get(function(val){
+			deep.path('some').path('deeply').path('nested').val(function(val){
 				expect(val).to.be('value');
 				done();
 			});
 		});
 
 		it('context null set value get error', function(done){
-			gun.set("oh yes",function(err){
+			gun.put("oh yes",function(err){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -522,21 +522,21 @@ describe('Gun', function(){
 
 		var foo;
 		it('context null set node', function(done){
-			foo = gun.set({foo: 'bar'}).get(function(obj){
+			foo = gun.put({foo: 'bar'}).val(function(obj){
 				expect(obj.foo).to.be('bar');
 				done();
 			});
 		});
 
 		it('context node set val', function(done){
-			foo.set('banana', function(err){
+			foo.put('banana', function(err){
 				expect(err).to.be.ok();
 				done();
 			});
 		});
 		
 		it('context node set node', function(done){
-			foo.set({bar: {zoo: 'who'}}).get(function(obj){
+			foo.put({bar: {zoo: 'who'}}).val(function(obj){
 				expect(obj.foo).to.be('bar');
 				expect(Gun.is.soul(obj.bar)).to.ok();
 				done();
@@ -545,7 +545,7 @@ describe('Gun', function(){
 		
 		it('context node and field set value', function(done){
 			var tar = foo.path('tar');
-			tar.set('zebra').get(function(val){
+			tar.put('zebra').val(function(val){
 				expect(val).to.be('zebra');
 				done();
 			});
@@ -554,7 +554,7 @@ describe('Gun', function(){
 		var bar;
 		it('context node and field of relation set node', function(done){
 			bar = foo.path('bar');
-			bar.set({combo: 'double'}).get(function(obj){
+			bar.put({combo: 'double'}).val(function(obj){
 				expect(obj.zoo).to.be('who');
 				expect(obj.combo).to.be('double');
 				done();
@@ -562,9 +562,9 @@ describe('Gun', function(){
 		});
 
 		it('context node and field, set node', function(done){
-			bar.path('combo').set({another: 'node'}).get(function(obj){
+			bar.path('combo').put({another: 'node'}).val(function(obj){
 				expect(obj.another).to.be('node');
-				bar.get(function(node){
+				bar.val(function(node){
 					expect(Gun.is.soul(node.combo)).to.be.ok();
 					expect(Gun.is.soul(node.combo)).to.be(Gun.is.soul.on(obj));
 					done();
@@ -574,7 +574,7 @@ describe('Gun', function(){
 
 
 		it('map', function(done){
-			var c = 0, map = gun.set({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
+			var c = 0, map = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
 			map.map(function(obj, soul){
 				c++;
 				if(soul === 'a'){

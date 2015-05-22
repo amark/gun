@@ -8,7 +8,7 @@
 	}
 ,	"dependencies": {
 		"express": "~>4.9.0",
-		"gun": "0.1.5"
+		"gun": "file:../"
 	}
 ,	"scripts": {
         "start": "node express.js",

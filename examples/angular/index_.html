@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../gun.js"></script>
+	</head>
+	<body>
+		<h3>Admin JSON Editor</h3>
+		This is a live view of your data, you can edit it in realtime or add new field/values.
+		<ul id="data">
+		</ul>
+		<li id="model">
+			<b>field</b>:
+			<span contenteditable="true">val</span>
+		</li>
+		<ul><li>
+			<form id="form" onsubmit="add()">
+				<label>
+					<input id="field" placeholder="field">
+					<button type="submit">add</button>
+				</label>
+			</form>
+		</li></ul>
+		<script>
+			var gun = Gun(location.origin + '/gun');
+			var ref = gun.get('example/angular/data');
+				
+			ref.on(function(data){
+				for(var field in data){
+					var val = data[field], elem;
+					if(field === '_'){ continue }
+					elem = $('#' + field) || $('#data').appendChild($('#model').cloneNode(true));
+					$('b', elem).innerText = elem.id = field;
+					$('span', elem).innerText = val;
+				}
+			});
+			
+			var $ = function(s, elem){ return (elem || document).querySelector(s) }
+			document.onkeyup = function(e){
+				if(!e || !e.target){ return } // make sure we have something!
+				if(!e.target.attributes.contenteditable){ return } // filter!
+				ref.path(e.target.previousElementSibling.innerText) // the path is the field in the previous element
+				   .put( e.target.innerText ); // the value is the text from the current target element
+			}
+			$('#form').onsubmit = function add(e){
+				return ref.path($('#field').value).put("value"), false;
+			}
+		</script>
+		<style>
+			html, body {
+				font-family: Verdana, Geneva, sans-serif;
+			}
+			a, button {
+				border: none;
+				color: skyblue;
+				background: transparent;
+				text-decoration: none;
+				cursor: poiner;
+			}
+			ul, li {
+				list-style-type: none;
+			}
+			ul:hover, li:hover {
+				list-style-type: inherit;
+			}
+			input {
+				border: none;
+				border-bottom: dashed 1px gainsboro;
+			}
+			.none, #model {
+				display: none;
+			}
+		</style>
+	</body>
+</html>
