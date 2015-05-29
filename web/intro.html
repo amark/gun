@@ -1,0 +1,65 @@
+<div class="center fold stretch" style="background: url(./img/knockout.jpg) no-repeat 50% 50%; background-size: 100%;">
+	<div class="stretch stick" style="top: 50%; margin-top: -2.25em; font-family: arial;">
+		<div style="font-size: 4em; color: white; text-shadow: black 0px 0px 1em;">GAME OVER</div>
+		<button style="color: #400; font-size: 1.5em; background: red; padding: .75em; box-shadow: inset 0px 0px 2em 0px maroon; border: 1px solid #444;">
+			play again
+		</button>
+		<span>?</span>
+	</div>
+</div>
+
+<div style="float: left; max-width: 750px; width: 100%; padding: 2em; line-height: 1.25em; color: #ddd;">
+ <p>"You don't remember what happened, do you?"</p>
+ <p>Violence is a jarring thing. Imagine waking up and having no memory. No notion of who you are, where you came from, or why you were chosen.</p>
+ <p>Your identity, <i>erased</i>. This is your story, and you are about to discover how.</p>
+ <h2>Hi, I'm Plublious. Let me be your guide.</h2>
+ <p>"You've got a dreadful case of amnesia. I guess you're just gonna have to trust me."</p>
+ <p>"So hey, what's your name?"</p>
+ <div id="namethee"><button id="whoami">I don't know</button> or <input id="myname"> <button id="iam">is my name</button>.</div>
+ <p class="none" id="benamedbob">"You don't know? Well then, let's call you Bob."</p>
+ <p class="none" id="benamed">"Hi, <span class="name"></span>!"</p>
+ <div class="none" id="discover">
+ 	<p>"What is this all about?" <span class="name"></span> asks.
+ 	<div><button id="answers">Find out the answer</button> or <button class="upset">Be upset your questions are being written for you</button>.</div>
+ 	<div class="none" id="distributed">
+ 		<p>"Distributed systems."</p>
+ 		<p>"What?" <span class="name"></span> gawks.
+ 		<p>"Distributed systems."</p>
+ 	</div>
+ </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+$(function(){
+	$("#whoami").click(function(){ $("#namethee").addClass('none'); named("Bob"); });
+	$("#iam").click(function(){ $("#namethee").addClass('none'); named($('#myname').val()); });
+	function named(name){ $(".name").text(name); $("#benamed, #discover").removeClass('none'); };
+	$("#answers").click(function(){ $(this).closest('div').addClass('none'); $("#distributed").removeClass('none') })
+})	
+</script>
+<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		font-size: 16pt;
+		font-family: 'Palatino Linotype', Verdana;
+		background: black;
+		color: white;
+	}
+	.center {
+		text-align: center;
+	}
+	.fold {
+		height: 100%;
+	}
+	.stretch {
+		width: 100%;
+	}
+	.stick {
+		position: absolute;
+	}
+	.none {
+		display: none;
+	}
+</style>

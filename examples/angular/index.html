@@ -53,10 +53,10 @@
 			var gun = Gun(location.origin + '/gun');
 			angular.module('admin', []).controller('editor', function($scope){
 				$scope.data = {};
-				$scope.$data = gun.load('example/angular/data').blank(function(){
+				$scope.$data = gun.get('example/angular/data')/*.not(function(){
 					console.log("Initializing Data!");
-					this.set({});
-				}).on(function(data){
+					this.put({});
+				})*/.on(function(data){
 					Gun.obj.map(data, function(val, field){
 						if(val === $scope.data[field]){ return }
 						$scope.data[field] = val;
@@ -64,13 +64,13 @@
 					$scope.$apply();
 				});
 				$scope.add = function(){
-					$scope.$data.path($scope.field).set( $scope.data[$scope.field] = 'value' );
+					$scope.$data.path($scope.field).put( $scope.data[$scope.field] = 'value' );
 					$scope.field = '';
 				};
 			}).directive('gun', function(){
 				return function(scope, elem){
 					elem.on('keyup', function(){
-						scope.$data.path(scope.key).set( scope.data[scope.key] = elem.text() );
+						scope.$data.path(scope.key).put( scope.data[scope.key] = elem.text() );
 					});
 				};
 			});
