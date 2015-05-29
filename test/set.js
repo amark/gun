@@ -1,22 +1,22 @@
 (function(){ // group test
 
 	var Gun = require('../index');
-	require('../lib/group');
+	require('../lib/set');
 	var gun = Gun({file: 'data.json'});
 
-	gun.group({
+	gun.set({
 		name: "Mark Nadal",
 		age: 23,
 		type: "human"
-	}).group({
+	}).back.set({
 		name: "Amber Nadal",
 		age: 23,
 		type: "human"
-	}).group({
+	}).back.set({
 		name: "Hobbes",
 		age: 4,
 		type: "kitten"
-	}).get(function(g){
+	}).back.val(function(g){
 		//console.log("GOT", g, this.__.graph);
 	}).map(function(val, id){
 		//console.log("map", id, val);
