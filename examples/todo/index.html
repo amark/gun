@@ -9,10 +9,11 @@
 		<script>
 		// by Forrest Tait! Edited by Mark Nadal.
 		function ready(){
-			Gun.log.verbose = true;
 			var $ = document.querySelector.bind(document);
 			var gun = Gun(location.origin + '/gun').get('example/todo/data');
-			gun.on(function renderToDo(val){
+			gun.not(function(){
+				return this.put({hello: "world!"}).key('example/todo/data');
+			}).on(function renderToDo(val){
 				var todoHTML = '';
 				for(key in val) {
 					if(!val[key] || key == '_') continue;

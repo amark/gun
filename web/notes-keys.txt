@@ -1,0 +1,127 @@
+Alice comes online and does
+
+`var todo = gun.get('todo')`
+
+However she is the first peer, objectively, to be around.
+
+Therefore, very quickly her query returns empty. So when she
+
+`todo.put({first: "buy groceries"}).key('todo')`
+
+the put has to generate a soul and GUN is instructed to associate 'todo' with that soul.
+
+A few hours later, Bob comes online and does
+
+`var todo = gun.get('todo')`
+
+and thankfully he was connected to Alice so he gets her soul and node. So when he
+
+`todo.put({last: "sell leftovers"}).key('todo')`
+
+this was the expected and intended result, producing the following graph:
+
+```{
+	'ASDF': {
+		_: {'#': 'ASDF', '>': {
+			first: 1,
+			last: 2
+		}},
+		first: "buy groceries",
+		last: "sell leftovers"
+	}
+}```
+
+For purposes of clarity, we are using states as if they were linearizable (this is not actually the case though).
+
+Then Carl comes online and tries to
+
+`var todo = gun.get('todo')`
+
+But since he is not connected to Alice or Bob, gets an empty result.
+
+Carl does nothing with it, meaning no mutation, no soul, no generation.
+
+Then Dave comes online and does the same as everyone else:
+
+`var todo = gun.get('todo')`
+
+But Dave is only connected to Carl as a peer, therefore his get is empty. Like Alice, he then
+
+`todo.put({remember: "eat food!", last: "no leftovers!"}).key('todo')`
+
+Which unfortunately causes a new soul to be generated. Meanwhile, everybody then does the following:
+
+`todo.on(function(val){ console.log(val) })`
+
+Alice and Bob immediately get:
+
+```{
+	_: {'#': 'ASDF', '>': {
+		first: 1,
+		last: 2
+	}},
+	first: "buy groceries",
+	last: "sell leftovers"
+}```
+
+But Carl and Dave immediately get:
+
+```{
+	_: {'#': 'FDSA', '>': {
+		remember: 3,
+		last: 3
+	}},
+	remember: "eat food!",
+	last: "no leftovers!"
+}```
+
+However, a few hours later everybody gets connected. This is the graph everyone then has:
+
+```{
+	'ASDF': {
+		_: {'#': 'ASDF', '>': {
+			first: 1,
+			last: 2
+		}},
+		first: "buy groceries",
+		last: "sell leftovers"
+	},
+	'FDSA': {
+		_: {'#': 'FDSA', '>': {
+			remember: 3,
+			last: 3
+		}},
+		remember: "eat food!",
+		last: "no leftovers!"
+	}
+}```
+
+But their `on` function triggers again, with the following `val` locally for everyone:
+
+```{
+	first: "buy groceries",
+	remember: "eat food!",
+	last: "no leftovers!"
+}```
+
+GUN merges all the nodes with matching keys into a temporary in-memory object.
+
+This way it is safe to get empty results and still put data into it,
+
+Everyone will see a unified view of the data when they do get connected, as intended.
+
+This solves the null, singular, and plural problems for get all together.
+
+However, if we intentionally do not want to see a potentially conflicting unified view, any peer can:
+
+`var todos = gun.all('todo')`
+
+And have the discrete data via:
+
+`todos.map(function(todo, soul){ console.log(todo) })`
+
+Which would currently get called twice, with the distinct nodes of 'ASDF' and 'FDSA'.
+
+The only thing that this does not address is how write operations (put/key) would effect `get` nodes.
+
+However, I feel like finding the answer to that question will be much easier than trying to solve `get` in any other way.

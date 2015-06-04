@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../gun.js"></script>
+	</head>
+	<body>
+		<h3>Admin JSON Editor</h3>
+		This is a live view of your data, you can edit it in realtime or add new field/values.
+		<ul id="data">
+		</ul>
+		<li id="model">
+			<b>field</b>:
+			<span contenteditable="true">val</span>
+		</li>
+		<ul><li>
+			<form id="form" onsubmit="add()">
+				<label>
+					<input id="field" placeholder="field">
+					<button type="submit">add</button>
+				</label>
+			</form>
+		</li></ul>
+		<script>
+			var ref = Gun(location.origin + '/gun').get('example/json/data');
+			ref.not(function(){
+				return this.put({hello: "world!"}).key('example/json/data');
+			}).on(function(data){
+				for(var field in data){
+					if(field === '_'){ continue } // skip meta data!
+					var val = (data[field = field || ''] || '').toString(), id = field.replace(/[^A-z]/ig, ''), elem; // make data safe.
+					(elem = $('#' + id) || $('#data').appendChild($('#model').cloneNode(true))).id = id; // reuse or make element, set id.
+					$('b', elem).innerHTML = field.replace(/\</ig, '&lt;'); // escape and display field
+					$('span', elem).innerHTML = val.replace(/\</ig, '&lt;'); // escape and display value
+				}
+			});
+			
+			var $ = function(s, elem){ return (elem || document).querySelector(s) } // make native look like jQuery.
+			document.onkeyup = function(e){
+				if(!e || !e.target){ return } // ignore if no element!
+				if(!e.target.attributes.contenteditable){ return } // ignore if element content isn't editable!
+				ref.path((e.target.previousElementSibling.innerHTML||'').toString().replace(/\</ig, '&lt;')) // grab the label, which is in the previous element.
+				   .put( (e.target.innerHTML||'').toString().replace(/\</ig, '&lt;') ); // insert the value of the text in the current element.
+			}
+			$('#form').onsubmit = function add(e){
+				return ref.path($('#field').value || '').put("value"), false; // add a new field, and cancel the form submit.
+			}
+		</script>
+		<style>
+			html, body {
+				font-family: Verdana, Geneva, sans-serif;
+			}
+			a, button {
+				border: none;
+				color: skyblue;
+				background: transparent;
+				text-decoration: none;
+				cursor: poiner;
+			}
+			ul, li {
+				list-style-type: none;
+			}
+			ul:hover, li:hover {
+				list-style-type: inherit;
+			}
+			input {
+				border: none;
+				border-bottom: dashed 1px gainsboro;
+			}
+			.none, #model {
+				display: none;
+			}
+		</style>
+	</body>
+</html>
