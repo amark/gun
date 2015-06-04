@@ -55,7 +55,7 @@
 				return !Gun.obj.map(node, function(value, field){ // need to invert this, because the way we check for this is via a negation.
 					if(field == Gun._.meta){ return } // skip this.
 					if(!Gun.is.value(value)){ return true } // it is true that this is an invalid node.
-					if(cb){ cb(value, field) }
+					if(cb){ cb(value, field, node._) }
 				});
 			}
 			return false;
@@ -70,8 +70,8 @@
 			}) && exist;
 		}
 		// Gun.ify // the serializer is too long for right here, it has been relocated towards the bottom.
-		Gun.union = function(gun, prime){
-			var ctx = {};
+		Gun.union = function(gun, prime, cb){
+			var ctx = {count: 0, cb: function(){ cb = cb? cb() && null : null }};
 			ctx.graph = gun.__.graph;
 			if(!ctx.graph){ ctx.err = {err: Gun.log("No graph!") } }
 			if(!prime){ ctx.err = {err: Gun.log("No data to merge!") } }
@@ -80,16 +80,22 @@
 				ctx.tmp[ctx.soul] = prime;
 				prime = ctx.tmp;
 			}
+			Gun.is.graph(prime, null, function(val, field, meta){
+				if(!meta || !(meta = meta[Gun._.HAM]) || !Gun.num.is(meta[field])){ 
+					return ctx.err = {err: Gun.log("No state on " + field + "!") } 
+				}
+			});
 			if(ctx.err){ return ctx }
 			(function union(graph, prime){
 				Gun.obj.map(prime, function(node, soul){
 					soul = Gun.is.soul.on(node);
 					if(!soul){ return }
 					var vertex = graph[soul];
-					if(!vertex){ // disjoint
+					if(!vertex){ // disjoint // TODO: Maybe not correct? BUG, probably.
 						gun.__.on(soul).emit(graph[soul] = node);
 						return;
 					}
+					ctx.count += 1;
 					Gun.HAM(vertex, node, function(){}, function(vertex, field, value){
 						if(!vertex){ return }
 						var change = {};
@@ -101,27 +107,27 @@
 						//context.nodes[change._[Gun._.soul]] = change;
 						//context('change').fire(change);
 						gun.__.on(Gun.is.soul.on(change)).emit(change);					
-					}, function(){
-						
+					}, function(){})(function(){
+						if(!(ctx.count -= 1)){ ctx.cb() }
 					});
 				});
 			})(ctx.graph, prime);
+			if(!ctx.count){ ctx.cb() }
 			return ctx;
 		}
-		Gun.HAM = function(vertex, delta, lower, each, upper){
+		Gun.HAM = function(vertex, delta, lower, now, upper){
+			upper.max = -Infinity;
 			Gun.obj.map(delta, function update(incoming, field){
 				if(field === Gun._.meta){ return }
-				if(!Gun.obj.has(vertex, field)){ // does not need to be applied through HAM
-					each.call({incoming: true, converge: true}, vertex, field, incoming);
-				}
 				var ctx = {incoming: {}, current: {}}, state;
 				ctx.drift = Gun.time.is();
 				ctx.incoming.value = Gun.is.soul(incoming) || incoming;
-				ctx.current.value = Gun.is.soul(vertex[field]) || vertex[field]
-				ctx.incoming.state = ((delta._||{})[Gun._.HAM]||{})[field] || 0;
-				ctx.current.state = ((vertex._||{})[Gun._.HAM]||{})[field] || 0;
+				ctx.current.value = Gun.is.soul(vertex[field]) || vertex[field];
+				ctx.incoming.state = Gun.num.is(ctx.tmp = ((delta._||{})[Gun._.HAM]||{})[field])? ctx.tmp : -Infinity;
+				ctx.current.state = Gun.num.is(ctx.tmp = ((vertex._||{})[Gun._.HAM]||{})[field])? ctx.tmp : -Infinity;
+				upper.max = ctx.incoming.state > upper.max? ctx.incoming.state : upper.max;
 				state = HAM(ctx.drift, ctx.incoming.state, ctx.current.state, ctx.incoming.value, ctx.current.value);
-				//console.log("HAM:", ctx);
+				//root.console.log("HAM:", ctx);
 				if(state.err){
 					root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err); // this error should never happen.
 					return;
@@ -131,13 +137,15 @@
 					return;
 				}
 				if(state.incoming){
-					each.call(state, vertex, field, incoming);
+					now.call(state, vertex, field, incoming);
 					return;
 				}
 				if(state.amnesiaQuarantine){
+					upper.wait = true;
+					upper.call(state, vertex, field, incoming); // signals that there are still future modifications.
 					Gun.schedule(ctx.incoming.state, function(){
 						update(incoming, field);
-						upper.call(state, vertex, field, incoming);
+						if(ctx.incoming.state === upper.max){ upper.last() }
 					});
 				}
 			});
@@ -175,15 +183,10 @@
 				}
 				return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
 			}
-		}
-		Gun.when = function(gun, cb){ // how much memory will this consume?
-			var setImmediate = setImmediate || function(cb){return setTimeout(cb,0)};
-			Gun.obj.map(gun._.graph, function(on, soul){
-				setImmediate(function(){ cb.apply(on, on.args) });
-			});
-			gun._.on('soul').event(function(soul){
-				cb.apply((gun._.graph = gun._.graph || {})[this.soul = soul] = this, this.args = arguments);
-			});
+			return function(fn){
+				upper.last = fn || function(){};
+				if(!upper.wait){ upper.last() }
+			}
 		}
 		Gun.roulette = function(l, c){
 			var gun = Gun.is(this)? this : {};
@@ -221,13 +224,31 @@
 			});
 			if(!stun){ Gun.on('opt').emit(gun, opt) }
 			return gun;
-		}		
+		}
 		Gun.chain.chain = function(from){
 			var gun = Gun(null);
 			from = from || this;
 			gun.back = from;
 			gun.__ = from.__;
-			gun._ = {on: Gun.on.create() };
+			gun._ = {on: Gun.on.create()};
+			gun._.status = function(e){
+				var proxy = function(chain, cb){
+					return Gun.obj.map(gun._.graph, function(on, soul){
+						setImmediate(function(){ cb.call(on, on.status) });
+						return on; // TODO: BUG! What about plural graphs?
+					}) || gun._.on(e)[chain](function(status){
+						if(status){ (gun._.graph = gun._.graph || {})[status.soul] = this }
+						cb.call(this, this.status = status);
+					});
+				}
+				proxy.event = function(cb){ return proxy('event', cb) };
+				proxy.once = function(cb){ return proxy('once', cb) };
+				proxy.emit = function(){
+					var args = arguments;
+					setImmediate(function(me){ (me = gun._.on(e)).emit.apply(me, args) }) 
+				};
+				return proxy;
+			}
 			return gun;
 		}
 		Chain.get = function(key, cb, opt){ // get opens up a reference to a node and loads it.
@@ -238,46 +259,46 @@
 			cb = cb || function(){};
 			opt = opt || {};
 			if(ctx.soul){
-				Gun.fns.async(function(){ open(ctx.soul) });
+				gun._.status('soul').emit({soul: ctx.soul});
 				if(ctx.node = gun.__.graph[ctx.soul]){ // in memory
 					cb.call(gun, null, Gun.obj.copy(ctx.node));
+					gun._.status('node').emit({soul: ctx.soul});
 				} else { load(key) } // not in memory
 			} else 
 			if(ctx.key){
 				
-				(function foo(){ // TODO: JANKY! UGLY!!!!
+				(function foo(){ // TODO: JANKY! UGLY!!!! Can resolve as soon as the object exists.
 					if(ctx.node = gun.__.keys[ctx.key]){ // in memory, or from put.key
 						if(true === ctx.node){
-							Gun.fns.async(foo);
+							setTimeout(foo,0);
 						} else {
 							cb.call(gun, null, Gun.obj.copy(ctx.node));
-							Gun.fns.async(function(){ open(Gun.is.soul.on(ctx.node)) });
+							var soul = Gun.is.soul.on(ctx.node);
+							gun._.status('soul').emit({soul: soul});
+							gun._.status('node').emit({soul: soul});
 						}
 					} else { load(key) } // not in memory
 				})();
 				
 			} else { cb.call(gun, {err: Gun.log("No key or relation to get!")}) }
 			
-			function open(soul){
-				if(!soul || ctx.open){ return }
-				ctx.open = true;
-				gun._.on('soul').emit(soul);
-			}
 			function load(key){
 				if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.get)){
 					ctx.hook(key, function(err, data){ // multiple times potentially
 						//console.log("chain.get from load", err, data);
 						if(err){ return cb.call(gun, err, data) }
-						if(!data){ return cb.call(gun, null) } // TODO: will have have `not` be based on open?
+						if(!data){ return cb.call(gun, null, null), gun._.status('null').emit() }
 						if(ctx.soul = Gun.is.soul.on(data)){
-							open(ctx.soul);
+							gun._.status('soul').emit({soul: ctx.soul});
 						} else { return cb.call(gun, {err: Gun.log('No soul on data!') }, data) }
 						if(err = Gun.union(gun, data).err){ return cb.call(gun, err) }
 						cb.call(gun, null, data);
+						gun._.status('node').emit({soul: ctx.soul});
 					}, opt);
 				} else {
 					root.console.log("Warning! You have no persistence layer to get from!");
 					cb.call(gun, null, null); // Technically no error, but no way we can get data.
+					gun._.status('null').emit();
 				}
 			}
 			return gun;
@@ -288,14 +309,12 @@
 			cb = cb || function(){};
 			opt = opt || {};
 			gun.__.keys[key] = true;
-			Gun.when(gun, function(soul){
-				Gun.fns.async(function wait(node){ // TODO: UGLY!!! JANKY!!!
-					node = gun.__.graph[soul];
-					if(true === node){ return Gun.fns.async(wait) }
-					gun.__.keys[key] = node;
+			gun._.status('soul').event(function($){ // TODO: once per soul in graph. (?)
+				gun._.status('node').once(function($){
+					gun.__.keys[key] = gun.__.graph[$.soul];
 				});
 				if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.key)){
-					ctx.hook(key, soul, function(err, data){
+					ctx.hook(key, $.soul, function(err, data){
 						return cb.call(gun, err, data);
 					}, opt);
 				} else {
@@ -307,6 +326,7 @@
 		}
 		Chain.all = function(key, cb){
 			var gun = this.chain();
+			return gun; // TODO: BUG! We need to create all!
 			cb = cb || function(){};
 			gun.shot.next(function(next){
 				Gun.obj.map(gun.__.keys, function(node, key){ // TODO: BUG!! Need to handle souls too!
@@ -349,21 +369,16 @@
 			var gun = this.chain(), ctx = {};
 			cb = cb || function(){};
 			path = (Gun.text.ify(path) || '').split('.');
-			//gun.back._.on('soul').event(function trace(soul){ // TODO: Check for field as well and merge?
-			Gun.when(gun.back, function trace(soul){ // TODO: Check for field as well and merge?
-				var node = gun.__.graph[soul], field = node && Gun.text.ify(path.shift()), val;
-				console.log("path...", soul, field, node);
-				if(!node){ // handle later 
-					return Gun.fns.async(function(){ // TODO: UGLY!!! JANKY!!!
-						trace(soul);
-					});
-				} else
+			// TODO: Hmmm once also? figure it out later.
+			gun.back._.status('node').event(function trace($){ // TODO: Check for field as well and merge?
+				var node = gun.__.graph[$.soul], field = Gun.text.ify(path.shift()), val;
 				if(path.length){
 					if(Gun.is.soul(val = node[field])){
+						//root.console.log('path RECURSION', field);
 						gun.get(val, function(err, data){
 							if(err){ return cb.call(gun, err, data) }
 							if(!data){ return cb.call(gun, null) }
-							trace(Gun.is.soul.on(data));
+							trace({soul: Gun.is.soul.on(data)});
 						});
 					} else {
 						cb.call(gun, null);
@@ -371,14 +386,20 @@
 				} else
 				if(!Gun.obj.has(node, field)){ // TODO: THIS MAY NOT BE CORRECT BEHAVIOR!!!!
 					cb.call(gun, null, null, field);
-					gun._.on('soul').emit(soul, field); // if .put is after, makes sense. If anything else, makes sense to wait.
+					gun._.on('soul').emit({soul: $.soul, field: field}); // if .put is after, makes sense. If anything else, makes sense to wait.
+					gun._.on('node').emit({soul: $.soul, field: field});
 				} else
 				if(Gun.is.soul(val = node[field])){
-					gun.get(val, cb);
-					gun._.on('soul').emit(Gun.is.soul(val), null, soul, field);
+					gun.get(val, function(err, data){
+						cb.call(gun, err, data);
+						if(err || !data){ return }
+						gun._.status('node').emit({soul: Gun.is.soul(val)});
+					});
+					gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 				} else {
 					cb.call(gun, null, val, field);
-					gun._.on('soul').emit(soul, field);
+					gun._.on('soul').emit({soul: $.soul, field: field});
+					gun._.on('node').emit({soul: $.soul, field: field});
 				}
 			});
 			
@@ -386,14 +407,11 @@
 		}
 		Chain.val = function(cb){
 			var gun = this, ctx = {};
-			cb = cb || function(){};
+			cb = cb || root.console.log.bind(root.console);
 			
-			Gun.when(gun, function(soul, field){
-				Gun.fns.async(function wait(node){ // TODO: UGLY!!! JANKY!!!
-					node = gun.__.graph[soul];
-					if(!node || true === node){ return Gun.fns.async(wait) }
-					cb.call(gun, field? node[field] : Gun.obj.copy(node));
-				});
+			gun._.status('node').event(function($){ // TODO: once per soul on graph. (?)
+				var node = gun.__.graph[$.soul];
+				cb.call(gun, $.field? node[$.field] : Gun.obj.copy(node)); // TODO: at terminating
 			});
 			
 			return gun;
@@ -403,10 +421,12 @@
 			var gun = this, ctx = {};
 			cb = cb || function(){};
 			
-			Gun.when(gun, function(soul, field){
-				gun.__.on(soul).event(function(delta){
-					var node = gun.__.graph[soul];
-					cb.call(gun, Gun.obj.copy(node), field);
+			// TODO: below is also probably going to be on node.
+			gun.val(cb)._.status('soul').event(function($){ // TODO: once per soul on graph. (?)
+				// TODO: Don't use val :(, but trigger callback now as well.
+				gun.__.on($.soul).event(function(delta){
+					var node = gun.__.graph[$.soul];
+					cb.call(gun, Gun.obj.copy(node), $.field);
 				});
 			});
 			
@@ -424,40 +444,37 @@
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
 		Chain.put = function(val, cb, opt){ // handle case where val is a gun context!
-			var gun = this.chain(), drift = Gun.time.is(), flag;
+			var gun = this.chain(), drift = Gun.time.is();
 			cb = cb || function(){};
 			opt = opt || {};
 			
 			if(!gun.back.back){
 				gun = gun.chain();
-				Gun.fns.async(function(){
-					flag = true;
-					gun.back._.on('soul').emit(Gun.is.soul.on(val) || Gun.roulette.call(gun));
-				});
+				gun.back._.status('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true});
 			}
-			Gun.when(gun.back, function(soul, field, from, at){
-				//console.log("chain.put", field, val, "on", soul, 'or', from, at);
-				var ctx = {}, obj = val;
+			gun.back._.status('soul').event(function($){ // TODO: maybe once per soul?
+				var ctx = {}, obj = val, $ = Gun.obj.copy($);
+				console.log("chain.put", val, $);
 				if(Gun.is.value(obj)){
-					if(from && at){
-						soul = from;
-						field = at;
+					if($.from && $.at){
+						$.soul = $.from;
+						$.field = $.at;
 					} // no else!
-					if(!field){
+					if(!$.field){
 						return cb.call(gun, {err: Gun.log("No field exists for " + (typeof obj) + "!")});
 					} else
-					if(gun.__.graph[soul]){
+					if(gun.__.graph[$.soul]){
 						ctx.tmp = {};
-						ctx.tmp[ctx.field = field] = obj;
+						ctx.tmp[ctx.field = $.field] = obj;
 						obj = ctx.tmp;
 					} else {
 						return cb.call(gun, {err: Gun.log("No node exists to put " + (typeof obj) + " in!")});
 					}
 				}
 				if(Gun.obj.is(obj)){
-					if(field && !ctx.field){
+					if($.field && !ctx.field){
 						ctx.tmp = {};
-						ctx.tmp[ctx.field = field] = obj;
+						ctx.tmp[ctx.field = $.field] = obj;
 						obj = ctx.tmp;
 					}
 					Gun.ify(obj, function(env, cb){
@@ -468,10 +485,10 @@
 						}
 						if(!Gun.is.soul.on(at.node)){
 							if(obj === at.obj){
-								env.graph[at.node._[Gun._.soul] = soul] = at.node;
-								cb(at, soul);
+								env.graph[at.node._[Gun._.soul] = $.soul] = at.node;
+								cb(at, $.soul);
 							} else {
-								flag? path() : gun.back.path(at.path.join('.'), path); // TODO: clean this up.
+								$.empty? path() : gun.back.path(at.path.join('.'), path); // TODO: clean this up.
 								function path(err, data){
 									var soul = Gun.is.soul.on(data) || Gun.roulette.call(gun);
 									env.graph[at.node._[Gun._.soul] = soul] = at.node;
@@ -485,11 +502,12 @@
 						if(!at.field){ return }
 						at.node._[Gun._.HAM][at.field] = drift;
 					})(function(err, ify){
-						console.log("chain.put PUT", ify.graph);
+						console.log("chain.put PUT <----", ify.graph);
 						if(err || ify.err){ return cb.call(gun, err || ify.err) }
 						if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) }
-						if(from = Gun.is.soul(ify.root[field])){ soul = from; field = null }
-						gun._.on('soul').emit(soul, field);
+						if($.from = Gun.is.soul(ify.root[$.field])){ $.soul = $.from; $.field = null }
+						gun._.on('soul').emit({soul: $.soul, field: $.field, candy: true});
+						gun._.on('node').emit({soul: $.soul, field: $.field, barf: false});
 						if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.put)){
 							ctx.hook(ify.graph, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
 								if(err){ return cb.call(gun, err) }
@@ -524,16 +542,17 @@
 			var ahead = gun.chain(); return ahead;
 			return gun;
 		}
-		Chain.not = function(not){
-			var gun = this;
-			not = not || function(){};
-			gun.shot.next(function(next){
-				if(gun._.node){ // if it does indeed exist
-					return next(); // yet fire off the chain
-				}
-				not.call(gun); // call not
-				next(); // fire off the chain
+		Chain.not = function(cb){
+			var gun = this, ctx = {};
+			cb = cb || function(){};
+			
+			gun._.status('null').once(function(){
+				var chain = gun.chain(), next = cb.call(chain);
+				next._.status('soul').event(function($){ gun._.on('soul').emit($) });
+				next._.status('node').event(function($){ gun._.on('node').emit($) });
+				chain._.on('soul').emit({soul: Gun.roulette.call(chain), empty: true});
 			});
+			
 			return gun;
 		}
 		Chain.err = function(dud){ // WARNING: dud was depreciated.
@@ -544,10 +563,6 @@
 	;(function(Util){
 		Util.fns = {};
 		Util.fns.is = function(fn){ return (fn instanceof Function)? true : false }
-		Util.fns.async = (function(){
-			var setImmediate = setImmediate || function(cb){return setTimeout(cb,0)};
-			return setImmediate;
-		})();
 		Util.fns.sum = function(done){ // combine with Util.obj.map for some easy parallel async operations!
 			var context = {task: {}, data: {}};
 			context.end = function(e,v){ return done(e,v), done = function(){} };
@@ -748,17 +763,10 @@
 		function ify(data, cb, opt){
 			opt = opt || {};
 			cb = cb || function(env, cb){ cb(env.at, Gun.roulette()) };
-			var ctx = {}, end = function(fn){
-				Gun.fns.async(function wait(){ // TODO: JANKY! clean this up, possibly?
-					if(ctx.err || !Gun.list.map(ctx.seen, function(at){
-						if(!at.soul){ return true }
-					})){
-						fn(ctx.err, ctx)
-					} else {
-						Gun.fns.async(wait); // TODO: BUG! JANKY!!! Make this cleaner.
-					}
-				}); 
-			}
+			var end = function(fn){
+				ctx.end = fn || function(){};
+				if(ctx.err){ return ctx.end(ctx.err, ctx), ctx.end = function(){} }
+			}, ctx = {};
 			if(!data){ return ctx.err = Gun.log('Serializer does not have correct parameters.'), end }
 			ctx.at = {};
 			ctx.root = {};
@@ -811,12 +819,18 @@
 				}
 				cb(ctx, function(at, soul){
 					at.soul = at.soul || soul;
+					setImmediate(function(){ unique(ctx) },0);
 					if(!at.back || !at.back.length){ return }
 					Gun.list.map(at.back, function(rel){
 						rel[Gun._.soul] = at.soul;
 					});
 				});
 			});
+		}
+		function unique(ctx){
+			if(ctx.err || !Gun.list.map(ctx.seen, function(at){
+				if(!at.soul){ return true }
+			})){ return ctx.end(ctx.err, ctx), ctx.end = function(){} }
 		}
 		function seen(ctx, at){
 			return Gun.list.map(ctx.seen, function(has){
@@ -830,6 +844,7 @@
 	} else {
 		module.exports = Gun;
 	}
+	var setImmediate = setImmediate || function(cb){return setTimeout(cb,0)};
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
 	root.console = root.console || {log: function(s){ return s }}; // safe for old browsers
 	var console = {log: Gun.log = function(s){return (Gun.log.verbose && root.console.log.apply(root.console, arguments)), s}};
@@ -917,6 +932,7 @@
 			});
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function(err, reply){
+					console.log("PUT success?", err, reply);
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						return cb({err: Gun.log(err || "Error: Put failed on " + url) });
 					} else {
@@ -925,7 +941,7 @@
 				}, {headers: tab.headers});
 				cb.peers = true;
 			}); tab.peers(cb);
-			Gun.obj.map(nodes, function(node, soul){
+			Gun.obj.map(nodes, function(node, soul){ // TODO: BUG? is this really necessary?
 				gun.__.on(soul).emit(node);
 			});
 		}
@@ -938,7 +954,7 @@
 		request.createServer(function(req, res){
 			if(!req.body){ return }
 			if(Gun.is.node(req.body) || Gun.is.graph(req.body)){
-				console.log("client server received request", req);
+				Gun.log("client server received request", req);
 				Gun.union(gun, req.body); // TODO: BUG? Interesting, this won't update localStorage because .put isn't called?
 			}
 		});
