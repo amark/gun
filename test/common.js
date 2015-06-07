@@ -588,7 +588,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						x: Date.now() + (100) // above now or upper boundary, aka future.
+						x: Date.now() + (200) // above now or upper boundary, aka future.
 					}},
 					x: 'how are you?'
 				}
@@ -597,7 +597,7 @@ describe('Gun', function(){
 			expect(gun.__.graph['asdf'].x).to.be('hello');
 			var now = Date.now();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(75);
+				expect(Date.now() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].x).to.be('how are you?');
 				done();
 			});
@@ -607,7 +607,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						y: Date.now() + (100) // above now or upper boundary, aka future.
+						y: Date.now() + (200) // above now or upper boundary, aka future.
 					}},
 					y: 'goodbye'
 				}
@@ -616,7 +616,7 @@ describe('Gun', function(){
 			expect(gun.__.graph['asdf'].y).to.not.be.ok();
 			var now = Date.now();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(75);
+				expect(Date.now() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].y).to.be('goodbye');
 				done();
 			});
@@ -627,7 +627,7 @@ describe('Gun', function(){
 				'asdf': {
 					_: {'#': 'asdf', '>':{
 						y: Date.now() + (2), // above now or upper boundary, aka future.
-						z: Date.now() + (100) // above now or upper boundary, aka future.
+						z: Date.now() + (200) // above now or upper boundary, aka future.
 					}},
 					y: 'bye',
 					z: 'who'
@@ -638,7 +638,7 @@ describe('Gun', function(){
 			expect(gun.__.graph['asdf'].z).to.not.be.ok();
 			var now = Date.now();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(75);
+				expect(Date.now() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].y).to.be('bye');
 				expect(gun.__.graph['asdf'].z).to.be('who');
 				done();
@@ -651,7 +651,7 @@ describe('Gun', function(){
 					_: {'#': 'asdf', '>':{
 						w: Date.now() + (2), // above now or upper boundary, aka future.
 						x: Date.now() - (60 * 1000), // above now or upper boundary, aka future.
-						y: Date.now() + (100), // above now or upper boundary, aka future.
+						y: Date.now() + (200), // above now or upper boundary, aka future.
 						z: Date.now() + (50) // above now or upper boundary, aka future.
 					}},
 					w: true,
@@ -667,7 +667,7 @@ describe('Gun', function(){
 			expect(gun.__.graph['asdf'].z).to.be('who');
 			var now = Date.now();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(75);
+				expect(Date.now() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].w).to.be(true);
 				expect(gun.__.graph['asdf'].x).to.be('how are you?');
 				expect(gun.__.graph['asdf'].y).to.be('farewell');
@@ -785,7 +785,7 @@ describe('Gun', function(){
 				expect(done.err).to.be.ok();
 				expect(done.flag).to.not.be.ok();
 				done();
-			}, 150);
+			}, 500);
 		});
 		
 		/*
@@ -1003,9 +1003,7 @@ describe('Gun', function(){
 		it('get put null', function(done){
 			gun.put({last: {some: 'object'}}).path('last').val(function(val){
 				expect(val.some).to.be('object');
-			}).put(null, function(err){
-				//console.log("ERR?", err);
-			}).val(function(val){
+			}).put(null).val(function(val){
 				expect(val).to.be(null);
 				done();
 			});
@@ -1019,7 +1017,7 @@ describe('Gun', function(){
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
-			}, 100);
+			}, 500);
 		});
 		
 		it('var get path', function(done){ // contexts should be able to be saved to a variable
@@ -1030,7 +1028,7 @@ describe('Gun', function(){
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
-			}, 100);
+			}, 500);
 		});
 		
 		it('get not put val path val', function(done){
@@ -1038,7 +1036,7 @@ describe('Gun', function(){
 				return this.put({
 					id: 'foobar',
 					title: 'awesome title',
-					todos: {hi: 'you'} // TODO: BUG! This should be empty?
+					todos: {}
 				}).key("examples/list/foobar");
 			}).val(function(data){
 				expect(data.id).to.be('foobar');
@@ -1126,7 +1124,7 @@ describe('Gun', function(){
 						done();
 					});
 				});
-			}, 50);
+			}, 500);
 		});
 		
 		it('path path', function(done){
@@ -1195,6 +1193,48 @@ describe('Gun', function(){
 					expect(Gun.is.soul(node.combo)).to.be.ok();
 					expect(Gun.is.soul(node.combo)).to.be(Gun.is.soul.on(obj));
 					done();
+				});
+			});
+		});
+		
+		it('val path put val', function(done){
+			
+			var gun = Gun();
+			
+			var al = gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
+			var beth = gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
+			
+			al.val(function(a){
+				beth.path('friend').put(a).val(function(aa){
+					expect(Gun.is.soul.on(a)).to.be(Gun.is.soul.on(aa));
+					done();
+				});
+			});
+			
+		});
+		
+		it('val path put val key', function(done){ // bug discovered from Jose's visualizer
+			var gun = Gun(), s = Gun.time.is(), n = function(){ return Gun.time.is() }
+			this.timeout(5000);
+			
+			gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
+			gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
+			gun.get('user/alfred').val(function(a){
+				gun.get('user/beth').path('friend').put(a); // b - friend_of -> a
+				
+				gun.get('user/beth').val(function(b){
+					gun.get('user/alfred').path('friend').put(b, function(){ // a - friend_of -> b
+						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}, function(err, ok){						
+							gun.get('user/alfred').path('friend.cat').key('the/cat');
+							
+							gun.get('the/cat').val(function(c){
+								expect(c.name).to.be('fluffy');
+								expect(c.age).to.be(3);
+								expect(c.coat).to.be('tabby');
+								done();
+							});
+						});
+					});
 				});
 			});
 		});
