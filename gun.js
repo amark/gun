@@ -520,11 +520,13 @@
 			return gun;
 		}
 		Chain.map = function(cb, opt){
-			var gun = this;
-			opt = (Gun.obj.is(opt)? opt : (opt? {node: true} : {})); // TODO: BUG: inverse the default here.
-			gun.val(function(val){
-				cb = cb || function(){};
-				Gun.obj.map(val, function(val, field){  // by default it maps over everything.
+			var gun = this, ctx = {};
+			opt = (Gun.obj.is(opt)? opt : (opt? {node: true} : {}));
+			cb = cb || function(){};
+			
+			gun._.status('node').event(function($){
+				var node = gun.__.graph[$.soul];
+				Gun.obj.map(node, function(val, field){
 					if(Gun._.meta == field){ return }
 					if(Gun.is.soul(val)){
 						gun.get(val).val(function(val){ // should map have support for `.not`?
@@ -536,7 +538,6 @@
 					}
 				});
 			});
-			var ahead = gun.chain(); return ahead;
 			return gun;
 		}
 		Chain.not = function(cb){
