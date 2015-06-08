@@ -1238,18 +1238,18 @@ describe('Gun', function(){
 				});
 			});
 		});
-		return;
+		
 		it('map', function(done){
 			var c = 0, map = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
-			map.map(function(obj, soul){
+			map.map(function(obj, field){
 				c++;
-				if(soul === 'a'){
+				if(field === 'a'){
 					expect(obj.here).to.be('you');
 				}
-				if(soul === 'b'){
+				if(field === 'b'){
 					expect(obj.go).to.be('dear');	
 				}
-				if(soul === 'c'){
+				if(field === 'c'){
 					expect(obj.sir).to.be('!');
 				}
 				if(c === 3){
