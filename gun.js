@@ -12,7 +12,7 @@
 		,HAM: '>'
 	}
 	;(function(Gun){ // GUN specific utilities
-		Gun.version = 0.1; // TODO: When Mark (or somebody) does a push/publish, dynamically update package.json
+		Gun.version = 0.2; // TODO: When Mark (or somebody) does a push/publish, dynamically update package.json
 		Gun.is = function(gun){ return (gun instanceof Gun)? true : false }
 		Gun.is.value = function(v){ // null, binary, number (!Infinity), text, or a rel (soul).
 			if(v === null){ return true } // deletes
@@ -389,9 +389,9 @@
 					} else
 					if(Gun.is.soul(val = node[field])){
 						gun.get(val, function(err, data){
-							cb.call(gun, err, data); // TODO: Should we attach field here, does map?
+							cb.call(gun, err, data, field); // TODO: Should we attach field here, does map?
 							if(err || !data){ return }
-							gun._.on('node').emit({soul: Gun.is.soul(val)});
+							gun._.on('node').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 						});
 						gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 					} else {
@@ -410,7 +410,7 @@
 			
 			gun._.status('node').event(function($){ // TODO: once per soul on graph. (?)
 				var node = gun.__.graph[$.soul];
-				cb.call(gun, $.field? node[$.field] : Gun.obj.copy(node)); // TODO: at terminating
+				cb.call(gun, $.field? node[$.field] : Gun.obj.copy(node), $.field || $.at); // TODO: at terminating
 			});
 			
 			return gun;
@@ -531,14 +531,17 @@
 				Gun.obj.map(node, function(val, field){
 					if(Gun._.meta == field){ return }
 					if(Gun.is.soul(val)){
-						gun.get(val).val(function(node){ // TODO: should map have support for `.not`? error?
-							cb.call(this, node, field); // TODO: Should this be NodeJS style or not?
-							gun._.on('node').emit({soul: Gun.is.soul(val)}); // TODO: Same as above, include field?
+						gun.get(val, function(err, data){ // TODO: should map have support for `.not`? error?
+							if(err || !data){ return } // TODO: Handle this!
+							cb.call(this, data, field);
+							gun._.on('node').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 						});
 						gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 					} else {
 						if(opt.node){ return } // {node: true} maps over only sub nodes.
 						cb.call(gun, val, field);
+						gun._.on('soul').emit({soul: $.soul, field: field});
+						gun._.on('node').emit({soul: $.soul, field: field});
 					}
 				});
 			});

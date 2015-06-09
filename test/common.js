@@ -1213,7 +1213,7 @@ describe('Gun', function(){
 			
 		});
 		
-		it('val path put val key', function(done){ // bug discovered from Jose's visualizer
+		it('val path put val key', function(done){ // bug discovered from Jose's visualizer // TODO: still timing issues, 0.6!
 			var gun = Gun(), s = Gun.time.is(), n = function(){ return Gun.time.is() }
 			this.timeout(5000);
 			

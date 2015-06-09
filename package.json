@@ -1,24 +1,21 @@
 {
 	"name": "gun",
-	"version": "0.1.5",
+	"version": "0.2.0",
 	"author": "Mark Nadal",
 	"description": "Graph engine.",
 	"engines": {
 		"node": "~>0.6.6"
 	},
 	"dependencies": {
-		"mime": "~>1.2.11",
 		"aws-sdk": "~>2.0.0",
 		"formidable": "~>1.0.15",
-		"ws": "~>0.4.32",
-		"request": "~>2.39.0"
+		"ws": "~>0.4.32"
 	},
 	"devDependencies": {
 		"mocha": "~>1.9.0"
 	},
 	"scripts": {
-		"start": "node examples/express.js 8080",
-		"prestart": "npm install ./examples",
+		"start": "node examples/http.js 8080",
 		"test": "mocha"
 	}
 }
