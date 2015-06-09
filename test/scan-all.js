@@ -1,7 +1,6 @@
 var expect = global.expect = require("./expect");
 
 var Gun = Gun || require('../gun');
-Gun.log.verbose = true;
 (typeof window === 'undefined') && require('../lib/file');
 
 describe('All', function(){

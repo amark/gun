@@ -364,40 +364,42 @@
 			Things that wait and merge many things together should be an abstraction ontop of path.
 		*/
 		Chain.path = function(path, cb){
-			var gun = this.chain(), ctx = {};
+			var gun = this.chain();
 			cb = cb || function(){};
-			path = (Gun.text.ify(path) || '').split('.');
 			// TODO: Hmmm once also? figure it out later.
-			gun.back._.status('node').event(function trace($){ // TODO: Check for field as well and merge?
-				var node = gun.__.graph[$.soul], field = Gun.text.ify(path.shift()), val;
-				if(path.length){
+			gun.back._.status('node').event(function($){
+				var ctx = {path: (Gun.text.ify(path) || '').split('.')};
+				(function trace($){ // TODO: Check for field as well and merge?
+					var node = gun.__.graph[$.soul], field = Gun.text.ify(ctx.path.shift()), val;
+					if(ctx.path.length){
+						if(Gun.is.soul(val = node[field])){
+							gun.get(val, function(err, data){
+								if(err){ return cb.call(gun, err, data) }
+								if(!data){ return cb.call(gun, null) }
+								trace({soul: Gun.is.soul.on(data)});
+							});
+						} else {
+							cb.call(gun, null);
+						}
+					} else
+					if(!Gun.obj.has(node, field)){ // TODO: THIS MAY NOT BE CORRECT BEHAVIOR!!!!
+						cb.call(gun, null, null, field);
+						gun._.on('soul').emit({soul: $.soul, field: field}); // if .put is after, makes sense. If anything else, makes sense to wait.
+						gun._.on('node').emit({soul: $.soul, field: field});
+					} else
 					if(Gun.is.soul(val = node[field])){
 						gun.get(val, function(err, data){
-							if(err){ return cb.call(gun, err, data) }
-							if(!data){ return cb.call(gun, null) }
-							trace({soul: Gun.is.soul.on(data)});
+							cb.call(gun, err, data); // TODO: Should we attach field here, does map?
+							if(err || !data){ return }
+							gun._.on('node').emit({soul: Gun.is.soul(val)});
 						});
+						gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 					} else {
-						cb.call(gun, null);
+						cb.call(gun, null, val, field);
+						gun._.on('soul').emit({soul: $.soul, field: field});
+						gun._.on('node').emit({soul: $.soul, field: field});
 					}
-				} else
-				if(!Gun.obj.has(node, field)){ // TODO: THIS MAY NOT BE CORRECT BEHAVIOR!!!!
-					cb.call(gun, null, null, field);
-					gun._.on('soul').emit({soul: $.soul, field: field}); // if .put is after, makes sense. If anything else, makes sense to wait.
-					gun._.on('node').emit({soul: $.soul, field: field});
-				} else
-				if(Gun.is.soul(val = node[field])){
-					gun.get(val, function(err, data){
-						cb.call(gun, err, data);
-						if(err || !data){ return }
-						gun._.status('node').emit({soul: Gun.is.soul(val)});
-					});
-					gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
-				} else {
-					cb.call(gun, null, val, field);
-					gun._.on('soul').emit({soul: $.soul, field: field});
-					gun._.on('node').emit({soul: $.soul, field: field});
-				}
+				}($));
 			});
 			
 			return gun;
@@ -520,18 +522,20 @@
 			return gun;
 		}
 		Chain.map = function(cb, opt){
-			var gun = this, ctx = {};
+			var gun = this.chain();
 			opt = (Gun.obj.is(opt)? opt : (opt? {node: true} : {}));
 			cb = cb || function(){};
 			
-			gun._.status('node').event(function($){
+			gun.back._.status('node').event(function($){
 				var node = gun.__.graph[$.soul];
 				Gun.obj.map(node, function(val, field){
 					if(Gun._.meta == field){ return }
 					if(Gun.is.soul(val)){
-						gun.get(val).val(function(val){ // should map have support for `.not`?
-							cb.call(this, val, field);
+						gun.get(val).val(function(node){ // TODO: should map have support for `.not`? error?
+							cb.call(this, node, field); // TODO: Should this be NodeJS style or not?
+							gun._.on('node').emit({soul: Gun.is.soul(val)}); // TODO: Same as above, include field?
 						});
+						gun._.on('soul').emit({soul: Gun.is.soul(val), field: null, from: $.soul, at: field});
 					} else {
 						if(opt.node){ return } // {node: true} maps over only sub nodes.
 						cb.call(gun, val, field);
