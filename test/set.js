@@ -1,4 +1,4 @@
-(function(){ // group test
+(function(){ return; // group test
 
 	var Gun = require('../index');
 	require('../lib/set');
