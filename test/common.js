@@ -1,5 +1,6 @@
 var Gun = Gun || require('../gun');
 if(typeof window !== 'undefined'){ root = window }
+Gun.log.squelch = true;
 describe('Gun', function(){
 	var t = {};
 	describe('Utility', function(){
@@ -747,10 +748,11 @@ describe('Gun', function(){
 			}).key('hello/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.key = true;
+				if(done.yes){ done() }
 			}).key('yes/hello', function(err, ok){
 				expect(err).to.not.be.ok();
-				expect(done.key).to.be.ok();
-				done();
+				done.yes = true;
+				if(done.key){ done() }
 			});
 		});
 		
@@ -1198,7 +1200,6 @@ describe('Gun', function(){
 		});
 		
 		it('val path put val', function(done){
-			
 			var gun = Gun();
 			
 			var al = gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
@@ -1240,8 +1241,8 @@ describe('Gun', function(){
 		});
 		
 		it('map', function(done){
-			var c = 0, map = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
-			map.map(function(obj, field){
+			var c = 0, set = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
+			set.map(function(obj, field){
 				c++;
 				if(field === 'a'){
 					expect(obj.here).to.be('you');

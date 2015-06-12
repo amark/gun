@@ -1,9 +1,11 @@
-var expect = global.expect = require("./expect");
 
-var Gun = Gun || require('../gun');
-(typeof window === 'undefined') && require('../lib/file');
 
-describe('All', function(){
+describe('All', function(){ return;
+	var expect = global.expect = require("./expect");
+
+	var Gun = Gun || require('../gun');
+	(typeof window === 'undefined') && require('../lib/file');
+	
 	var gun = Gun({file: 'data.json'});
 
 	var keys = {
@@ -25,7 +27,7 @@ describe('All', function(){
 
 	it('from', function() {
 		var r = gun.__.opt.hooks.all(keys, {from: 'user/'});
-		console.log(r);
+		//console.log(r);
 		expect(r).to.be.eql({
 			'user/marknadal': { '#': 'asdf' },
 			'user/ambernadal': { '#': 'fdsa' },
@@ -41,7 +43,7 @@ describe('All', function(){
 
 	it('from and upto', function() {
 		var r = gun.__.opt.hooks.all(keys, {from: 'user/', upto: '/'});
-		console.log('upto', r);
+		//console.log('upto', r);
 		expect(r).to.be.eql({
 			'user/marknadal': { '#': 'asdf' },
 			'user/ambernadal': { '#': 'fdsa' },
@@ -51,7 +53,7 @@ describe('All', function(){
 
 	it('from and upto and start and end', function() {
 		var r = gun.__.opt.hooks.all(keys, {from: 'user/', upto: '/', start: "c", end: "f"});
-		console.log('upto and start and end', r);
+		//console.log('upto and start and end', r);
 		expect(r).to.be.eql({
 			'user/forrest': { '#': 'abcd' }
 		});
@@ -65,9 +67,9 @@ describe('All', function(){
 			d: {name: "Johnny Depp"},
 			e: {name: "Santa Clause"}
 		});
-		console.log("map:");
+		//console.log("map:");
 		users.map().val(function(user){
-			console.log("each user:", user);
+			//console.log("each user:", user);
 		}).path("ohboy");
 		return;
 		users.map(function(){
