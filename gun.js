@@ -297,7 +297,7 @@
 							gun._.at('soul').emit({soul: ctx.soul});
 						} else { return cb.call(gun, {err: Gun.log('No soul on data!') }, data) }
 						if(err = Gun.union(gun, data).err){ return cb.call(gun, err) }
-						if(!Gun.obj.map(data, function(val, field){
+						if(!Gun.obj.map(data, function(val, field){ // TODO: turn this into a utility function?
 							if(Gun._.meta === field){ return }
 							return true;
 						})){ gun.__.flag.end[ctx.soul] = true }
@@ -417,7 +417,7 @@
 			
 			return gun;
 		}
-		Chain.val = function(cb, opt){ // TODO: MARK!!! COME BACK HERE!! You're trying to get val to be unique per soul+field.
+		Chain.val = function(cb, opt){
 			var gun = this, ctx = {};
 			cb = cb || root.console.log.bind(root.console);
 			opt = opt || {};
@@ -444,6 +444,10 @@
 				ctx[$.soul] = gun.__.on($.soul).event(on);
 				function on(delta){ // TODO: Filter out end events except where option wanted.
 					var node = gun.__.graph[$.soul];
+					if(!opt.end && delta && !Gun.obj.map(delta, function(val, field){ // TODO: turn this into a utility function?
+						if(Gun._.meta === field){ return }
+						return true;
+					})){ return }
 					if(opt.change){
 						cb.call(gun, Gun.obj.copy(delta || node), $.field);
 					} else {
@@ -509,12 +513,13 @@
 								env.graph[at.node._[Gun._.soul] = at.soul = $.soul] = at.node;
 								cb(at, at.soul);
 							} else {
-								$.empty? path() : gun.back.path(at.path.join('.'), path); // TODO: clean this up.
 								function path(err, data){
+									if(at.soul){ return }
 									at.soul = Gun.is.soul.on(data) || Gun.is.soul.on(at.obj) || Gun.roulette.call(gun);
 									env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
 									cb(at, at.soul);
 								};
+								$.empty? path() : gun.back.path(at.path.join('.'), path); // TODO: clean this up.
 							}
 						}
 						if(!at.node._[Gun._.HAM]){
@@ -897,7 +902,7 @@
 		window.tab = tab; // for debugging purposes
 		opt = opt || {};
 		tab.headers = opt.headers || {};
-		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random();
+		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
 		tab.prefix = tab.prefix || opt.prefix || 'gun/';
 		tab.prekey = tab.prekey || opt.prekey || '';
 		tab.prenode = tab.prenode || opt.prenode || '_/nodes/';
@@ -912,16 +917,20 @@
 			} else {
 				o.url.pathname = '/' + key;
 			}
-			Gun.log("gun get", key);
+			Gun.log("tab get --->", key);
 			(function local(key, cb){
 				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
 					: tab.prefix + tab.prekey + key
 				if((node = store.get(lkey)) && node[Gun._.soul]){ return local(node, cb) }
-				if(cb.node = node){ Gun.log('via cache', key); setTimeout(function(){cb(null, node)},0) }
+				if(cb.node = node){ Gun.log('tab via cache <---', key); setTimeout(function(){
+					cb(null, node);
+					cb(null, {_: {'#': Gun.is.soul.on(node) }}); // TODO: Don't have the symbols hard coded.
+				},0) }
 			}(key, cb));
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
-					Gun.log('via', url, key, reply.body);
+					reply.body = reply.body || reply.chunk || reply.end || reply.write;
+					Gun.log('tab via', url, key, '<--', reply.body);
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						cb({err: Gun.log(err || "Error: Get failed through " + url) });
 					} else {
@@ -952,6 +961,7 @@
 			store.put(tab.prefix + tab.prekey + key, meta);
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, meta, function(err, reply){
+					reply.body = reply.body || reply.chunk || reply.end || reply.write;
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
 						cb({err: Gun.log(err || "Error: Key failed to be made on " + url) });
@@ -972,6 +982,7 @@
 			});
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function(err, reply){
+					reply.body = reply.body || reply.chunk || reply.end || reply.write;
 					console.log("PUT success?", err, reply);
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						return cb({err: Gun.log(err || "Error: Put failed on " + url) });
@@ -1035,7 +1046,7 @@
 				if(opt.url){ req.url = opt.url }
 				req.headers = req.headers || {};
 				r.ws.cbs[req.headers['ws-rid'] = 'WS' + (+ new Date()) + '.' + Math.floor((Math.random()*65535)+1)] = function(err,res){
-					delete r.ws.cbs[req.headers['ws-rid']];
+					if(res.body || res.end){ delete r.ws.cbs[req.headers['ws-rid']] }
 					cb(err,res);
 				}
 				ws.send(JSON.stringify(req));
