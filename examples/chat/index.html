@@ -1,0 +1,65 @@
+<html>
+	<body>
+		<style>
+			.hide { display: none; }
+			form .who { width: 10%; }
+			form .what { width: 80%; }
+		</style>
+		<ul>
+			<li class="hide">
+				<b class="who"></b>:
+				<span class="what"></span>
+				<i class="when">0</i>
+			</li>
+		</ul>
+		<form>
+			<input class="who" placeholder="alias">
+			<input class="what" placeholder="message">
+			<button>send</button>
+		</form>
+		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="../../gun.js"></script>
+		<script>
+			//Gun.log.verbose = true;
+			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(){
+				console.log("INIT CHAT");
+				return this.put({1: {
+					who: 'sys', what: "Welcome to your chat app!", when: Gun.time.is()
+				}}).key('example/chat/data');
+			});
+			$('form').submit(function(e){
+				var msg = {};
+				msg.when = Gun.time.is() + '_' + Gun.text.random(4);
+				msg.who = $(this).find('.who').val() || 'user' + Gun.text.random(6);
+				msg.what = $(this).find('.what').val() || '';
+				chat.path(msg.when).put(msg);
+				$(this).find('.what').val('');
+				return e.preventDefault(), false;
+			});
+			
+			var $model = $('ul li').clone().removeClass('hide');
+			chat.map().val(function(msg, field){
+				if(!spam.lock && !spam.start){ spam(); }
+				console.log("the message:", msg);
+				var $last = sort(msg.when, $('ul li').last()), $msg = $("#msg-" + msg.when);
+				$msg = $msg.length? $msg : $model.clone().attr('id', 'msg-' + msg.when).insertAfter($last);
+				$msg.find('.who').text(msg.who);
+				$msg.find('.what').text(msg.what);
+				$msg.find('.when').text(msg.when);
+				window.scrollTo(0,document.body.scrollHeight);
+			});
+			function sort(when, elem){
+				return (when > (elem.find('.when').text() || 0))? elem : sort(when, elem.prev());
+			}
+			function spam(){
+				spam.start = true;
+				spam.lock = false;
+				if(spam.count > 1500){ return }
+				$('.what').val(++spam.count);
+				$('form').trigger('submit');
+				setTimeout(spam, 0);
+			}; spam.count = 0;
+			spam.lock = true;
+		</script>
+	</body>
+</html>
