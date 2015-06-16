@@ -424,9 +424,9 @@
 			
 			gun._.at('node').event(function($){
 				var node = gun.__.graph[$.soul];
-				if($.field){ return cb.call(gun, node[$.field], $.field) }
+				if($.field){ return cb.call(gun, node[$.field], $.field || $.at) }
 				if(!gun.__.flag.end[$.soul]){ return }
-				cb.call(gun, Gun.obj.copy(node));
+				cb.call(gun, Gun.obj.copy(node), $.field || $.at);
 			});
 			
 			return gun;
@@ -983,7 +983,7 @@
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, nodes, function(err, reply){
 					reply.body = reply.body || reply.chunk || reply.end || reply.write;
-					console.log("PUT success?", err, reply);
+					Gun.log("PUT success?", err, reply);
 					if(err || !reply || (err = reply.body && reply.body.err)){
 						return cb({err: Gun.log(err || "Error: Put failed on " + url) });
 					} else {
