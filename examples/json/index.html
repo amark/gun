@@ -35,7 +35,7 @@
 				}
 			});
 			
-			var $ = function(s, elem){ return (elem || document).querySelector(s) } // make native look like jQuery.
+			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
 			document.onkeyup = function(e){
 				if(!e || !e.target){ return } // ignore if no element!
 				if(!e.target.attributes.contenteditable){ return } // ignore if element content isn't editable!
