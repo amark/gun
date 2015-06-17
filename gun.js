@@ -115,7 +115,7 @@
 						if(!(ctx.count -= 1)){ ctx.cb() }
 					});
 				});
-				ctx.count -= 1; // TODO!!! YOU NEED A TEST FOR THIS!!! First node was a synchronise HAM op and the second one was a disjoint op. The callback got called before the synchronise operation happened cause I was only incrementally counting HAM ops, rather than counting across the whole graph like I now am doing.
+				ctx.count -= 1;
 			})(ctx.graph, prime);
 			if(!ctx.count){ ctx.cb() }
 			return ctx;

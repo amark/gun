@@ -502,7 +502,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						a: Date.now()
+						a: Gun.time.is()
 					}},
 					a: 0
 				}
@@ -519,7 +519,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						b: Date.now()
+						b: Gun.time.is()
 					}},
 					b: 'c'
 				}
@@ -538,7 +538,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						b: Date.now()
+						b: Gun.time.is()
 					}},
 					b: 'd'
 				}
@@ -572,7 +572,7 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						x: Date.now() - (60 * 1000) // above lower boundary, below now or upper boundary.
+						x: Gun.time.is() - (60 * 1000) // above lower boundary, below now or upper boundary.
 					}},
 					x: 'hello'
 				}
@@ -589,16 +589,16 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						x: Date.now() + (200) // above now or upper boundary, aka future.
+						x: Gun.time.is() + (200) // above now or upper boundary, aka future.
 					}},
 					x: 'how are you?'
 				}
 			}
 
 			expect(gun.__.graph['asdf'].x).to.be('hello');
-			var now = Date.now();
+			var now = Gun.time.is();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(100);
+				expect(Gun.time.is() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].x).to.be('how are you?');
 				done();
 			});
@@ -608,16 +608,16 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						y: Date.now() + (200) // above now or upper boundary, aka future.
+						y: Gun.time.is() + (200) // above now or upper boundary, aka future.
 					}},
 					y: 'goodbye'
 				}
 			}
 
 			expect(gun.__.graph['asdf'].y).to.not.be.ok();
-			var now = Date.now();
+			var now = Gun.time.is();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(100);
+				expect(Gun.time.is() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].y).to.be('goodbye');
 				done();
 			});
@@ -627,8 +627,8 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						y: Date.now() + (2), // above now or upper boundary, aka future.
-						z: Date.now() + (200) // above now or upper boundary, aka future.
+						y: Gun.time.is() + (2), // above now or upper boundary, aka future.
+						z: Gun.time.is() + (200) // above now or upper boundary, aka future.
 					}},
 					y: 'bye',
 					z: 'who'
@@ -637,9 +637,9 @@ describe('Gun', function(){
 
 			expect(gun.__.graph['asdf'].y).to.be('goodbye');
 			expect(gun.__.graph['asdf'].z).to.not.be.ok();
-			var now = Date.now();
+			var now = Gun.time.is();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(100);
+				expect(Gun.time.is() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].y).to.be('bye');
 				expect(gun.__.graph['asdf'].z).to.be('who');
 				done();
@@ -650,10 +650,10 @@ describe('Gun', function(){
 			var prime = {
 				'asdf': {
 					_: {'#': 'asdf', '>':{
-						w: Date.now() + (2), // above now or upper boundary, aka future.
-						x: Date.now() - (60 * 1000), // above now or upper boundary, aka future.
-						y: Date.now() + (200), // above now or upper boundary, aka future.
-						z: Date.now() + (50) // above now or upper boundary, aka future.
+						w: Gun.time.is() + (2), // above now or upper boundary, aka future.
+						x: Gun.time.is() - (60 * 1000), // above now or upper boundary, aka future.
+						y: Gun.time.is() + (200), // above now or upper boundary, aka future.
+						z: Gun.time.is() + (50) // above now or upper boundary, aka future.
 					}},
 					w: true,
 					x: 'nothing',
@@ -666,13 +666,66 @@ describe('Gun', function(){
 			expect(gun.__.graph['asdf'].x).to.be('how are you?');
 			expect(gun.__.graph['asdf'].y).to.be('bye');
 			expect(gun.__.graph['asdf'].z).to.be('who');
-			var now = Date.now();
+			var now = Gun.time.is();
 			var ctx = Gun.union(gun, prime, function(){
-				expect(Date.now() - now).to.be.above(100);
+				expect(Gun.time.is() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].w).to.be(true);
 				expect(gun.__.graph['asdf'].x).to.be('how are you?');
 				expect(gun.__.graph['asdf'].y).to.be('farewell');
 				expect(gun.__.graph['asdf'].z).to.be('doctor who');
+				done();
+			});
+		});
+		
+		it('two nodes', function(done){ // chat app problem where disk dropped the last data, turns out it was a union problem!
+			var state = Gun.time.is();
+			var prime = {
+				'sadf': {
+					_: {'#': 'sadf', '>':{
+						1: state
+					}},
+					1: {'#': 'fdsa'}
+				},
+				'fdsa': {
+					_: {'#': 'fdsa', '>':{
+						msg: state
+					}},
+					msg: "Let's chat!"
+				}
+			}
+
+			expect(gun.__.graph['sadf']).to.not.be.ok();
+			expect(gun.__.graph['fdsa']).to.not.be.ok();
+			var ctx = Gun.union(gun, prime, function(){
+				expect(gun.__.graph['sadf'][1]).to.be.ok();
+				expect(gun.__.graph['fdsa'].msg).to.be("Let's chat!");
+				done();
+			});
+		});
+		
+		it('append third node', function(done){ // chat app problem where disk dropped the last data, turns out it was a union problem!
+			var state = Gun.time.is();
+			var prime = {
+				'sadf': {
+					_: {'#': 'sadf', '>':{
+						2: state
+					}},
+					2: {'#': 'fads'}
+				},
+				'fads': {
+					_: {'#': 'fads', '>':{
+						msg: state
+					}},
+					msg: "hi"
+				}
+			}
+
+			expect(gun.__.graph['sadf']).to.be.ok();
+			expect(gun.__.graph['fdsa']).to.be.ok();
+			var ctx = Gun.union(gun, prime, function(){
+				expect(gun.__.graph['sadf'][1]).to.be.ok();
+				expect(gun.__.graph['sadf'][2]).to.be.ok();
+				expect(gun.__.graph['fads'].msg).to.be("hi");
 				done();
 			});
 		});
