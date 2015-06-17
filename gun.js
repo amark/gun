@@ -326,13 +326,13 @@
 			opt = Gun.text.is(opt)? {soul: opt} : opt || {};
 			opt.soul = opt.soul || opt[Gun._.soul];
 			gun._.at('soul').event(index);
-			if(opt.soul){ // TODO! BUG! WRITE A TEST FOR THIS!
+			if(opt.soul){ // force inject // TODO! BUG! WRITE A TEST FOR THIS!
 				if(!gun.__.graph[opt.soul]){
 					gun.__.graph[opt.soul] = {_: {'#': opt.soul, '>': {}}}; // TODO! SYMBOLS SHOULD NOT BE HARD CODED!
 				}
 				gun.__.keys[key] = gun.__.graph[opt.soul];
 				gun._.at('soul').emit({soul: opt.soul});
-			} else {				
+			} else { // will be injected via a put	
 				(gun.__.flag.start[key] = gun._.at('node')).once(function($){
 					gun.__.keys[key] = gun.__.graph[$.soul];
 					delete gun.__.flag.start[key];

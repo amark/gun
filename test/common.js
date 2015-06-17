@@ -1311,5 +1311,15 @@ describe('Gun', function(){
 				}
 			})
 		});
+		
+		it('key soul', function(done){
+			var gun = Gun();
+			gun.key('me', function(err, ok){
+				expect(err).to.not.be.ok();
+				expect(gun.__.keys['me']).to.be.ok();
+				expect(Gun.is.soul.on(gun.__.keys['me'])).to.be.ok();
+				done();
+			}, 'qwertyasdfzxcv');
+		});
 	});
 });
