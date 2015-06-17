@@ -1321,5 +1321,25 @@ describe('Gun', function(){
 				done();
 			}, 'qwertyasdfzxcv');
 		});
+		
+		it('no false positive null emit', function(done){
+			var gun = Gun({hooks: {get: function(key, cb){
+				cb(null, {_: {'#': soul, '>': {'a': 0}},
+					'a': 'b'
+				});
+				cb(null, {_: {'#': soul }});
+				cb(); // false trigger!
+			}}}), soul = Gun.text.random();
+			
+			gun.get('me').not(function(){
+				done.fail = true;
+			}).val(function(val){
+				setTimeout(function(){
+					expect(val.a).to.be('b');
+					expect(done.fail).to.not.be.ok();
+					done();
+				},5);
+			});
+		});
 	});
 });
