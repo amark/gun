@@ -1327,6 +1327,9 @@ describe('Gun', function(){
 				cb(null, {_: {'#': soul, '>': {'a': 0}},
 					'a': 'b'
 				});
+				cb(null, {_: {'#': soul, '>': {'c': 0}},
+					'c': 'd'
+				});
 				cb(null, {_: {'#': soul }});
 				cb(); // false trigger!
 			}}}), soul = Gun.text.random();
@@ -1336,7 +1339,51 @@ describe('Gun', function(){
 			}).val(function(val){
 				setTimeout(function(){
 					expect(val.a).to.be('b');
+					expect(val.c).to.be('d');
 					expect(done.fail).to.not.be.ok();
+					done();
+				},5);
+			});
+		});
+		
+		it('unique val on stream', function(done){
+			var gun = Gun({hooks: {get: function(key, cb){
+				cb(null, {_: {'#': soul, '>': {'a': 0}},
+					'a': 'b'
+				});
+				cb(null, {_: {'#': soul, '>': {'c': 0}},
+					'c': 'd'
+				});
+				cb(null, {_: {'#': soul }});
+			}}}), soul = Gun.text.random();
+			
+			gun.get('me').val(function(val){
+				done.count = (done.count || 0) + 1;
+				setTimeout(function(){
+					expect(val.a).to.be('b');
+					expect(val.c).to.be('d');
+					expect(done.count).to.be(1);
+					done();
+				},5);
+			});
+		});
+		
+		it('unique path val on stream', function(done){
+			var gun = Gun({hooks: {get: function(key, cb){
+				cb(null, {_: {'#': soul, '>': {'a': 0}},
+					'a': 'a'
+				});
+				cb(null, {_: {'#': soul, '>': {'a': 1}},
+					'a': 'b'
+				});
+				cb(null, {_: {'#': soul }});
+			}}}), soul = Gun.text.random();
+			
+			gun.get('me').path('a').val(function(val){
+				done.count = (done.count || 0) + 1;
+				setTimeout(function(){
+					expect(val).to.be('b');
+					expect(done.count).to.be(1);
 					done();
 				},5);
 			});
