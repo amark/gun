@@ -5,64 +5,61 @@
 			.hide { display: none; }
 			form .who { width: 10%; }
 			form .what { width: 80%; }
+			ul { list-style: none; padding: 0; }
 		</style>
-		<ul>
-			<li class="hide">
-				<b class="who"></b>:
-				<span class="what"></span>
-				<i class="when">0</i>
-				<u class="sort hide">0</u>
-			</li>
-		</ul>
+		<ul><li class="hide">
+			<b class="who"></b>:
+			<span class="what"></span>
+			<i class="hide when">0</i>
+			<u class="hide sort">0</u>
+		</li></ul>
 		<form>
 			<input class="who" placeholder="alias">
 			<input class="what" placeholder="message">
 			<button>send</button>
 		</form>
-		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 		<script src="../../gun.js"></script>
 		<script>
-			//Gun.log.verbose = true;
 			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(){
-				console.log("INIT CHAT");
-				return this.put({1: {
-					who: 'sys', what: "Welcome to your chat app!", when: Gun.time.is()
-				}}).key('example/chat/data');
+				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key('example/chat/data');
 			});
-			$('form').submit(function(e){
-				var msg = {};
-				msg.when = Gun.time.is();
-				msg.who = $(this).find('.who').val() || 'user' + Gun.text.random(6);
-				msg.what = $(this).find('.what').val() || '';
-				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
-				$(this).find('.what').val('');
-				return e.preventDefault(), false;
-			});
-			
-			var $model = $('ul li').clone().removeClass('hide');
 			chat.map().val(function(msg, field){
 				//console.log("the message:", field, msg);
 				if(!spam.lock && !spam.start){ spam(); }
-				var $last = sort(field, $('ul li').last()), $msg = $("#msg-" + field);
-				$msg = $msg.length? $msg : $model.clone().attr('id', 'msg-' + field).insertBefore($last);
-				$msg.find('.who').text(msg.who);
-				$msg.find('.what').text(msg.what);
-				$msg.find('.when').text(new Date(msg.when).toLocaleTimeString());
-				$msg.find('.sort').text(field);
-				window.scrollTo(0,document.body.scrollHeight);
+				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;
+				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last)).id = 'msg-' + field;
+				$('.who', $msg)[$.text] = msg.who;
+				$('.what', $msg)[$.text] = msg.what;
+				$msg.setAttribute('title', $('.when', $msg)[$.text] = new Date(msg.when).toLocaleTimeString().toLowerCase());
+				$('.sort', $msg)[$.text] = field;
+				window.scrollTo(0, document.body.scrollHeight);
 			});
-			function sort(when, elem){
-				return (when > (elem.find('.sort').text() || 0))? elem : sort(when, elem.prev());
-			}
+			
+			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
+			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
+			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || 0))? e : $.sort(when, e.previousSibling) }
+			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
+			
+			$('.who', $('form')).value = document.cookie;
+			$('.what', $('form')).focus();
+			$('form').onsubmit = function(e){
+				var msg = {};
+				msg.when = Gun.time.is();
+				msg.who = document.cookie = $('.who', this).value || 'user' + Gun.text.random(6);
+				msg.what = $('.what', this).value || '';
+				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
+				$('.what', this).value = '';
+				return (e && e.preventDefault()), false;
+			};
+			
 			function spam(){
-				spam.start = true;
-				spam.lock = false;
-				if(spam.count >= 20){ return }
-				$('.what').val(++spam.count);
-				$('form').trigger('submit');
+				spam.start = true; spam.lock = false;
+				if(spam.count >= 100){ return }
+				var $f = $('form');
+				$('.what', $f).value = ++spam.count;
+				$f.onsubmit();
 				setTimeout(spam, 0);
-			}; spam.count = 0;
-			spam.lock = true;
+			}; spam.count = 0; spam.lock = true;
 		</script>
 	</body>
 </html>

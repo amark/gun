@@ -87,15 +87,17 @@
 			});
 			if(ctx.err){ return ctx }
 			(function union(graph, prime){
+				ctx.count += 1;
 				Gun.obj.map(prime, function(node, soul){
 					soul = Gun.is.soul.on(node);
 					if(!soul){ return }
+					ctx.count += 1;
 					var vertex = graph[soul];
 					if(!vertex){ // disjoint // TODO: Maybe not correct? BUG, probably.
 						gun.__.on(soul).emit(graph[soul] = node);
+						ctx.count -= 1;
 						return;
 					}
-					ctx.count += 1;
 					Gun.HAM(vertex, node, function(){}, function(vertex, field, value){
 						if(!vertex){ return }
 						var change = {};
@@ -113,6 +115,7 @@
 						if(!(ctx.count -= 1)){ ctx.cb() }
 					});
 				});
+				ctx.count -= 1; // TODO!!! YOU NEED A TEST FOR THIS!!! First node was a synchronise HAM op and the second one was a disjoint op. The callback got called before the synchronise operation happened cause I was only incrementally counting HAM ops, rather than counting across the whole graph like I now am doing.
 			})(ctx.graph, prime);
 			if(!ctx.count){ ctx.cb() }
 			return ctx;
@@ -292,7 +295,10 @@
 					ctx.hook(key, function(err, data){ // multiple times potentially
 						console.log("chain.get from load", err, data);
 						if(err){ return cb.call(gun, err, data) }
-						if(!data){ return cb.call(gun, null, null), gun._.at('null').emit() }
+						if(!data){
+							if(ctx.soul){ return }
+							return cb.call(gun, null, null), gun._.at('null').emit() 
+						}
 						if(ctx.soul = Gun.is.soul.on(data)){
 							gun._.at('soul').emit({soul: ctx.soul});
 						} else { return cb.call(gun, {err: Gun.log('No soul on data!') }, data) }
@@ -315,13 +321,24 @@
 		Chain.key = function(key, cb, opt){
 			var gun = this, ctx = {};
 			if(!key){ return cb.call(gun, {err: Gun.log('No key!')}), gun }
+			if(!gun.back){ gun = gun.chain() }
 			cb = cb || function(){};
-			opt = opt || {};
-			(gun.__.flag.start[key] = gun._.at('node')).once(function($){
-				gun.__.keys[key] = gun.__.graph[$.soul];
-				delete gun.__.flag.start[key];
-			}, -1);
-			gun._.at('soul').event(function($){ // TODO: once per soul in graph. (?)
+			opt = Gun.text.is(opt)? {soul: opt} : opt || {};
+			opt.soul = opt.soul || opt[Gun._.soul];
+			gun._.at('soul').event(index);
+			if(opt.soul){ // TODO! BUG! WRITE A TEST FOR THIS!
+				if(!gun.__.graph[opt.soul]){
+					gun.__.graph[opt.soul] = {_: {'#': opt.soul, '>': {}}}; // TODO! SYMBOLS SHOULD NOT BE HARD CODED!
+				}
+				gun.__.keys[key] = gun.__.graph[opt.soul];
+				gun._.at('soul').emit({soul: opt.soul});
+			} else {				
+				(gun.__.flag.start[key] = gun._.at('node')).once(function($){
+					gun.__.keys[key] = gun.__.graph[$.soul];
+					delete gun.__.flag.start[key];
+				}, -1);
+			}
+			function index($){ // TODO: once per soul in graph. (?)
 				if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.key)){
 					ctx.hook(key, $.soul, function(err, data){
 						return cb.call(gun, err, data);
@@ -330,7 +347,7 @@
 					console.Log("Warning! You have no key hook!");
 					cb.call(gun, null); // This is in memory success, hardly "success" at all.
 				}
-			});
+			}
 			return gun;
 		}
 		Chain.all = function(key, cb){
@@ -377,6 +394,7 @@
 		Chain.path = function(path, cb){
 			var gun = this.chain();
 			cb = cb || function(){};
+			if(!gun.back._.at){ return cb.call(gun, {err: Gun.log("No context!")}), gun }
 			// TODO: Hmmm once also? figure it out later.
 			gun.back._.at('node').event(function($){
 				var ctx = {path: (Gun.text.ify(path) || '').split('.')};
@@ -424,9 +442,14 @@
 			
 			gun._.at('node').event(function($){
 				var node = gun.__.graph[$.soul];
-				if($.field){ return cb.call(gun, node[$.field], $.field || $.at) }
-				if(!gun.__.flag.end[$.soul]){ return }
+				if($.field){
+					if(ctx[$.soul + $.field]){ return }
+					ctx[$.soul + $.field] = true; // TODO: unregister instead?
+					return cb.call(gun, node[$.field], $.field || $.at) 
+				}
+				if(ctx[$.soul] || !gun.__.flag.end[$.soul]){ return }
 				cb.call(gun, Gun.obj.copy(node), $.field || $.at);
+				ctx[$.soul] = true; // TODO: unregister instead?
 			});
 			
 			return gun;
@@ -899,7 +922,7 @@
 	if(!this.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 	Gun.on('opt').event(function(gun, opt){
-		window.tab = tab; // for debugging purposes
+		var tab = gun.__.tab = gun.__.tab || {}; 
 		opt = opt || {};
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
@@ -997,17 +1020,19 @@
 			});
 		}
 		tab.peers = function(cb){
-			if(cb && !cb.peers){ // there are no peers! this is a local only instance
-				setTimeout(function(){console.log("Warning! You have no peers to connect to!");cb()},1);
-			}
+			if(cb && !cb.peers){ setTimeout(function(){
+				console.log("Warning! You have no peers to connect to!");
+				if(!cb.node){ cb() }
+			},1)}
 		}
-		tab.put.defer = {};
-		request.createServer(function(req, res){
-			if(!req.body){ return }
-			if(Gun.is.node(req.body) || Gun.is.graph(req.body)){
-				Gun.log("client server received request", req);
-				Gun.union(gun, req.body); // TODO: BUG? Interesting, this won't update localStorage because .put isn't called?
-			}
+		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
+			return tab.request = tab.request || request.createServer(function(req, res){
+				if(!req.body){ return }
+				if(Gun.is.node(req.body) || Gun.is.graph(req.body)){
+					Gun.log("client server received request", req);
+					Gun.union(gun, req.body); // TODO: BUG? Interesting, this won't update localStorage because .put isn't called?
+				}
+			}) || true;
 		});
 		gun.__.opt.hooks.get = gun.__.opt.hooks.get || tab.get;
 		gun.__.opt.hooks.put = gun.__.opt.hooks.put || tab.put;
@@ -1029,15 +1054,20 @@
 			if(!opt.base){ return }
 			r.transport(opt, cb);
 		}
-		r.createServer = function(fn){ (r.createServer = fn).on = true }
+		r.createServer = function(fn){ r.createServer.s.push(fn) }
+		r.createServer.ing = function(req, cb){
+			var i = r.createServer.s.length;
+			while(i--){ (r.createServer.s[i] || function(){})(req, cb) }
+		}
+		r.createServer.s = [];
 		r.transport = function(opt, cb){
 			//Gun.log("TRANSPORT:", opt);
 			if(r.ws(opt, cb)){ return }
 			r.jsonp(opt, cb);
 		}
 		r.ws = function(opt, cb){
-			var ws = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
-			if(!ws){ return }
+			var ws, WS = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
+			if(!WS){ return }
 			if(ws = r.ws.peers[opt.base]){
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
 				var req = {};
@@ -1053,7 +1083,7 @@
 				return true;
 			}
 			if(ws === false){ return }
-			ws = r.ws.peers[opt.base] = new WebSocket(opt.base.replace('http','ws'));
+			ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
 			ws.onopen = function(o){ r.ws(opt, cb) };
 			ws.onclose = window.onbeforeunload = function(c){
 				if(!c){ return }
@@ -1074,7 +1104,7 @@
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (r.ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
 				Gun.log("We have a pushed message!", res);
-				if(res.body){ r.createServer(res, function(){}) } // emit extra events.
+				if(res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
 			};
 			ws.onerror = function(e){ Gun.log(e); };
 			return true;
@@ -1119,7 +1149,7 @@
 					while(reply.body && reply.body.length && reply.body.shift){ // we're assuming an array rather than chunk encoding. :(
 						var res = reply.body.shift();
 						//Gun.log("-- go go go", res);
-						if(res && res.body){ r.createServer(res, function(){}) } // emit extra events.
+						if(res && res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
 					}
 				});
 			}, res.headers.poll);
