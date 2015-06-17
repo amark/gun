@@ -473,9 +473,9 @@
 						return true;
 					})){ return }
 					if(opt.change){
-						cb.call(gun, Gun.obj.copy(delta || node), $.field);
+						cb.call(gun, Gun.obj.copy(delta || node), $.field || $.at);
 					} else {
-						cb.call(gun, Gun.obj.copy(node), $.field);
+						cb.call(gun, Gun.obj.copy(node), $.field || $.at);
 					}
 				}
 			});
