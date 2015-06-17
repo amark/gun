@@ -36,8 +36,8 @@
 			});
 			
 			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
 			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || 0))? e : $.sort(when, e.previousSibling) }
+			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
 			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
 			
 			$('.who', $('form')).value = document.cookie;
