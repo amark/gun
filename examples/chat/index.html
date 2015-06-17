@@ -2,15 +2,16 @@
 <html>
 	<body>
 		<style>
+			html, body { font-size: 14pt; }
 			.hide { display: none; }
 			form .who { width: 10%; }
 			form .what { width: 80%; }
 			ul { list-style: none; padding: 0; }
 		</style>
 		<ul><li class="hide">
+			<i class="when" style="color: #555; font-size: 12pt;">0</i>
 			<b class="who"></b>:
 			<span class="what"></span>
-			<i class="hide when">0</i>
 			<u class="hide sort">0</u>
 		</li></ul>
 		<form>
@@ -23,16 +24,16 @@
 			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(){
 				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key('example/chat/data');
 			});
-			chat.map().val(function(msg, field){
-				//console.log("the message:", field, msg);
-				if(!spam.lock && !spam.start){ spam(); }
+			chat.map().on(function(msg, field){
 				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;
-				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last)).id = 'msg-' + field;
+				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last.nextSibling)).id = 'msg-' + field;
 				$('.who', $msg)[$.text] = msg.who;
 				$('.what', $msg)[$.text] = msg.what;
-				$msg.setAttribute('title', $('.when', $msg)[$.text] = new Date(msg.when).toLocaleTimeString().toLowerCase());
+				$('.when', $msg)[$.text] = new Date(msg.when).toLocaleTimeString().toLowerCase();
 				$('.sort', $msg)[$.text] = field;
-				window.scrollTo(0, document.body.scrollHeight);
+				if(document.body.scrollHeight - (window.scrollY + window.innerHeight) <= $ul.lastChild.scrollHeight + 50){
+					window.scrollTo(0, document.body.scrollHeight);
+				}
 			});
 			
 			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
@@ -40,26 +41,17 @@
 			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
 			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
 			
-			$('.who', $('form')).value = document.cookie;
+			$('.who', $('form')).value = (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'';
 			$('.what', $('form')).focus();
 			$('form').onsubmit = function(e){
 				var msg = {};
 				msg.when = Gun.time.is();
-				msg.who = document.cookie = $('.who', this).value || 'user' + Gun.text.random(6);
+				document.cookie = ('alias=' + (msg.who = $('.who', this).value || 'user' + Gun.text.random(6)));
 				msg.what = $('.what', this).value || '';
 				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
 				$('.what', this).value = '';
 				return (e && e.preventDefault()), false;
 			};
-			
-			function spam(){
-				spam.start = true; spam.lock = false;
-				if(spam.count >= 100){ return }
-				var $f = $('form');
-				$('.what', $f).value = ++spam.count;
-				$f.onsubmit();
-				setTimeout(spam, 0);
-			}; spam.count = 0; spam.lock = true;
 		</script>
 	</body>
 </html>
