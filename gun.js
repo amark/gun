@@ -297,7 +297,8 @@
 						if(err){ return cb.call(gun, err, data) }
 						if(!data){
 							if(ctx.soul){ return }
-							return cb.call(gun, null, null), gun._.at('null').emit() 
+							cb.call(gun, null, null);
+							return gun._.at('null').emit();
 						}
 						if(ctx.soul = Gun.is.soul.on(data)){
 							gun._.at('soul').emit({soul: ctx.soul});
