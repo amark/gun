@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../gun.js"></script>
+	</head>
 	<body>
 		<style>
 			html, body { font-size: 14pt; }
@@ -19,12 +23,11 @@
 			<input class="what" placeholder="message">
 			<button>send</button>
 		</form>
-		<script src="../../gun.js"></script>
 		<script>
 			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(){
 				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key('example/chat/data');
 			});
-			chat.map().on(function(msg, field){
+			chat.map().val(function(msg, field){
 				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;
 				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last.nextSibling)).id = 'msg-' + field;
 				$('.who', $msg)[$.text] = msg.who;

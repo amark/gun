@@ -942,6 +942,7 @@
 				o.url.pathname = '/' + key;
 			}
 			Gun.log("tab get --->", key);
+			// to comment out or not to?
 			(function local(key, cb){
 				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
 					: tab.prefix + tab.prekey + key
@@ -951,6 +952,7 @@
 					cb(null, {_: {'#': Gun.is.soul.on(node) }}); // TODO: Don't have the symbols hard coded.
 				},0) }
 			}(key, cb));
+			//console.log("DO NOT COMMIT WITH LOCALSTORAGE COMMENTED OUT!");
 			Gun.obj.map(gun.__.opt.peers, function(peer, url){
 				request(url, null, function(err, reply){
 					reply.body = reply.body || reply.chunk || reply.end || reply.write;
@@ -1029,7 +1031,9 @@
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
 			return tab.request = tab.request || request.createServer(function(req, res){
 				if(!req.body){ return }
-				if(Gun.is.node(req.body) || Gun.is.graph(req.body)){
+				if(Gun.is.node(req.body) || Gun.is.graph(req.body, function(node, soul){
+					gun.__.flag.end[soul] = true; // TODO! Put this in CORE not in TAB driver?
+				})){
 					Gun.log("client server received request", req);
 					Gun.union(gun, req.body); // TODO: BUG? Interesting, this won't update localStorage because .put isn't called?
 				}
