@@ -298,7 +298,7 @@
 						if(!data){
 							if(ctx.soul){ return }
 							cb.call(gun, null, null);
-							return gun._.at('null').emit();
+							return gun._.at('null').emit({key: ctx.key});
 						}
 						if(ctx.soul = Gun.is.soul.on(data)){
 							gun._.at('soul').emit({soul: ctx.soul});
@@ -314,7 +314,7 @@
 				} else {
 					console.Log("Warning! You have no persistence layer to get from!");
 					cb.call(gun, null, null); // Technically no error, but no way we can get data.
-					gun._.at('null').emit();
+					gun._.at('null').emit({key: ctx.key});
 				}
 			}
 			return gun;
@@ -601,15 +601,34 @@
 			
 			return gun;
 		}
+		Chain.chain.set = function(val, cb, opt){ // TODO: NEEDS TESTS!!!!!! WARNING: Do we keep?
+			var gun = this, ctx = {}, drift = Gun.time.now();
+			cb = cb || function(){};
+			opt = opt || {};
+			
+			if(!gun.back){ gun = gun.put({}) }
+			gun = gun.not(function(next, key){
+				return key? this.put({}).key(key) : this.put({});
+			});
+			if(!val && !Gun.is.value(val)){ return gun }
+			
+			var obj = {};
+			obj['I' + drift + 'R' + Gun.text.random(5)] = val;
+			return gun.put(obj, cb);
+		}
 		Chain.not = function(cb){
 			var gun = this, ctx = {};
 			cb = cb || function(){};
 			
-			gun._.at('null').once(function(){
-				var chain = gun.chain(), next = cb.call(chain);
-				next._.at('soul').event(function($){ gun._.on('soul').emit($) });
-				next._.at('node').event(function($){ gun._.on('node').emit($) });
-				chain._.on('soul').emit({soul: Gun.roulette.call(chain), empty: true});
+			gun._.at('null').once(function($){
+				function kick(next){
+					if(++c){ return Gun.log("Warning! Multiple `not` resumes!"); }
+					next._.at('soul').event(function($){ gun._.on('soul').emit($) });
+					next._.at('node').event(function($){ gun._.on('node').emit($) });
+				}
+				var $ = $ || {}, chain = gun.chain(), next = cb.call(chain, kick, $.key), c = -1;
+				if(Gun.is(next)){ kick(next) }
+				chain._.on('soul').emit({soul: Gun.roulette.call(chain), empty: true, key: $.key});
 			});
 			
 			return gun;
