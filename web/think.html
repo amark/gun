@@ -1,0 +1,252 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="./dep/jquery.js"></script>
+</head>
+<body>
+
+<p>Before we can start building anything interesting, we should have a way to jot down our thoughts. Therefore the first thing we will build is a tool to keep track of what needs to be done. The infamous To-Do app, allowing us to keep temporary notes.</p>
+
+<p>So what are the requirements? The ability to add a note, read our notes, and clear them off. Additionally, we need a space to keep these notes in, and a web page to access them through. Let's start with the page!</p>
+
+<div class="edit">... loading editor ...
+	<textarea style="height: 13em"><html>
+	<body>
+		<h2>Title</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+	</body>
+</html></textarea>
+</div>
+<script>$('.edit').load('./editor.html')</script>
+
+<style>
+	.none { display: none }
+	.step-at { display: block }
+	textarea { border: none; width: 100%; }
+</style>
+
+<div id="step-1" class="step">
+	<p>What does this do? HTML is how we code the layout of a web page.</p>
+	<ul>
+		<li>We first must wrap all our code in an <u>html</u> tag so our computer knows it is a web page.</li>
+		<li>The <u>body</u> tag tells it to display the contents enclosed within.</li>
+		<li><u>h2</u> is one of many semantic tags for declaring a title, others include <u>h1</u>, <u>h3</u> and so on of different sizes.</li>
+		<li>A <u>form</u> is a container for getting information from a user.</li>
+		<li>Form's have <u>input</u>s which let the user type data in, it is a self-closing tag.</li>
+		<li>The <u>button</u> can be pressed, causing an action that we code to happen.</li>
+		<li><u>ul</u> is an unordered list, we will display our thoughts inside that list.</li>
+	</ul>
+	Now, try changing the <u>h1</u> text from "Title" to the name of our app, "Thoughts".
+	<button>I've done it!</button>
+	
+<textarea id="code-1" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+<!-- Replace this Line with the Code in the Step below! -->
+	</body>
+</html></textarea>
+</div>
+
+<div id="step-2" class="step">
+	<p>See how the preview live updated? This helps us see our code as we type it.</p>
+	<p>Now we want to write code that reacts to a user pressing the 'add' button. We can do this using raw javascript but it quickly becomes verbose, so to keep things concise we will use a popular library called jQuery. Also, we need a way to store the thoughts, so we will include GUN as well.</p>
+	<p>Insert the following inbetween the ending <u>ul</u> tag and the ending <u>body</u> tag:</p>
+	<textarea style="height: 6em;">
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		<script>
+			alert("Good job! Our code will go in this script tag!");
+		</script></textarea>
+	<button>It worked.</button>
+	
+<textarea id="code-2" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		</script>
+			alert("Good job! Our code will go in this script tag!");
+		</script>
+	</body>
+</html></textarea>
+</div>
+
+<div id="step-3" class="step">
+	<p>Wonderful! You should have gotten the alert message, this means writing code works! Let's replace the alert line with code that reacts to user input.</p>
+	<textarea style="height: 5em;">
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				alert("We got your thought! " + $('input').val());
+			});</textarea>
+	<p>What's going on here?</p>
+	<ul>
+		<li>The <u>$</u> is a symbol for jQuery, we call it by enclosing text within parenthesis <u>()</u>.</li>
+		<li>jQuery will give us a reference to the HTML tag that corresponds to <u>'form'</u>, the quotation marks denote text in javascript.</li>
+		<li><u>on</u> is a <u>$</u> command that can be called as well. We call it with the text of the name of the event we want to react to, and a <u>function</u> which gets called when that event happens.</li>
+		<li>There are many different events, such as <u>'click'</u> when a user presses something or <u>'mousemove'</u>. But we will use <u>'submit'</u> because it reacts to both a button <u>'click'</u> or a return keystroke on a form.</li>
+		<li>A <u>function</u> is code that does not get run until it is called. It typically gets called with data, like <u>event</u>.</li>
+		<li>The default behavior of a form is to cause the browser to change pages, we can prevent that by calling <u>preventDefault</u> on the <u>event</u>.</li>
+		<li>Finally, caling <u>$</u> with <u>'input'</u> will reference the HTML input tag and then calling <u>val</u> on that gives us the value the user typed in.</li>
+	</ul>
+	<button>Got it.</button>
+	
+<textarea id="code-3" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		</script>
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				alert("We got your thought! " + $('input').val());
+			});
+		</script>
+	</body>
+</html></textarea>
+</div>
+
+<div id="step-4" class="step">
+	<p>Now that users can jot down their thoughts, we need a place to save them.</p>
+	<textarea style="height: 1em;">
+			var gun = Gun().get('thoughts').set();
+	</textarea>
+	<ul>
+		<li>The <u>var</u>iable keyword tells javascript that we want to create a reference named <u>gun</u> that we can reuse.</li>
+		<li>First we call <u>Gun</u> to start up the database, which only needs to be done once.</li>
+		<li>Then we can chain off of it, by calling <u>get</u> with the text of the name of our data to load.</li>
+		<li>However, no data has been saved to <u>'thoughts'</u> yet! So we cannot open anything.</li>
+		<li>If we add calling <u>set</u> onto the chain, it will update <u>'thoughts'</u> to hold data.</li>
+		<li>Now <u>gun</u> is a reference to this data chain! We will use it in the next step to save our thoughts</u>
+	</ul>
+	<button>Let's do it!</button>
+<textarea id="code-4" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		</script>
+			var gun = Gun().get('thoughts').set();
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				alert("We got your thought! " + $('input').val());
+			});
+		</script>
+	</body>
+</html></textarea>
+</div>
+
+<div id="step-5" class="step">
+	<p>step 5</p>
+	<textarea>
+			var gun = Gun();
+	</textarea>
+	<button>Go!</button>
+<textarea id="code-3" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		</script>
+			var gun = Gun().get('thoughts').set();
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				gun.set($('input').val());
+				$('input').val("");
+			});
+		</script>
+	</body>
+</html></textarea>
+</div>
+
+<script>
+$('.step').addClass('none').first().addClass('step-at');
+$('button').on('click', next);
+function next(){
+	$('.step-at').removeClass('step-at');
+	$('#step-' + (++next.at)).addClass('step-at');
+	(next.step[next.at] || function(){})();
+}
+next.at = 1;
+next.comment = /\s*\/\*(.*?)\*\/\s*/i;
+next.unwrap = /\s*<\/?(html|body)>\s*\s*/ig;
+next.wrap = function(c){ return '<html>\n\t<body>\n\t\t' + c + '\n\t</body>\n</html>' }
+next.step = [null, null, function(){
+	next.mir = $('.CodeMirror')[0].CodeMirror;
+	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	code.find('h2').text('Thoughts');
+	next.mir.setValue(next.wrap($.trim(code.html()) + "\n<!-- Replace this line with the Code in the Step below! -->"));
+}, function(){
+	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var ctx = {$: true, gun: true, alert: true};
+	code.find('script').each(function(){
+		var src = ($(this).attr('src') || '').toLowerCase();
+		if(src.indexOf('jquery')){ ctx.$ = false }
+		if(src.indexOf('gun')){ ctx.gun = false }
+		if(($(this).text()||'').indexOf('alert')){ ctx.alert = false }
+	});
+	code.contents().filter(function(){ return this.nodeType == 8 }).remove();
+	var ul = code.find('ul');
+	if(ctx.alert){ ul.after($('<script>').text('\n\t\t\talert("Good job! Our code will go in this script tag!");\n\t\t')) }
+	if(ctx.gun){ ul.after($('<script>').attr('src', 'https://rawgit.com/amark/gun/develop/gun.js')) }
+	if(ctx.$){ ul.after($('<script>').attr('src','https://code.jquery.com/jquery-1.11.3.min.js')) }
+	next.mir.setValue(next.wrap($.trim(code.html().replace(/<script/ig, '\n\t\t<script'))));
+}, function(){
+	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var script = code.find('script').last();
+	if(0 > script.text().indexOf('.on')){
+		script.text("\n\t\t\t$('form').on('submit', function(event){"
+		+	"\n\t\t\t\tevent.preventDefault();"
+		+	"\n\t\t\t\talert(\"We got your thought! \" + $('input').val());"
+		+	"\n\t\t\t});\n\t\t");
+	}
+	script.text('\n/* Replace this line with the Code in the Step below! */' + script.text());
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var script = code.find('script').last();
+	script.text(script.text().replace(next.comment, ''));
+	if(0 > script.text().indexOf('Gun')){
+		script.text("\n\t\t\tvar gun = Gun().get('thoughts').set();\n\t\t\t" + script.text());
+	}
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}]
+</script>
+</body>
+</html>

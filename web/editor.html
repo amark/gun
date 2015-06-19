@@ -1,0 +1,64 @@
+<html>
+<body>
+<link rel="stylesheet" href="./dep/codemirror/codemirror.css">
+<link rel="stylesheet" href="./dep/codemirror/colorforth.css">
+<style>
+	.edit { 
+		border: 1px dashed; 
+		overflow: hidden; 
+	}
+	.CodeMirror {
+		float: left;
+		padding: .5em;
+		height: auto;
+		width: 49%;
+	}
+	iframe { 
+		float: left;
+		width: 49%;
+		border: none;
+	}
+</style>
+<textarea style="height: 15em"><html>
+	<body>
+		<h2>Title</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+	</body>
+</html></textarea>
+<iframe></iframe>
+<script src="./dep/codemirror/codemirror.js"></script>
+<script src="./dep/codemirror/xml.js"></script>
+<script src="./dep/codemirror/javascript.js"></script>
+<script src="./dep/codemirror/css.js"></script>
+<script src="./dep/codemirror/htmlmixed.js"></script>
+<script src="./dep/codemirror/matchbrackets.js"></script>
+<script>
+var editor = CodeMirror.fromTextArea($('textarea')[0], {
+	theme: 'colorforth',
+	//lineNumbers: true,
+	matchBrackets: true,
+	mode: "text/html",
+	tabSize: 2
+});
+
+editor.on("change", function change() {
+	clearTimeout(change.throttle);
+	change.throttle = setTimeout(live, 100);
+});
+   
+function live() {
+	var frame = $('iframe')[0];
+	frame = frame.contentDocument ||  frame.contentWindow.document;
+	frame.open();
+	frame.write(editor.getValue());
+	frame.close();
+}
+setTimeout(live, 100);    
+</script>
+</html>
+</body>
