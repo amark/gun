@@ -601,7 +601,7 @@
 			
 			return gun;
 		}
-		Chain.chain.set = function(val, cb, opt){ // TODO: NEEDS TESTS!!!!!! WARNING: Do we keep?
+		Chain.set = function(val, cb, opt){ // TODO: NEEDS TESTS!!!!!! WARNING: Do we keep?
 			var gun = this, ctx = {}, drift = Gun.time.now();
 			cb = cb || function(){};
 			opt = opt || {};
