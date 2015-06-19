@@ -1,4 +1,5 @@
-describe('All', function(){ return;
+describe('All', function(){ 
+	return;
 	var expect = global.expect = require("./expect");
 
 	var Gun = Gun || require('../gun');
