@@ -1,21 +1,50 @@
 {
-	"name": "gun",
-	"version": "0.2.0",
-	"author": "Mark Nadal",
-	"description": "Graph engine.",
-	"engines": {
-		"node": "~>0.6.6"
-	},
-	"dependencies": {
-		"aws-sdk": "~>2.0.0",
-		"formidable": "~>1.0.15",
-		"ws": "~>0.4.32"
-	},
-	"devDependencies": {
-		"mocha": "~>1.9.0"
-	},
-	"scripts": {
-		"start": "node examples/http.js 8080",
-		"test": "mocha"
-	}
+  "name": "gun",
+  "version": "0.2.0",
+  "description": "Graph engine",
+  "main": "gun.js",
+  "scripts": {
+    "start": "node examples/http.js 8080",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amark/gun.git"
+  },
+  "keywords": [
+    "graph",
+    "document",
+    "key",
+    "value",
+    "relational",
+    "datastore",
+    "database",
+    "engine",
+    "realtime",
+    "decentralized",
+    "peer-to-peer",
+    "P2P",
+    "OSS",
+    "distributed",
+    "embedded",
+    "localstorage",
+    "S3"
+  ],
+  "author": "Mark Nadal",
+  "license": "(Zlib OR MIT OR Apache-2.0)",
+  "bugs": {
+    "url": "https://github.com/amark/gun/issues"
+  },
+  "homepage": "https://github.com/amark/gun#readme",
+  "engines": {
+    "node": "~>0.6.6"
+  },
+  "dependencies": {
+    "aws-sdk": "~>2.0.0",
+    "formidable": "~>1.0.15",
+    "ws": "~>0.4.32"
+  },
+  "devDependencies": {
+    "mocha": "~>1.9.0"
+  }
 }
