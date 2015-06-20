@@ -1,6 +1,8 @@
 gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun)
 ===
 
+GUN is a realtime, decentralized, embedded, graph database engine.
+
 ## Getting Started
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
@@ -159,3 +161,30 @@ So join our community, in the quest of learning cool things and helping yourself
  - MongoDB Query Documents
  - Neo4j Cypher
  - Gremlin Query Language
+
+
+## Contributors
+
+Thanks to the following people who have contributed to GUN:
+ [agborkowski](https://github.com/agborkowski)
+ - [alexlafroscia](https://github.com/alexlafroscia)
+ - [anubiann00b](https://github.com/anubiann00b)
+ - [bromagosa](https://github.com/bromagosa)
+ - [coolaj86](https://github.com/coolaj86)
+ - [d-oliveros](https://github.com/d-oliveros)
+ - [danscan](https://github.com/danscan)
+ - [forrestjt](https://github.com/forrestjt)
+ - [gedw99](https://github.com/gedw99)
+ - [HelloCodeMing](https://github.com/HelloCodeMing)
+ - [JosePedroDias](https://github.com/josepedrodias)
+ - [onetom](https://github.com/onetom)
+ - [ndarilek](https://github.com/ndarilek)
+ - [phpnode](https://github.com/phpnode)
+ - [riston](https://github.com/riston)
+ - [rootsical](https://github.com/rootsical)
+ - [rrrene](https://github.com/rrrene)
+ - [ssr1ram](https://github.com/ssr1ram)
+ - [Xe](https://github.com/Xe)
+ - [zot](https://github.com/zot)
+
+This list of contributors was manually compiled; if you have contributed in code, issues, or conversation and your GitHub username is not listed, please submit an issue so we can get you added!
