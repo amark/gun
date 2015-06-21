@@ -1209,6 +1209,7 @@ describe('Gun', function(){
 		});
 		
 		it('context node put val', function(done){
+			// EFFECTIVELY a TIMEOUT from the previous test.
 			foo.put('banana', function(err){
 				expect(err).to.be.ok();
 				done();
@@ -1216,6 +1217,7 @@ describe('Gun', function(){
 		});
 		
 		it('context node put node', function(done){
+			// EFFECTIVELY a TIMEOUT from the previous test.
 			foo.put({bar: {zoo: 'who'}}).val(function(obj){
 				expect(obj.foo).to.be('bar');
 				expect(Gun.is.soul(obj.bar)).to.ok();
@@ -1224,6 +1226,7 @@ describe('Gun', function(){
 		});
 		
 		it('context node and field put value', function(done){
+			// EFFECTIVELY a TIMEOUT from the previous test.
 			var tar = foo.path('tar');
 			tar.put('zebra').val(function(val){
 				expect(val).to.be('zebra');
@@ -1233,6 +1236,7 @@ describe('Gun', function(){
 		
 		var bar;
 		it('context node and field of relation put node', function(done){
+			// EFFECTIVELY a TIMEOUT from the previous test.
 			bar = foo.path('bar');
 			bar.put({combo: 'double'}).val(function(obj){
 				expect(obj.zoo).to.be('who');
@@ -1242,6 +1246,7 @@ describe('Gun', function(){
 		});
 		
 		it('context node and field, put node', function(done){
+			// EFFECTIVELY a TIMEOUT from the previous test.
 			bar.path('combo').put({another: 'node'}).val(function(obj){
 				expect(obj.another).to.be('node');
 				bar.val(function(node){
@@ -1386,6 +1391,37 @@ describe('Gun', function(){
 					expect(done.count).to.be(1);
 					done();
 				},5);
+			});
+		});
+		
+		it('double not', function(done){ // from the thought tutorial
+			var gun = Gun().get('thoughts').not(function(n, key){
+				return this.put({}).key(key);
+			});
+			
+			setTimeout(function(){
+				gun.not(function(){
+					console.log("DOUBLE NOT!!!!!!");
+					done.not = true;
+				}).val(function(){
+					expect(done.not).to.not.be.ok();
+					done();
+				})
+			});
+		});
+
+		it('set', function(done){
+			var gun = Gun().get('set').set(), i = 0;
+			gun.val(function(val){
+				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
+			});
+			gun.set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
+				.map().val(function(val){ // TODO! BUG? If we do gun.set it immediately calls and we get stale data. Is this wrong?
+				expect(val).to.be(++i);
+				if(4 === i){
+					console.log("TODO? BUG! Double soul?", gun.__.graph);
+					done() 
+				}
 			});
 		});
 	});

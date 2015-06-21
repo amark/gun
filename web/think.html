@@ -133,8 +133,7 @@
 <div id="step-4" class="step">
 	<p>Now that users can jot down their thoughts, we need a place to save them.</p>
 	<textarea style="height: 1em;">
-			var gun = Gun().get('thoughts').set();
-	</textarea>
+			var gun = Gun().get('thoughts').set();</textarea>
 	<ul>
 		<li>The <u>var</u>iable keyword tells javascript that we want to create a reference named <u>gun</u> that we can reuse.</li>
 		<li>First we call <u>Gun</u> to start up the database, which only needs to be done once.</li>
@@ -170,11 +169,12 @@
 	<p>Replace the alert line in the submit function with the following:</p>
 	<textarea style="height: 2.5em;">
 				gun.set($('input').val());
-				$('input').val("");
-	</textarea>
-	<p>We're telling gun to add the value of the input as an item in the <u>set</u>.</p>
-	<p>Then we also want the input's <u>val</u>ue to be empty text, so we can add a new thought later.</u>
-	<button>Go!</button>
+				$('input').val("");</textarea>
+	<ul>
+		<li>We're telling gun to add the value of the input as an item in the <u>set</u>.</li>
+		<li>Then we also want the input's <u>val</u>ue to be empty text, so we can add a new thought later.</li>
+	</ul>
+	<button>Getting close!</button>
 <textarea id="code-5" class="none" style="height: 14em"><html>
 	<body>
 		<h2>Thoughts</h2>
