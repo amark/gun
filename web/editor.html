@@ -52,7 +52,8 @@ editor.on("change", function change() {
 });
    
 function live() {
-	var frame = $('iframe')[0];
+	var frame = $('iframe').height($('.CodeMirror').height() * .95)[0];
+	$('iframe').height($('.CodeMirror').height());
 	frame = frame.contentDocument ||  frame.contentWindow.document;
 	frame.open();
 	frame.write(editor.getValue());

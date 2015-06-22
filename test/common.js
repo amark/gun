@@ -1419,7 +1419,9 @@ describe('Gun', function(){
 				.map().val(function(val){ // TODO! BUG? If we do gun.set it immediately calls and we get stale data. Is this wrong?
 				expect(val).to.be(++i);
 				if(4 === i){
-					console.log("TODO? BUG! Double soul?", gun.__.graph);
+					done.i = 0;
+					Gun.obj.map(gun.__.graph, function(){ done.i++ });
+					expect(done.i).to.be(1); // make sure there isn't double.
 					done() 
 				}
 			});

@@ -1,6 +1,21 @@
-(function(){ return; // TODO! BUG! Causes tests to crash and burn badly.
-
+(function(){ return;
 	var Gun = require('../gun');
+	var done = function(){};
+	
+	var gun = Gun().get('set').set(), i = 0;
+	gun.val(function(val){
+		console.log('t1', val);
+	}).set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
+		.map().val(function(val){ // TODO! BUG? If we do gun.set it immediately calls and we get stale data. Is this wrong?
+		console.log('t2', val, ++i);
+		if(4 === i){
+			console.log("TODO? BUG! Double soul?", gun.__.graph);
+			done() 
+		}
+	});
+
+	return; // TODO! BUG! Causes tests to crash and burn badly.
+	
 	require('../lib/set');
 	var gun = Gun();
 	
