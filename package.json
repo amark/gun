@@ -2,7 +2,7 @@
   "name": "gun",
   "version": "0.2.0",
   "description": "Graph engine",
-  "main": "gun.js",
+  "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
     "test": "mocha"
