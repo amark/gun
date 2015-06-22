@@ -598,7 +598,7 @@
 			
 			return gun;
 		}
-		Chain.set = function(val, cb, opt){ // TODO: NEEDS TESTS!!!!!! WARNING: Do we keep?
+		Chain.set = function(val, cb, opt){
 			var gun = this, ctx = {}, drift = Gun.time.now();
 			cb = cb || function(){};
 			opt = opt || {};
@@ -616,7 +616,7 @@
 			cb = cb || function(){};
 			
 			gun._.at('null').once(function(key){
-				if(gun.__.keys[key = (key || {}).key] || key.soul){ return }
+				if(key.soul || gun.__.keys[key = (key || {}).key] || gun.__.flag.start[key]){ return }
 				// TODO! BUG? There WAS a timing bug with the above, but setTimeout seems to fix it compared to setImmediate.
 				var kick = function(next){
 					if(++c){ return Gun.log("Warning! Multiple `not` resumes!"); }
