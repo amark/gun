@@ -996,64 +996,104 @@
 				cb.peers = true;
 			}); tab.peers(cb);
 		}
-		tab.key = function(key, soul, cb){
+		tab.key = function(key, soul, cb, opt){
 			var meta = {};
+			opt = opt || {};
 			meta[Gun._.soul] = soul = Gun.text.is(soul)? soul : (soul||{})[Gun._.soul];
 			if(!soul){ return cb({err: Gun.log("No soul!")}) }
 			store.put(tab.prefix + tab.prekey + key, meta);
-			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				request(url, meta, function(err, reply){
-					reply.body = reply.body || reply.chunk || reply.end || reply.write;
-					if(err || !reply || (err = reply.body && reply.body.err)){
-						// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
-						cb({err: Gun.log(err || "Error: Key failed to be made on " + url) });
-					} else {
-						cb(null, reply.body);
-					}
-				}, {url: {pathname: '/' + key }, headers: tab.headers});
-				cb.peers = true;
-			}); tab.peers(cb);
+			if(!(cb.local = opt.local || opt.soul)){
+				Gun.obj.map(gun.__.opt.peers, function(peer, url){
+					request(url, meta, function(err, reply){
+						reply.body = reply.body || reply.chunk || reply.end || reply.write;
+						if(err || !reply || (err = reply.body && reply.body.err)){
+							// tab.key(key, soul, cb); // naive implementation of retry TODO: BUG: need backoff and anti-infinite-loop!
+							cb({err: Gun.log(err || "Error: Key failed to be made on " + url) });
+						} else {
+							cb(null, reply.body);
+						}
+					}, {url: {pathname: '/' + key }, headers: tab.headers});
+					cb.peers = true;
+				}); 
+			} tab.peers(cb);
 		}
-		tab.put = tab.put || function(nodes, cb){
+		tab.put = tab.put || function(nodes, cb, opt){
 			cb = cb || function(){};
+			opt = opt || {};
 			// TODO: batch and throttle later.
 			// tab.store.put(cb.id = 'send/' + Gun.text.random(), nodes); // TODO: store SENDS until SENT.
 			Gun.obj.map(nodes, function(node, soul){
 				if(!gun || !gun.__ || !gun.__.graph || !gun.__.graph[soul]){ return }
 				store.put(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
 			});
-			Gun.obj.map(gun.__.opt.peers, function(peer, url){
-				request(url, nodes, function(err, reply){
-					reply.body = reply.body || reply.chunk || reply.end || reply.write;
-					Gun.log("PUT success?", err, reply);
-					if(err || !reply || (err = reply.body && reply.body.err)){
-						return cb({err: Gun.log(err || "Error: Put failed on " + url) });
-					} else {
-						cb(null, reply.body);
-					}
-				}, {headers: tab.headers});
-				cb.peers = true;
-			}); tab.peers(cb);
+			if(!(cb.local = opt.local)){ 
+				Gun.obj.map(gun.__.opt.peers, function(peer, url){
+					request(url, nodes, function(err, reply){
+						reply.body = reply.body || reply.chunk || reply.end || reply.write;
+						Gun.log("PUT success?", err, reply);
+						if(err || !reply || (err = reply.body && reply.body.err)){
+							return cb({err: Gun.log(err || "Error: Put failed on " + url) });
+						} else {
+							cb(null, reply.body);
+						}
+					}, {headers: tab.headers});
+					cb.peers = true;
+				});
+			} tab.peers(cb);
 			Gun.obj.map(nodes, function(node, soul){ // TODO: BUG? is this really necessary?
 				gun.__.on(soul).emit(node);
 			});
 		}
 		tab.peers = function(cb){
 			if(cb && !cb.peers){ setTimeout(function(){
-				console.log("Warning! You have no peers to connect to!");
+				if(!cb.local){ console.log("Warning! You have no peers to connect to!") }
 				if(!cb.node){ cb() }
 			},1)}
 		}
+		tab.server = tab.server || function(req, res){
+			if(!req || !res || !req.url || !req.method){ return }
+			req.url = req.url.href? req.url : document.createElement('a');
+			req.url.href = req.url.href || req.url;
+			req.url.key = (req.url.pathname||'').replace(tab.server.regex,'').replace(/^\//i,'') || '';
+			req.method = req.body? 'put' : 'get';
+			if('get' == req.method){ return tab.server.get(req, res) }
+			if('put' == req.method || 'post' == req.method){ return tab.server.put(req, res) }
+		}
+		tab.server.json = 'application/json';
+		tab.server.regex = gun.__.opt.route = gun.__.opt.route || opt.route || /^\/gun/i;
+		tab.server.get = function(){}
+		tab.server.put = function(req, cb){
+			var reply = {headers: {'Content-Type': tab.server.json}};
+			if(!req.body){ return cb({headers: reply.headers, body: {err: "No body"}}) }
+			// TODO: Re-emit message to other peers if we have any non-overlaping ones.
+			if(tab.server.put.key(req, cb)){ return }
+			if(Gun.is.node(req.body) || Gun.is.graph(req.body, function(node, soul){
+				gun.__.flag.end[soul] = true; // TODO! Put this in CORE not in TAB driver?
+			})){
+				//console.log("tran.put", req.body);					
+				if(req.err = Gun.union(gun, req.body, function(err, ctx){
+					if(err){ return cb({headers: reply.headers, body: {err: err || "Union failed."}}) }
+					var ctx = ctx || {}; ctx.graph = {};
+					Gun.is.graph(req.body, function(node, soul){ ctx.graph[soul] = gun.__.graph[soul] });
+					gun.__.opt.hooks.put(ctx.graph, function(err, ok){
+						if(err){ return cb({headers: reply.headers, body: {err: err || "Failed."}}) }
+						cb({headers: reply.headers, body: {ok: ok || "Persisted."}});
+					}, {local: true});
+				}).err){ cb({headers: reply.headers, body: {err: req.err || "Union failed."}}) }
+			}
+		}
+		tab.server.put.key = function(req, cb){
+			if(!req || !req.url || !req.url.key || !Gun.obj.has(req.body, Gun._.soul)){ return }
+			var index = req.url.key, soul = Gun.is.soul(req.body);
+			//console.log("tran.key", index, req.body);
+			gun.key(index, function(err, reply){
+				if(err){ return cb({headers: {'Content-Type': tab.server.json}, body: {err: err}}) }
+				cb({headers: {'Content-Type': tab.server.json}, body: reply}); // TODO: Fix so we know what the reply is.
+			}, soul);
+			return true;
+		}
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
-			return tab.request = tab.request || request.createServer(function(req, res){
-				if(!req.body){ return }
-				if(Gun.is.node(req.body) || Gun.is.graph(req.body, function(node, soul){
-					gun.__.flag.end[soul] = true; // TODO! Put this in CORE not in TAB driver?
-				})){
-					Gun.log("client server received request", req);
-					Gun.union(gun, req.body); // TODO: BUG? Interesting, this won't update localStorage because .put isn't called?
-				}
-			}) || true;
+			return tab.request = tab.request || request.createServer(tab.server) || true;
 		});
 		gun.__.opt.hooks.get = gun.__.opt.hooks.get || tab.get;
 		gun.__.opt.hooks.put = gun.__.opt.hooks.put || tab.put;
