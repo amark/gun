@@ -282,7 +282,7 @@
 					}
 				}
 				if(gun.__.keys[ctx.key]){ get() } // in memory
-				else if(ctx.flag = gun.__.flag.start[key]){ // will be in memory
+				else if(ctx.flag = gun.__.flag.start[ctx.key]){ // will be in memory
 					ctx.flag.once(get);
 				} else { load(key) } // not in memory
 				
@@ -296,6 +296,12 @@
 						if(!data){
 							if(ctx.soul){ return }
 							cb.call(gun, null, null);
+							gun.__.flag.end[ctx.key] = gun.__.flag.end[ctx.key] || function($){
+								// TODO: cover all edge cases, uniqueness?
+								delete gun.__.flag.end[ctx.key]; 
+								gun._.at('soul').emit($);
+								gun._.at('node').emit($);
+							};
 							return gun._.at('null').emit({key: ctx.key, GET: 'NULL', MEMORY: true});
 						}
 						if(ctx.soul = Gun.is.soul.on(data)){
@@ -329,6 +335,9 @@
 					gun.__.graph[opt.soul] = {_: {'#': opt.soul, '>': {}}}; // TODO! SYMBOLS SHOULD NOT BE HARD CODED!
 				}
 				gun.__.keys[key] = gun.__.graph[opt.soul];
+				if(gun.__.flag.end[key]){ // TODO: Ought this be fulfilled from self as well?
+					gun.__.flag.end[key]({soul: opt.soul});
+				}
 				index({soul: opt.soul});
 			} else { // will be injected via a put
 				(gun.__.flag.start[key] = gun._.at('node')).once(function($){
@@ -490,13 +499,16 @@
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
 		Chain.put = function(val, cb, opt){ // handle case where val is a gun context!
-			var gun = this.chain(), drift = Gun.time.now();
+			var gun = this.chain(), call = function(){
+				gun.back._.at('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true, PUT: 'SOUL'});
+			}, drift = Gun.time.now();
 			cb = cb || function(){};
 			opt = opt || {};
 			if(!gun.back.back){
 				gun = gun.chain();
-				gun.back._.at('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true, PUT: 'SOUL'});
+				call();
 			}
+			if(gun.back.not){ gun.back.not(call) }
 			
 			gun.back._.at('soul').event(function($){ // TODO: maybe once per soul?
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
