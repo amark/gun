@@ -9,12 +9,12 @@
 
 <p>Before we can start building anything interesting, we should have a way to jot down our thoughts. Therefore the first thing we will build is a tool to keep track of what needs to be done. The infamous To-Do app, allowing us to keep temporary notes.</p>
 
-<p>So what are the requirements? The ability to add a note, read our notes, and to clear them off. Additionally, we need a space to keep these notes in, and a web page to access them through. Let's start with the page! You can edit the code below.</p>
+<p>So what are the requirements? The ability to add a note, read our notes, and to clear them off. We will also need a space to keep these notes in, and a web page to access them through. Let's start with the page! You can edit the code below, which will update the live preview.</p>
 
-<div class="edit">... loading editor ...
+<div class="edit">... loading editor and preview ...
 	<textarea style="height: 13em"><html>
 	<body>
-		<h2>Title</h2>
+		<h1>Title</h1>
 
 		<form>
 			<input><button>Add</button>
@@ -24,7 +24,15 @@
 	</body>
 </html></textarea>
 </div>
-<script>$('.edit').load('./editor.html')</script>
+<script>
+var code = $('.edit').load('./editor.html', function(){setTimeout(function(){
+	var editor = $('.CodeMirror')[0].CodeMirror;
+	editor.live(function(frame){
+		$('body', frame).on('submit', 'form', function(e){e.preventDefault()});
+	});
+	editor.setValue(code);
+},1)}).find('textarea').text();
+</script>
 
 <style>
 	.none { display: none }
@@ -35,15 +43,15 @@
 <div id="step-1" class="step">
 	<p>What does this do? HTML is how we code the layout of a web page.</p>
 	<ul>
-		<li>We first must wrap all our code in an <u>html</u> tag so our computer knows it is a web page.</li>
+		<li>We first must wrap all our code in an open and closing <u>html</u> tag so our computer knows it is a web page.</li>
 		<li>The <u>body</u> tag tells it to display the contents enclosed within.</li>
-		<li><u>h2</u> is one of many semantic tags for declaring a title, others include <u>h1</u>, <u>h3</u> and so on of different sizes.</li>
+		<li><u>h1</u> is one of many semantic tags for declaring a title, others include <u>h2</u>, <u>h3</u> and so on of different sizes.</li>
 		<li>A <u>form</u> is a container for getting information from a user.</li>
-		<li>Form's have <u>input</u>s which let the user type data in, it is a self-closing tag.</li>
+		<li>Forms have <u>input</u>s which let the user type data in, it is a self-closing tag.</li>
 		<li>The <u>button</u> can be pressed, causing an action that we code to happen.</li>
-		<li><u>ul</u> is an unordered list, we will display our thoughts inside that list.</li>
+		<li><u>ul</u> is an unordered list which we will display our thoughts inside of.</li>
 	</ul>
-	<p>Now, try changing the <u>h1</u> text from "Title" to the name of our app, "Thoughts".</p>
+	<p>Now, try changing the <u>h1</u> text in the editor from "Title" to the name of our app, "Thoughts".</p>
 	<button class="none">I've done it!</button>
 	
 <textarea id="code-1" class="none" style="height: 14em"><html>
@@ -55,21 +63,28 @@
 		</form>
 		
 		<ul></ul>
-<!-- Replace this Line with the Code in the Step below! -->
+<!-- Replace this Comment Line with the Code in the Step below! -->
 	</body>
 </html></textarea>
 </div>
 
 <div id="step-2" class="step">
-	<p>See how the preview live updated? This helps us see our code as we type it.</p>
-	<p>Now we want to write code that reacts to a user pressing the 'add' button. We can do this using raw javascript but it quickly becomes verbose, so to keep things concise we will use a popular library called jQuery. Also, we need a way to store the thoughts, so we will include GUN as well.</p>
-	<p>Insert the following inbetween the ending <u>ul</u> tag and the ending <u>body</u> tag:</p>
+	<p>HTML controls the layout, but how do we control what happens when a user presses the 'add' button? This is done with javascript. But using raw javascript quickly becomes verbose, so to keep things concise we will use a popular tool called jQuery. We also need a tool to store data, so we will include GUN as well.</p>
+	<p>Insert the following between the ending <u>ul</u> tag and the ending <u>body</u> tag, replacing the comment line:</p>
 	<textarea style="height: 6em;">
 		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 		<script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
 		<script>
-			alert("Good job! Our code will go in this script tag!");
+			alert("Good job! You'll replace this line in the next step!");
 		</script></textarea>
+	<ul>
+		<li>The <u>script</u> tag tells the browser to use some javascript code, and <u>src</u> is where to load it from.</li>
+		<li>We can then test to see if our code worked with an <u>alert</u> message, which pops up and forces you to press ok.</li>
+		<li>In javascript, we denote text by wrapping it inside quotation marks, double <u>""</u> or single <u>''</u>.</li>
+		<li>We instruct the computer to notify us with that text by calling the <u>alert</u> function using parenthesis <u>()</u>.</li>
+		<li>A function is just a fancy word for a reusable piece of code that does something when we call its name, such as <u>alert</u>.</u>
+		<li>A semicolon <u>;</u> marks the end of a javascript sentence in the same way a period marks the end of a sentence.</li>
+	</ul>
 	<button class="none">It worked.</button>
 	
 <textarea id="code-2" class="none" style="height: 14em"><html>
@@ -84,14 +99,14 @@
 		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
 		</script>
-			alert("Good job! Our code will go in this script tag!");
+			alert("Good job! You'll replace this line in the next step!");
 		</script>
 	</body>
 </html></textarea>
 </div>
 
 <div id="step-3" class="step">
-	<p>Wonderful! You should have gotten the alert message, this means writing code works! Let's replace the alert line with code that reacts to user input.</p>
+	<p>Wonderful! You should have gotten the alert message, this means writing code works! Let's replace the alert line entirely with code that responds to user input.</p>
 	<textarea style="height: 5em;">
 			$('form').on('submit', function(event){
 				event.preventDefault();
@@ -99,13 +114,16 @@
 			});</textarea>
 	<p>What's going on here?</p>
 	<ul>
-		<li>The <u>$</u> is a symbol for jQuery, we call it by enclosing text within parenthesis <u>()</u>.</li>
-		<li>jQuery will give us a reference to the HTML tag that corresponds to <u>'form'</u>, the quotation marks denote text in javascript.</li>
-		<li><u>on</u> is a <u>$</u> command that can be called as well. We call it with the text of the name of the event we want to react to, and a <u>function</u> which gets called when that event happens.</li>
-		<li>There are many different events, such as <u>'click'</u> when a user presses something or <u>'mousemove'</u>. But we will use <u>'submit'</u> because it reacts to both a button <u>'click'</u> or a return keystroke on a form.</li>
-		<li>A <u>function</u> is code that does not get run until it is called. It typically gets called with data, like <u>event</u>.</li>
-		<li>The default behavior of a form is to cause the browser to change pages, we can prevent that by calling <u>preventDefault</u> on the <u>event</u>.</li>
-		<li>Finally, caling <u>$</u> with <u>'input'</u> will reference the HTML input tag and then calling <u>val</u> on that gives us the value the user typed in.</li>
+		<li>jQuery is a function like <u>alert</u>, its name is <u>$</u> which can be called with parenthesis <u>()</u>.</li>
+		<li>Calling <u>$</u> with <u>'form'</u> as the input gives us a reference to the corresponding HTML form tag.</li>
+		<li>We then call <u>on</u> with two inputs. First the text name of an <u>event</u> we want to react to, and then a <u>function</u> we create.
+		<ul>
+			<li>Events are predefined ways we can interact with a user, such as <u>'mousemove'</u> or a <u>'keypress'</u>.</li>
+			<li>We use <u>'submit'</u> because it responds to both a button <u>'click'</u> and hitting enter on a form.</li>
+			<li>Our <u>function</u> will get called with the <u>event</u> every time the user does that action, allowing us to react to their input.</li>
+		</ul>
+		<li>The default behavior of a form is to cause the browser to change pages which is annoying, we prevent that by calling <u>preventDefault</u> on the <u>event</u>.</li>
+		<li>Finally, calling <u>$</u> with <u>'input'</u> will reference the HTML input tag which we then call <u>val</u> on, giving us the text the user typed in.</li>
 	</ul>
 	<button class="none">Got it.</button>
 	
@@ -131,16 +149,14 @@
 </div>
 
 <div id="step-4" class="step">
-	<p>Now that users can jot down their thoughts, we need a place to save them.</p>
+	<p>Now that users can jot down their thoughts, we need a place to save them. Let's start using GUN for just that.</p>
 	<textarea style="height: 1em;">
-			var gun = Gun().get('thoughts').set();</textarea>
+			var gun = Gun().get('thoughts');</textarea>
 	<ul>
 		<li>The <u>var</u>iable keyword tells javascript that we want to create a reference named <u>gun</u> that we can reuse.</li>
-		<li>First we call <u>Gun</u> to start up the database, which only needs to be done once.</li>
-		<li>Then we can chain off of it, by calling <u>get</u> with the text of the name of our data to load.</li>
-		<li>However, no data has been saved to <u>'thoughts'</u> yet! So we cannot open anything.</li>
-		<li>If we add calling <u>set</u> onto the chain, it will update <u>'thoughts'</u> to hold data.</li>
-		<li>Now <u>gun</u> is a reference to this data chain! We will use it in the next step to save our thoughts</u>
+		<li>We call <u>Gun</u> to start the database, which only needs to be done once per page load.</li>
+		<li>Now we want to open up a reference to some data, so we call <u>get</u> with the name of the data we want.</li>
+		<li>However, no data has been saved to <u>'thoughts'</u> yet! Let's fix that in the next step by using <u>gun</u>.</li>
 	</ul>
 	<button class="none">Let's do it!</button>
 <textarea id="code-4" class="none" style="height: 14em"><html>
@@ -171,10 +187,10 @@
 				gun.set($('input').val());
 				$('input').val("");</textarea>
 	<ul>
-		<li>We're telling gun to add the value of the input as an item in the <u>set</u>.</li>
-		<li>Then we also want the input's <u>val</u>ue to be empty text, so we can add a new thought later.</li>
+		<li>We're telling gun to add the value of the input as an item in a <u>set</u> of thoughts.</li>
+		<li>Then we also want the input's <u>val</u>ue to become empty text, so we can add new thoughts later.</li>
 	</ul>
-	<button class="none">Getting close!</button>
+	<button class="none">Show me the data!</button>
 <textarea id="code-5" class="none" style="height: 14em"><html>
 	<body>
 		<h2>Thoughts</h2>
@@ -199,7 +215,7 @@
 </div>
 
 <div id="step-6" class="step">
-	<p>Fantastic! Now that we can successfully store data, we want show the data!</p>
+	<p>Fantastic! Now that we can successfully store data, we want show the data! Replace the comment line in the editor with the following:</p>
 	<textarea style="height: 9em;">
 			gun.on().map(function(thought, id){
 				var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
@@ -210,8 +226,8 @@
 				}
 			});</textarea>
 	<ul>
-		<li>In the same way $'s <u>on</u> reacts to events, so does gun. It reacts to any update on 'thoughts'.</li>
-		<li><u>map</u> calls the <u>function</u> you passed into it for each item in the set, one at a time.</li>
+		<li>In the same way $'s <u>on</u> reacts to events, so does gun. It responds to any update on 'thoughts'.</li>
+		<li><u>map</u> calls the <u>function</u> you input into it for each item in the set, one at a time.</li>
 		<li>We get the <u>thought</u> value itself and a unique <u>id</u>entifier for the item in the set.</li>
 		<li>This next line looks scary, but read it like this, "make <u>var</u>iable <u>li</u> equal to X or Y".
 		<ul>
@@ -254,6 +270,62 @@
 </html></textarea>
 </div>
 
+<div id="step-7" class="step">
+	<p>Finally we want to be able to clear off our thoughts when we are done with them. The interface for this could be done in many different ways, but for simplicity we will use a double tap as the gesture to clear it off. Replace the comment line in the editor with this code.</p>
+	<textarea style="height: 4em;">
+			$('body').on('dblclick', 'li', function(event){
+				gun.path(this.id).put(null);
+			});</textarea>
+	<ul>
+		<li>In order to react to any <u>'dblclick'</u> event rather than a specific one, we call <u>on</u> on the page's <u>'body'</u> as a whole.</li>
+		<li>But we want to filter the events to ones that happened only on any <u>'li'</u> tag. Fortunately, we can call <u>on</u> with an optional second input of <u>'li'</u> which does just that.</li>
+		<li>Inside a <u>function</u> we get a special <u>this</u> keyword in javascript, which <u>$</u> uses as a reference to the original HTML tag that caused the event.</li>
+		<li>Calling <u>path</u> tells <u>gun</u> to filter its data to just the <u>id</u> of the thought we want to clear off.</li>
+		<li>Then calling <u>put</u> on that tells gun to update that thought to <u>null</u>, so we no longer have the thought.</li>
+		<li>And whenever an update happens, <u>gun</u>'s <u>on</u> function from the previous step gets called again, which then hides the corresponding HTML list item.</u>
+	</ul>
+	<button class="none">Done!</button>
+<textarea id="code-7" class="none" style="height: 14em"><html>
+	<body>
+		<h2>Thoughts</h2>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		</script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		</script src="https://rawgit.com/amark/gun/develop/gun.js"></script>
+		</script>
+			var gun = Gun().get('thoughts').set();
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				gun.set($('input').val());
+				$('input').val("");
+			});
+			gun.on().map(function(thought, id){
+				var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
+				if(thought){
+					$(li).text(thought);
+				} else {
+					$(li).hide();
+				}
+			});
+			$('body').on('dblclick', 'li', function(event){
+				$(this).remove();
+				gun.path(this.id).put(null);
+			});
+		</script>
+	</body>
+</html></textarea>
+</div>
+
+<div id="step-8" class="step">
+	<p>Congratulations! You are all done, you have built your first GUN app!</p>
+	<p>In the next tutorial we will use GUN to synchronize data in realtime across multiple devices. We'll start by copying the app we made here and modifying it to become a chat app.</p>
+	<a href="#">Coming Soon!</a>
+</div>
+
 <script>
 $('.step').addClass('none').first().addClass('step-at');
 $('button').on('click', next).removeClass('none');
@@ -266,13 +338,16 @@ next.at = 1;
 next.comment = /\s*\/\*(.*?)\*\/\s*/i;
 next.unwrap = /\s*<\/?(html|body)>\s*\s*/ig;
 next.wrap = function(c){ return '<html>\n\t<body>\n\t\t' + c + '\n\t</body>\n</html>' }
+next.code = function(){ return $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>') }
 next.step = [null, null, function(){
 	next.mir = $('.CodeMirror')[0].CodeMirror;
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
-	code.find('h2').text('Thoughts');
-	next.mir.setValue(next.wrap($.trim(code.html()) + "\n<!-- Replace this line with the Code in the Step below! -->"));
+	var code = next.code();
+	if(code.find('h1').text().toLowerCase() == 'title'){
+		code.find('h1').text('Thoughts');
+	}
+	next.mir.setValue(next.wrap($.trim(code.html()) + "\n<!-- Replace this Comment Line with the Code in the Step below! -->"));
 }, function(){
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var code = next.code();
 	var ctx = {$: true, gun: true, alert: true};
 	code.find('script').each(function(){
 		var src = ($(this).attr('src') || '').toLowerCase();
@@ -285,39 +360,44 @@ next.step = [null, null, function(){
 	if(ctx.alert){ ul.after($('<script>').text('\n\t\t\talert("Good job! Our code will go in this script tag!");\n\t\t')) }
 	if(ctx.gun){ ul.after($('<script>').attr('src', 'https://rawgit.com/amark/gun/develop/gun.js')) }
 	if(ctx.$){ ul.after($('<script>').attr('src','https://code.jquery.com/jquery-1.11.3.min.js')) }
-	next.mir.setValue(next.wrap($.trim(code.html().replace(/<script/ig, '\n\t\t<script'))));
+	if(ctx.alert || ctx.gun || ctx.$){ next.mir.setValue(next.wrap($.trim(code.html().replace(/<script/ig, '\n\t\t<script')))) }
 }, function(){
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var code = next.code();
 	var script = code.find('script').last();
 	if(0 > script.text().indexOf('.on')){
-		script.text(script.text().replace(/\s*alert.*\n/i, "\n\t\t\t$('form').on('submit', function(event){"
-		+	"\n\t\t\t\tevent.preventDefault();"
-		+	"\n\t\t\t\talert(\"We got your thought! \" + $('input').val());"
-		+	"\n\t\t\t});\n"));
+		script.text('\n' + script.text().replace(/\s*alert.*\n/i, $('#step-3').find('textarea').first().text() + '\n'));
 	}
-	script.text('\n/* Replace this line with the Code in the Step below! */' + script.text());
+	script.text('\n/* Replace this Comment Line with the Code in the Step below! */' + script.text());
 	next.mir.setValue(next.wrap($.trim(code.html())));
 }, function(){
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var code = next.code();
 	var script = code.find('script').last();
 	script.text(script.text().replace(next.comment, ''));
 	if(0 > script.text().indexOf('Gun')){
-		script.text("\n\t\t\tvar gun = Gun().get('thoughts').set();\n\t\t\t" + script.text());
+		script.text('\n' + $('#step-4').find('textarea').first().text() + "\n\t\t\t" + script.text());
 	}
 	next.mir.setValue(next.wrap($.trim(code.html())));
 }, function(){
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var code = next.code();
 	var script = code.find('script').last();
 	if(0 < script.text().indexOf('alert')){
-		script.text(script.text().replace(/\s*alert.*\n/i, "\n\t\t\t\tgun.set($('input').val());\n\t\t\t\t$('input').val(\"\");\n"));
+		script.text(script.text().replace(/\s*alert.*\n/i, '\n' + $('#step-5').find('textarea').first().text() + '\n'));
 	}
-	script.text(script.text() + '/* Replace this line with the Code in the Step below! */\n');
+	script.text(script.text() + '\n/* Replace this Comment Line with the Code in the Step below! */\n\t\t');
 	next.mir.setValue(next.wrap($.trim(code.html())));
 }, function(){
-	var code = $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>');
+	var code = next.code();
 	var script = code.find('script').last();
 	if(0 > script.text().indexOf('.map')){
-		script.text(script.text().replace(/\s*.*replace.*\n/i, '\n' + $('#step-6').find('textarea').first().text() + '\n'));
+		script.text(script.text().replace(/\s*.*replace.*\n/i, '\n' + $('#step-6').find('textarea').first().text()));
+	}
+	script.text(script.text() + '\n/* Replace this Comment Line with the Code in the Step below! */\n\t\t');
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	if(0 > script.text().indexOf('gun.path')){
+		script.text(script.text().replace(/\s*.*replace.*\n/i, '\n' + $('#step-7').find('textarea').first().text() + '\n'));
 	}
 	next.mir.setValue(next.wrap($.trim(code.html())));
 }]

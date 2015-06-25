@@ -1416,7 +1416,7 @@ describe('Gun', function(){
 				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
 			});
 			gun.set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
-				.map().val(function(val){ // TODO! BUG? If we do gun.set it immediately calls and we get stale data. Is this wrong?
+				.map().val(function(val){ // TODO! BUG! If we instead do gun.map().val() we will get stale data, fix this.
 				expect(val).to.be(++i);
 				if(4 === i){
 					done.i = 0;
@@ -1425,6 +1425,30 @@ describe('Gun', function(){
 					done() 
 				}
 			});
+		});
+		
+		it('peer 1 get key, peer 2 put key, peer 1 val', function(done){
+			var hooks = {get: function(key, cb, opt){
+				cb();
+			}, put: function(nodes, cb, opt){
+				Gun.union(gun1, nodes);
+				cb();
+			}, key: function(key, soul, cb, opt){
+				gun1.key(key, null, soul);
+				cb();
+			}},
+			gun1 = Gun({hooks: {get: hooks.get}}).get('race')
+			, gun2 = Gun({hooks: hooks}).get('race');
+			
+			setTimeout(function(){
+				gun2.put({the: 'data'}).key('race');
+				setTimeout(function(){
+					gun1.on(function(val){
+						expect(val.the).to.be('data');
+						done();
+					});
+				},10);
+			},10);
 		});
 	});
 });
