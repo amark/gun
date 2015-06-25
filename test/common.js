@@ -1407,7 +1407,7 @@ describe('Gun', function(){
 					expect(done.not).to.not.be.ok();
 					done();
 				})
-			});
+			}, 10);
 		});
 
 		it('set', function(done){
