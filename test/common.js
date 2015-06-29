@@ -1,6 +1,10 @@
-var Gun = Gun || require('../gun');
-if(typeof window !== 'undefined'){ root = window }
+(function(env){
+	root = env.window? env.window : root;
+	env.window && root.localStorage && root.localStorage.clear();
+	root.Gun = root.Gun || require('../gun');
+}(this));
 Gun.log.squelch = true;
+
 describe('Gun', function(){
 	var t = {};
 	describe('Utility', function(){
@@ -480,6 +484,31 @@ describe('Gun', function(){
 		});
 	});
 	
+	describe('Schedule', function(){
+		it('one', function(done){
+			Gun.schedule(Gun.time.is(), function(){
+				expect(true).to.be(true);
+				done(); //setTimeout(function(){ done() },1);
+			});
+		});
+		
+		it('many', function(done){
+			Gun.schedule(Gun.time.is() + 50, function(){
+				done.first = true;
+			});
+			Gun.schedule(Gun.time.is() + 100, function(){
+				done.second = true;
+			});
+			Gun.schedule(Gun.time.is() + 200, function(){
+				done.third = true;
+				expect(done.first).to.be(true);
+				expect(done.second).to.be(true);
+				expect(done.third).to.be(true);
+				done(); //setTimeout(function(){ done() },1);
+			});
+		});
+	});
+	
 	describe('Union', function(){
 		var gun = Gun();
 		
@@ -603,7 +632,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+		var to = 5000;
 		it('disjoint future', function(done){
 			var prime = {
 				'asdf': {
@@ -613,7 +642,6 @@ describe('Gun', function(){
 					y: 'goodbye'
 				}
 			}
-
 			expect(gun.__.graph['asdf'].y).to.not.be.ok();
 			var now = Gun.time.is();
 			var ctx = Gun.union(gun, prime, function(){
@@ -642,7 +670,7 @@ describe('Gun', function(){
 				expect(Gun.time.is() - now).to.be.above(100);
 				expect(gun.__.graph['asdf'].y).to.be('bye');
 				expect(gun.__.graph['asdf'].z).to.be('who');
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
@@ -673,7 +701,7 @@ describe('Gun', function(){
 				expect(gun.__.graph['asdf'].x).to.be('how are you?');
 				expect(gun.__.graph['asdf'].y).to.be('farewell');
 				expect(gun.__.graph['asdf'].z).to.be('doctor who');
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
@@ -1047,7 +1075,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		
 		it('put path val sub', function(done){
 			gun.put({last: {some: 'object'}}).path('last').val(function(val){
 				expect(val.some).to.be('object');
@@ -1194,7 +1222,7 @@ describe('Gun', function(){
 		});
 		
 		it('context null put value val error', function(done){
-			gun.put("oh yes",function(err){
+			gun.put("oh yes", function(err){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -1204,55 +1232,55 @@ describe('Gun', function(){
 		it('context null put node', function(done){
 			foo = gun.put({foo: 'bar'}).val(function(obj){
 				expect(obj.foo).to.be('bar');
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
 		it('context node put val', function(done){
-			// EFFECTIVELY a TIMEOUT from the previous test.
+			// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 			foo.put('banana', function(err){
 				expect(err).to.be.ok();
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
 		it('context node put node', function(done){
-			// EFFECTIVELY a TIMEOUT from the previous test.
+			// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 			foo.put({bar: {zoo: 'who'}}).val(function(obj){
 				expect(obj.foo).to.be('bar');
 				expect(Gun.is.soul(obj.bar)).to.ok();
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
 		it('context node and field put value', function(done){
-			// EFFECTIVELY a TIMEOUT from the previous test.
+			// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 			var tar = foo.path('tar');
 			tar.put('zebra').val(function(val){
 				expect(val).to.be('zebra');
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
 		var bar;
 		it('context node and field of relation put node', function(done){
-			// EFFECTIVELY a TIMEOUT from the previous test.
+			// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 			bar = foo.path('bar');
 			bar.put({combo: 'double'}).val(function(obj){
 				expect(obj.zoo).to.be('who');
 				expect(obj.combo).to.be('double');
-				done();
+				done(); //setTimeout(function(){ done() },1);
 			});
 		});
 		
 		it('context node and field, put node', function(done){
-			// EFFECTIVELY a TIMEOUT from the previous test.
+			// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 			bar.path('combo').put({another: 'node'}).val(function(obj){
 				expect(obj.another).to.be('node');
 				bar.val(function(node){
 					expect(Gun.is.soul(node.combo)).to.be.ok();
 					expect(Gun.is.soul(node.combo)).to.be(Gun.is.soul.on(obj));
-					done();
+					done(); //setTimeout(function(){ done() },1);
 				});
 			});
 		});
@@ -1417,8 +1445,9 @@ describe('Gun', function(){
 			});
 			gun.set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
 				.map().val(function(val){ // TODO! BUG! If we instead do gun.map().val() we will get stale data, fix this.
-				expect(val).to.be(++i);
-				if(4 === i){
+				i += 1;
+				expect(val).to.be(i);
+				if(i % 4 === 0){
 					done.i = 0;
 					Gun.obj.map(gun.__.graph, function(){ done.i++ });
 					expect(done.i).to.be(1); // make sure there isn't double.
@@ -1431,9 +1460,11 @@ describe('Gun', function(){
 			var hooks = {get: function(key, cb, opt){
 				cb();
 			}, put: function(nodes, cb, opt){
+				//root.console.log("put hook", nodes);
 				Gun.union(gun1, nodes);
 				cb();
 			}, key: function(key, soul, cb, opt){
+				//root.console.log("key hook", key, soul);
 				gun1.key(key, null, soul);
 				cb();
 			}},
