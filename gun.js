@@ -242,7 +242,7 @@
 			gun._.at = function(e){
 				var proxy = function(cb, i, chain){
 					var on = gun._.on(e), at;
-					if(at = ((on = gun._.on(e)).e = on.e || {})[e]){ cb.call(on, at) }
+					if(at = ((on = gun._.on(e)).e = on.e || {})[e]){ setTimeout(function(){cb.call(on, at)},0) }
 					on[chain](function(at){
 						cb.call(on, at);
 					}, i);
@@ -618,7 +618,6 @@
 			if(!gun.back){ gun = gun.put({}) }
 			gun = gun.not(function(next, key){ return key? this.put({}).key(key) : this.put({}) });
 			if(!val && !Gun.is.value(val)){ return gun }
-			
 			var obj = {};
 			obj['I' + drift + 'R' + Gun.text.random(5)] = val;
 			return gun.put(obj, cb);
@@ -628,8 +627,8 @@
 			cb = cb || function(){};
 			
 			gun._.at('null').once(function(key){
-				if(key.soul || gun.__.keys[key = (key || {}).key] || gun.__.flag.start[key]){ return }
-				// TODO! BUG? There WAS a timing bug with the above, but setTimeout seems to fix it compared to setImmediate.
+				if(key.soul || gun.__.keys[key = (key || {}).key]){ return }
+				// TODO! BUG? Removed a start flag check and tests passed, but is that an edge case?
 				var kick = function(next){
 					if(++c){ return Gun.log("Warning! Multiple `not` resumes!"); }
 					next._.at('soul').once(function($){ $.N0T = 'KICK SOUL'; gun._.at('soul').emit($) });
@@ -823,6 +822,7 @@
 		schedule.soonest = Infinity;
 		schedule.sort = Gun.list.sort('when');
 		schedule.set = function(future){
+			if(Infinity <= (schedule.soonest = future)){ return }
 			var now = Gun.time.is();
 			future = (future <= now)? 0 : (future - now);
 			clearTimeout(schedule.id);
@@ -835,7 +835,7 @@
 				if(!wait){ return }
 				if(wait.when <= now){
 					if(Gun.fns.is(wait.event)){
-						wait.event();
+						setTimeout(function(){ wait.event() },0);
 					}
 				} else {
 					soonest = (soonest < wait.when)? soonest : wait.when;
@@ -845,7 +845,7 @@
 			schedule.set(soonest);
 		}
 		Gun.schedule = function(state, cb){
-			schedule.waiting.push({when: state, event: cb});
+			schedule.waiting.push({when: state, event: cb || function(){}});
 			if(schedule.soonest < state){ return }
 			schedule.set(state);
 		}
@@ -857,7 +857,7 @@
 			var end = function(fn){
 				ctx.end = fn || function(){};
 				if(ctx.err){ return ctx.end(ctx.err, ctx), ctx.end = function(){} }
-				// unique(ctx); // if we remove the setTimeout, we need to call this at the end as well.
+				unique(ctx);
 			}, ctx = {};
 			if(!data){ return ctx.err = Gun.log('Serializer does not have correct parameters.'), end }
 			ctx.at = {};
@@ -884,12 +884,10 @@
 		function map(ctx, cb){
 			var rel = function(at, soul){
 				at.soul = at.soul || soul;
-				setTimeout(function(){ unique(ctx) },0);
-				if(!at.back || !at.back.length){ return }
 				Gun.list.map(at.back, function(rel){
 					rel[Gun._.soul] = at.soul;
 				});
-				// unique(ctx); could we remove the setTimeot?
+				unique(ctx); // could we remove the setTimeot?
 			}, it;
 			Gun.obj.map(ctx.at.obj, function(val, field){
 				ctx.at.val = val;
@@ -974,7 +972,7 @@
 			(function local(key, cb){
 				var node, lkey = key[Gun._.soul]? tab.prefix + tab.prenode + key[Gun._.soul]
 					: tab.prefix + tab.prekey + key
-				if((node = store.get(lkey)) && node[Gun._.soul]){ return local(node, cb) }
+				if((node = store.get(lkey)) && Gun.is.soul(node)){ return local(node, cb) }
 				if(cb.node = node){ Gun.log('tab via cache <---', key); setTimeout(function(){
 					cb(null, node);
 					cb(null, {_: {'#': Gun.is.soul.on(node) }}); // TODO: Don't have the symbols hard coded.
@@ -1115,7 +1113,7 @@
 		function s(){}
 		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-		s.get = function(key){ return Gun.obj.ify(store.getItem(key)) }
+		s.get = function(key){ return Gun.obj.ify(store.getItem(key) || null) }
 		s.del = function(key){ return store.removeItem(key) }
 		return s;
 	}());
