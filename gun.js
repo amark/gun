@@ -264,6 +264,7 @@
 			ctx.soul = Gun.is.soul(key); // if key is a soul, then the soul, else false.
 			cb = cb || function(){};
 			opt = opt || {};
+			if(opt.force){ load(key) } else
 			if(ctx.soul){
 				gun._.at('soul').emit({soul: ctx.soul, GET: 'SOUL'});
 				if(ctx.node = gun.__.graph[ctx.soul]){ // in memory

@@ -1481,5 +1481,66 @@ describe('Gun', function(){
 				},10);
 			},10);
 		});
+		
+		it('get pseudo merge', function(done){
+			Gun.on('opt').event(function(gun, o){
+				gun.__.opt.hooks = {get: function(key, cb, opt){
+					var other = (o.alice? gun2 : gun1);
+					if(connect){
+						console.log('connect to peer and get', key);
+						other.get(key, cb);
+					} else {
+						cb();
+					}
+				}, put: function(nodes, cb, opt){
+					var other = (o.alice? gun2 : gun1);
+					if(connect){
+						Gun.union(other, nodes);
+					}
+					cb();
+				}, key: function(key, soul, cb, opt){
+					var other = (o.alice? gun2 : gun1);
+					if(connect){
+						other.key(key, null, soul);
+					}
+					cb();
+				}}
+			});
+			var connect, gun1 = Gun({alice: true}).get('pseudo/merge').not(function(){
+				return this.put({hello: "world!"}).key('pseudo/merge');
+			}), gun2;
+			
+			gun1.val(function(val){
+				expect(val.hello).to.be('world!');
+			});
+			setTimeout(function(){
+				gun2 = Gun({bob: true}).get('pseudo/merge').not(function(){
+					return this.put({hi: "mars!"}).key('pseudo/merge');
+				});
+				gun2.val(function(val){
+					expect(val.hi).to.be('mars!');
+				});
+				setTimeout(function(){
+					// CONNECT THE TWO PEERS
+					connect = true;
+					Gun.log.verbose = true;
+					gun1.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
+					gun2.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
+					setTimeout(function(){
+						gun1.val(function(val){
+							expect(val.hello).to.be('world!');
+							expect(val.hi).to.be('mars!');
+							done.gun1 = true;
+						});
+						gun2.val(function(val){
+							expect(val.hello).to.be('world!');
+							expect(val.hi).to.be('mars!');
+							expect(done.gun1).to.be.ok();
+							done();
+						});
+					},10);
+				},10);
+			},10);
+		});
 	});
 });
