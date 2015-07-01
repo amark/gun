@@ -159,6 +159,15 @@ describe('Gun', function(){
 			it('has',function(){
 				var obj = {a:1,b:2};
 				expect(Gun.obj.has(obj,'a')).to.be.ok();
+			});			
+			it('empty',function(){
+				expect(Gun.obj.empty()).to.be(true);
+				expect(Gun.obj.empty({a:false})).to.be(false);
+				expect(Gun.obj.empty({a:false},'a')).to.be(true);
+				expect(Gun.obj.empty({a:false},{a:1})).to.be(true);
+				expect(Gun.obj.empty({a:false,b:1},'a')).to.be(false);
+				expect(Gun.obj.empty({a:false,b:1},{a:1})).to.be(false);
+				expect(Gun.obj.empty({1:1},'danger')).to.be(false);
 			});
 			it('copy',function(){
 				var obj = {"a":false,"b":1,"c":"d","e":[0,1],"f":{"g":"h"}};
@@ -378,7 +387,7 @@ describe('Gun', function(){
 		expect(test.err.meta).to.be.ok(); // TODO: Fail: this passes, somehow? Fix ify code!
 	});
 	
-	describe('Event Promise Back In Time', function(){ return;
+	describe('Event Promise Back In Time', function(){ return; // TODO: I think this can be removed entirely now.
 		/*	
 			var ref = gun.put({field: 'value'}).key('field/value').get('field/value', function(){
 				expect()
@@ -762,7 +771,7 @@ describe('Gun', function(){
 	
 	describe('API', function(){
 		var gun = Gun();
-		
+		(function(){
 		it('put', function(done){
 			gun.put("hello", function(err){
 				expect(err).to.be.ok();
@@ -804,13 +813,13 @@ describe('Gun', function(){
 		});
 		
 		it('put node key gun get', function(done){
-			gun.put({hello: "key"}).key('yes/key', function(err, ok){
+			gun.put({hello: "a key"}).key('yes/a/key', function(err, ok){
 				expect(err).to.not.be.ok();
 			});
 			
-			gun.get('yes/key', function(err, data){
+			gun.get('yes/a/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hello).to.be('key');
+				expect(data.hello).to.be('a key');
 				done();
 			});
 		});
@@ -1349,21 +1358,28 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.key('me', function(err, ok){
 				expect(err).to.not.be.ok();
-				expect(gun.__.keys['me']).to.be.ok();
-				expect(Gun.is.soul.on(gun.__.keys['me'])).to.be.ok();
+				expect(gun.__.key.s['me']).to.be.ok();
+				Gun.is.graph(gun.__.key.s['me'], function(node, soul){ done.soul = soul });
+				expect(done.soul).to.be.ok('qwertyasdfzxcv');
 				done();
 			}, 'qwertyasdfzxcv');
 		});
 		
 		it('no false positive null emit', function(done){
 			var gun = Gun({hooks: {get: function(key, cb){
-				cb(null, {_: {'#': soul, '>': {'a': 0}},
+				var g = {};
+				g[soul] = {_: {'#': soul, '>': {'a': 0}},
 					'a': 'b'
-				});
-				cb(null, {_: {'#': soul, '>': {'c': 0}},
+				};
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul, '>': {'c': 0}},
 					'c': 'd'
-				});
-				cb(null, {_: {'#': soul }});
+				};
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul }};
+				cb(null, g);
 				cb(); // false trigger!
 			}}}), soul = Gun.text.random();
 			
@@ -1381,13 +1397,19 @@ describe('Gun', function(){
 		
 		it('unique val on stream', function(done){
 			var gun = Gun({hooks: {get: function(key, cb){
-				cb(null, {_: {'#': soul, '>': {'a': 0}},
+				var g = {};
+				g[soul] = {_: {'#': soul, '>': {'a': 0}},
 					'a': 'b'
-				});
-				cb(null, {_: {'#': soul, '>': {'c': 0}},
+				};
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul, '>': {'c': 0}},
 					'c': 'd'
-				});
-				cb(null, {_: {'#': soul }});
+				}; 
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul }};
+				cb(null, g);
 			}}}), soul = Gun.text.random();
 			
 			gun.get('me').val(function(val){
@@ -1403,13 +1425,19 @@ describe('Gun', function(){
 		
 		it('unique path val on stream', function(done){
 			var gun = Gun({hooks: {get: function(key, cb){
-				cb(null, {_: {'#': soul, '>': {'a': 0}},
+				var g = {};
+				g[soul] = {_: {'#': soul, '>': {'a': 0}},
 					'a': 'a'
-				});
-				cb(null, {_: {'#': soul, '>': {'a': 1}},
+				};
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul, '>': {'a': 1}},
 					'a': 'b'
-				});
-				cb(null, {_: {'#': soul }});
+				};
+				cb(null, g);
+				g = {};
+				g[soul] = {_: {'#': soul }};
+				cb(null, g);
 			}}}), soul = Gun.text.random();
 			
 			gun.get('me').path('a').val(function(val){
@@ -1439,13 +1467,31 @@ describe('Gun', function(){
 		});
 
 		it('set', function(done){
-			var gun = Gun().get('set').set(), i = 0;
-			gun.val(function(val){
-				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
+			done.c = 0;
+			var gun = Gun();
+			gun.get('set').set().set().val(function(val){
+				done.c += 1;
+				expect(Gun.obj.empty(val, '_')).to.be.ok();
+				setTimeout(function(){ 
+					expect(done.c).to.be(1);
+					done() 
+				},10)
 			});
+		});
+		
+		it('set multiple', function(done){
+			Gun.log.verbose = true;
+			var gun = Gun().get('sets').set(), i = 0;
+			gun.val(function(val){
+				console.log("@@@@@@@@@ BEFORE", val);
+				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
+				expect(Gun.obj.empty(val, '_')).to.be.ok();
+			});
+			
 			gun.set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
 				.map().val(function(val){ // TODO! BUG! If we instead do gun.map().val() we will get stale data, fix this.
 				i += 1;
+				console.log('@@@@@@@@@', i, val);
 				expect(val).to.be(i);
 				if(i % 4 === 0){
 					done.i = 0;
@@ -1481,8 +1527,23 @@ describe('Gun', function(){
 				},10);
 			},10);
 		});
-		
+		}()); return;
 		it('get pseudo merge', function(done){
+			var gun = Gun();
+			
+			gun.put({a: 1, z: -1}).key('pseudo');
+			gun.put({b: 2, z: 0}).key('pseudo');
+			
+			gun.get('pseudo').val(function(val){
+				console.log('pseudo?!!!!!', val);
+				expect(val.a).to.be(1);
+				expect(val.b).to.be(2);
+				expect(val.z).to.be(0);
+				done();
+			});
+		});
+		return;
+		it('get pseudo merge across peers', function(done){
 			Gun.on('opt').event(function(gun, o){
 				gun.__.opt.hooks = {get: function(key, cb, opt){
 					var other = (o.alice? gun2 : gun1);
@@ -1528,11 +1589,13 @@ describe('Gun', function(){
 					gun2.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
 					setTimeout(function(){
 						gun1.val(function(val){
+							console.log('@@@@@@@@@@@@1', val);
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							done.gun1 = true;
 						});
 						gun2.val(function(val){
+							console.log('@@@@@@@@@@@@2', val);
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							expect(done.gun1).to.be.ok();
