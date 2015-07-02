@@ -767,11 +767,67 @@ describe('Gun', function(){
 			});
 		});
 		
+		it('pseudo null', function(){
+				var node = Gun.union.pseudo('pseudo');
+				expect(Gun.is.soul.on(node)).to.be('pseudo');
+		});
+		
+		it('pseudo node', function(){
+			
+			var graph = {
+				'asdf': {
+					_: {'#': 'asdf', '>': {
+						x: Gun.time.is(),
+						y: Gun.time.is()
+					}},
+					x: 1,
+					y: 2
+				}
+			}
+			var node = Gun.union.pseudo('soul', graph);
+			expect(node).to.not.be.ok();
+		});
+		
+		it('pseudo graph', function(){
+			
+			var graph = {
+				'asdf': {
+					_: {'#': 'asdf', '>': {
+						a: Gun.time.is() - 2,
+						z: Gun.time.is() - 2
+					}},
+					a: 1,
+					z: 1
+				},
+				'fdsa': {
+					_: {'#': 'fdsa', '>': {
+						b: Gun.time.is() - 1,
+						z: Gun.time.is() - 1
+					}},
+					b: 2,
+					z: 2
+				},
+				'sadf': {
+					_: {'#': 'sadf', '>': {
+						c: Gun.time.is(),
+						z: Gun.time.is() - 100
+					}},
+					c: 3,
+					z: 3
+				}
+			}
+			var node = Gun.union.pseudo('soul', graph);
+			expect(Gun.is.soul.on(node)).to.be('soul');
+			expect(node.a).to.be(1);
+			expect(node.b).to.be(2);
+			expect(node.c).to.be(3);
+			expect(node.z).to.be(2);
+		});
 	});
 	
 	describe('API', function(){
 		var gun = Gun();
-		(function(){
+		
 		it('put', function(done){
 			gun.put("hello", function(err){
 				expect(err).to.be.ok();
@@ -807,7 +863,11 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 			}).get('yes/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hello).to.be('key');
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hello).to.be('key');
+				});
 				done();
 			});
 		});
@@ -819,7 +879,11 @@ describe('Gun', function(){
 			
 			gun.get('yes/a/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hello).to.be('a key');
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hello).to.be('a key');
+				});
 				done();
 			});
 		});
@@ -834,7 +898,11 @@ describe('Gun', function(){
 		it('get key', function(done){
 			gun.get('yes/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hello).to.be('key');
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hello).to.be('key');
+				});
 			}).key('hello/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.key = true;
@@ -856,7 +924,11 @@ describe('Gun', function(){
 		it('get node put node merge', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).put({hi: 'you'}, function(err, ok){
 				expect(err).to.not.be.ok();
 				var node = gun.__.graph[done.soul];
@@ -898,8 +970,12 @@ describe('Gun', function(){
 		it('get node put node merge conflict', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hi).to.be('you');
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hi).to.be('you');
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).put({hi: 'overwritten'}, function(err, ok){
 				expect(err).to.not.be.ok();
 				var node = gun.__.graph[done.soul];
@@ -920,8 +996,12 @@ describe('Gun', function(){
 		it('get node path put value', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hi).to.be('overwritten');
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hi).to.be('overwritten');
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).path('hi').put('again', function(err, ok){
 				expect(err).to.not.be.ok();
 				var node = gun.__.graph[done.soul];
@@ -934,8 +1014,12 @@ describe('Gun', function(){
 		it('get node path put object', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(data.hi).to.be('again');
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(node.hi).to.be('again');
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).path('hi').put({yay: "value"}, function(err, ok){
 				expect(err).to.not.be.ok();
 				var root = gun.__.graph[done.soul];
@@ -950,8 +1034,12 @@ describe('Gun', function(){
 		it('get node path put object merge', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(done.ref = Gun.is.soul(data.hi)).to.be.ok();
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(done.ref = Gun.is.soul(node.hi)).to.be.ok();
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).path('hi').put({happy: "faces"}, function(err, ok){
 				expect(err).to.not.be.ok();
 				var root = gun.__.graph[done.soul];
@@ -968,8 +1056,12 @@ describe('Gun', function(){
 		it('get node path put value conflict relation', function(done){
 			gun.get('hello/key', function(err, data){
 				expect(err).to.not.be.ok();
-				expect(done.ref = Gun.is.soul(data.hi)).to.be.ok();
-				done.soul = Gun.is.soul.on(data);
+				var c = 0;
+				Gun.is.graph(data, function(node){
+					expect(c++).to.be(0);
+					expect(done.ref = Gun.is.soul(node.hi)).to.be.ok();
+					done.soul = Gun.is.soul.on(node);
+				});
 			}).path('hi').put('crushed', function(err, ok){
 				expect(err).to.not.be.ok();
 				var root = gun.__.graph[done.soul];
@@ -1317,10 +1409,10 @@ describe('Gun', function(){
 			gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
 			gun.get('user/alfred').val(function(a){
 				gun.get('user/beth').path('friend').put(a); // b - friend_of -> a
-				
-				gun.get('user/beth').val(function(b){
+				gun.get('user/beth').val(function(b){ // TODO: We should have b.friend by now!
 					gun.get('user/alfred').path('friend').put(b, function(){ // a - friend_of -> b
-						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}, function(err, ok){						
+						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}, function(err, ok){
+							
 							gun.get('user/alfred').path('friend.cat').key('the/cat');
 							
 							gun.get('the/cat').val(function(c){
@@ -1480,24 +1572,23 @@ describe('Gun', function(){
 		});
 		
 		it('set multiple', function(done){
-			Gun.log.verbose = true;
 			var gun = Gun().get('sets').set(), i = 0;
 			gun.val(function(val){
-				console.log("@@@@@@@@@ BEFORE", val);
 				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
 				expect(Gun.obj.empty(val, '_')).to.be.ok();
 			});
 			
-			gun.set(1).set(2).set(3).set(4) // if you set an object you'd have to do a `.back`
-				.map().val(function(val){ // TODO! BUG! If we instead do gun.map().val() we will get stale data, fix this.
+			gun.set(1).set(2).set(3).set(4); // if you set an object you'd have to do a `.back`
+			gun.map().val(function(val){
 				i += 1;
-				console.log('@@@@@@@@@', i, val);
 				expect(val).to.be(i);
 				if(i % 4 === 0){
-					done.i = 0;
-					Gun.obj.map(gun.__.graph, function(){ done.i++ });
-					expect(done.i).to.be(1); // make sure there isn't double.
-					done() 
+					setTimeout(function(){
+						done.i = 0;
+						Gun.obj.map(gun.__.graph, function(){ done.i++ });
+						expect(done.i).to.be(1); // make sure there isn't double.
+						done() 
+					},10);
 				}
 			});
 		});
@@ -1506,11 +1597,11 @@ describe('Gun', function(){
 			var hooks = {get: function(key, cb, opt){
 				cb();
 			}, put: function(nodes, cb, opt){
-				//root.console.log("put hook", nodes);
+				//console.log("put hook", nodes);
 				Gun.union(gun1, nodes);
 				cb();
 			}, key: function(key, soul, cb, opt){
-				//root.console.log("key hook", key, soul);
+				//console.log("key hook", key, soul);
 				gun1.key(key, null, soul);
 				cb();
 			}},
@@ -1527,7 +1618,7 @@ describe('Gun', function(){
 				},10);
 			},10);
 		});
-		}()); return;
+		
 		it('get pseudo merge', function(done){
 			var gun = Gun();
 			
@@ -1535,20 +1626,33 @@ describe('Gun', function(){
 			gun.put({b: 2, z: 0}).key('pseudo');
 			
 			gun.get('pseudo').val(function(val){
-				console.log('pseudo?!!!!!', val);
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
 				done();
 			});
 		});
-		return;
+		
+		it('get pseudo merge on', function(done){
+			var gun = Gun();
+			
+			gun.put({a: 1, z: -1}).key('pseudon');
+			gun.put({b: 2, z: 0}).key('pseudon');
+			
+			gun.get('pseudon').on(function(val){
+				expect(val.a).to.be(1);
+				expect(val.b).to.be(2);
+				expect(val.z).to.be(0);
+				done();
+			});
+		});
+		
 		it('get pseudo merge across peers', function(done){
 			Gun.on('opt').event(function(gun, o){
 				gun.__.opt.hooks = {get: function(key, cb, opt){
 					var other = (o.alice? gun2 : gun1);
 					if(connect){
-						console.log('connect to peer and get', key);
+						//console.log('connect to peer and get', key);
 						other.get(key, cb);
 					} else {
 						cb();
@@ -1584,18 +1688,15 @@ describe('Gun', function(){
 				setTimeout(function(){
 					// CONNECT THE TWO PEERS
 					connect = true;
-					Gun.log.verbose = true;
 					gun1.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
 					gun2.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
 					setTimeout(function(){
 						gun1.val(function(val){
-							console.log('@@@@@@@@@@@@1', val);
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							done.gun1 = true;
 						});
 						gun2.val(function(val){
-							console.log('@@@@@@@@@@@@2', val);
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							expect(done.gun1).to.be.ok();
