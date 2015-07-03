@@ -866,9 +866,9 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return done(), true }
 					expect(node.hello).to.be('key');
 				});
-				done();
 			});
 		});
 		
@@ -882,9 +882,9 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return done(), true }
 					expect(node.hello).to.be('a key');
 				});
-				done();
 			});
 		});
 		
@@ -901,6 +901,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return }
 					expect(node.hello).to.be('key');
 				});
 			}).key('hello/key', function(err, ok){
@@ -973,6 +974,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return true }
 					expect(node.hi).to.be('you');
 					done.soul = Gun.is.soul.on(node);
 				});
@@ -999,6 +1001,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return true }
 					expect(node.hi).to.be('overwritten');
 					done.soul = Gun.is.soul.on(node);
 				});
@@ -1017,6 +1020,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return true }
 					expect(node.hi).to.be('again');
 					done.soul = Gun.is.soul.on(node);
 				});
@@ -1037,6 +1041,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return true }
 					expect(done.ref = Gun.is.soul(node.hi)).to.be.ok();
 					done.soul = Gun.is.soul.on(node);
 				});
@@ -1059,6 +1064,7 @@ describe('Gun', function(){
 				var c = 0;
 				Gun.is.graph(data, function(node){
 					expect(c++).to.be(0);
+					if(Gun.obj.empty(node, Gun._.meta)){ return true }
 					expect(done.ref = Gun.is.soul(node.hi)).to.be.ok();
 					done.soul = Gun.is.soul.on(node);
 				});
@@ -1300,7 +1306,6 @@ describe('Gun', function(){
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
 					expect(mark.citizen).to.be("USA");
-
 					this.path('wife').val(function(Amber){
 						expect(Amber.name).to.be("Amber");
 						expect(Amber.age).to.be(23);
@@ -1625,14 +1630,15 @@ describe('Gun', function(){
 			gun.put({a: 1, z: -1}).key('pseudo');
 			gun.put({b: 2, z: 0}).key('pseudo');
 			
+			Gun.log.verbose = true;
 			gun.get('pseudo').val(function(val){
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
-				done();
+				//done();
 			});
 		});
-		
+		return;
 		it('get pseudo merge on', function(done){
 			var gun = Gun();
 			
@@ -1640,15 +1646,20 @@ describe('Gun', function(){
 			gun.put({b: 2, z: 0}).key('pseudon');
 			
 			gun.get('pseudon').on(function(val){
+				console.log("HOW MANY pseudon TIMES??", val);
+				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff?
+				done.val = val;
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
-				done();
+				//done();
 			});
 		});
-		
+		return;
 		it('get pseudo merge across peers', function(done){
+			alert(1);
 			Gun.on('opt').event(function(gun, o){
+				if(connect){ return }
 				gun.__.opt.hooks = {get: function(key, cb, opt){
 					var other = (o.alice? gun2 : gun1);
 					if(connect){
@@ -1700,6 +1711,7 @@ describe('Gun', function(){
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							expect(done.gun1).to.be.ok();
+							Gun({});
 							done();
 						});
 					},10);
