@@ -42,12 +42,12 @@ Using S3 is recommended for deployment, and using a file is recommended for loca
 The examples included in this repo are online [here](http://gunjs.herokuapp.com/), you can run them locally by:
 
 ```bash
-sudo npm install gun
+npm install gun
 cd node_modules/gun
 node examples/http.js 8080
 ```
 
-Then visit [http://localhost:8080](http://localhost:8080) in your browser. If that did not work it is probably because npm installed to a global directory, to fix this try `mkdir node_modules` in your desired directory and re-run the above commands.
+Then visit [http://localhost:8080](http://localhost:8080) in your browser. If that did not work it is probably because npm installed it to a global directory. To fix that try `mkdir node_modules` in your desired directory and re-run the above commands. You also might have to add `sudo` in front of the commands.
 
 ***
 ## WARNINGS
