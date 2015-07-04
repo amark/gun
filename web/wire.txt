@@ -1,0 +1,65 @@
+WIRE PROTOCOL
+
+save/set/create/put/post/delete/update/change/mutate
+
+get/open/load/call/location/address
+
+name/reference/key/index/point
+
+
+/gun {data: 'yay', #: "soul"}
+
+/gun/key {#: 'soul'}
+
+/gun/key
+
+/gun/key?*=/&*<=a&*>=c
+
+
+Reads are a GET and do not contain a body.
+Writes have a body.
+
+Reads may call the callback multiple times, and will end with an empty object.
+
+Reads are either a singular pathname or pound query to get a key or soul's individual node.
+Or a read is to retrieve information on many key's and their corresponding soul.
+Query formats are allowed as:
+?
+	* = /
+		star means the peer should reply with all the KEYS it has up to the character in the value of the query.
+		Ex. "/users/?*=/" would return {"users/marknadal": {"#": "ASDF"}, "users/ambernadal": {"#": "FDSA"}}
+		If there is no up to character, then all subkeys would be returned as well.
+		The peer does not have to reply with all of its keys, however if there are more keys for the receiving peer, it should give it a lexical cursor. (how?)
+		Ordering is not guaranteed, however if there is ordering, it should be lexical. Therefore things like limit or skip do not necessarily apply.
+	*> = a
+	*< = c
+		star greater than and star less than are lexical constraints on returning all peers KEYS.
+		Ex. "/users/?*=/&*>=a&*<=c" asks the peer to return users that start and end between 'a' and 'c',
+			thus {"users/alice": {"#": "DSAF"}, "users/bob": {"#": "DAFS"}, "user/carl": {"#": "SAFD"}}
+	# = ASDF
+		pound means the peer should reply with the node that has this exact soul. There should be no key prefixed path on this type of request. A special case of "#=*" indicates to literally dump the entire graph, as is, to the client. Lexical carets are okay.
+	% = 30
+		percent means byte constraint requested by the peer asking for data.
+	> = 1426007247399
+	< = 1426007248941
+		greater than and less than are time/state constraints, allowing a peer to request historical data or future data.
+		the peer processing the request ought to reply with such state data if it has it, but has no requirement to keep such data (but is encouraged to do so).
+
+Using query constraints is generally not advised, as it is better to do all computation at the point of data, or have all data at the point of computation, not inbetween.
+This protocol should work over HTTP, or the JSONP fallback specification, and emulated over WS or WebRTC.
+
+On a separate note, it might be advantageous to chunk node objects into pieces as well, in case they grow too big or especially contain too many field/value pairs. If this was built into the behavior, to handle better streaming and lower memory use cases, it would also become ideal for groups of data without any extra logic or behavior.
+
+There are three types of grouped related data:
+
+1. Dependent Causality (videos, audio, etc.)
+2. Relative Ordering (age, height, users, etc.)
+3. Independent
+
+Obviously independent data is fairly uninteresting, as the HAM can handle convergence just on states alone. Relative ordering requires only application specific logic to sort data for the view, or computing averages and such. They can always be streamed in efficiently by creating indices on the desired properties and then doing lexical loading. Any conflict in ordering on one property can be handled by cascading into other properties, like from sort order to then creation date. By this means, all data should be explicitly recorded, not implicit.
+
+Dependent Causality is the most interesting, and unfortunately not conducive towards efficient means of streaming. This means the data must be sorted in a particular direction, and even if you receive a "later" chunk, you should not reveal it until all earlier chunks have been digested. Which might means you have to discard it from memory if space runs out, and then pull it back in again at the right time. Let's look at some differences here with some concrete examples.
+
+If we have 4 people in the back room, and we want to sort them by height as they come on to stage, then order in which they come out from behind does not matter. Say their heights are 4, 5, 6, and 7 feet tall. When the first one comes out we do not need to do anything, where the 6 is the first one. Then the second one comes out and is 4, so we put them to the left of the first. Then third comes out the 7, and we put them to the right of the first. Finally, the fourth comes out as the 5, and we put them inbetween the first and second. This method allows us to incrementally sort and always see the correct ordering without waiting.
+
+However, lets say we have collaborative text. We have the initial text of "Hello" and an editor named Alice adds ", World!" in which each letter (' ', ',', 'W', 'o', 'r', 'l', 'd', '!') is streamed, potentially out of order, to Bob. We are going to assert that relative ordering does not work because, for the sake of explanation, any individual letter could be lost in the mail as they are sent. The last thing we want is Bob receiving the three characters 'old', which has correct relative ordering but wrong dependency, and thinking Alice is insulting him for being senile. Therefore every letter should specify the message that comes before it, the letter that it depends upon.

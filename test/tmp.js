@@ -5,15 +5,15 @@
 	Gun.log.verbose = true;
 
 	/*
-	gun.set({foo: "bar"}).get(function(val){
+	gun.put({foo: "bar"}).val(function(val){
 		console.log("POWR HOUSE", val);
-		this.set({lol: 'pancakes'}).get(function(v){
+		this.put({lol: 'pancakes'}).val(function(v){
 			console.log("YEAH CAKES", v);
 		})
 	});
 	*/
 
-	gun.load('hello/world').set({hello: 'Mark'}).path('hello').get(function(val){
+	gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val){
 		console.log("YO", val);
 		expect(val).to.be('Mark');
 		done();
