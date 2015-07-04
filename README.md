@@ -62,7 +62,7 @@ GUN is not stable, and therefore should not be trusted in a production environme
 
 Below is a really basic overview of how the gun API works. For a more detailed explanation with many more examples, [check out the wiki](https://github.com/amark/gun/wiki).
 
-## Setting Data
+## Putting Data
 
 In gun, it can be helpful to think of everything as field/value pairs. For example, let's say we have a `user` object that looks like this:
 
@@ -160,7 +160,3 @@ We need help on the following roadmap.
  - Neo4j Cypher
  - LINQ
  - Gremlin Query Language
-
-LICENSE
----
-Triple Licensed Zlib, MIT and Apache2. See LICENSE file
