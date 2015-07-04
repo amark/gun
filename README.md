@@ -5,7 +5,7 @@ GUN is a realtime, decentralized, embedded, graph database engine.
 
 ## Getting Started
 
-For the browser, try out this [tutorial](https://dl.dropboxusercontent.com/u/4374976/gun/web/think.html). This README is for GUN servers.
+For the browser, try out this [tutorial](http://gun.js.org/web/think.html). This README is for GUN servers.
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 Then in your terminal, run:
@@ -42,12 +42,12 @@ Using S3 is recommended for deployment, and using a file is recommended for loca
 The examples included in this repo are online [here](http://gunjs.herokuapp.com/), you can run them locally by:
 
 ```bash
-sudo npm install gun
+npm install gun
 cd node_modules/gun
 node examples/http.js 8080
 ```
 
-Then visit [http://localhost:8080](http://localhost:8080) in your browser. If that did not work it is probably because npm installed to a global directory, to fix this try `mkdir node_modules` in your desired directory and re-run the above commands.
+Then visit [http://localhost:8080](http://localhost:8080) in your browser. If that did not work it is probably because npm installed it to a global directory. To fix that try `mkdir node_modules` in your desired directory and re-run the above commands. You also might have to add `sudo` in front of the commands.
 
 ***
 ## WARNINGS
@@ -62,7 +62,7 @@ GUN is not stable, and therefore should not be trusted in a production environme
 
 Below is a really basic overview of how the gun API works. For a more detailed explanation with many more examples, [check out the wiki](https://github.com/amark/gun/wiki).
 
-## Setting Data
+## Putting Data
 
 In gun, it can be helpful to think of everything as field/value pairs. For example, let's say we have a `user` object that looks like this:
 
@@ -138,17 +138,25 @@ We need help on the following roadmap.
 ## Ahead
 - ~~Realtime push to the browser~~
 - ~~Persistence in the browser~~
+- Efficient storage engine
 - Authorization callbacks
+- Security or ACLs
+- Schema Validation
+- Point of Entry Encryption
 - ~~Graph manipulation~~
 - Server to server communication
 - Test more
+- WebRTC Transport
+- LRU or some Expiry (so RAM doesn't asplode)
 - Bug fixes
 - Data Structures:
  - ~~Sets~~ (Table/Collections, Unordered Lists)
  - CRDTs
  - OT
+ - Locking / Strong Consistency (sacrifices Availability)
 - Query:
  - SQL
  - MongoDB Query Documents
  - Neo4j Cypher
+ - LINQ
  - Gremlin Query Language

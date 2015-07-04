@@ -11,7 +11,7 @@
 		var key = decodeURIComponent((location.search.match(/key\=(.*?)(\&|$)/i)||[])[1]||'') || alert("Please provide a key in a query parameter, such as `?key=example/tutorial`.");
 
 		var gun = Gun('https://gunjs.herokuapp.com/gun');
-		var ref = gun.load(key);
+		var ref = gun.get(key);
 		ref.on(function(data){
 			delete data._;
 		  $('body').text(JSON.stringify(data,0,2));
