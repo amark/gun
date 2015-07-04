@@ -380,6 +380,7 @@
 							}, gun._.at('null').emit({key: ctx.key, GET: 'NULL'});
 						}
 						var dat = ctx.data = {};
+						if(Gun.obj.empty(data)){ return cb.call(gun, null, data) }
 						if(!Gun.is.graph(data, function(node, soul, map){
 							if(err = Gun.union(gun, node).err){ return cb.call(gun, err, data) }
 							/*dat[soul] = Gun.union.pseudo(soul); map(function(val, field){
@@ -537,10 +538,8 @@
 						ctx[$.soul + $.field] = true; // TODO: unregister instead?
 						return cb.call(gun, node[$.field], $.field || $.at);
 					}
-					console.log("VAL VAL VAL VAL VAL", delta, gun.__.meta($.soul));
-					if(ctx[$.soul] || !gun.__.meta($.soul).end){ return } // TODO: Add opt to change number of terminations.
-					ctx[$.soul] = true; // TODO: unregister instead?
-					console.log("CTX", ctx); // MARK COME BACK HERE!!! TODO!!!
+					if(ctx[$.soul] || ($.key && ctx[$.key]) || !gun.__.meta($.soul).end){ return } // TODO: Add opt to change number of terminations.
+					ctx[$.soul] = ctx[$.key] = true; // TODO: unregister instead?
 					cb.call(gun, Gun.obj.copy(node), $.field || $.at);
 				}, {raw: true});
 				
@@ -555,7 +554,9 @@
 			
 			gun._.at('soul').event(function($){ // TODO: once per soul on graph. (?)
 				if(ctx[$.soul]){
-					ctx[$.soul](gun.__.graph[$.soul], $);
+					if(opt.raw){
+						ctx[$.soul](gun.__.graph[$.soul], $); // TODO: we get duplicate ons, once here and once from HAM.
+					}
 				} else {
 					(ctx[$.soul] = function(delta, $$){
 						var $$ = $$ || $, node = gun.__.graph[$$.soul];
@@ -684,6 +685,7 @@
 						gun._.at('soul').emit({soul: s, field: null, from: soul, at: field, MAP: 'SOUL'});
 					} else {
 						if(opt.node){ return } // {node: true} maps over only sub nodes.
+						console.log("trigger next thing", field, val);
 						cb.call(gun, val, field);
 						gun._.at('soul').emit({soul: soul, field: field, MAP: 'SOUL'});
 					}
@@ -991,6 +993,7 @@
 		tab.get = tab.get || function(key, cb, opt){
 			if(!key){ return }
 			cb = cb || function(){};
+			cb.GET = true;
 			(opt = opt || {}).url = opt.url || {};
 			opt.headers = Gun.obj.copy(tab.headers);
 			if(Gun.is.soul(key)){
@@ -1003,7 +1006,8 @@
 				var path = (path = Gun.is.soul(key))? tab.prefix + tab.prenode + path
 					: tab.prefix + tab.prekey + key, node = store.get(path), graph, soul;
 				if(Gun.is.node(node)){
-					(graph = {})[soul = Gun.is.soul.on(node)] = node;
+					(cb.graph = cb.graph || {}
+					)[soul = Gun.is.soul.on(node)] = (graph = {})[soul] = cb.node = node;
 					cb(null, graph); 
 					(graph = {})[soul] = Gun.union.pseudo(soul); // end.
 					return cb(null, graph);
@@ -1019,13 +1023,13 @@
 						if(!p.graph && !Gun.obj.empty(cb.graph)){ // if we have local data
 							tab.put(p.graph = cb.graph, function(e,r){ // then sync it if we haven't already
 								Gun.log("Stateless handshake sync:", e, r);
-							}, {peers: tab.peers(url)}); // to the peer.
+							}, {peers: tab.peers(url)}); // to the peer. // TODO: This forces local to flush again, not necessary.
 							// TODO: What about syncing our keys up?
 						}
 						Gun.is.graph(reply.body, function(node, soul){ // make sure for each received node
 							if(!Gun.is.soul(key)){ tab.key(key, soul, function(){}, {local: true}) } // that the key points to it.
 						});
-						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chacne to union on it.
+						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
 					}), opt);
 					cb.peers = true;
 				});
