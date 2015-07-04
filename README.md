@@ -51,7 +51,12 @@ Then visit [http://localhost:8080](http://localhost:8080) in your browser. If th
 
 ## WARNINGS
 
-Version 0.2.0 breaks **everything** from 0.1.x, see [#54](/../../issues/54) to migrate (`.all` is not implemented yet). GUN is not stable, and therefore should not be trusted in a production environment.
+### v0.2.0 [![Queued](https://badge.waffle.io/amark/gun.svg?label=Queue&title=Queue)](http://waffle.io/amark/gun) [![In Progress](https://badge.waffle.io/amark/gun.svg?label=InProgress&title=In%20Progress)](http://waffle.io/amark/gun) [![Pending Deploy](https://badge.waffle.io/amark/gun.svg?label=Pending&title=Done)](http://waffle.io/amark/gun) Status
+
+Version 0.2.0 is currently in alpha.  Important changes include `.get` to `.val`, `.load` to `.get`, and `.set` to `.put`. Documentation is our current focus, and `.all` functionality will be coming soon.  The latest documentation can be found at https://github.com/amark/gun/wiki/0.2.0-API-and-How-to.  Please report any issues via https://github.com/amark/gun/issues.
+
+GUN is not stable, and therefore should not be trusted in a production environment.
+***
 
 ## API
 
