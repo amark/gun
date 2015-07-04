@@ -1,7 +1,7 @@
 HOOKS:
  - TRANSPORT:
-	Has to basically re-implement set/load/key over some transport.
-	REMEMBER that you have to subscribe on all set/load/key (especially key).
+	Has to basically re-implement set/get/key/all over some transport.
+	REMEMBER that you have to subscribe on all set/get/key/all (especially key).
 
 
 Notes:
@@ -60,6 +60,16 @@ These are reserved for gun, to include meta-data on the data itself.
 . represents walking the path through a node's scope
 _ represents non-human data in the graph that the amnesia machine uses to process stuff
 > and < are dedicated to comparing timestamp states, timelessly to avoid malicious abuse (this should always come last, because requests will be rejected without it)
+~ is who
+* relates to key prefixes
+*> lexical constraint
+*< lexical constraint
+@ is where it should be delivered to.
+@> is where it has been or will be rebroadcasted through.
+% is for byte constraints.
+: is time
+$ is value
+' is for escaping characters contained within '
 
 {
 	who: {}
@@ -85,9 +95,41 @@ How do we do memory management / clean up then of old dead bad data?
 Init
 You initialize with a node(s) you want to connect to.
 
-Evolution
-var node = gun.create('person/joe', {}); // this creates a 'new' node with an identifier to this node
-node('name', 'joe'); // changes properties
-node('age', 24);
-node('eyes', {}); // this internally creates a new node within the same subset as joe,
-node('eyes.color', 'blue');
+DISK
+We might want to compact everything into a journal, with this type of format:
+#'ASDF'.'hello'>12743921$"world"
+Over the wire though it would include more information, like the ordering of where it has/will-be traversed through.
+@>'random','gunjs.herokuapp.com','127.0.0.1:8080':7894657#'ASDF'.'hello'>12743921$"world"
+What about ACKs?
+@'random':7894657#'ASDF'.'hello'>12743921
+
+There is a limited amount of space on a machine, where we assume it is considered ephemeral as a user viewing device.
+Such machines are the default requiring no configuration, machines that are permanent nodes can configure caps.
+For instance, the browser would be a looping ephemeral device, where the 5mb localStorage gets recycled.
+The localhost server of that device would be permanent and not loop, but halt when storage runs out.
+By thus virtue of this, clients should be able to throttle (backpressure) their data intake.
+The size of primitive values is fundamentally outside our control and left to the developer or multiparting.
+If they decide to have a string that exceeds memory or local disk then their app will always fail regardless of multiparting.
+However it is our duty to make sure that the rest of the structured data is streamable, including JSON.
+Therefore networks and snapshotting should throttle to a size limit specified by the requesting agent.
+Resuming these requests will be based soley on a lexical cursor included in the delivery, to avoid remembering state.
+The asynchronicity of these lexical cursor could pose potential concurrency issues, and have to be considered ad hoc.
+That is to say, if you are dealing with a large data set, you should always subscribe to updates it and never merely "get" it.
+For the edge case of the singleton "get", the lexical cursor will progress until it receives the same or no cursor back from the server and terminate.
+
+total over a range of time: {"alice", "bob", "carl", "david", "ed", "fred", "gary", "harry", "ian", "jake", "kim"}
+client requests "users" at limit of 30 characters, server replies with (rounded down) {"alice", "bob", "carl"}.
+after a while the client has processed this and goes for the next step, requesting /users?*>=carl&%=30 and {"david", "ed", "fred", "gary"} is returned.
+then again /user?*>gary&%=30 with {"harry", "ian", "jake", "kim"} response.
+then again /user?*>kim&%=30 with {} response. No subsequent cursor is possible, end.
+Note: I do not know yet if the lexical cursor should be open-closed boundary, open-open, closed-closed, or closed-open - decide later.
+
+
+
+
+
+
+
+
+
+
