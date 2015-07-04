@@ -1,17 +1,17 @@
 {
 	"name": "examples",
-	"main": "express.js",
+	"main": "http.js",
 	"description": "Example gun apps"
-,	"version": "0.0.1"
+,	"version": "0.0.2"
 ,	"engines": {
 		"node": "~>0.10.x"
 	}
 ,	"dependencies": {
 		"express": "~>4.9.0",
-		"gun": "file:../"
+		"gun": "~>0.2.x"
 	}
 ,	"scripts": {
-        "start": "node express.js",
+        "start": "node http.js",
         "test": "mocha"
     }
 }
