@@ -87,7 +87,7 @@
 		<div class="full grid">
 			<div class="middle unit teft">
 <pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var gun = Gun('https://gunjs.herokuapp.com/gun');
-gun.set({hello: "world"}).key('<span class="your-key">example/tutorial</span>');</pre>
+gun.put({hello: "world"}).key('<span class="your-key">example/tutorial</span>');</pre>
 			</div>
 			<div class="middle unit teft" style="min-width: 20em; max-width: 28em; margin-bottom: 1em;">
 				<a href="#step2"><button class="left" style="margin-right: 1em;"><big>Run!</big></button></a>
@@ -101,7 +101,7 @@ gun.set({hello: "world"}).key('<span class="your-key">example/tutorial</span>');
 
 		<div class="full grid">
 			<div class="middle unit teft">
-<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var ref = gun.load('<span class="your-key">example/tutorial</span>');
+<pre style="max-width: 30.1em; margin: 0 1em 1em 0;">var ref = gun.get('<span class="your-key">example/tutorial</span>');
 ref.on(function(data){
   $('body').text(JSON.stringify(data));
 });</pre>
@@ -183,12 +183,12 @@ ref.on(function(data){
 		</style>
 		<div class="grid">
 			<div class="middle unit teft">
-<pre style="max-width: 40em; margin: 0 1em 1em 0;">ref.path('<input id="try-path" value="hello">').set("<input id="try-sync" value="sync">");</pre>
+<pre style="max-width: 40em; margin: 0 1em 1em 0;">ref.path('<input id="try-path" value="hello">').put("<input id="try-sync" value="sync">");</pre>
 			</div>
 			<div class="middle unit teft" style="min-width: 20em; max-width: 30em; margin-bottom: 1em;">
 				<button type="submit" class="left" style="margin-right: 1em;"><big>Update!</big></button>
 				Let's update the "hello" field with a different value.
-				We can path into any field, and set it directly.
+				We can path into any field, and update it directly.
 			</div>
 		</div>
 		</form>
@@ -215,7 +215,7 @@ ref.on(function(data){
 			$(".step1").find('button').on('click', function(e){
 				if(gun){ return }
 				gun = Gun('https://gunjs.herokuapp.com/gun');
-				gun.set({hello: "world"}).key(key);
+				gun.put({hello: "world"}).key(key);
 			});
 			$(".step2").find('button').on('click', function(e){
 				$(".browser").find("iframe").attr("src", "./tabs.html?key=" + key);
@@ -223,7 +223,7 @@ ref.on(function(data){
 			$(".step3").find('form').on('submit', function(e){
 				var val = $("#try-sync").val() || null;
 				var path = $("#try-path").val();
-				gun.load(key).path(path).set(val);
+				gun.get(key).path(path).put(val);
 			});
 		})
 	</script>
