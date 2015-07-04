@@ -1630,15 +1630,14 @@ describe('Gun', function(){
 			gun.put({a: 1, z: -1}).key('pseudo');
 			gun.put({b: 2, z: 0}).key('pseudo');
 			
-			Gun.log.verbose = true;
 			gun.get('pseudo').val(function(val){
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
-				//done();
+				done();
 			});
 		});
-		return;
+		
 		it('get pseudo merge on', function(done){
 			var gun = Gun();
 			
@@ -1646,18 +1645,16 @@ describe('Gun', function(){
 			gun.put({b: 2, z: 0}).key('pseudon');
 			
 			gun.get('pseudon').on(function(val){
-				console.log("HOW MANY pseudon TIMES??", val);
 				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff?
 				done.val = val;
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
-				//done();
+				done();
 			});
 		});
-		return;
+		
 		it('get pseudo merge across peers', function(done){
-			alert(1);
 			Gun.on('opt').event(function(gun, o){
 				if(connect){ return }
 				gun.__.opt.hooks = {get: function(key, cb, opt){
@@ -1717,6 +1714,165 @@ describe('Gun', function(){
 					},10);
 				},10);
 			},10);
+		});
+	});	
+		
+	describe('Streams', function(){
+		var gun = Gun(), g = function(){
+			return Gun({hooks: {get: ctx.get}});
+		}, ctx = {gen: 5, extra: 45, network: 2};
+		
+		it('prep hook', function(done){
+			this.timeout(ctx.gen * ctx.extra);
+			var peer = Gun(), ref;
+			ctx.get = function(key, cb){
+				var c = 0;
+				cb = cb || function(){};
+				if('big' !== key){ return cb(null, null) }
+				setTimeout(function badNetwork(){
+					c += 1;
+					var soul = Gun.is.soul.on(ref);
+					var graph = {};
+					var data = graph[soul] = {_: {'#': soul, '>': {}}};
+					if(!ref['f' + c]){ 
+						return cb(null, graph), cb(null, {});
+					}
+					data._[Gun._.HAM]['f' + c] = ref._[Gun._.HAM]['f' + c];
+					data['f' + c] = ref['f' + c];
+					cb(null, graph);
+					setTimeout(badNetwork, ctx.network);
+				},ctx.network);
+			}
+			ctx.get.fake = {};
+			for(var i = 1; i < (ctx.gen) + 1; i++){
+				ctx.get.fake['f'+i] = i;
+				ctx.length = i;
+			}
+			var big = peer.put(ctx.get.fake).val(function(val){
+				ref = val;
+				ctx.get('big', function(err, graph){
+					if(Gun.obj.empty(graph)){ done() }
+				});
+				gun.opt({hooks: {get: ctx.get}});
+			});
+		});
+		
+		it('map chain', function(done){
+			var set = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
+			set.map().val(function(obj, field){
+				if(obj.here){
+					done.a = obj.here;
+					expect(obj.here).to.be('you');
+				}
+				if(obj.go){
+					done.b = obj.go;
+					expect(obj.go).to.be('dear');	
+				}
+				if(obj.sir){
+					done.c = obj.sir;
+					expect(obj.sir).to.be('!');
+				}
+				if(done.a && done.b && done.c){
+					done();
+				}
+			});
+		});
+		
+		it('map chain path', function(done){
+			var set = gun.put({
+				a: {name: "Mark",
+					pet: {coat: "tabby", name: "Hobbes"}
+				}, b: {name: "Alice",
+					pet: {coat: "calico", name: "Cali"}
+				}, c: {name: "Bob",
+					pet: {coat: "tux", name: "Casper"}
+				} 
+			});
+			set.map().path('pet').val(function(obj, field){
+				if(obj.name === 'Hobbes'){
+					done.hobbes = obj.name;
+					expect(obj.name).to.be('Hobbes');
+					expect(obj.coat).to.be('tabby');
+				}
+				if(obj.name === 'Cali'){
+					done.cali = obj.name;
+					expect(obj.name).to.be('Cali');
+					expect(obj.coat).to.be('calico');
+				}
+				if(obj.name === 'Casper'){
+					done.casper = obj.name;
+					expect(obj.name).to.be('Casper');
+					expect(obj.coat).to.be('tux');
+				}
+				if(done.hobbes && done.cali && done.casper){
+					done();
+				}
+			});
+		});
+		
+		it('get big on', function(done){
+			this.timeout(ctx.gen * ctx.extra);
+			var test = {c: 0, last: 0};
+			g().get('big').on(function(val){
+				if(test.done){ return console.log("hey yo! you got duplication on your ons!"); }
+				delete val._;
+				if(val['f' + (test.last + 1)]){ 
+					test.c += 1;
+					test.last += 1;
+				}
+				var obj = {};
+				for(var i = 1; i < test.c + 1; i++){
+					obj['f'+i] = i;
+				}
+				expect(val).to.eql(obj);
+				if(test.c === ctx.length){
+					test.done = true;
+					done();
+				}
+			});
+		});
+		
+		it('get big on delta', function(done){
+			this.timeout(ctx.gen * ctx.extra);
+			var test = {c: 0, seen: {}};
+			g().get('big').on(function(val){
+				delete val._;
+				if(test.seen['f' + test.c]){ return }
+				test.seen['f' + test.c] = true;
+				test.c += 1;
+				var obj = {};
+				obj['f' + test.c] = test.c;
+				expect(val).to.eql(obj);
+				if(test.c === ctx.length){
+					done();
+				}
+			}, true);
+		});
+		
+		it('get val', function(done){
+			this.timeout(ctx.gen * ctx.extra);
+			g().get('big').val(function(obj){
+				delete obj._;
+				expect(obj.f1).to.be(1);
+				expect(obj['f' + ctx.length]).to.be(ctx.length);
+				expect(obj).to.be.eql(ctx.get.fake);
+				done();
+			});
+		});
+		
+		it('get big map val', function(done){
+			this.timeout(ctx.gen * ctx.extra);
+			var test = {c: 0, seen: {}};
+			g().get('big').map().val(function(val, field){
+				if(test.seen[field]){ return }
+				test.seen[field] = true;
+				delete val._;
+				expect(field).to.be('f' + (test.c += 1));
+				expect(val).to.be(test.c);
+				if(test.c === ctx.length){
+					done();
+				}
+			});
 		});
 	});
 });

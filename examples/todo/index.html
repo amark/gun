@@ -11,20 +11,18 @@
 		function ready(){
 			var $ = document.querySelector.bind(document);
 			var gun = Gun(location.origin + '/gun').get('example/todo/data');
-			gun.not(function(){
-				return this.put({hello: "world!"}).key('example/todo/data');
-			}).on(function renderToDo(val){
+			gun.on(function renderToDo(val){
 				var todoHTML = '';
-				for(key in val) {
-					if(!val[key] || key == '_') continue;
-					todoHTML += '<li style="width:400px;height:2em;">' + (val[key]||'').toString().replace(/\</ig, '&lt;') +
-					'<button style="float:right;" onclick=removeToDo("'+key+'")>X</button></li>';
+				for(field in val) {
+					if(!val[field] || field == '_') continue;
+					todoHTML += '<li style="width:400px;height:2em;">'
+						+ (val[field]||'').toString().replace(/\</ig, '&lt;')
+						+ '<button style="float:right;" onclick=removeToDo("'+field+'")>X</button></li>';
 				}
 				$("#todos").innerHTML = todoHTML;
 			});
 			$("#addToDo").onsubmit = function(){
-				var id = randomId();
-				gun.path(id).put(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
+				gun.set(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
 				$("#todoItem").value = "";
 				return false;
 			};
