@@ -58,7 +58,7 @@ Version 0.2.0 is currently in alpha.  Important changes include `.get` to `.val`
 GUN is not stable, and therefore should not be trusted in a production environment.
 ***
 
-## API
+## [API](https://github.com/amark/gun/wiki/JS-API)
 
 Below is a really basic overview of how the gun API works. For a more detailed explanation with many more examples, [check out the wiki](https://github.com/amark/gun/wiki).
 
