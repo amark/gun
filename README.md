@@ -33,7 +33,7 @@ var gun = Gun({
 });
 ```
 
-These are the default persistence layers, they are modular and can be replaced others.
+These are the default persistence layers, they are modular and can be replaced by others.
 
 Using S3 is recommended for deployment, and using a file is recommended for local development.
 
