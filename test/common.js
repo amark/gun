@@ -1836,6 +1836,28 @@ describe('Gun', function(){
 				});
 			})
 		});
+		
+		it("ToDo", function(done){ // Simulate ToDo app!
+			var gun = Gun().get('example/todo/data');
+			gun.on(function renderToDo(val){
+				if(done.done){ return }
+				if(done.clear){
+					done.done = true;
+					expect(val[done.id]).to.not.be.ok();
+					return done();
+				}
+				delete val._;
+				Gun.obj.map(val, function(val, field){ return done.id = field; });
+				expect(val[done.id]).to.be('groceries');
+			});
+			setTimeout(function(){ // form submit
+				gun.set("groceries");
+				setTimeout(function(){ // clear off element
+					done.clear = true;
+					gun.path(done.id).put(null);
+				},100);
+			},200);
+		});
 	});	
 		
 	describe('Streams', function(){
