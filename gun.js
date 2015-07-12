@@ -367,7 +367,7 @@
 			function load(key){
 				if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.get)){
 					ctx.hook(key, function(err, data){ // will be called multiple times.
-						console.log("chain.get ", key, "from hook", err, data);
+						console.log("chain.get ", key, "from hook", err, data, '\n');
 						if(err){ return cb.call(gun, err, null) }
 						if(!data){
 							if(ctx.data){ return }
@@ -418,7 +418,7 @@
 				index({soul: opt.soul});
 			} else { // will be injected via a put
 				(gun.__.flag.start[key] = gun._.at('soul')).once(function($){
-					console.log("chain.key");
+					console.log("chain.key", key, '\n');
 					(gun.__.key.s[key] = gun.__.key.s[key] || {})[$.soul] = gun.__.graph[$.soul];
 					delete gun.__.flag.start[key];
 				}, -1);
@@ -477,44 +477,39 @@
 			Path ultimately should call .val each time, individually, for what it finds.
 			Things that wait and merge many things together should be an abstraction ontop of path.
 		*/
-		Chain.path = function(path, cb){
+		Chain.path = function(path, cb, opt){
 			var gun = this.chain();
 			cb = cb || function(){};
+			opt = opt || {};
+			if((path !== null && !path) || !Gun.text.is(path = path.join? path.join('.') : path + '')){ return }
 			if(!gun.back._.at){ return cb.call(gun, {err: Gun.log("No context!")}), gun }
-			// TODO: Hmmm once also? figure it out later.
-			gun.back._.at('soul').event(function($){
-				var ctx = {path: (Gun.text.ify(path) || '').split('.')};
-				(function trace($){ // TODO: Check for field as well and merge?
-					if(!ctx.path.length){ return }
-					var node = gun.__.graph[$.soul], field = Gun.text.ify(ctx.path.shift()), soul, val;
-					if(ctx.path.length){
-						if(soul = Gun.is.soul(val = node[field])){
-							gun.get(val, function(err, data){
-								data = (data || {})[soul];
-								if(err || !data || Gun.obj.empty(data, Gun._.meta)){ return cb.call(gun, err) }
-								trace({soul: soul});
-							});
-						} else {
-							cb.call(gun, null);
-						}
-					} else
-					if(!Gun.obj.has(node, field)){ // TODO: THIS MAY NOT BE CORRECT BEHAVIOR!!!!
-						cb.call(gun, null, null, field);
-						gun._.at('soul').emit({soul: $.soul, field: field, PATH: 'SOUL', WAS: 'ON'}); // if .put is after, makes sense. If anything else, makes sense to wait.
-					} else
-					if(soul = Gun.is.soul(val = node[field])){
-						gun.get(val, function(err, data){
-							data = (data || {})[soul];
-							cb.call(gun, err, data, field); // TODO: Should we attach field here, does map?
-						});
-						ctx.node = gun.__.graph[ctx.soul] = gun.__.graph[ctx.soul] || Gun.union.pseudo(soul);
-						gun._.at('soul').emit({soul: soul, field: null, from: $.soul, at: field, PATH: 'SOUL'});
-					} else {
-						cb.call(gun, null, val, field);
-						gun._.at('soul').emit({soul: $.soul, field: field, PATH: 'SOUL'});
+			
+			gun.back.on(function($, node){
+				if(!(node = node || gun.__.graph[$.soul])){ return }
+				var chain = this || gun, src = opt.src || gun;
+				var ctx = {path: path.split('.')}, field = Gun.text.ify(ctx.path.shift());
+				var val = node[field], soul = Gun.is.soul(val);
+				console.log("chain.path", field, node, '\n');
+				if(!field && !ctx.path.length){
+					cb.call(chain, null, node, field);
+					return opt.step? src._.at('soul').emit({soul: $.soul, field: null, from: opt.step.soul, at: opt.step.field, gun: chain, PATH: 'SOUL'})
+					:	src._.at('soul').emit({soul: $.soul, field: null, gun: chain, PATH: 'SOUL'});
+				}
+				if(!Gun.obj.has(node, field)){
+					if(opt.end || (!ctx.path.length && gun.__.meta($.soul).end)){ // TODO: Make it so you can adjust how many terminations!
+						cb.call(chain, null, null, field);
+						src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
 					}
-				}($));
-			});
+					return;
+				}
+				if(soul){
+					return gun.get(val, function(err, data){
+						if(err){ return cb.call(chain, err) }
+					}).path(ctx.path, cb, {src: src, step: {soul: $.soul, field: field}});
+				}
+				cb.call(chain, null, val, field);
+				return src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
+			}, {raw: true, once: true});
 			
 			return gun;
 		}
@@ -536,11 +531,11 @@
 					if($.field){
 						if(ctx[$.soul + $.field]){ return }
 						ctx[$.soul + $.field] = true; // TODO: unregister instead?
-						return cb.call(gun, node[$.field], $.field || $.at);
+						return cb.call($.gun || gun, node[$.field], $.field || $.at);
 					}
 					if(ctx[$.soul] || ($.key && ctx[$.key]) || !gun.__.meta($.soul).end){ return } // TODO: Add opt to change number of terminations.
 					ctx[$.soul] = ctx[$.key] = true; // TODO: unregister instead?
-					cb.call(gun, Gun.obj.copy(node), $.field || $.at);
+					cb.call($.gun || gun, Gun.obj.copy(node), $.field || $.at);
 				}, {raw: true});
 				
 				return gun;
@@ -551,7 +546,6 @@
 			var gun = this, ctx = {};
 			opt = Gun.obj.is(opt)? opt : {change: opt};
 			cb = cb || function(){};
-			
 			gun._.at('soul').event(function($){ // TODO: once per soul on graph. (?)
 				if(ctx[$.soul]){
 					if(opt.raw){
@@ -559,13 +553,15 @@
 					}
 				} else {
 					(ctx[$.soul] = function(delta, $$){
-						var $$ = $$ || $, node = gun.__.graph[$$.soul];
-						if(opt.raw){ return cb.call(gun, $$, delta, this) }
+						$$ = $$ || $; var node = gun.__.graph[$$.soul];
+						if(delta && $.soul != Gun.is.soul.on(delta)){ return }
+						if(opt.raw){ return cb.call($$.gun || gun, $$, delta, this) }
 						if(!opt.end && Gun.obj.empty(delta, Gun._.meta)){ return }
 						if($$.key){ node = Gun.union.pseudo($.key, gun.__.key.s[$.key]) || node }
-						cb.call(gun, Gun.obj.copy(opt.change? delta || node : node), $$.field || $$.at);
+						if(opt.change){ node = delta || node }
+						cb.call($$.gun || gun, Gun.obj.copy($$.field? node[$$.field] : node), $$.field || $$.at);
 					})(gun.__.graph[$.soul], $);
-					gun.__.on($.soul).event(ctx[$.soul]);
+					if(!opt.once){ gun.__.on($.soul).event(ctx[$.soul]) }
 				}
 			});
 			
@@ -595,8 +591,9 @@
 			if(gun.back.not){ gun.back.not(call) }
 			
 			gun.back._.at('soul').event(function($){ // TODO: maybe once per soul?
+				var chain = $.gun || gun; 
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
-				console.log("chain.put", val);
+				console.log("chain.put", val, '\n');
 				if(Gun.is.value(obj)){
 					if($.from && $.at){
 						$.soul = $.from;
@@ -636,7 +633,7 @@
 									env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
 									cb(at, at.soul);
 								};
-								$.empty? path() : gun.back.path(at.path.join('.'), path); // TODO: clean this up.
+								$.empty? path() : gun.back.path(at.path, path, {once: true, end: true}); // TODO: clean this up.
 							}
 						}
 						if(!at.node._[Gun._.HAM]){
@@ -645,7 +642,7 @@
 						if(!at.field){ return }
 						at.node._[Gun._.HAM][at.field] = drift;
 					})(function(err, ify){
-						console.log("chain.put PUT <----", ify.graph);
+						console.log("chain.put PUT <----", ify.graph, '\n');
 						if(err || ify.err){ return cb.call(gun, err || ify.err) }
 						if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) }
 						if($.from = Gun.is.soul(ify.root[$.field])){ $.soul = $.from; $.field = null }
@@ -670,26 +667,23 @@
 			opt = (Gun.obj.is(opt)? opt : (opt? {node: true} : {}));
 			cb = cb || function(){};
 			
-			gun.back.on(function(node){ // oo what if this gets TODO: BUG! retriggered?
+			gun.back.on(function(node){
 				var soul = Gun.is.soul.on(node);
+				console.log("chain.map", node, '\n');
 				Gun.obj.map(node, function(val, field){ // maybe filter against known fields.
 					if(Gun._.meta == field){ return }
 					var s = Gun.is.soul(val);
 					if(s){
-						gun.get(val, function(err, data){
-							data = (data || {})[s]; // TODO: should map have support for `.not`? error?
-							if(err || !data || Gun.obj.empty(data, Gun._.meta)){ return }
-							cb.call(this, Gun.obj.copy(data), field);
-						});
-						gun.__.graph[s] = gun.__.graph[s] || Gun.union.pseudo(s);
-						gun._.at('soul').emit({soul: s, field: null, from: soul, at: field, MAP: 'SOUL'});
+						gun.get(val).on(function(d, f){
+							cb.call(this, d, f || field);
+							gun._.at('soul').emit({soul: s, field: null, from: soul, at: field, MAP: 'SOUL', gun: this})
+						}); //, {once: true});
 					} else {
 						if(opt.node){ return } // {node: true} maps over only sub nodes.
-						console.log("trigger next thing", field, val);
-						cb.call(gun, val, field);
+						cb.call(this, val, field);
 						gun._.at('soul').emit({soul: soul, field: field, MAP: 'SOUL'});
 					}
-				});
+				}, this || gun);
 			}, true);
 			
 			return gun;
@@ -700,11 +694,11 @@
 			opt = opt || {};
 			
 			if(!gun.back){ gun = gun.put({}) }
-			gun = gun.not(function(next, key){ return key? this.put({}).key(key) : this.put({}) });
+			gun = gun.not(function(key){ return key? this.put({}).key(key) : this.put({}) });
 			if(!val && !Gun.is.value(val)){ return gun }
-			var obj = {};
-			obj['I' + drift + 'R' + Gun.text.random(5)] = val;
-			return gun.put(obj, cb);
+			var obj = {}, index = 'I' + drift + 'R' + Gun.text.random(5);
+			obj[index] = val;
+			return Gun.is.value(val)? gun.put(obj, cb) : gun.put(obj, cb).path(index);
 		}
 		Chain.not = function(cb){
 			var gun = this, ctx = {};
@@ -716,7 +710,7 @@
 				var kick = function(next){
 					if(++c){ return Gun.log("Warning! Multiple `not` resumes!"); }
 					next._.at('soul').once(function($){ $.N0T = 'KICK SOUL'; gun._.at('soul').emit($) });
-				}, chain = gun.chain(), next = cb.call(chain, kick, key), c = -1;
+				}, chain = gun.chain(), next = cb.call(chain, key, kick), c = -1;
 				if(Gun.is(next)){ kick(next) }
 				chain._.at('soul').emit({soul: Gun.roulette.call(chain), empty: true, key: key, N0T: 'SOUL', WAS: 'ON'}); // WAS ON
 			});

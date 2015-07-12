@@ -7,6 +7,7 @@ Gun.log.squelch = true;
 
 describe('Gun', function(){
 	var t = {};
+	
 	describe('Utility', function(){
 
 		it('verbose console.log debugging', function(done) { console.log("TURN THIS BACK ON the DEBUGGING TEST"); done(); return;
@@ -829,7 +830,7 @@ describe('Gun', function(){
 		var gun = Gun();
 		
 		it('put', function(done){
-			gun.put("hello", function(err){
+			gun.put("hello", function(err, ok){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -953,12 +954,13 @@ describe('Gun', function(){
 			}, 500);
 		});
 		
-		/*
+		/* // not sure what this is suppose to do. Review later
 		it('get key no data put', function(done){
 			gun.get('this/key/definitely/does/not/exist', function(err, data){
 				expect(err).to.not.be.ok();
 				expect(data).to.not.be.ok();
 			}).put({testing: 'stuff'}, function(err, ok){
+				console.log("what?", err, ok);
 				expect(err).to.not.be.ok();
 				var node = gun.__.graph[done.soul];
 				expect(node.hello).to.be('key');
@@ -1082,7 +1084,7 @@ describe('Gun', function(){
 			});
 		});
 		
-		/*
+		/* // Future feature!
 		it('put gun node', function(done){
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
 			var amber = gun.put({age: 23, name: "Amber Nadal"});
@@ -1548,7 +1550,7 @@ describe('Gun', function(){
 		});
 		
 		it('double not', function(done){ // from the thought tutorial
-			var gun = Gun().get('thoughts').not(function(n, key){
+			var gun = Gun().get('thoughts').not(function(key){
 				return this.put({}).key(key);
 			});
 			
@@ -1584,7 +1586,7 @@ describe('Gun', function(){
 			});
 			
 			gun.set(1).set(2).set(3).set(4); // if you set an object you'd have to do a `.back`
-			gun.map().val(function(val){
+			gun.map().val(function(val, field){
 				i += 1;
 				expect(val).to.be(i);
 				if(i % 4 === 0){
@@ -1592,6 +1594,7 @@ describe('Gun', function(){
 						done.i = 0;
 						Gun.obj.map(gun.__.graph, function(){ done.i++ });
 						expect(done.i).to.be(1); // make sure there isn't double.
+						Gun.log.verbose = false;
 						done() 
 					},10);
 				}
@@ -1714,6 +1717,124 @@ describe('Gun', function(){
 					},10);
 				},10);
 			},10);
+		});
+				
+		it("get map val -> map val", function(done){ // Terje's bug
+			var gun = Gun(); // we can test GUN locally.
+			var passengers = gun.get('passengers'); // this is now a list of passengers that we will map over.
+			var ctx = {n: 0, d: 0, l: 0};
+			passengers.map().val(function(passenger, id){
+				this.map().val(function(change, field){
+					//console.log("Passenger", passenger.name, "had", field, "change to:", change, '\n\n');
+					if('name' == field){ expect(change).to.be(passenger.name); ctx.n++ }
+					if('direction' == field){ expect(change).to.be(passenger.direction); ctx.d++ }
+					if('location' == field){
+						delete change._; ctx.l++;
+						if('Bob' == passenger.name){
+							expect(change).to.eql({'lat': '37.6159', 'lng': '-128.5'}); 
+						} else {
+							expect(change).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'}); 
+						}
+					}
+					if(ctx.n == 2 && ctx.d == 2 && ctx.l == 2){ done() }
+				});
+			});
+			var bob = passengers.set({
+				name: "Bob",
+				location: {'lat': '37.6159', 'lng': '-128.5'},
+				direction: '128.2'
+			});
+			var fred = passengers.set({
+				name: "Fred",
+				location: {'lat': 'f37.6159', 'lng': 'f-128.5'},
+				direction: 'f128.2'
+			});
+		});
+				
+		it("get map map val", function(done){ // Terje's bug
+			var gun = Gun(); // we can test GUN locally.
+			var passengers = gun.get('passengers/map'); // this is now a list of passengers that we will map over.
+			var ctx = {n: 0, d: 0, l: 0};
+			passengers.map().map().val(function(val, field){
+				if('name' == field){ expect(val).to.be(!ctx.n? 'Bob' : 'Fred'); ctx.n++ }
+				if('direction' == field){ expect(val).to.be(!ctx.d? '128.2' : 'f128.2'); ctx.d++ }
+				if('location' == field){
+					delete val._;
+					if(!ctx.l){
+						expect(val).to.eql({'lat': '37.6159', 'lng': '-128.5'}); 
+					} else {
+						expect(val).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'}); 
+					}
+					ctx.l++;
+				}
+				if(ctx.n == 2 && ctx.d == 2 && ctx.l == 2){ done() }
+			});
+			var bob = passengers.set({
+				name: "Bob",
+				location: {'lat': '37.6159', 'lng': '-128.5'},
+				direction: '128.2'
+			});
+			setTimeout(function(){
+				var fred = passengers.set({
+					name: "Fred",
+					location: {'lat': 'f37.6159', 'lng': 'f-128.5'},
+					direction: 'f128.2'
+				});
+			},100);
+		});
+				
+		it("get map path val", function(done){ // Terje's bug
+			var gun = Gun();
+			var ctx = {l: -1, d: 0};
+			var passengers = gun.get('passengers/path');
+			passengers.map().path('location.lng').val(function(val, field){
+				expect(field).to.be('lng');
+				if(ctx.l){
+					expect(val).to.be('-128.5'); 
+				} else {
+					expect(val).to.eql('f-128.5'); 
+				}
+				ctx.l++;
+				if(ctx.l){ done() }
+			});
+			var bob = passengers.set({
+				name: "Bob",
+				location: {'lat': '37.6159', 'lng': '-128.5'},
+				direction: '128.2'
+			});
+			setTimeout(function(){
+				var fred = passengers.set({
+					name: "Fred",
+					location: {'lat': 'f37.6159', 'lng': 'f-128.5'},
+					direction: 'f128.2'
+				});
+			},100);
+		});
+		
+		it("put path deep val -> path val", function(done){ // Terje's bug
+			var gun = Gun();
+			gun.put({you: {have: {got: {to: {be: {kidding: "me!"}}}}}}).path('you.have.got.to.be').val(function(val, field){
+				expect(val.kidding).to.be('me!');
+				this.path('kidding').val(function(val){
+					expect(val).to.be('me!');
+					done();
+				});
+			});
+		});
+		
+		it("get set path put, map path val -> path val", function(done){ // Terje's bug
+			var gun = Gun();
+			var ctx = {l: -1, d: 0};
+			var passengers = gun.get('passengers/set/path');
+			passengers.set({name: 'Bob'}).path('direction').put({lol: {just: 'kidding', dude: '!'}}, function(err, ok){});
+			passengers.map().path('direction.lol').val(function(val){
+				this.path('just').val(function(val){
+					expect(val).to.be('kidding');
+				}).back.path('dude').val(function(val){
+					expect(val).to.be('!');
+					done();
+				});
+			})
 		});
 	});	
 		
