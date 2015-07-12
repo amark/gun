@@ -8,7 +8,7 @@
 	}
 ,	"dependencies": {
 		"express": "~>4.9.0",
-		"gun": "~>0.2.0-alpha-2"
+		"gun": "~>0.2.0-alpha-3"
 	}
 ,	"scripts": {
         "start": "node http.js",
