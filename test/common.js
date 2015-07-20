@@ -1836,6 +1836,19 @@ describe('Gun', function(){
 				});
 			})
 		});
+		
+		it("gun put null path on put sub object", function(done){ // consensus4's bug
+			var gun = Gun();
+			//Gun.log.verbose = true;
+			var game = gun.put({board: null, teamA: null, teamB: null, turn: null}).key('the/game');
+			game.path('board').on(function(board){
+				console.log("board updated", board);
+			});
+			setTimeout(function(){
+				//game.path('board').put({11: ' ', 22: ' ', 33: 'A'});
+				game.put({board: {11: ' ', 22: ' ', 33: 'A'}});
+			},100);
+		});
 	});	
 		
 	describe('Streams', function(){

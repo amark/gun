@@ -3,3 +3,5 @@ npm-debug.log
 *data.json
 *.db
 .idea/
+*.bak
+*.new
