@@ -559,6 +559,7 @@
 						if(!opt.end && Gun.obj.empty(delta, Gun._.meta)){ return }
 						if($$.key){ node = Gun.union.pseudo($.key, gun.__.key.s[$.key]) || node }
 						if(opt.change){ node = delta || node }
+						//root.console.log("ON IT BABY!", $$, node);
 						cb.call($$.gun || gun, Gun.obj.copy($$.field? node[$$.field] : node), $$.field || $$.at);
 					})(gun.__.graph[$.soul], $);
 					if(!opt.once){ gun.__.on($.soul).event(ctx[$.soul]) }
