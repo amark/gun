@@ -1858,6 +1858,29 @@ describe('Gun', function(){
 				},100);
 			},200);
 		});
+		
+		it("gun put null path on put sub object", function(done){ // consensus4's bug
+			done.c = 1;
+			var gun = Gun();
+			//Gun.log.verbose = true;
+			var game = gun.put({board: null, teamA: null, teamB: null, turn: null}).key('the/game');
+			game.path('board').on(function(board, field){
+				expect(field).to.be('board');
+				if(done.c == 1){
+					expect(board).to.not.be.ok();
+				}
+				if(done.c === 2){
+					done.c++;
+					delete board._;
+					expect(board).to.be.eql({11: ' ', 22: ' ', 33: 'A'});
+					done();
+				}
+			});
+			setTimeout(function(){
+				done.c++;
+				game.put({board: {11: ' ', 22: ' ', 33: 'A'}});
+			},100);
+		});
 	});	
 		
 	describe('Streams', function(){
