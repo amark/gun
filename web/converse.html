@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="./dep/jquery.js"></script>
+</head>
+<body>
+
+<p>Now that we can jot down our thoughts in a <a href="./think.html">To-Do</a> app, let us add something ambitious to it. To-Do: Build a realtime chat app! Which is exactly what we are going to do in this tutorial. It is the next natural step, we can track our thoughts - but now we want to have conversations about them with others to refine our ideas.</p>
+
+<p>So what are the requirements? The ability to write a message, send a message, and receive messages. We will also need a space to keep these messages in, and a web page to access the chat through. Let's start with making a copy of our code from the To-Do app! You can edit the code below, which will update the live preview.</p>
+
+<div class="edit">... loading editor and preview ...
+	<textarea style="height: 36em"><html>
+	<body>
+		<h1>Thoughts</h1>
+
+		<form>
+			<input><button>Add</button>
+		</form>
+		
+		<ul></ul>
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="https://rawgit.com/amark/gun/master/gun.js"></script>
+		<script>
+			var gun = Gun().get('thoughts');
+			$('form').on('submit', function(event){
+				event.preventDefault();
+				gun.set($('input').val());
+				$('input').val("");
+			});
+			gun.on().map(function(thought, id){
+				var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
+				if(thought){
+					$(li).text(thought);
+				} else {
+					$(li).hide();
+				}
+			});
+			$('body').on('dblclick', 'li', function(event){
+				gun.path(this.id).put(null);
+			});
+		</script>
+	</body>
+</html></textarea>
+</div>
+<script>
+var code = $('.edit').load('./editor.html', function(){setTimeout(function(){
+	var editor = $('.CodeMirror')[0].CodeMirror;
+	editor.live(function(frame){
+		$('body', frame).on('submit', 'form', function(e){e.preventDefault()});
+	});
+	editor.setValue(code);
+},1)}).find('textarea').text();
+</script>
+
+<style>
+	.none { display: none }
+	.step-at { display: block }
+	textarea { border: none; width: 100%; }
+</style>
+
+<div id="step-0" class="step">
+	<p>The first thing we need to do is update the HTML.</p>
+	<ol>
+		<li>Change the text in the <u>h1</u> tag to "Chat".</li>
+		<li>Move the <u>ul</u> tags up to be above the <u>form</u> tag.</li>
+		<li>Add an opening closing <u>textarea</u> tag inbetween the input and button.</li>
+		<li>Make the <u>button</u> say "send" instead of "Add".</li>
+		<li>
+			Now we want to model what the HTML for our message will look like. Copy the following into the editor to be above the first <u>script</u> tag:
+			<textarea style="height: 9em;"><div class="model" style="display: none;">
+			<li class="message">
+				<i class="when">0</i>
+				<b class="who"></b>:
+				<span class="what"></span>
+			</li>
+		</div>
+</textarea>
+		</li>
+	</ol>
+	<p>What is happening?</p>
+	<ul>
+		<li>We do not actually have any messages yet, so we do not want an empty chat message displaying on the screen.</li>
+		<li>There are a bunch of other HTML tags out there, let us do a quick review of the new ones we added.
+			<ul>
+				<li>The <u>textarea</u> tag is like an <u>input</u> tag except longer content.</li>
+				<li>A <u>div</u> tag is a generic HTML tag to put anything else inside of.</li>
+				<li>The <i><u>i</u>alicize</i> tag stylizes your text as so.</li>
+				<li>The <b><u>b</u>old</b> tag does similarly.</li>
+				<li>And a <u>span</u> tag is a generic HTML tag to put text inside of.</li>
+			</ul>
+		</li>
+		<li>It turns out that HTML allows you to add extra data to your page, let us go over them.
+			<ul>
+				<li>One of these attributes is a <u>class</u> which lets you categorize your HTML.</li>
+				<li>The other one is a <u>style</u> attribute, which lets you style your HTML with <a href="https://www.google.com/search?q=CSS">CSS</a>.</li>
+			</ul>
+		<li>To keep our models hidden, we wrap them inside of <u>div</u> container, and then tell the computer not to display it.</li>
+		<li>When we receive a message, we will make a copy of the <u>"message"</u> model and fill it up with the data using javascript.</li>
+	</ul>
+	<button class="none">All tweaked!</button>
+</div>
+
+<div id="step-1" class="step">
+	<p>Before we get started with writing any javascript, we need to clean up some code that no longer applies! Go ahead and remove the following 3 lines of code from the bottom of our script tag:</p>
+		<textarea style="height: 4em;">
+			$('body').on('dblclick', 'li', function(event){
+				gun.path(this.id).put(null);
+			});</textarea>
+	<button class="none">I removed it!</button>
+</div>
+
+<div id="step-2" class="step">
+	<p>Wonderful! Now we want to change the name of the data so we do not get our previous app's data. Additionally, if we want this data to be shared and updated in realtime with other people, we have to connect to them directly or a server that does this for us. Modify the line where we initialize gun (hint: it is the very first line) with this:</p>
+		<textarea style="height: 1em;">			var gun = Gun('https://gunjs.herokuapp.com/gun').get('tutorial/chat/app');</textarea>
+	<p>What does this do?</p>
+	<ul>
+		<li>The URL <u>'https://gunjs.herokuapp.com/gun'</u> happens to be a gun peer.</li>
+		<li>Anyone can run a gun peer, by using <a href="https://github.com/amark/gun">gun on a server</a>.</li>
+		<li>This particular peer is a testing server, please do not use it outside these tutorials - it is not very fast or reliable, as we regularly delete data from it.</li>
+		<li>The <u>'tutorial/chat/app'</u> is the name of our shared data, it acts as a key to help us find it.</li>
+	</ul>
+	<button class="none">Connect!</button>
+</div>
+
+<div id="step-3" class="step">
+	<p>Oops, our current code is handling the data incorrectly. We need to fix that, adjust the commented line in the editor to this:</p>
+		<textarea style="height: 1em;">gun.map().val(function(message, id){</textarea>
+	<p>Why?</p>
+	<ul>
+		<li>Because we do not expect <u>message</u>s to change, therefore we just get the <u>val</u>ue instead of reacting <u>on</u> updates.</li>
+		<li>We also swap the order, placing <u>map</u> in front because we want to get each message item in the set (or that will be in the set) once rather than every item in the set every time it changes. Kinda confusing, but just reread that a couple of times and think about it.</li>
+	</ul>
+	<button class="none">Got it.</button>
+</div>
+
+<div id="step-4" class="step">
+	<p>We still have breaking changes, we need to revamp the inside of the val function with the following:</p>
+		<textarea style="height: 8em;">
+				var $li = $(
+					$('#' + id).get(0) || 
+					$('.model').find('.message').clone(true).attr('id', id).appendTo('ul')
+				);
+				$li.find('.who').text(message.who);
+				$li.find('.what').text(message.what);
+				$li.find('.when').text(message.when);</textarea>
+	<p>What does this do?</p>
+	<ul>
+		<li>As before, if the list item already exists, use it.</li>
+		<li><u>||</u> or find a model message, <u>clone</u> it, set its <u>id</u> so we can reuse it later, and <u>append</u> it to the list.</li>
+		<li>Then fill in the model with the specific pieces of data from our message.</li>
+	</ul>
+	<p>Now we need to make sure that the data we save matches the same format as the messages we receive.</p>
+	<button class="none">Okay.</button>
+</div>
+
+<div id="step-5" class="step">
+	<p>Replace everything inside of the form on submit function with the following:</p>
+		<textarea style="height: 8em;">
+				event.preventDefault();
+				var message = {};
+				message.who = $('form').find('input').val();
+				message.what = $('form').find('textarea').val();
+				message.when = new Date().getTime();
+				gun.set(message);
+				$('form').find('textarea').val("");</textarea>
+	<p>What is happening?</p>
+	<ul>
+		<li>We still want to prevent the default behavior of the browser, which would be to reload the page.</li>
+		<li>Then we want to create a javascript object using <u>{}</u> curly braces, which allows us to describe complex data.<li>Our data will be composed of three parts, <u>who</u> sent the message, <u>what</u> the message is, and <u>when</u> it was written.</li>
+		<li>We then add this message to a <u>set</u> of messages in the chat, which will get <u>map</u>ped over.</li>
+		<li>Finally we want to clear out the <u>textarea</u> we wrote our message in, so that way we can type another.</li>
+	</ul>
+	<button class="none">Try sending a message!</button>
+</div>
+
+<div id="step-6" class="step">
+	<p>Wow! Our chat is fully functioning! You can pat yourself on the back and be done now if you want. But there are lots of little things we can do to polish up the experience.</p>
+	<p>We will not be doing any design, as that exceeds the scope of what this tutorial teaches. So prepare for your app to look pretty ugly, you can try to make things pretty on your own. What then, is left?</p>
+	<ul>
+		<li>The message's sent time is not human friendly, we will need to convert it.</li>
+		<li>Messages currently may be shown out of order, so we need to order them correctly.</li>
+		<li>Every time a message comes in you have to scroll down to read it, we should automate that.</li>
+	</ul>
+	<button class="none">Let's do it!</button>
+</div>
+
+<div id="step-7" class="step">
+	<p>Tutorial Unfinished, Sad Face. We're Working On It Though!</p>
+	<p>Check out the <a href="https://github.com/amark/gun">github</a> in the meanwhile for more documentation.</p>
+</div>
+
+<div id="step-8" class="step">
+	<p>Congratulations! You have built a realtime chat app! That is quite the accomplishment, you should go celebrate by eating a sandwhich.</p>
+	<p>Now that we can converse with people, we might want to know <i>who</i> they are. In the next tutorial we will create a contact app with some basic social network features and learn a little bit about security.</p>
+	<a href="#">Coming Later!</a>
+	<p>Check out the <a href="https://github.com/amark/gun">github</a> in the meanwhile for more documentation.</p>
+</div>
+
+<script>
+$('.step').addClass('none').first().addClass('step-at');
+$('button').on('click', next).removeClass('none');
+function next(){
+	$('.step-at').removeClass('step-at');
+	$('#step-' + (++next.at)).addClass('step-at');
+	(next.step[next.at] || function(){})();
+}
+next.at = 0;
+next.comment = /\s*\/\*(.*?)\*\/\s*/i;
+next.unwrap = /\s*<\/?(html|body)>\s*\s*/ig;
+next.wrap = function(c){ return '<html>\n\t<body>\n\t\t' + c + '\n\t</body>\n</html>' }
+next.code = function(){ return $('<div>' + next.mir.getValue().replace(next.wrap, '') + '</div>') }
+next.step = [null, function(){
+	next.mir = $('.CodeMirror')[0].CodeMirror;
+	var code = next.code();
+	if(code.find('h1').text().toLowerCase() == 'thoughts'){
+		code.find('h1').text('Chat');
+	}
+	if(code.find('button').text().toLowerCase() == 'add'){
+		code.find('button').text('send');
+	}
+	if(!code.find('textarea').length){
+		code.find('button').before("<textarea>");
+	}
+	if(code.find('form').index() < code.find('ul').index()){
+		code.find('ul').insertBefore(code.find('form')).after('\n\t\t');
+		code.contents().filter(function(){ 
+			return $(this).text().indexOf('\n') >= 0 && $(this).prev().is('form') 
+		}).remove();
+		code.find('form').after('\n\n\t\t');
+	}
+	if(!code.find('.model').length){
+		code.find('script').first().before($('#step-0').find('textarea').first().text() + '\n\t\t');
+	}
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	script.text(script.text().slice(0, script.text().indexOf(
+		$('#step-1').find('textarea').first().text().replace(/\s/ig,'').slice(0,7)
+	)));
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	if(script.text().indexOf('Gun()')){
+		script.text(script.text().replace('Gun()', 'Gun(' +
+			($('#step-2').find('textarea').first().text().match(/Gun\((.*?)\)/i)||[])[1]
+		+ ')'));
+	}
+	if(script.text().indexOf("'thoughts'")){
+		script.text(script.text().replace("'thoughts'",
+			($('#step-2').find('textarea').first().text().match(/get\((.*?)\)/i)||[])[1]
+		));
+	}
+	script.text(script.text().replace(/gun\.on\(\)\.map(.*)\n/ig, "gun.on().map(function(thought, id){ // Edit this line!\n"));
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	if(script.text().indexOf('.on().map')){
+		script.text(script.text().replace(/gun\.on\(\)\.map(.*)\n/ig,
+			$('#step-3').find('textarea').first().text() + '\n'
+		));
+	}
+	next.mir.setValue(next.wrap($.trim(code.html())));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	var jsq = jsQuery(script.text());
+	if(0 > jsq.find('.function').last().text().indexOf('.clone(')){
+		jsq.find('.function').last().empty().append(
+			jsQuery($('#step-4').find('textarea').first().text()).contents()
+		);
+		script.text(jsq.text());
+	}
+	next.mir.setValue(html_beautify(next.wrap($.trim(code.html()))));
+}, function(){
+	var code = next.code();
+	var script = code.find('script').last();
+	var jsq = jsQuery(script.text());
+	if(0 > jsq.find('.function').first().text().indexOf('.what = ')){
+		jsq.find('.function').first().empty().append(
+			jsQuery($('#step-5').find('textarea').first().text()).contents()
+		);
+		script.text(jsq.text());
+	}
+	next.mir.setValue(html_beautify(next.wrap($.trim(code.html()))));
+}]
+</script>
+</body>
+</html>
