@@ -1130,7 +1130,7 @@
 			return true;
 		}
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
-			return tab.request = tab.request || request.createServer(tab.server) || true;
+			return (tab.request = tab.request || request.createServer(tab.server) || true);
 		});
 		gun.__.opt.hooks.get = gun.__.opt.hooks.get || tab.get;
 		gun.__.opt.hooks.put = gun.__.opt.hooks.put || tab.put;
@@ -1192,6 +1192,10 @@
 					return;
 				}
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
+				setTimeout(function(){
+					console.log("!!!!! WEBSOCKET DICONNECTED !!!!!! ATTEMPTING INFINITE RETRY WITH NO BACKOFF !!!!!!!");
+					r.ws(opt, function(){}); // opt here is a race condition, is it not? Does this matter?
+				}, 50) // make this an exponential backoff.
 			};
 			ws.onmessage = function(m){
 				if(!m || !m.data){ return }
@@ -1204,7 +1208,7 @@
 				Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
 			};
-			ws.onerror = function(e){ Gun.log(e); };
+			ws.onerror = function(e){ console.log("!!!! WEBSOCKET ERROR !!!!", e); Gun.log(e); };
 			return true;
 		}
 		r.ws.peers = {};
