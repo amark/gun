@@ -3,6 +3,8 @@ gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https:/
 
 GUN is a realtime, decentralized, embedded, graph database engine.
 
+[![1 minute demo of fault tolerance](http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg)](https://youtu.be/-i-11T5ZI9o)
+
 ## Getting Started
 
 For the browser, try out this [tutorial](http://gun.js.org/web/think.html). This README is for GUN servers.
