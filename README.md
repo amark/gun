@@ -1,7 +1,7 @@
 gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ===
 
-GUN is a realtime, decentralized, embedded, graph database engine.
+GUN is a realtime, decentralized, offline-first, graph database engine.
 
 [![1 minute demo of fault tolerance](http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg)](https://youtu.be/-i-11T5ZI9o)
 
