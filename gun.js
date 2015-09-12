@@ -520,7 +520,7 @@
 			});
 			return function(cb, opt){
 				var gun = this, ctx = {};
-				cb = cb || root.console.log.bind(root.console);
+				cb = cb || function(val, field){ root.console.log(field + ':', val) }
 				opt = opt || {};
 				
 				gun.on(function($, delta, on){
