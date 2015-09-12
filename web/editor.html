@@ -21,12 +21,24 @@
 </style>
 <textarea style="height: 15em"></textarea>
 <iframe></iframe>
+
+<script src="./dep/jquery.js"></script>
+<script src="./dep/jsquery.js"></script>
+
 <script src="./dep/codemirror/codemirror.js"></script>
 <script src="./dep/codemirror/xml.js"></script>
 <script src="./dep/codemirror/javascript.js"></script>
 <script src="./dep/codemirror/css.js"></script>
 <script src="./dep/codemirror/htmlmixed.js"></script>
 <script src="./dep/codemirror/matchbrackets.js"></script>
+
+<script src="./dep/beautify/beautify.js"></script>
+<script src="./dep/beautify/beautify-css.js"></script>
+<script src="./dep/beautify/beautify-html.js"></script>
+<script src="./dep/beautify/unpackers/javascriptobfuscator_unpacker.js"></script>
+<script src="./dep/beautify/unpackers/urlencode_unpacker.js"></script>
+<script src="./dep/beautify/unpackers/p_a_c_k_e_r_unpacker.js"></script>
+<script src="./dep/beautify/unpackers/myobfuscate_unpacker.js"></script>
 <script>
 var editor = CodeMirror.fromTextArea($('textarea')[0], {
 	theme: 'colorforth',
