@@ -5,10 +5,6 @@ GUN is a realtime, decentralized, offline-first, graph database engine.
 
 [![1 minute demo of fault tolerance](http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg)](https://youtu.be/-i-11T5ZI9o)
 
-<b> ** For MHacks 2015 Hackathon competitors! Win paintball guns for the entire team for the Best Use of GUN at MHacks. You must talk with mark@gunDB.io or sean@gunDB.io, find our booth. ** </b>
-
-<img src="http://ecx.images-amazon.com/images/I/51kLqX%2BuEjL._SL1000_.jpg" width="600px"/>
-
 ## Getting Started
 
 For the browser, try out this [tutorial](http://gun.js.org/web/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
