@@ -109,7 +109,9 @@ gun.get('usernames/marknadal').val(function(user){
 });
 ```
 
-Basically, this tells gun to check `'usernames/marknadal'`, and then return the object it finds associated with it. For more information, including how to save relational or document based data, [check out the wiki](https://github.com/amark/gun/wiki).
+Basically, this tells gun to check `'usernames/marknadal'`, and then return the object it finds associated with it. For more information, including how to save relational or document based data, [check out the wiki](https://github.com/amark/gun/wiki), or watch this tutorial:
+
+[![7 min | Getting Started with Data Types](http://img.youtube.com/vi/cOO6wz1rZVY/0.jpg)](https://youtu.be/cOO6wz1rZVY)
 
 ---
 
