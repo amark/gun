@@ -1886,7 +1886,7 @@ describe('Gun', function(){
 	describe('Streams', function(){
 		var gun = Gun(), g = function(){
 			return Gun({hooks: {get: ctx.get}});
-		}, ctx = {gen: 5, extra: 45, network: 2};
+		}, ctx = {gen: 9, extra: 45, network: 2};
 		
 		it('prep hook', function(done){
 			this.timeout(ctx.gen * ctx.extra);
