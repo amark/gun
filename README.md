@@ -124,7 +124,7 @@ as it enables us where to refine GUN. So drop us a line in the [![Gitter](https:
 
 Thanks to the following people who have contributed to GUN, via code, issues, or conversation:
 
-[agborkowski](https://github.com/agborkowski), [alexlafroscia](https://github.com/alexlafroscia), [anubiann00b](https://github.com/anubiann00b), [bromagosa](https://github.com/bromagosa), [coolaj86](https://github.com/coolaj86), [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan), [forrestjt](https://github.com/forrestjt), [gedw99](https://github.com/gedw99), [HelloCodeMing](https://github.com/HelloCodeMing), [JosePedroDias](https://github.com/josepedrodias), [onetom](https://github.com/onetom), [ndarilek](https://github.com/ndarilek), [phpnode](https://github.com/phpnode), [riston](https://github.com/riston), [rootsical](https://github.com/rootsical), [rrrene](https://github.com/rrrene), [ssr1ram](https://github.com/ssr1ram), [Xe](https://github.com/Xe), [zot](https://github.com/zot)
+[agborkowski](https://github.com/agborkowski), [alexlafroscia](https://github.com/alexlafroscia), [anubiann00b](https://github.com/anubiann00b), [bromagosa](https://github.com/bromagosa), [coolaj86](https://github.com/coolaj86), [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan), [forrestjt](https://github.com/forrestjt), [gedw99](https://github.com/gedw99), [HelloCodeMing](https://github.com/HelloCodeMing), [JosePedroDias](https://github.com/josepedrodias), [onetom](https://github.com/onetom), [ndarilek](https://github.com/ndarilek), [phpnode](https://github.com/phpnode), [RangerMauve](https://github.com/RangerMauve), [riston](https://github.com/riston), [rootsical](https://github.com/rootsical), [rrrene](https://github.com/rrrene), [ssr1ram](https://github.com/ssr1ram), [Xe](https://github.com/Xe), [zot](https://github.com/zot)
 
 This list of contributors was manually compiled, alphabetically sorted. If we missed you, please submit an issue so we can get you added!
 
@@ -147,7 +147,7 @@ We need help on the following roadmap.
 - Efficient storage engine
 - Authorization callbacks
 - Security or ACLs
-- Schema Validation
+- ~~Schema Validation~~ [@RangerMauve](https://github.com/RangerMauve/gun-schema)
 - Point of Entry Encryption
 - ~~Graph manipulation~~
 - Server to server communication
