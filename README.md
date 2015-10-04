@@ -147,7 +147,7 @@ We need help on the following roadmap.
 - Efficient storage engine
 - Authorization callbacks
 - Security or ACLs
-- ~~Schema Validation~~ [@RangerMauve](https://github.com/RangerMauve/gun-schema)
+- ~~Schema Validation~~ [@RangerMauve](https://github.com/gundb/gun-schema)
 - Point of Entry Encryption
 - ~~Graph manipulation~~
 - Server to server communication
