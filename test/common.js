@@ -1854,7 +1854,7 @@ describe('Gun', function(){
 			});
 			setTimeout(function(){
 				me.put({a: 'b'});
-			});
+			},100);
 		});
 		
 		it("gun get empty set path empty later path put multi", function(done){ // Issue #99 #101, bug in survey and trace game.
