@@ -146,7 +146,7 @@
 				if(field === Gun._.meta){ return }
 				now.end = false;
 				var ctx = {incoming: {}, current: {}}, state;
-				ctx.drift = (ctx.drift = Gun.time.is()) > (Gun.time.now.last || -Infinity)? ctx.drift : Gun.time.now.last;
+				ctx.drift = Gun.time.now(); //(ctx.drift = Gun.time.is()) > (Gun.time.now.last || -Infinity)? ctx.drift : Gun.time.now.last;
 				ctx.incoming.value = Gun.is.soul(incoming) || incoming;
 				ctx.current.value = Gun.is.soul(vertex[field]) || vertex[field];
 				ctx.incoming.state = Gun.num.is(ctx.tmp = ((delta._||{})[Gun._.HAM]||{})[field])? ctx.tmp : -Infinity;
@@ -497,6 +497,8 @@
 				}
 				if(!Gun.obj.has(node, field)){
 					if(opt.end || (!ctx.path.length && gun.__.meta($.soul).end)){ // TODO: Make it so you can adjust how many terminations!
+						console.log("whap!");
+						// TODO: BUG! `chain` here is incorrect on unknowns.
 						cb.call(chain, null, null, field);
 						src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
 					}
@@ -529,7 +531,7 @@
 						node = Gun.union.pseudo($.key, gun.__.key.s[$.key]) || node;
 					}
 					if($.field){
-						if(ctx[$.soul + $.field]){ return }
+						if(!Gun.obj.has(node, $.field) || ctx[$.soul + $.field]){ return }
 						ctx[$.soul + $.field] = true; // TODO: unregister instead?
 						return cb.call($.gun || gun, node[$.field], $.field || $.at);
 					}
@@ -589,8 +591,8 @@
 		*/
 		Chain.put = function(val, cb, opt){ // TODO: handle case where val is a gun context!
 			var gun = this.chain(), call = function(){
-				gun.back._.at('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true, PUT: 'SOUL'});
-			}, drift = Gun.time.now();
+				gun.back._.at('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true, PUT: 'SOUL'}); // TODO: refactor Gun.roulette!
+			}, drift = Gun.time.now(); // TODO: every instance of gun maybe should have their own version of time.
 			cb = cb || function(){};
 			opt = opt || {};
 			if(!gun.back.back){
@@ -638,7 +640,7 @@
 							} else {
 								function path(err, data){
 									if(at.soul){ return }
-									at.soul = Gun.is.soul.on(data) || Gun.is.soul.on(at.obj) || Gun.roulette.call(gun);
+									at.soul = Gun.is.soul.on(data) || Gun.is.soul.on(at.obj) || Gun.roulette.call(gun); // TODO: refactor Gun.roulette!
 									env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
 									cb(at, at.soul);
 								};
@@ -698,14 +700,14 @@
 			return gun;
 		}
 		Chain.set = function(val, cb, opt){
-			var gun = this, ctx = {}, drift = Gun.time.now();
+			var gun = this, ctx = {}, drift = Gun.text.ify(Gun.time.now()||0).replace('.','D'); // TODO: every gun instance should maybe have their own version of time.
 			cb = cb || function(){};
 			opt = opt || {};
 			
 			if(!gun.back){ gun = gun.put({}) }
 			gun = gun.not(function(key){ return key? this.put({}).key(key) : this.put({}) });
 			if(!val && !Gun.is.value(val)){ return gun }
-			var obj = {}, index = 'I' + drift + 'R' + Gun.text.random(5);
+			var obj = {}, index = 'I' + drift + 'R' + Gun.text.random(5); // TODO: Make this configurable!
 			obj[index] = val;
 			return Gun.is.value(val)? gun.put(obj, cb) : gun.put(obj, cb).path(index);
 		}
@@ -721,7 +723,7 @@
 					next._.at('soul').once(function($){ $.N0T = 'KICK SOUL'; gun._.at('soul').emit($) });
 				}, chain = gun.chain(), next = cb.call(chain, key, kick), c = -1;
 				if(Gun.is(next)){ kick(next) }
-				chain._.at('soul').emit({soul: Gun.roulette.call(chain), empty: true, key: key, N0T: 'SOUL', WAS: 'ON'}); // WAS ON
+				chain._.at('soul').emit({soul: Gun.roulette.call(chain), empty: true, key: key, N0T: 'SOUL', WAS: 'ON'}); // WAS ON! TOOD: refactor Gun.roulette
 			});
 			
 			return gun;
@@ -848,9 +850,7 @@
 		Util.time = {};
 		Util.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
 		Util.time.now = function(t){
-			return (t=t||Util.time.is()) > (Util.time.now.last || -Infinity)? (Util.time.now.last = t) : Util.time.now(t + 1);
-			return (t = Util.time.is() + Math.random()) > (Util.time.now.last || -Infinity)? 
-				(Util.time.now.last = t) : Util.time.now();
+			return ((t=t||Util.time.is()) > (Util.time.now.last || -Infinity)? (Util.time.now.last = t) : Util.time.now(t + 1)) + (Util.time.now.drift || 0);
 		};
 	};
 	;(function(schedule){ // maybe use lru-cache
@@ -859,13 +859,13 @@
 		schedule.sort = Gun.list.sort('when');
 		schedule.set = function(future){
 			if(Infinity <= (schedule.soonest = future)){ return }
-			var now = Gun.time.is();
+			var now = Gun.time.now(); // WAS time.is() TODO: Hmmm, this would make it hard for every gun instance to have their own version of time.
 			future = (future <= now)? 0 : (future - now);
 			clearTimeout(schedule.id);
 			schedule.id = setTimeout(schedule.check, future);
 		}
 		schedule.check = function(){
-			var now = Gun.time.is(), soonest = Infinity;
+			var now = Gun.time.now(), soonest = Infinity; // WAS time.is() TODO: Same as above about time. Hmmm.
 			schedule.waiting.sort(schedule.sort);
 			schedule.waiting = Gun.list.map(schedule.waiting, function(wait, i, map){
 				if(!wait){ return }
@@ -889,22 +889,13 @@
 	;Gun.ify=(function(Serializer){
 		function ify(data, cb, opt){
 			opt = opt || {};
-			cb = cb || function(env, cb){ cb(env.at, Gun.roulette()) };
+			cb = cb || function(env, cb){ cb(env.at, Gun.roulette()) }; // TODO: refactor Gun.roulette
 			var end = function(fn){
 				ctx.end = fn || function(){};
 				if(ctx.err){ return ctx.end(ctx.err, ctx), ctx.end = function(){} }
 				unique(ctx);
-			}, ctx = {};
+			}, ctx = {at: {path: [], obj: data}, root: {}, graph: {}, queue: [], seen: [], loop: true};
 			if(!data){ return ctx.err = Gun.log('Serializer does not have correct parameters.'), end }
-			ctx.at = {};
-			ctx.root = {};
-			ctx.graph = {};
-			ctx.queue = [];
-			ctx.seen = [];
-			ctx.loop = true;
-			
-			ctx.at.path = [];
-			ctx.at.obj = data;
 			ctx.at.node = ctx.root;
 			while(ctx.loop && !ctx.err){
 				seen(ctx, ctx.at);
@@ -986,13 +977,14 @@
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 	Gun.on('opt').event(function(gun, opt){
 		opt = opt || {};
-		var tab = gun.__.tab = gun.__.tab || {}; 
+		var tab = gun.tab = gun.tab || {};
+		tab.store = tab.store || store;
+		tab.request = tab.request || request;
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
 		tab.prefix = tab.prefix || opt.prefix || 'gun/';
 		tab.prekey = tab.prekey || opt.prekey || '';
 		tab.prenode = tab.prenode || opt.prenode || '_/nodes/';
-		window.tab = tab; window.store = store;
 		tab.get = tab.get || function(key, cb, opt){
 			if(!key){ return }
 			cb = cb || function(){};
@@ -1007,7 +999,7 @@
 			Gun.log("tab get --->", key);
 			(function local(key, cb){
 				var path = (path = Gun.is.soul(key))? tab.prefix + tab.prenode + path
-					: tab.prefix + tab.prekey + key, node = store.get(path), graph, soul;
+					: tab.prefix + tab.prekey + key, node = tab.store.get(path), graph, soul;
 				if(Gun.is.node(node)){
 					(cb.graph = cb.graph || {}
 					)[soul = Gun.is.soul.on(node)] = (graph = {})[soul] = cb.node = node;
@@ -1022,7 +1014,7 @@
 			}(key, cb));
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
-					request(url, null, tab.error(cb, "Error: Get failed through " + url, function(reply){
+					tab.request(url, null, tab.error(cb, "Error: Get failed through " + url, function(reply){
 						if(!p.graph && !Gun.obj.empty(cb.graph)){ // if we have local data
 							tab.put(p.graph = cb.graph, function(e,r){ // then sync it if we haven't already
 								Gun.log("Stateless handshake sync:", e, r);
@@ -1044,11 +1036,11 @@
 			Gun.is.graph(graph, function(node, soul){
 				if(!opt.local){ gun.__.on(soul).emit(node) } // TODO: Should this be in core?
 				if(!gun.__.graph[soul]){ return }
-				store.put(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
+				tab.store.put(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
 			});
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					request(url, graph, tab.error(cb, "Error: Put failed on " + url), {headers: tab.headers});
+					tab.request(url, graph, tab.error(cb, "Error: Put failed on " + url), {headers: tab.headers});
 					cb.peers = true;
 				});
 			} tab.peers(cb);
@@ -1060,12 +1052,12 @@
 			meta[Gun._.soul] = soul = Gun.is.soul(soul) || soul;
 			if(!soul){ return cb({err: Gun.log("No soul!")}) }
 			(function(souls){
-				(souls = store.get(tab.prefix + tab.prekey + key) || {})[soul] = meta;
-				store.put(tab.prefix + tab.prekey + key, souls);
+				(souls = tab.store.get(tab.prefix + tab.prekey + key) || {})[soul] = meta;
+				tab.store.put(tab.prefix + tab.prekey + key, souls);
 			}());
 			if(!(cb.local = opt.local || opt.soul)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					request(url, meta, tab.error(cb, "Error: Key failed to be made on " + url), {url: {pathname: '/' + key }, headers: tab.headers});
+					tab.request(url, meta, tab.error(cb, "Error: Key failed to be made on " + url), {url: {pathname: '/' + key }, headers: tab.headers});
 					cb.peers = true;
 				}); 
 			} tab.peers(cb);
@@ -1130,7 +1122,7 @@
 			return true;
 		}
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
-			return (tab.request = tab.request || request.createServer(tab.server) || true);
+			return (tab.server.able = tab.server.able || tab.request.createServer(tab.server) || true);
 		});
 		gun.__.opt.hooks.get = gun.__.opt.hooks.get || tab.get;
 		gun.__.opt.hooks.put = gun.__.opt.hooks.put || tab.put;
