@@ -1837,6 +1837,63 @@ describe('Gun', function(){
 			})
 		});
 		
+		it.skip("gun get empty set, path val -> this put", function(done){ // Issue #99 #101, bug in survey and trace game.
+			var test = {c: 0}, u;
+			var gun = Gun();
+			console.log("game = gun get GAME set");
+			var game = gun.get('some/not/yet/set/put/thing').set();
+			console.log("me = game data path ALIAS val");
+			// TODO: add one for NOT
+			// the behavior we decided is VAL will hang until data defined
+			// NOT will get called after first peer (or configurable).
+			var me = game.path('alias').on(function(val){
+				console.log("TESTING!!!!", val);
+				expect(val).to.not.be(u);
+				var meid = Gun.is.soul.on(val);
+				var self = this;
+				expect(self === game).to.not.be.ok();
+				expect(self === me).to.be.ok();
+				if(test.c++){ return }
+				self.put({x: 0, y: 0});
+				setTimeout(function(){
+					var graph = Gun.obj.copy(game.__.graph);
+					Gun.obj.map(graph, function(node){delete node._});
+					
+				},100);
+			})
+		});
+		
+		// gr.put({a: {b: {c: 'd'}}}).path('z').set().val(); TEST sets on paths.
+		
+		it.skip("gun get empty set path empty later path put multi", function(done){ // Issue #99 #101, bug in survey and trace game.
+			Gun.log.verbose = true;
+			var gun = Gun();
+			var data = gun.get('some/not/yet/set/put/thing/2').set();
+			var path = data.path('sub');
+			function put(d, t, f){				
+				setTimeout(function(){
+					path.put(d, function(err, ok){
+						expect(err).to.not.be.ok();
+						if(f){
+							path.val(function(v){
+								delete v._;
+								expect(v).to.eql(d); 
+								done();
+							});
+						}
+					});
+					setTimeout(function(){
+						data.val(function(v){
+							console.log(d, "DATA", data.__.graph);
+						});
+					},2)
+				},t || 10);
+			};
+			put({on: 'bus', not: 'transparent'});
+			put({on: null, not: 'torrent'}, 100);
+			put({on: 'sub', not: 'parent'}, 250, true);
+		});
+		
 		it("ToDo", function(done){ // Simulate ToDo app!
 			var gun = Gun().get('example/todo/data');
 			gun.on(function renderToDo(val){
@@ -1880,6 +1937,54 @@ describe('Gun', function(){
 				done.c++;
 				game.put({board: {11: ' ', 22: ' ', 33: 'A'}});
 			},100);
+		});
+		
+		it("gun get path empty val", function(done){
+			done.c = 0;
+			var u;
+			var gun = Gun();
+			var game = gun.get('players').set();
+			var me = game.path('player3').val(function(val){
+				if(!done.c){ done.fail = true }
+				expect(val).to.not.be(u);
+				expect(val.x).to.be(0);
+				expect(val.y).to.be(0);
+				expect(done.fail).to.not.be.ok();
+				done();
+			});
+			setTimeout(function(){
+				done.c++;
+				expect(done.fail).to.not.be.ok();
+				me.put({x: 0, y: 0});
+			},10)
+		});
+		
+		it.only("gun get path empty on", function(done){
+			done.c = 0;
+			var u;
+			var gun = Gun();
+			var game = gun.get('players').set();
+			var me = game.path('player3').on(function(val){
+				if(!done.c){ done.fail = true }
+				expect(val).to.not.be(u);
+				expect(val.x).to.be(0);
+				expect(val.y).to.be(0);
+				expect(done.fail).to.not.be.ok();
+				done();
+			});
+			setTimeout(function(){
+				done.c++;
+				expect(done.fail).to.not.be.ok();
+				me.put({x: 0, y: 0});
+			},10)
+		});
+		
+		it.skip("gun get path empty not", function(done){
+			var g = Gun();
+		});
+		
+		it.skip("gun get path empty set", function(done){
+			var g = Gun();
 		});
 	});	
 		
