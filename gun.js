@@ -132,7 +132,7 @@
 			Gun.is.graph(graph, function(node, ss){
 				c += 1; s = ss;
 				Gun.HAM(vertex, node, function(){}, function(vertex, field, value){
-					(vertex._[Gun._.HAM] = vertex._[Gun._.HAM] || {})[field] = node._[Gun._.HAM][field];
+					(vertex._[Gun._.HAM] = vertex._[Gun._.HAM] || {})[field] = (node._[Gun._.HAM] = node._[Gun._.HAM] || {})[field];
 					vertex[field] = value;
 				}, function(){});
 			});
@@ -489,7 +489,6 @@
 				var chain = this || gun, src = opt.src || gun;
 				var ctx = {path: path.split('.')}, field = Gun.text.ify(ctx.path.shift());
 				var val = node[field], soul = Gun.is.soul(val);
-				console.log("chain.path", field, node, '\n');
 				if(!field && !ctx.path.length){
 					cb.call(chain, null, node, field);
 					return opt.step? src._.at('soul').emit({soul: $.soul, field: null, from: opt.step.soul, at: opt.step.field, gun: chain, PATH: 'SOUL'})
@@ -497,10 +496,9 @@
 				}
 				if(!Gun.obj.has(node, field)){
 					if(opt.end || (!ctx.path.length && gun.__.meta($.soul).end)){ // TODO: Make it so you can adjust how many terminations!
-						console.log("whap!");
-						// TODO: BUG! `chain` here is incorrect on unknowns.
+						// TODO: BUG! `chain` here is incorrect on unknowns. This has been fixed at an API level.
 						cb.call(chain, null, null, field);
-						src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
+						src._.at('null').emit({soul: $.soul, field: field, gun: chain, PATH: 'NULL'});
 					}
 					return;
 				}
@@ -590,18 +588,18 @@
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
 		Chain.put = function(val, cb, opt){ // TODO: handle case where val is a gun context!
-			var gun = this.chain(), call = function(){
-				gun.back._.at('soul').emit({soul: Gun.is.soul.on(val) || Gun.roulette.call(gun), empty: true, PUT: 'SOUL'}); // TODO: refactor Gun.roulette!
+			var gun = this.chain(), call = function($){
+				gun.back._.at('soul').emit({soul: $.soul || Gun.is.soul.on(val) || Gun.roulette.call(gun), field: $.field, empty: true, gun: $.gun, PUT: 'SOUL'}); // TODO: refactor Gun.roulette!
 			}, drift = Gun.time.now(); // TODO: every instance of gun maybe should have their own version of time.
 			cb = cb || function(){};
 			opt = opt || {};
 			if(!gun.back.back){
 				gun = gun.chain();
-				call();
+				call({});
 			}
-			if(gun.back.not){ gun.back.not(call) }
+			if(gun.back.not){ gun.back.not(call, {raw: true}) }
 			
-			gun.back._.at('soul').event(function($){ // TODO: maybe once per soul?
+			gun.back._.at('soul').once(function($){ // TODO: maybe once per soul?
 				var chain = $.gun || gun; 
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
 				console.log("chain.put", val, '\n');
@@ -644,7 +642,7 @@
 									env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
 									cb(at, at.soul);
 								};
-								$.empty? path() : gun.back.path(at.path, path, {once: true, end: true}); // TODO: clean this up.
+								($.empty && !$.field)? path() : chain.back.path(at.path, path, {once: true, end: true}); // TODO: clean this up.
 							}
 						}
 						if(!at.node._[Gun._.HAM]){
@@ -671,6 +669,7 @@
 					});
 				}
 			});
+			
 			return gun;
 		}
 		Chain.map = function(cb, opt){
@@ -711,19 +710,22 @@
 			obj[index] = val;
 			return Gun.is.value(val)? gun.put(obj, cb) : gun.put(obj, cb).path(index);
 		}
-		Chain.not = function(cb){
+		Chain.not = function(cb, opt){
 			var gun = this, ctx = {};
 			cb = cb || function(){};
+			opt = opt || {};
 			
-			gun._.at('null').once(function(key){
-				if(key.soul || gun.__.key.s[key = (key || {}).key]){ return }
+			gun._.at('null').once(function($){
+				if($.key && ($.soul || gun.__.key.s[$.key])){ return }
+				if($.field && Gun.obj.has(gun.__.graph[$.soul], $.field)){ return }
 				// TODO! BUG? Removed a start flag check and tests passed, but is that an edge case?
 				var kick = function(next){
 					if(++c){ return Gun.log("Warning! Multiple `not` resumes!"); }
 					next._.at('soul').once(function($){ $.N0T = 'KICK SOUL'; gun._.at('soul').emit($) });
-				}, chain = gun.chain(), next = cb.call(chain, key, kick), c = -1;
+				}, chain = gun.chain(), next = cb.call(chain, opt.raw? $ : ($.field || $.key), kick), c = -1;
 				if(Gun.is(next)){ kick(next) }
-				chain._.at('soul').emit({soul: Gun.roulette.call(chain), empty: true, key: key, N0T: 'SOUL', WAS: 'ON'}); // WAS ON! TOOD: refactor Gun.roulette
+				gun.__.graph[kick.soul = Gun.roulette.call(chain)] = gun.__.graph[kick.soul] || Gun.union.pseudo(kick.soul); // TODO: refactor Gun.roulette
+				chain._.at('soul').emit({soul: kick.soul, empty: true, key: $.key, field: $.field, N0T: 'SOUL', WAS: 'ON'}); // WAS ON! 
 			});
 			
 			return gun;

@@ -9,8 +9,9 @@ describe('Gun', function(){
 	var t = {};
 	
 	describe('Utility', function(){
-
-		it('verbose console.log debugging', function(done) { console.log("TURN THIS BACK ON the DEBUGGING TEST"); done(); return;
+		
+		/* // causes logger to no longer log.
+		it('verbose console.log debugging', function(done) {
 
 			var gun = Gun();
 			var log = root.console.log, counter = 1;
@@ -31,6 +32,7 @@ describe('Gun', function(){
 				});
 			});
 		});
+		*/
 
 		describe('Type Check', function(){
 			it('binary', function(){
@@ -1408,7 +1410,7 @@ describe('Gun', function(){
 			
 		});
 		
-		it('val path put val key', function(done){ // bug discovered from Jose's visualizer // TODO: still timing issues, 0.6!
+		it('val path put val key', function(done){ // bug discovered from Jose's visualizer
 			var gun = Gun(), s = Gun.time.is(), n = function(){ return Gun.time.is() }
 			this.timeout(5000);
 			
@@ -1417,8 +1419,8 @@ describe('Gun', function(){
 			gun.get('user/alfred').val(function(a){
 				gun.get('user/beth').path('friend').put(a); // b - friend_of -> a
 				gun.get('user/beth').val(function(b){ // TODO: We should have b.friend by now!
-					gun.get('user/alfred').path('friend').put(b, function(){ // a - friend_of -> b
-						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}, function(err, ok){
+					gun.get('user/alfred').path('friend').put(b).val(function(beth){ // a - friend_of -> b
+						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}).val(function(cat){
 							
 							gun.get('user/alfred').path('friend.cat').key('the/cat');
 							
@@ -1837,36 +1839,26 @@ describe('Gun', function(){
 			})
 		});
 		
-		it.skip("gun get empty set, path val -> this put", function(done){ // Issue #99 #101, bug in survey and trace game.
+		it("gun get empty set, path not -> this put", function(done){ // Issue #99 #101, bug in survey and trace game.
 			var test = {c: 0}, u;
 			var gun = Gun();
-			console.log("game = gun get GAME set");
 			var game = gun.get('some/not/yet/set/put/thing').set();
-			console.log("me = game data path ALIAS val");
-			// TODO: add one for NOT
-			// the behavior we decided is VAL will hang until data defined
-			// NOT will get called after first peer (or configurable).
-			var me = game.path('alias').on(function(val){
-				console.log("TESTING!!!!", val);
+			var me = game.path('alias').val(function(val){
 				expect(val).to.not.be(u);
+				expect(val.a).to.be('b');
 				var meid = Gun.is.soul.on(val);
 				var self = this;
 				expect(self === game).to.not.be.ok();
 				expect(self === me).to.be.ok();
-				if(test.c++){ return }
-				self.put({x: 0, y: 0});
-				setTimeout(function(){
-					var graph = Gun.obj.copy(game.__.graph);
-					Gun.obj.map(graph, function(node){delete node._});
-					
-				},100);
-			})
+				done();
+			});
+			setTimeout(function(){
+				me.put({a: 'b'});
+			});
 		});
 		
-		// gr.put({a: {b: {c: 'd'}}}).path('z').set().val(); TEST sets on paths.
-		
-		it.skip("gun get empty set path empty later path put multi", function(done){ // Issue #99 #101, bug in survey and trace game.
-			Gun.log.verbose = true;
+		it("gun get empty set path empty later path put multi", function(done){ // Issue #99 #101, bug in survey and trace game.
+			done.c = 0;
 			var gun = Gun();
 			var data = gun.get('some/not/yet/set/put/thing/2').set();
 			var path = data.path('sub');
@@ -1874,23 +1866,15 @@ describe('Gun', function(){
 				setTimeout(function(){
 					path.put(d, function(err, ok){
 						expect(err).to.not.be.ok();
-						if(f){
-							path.val(function(v){
-								delete v._;
-								expect(v).to.eql(d); 
-								done();
-							});
+						done.c++;
+						if(f && done.c >= 3){
+							done();
 						}
 					});
-					setTimeout(function(){
-						data.val(function(v){
-							console.log(d, "DATA", data.__.graph);
-						});
-					},2)
 				},t || 10);
 			};
 			put({on: 'bus', not: 'transparent'});
-			put({on: null, not: 'torrent'}, 100);
+			put({on: null, not: 'torrent'}, 200);
 			put({on: 'sub', not: 'parent'}, 250, true);
 		});
 		
@@ -1943,8 +1927,8 @@ describe('Gun', function(){
 			done.c = 0;
 			var u;
 			var gun = Gun();
-			var game = gun.get('players').set();
-			var me = game.path('player3').val(function(val){
+			var game = gun.get('game1/players').set();
+			var me = game.path('player1').val(function(val){
 				if(!done.c){ done.fail = true }
 				expect(val).to.not.be(u);
 				expect(val.x).to.be(0);
@@ -1956,35 +1940,51 @@ describe('Gun', function(){
 				done.c++;
 				expect(done.fail).to.not.be.ok();
 				me.put({x: 0, y: 0});
-			},10)
+			},10);
 		});
 		
-		it.only("gun get path empty on", function(done){
+		it("gun get path empty on", function(done){
 			done.c = 0;
 			var u;
 			var gun = Gun();
-			var game = gun.get('players').set();
-			var me = game.path('player3').on(function(val){
+			var game = gun.get('game2/players').set(); 
+			var me = game.path('player2').on(function(val){
 				if(!done.c){ done.fail = true }
 				expect(val).to.not.be(u);
-				expect(val.x).to.be(0);
-				expect(val.y).to.be(0);
+				expect(val.x).to.be(1);
+				expect(val.y).to.be(1);
 				expect(done.fail).to.not.be.ok();
+				if(done.c > 1){ return } // it is okay if ON gets called many times, this protects against that.
+				// although it would be nice if we could minimize the amount of duplications.
 				done();
+				done.c++;
 			});
 			setTimeout(function(){
 				done.c++;
 				expect(done.fail).to.not.be.ok();
-				me.put({x: 0, y: 0});
-			},10)
+				me.put({x: 1, y: 1});
+			},10);
 		});
 		
-		it.skip("gun get path empty not", function(done){
-			var g = Gun();
+		it("gun get path empty not", function(done){
+			var u;
+			var gun = Gun();
+			var game = gun.get('game3/players').set();
+			var me = game.path('player3').not(function(field){
+				expect(field).to.be('player3');
+				done();
+			});
 		});
 		
-		it.skip("gun get path empty set", function(done){
-			var g = Gun();
+		it("gun get path empty set", function(done){
+			var u;
+			var gun = Gun();
+			var game = gun.get('game4/players').set();
+			var me = game.path('player4').set().path('alias').put('awesome').val(function(val, field){
+				expect(val).to.be('awesome');
+				expect(field).to.be('alias');
+				done();
+			})
 		});
 	});	
 		
