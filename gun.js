@@ -599,7 +599,7 @@
 			}
 			if(gun.back.not){ gun.back.not(call, {raw: true}) }
 			
-			gun.back._.at('soul').once(function($){ // TODO: maybe once per soul?
+			gun.back._.at('soul').event(function($){ // TODO: maybe once per soul?
 				var chain = $.gun || gun; 
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
 				console.log("chain.put", val, '\n');
