@@ -1021,11 +1021,12 @@
 							tab.put(p.graph = cb.graph, function(e,r){ // then sync it if we haven't already
 								Gun.log("Stateless handshake sync:", e, r);
 							}, {peers: tab.peers(url)}); // to the peer. // TODO: This forces local to flush again, not necessary.
-							// TODO: What about syncing our keys up?
 						}
-						Gun.is.graph(reply.body, function(node, soul){ // make sure for each received node
-							if(!Gun.is.soul(key)){ tab.key(key, soul, function(){}, {local: true}) } // that the key points to it.
-						});
+						if(!Gun.is.soul(key)){
+							Gun.is.graph(reply.body || gun.__.key.s[key], function(node, soul){ // make sure for each received node or nodes of our key
+								tab.key(key, soul, function(){}); // that the key points to it.
+							});
+						}
 						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
 					}), opt);
 					cb.peers = true;
