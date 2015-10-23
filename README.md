@@ -1,11 +1,13 @@
-gun [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ===
 
-GUN is a realtime, decentralized, embedded, graph database engine.
+GUN is a realtime, decentralized, offline-first, graph database engine.
+
+[![1 minute demo of fault tolerance](http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg)](https://youtu.be/-i-11T5ZI9o)
 
 ## Getting Started
 
-For the browser, try out this [tutorial](http://gun.js.org/web/think.html). This README is for GUN servers.
+For the browser, try out this [tutorial](http://gun.js.org/web/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 Then in your terminal, run:
@@ -35,7 +37,7 @@ var gun = Gun({
 
 These are the default persistence layers, they are modular and can be replaced by others.
 
-Using S3 is recommended for deployment, and using a file is recommended for local development.
+Using S3 is recommended for deployment, and using a file is recommended for local development only.
 
 ## Demos
 
@@ -107,7 +109,9 @@ gun.get('usernames/marknadal').val(function(user){
 });
 ```
 
-Basically, this tells gun to check `'usernames/marknadal'`, and then return the object it finds associated with it. For more information, including how to save relational or document based data, [check out the wiki](https://github.com/amark/gun/wiki).
+Basically, this tells gun to check `'usernames/marknadal'`, and then return the object it finds associated with it. For more information, including how to save relational or document based data, [check out the wiki](https://github.com/amark/gun/wiki), or watch this tutorial:
+
+[![7 min | Getting Started with Data Types](http://img.youtube.com/vi/cOO6wz1rZVY/0.jpg)](https://youtu.be/cOO6wz1rZVY)
 
 ---
 
@@ -120,7 +124,7 @@ as it enables us where to refine GUN. So drop us a line in the [![Gitter](https:
 
 Thanks to the following people who have contributed to GUN, via code, issues, or conversation:
 
-[agborkowski](https://github.com/agborkowski), [alexlafroscia](https://github.com/alexlafroscia), [anubiann00b](https://github.com/anubiann00b), [bromagosa](https://github.com/bromagosa), [coolaj86](https://github.com/coolaj86), [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan), [forrestjt](https://github.com/forrestjt), [gedw99](https://github.com/gedw99), [HelloCodeMing](https://github.com/HelloCodeMing), [JosePedroDias](https://github.com/josepedrodias), [onetom](https://github.com/onetom), [ndarilek](https://github.com/ndarilek), [phpnode](https://github.com/phpnode), [riston](https://github.com/riston), [rootsical](https://github.com/rootsical), [rrrene](https://github.com/rrrene), [ssr1ram](https://github.com/ssr1ram), [Xe](https://github.com/Xe), [zot](https://github.com/zot)
+[agborkowski](https://github.com/agborkowski); [alexlafroscia](https://github.com/alexlafroscia); [anubiann00b](https://github.com/anubiann00b); [bromagosa](https://github.com/bromagosa); [coolaj86](https://github.com/coolaj86); [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan); **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; [gedw99](https://github.com/gedw99); [HelloCodeMing](https://github.com/HelloCodeMing); **[JosePedroDias](https://github.com/josepedrodias) (graph visualizer)**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc) [live demo](http://todos.loqali.com/))**; [ndarilek](https://github.com/ndarilek); [onetom](https://github.com/onetom); [phpnode](https://github.com/phpnode); [PsychoLlama](https://github.com/PsychoLlama); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; [riston](https://github.com/riston); [rootsical](https://github.com/rootsical); [rrrene](https://github.com/rrrene); [ssr1ram](https://github.com/ssr1ram); [Xe](https://github.com/Xe); [zot](https://github.com/zot);
 
 This list of contributors was manually compiled, alphabetically sorted. If we missed you, please submit an issue so we can get you added!
 
@@ -143,7 +147,7 @@ We need help on the following roadmap.
 - Efficient storage engine
 - Authorization callbacks
 - Security or ACLs
-- Schema Validation
+- ~~Schema Validation~~ [@RangerMauve](https://github.com/gundb/gun-schema)
 - Point of Entry Encryption
 - ~~Graph manipulation~~
 - Server to server communication
