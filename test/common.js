@@ -9,7 +9,7 @@ describe('Gun', function(){
 	var t = {};
 	
 	describe('Utility', function(){
-		var u;
+		
 		/* // causes logger to no longer log.
 		it('verbose console.log debugging', function(done) {
 
@@ -38,8 +38,6 @@ describe('Gun', function(){
 			it('binary', function(){
 				expect(Gun.bi.is(false)).to.be(true);
 				expect(Gun.bi.is(true)).to.be(true);
-				expect(Gun.bi.is(u)).to.be(false);
-				expect(Gun.bi.is(null)).to.be(false);
 				expect(Gun.bi.is('')).to.be(false);
 				expect(Gun.bi.is('a')).to.be(false);
 				expect(Gun.bi.is(0)).to.be(false);
@@ -54,8 +52,6 @@ describe('Gun', function(){
 				expect(Gun.num.is(0)).to.be(true);
 				expect(Gun.num.is(1)).to.be(true);
 				expect(Gun.num.is(Infinity)).to.be(true);
-				expect(Gun.num.is(u)).to.be(false);
-				expect(Gun.num.is(null)).to.be(false);
 				expect(Gun.num.is(NaN)).to.be(false);
 				expect(Gun.num.is('')).to.be(false);
 				expect(Gun.num.is('a')).to.be(false);
@@ -70,8 +66,6 @@ describe('Gun', function(){
 			it('text',function(){
 				expect(Gun.text.is('')).to.be(true);
 				expect(Gun.text.is('a')).to.be(true);
-				expect(Gun.text.is(u)).to.be(false);
-				expect(Gun.text.is(null)).to.be(false);
 				expect(Gun.text.is(false)).to.be(false);
 				expect(Gun.text.is(true)).to.be(false);
 				expect(Gun.text.is(0)).to.be(false);
@@ -85,8 +79,6 @@ describe('Gun', function(){
 			it('list',function(){
 				expect(Gun.list.is([])).to.be(true);
 				expect(Gun.list.is([1])).to.be(true);
-				expect(Gun.list.is(u)).to.be(false);
-				expect(Gun.list.is(null)).to.be(false);
 				expect(Gun.list.is(0)).to.be(false);
 				expect(Gun.list.is(1)).to.be(false);
 				expect(Gun.list.is('')).to.be(false);
@@ -100,8 +92,6 @@ describe('Gun', function(){
 			it('obj',function(){
 				expect(Gun.obj.is({})).to.be(true);
 				expect(Gun.obj.is({a:1})).to.be(true);
-				expect(Gun.obj.is(u)).to.be(false);
-				expect(Gun.obj.is(null)).to.be(false);
 				expect(Gun.obj.is(0)).to.be(false);
 				expect(Gun.obj.is(1)).to.be(false);
 				expect(Gun.obj.is('')).to.be(false);
@@ -114,8 +104,6 @@ describe('Gun', function(){
 			});
 			it('fns',function(){
 				expect(Gun.fns.is(function(){})).to.be(true);
-				expect(Gun.fns.is(u)).to.be(false);
-				expect(Gun.fns.is(null)).to.be(false);
 				expect(Gun.fns.is('')).to.be(false);
 				expect(Gun.fns.is('a')).to.be(false);
 				expect(Gun.fns.is(0)).to.be(false);
