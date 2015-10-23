@@ -2145,5 +2145,29 @@ describe('Gun', function(){
 				}
 			});
 		});
+		
+		it('val emits all data', function(done){ // bug in chat app
+			var chat = Gun().get('example/chat/data').not(function(){
+				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 0}}).key('example/chat/data');
+			});
+			chat.set({who: 'mark', what: "1", when: 1});
+			chat.set({who: 'mark', what: "2", when: 2});
+			chat.set({who: 'mark', what: "3", when: 3});
+			chat.set({who: 'mark', what: "4", when: 4});
+			chat.set({who: 'mark', what: "5", when: 5});
+			var seen = {1: false, 2: false, 3: false, 4: false, 5: false}
+			setTimeout(function(){				
+				chat.map(function(m){ /*console.log("MAP:", m)*/ }).val(function(msg, field){
+					var msg = Gun.obj.copy(msg);
+					if(msg.what){
+						expect(msg.what).to.be.ok();
+						seen[msg.when] = true;
+					}
+					if(!Gun.obj.map(seen, function(boo){ if(!boo){ return true } })){
+						done();
+					}
+				});
+			}, 100);
+		});
 	});
 });
