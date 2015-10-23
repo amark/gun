@@ -476,8 +476,7 @@
 			var gun = this.chain();
 			cb = cb || function(){};
 			opt = opt || {};
-			if(!Gun.text.is(path = Gun.text.is(path)? path || null : Gun.num.is(path)? (path + '') : Gun.list.is(path)? path.join('.') : path)){ return cb.call(gun, {err: Gun.log("Invalid path '" + path + "'!")}), gun }
-			//if((path !== null && !path) || !Gun.text.is(path = path.join? path.join('.') : path + '')){ return }
+			if((path !== null && !path) || !Gun.text.is(path = path.join? path.join('.') : path + '')){ return }
 			if(!gun.back._.at){ return cb.call(gun, {err: Gun.log("No context!")}), gun }
 			
 			gun.back.on(function($, node){
@@ -765,7 +764,7 @@
 		Util.bi.is = function(b){ return (b instanceof Boolean || typeof b == 'boolean')? true : false }
 		Util.num = {};
 		Util.num.is = function(n){
-			return !Util.list.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0); // jquery doesn't check for Infinity.
+			return ((n===0)? true : (!isNaN(n) && !Util.bi.is(n) && !Util.list.is(n) && !Util.text.is(n))? true : false );
 		}
 		Util.text = {};
 		Util.text.is = function(t){ return typeof t == 'string'? true : false }
