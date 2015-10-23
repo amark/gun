@@ -476,7 +476,7 @@
 			var gun = this.chain();
 			cb = cb || function(){};
 			opt = opt || {};
-			if((path !== null && !path) || !Gun.text.is(path = path.join? path.join('.') : path + '')){ return }
+			if((path !== null && !path) || path === null || !Gun.text.is(path = path.join? path.join('.') : path + '')){ return }
 			if(!gun.back._.at){ return cb.call(gun, {err: Gun.log("No context!")}), gun }
 			
 			gun.back.on(function($, node){
