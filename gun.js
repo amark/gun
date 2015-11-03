@@ -478,7 +478,6 @@
 			opt = opt || {};
 			if(!Gun.text.is(path = Gun.text.is(path)? path || null : Gun.num.is(path)? (path + '') : Gun.list.is(path)? path.join('.') : path)){ return cb.call(gun, {err: Gun.log("Invalid path '" + path + "'!")}), gun }
 			if(!gun.back._.at){ return cb.call(gun, {err: Gun.log("No context!")}), gun }
-			
 			gun.back.on(function($, node){
 				if(!(node = node || gun.__.graph[$.soul])){ return }
 				var chain = this || gun, src = opt.src || gun;
@@ -500,11 +499,11 @@
 				if(soul){
 					return gun.get(val, function(err, data){
 						if(err){ return cb.call(chain, err) }
-					}).path(ctx.path, cb, {src: src, step: {soul: $.soul, field: field}});
+					}).path(ctx.path, cb, {src: src, step: {soul: $.soul, field: field}, path: path});
 				}
 				cb.call(chain, null, val, field);
 				return src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
-			}, {raw: true, once: true});
+			}, {raw: true});
 			
 			return gun;
 		}
@@ -520,29 +519,38 @@
 				opt = opt || {};
 				
 				gun.on(function($, delta, on){
-					var node = gun.__.graph[$.soul], hash = $.soul + ($.field || '');
-					if(!$.soul || !node || ctx[hash + '.end']){ return }
+					var node = gun.__.graph[$.soul];
+					if(ctx[$.soul + '.end']){ return ctx[$.soul + '.end'](node, $) }
 					//(on = on || {off:function(){}}).off();
-					ctx[hash + '.end'] = function(data){
-						if(data && $.soul != Gun.is.soul.on(data)){ return }
-						var node = gun.__.graph[$.soul] || node; //on = (this || {off:function(){}}); // TODO: BUG? is var node = thing || node safe in old IE?
-						if($.key){
+					ctx[$.soul + '.end'] = function(data, $$){
+						$$ = $$ || $;					
+						var soul, field;
+						if(!$$.field && $$.from){ // if the current node is a child of the parent that we were subscribing to a field on.
+							soul = $$.from;
+							field = $$.at;
+						} else {
+							soul = $$.soul;
+							field = $$.field || '';
+						}
+						var hash = soul + field;
+						var node = gun.__.graph[$$.soul] || data || node; //on = (this || {off:function(){}}); // TODO: BUG? is var node = thing || node safe in old IE?
+						if($$.key){
 							// TODO: BUG! Shouldn't `.val` pseudo union check that each node in the key graph is ended? Current thought: Not necessarily! Since `.val` is first come first serve until we provide configurable end options.
 							node = Gun.union.pseudo($.key, gun.__.key.s[$.key]) || node;
 						}
-						if($.field){
-							if(!Gun.obj.has(node, $.field) || ctx[hash] || Gun.is.soul(node[$.field])){ return }
+						if($$.field){
+							if(!Gun.obj.has(node, $$.field) || ctx[hash] || Gun.is.soul(node[$$.field])){ return }
 							ctx[hash] = true; //on.off(); // TODO: Fix the bug with at for this to be on.
-							return cb.call($.gun || gun, node[$.field], $.field || $.at);
+							return cb.call($$.gun || gun, node[$$.field], $$.field);
 						}
-						if(!gun.__.meta($.soul).end || (ctx[$.soul] || ($.key && ctx[$.key]))){ return } // TODO: Add opt to change number of terminations.
-						ctx[$.soul] = ctx[$.key] = true; //on.off(); // TODO: Fix the bug with at for this to be on.
-						cb.call($.gun || gun, Gun.obj.copy(node), $.field || $.at);
+						if(!gun.__.meta($$.soul).end || (ctx[hash] || ($$.key && ctx[$$.key]))){ return } // TODO: Add opt to change number of terminations.
+						ctx[hash] = ctx[$$.soul] = ctx[$$.key] = true; //on.off(); // TODO: Fix the bug with at for this to be on.
+						cb.call($$.gun || gun, Gun.obj.copy(node), field);
 					}
 					if(gun.__.meta($.soul).end){
-						if(!$.field || Gun.obj.has(node, $.field)){ return ctx[hash + '.end']() }
+						if(!$.field || Gun.obj.has(node, $.field)){ return ctx[$.soul + '.end'](node, $) }
 					}
-					gun.__.on($.soul + '.end').event(ctx[hash + '.end']);
+					gun.__.on($.soul + '.end').event(ctx[$.soul + '.end']);
 				}, {raw: true});
 				
 				return gun;
@@ -604,9 +612,13 @@
 			}
 			if(gun.back.not){ gun.back.not(call, {raw: true}) }
 			
-			gun.back._.at('soul').event(function($){ // TODO: maybe once per soul?
+			gun.back._.at('soul').event(function($){
 				var chain = $.gun || gun; 
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
+				var hash = $.field? $.soul + $.field : ($.from? $.from + ($.at || '') : $.soul);
+				//var hash = $.from? ($.from + ($.at || '')) : ($.soul + ($.field || ''));
+				if(call[hash]){ return }
+				call[hash] = true;
 				console.log("chain.put", val, '\n');
 				if(Gun.is.value(obj)){
 					if($.from && $.at){
