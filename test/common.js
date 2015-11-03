@@ -1866,8 +1866,22 @@ describe('Gun', function(){
 			})
 		});
 		
-		/* // TODO: BUG! BAD! THIS IS AN ACTIVE BUG THAT NEEDS TO BE FIXED!!!!
-		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace
+		it("gun get on, later gun put key", function(done){
+			var gun = Gun();
+			
+			var keyC = gun.get('keyC').on(function(val){ 
+				expect(val.hello).to.be('world');
+				if(done.done){ return }
+				done.done = true;
+				done();
+			});
+			
+			setTimeout(function(){
+				gun.put({hello: 'world'}).key('keyC');
+			}, 100);
+		});
+		/*
+		it.only('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace
 			var gun = Gun().get('players');
 			
 			gun.put({
@@ -2020,7 +2034,8 @@ describe('Gun', function(){
 				}
 			});
 			
-			 ([0, 1, 2, 3]).forEach(function (player, number) {
+			 Gun.list.map([0, 1, 2, 3], function (player, number) {
+				number = number - 1;
 				gun
 					.path(number + '.history')
 					.map(function (entry, logNum) {

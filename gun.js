@@ -360,7 +360,10 @@
 				if(gun.__.key.s[ctx.key]){ get() } // check if it is in memory, else
 				else if(ctx.flag = gun.__.flag.start[ctx.key]){ // if it will be in memory, then TODO: convert this to use the meta system instead if possible, seems cleaner.
 					ctx.flag.once(get); // subscribe to when that happens.
-				} else { load(key) } // else it is not in memory, load it.
+				} else { // else it is not in memory, load it.
+					load(key);
+					gun.__.on(ctx.key + '.key').once(get);
+				} 
 			} else { cb.call(gun, {err: Gun.log("No key or relation to get!")}) }
 			
 			function load(key){ // load a key or soul.
@@ -398,7 +401,7 @@
 			var gun = this, ctx = {};
 			if(!key){ return cb.call(gun, {err: Gun.log('No key!')}), gun }
 			if(!gun.back){ gun = gun.chain() }
-			if(gun.__.key.s[key]){ console.Log("Warning! Key already used!") } // TODO: Have opt that will aggregate.
+			if(gun.__.key.s[key]){ console.log("Note: Key already used!") } // TODO: Have opt that will aggregate.
 			cb = cb || function(){};
 			opt = Gun.text.is(opt)? {soul: opt} : opt || {};
 			opt.soul = opt.soul || opt[Gun._.soul];
@@ -420,6 +423,7 @@
 				gun._.at('soul').event(index);
 			}
 			function index($){ // TODO: once per soul in graph. (?)
+				gun.__.on(key + '.key').emit({});
 				if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.key)){
 					ctx.hook(key, $.soul, function(err, data){
 						return cb.call(gun, err, data);
