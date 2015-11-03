@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Graph engine",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,8 @@
     "url": "git+https://github.com/amark/gun.git"
   },
   "keywords": [
+	"gun",
+	"gunDB",
     "graph",
     "document",
     "key",
@@ -23,9 +25,9 @@
     "realtime",
     "decentralized",
     "peer-to-peer",
+    "distributed",
     "P2P",
     "OSS",
-    "distributed",
     "embedded",
     "localstorage",
     "S3"

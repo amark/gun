@@ -1005,9 +1005,10 @@ describe('Gun', function(){
 		
 		it('get node path', function(done){
 			gun.get('hello/key').path('hi', function(err, val){
+				if(done.end){ return } // it is okay for path's callback to be called multiple times.
 				expect(err).to.not.be.ok();
 				expect(val).to.be('overwritten');
-				done();
+				done(); done.end = true;
 			});
 		});
 		
@@ -1211,6 +1212,20 @@ describe('Gun', function(){
 				expect(val.some).to.be('object');
 			}).put(null).val(function(val){
 				expect(val).to.be(null);
+				done();
+			});
+		});
+		
+		it('Gun get put null', function(done){ // flip flop bug
+			var gun = Gun();
+			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
+				done.some = true;
+				//console.log("*******************************", field, val);
+				expect(val.some).to.be('object');
+			}).put(null).val(function(val, field){
+				//console.log("***************null****************", field, val);
+				expect(val).to.be(null);
+				expect(done.some).to.be.ok();
 				done();
 			});
 		});
@@ -1430,7 +1445,7 @@ describe('Gun', function(){
 			gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
 			gun.get('user/alfred').val(function(a){
 				gun.get('user/beth').path('friend').put(a); // b - friend_of -> a
-				gun.get('user/beth').val(function(b){ // TODO: We should have b.friend by now!
+				gun.get('user/beth').val(function(b){
 					gun.get('user/alfred').path('friend').put(b).val(function(beth){ // a - friend_of -> b
 						gun.get('user/beth').path('cat').put({name: "fluffy", age: 3, coat: "tabby"}).val(function(cat){
 							
@@ -1584,7 +1599,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.get('set').set().set().val(function(val){
 				done.c += 1;
-				expect(Gun.obj.empty(val, '_')).to.be.ok();
+				expect(Gun.obj.empty(val, Gun._.meta)).to.be.ok();
 				setTimeout(function(){ 
 					expect(done.c).to.be(1);
 					done() 
@@ -1592,11 +1607,11 @@ describe('Gun', function(){
 			});
 		});
 		
-		it('set multiple', function(done){
+		it('set multiple', function(done){ // kinda related to flip flop?
 			var gun = Gun().get('sets').set(), i = 0;
 			gun.val(function(val){
 				expect(done.soul = Gun.is.soul.on(val)).to.be.ok();
-				expect(Gun.obj.empty(val, '_')).to.be.ok();
+				expect(Gun.obj.empty(val, Gun._.meta)).to.be.ok();
 			});
 			
 			gun.set(1).set(2).set(3).set(4); // if you set an object you'd have to do a `.back`
@@ -1662,7 +1677,7 @@ describe('Gun', function(){
 			gun.put({b: 2, z: 0}).key('pseudon');
 			
 			gun.get('pseudon').on(function(val){
-				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff?
+				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff? (may not happen to after 1.0.0) 
 				done.val = val;
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
@@ -1851,6 +1866,32 @@ describe('Gun', function(){
 			})
 		});
 		
+		/* // TODO: BUG! BAD! THIS IS AN ACTIVE BUG THAT NEEDS TO BE FIXED!!!!
+		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace
+			var gun = Gun().get('players');
+			
+			gun.put({
+			  taken: true,
+			  history: {0: {}, 1: {}}
+			});
+
+			gun
+				.path('history')
+				.put(null)
+				.back
+				.path('taken')
+				.put(false)
+			
+			// TODO: BUG! There is a variation of this, where we just do `.val` rather than `gun.val` and `.val` by itself (chained off of the sub-paths) doesn't even get called. :(
+			gun.val(function(players){ // this val is subscribed to the original put and therefore does not get any of the sub-path listeners, therefore it gets called EARLY with the original/old data rather than waiting for the sub-path data to "finish" and then get called.
+				console.log("LOOK HERE!!!!", players);
+				expect(players.taken).to.be(false);
+				expect(players.history).to.be(null);
+				done();
+			});
+			
+		});
+		*/
 		it("gun get empty set, path not -> this put", function(done){ // Issue #99 #101, bug in survey and trace game.
 			var test = {c: 0}, u;
 			var gun = Gun();
@@ -1919,10 +1960,11 @@ describe('Gun', function(){
 			var game = gun.put({board: null, teamA: null, teamB: null, turn: null}).key('the/game');
 			game.path('board').on(function(board, field){
 				expect(field).to.be('board');
-				if(done.c == 1){
+				if(done.c === 1){
 					expect(board).to.not.be.ok();
 				}
 				if(done.c === 2){
+					if(!board[11] || !board[22] || !board[33]){ return }
 					done.c++;
 					delete board._;
 					expect(board).to.be.eql({11: ' ', 22: ' ', 33: 'A'});
@@ -1935,7 +1977,66 @@ describe('Gun', function(){
 			},100);
 		});
 		
-		it("gun get path empty val", function(done){
+		it("get set put map -> put, foreach gun path map", function(done){ // replicate Jesse's Trace game bug
+			done.c = 0;
+			gun = Gun()
+			.get('players').set()
+			.put({
+				0: {
+					num: 0
+				},
+				1: {
+					num: 1
+				},
+				2: {
+					num: 2
+				},
+				3: {
+					num: 3
+				}
+			}, function(err,ok){
+				expect(done.c++).to.be(0);
+			}).val(function(p){
+				done.p = Gun.is.soul.on(p);
+				done.m = Gun.is.soul(p[0]);
+				expect(Gun.is.soul(p[0])).to.be.ok();
+				expect(Gun.is.soul(p[1])).to.be.ok();
+				expect(Gun.is.soul(p[2])).to.be.ok();
+				expect(Gun.is.soul(p[3])).to.be.ok();
+			})
+			
+			var players = [], me;
+			gun.map(function (player, number) {
+				players[number] = player;
+				players[number].history = [];
+				if (!player.taken && !me) {
+					this.put({
+						taken: true,
+						history: {
+							0: {x: 1, y: 2}
+						}
+					}, function(err,ok){});
+					me = number;
+				}
+			});
+			
+			 ([0, 1, 2, 3]).forEach(function (player, number) {
+				gun
+					.path(number + '.history')
+					.map(function (entry, logNum) {
+						done.c++;
+						players[number].history[logNum] = entry;
+						expect(entry.x).to.be(1);
+						expect(entry.y).to.be(2);
+						setTimeout(function(){
+							expect(done.c).to.be(2);
+							done();
+						},100);
+					});
+			});
+		});
+		
+		it("gun get path empty val", function(done){ // flip flop bug
 			done.c = 0;
 			var u;
 			var gun = Gun();
@@ -1959,17 +2060,17 @@ describe('Gun', function(){
 			done.c = 0;
 			var u;
 			var gun = Gun();
-			var game = gun.get('game2/players').set(); 
+			var game = gun.get('game2/players').set();
 			var me = game.path('player2').on(function(val){
 				if(!done.c){ done.fail = true }
+				expect(done.fail).to.not.be.ok();
 				expect(val).to.not.be(u);
+				if(done.done || !val.x || !val.y){ return } // it is okay if ON gets called many times, this protects against that.
+				// TODO: although it would be nice if we could minimize the amount of duplications. (may not happen to after 1.0.0) 
 				expect(val.x).to.be(1);
 				expect(val.y).to.be(1);
-				expect(done.fail).to.not.be.ok();
-				if(done.c > 1){ return } // it is okay if ON gets called many times, this protects against that.
-				// although it would be nice if we could minimize the amount of duplications.
+				done.done = true;
 				done();
-				done.c++;
 			});
 			setTimeout(function(){
 				done.c++;
@@ -1998,12 +2099,12 @@ describe('Gun', function(){
 				done();
 			})
 		});
-	});	
+	});
 		
 	describe('Streams', function(){
 		var gun = Gun(), g = function(){
 			return Gun({hooks: {get: ctx.get}});
-		}, ctx = {gen: 9, extra: 45, network: 2};
+		}, ctx = {gen: 9, extra: 100, network: 2};
 		
 		it('prep hook', function(done){
 			this.timeout(ctx.gen * ctx.extra);
