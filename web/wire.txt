@@ -1,10 +1,10 @@
 WIRE PROTOCOL
 
-save/set/create/put/post/delete/update/change/mutate
+put/save/set/create/post/delete/update/change/mutate
 
 get/open/load/call/location/address
 
-name/reference/key/index/point
+key/name/reference/index/point
 
 
 /gun {data: 'yay', #: "soul"}
@@ -37,7 +37,7 @@ Query formats are allowed as:
 		Ex. "/users/?*=/&*>=a&*<=c" asks the peer to return users that start and end between 'a' and 'c',
 			thus {"users/alice": {"#": "DSAF"}, "users/bob": {"#": "DAFS"}, "user/carl": {"#": "SAFD"}}
 	# = ASDF
-		pound means the peer should reply with the node that has this exact soul. There should be no key prefixed path on this type of request. A special case of "#=*" indicates to literally dump the entire graph, as is, to the client. Lexical carets are okay.
+		pound means the peer should reply with a graph node that has this exact soul. There should be no key prefixed path on this type of request. A special case of "#=*" indicates to literally dump the entire graph, as is, to the client. Lexical carets are okay.
 	% = 30
 		percent means byte constraint requested by the peer asking for data.
 	> = 1426007247399
