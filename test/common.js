@@ -1880,7 +1880,7 @@ describe('Gun', function(){
 				gun.put({hello: 'world'}).key('keyC');
 			}, 100);
 		});
-		/*
+		/* // TODO: BUG! UNDO!
 		it.only('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace
 			var gun = Gun().get('players');
 			
@@ -1897,15 +1897,277 @@ describe('Gun', function(){
 				.put(false)
 			
 			// TODO: BUG! There is a variation of this, where we just do `.val` rather than `gun.val` and `.val` by itself (chained off of the sub-paths) doesn't even get called. :(
-			gun.val(function(players){ // this val is subscribed to the original put and therefore does not get any of the sub-path listeners, therefore it gets called EARLY with the original/old data rather than waiting for the sub-path data to "finish" and then get called.
+			console.log('------------------');
+			console.log("do we have a flag?", gun._.putFlag);
+			gun.on(function(players){ // this val is subscribed to the original put and therefore does not get any of the sub-path listeners, therefore it gets called EARLY with the original/old data rather than waiting for the sub-path data to "finish" and then get called.
 				console.log("LOOK HERE!!!!", players);
 				expect(players.taken).to.be(false);
 				expect(players.history).to.be(null);
 				done();
 			});
+			console.log('------------------');
 			
 		});
 		*/
+		
+		it.skip("gun put recursive path slowdown", function(done){
+			this.timeout(20000);
+			var gun = Gun(); //.get('bug').put({});
+			console.log('wat the hook?', gun.__.opt.hooks.put);
+			gun.__.opt.hooks.put = null;
+			function put(num, t) {
+				Gun.log.debug = 0;
+				var now = new Date().getTime();
+				var cb;
+				for (var i = 1; i <= num; i++) {
+					if (i === num) {
+						cb = function (err, ok) {
+							console.log(num + 'ops: ' + (new Date().getTime() - now)/1000 + 's');
+						}
+					}
+					Gun.ify({   //hello: 'world'}, cb);
+						deeply: {
+							nested: i
+						}
+					})(cb);
+				}
+				return new Date().getTime() - now;
+			}
+			
+			put(1);
+			put(2);
+			put(10);
+			put(50);
+			put(100);
+			put(1000);
+			put(5000);
+			put(10000, true);
+			/*
+				ALL AT 10k OPS:
+				IFY directly comes in at 1s
+				IFY wrapped around a chain takes 2s
+				IFY wrapped with a chain and IFY X takes 4s
+				IFY wrapped with a chain and IFY X plus if checks 5s
+				^ that + union takes 7s
+				^ that + map pseudo takes 9s
+				^ that + emit takes 11s ~ 16s
+				^ that + hook sometimes takes + 10s. YIPES.
+			*/
+			
+			var gun2 = Gun();//.get('bug').put({});
+			//gun.path('example').put('string to be replaced');
+			gun2.__.opt.hooks.put = null;
+			function put2(num, t) {
+				var now = new Date().getTime();
+				var cb;
+				for (var i = 1; i <= num; i++) {
+					if (i === num) {
+						cb = function () {
+							console.log(num + ' API ops: ' + (new Date().getTime() - now)/1000 + 's', Gun.log.debug);
+							t && done();
+						}
+					}
+					gun2.put({  hello: 'world'}, cb);
+						/*deeply: {
+							nested: i
+						}
+					}, cb);*/
+				}
+				return new Date().getTime() - now;
+			}
+			Gun.log.start = Gun.time.is();
+			put2(1);
+			put2(10000);
+			put2(1, true);
+			//put2(2);
+			//put2(10);
+			//put2(50);
+			//put2(100, true);
+			//put2(5000, true);
+		});
+		it.skip("test timeout", function(done){ return done();
+			var i = 1000, start = Date.now();
+			while(i--){
+				setTimeout(function(){
+					console.log("ended in", (Date.now() - start)/1000);
+				},0);
+				/*
+				Gun.schedule(start, function(){
+					console.log("ended in", (Date.now() - start)/1000);
+				});
+				setImmediate(function(){
+					console.log("ended in", (Date.now() - start)/1000);
+				});
+				process.nextTick(function(){
+					console.log("ended in", (Date.now() - start)/1000);
+				});
+				*/
+			}
+		});
+		it.skip("test assignment", function(done){
+			var env = {graph: {}};
+			function speed(other){			
+				var i = 10000;
+				while(i--){
+					var $ = {soul: Gun.text.random()};
+					var at = {node: {_: {}}};
+					var obj = {
+						deeply: {
+							nested: 'lol'
+						}
+					}
+					env.graph[at.node._[Gun._.soul] = at.soul = $.soul] = at.node
+				}
+			}
+			var start = Date.now();
+			speed();
+			console.log('wat', (Date.now() - start)/1000);
+		});
+		it.skip("test fn call", function(done){
+			function speed(i, cb){
+				var r = 0;
+				while(i--){
+					if(cb){
+						cb(i);
+					} else {
+						r += i;
+					}
+				}
+			}
+			var start = Date.now();
+			speed(100000000);
+			console.log('no fn', (Date.now() - start)/1000);
+			var start = Date.now(), r = 0;
+			speed(100000000, function(i){ r += i });
+			console.log('w/ fn', (Date.now() - start)/1000);
+			var start = Date.now(), r = 0;
+			function foo(i){ r += i }
+			speed(100000000, foo);
+			console.log('w/ named fn', (Date.now() - start)/1000);
+		});
+		it.skip("gun put recursive path slowdown MUTANT TEST", function(done){
+			this.timeout(30000);
+			
+			Gun.chain.put = function(val, cb, opt){
+				var gun = this.chain(), obj;
+				var drift = Gun.time.now(), call = {};
+				cb = cb || function(){};
+				gun._.at('soul').event(
+				//(
+				function($){
+					var chain = $.gun || gun; 
+					var ctx = {}, obj = val, $ = Gun.obj.copy($);
+					var hash = $.field? $.soul + $.field : ($.from? $.from + ($.at || '') : $.soul);
+					if(call[hash]){ return }
+					gun.__.meta($.soul).put = true;
+					call[hash] = true;
+					if(Gun.is.value(obj)){
+						if($.from && $.at){
+							$.soul = $.from;
+							$.field = $.at;
+						} // no else!
+						if(!$.field){
+							return cb.call(gun, {err: Gun.log("No field exists for " + (typeof obj) + "!")});
+						} else
+						if(gun.__.graph[$.soul]){
+							ctx.tmp = {};
+							ctx.tmp[ctx.field = $.field] = obj;
+							obj = ctx.tmp;
+						} else {
+							return cb.call(gun, {err: Gun.log("No node exists to put " + (typeof obj) + " in!")});
+						}
+					}
+					if(Gun.obj.is(obj)){
+						if($.field && !ctx.field){
+							ctx.tmp = {};
+							ctx.tmp[ctx.field = $.field] = obj;
+							obj = ctx.tmp;
+						}
+						Gun.ify(obj || val, function(env, cb){
+							var at;
+							if(!env || !(at = env.at) || !env.at.node){ return }
+							if(!at.node._){
+								at.node._ = {};
+							}
+							if(!Gun.is.soul.on(at.node)){
+								if(obj === at.obj){
+									env.graph[at.node._[Gun._.soul] = at.soul = $.soul] = at.node;
+									cb(at, at.soul);
+								} else {
+									function path(err, data){
+										if(at.soul){ return }
+										at.soul = Gun.is.soul.on(data) || Gun.is.soul.on(at.obj) || Gun.roulette.call(gun); // TODO: refactor Gun.roulette!
+										env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
+							//var start = performance.now();
+										cb(at, at.soul);
+							//first = performance.now() - start;(first > .05) && console.log('here');
+									};
+									($.empty && !$.field)? path() : chain.back.path(at.path || [], path, {once: true, end: true}); // TODO: clean this up.
+								}
+								//var diff1 = (first - start), diff2 = (second - first), diff3 = (third - second);
+								//(diff1 || diff2 || diff3) && console.log(diff1, '    ', diff2,  '    ', diff3);
+							}
+							if(!at.node._[Gun._.HAM]){
+								at.node._[Gun._.HAM] = {};
+							}
+							if(!at.field){ return }
+							at.node._[Gun._.HAM][at.field] = drift;
+						})(function(err, ify){
+							//console.log("chain.put PUT <----", ify.graph, '\n');
+							if(err || ify.err){ return cb.call(gun, err || ify.err) }
+							if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) }
+							if($.from = Gun.is.soul(ify.root[$.field])){ $.soul = $.from; $.field = null }
+							Gun.obj.map(ify.graph, function(node, soul){ Gun.union(gun, Gun.union.pseudo(soul)) });
+							gun._.at('soul').emit({soul: $.soul, field: $.field, key: $.key, PUT: 'SOUL', WAS: 'ON'}); // WAS ON
+							//return cb(null, true);
+							if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.put)){
+								ctx.hook(ify.graph, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
+									if(err){ return cb.call(gun, err) }
+									return cb.call(gun, null, data);
+								}, opt);
+							} else {
+								//console.Log("Warning! You have no persistence layer to save to!");
+								cb.call(gun, null); // This is in memory success, hardly "success" at all.
+							}
+						});
+					}
+				})
+				gun._.at('soul').emit({soul: Gun.roulette.call(gun), field: null, empty: true});
+				return gun;
+			}
+			
+			var gun = Gun(); //.get('bug').put({});
+			gun.__.opt.hooks.put = null;
+			function put(num, t) {
+				Gun.log.debug = 0;
+				var now = new Date().getTime();
+				var cb;
+				for (var i = 1; i <= num; i++) {
+					if (i === num) {
+						cb = function (err, ok) {
+							console.log(num + 'MUTANT ops: ' + (new Date().getTime() - now)/1000 + 's');
+							t && done();
+						}
+					}
+					gun.put({   //hello: 'world'}, cb);
+						deeply: {
+							nested: i
+						}
+					}, cb);
+				}
+				return new Date().getTime() - now;
+			}
+			
+			//put(1, true);
+			/*put(2);
+			put(10);
+			put(50);
+			put(100);
+			put(1000);
+			put(5000);
+			*/
+			put(10000, true);
+		});
 		it("gun get empty set, path not -> this put", function(done){ // Issue #99 #101, bug in survey and trace game.
 			var test = {c: 0}, u;
 			var gun = Gun();
@@ -2285,7 +2547,7 @@ describe('Gun', function(){
 			chat.set({who: 'mark', what: "5", when: 5});
 			var seen = {1: false, 2: false, 3: false, 4: false, 5: false}
 			setTimeout(function(){				
-				chat.map(function(m){ /*console.log("MAP:", m)*/ }).val(function(msg, field){
+				chat.map(function(m){ }).val(function(msg, field){
 					var msg = Gun.obj.copy(msg);
 					if(msg.what){
 						expect(msg.what).to.be.ok();

@@ -501,14 +501,14 @@
 					return;
 				}
 				if(soul){
+					//root.console.log('how many times?', Gun.log.debug, opt.path || path);
 					return gun.get(val, function(err, data){
 						if(err){ return cb.call(chain, err) }
-					}).path(ctx.path, cb, {src: src, step: {soul: $.soul, field: field}, path: path});
+					}).path(ctx.path, cb, {src: src, step: {soul: $.soul, field: field}, path: path, once: opt.once});
 				}
 				cb.call(chain, null, val, field);
 				return src._.at('soul').emit({soul: $.soul, field: field, gun: chain, PATH: 'SOUL'});
-			}, {raw: true});
-			
+			}, {raw: true, once: opt.once }); // TODO: BUG! THIS MAKES THINGS BETTER BUT STIL TERRIBLE.
 			return gun;
 		}
 		Chain.val = (function(){
@@ -605,23 +605,33 @@
 				If this causes any application-level concern, it can compare against the live data by immediately reading it, or accessing the logs if enabled.
 		*/
 		Chain.put = function(val, cb, opt){ // TODO: handle case where val is a gun context!
+			
+			
+			// TODO: BUG! MARK COME BACK HERE! DEBUGGING WITH SEAN.
+			// check for what this.chain() does and whether that is slow or not, and the continue forward. 
+			
+			
+			
 			var gun = this.chain(), call = function($){
+				Gun.log.debug = Gun.log.debug || 0; Gun.log.debug++;
 				gun.back._.at('soul').emit({soul: $.soul || Gun.is.soul.on(val) || Gun.roulette.call(gun), field: $.field, empty: true, gun: $.gun, PUT: 'SOUL'}); // TODO: refactor Gun.roulette!
-			}, drift = Gun.time.now(); // TODO: every instance of gun maybe should have their own version of time.
+			}, drift = Gun.time.now(), f; // TODO: every instance of gun maybe should have their own version of time.
 			cb = cb || function(){};
 			opt = opt || {};
 			if(!gun.back.back){
-				gun = gun.chain();
-				call({});
+				gun = gun.chain(); f = true;
 			}
-			if(gun.back.not){ gun.back.not(call, {raw: true}) }
 			
+			//setTimeout(function($){ var $ = {soul: Gun.roulette.call(gun), field: null, empty: true};
+			//(function($){
 			gun.back._.at('soul').event(function($){
 				var chain = $.gun || gun; 
 				var ctx = {}, obj = val, $ = Gun.obj.copy($);
 				var hash = $.field? $.soul + $.field : ($.from? $.from + ($.at || '') : $.soul);
 				//var hash = $.from? ($.from + ($.at || '')) : ($.soul + ($.field || ''));
 				if(call[hash]){ return }
+				//root.console.log('how long?', (Gun.time.is() - Gun.log.start)/1000);
+				gun.__.meta($.soul).put = true;
 				call[hash] = true;
 				console.log("chain.put", val, '\n');
 				if(Gun.is.value(obj)){
@@ -674,10 +684,10 @@
 					})(function(err, ify){
 						console.log("chain.put PUT <----", ify.graph, '\n');
 						if(err || ify.err){ return cb.call(gun, err || ify.err) }
-						if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) }
+						if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) } // THIS COSTS 2s!
 						if($.from = Gun.is.soul(ify.root[$.field])){ $.soul = $.from; $.field = null }
-						Gun.obj.map(ify.graph, function(node, soul){ Gun.union(gun, Gun.union.pseudo(soul)) });
-						gun._.at('soul').emit({soul: $.soul, field: $.field, key: $.key, PUT: 'SOUL', WAS: 'ON'}); // WAS ON
+						Gun.obj.map(ify.graph, function(node, soul){ Gun.union(gun, Gun.union.pseudo(soul)) }); // THIS COSTS 2s!
+						gun._.at('soul').emit({soul: $.soul, field: $.field, key: $.key, PUT: 'SOUL', WAS: 'ON'}); // WAS ON // THIS COSTS 2s!
 						if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.put)){
 							ctx.hook(ify.graph, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
 								if(err){ return cb.call(gun, err) }
@@ -689,8 +699,9 @@
 						}
 					});
 				}
-			});
-			
+			});//({soul: Gun.roulette.call(gun), field: null, empty: true});
+			if(f){ call({}) }
+			if(gun.back.not){ gun.back.not(call, {raw: true}) }
 			return gun;
 		}
 		Chain.map = function(cb, opt){
@@ -834,7 +845,7 @@
 			})? false : true;
 		}
 		Util.obj.map = function(l, c, _){
-			var u, i = 0, ii = 0, x, r, rr, f = Util.fns.is(c),
+			var u, i = 0, ii = 0, x, r, rr, ll, lle, f = Util.fns.is(c),
 			t = function(k,v){
 				if(v !== u){
 					rr = rr || {};
@@ -843,16 +854,19 @@
 				} rr = rr || [];
 				rr.push(k);
 			};
-			if(Util.list.is(l)){
-				x = l.length;
+			if(Object.keys && Util.obj.is(l)){
+				//ll = Object.keys(l); lle = true;
+			}
+			if(Util.list.is(l) || ll){
+				x = (ll || l).length;
 				for(;i < x; i++){
 					ii = (i + Util.list.index);
 					if(f){
-						r = _? c.call(_, l[i], ii, t) : c(l[i], ii, t);
+						r = lle? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
 						if(r !== u){ return r }
 					} else {
 						//if(Util.test.is(c,l[i])){ return ii } // should implement deep equality testing!
-						if(c === l[i]){ return ii } // use this for now
+						if(c === l[lle? ll[i] : i]){ return ll? ll[i] : ii } // use this for now
 					}
 				}
 			} else {
