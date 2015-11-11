@@ -700,8 +700,8 @@
 					});
 				}
 			});//({soul: Gun.roulette.call(gun), field: null, empty: true});
-			if(f){ call({}) }
-			if(gun.back.not){ gun.back.not(call, {raw: true}) }
+			if(f){ call({}) } // TODO: BUG! Causes pseudomerge on Node 0.6 to fail.
+			if(gun.back.not){ gun.back.not(call, {raw: true}) } // ^ TODO: BUG! See above.
 			return gun;
 		}
 		Chain.map = function(cb, opt){
