@@ -514,8 +514,8 @@
 				gun.__.on(Gun.is.soul.on(data) + '.end').emit(data);
 			});
 			return function(cb, opt){
-				var gun = this, ctx = {};
-				cb = cb || function(val, field){ root.console.log(field + ':', val) }
+        var gun = this, ctx = {}, args = Array.prototype.slice.call(arguments);
+				cb = Gun.fns.is(cb)? cb : function(val, field){ root.console.log.apply(root.console, args.concat([field && (field += ':'), val])) }
 				opt = opt || {};
 				
 				gun.on(function($, delta, on){
