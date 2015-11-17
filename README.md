@@ -144,7 +144,7 @@ We need help on the following roadmap.
 ## Ahead
 - ~~Realtime push to the browser~~
 - ~~Persistence in the browser~~
-- Efficient storage engine
+- ~~Efficient storage engine~~ [@PsychoLlama](https://github.com/psychollama/gun-level)
 - Authorization callbacks
 - Security or ACLs
 - ~~Schema Validation~~ [@RangerMauve](https://github.com/gundb/gun-schema)
