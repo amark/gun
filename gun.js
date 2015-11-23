@@ -980,10 +980,8 @@
 	}({}));
 	if(typeof window !== "undefined"){
 		window.Gun = Gun;
-		if(typeof module !== 'undefined' && module.exports){
-			module.exports = Gun;
-		}
-	} else {
+	}
+	if(typeof module !== 'undefined' && module.exports){
 		module.exports = Gun;
 	}
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
