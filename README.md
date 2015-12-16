@@ -7,7 +7,7 @@ GUN is a realtime, decentralized, offline-first, graph database engine.
 
 ## Getting Started
 
-For the browser, try out this [tutorial](http://gun.js.org/web/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
+For the browser, try out this [tutorial](http://gun.js.org/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 Then in your terminal, run:
