@@ -7,7 +7,7 @@ GUN is a realtime, decentralized, offline-first, graph database engine.
 
 ## Getting Started
 
-For the browser, try out this [tutorial](http://gun.js.org/web/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
+For the browser, try out this [tutorial](http://gun.js.org/think.html) and then use a [starter template](http://plnkr.co/edit/f1yzn5). This README is for GUN servers.
 
 If you do not have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 Then in your terminal, run:
@@ -115,14 +115,16 @@ Basically, this tells gun to check `'usernames/marknadal'`, and then return the 
 
 ---
 
-## YOU 
-Being lonely is never any fun, especially when programming.
+## YOU
+
+[Add your project!](https://github.com/amark/gun/wiki/projects)
+
 Our goal is for GUN to be the easiest database ever,
 which means if you ever get stuck on something for longer than 5 minutes,
 let us know so we can help you. Your input is invaluable,
 as it enables us where to refine GUN. So drop us a line in the [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)! Or join the [mail list](https://groups.google.com/forum/#!forum/g-u-n).
 
-Thanks to the following people who have contributed to GUN, via code, issues, or conversation:
+Thanks to the following people who have contributed to GUN, via code, issues, or conversation (this list has quickly become tremendously behind! We'll probably turn this into a dedicated wiki page so you can add yourself):
 
 [agborkowski](https://github.com/agborkowski); [alexlafroscia](https://github.com/alexlafroscia); [anubiann00b](https://github.com/anubiann00b); [bromagosa](https://github.com/bromagosa); [coolaj86](https://github.com/coolaj86); [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan); **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; [gedw99](https://github.com/gedw99); [HelloCodeMing](https://github.com/HelloCodeMing); **[JosePedroDias](https://github.com/josepedrodias) (graph visualizer)**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc) [live demo](http://todos.loqali.com/))**; [ndarilek](https://github.com/ndarilek); [onetom](https://github.com/onetom); [phpnode](https://github.com/phpnode); [PsychoLlama](https://github.com/PsychoLlama); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; [riston](https://github.com/riston); [rootsical](https://github.com/rootsical); [rrrene](https://github.com/rrrene); [ssr1ram](https://github.com/ssr1ram); [Xe](https://github.com/Xe); [zot](https://github.com/zot);
 
@@ -144,7 +146,7 @@ We need help on the following roadmap.
 ## Ahead
 - ~~Realtime push to the browser~~
 - ~~Persistence in the browser~~
-- Efficient storage engine
+- ~~Efficient storage engine~~ [@PsychoLlama](https://github.com/psychollama/gun-level)
 - Authorization callbacks
 - Security or ACLs
 - ~~Schema Validation~~ [@RangerMauve](https://github.com/gundb/gun-schema)
