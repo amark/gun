@@ -22,7 +22,7 @@
 				$("#todos").innerHTML = todoHTML;
 			});
 			$("#addToDo").onsubmit = function(){
-				gun.set(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
+				gun.path(Gun.text.random()).put(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
 				$("#todoItem").value = "";
 				return false;
 			};

@@ -116,7 +116,7 @@
 			Gun.ify(ctx.obj, soul, {pure: true})(end); // serialize the data!
 		}
 		function not(at){
-			if(gun.__.opt.init){ return Gun.log("Warning! You have no context to put on!") }
+			if(gun.__.opt.init){ return Gun.log("Warning! You have no context to put on!") } // TODO: Allow local opt as well, not just instance opt!
 			if(at.soul){ return at.not = true, put(at) }
 			gun.init();
 		}
@@ -142,9 +142,9 @@
 		function memory(at){
 			var cached = ctx.chain.__.by(at.soul).node;
 			if(!cached){ return false }
-			if(Gun.is.node.soul(cached, Gun._.key)){
+			if(Gun.is.node.soul(cached, Gun._.key)){ // TODO: End node from wire might not have key indicator?
 				opt.key = opt.key || Gun.is.node.soul(cached);
-				Gun.is.node(at.change || cached, union); // TODO: This seems like it should cause infinite recursion, but it doesn't.
+				Gun.is.node(at.change || cached, union);
 			}
 			if(opt.key){ (at = Gun.obj.copy(at)).key = opt.key }
 			if(!at.change){ at.change = cached }
@@ -158,6 +158,7 @@
 			ctx.chain.get(rel, cb, {chain: ctx.chain, key: opt.key, field: opt.field, raw: opt.raw});
 		}
 		function get(err, data, info){
+			//console.log("chain.get wire", err, data, info);
 			if(err){
 				Gun.log(err.err || err);
 				cb.call(ctx.chain, err);
@@ -294,7 +295,7 @@
 			}
 		};
 		gun.on(trace, {raw: true, once: opt.once});
-		if(!gun.__.opt.init){ gun._.at('null').map(function(at){ gun.init() }) }
+		if(!gun.__.opt.init){ gun._.at('null').map(function(at){ gun.init() }) } // TODO: Allow for local opt as well, not just instance opt!
 		if(gun === gun.back){ cb.call(gun, {err: Gun.log('You have no context to `.path`!')}) }
 		return chain;
 	}
@@ -949,45 +950,43 @@
 }());
 
 
-;(function(tab){
+;(function(Tab){
+	return;
 	if(!this.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
+
+	;(function(exports){
+		function s(){}
+		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
+		s.get = function(key, cb){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) }
+		s.del = function(key){ return store.removeItem(key) }
+		var store = this.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
+		exports.store = s;
+	}(Tab));
+
 	Gun.on('opt').event(function(gun, opt){
 		opt = opt || {};
 		var tab = gun.tab = gun.tab || {};
-		tab.store = tab.store || store;
+		tab.store = tab.store || Tab.store;
 		tab.request = tab.request || request;
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
 		tab.prefix = tab.prefix || opt.prefix || 'gun/';
-		tab.prekey = tab.prekey || opt.prekey || '';
-		tab.prenode = tab.prenode || opt.prenode || '_/nodes/';
 		tab.get = tab.get || function(key, cb, opt){
 			if(!key){ return }
 			cb = cb || function(){};
 			cb.GET = true;
 			(opt = opt || {}).url = opt.url || {};
 			opt.headers = Gun.obj.copy(tab.headers);
-			if(Gun.is.soul(key)){
-				opt.url.query = key;
-			} else {
-				opt.url.pathname = '/' + key;
-			}
+			opt.url.pathname = '/' + key;
 			Gun.log("tab get --->", key);
-			(function local(key, cb){
-				var path = (path = Gun.is.soul(key))? tab.prefix + tab.prenode + path
-					: tab.prefix + tab.prekey + key, node = tab.store.get(path), graph, soul;
-				if(Gun.is.node(node)){
-					(cb.graph = cb.graph || {}
-					)[soul = Gun.is.soul.on(node)] = (graph = {})[soul] = cb.node = node;
-					cb(null, graph); 
-					(graph = {})[soul] = Gun.union.pseudo(soul); // end.
-					return cb(null, graph);
-				} else 
-				if(Gun.obj.is(node)){
-					Gun.obj.map(node, function(rel){ if(Gun.is.soul(rel)){ local(rel, cb) } });
-					cb(null, {});
-				}
+			(function local(key, cb){return; // TODO: BUG! UNDO!
+				tab.store.get(tab.prefix + key, function(err, data){
+					if(err){ return cb(err) }
+					cb(err, Gun.is.graph.ify(data)); // node
+					cb(err, Gun.is.node.soul.ify({}, Gun.is.node.soul(data))); // end
+					cb(err, {}); // terminate
+				});
 			}(key, cb));
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
@@ -996,11 +995,6 @@
 							tab.put(p.graph = cb.graph, function(e,r){ // then sync it if we haven't already
 								Gun.log("Stateless handshake sync:", e, r);
 							}, {peers: tab.peers(url)}); // to the peer. // TODO: This forces local to flush again, not necessary.
-						}
-						if(!Gun.is.soul(key)){
-							Gun.is.graph(reply.body || gun.__.key.s[key], function(node, soul){ // make sure for each received node or nodes of our key
-								tab.key(key, soul, function(){}); // that the key points to it.
-							});
 						}
 						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
 					}), opt);
@@ -1012,9 +1006,8 @@
 			cb = cb || function(){};
 			opt = opt || {};
 			Gun.is.graph(graph, function(node, soul){
-				if(!opt.local){ gun.__.on(soul).emit(node) } // TODO: Should this be in core?
 				if(!gun.__.graph[soul]){ return }
-				tab.store.put(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
+				tab.store.put(tab.prefix + soul, gun.__.graph[soul]);
 			});
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
@@ -1023,23 +1016,12 @@
 				});
 			} tab.peers(cb);
 		}
-		tab.key = tab.key || function(key, soul, cb, opt){
-			var meta = {};
-			opt = opt || {};
-			cb = cb || function(){};
-			meta[Gun._.soul] = soul = Gun.is.soul(soul) || soul;
-			if(!soul){ return cb({err: Gun.log("No soul!")}) }
-			(function(souls){
-				(souls = tab.store.get(tab.prefix + tab.prekey + key) || {})[soul] = meta;
-				tab.store.put(tab.prefix + tab.prekey + key, souls);
-			}());
-			if(!(cb.local = opt.local || opt.soul)){
-				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					tab.request(url, meta, tab.error(cb, "Error: Key failed to be made on " + url), {url: {pathname: '/' + key }, headers: tab.headers});
-					cb.peers = true;
-				}); 
-			} tab.peers(cb);
-		}
+		tab.com(function(msg, reply){
+
+		});
+		tab.com.to(msg, function(reply){
+
+		}, opt);
 		tab.error = function(cb, error, fn){
 			return function(err, reply){
 				reply.body = reply.body || reply.chunk || reply.end || reply.write;
@@ -1102,18 +1084,18 @@
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
 			return (tab.server.able = tab.server.able || tab.request.createServer(tab.server) || true);
 		});
-		gun.__.opt.hooks.get = gun.__.opt.hooks.get || tab.get;
-		gun.__.opt.hooks.put = gun.__.opt.hooks.put || tab.put;
-		gun.__.opt.hooks.key = gun.__.opt.hooks.key || tab.key;
+		gun.__.opt.wire.get = gun.__.opt.wire.get || tab.get;
+		gun.__.opt.wire.put = gun.__.opt.wire.put || tab.put;
+		gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
 	});
-	var store = (function(){
-		function s(){}
-		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
-		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-		s.get = function(key){ return Gun.obj.ify(store.getItem(key) || null) }
-		s.del = function(key){ return store.removeItem(key) }
-		return s;
-	}());
+
+	;(function(exports){
+		exports.com = function(){
+
+		};
+		com.to = function(){};
+	}(Tab));
+
 	var request = (function(){
 		function r(base, body, cb, opt){
 			opt = opt || (base.length? {base: base} : base);
