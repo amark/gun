@@ -562,6 +562,8 @@
 			}
 		}
 
+		Gun.is.node.HAM = function(n, f){ return (f && n && n._ && n._[Gun._.HAM] && n._[Gun._.HAM][f]) || false }
+
 		Gun.HAM = function(machineState, incomingState, currentState, incomingValue, currentValue){ // TODO: Lester's comments on roll backs could be vulnerable to divergence, investigate!
 			if(machineState < incomingState){
 				// the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
@@ -930,6 +932,35 @@
 				if(at.obj === has.obj){ return has }
 			}) || (ctx.seen.push(at) && false);
 		}
+		ify.wire = function(n, cb, opt){ return Gun.text.is(n)? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt) }
+		ify.wire.to = function(n, cb, opt){ var t, b;
+			if(!n || !(t = Gun.is.node.soul(n))){ return null }
+			cb = cb || function(){};
+			t = (b = "#'" + JSON.stringify(t) + "'");
+			Gun.obj.map(n, function(v,f){
+				if(Gun._.meta === f){ return }
+				var w = '', s = Gun.is.node.HAM(n,f);
+				if(!s){ return }
+				w += ".'" + JSON.stringify(f) + "'";
+				w += "='" + JSON.stringify(v) + "'";
+				w += ">'" + JSON.stringify(s) + "'";
+				t += w;
+				w = b + w;
+				cb(null, w);
+			});
+			return t;
+		}
+		ify.wire.from = function(n, cb, opt){
+			if(!n){ return null }
+			var a = [], s = -1, e = 0, end = 1;
+			while((e = n.indexOf("'", s + 1)) >= 0){
+				if(s === e || '\\' === n.charAt(e-1)){}else{
+					a.push(n.slice(s + 1,e));
+					s = e;
+				}
+			}
+			return a;
+		}
 		Gun.ify = ify;
 	}(Gun));
 
@@ -951,7 +982,7 @@
 
 
 ;(function(Tab){
-	return;
+	
 	if(!this.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 
@@ -1016,12 +1047,6 @@
 				});
 			} tab.peers(cb);
 		}
-		tab.com(function(msg, reply){
-
-		});
-		tab.com.to(msg, function(reply){
-
-		}, opt);
 		tab.error = function(cb, error, fn){
 			return function(err, reply){
 				reply.body = reply.body || reply.chunk || reply.end || reply.write;
@@ -1055,31 +1080,15 @@
 			var reply = {headers: {'Content-Type': tab.server.json}};
 			if(!req.body){ return cb({headers: reply.headers, body: {err: "No body"}}) }
 			// TODO: Re-emit message to other peers if we have any non-overlaping ones.
-			if(tab.server.put.key(req, cb)){ return }
-			if(Gun.is.node(req.body) || Gun.is.graph(req.body, function(node, soul){
-				gun.__.flag.end[soul] = true; // TODO: Put this in CORE not in TAB driver?
-			})){
-				//console.log("tran.put", req.body);					
-				if(req.err = Gun.union(gun, req.body, function(err, ctx){
-					if(err){ return cb({headers: reply.headers, body: {err: err || "Union failed."}}) }
-					var ctx = ctx || {}; ctx.graph = {};
-					Gun.is.graph(req.body, function(node, soul){ ctx.graph[soul] = gun.__.graph[soul] });
-					gun.__.opt.hooks.put(ctx.graph, function(err, ok){
-						if(err){ return cb({headers: reply.headers, body: {err: err || "Failed."}}) }
-						cb({headers: reply.headers, body: {ok: ok || "Persisted."}});
-					}, {local: true});
-				}).err){ cb({headers: reply.headers, body: {err: req.err || "Union failed."}}) }
-			}
-		}
-		tab.server.put.key = function(req, cb){
-			if(!req || !req.url || !req.url.key || !Gun.obj.has(req.body, Gun._.soul)){ return }
-			var index = req.url.key, soul = Gun.is.soul(req.body);
-			//console.log("tran.key", index, req.body);
-			gun.key(index, function(err, reply){
-				if(err){ return cb({headers: {'Content-Type': tab.server.json}, body: {err: err}}) }
-				cb({headers: {'Content-Type': tab.server.json}, body: reply}); // TODO: Fix so we know what the reply is.
-			}, soul);
-			return true;
+			if(req.err = Gun.union(gun, req.body, function(err, ctx){
+				if(err){ return cb({headers: reply.headers, body: {err: err || "Union failed."}}) }
+				var ctx = ctx || {}; ctx.graph = {};
+				Gun.is.graph(req.body, function(node, soul){ ctx.graph[soul] = gun.__.graph[soul] });
+				gun.__.opt.wire.put(ctx.graph, function(err, ok){
+					if(err){ return cb({headers: reply.headers, body: {err: err || "Failed."}}) }
+					cb({headers: reply.headers, body: {ok: ok || "Persisted."}});
+				}, {local: true});
+			}).err){ cb({headers: reply.headers, body: {err: req.err || "Union failed."}}) }
 		}
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
 			return (tab.server.able = tab.server.able || tab.request.createServer(tab.server) || true);
@@ -1088,13 +1097,6 @@
 		gun.__.opt.wire.put = gun.__.opt.wire.put || tab.put;
 		gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
 	});
-
-	;(function(exports){
-		exports.com = function(){
-
-		};
-		com.to = function(){};
-	}(Tab));
 
 	var request = (function(){
 		function r(base, body, cb, opt){
@@ -1110,6 +1112,7 @@
 			while(i--){ (r.createServer.s[i] || function(){})(req, cb) }
 		}
 		r.createServer.s = [];
+		r.back = 2; r.backoff = 2;
 		r.transport = function(opt, cb){
 			//Gun.log("TRANSPORT:", opt);
 			if(r.ws(opt, cb)){ return }
@@ -1134,7 +1137,7 @@
 			}
 			if(ws === false){ return }
 			ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
-			ws.onopen = function(o){ r.ws(opt, cb) };
+			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
 			ws.onclose = window.onbeforeunload = function(c){
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
@@ -1145,9 +1148,8 @@
 				}
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
 				setTimeout(function(){
-					console.log("!!!!! WEBSOCKET DICONNECTED !!!!!! ATTEMPTING INFINITE RETRY WITH NO BACKOFF !!!!!!!");
 					r.ws(opt, function(){}); // opt here is a race condition, is it not? Does this matter?
-				}, 50) // make this an exponential backoff.
+				}, r.back *= r.backoff);
 			};
 			ws.onmessage = function(m){
 				if(!m || !m.data){ return }
@@ -1157,10 +1159,10 @@
 				if(!res){ return }
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (r.ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
-				Gun.log("We have a pushed message!", res);
+				//Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
 			};
-			ws.onerror = function(e){ console.log("!!!! WEBSOCKET ERROR !!!!", e); Gun.log(e); };
+			ws.onerror = function(e){ Gun.log(e); };
 			return true;
 		}
 		r.ws.peers = {};

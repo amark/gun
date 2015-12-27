@@ -24,8 +24,8 @@
 			<button>send</button>
 		</form>
 		<script>
-			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(){
-				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key('example/chat/data');
+			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(key){
+				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
 			chat.map().val(function(msg, field){
 				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;

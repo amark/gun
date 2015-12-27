@@ -968,7 +968,8 @@ describe('Gun', function(){
 	});
 
 	describe('API', function(){
-		var gun = Gun();
+		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
+		var gun = Gun(gopt);
 				
 		it('gun chain separation', function(done){
 			var gun = Gun();
@@ -1139,12 +1140,13 @@ describe('Gun', function(){
 
 		it('put node key get', function(done){
 			done.keycb = false;
-			gun.put({hello: "key"}).key('yes/key', function(err, ok){ // DEBUG FROM HERE!
+			gun.put({hello: "key"}).key('yes/key', function(err, ok){
 				done.keycb = true;
 				expect(err).to.not.be.ok();
 			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
+				console.log("wait what?", done.keycb);
 				expect(done.keycb).to.be.ok();
 				expect(node.hello).to.be('key');
 				if(done.c){ return }
@@ -1282,7 +1284,7 @@ describe('Gun', function(){
 				done();
 			}, 500);
 		});
-		
+
 		it('get node put node merge conflict', function(done){
 			gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
@@ -1441,7 +1443,7 @@ describe('Gun', function(){
 				done(); done.c = 1;
 			});
 		});
-
+		
 		/* // TODO: Future feature!
 		it('put gun node', function(done){
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
@@ -1957,7 +1959,7 @@ describe('Gun', function(){
 				});
 			});
 		});
-
+		
 		it('map', function(done){
 			var c = 0, set = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
 			set.map(function(obj, field){
@@ -2082,7 +2084,7 @@ describe('Gun', function(){
 		});
 
 		it('double not', function(done){ // from the thought tutorial
-			var gun = Gun().get('thoughts').not(function(key){
+			var gun = Gun(gopt).get('thoughts').not(function(key){
 				return this.put({}).key(key);
 			});
 			
@@ -2095,7 +2097,7 @@ describe('Gun', function(){
 				})
 			}, 10);
 		});
-		
+
 		it('node path node path node path', function(done){
 			var gun = Gun();
 			var data = gun.get('data');
@@ -2368,7 +2370,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('get pseudo merge across peers', function(done){
 			Gun.on('opt').event(function(gun, o){
 				if(connect){ return }
@@ -2564,7 +2566,7 @@ describe('Gun', function(){
 		});
 
 		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace
-			var gun = Gun().get('players');
+			var gun = Gun(gopt).get('players');
 			
 			gun.put({
 			  taken: true,
@@ -2937,10 +2939,10 @@ describe('Gun', function(){
 				game.put({board: {11: ' ', 22: ' ', 33: 'A'}});
 			},100);
 		});
-		
+
 		it("get init put map -> put, foreach gun path map", function(done){ // replicate Jesse's Trace game bug
 			done.c = 0;
-			gun = Gun({init: true})
+			gun = Gun(gopt).opt({init: true})
 			.get('players').init()
 			.put({
 				0: {
@@ -3001,7 +3003,7 @@ describe('Gun', function(){
 		it("gun get path empty val", function(done){ // flip flop bug
 			done.c = 0;
 			var u;
-			var gun = Gun();
+			var gun = Gun(gopt);
 			var game = gun.get('game1/players');
 			var me = game.path('player1').val(function(val){
 				if(!done.c){ done.fail = true }
@@ -3021,7 +3023,7 @@ describe('Gun', function(){
 		it("gun get path empty on", function(done){
 			done.c = 0;
 			var u;
-			var gun = Gun();
+			var gun = Gun(gopt);
 			var game = gun.get('game2/players');
 			var me = game.path('player2').on(function(val){
 				if(!done.c){ done.fail = true }
@@ -3043,7 +3045,7 @@ describe('Gun', function(){
 		
 		it("gun get path empty not", function(done){
 			var u;
-			var gun = Gun({init: true});
+			var gun = Gun(gopt).opt({init: true})
 			var game = gun.get('game3/players').init();
 			var me = game.path('player3').not(function(field){
 				expect(field).to.be('player3');
@@ -3053,7 +3055,7 @@ describe('Gun', function(){
 		
 		it("gun get path empty init", function(done){
 			var u;
-			var gun = Gun({init: true});
+			var gun = Gun(gopt).opt({init: true});
 			var game = gun.get('game4/players').init();
 			var me = game.path('player4').init().path('alias').init().put({oh: 'awesome'}).val(function(val, field){
 				expect(val.oh).to.be('awesome');
