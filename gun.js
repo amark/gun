@@ -1010,8 +1010,8 @@
 			(opt = opt || {}).url = opt.url || {};
 			opt.headers = Gun.obj.copy(tab.headers);
 			opt.url.pathname = '/' + key;
-			Gun.log("tab get --->", key);
-			(function local(key, cb){return; // TODO: BUG! UNDO!
+			//Gun.log("tab get --->", key);
+			(function local(key, cb){
 				tab.store.get(tab.prefix + key, function(err, data){
 					if(err){ return cb(err) }
 					cb(err, Gun.is.graph.ify(data)); // node
