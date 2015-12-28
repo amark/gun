@@ -1013,8 +1013,9 @@
 			//Gun.log("tab get --->", key);
 			(function local(key, cb){
 				tab.store.get(tab.prefix + key, function(err, data){
+					if(!data){ return } // let the peers handle no data.
 					if(err){ return cb(err) }
-					cb(err, Gun.is.graph.ify(data)); // node
+					cb(err, data); // node
 					cb(err, Gun.is.node.soul.ify({}, Gun.is.node.soul(data))); // end
 					cb(err, {}); // terminate
 				});
