@@ -1016,10 +1016,11 @@
 			} else {
 				opt.url.pathname = '/' + key;
 			}
+			var getPrefix = (opt.prefix) ? opt.prefix: tab.prefix; // allows users to provide a prefix for the get operation
 			Gun.log("tab get --->", key);
 			(function local(key, cb){
-				var path = (path = Gun.is.soul(key))? tab.prefix + tab.prenode + path
-					: tab.prefix + tab.prekey + key, node = tab.store.get(path), graph, soul;
+				var path = (path = Gun.is.soul(key))? getPrefix + tab.prenode + path
+					: getPrefix + tab.prekey + key, node = tab.store.get(path), graph, soul;
 				if(Gun.is.node(node)){
 					(cb.graph = cb.graph || {}
 					)[soul = Gun.is.soul.on(node)] = (graph = {})[soul] = cb.node = node;
@@ -1050,14 +1051,15 @@
 					cb.peers = true;
 				});
 			} tab.peers(cb);
-		}
+		};
 		tab.put = tab.put || function(graph, cb, opt){
 			cb = cb || function(){};
 			opt = opt || {};
+			var putPrefix = (opt.prefix) ? opt.prefix: tab.prefix; // allows users to provide a prefix for the put operation
 			Gun.is.graph(graph, function(node, soul){
 				if(!opt.local){ gun.__.on(soul).emit(node) } // TODO: Should this be in core?
 				if(!gun.__.graph[soul]){ return }
-				tab.store.put(tab.prefix + tab.prenode + soul, gun.__.graph[soul]);
+				tab.store.put(putPrefix + tab.prenode + soul, gun.__.graph[soul]);
 			});
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
@@ -1065,16 +1067,17 @@
 					cb.peers = true;
 				});
 			} tab.peers(cb);
-		}
+		};
 		tab.key = tab.key || function(key, soul, cb, opt){
 			var meta = {};
 			opt = opt || {};
 			cb = cb || function(){};
+			var keyPrefix = (opt.prefix) ? opt.prefix: tab.prefix; // allows users to provide a prefix for the key operation
 			meta[Gun._.soul] = soul = Gun.is.soul(soul) || soul;
 			if(!soul){ return cb({err: Gun.log("No soul!")}) }
 			(function(souls){
-				(souls = tab.store.get(tab.prefix + tab.prekey + key) || {})[soul] = meta;
-				tab.store.put(tab.prefix + tab.prekey + key, souls);
+				(souls = tab.store.get(keyPrefix + tab.prekey + key) || {})[soul] = meta;
+				tab.store.put(keyPrefix + tab.prekey + key, souls);
 			}());
 			if(!(cb.local = opt.local || opt.soul)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
@@ -1082,7 +1085,7 @@
 					cb.peers = true;
 				}); 
 			} tab.peers(cb);
-		}
+		};
 		tab.error = function(cb, error, fn){
 			return function(err, reply){
 				reply.body = reply.body || reply.chunk || reply.end || reply.write;
