@@ -24,6 +24,11 @@
 			<button>send</button>
 		</form>
 		<script>
+			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
+			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || 0))? e : $.sort(when, e.previousSibling) }
+			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
+			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
+
 			var chat = Gun(location.origin + '/gun').get('example/chat/data').not(function(key){
 				return this.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
@@ -38,12 +43,7 @@
 					window.scrollTo(0, document.body.scrollHeight);
 				}
 			});
-			
-			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || 0))? e : $.sort(when, e.previousSibling) }
-			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
-			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
-			
+				
 			$('.who', $('form')).value = (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'';
 			$('.what', $('form')).focus();
 			$('form').onsubmit = function(e){

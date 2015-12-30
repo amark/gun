@@ -22,10 +22,14 @@
 			</form>
 		</li></ul>
 		<script>
+			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
+
 			var ref = Gun(location.origin + '/gun').get('example/json/data');
-			ref.not(function(){
-				return this.put({hello: "world!"}).key('example/json/data');
-			}).on(function(data){
+			ref/*.not(function(key){
+				console.log("does NOT exist", key);
+				return this.put({hello: "world!"}).key(key);
+			})*/.on(function(data){
+				console.log("ugggh", data);
 				for(var field in data){
 					if(field === '_'){ continue } // skip meta data!
 					var val = (data[field = field || ''] || '').toString(), id = field.replace(/[^A-z]/ig, ''), elem; // make data safe.
@@ -34,8 +38,6 @@
 					$('span', elem).innerHTML = val.replace(/\</ig, '&lt;'); // escape and display value
 				}
 			});
-			
-			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
 			document.onkeyup = function(e){
 				if(!e || !e.target){ return } // ignore if no element!
 				if(!e.target.attributes.contenteditable){ return } // ignore if element content isn't editable!

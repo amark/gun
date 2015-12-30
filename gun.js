@@ -53,6 +53,7 @@
 			ctx.by = chain.__.by(ctx.soul);
 			if(!at.soul || (at.not && at.not === at.field) || cb[at.hash = at.hash || Gun.on.at.hash(at)]){ return } cb[at.hash] = true; // only put the data once on each soul we encounter.
 			if(!opt.key && Gun.is.node.soul(ctx.by.node, Gun._.key)){ return } // ignore key nodes unless we're trying to update one explicitly.
+			//if(Gun.is(val) && (val._||{}).get){ ctx.obj = val = Gun.is.rel.ify(val._.get) }
 			if(ctx.field){ Gun.obj.as(ctx.obj = {}, ctx.field, val) } // if there is a field, then data is actually getting put on the parent.
 			else if(!Gun.obj.is(val)){ return cb.call(chain, ctx.err = {err: Gun.log("No node exists to put " + (typeof val) + ' "' + val + '" in!')}), chain._.at('err').emit(ctx.err) } // if the data is a primitive and there is no context for it yet, then we have an error.
 			function soul(env, cb, map){ var eat;
@@ -130,19 +131,20 @@
 		return chain;
 	}
 
-	Gun.chain.get = function(key, cb, opt){ // get opens up a reference to a node and loads it.
+	Gun.chain.get = function(soul, cb, opt){ // get opens up a reference to a node and loads it.
 		opt = opt || {};
-		opt.rel = opt.rel || Gun.is.rel(key);
-		if(!(key = Gun.is.rel(key) || key) || !Gun.text.is(key)){ return key = this.chain(), cb.call(key, {err: Gun.log('No key or relation to get!')}), key }
+		opt.rel = opt.rel || Gun.is.rel(soul);
+		if(!(soul = Gun.is.rel(soul) || soul) || !Gun.text.is(soul)){ return soul = this.chain(), cb.call(soul, {err: Gun.log('No soul or relation to get!')}), soul }
 		cb = cb || function(){}; // only gets called for wire stuff, not chain events.
-		var ctx = {by: this.__.by(key)};
+		var ctx = {by: this.__.by(soul)};
 		ctx.by.chain = ctx.by.chain || this.chain();
 		ctx.chain = opt.chain || ctx.by.chain; // TODO: BUG! opt.chain is asking for us to fire on this chain, not necessarily make it the this of callbacks.
+		//ctx.chain._.get = soul;
 		function chains(cb){ if(opt.chain){ cb(opt.chain) } cb(ctx.by.chain); }
 		function memory(at){
 			var cached = ctx.chain.__.by(at.soul).node;
 			if(!cached){ return false }
-			if(Gun.is.node.soul(cached, Gun._.key)){ // TODO: End node from wire might not have key indicator?
+			if(Gun.is.node.soul(cached, Gun._.key)){ // TODO: End node from wire might not have key indicator? // TODO: MARK! KEY! REVISE!
 				opt.key = opt.key || Gun.is.node.soul(cached);
 				Gun.is.node(at.change || cached, union);
 			}
@@ -166,7 +168,7 @@
 			}
 			if(!data){
 				cb.call(ctx.chain, null, null);
-				return chains(function(chain){ chain._.at('null').emit({not: key}) });
+				return chains(function(chain){ chain._.at('null').emit({not: soul}) });
 			}
 			if(Gun.obj.empty(data)){ return }
 			if(err = Gun.union(ctx.chain, data).err){
@@ -182,16 +184,16 @@
 			else if(at.field){ return }
 			if(memory(at)){ return }
 			if(Gun.fns.is(map.wire)){
-				return map.wire(key, get, opt);
+				return map.wire(soul, get, opt);
 			}
 			if(!Gun.log.count('no-wire-get')){ Gun.log("Warning! You have no persistence layer to get from!") }
 			cb.call(ctx.chain, null); // This is in memory success, hardly "success" at all.
-			chains(function(chain){ chain._.at('null').emit({not: key}) });
+			chains(function(chain){ chain._.at('null').emit({not: soul}) });
 		}
-		if(Gun.fns.is(map.wire = ctx.chain.__.opt.wire.get) && opt.force){ map.wire(key, get, opt) }
-		map.raw = (map.at = ctx.chain.__.at(key)).map(map);
+		if(Gun.fns.is(map.wire = ctx.chain.__.opt.wire.get) && opt.force){ map.wire(soul, get, opt) }
+		map.raw = (map.at = ctx.chain.__.at(soul)).map(map);
 		if(opt.raw){ opt.raw = map.raw }
-		if(!map.ran){ map.at.emit({soul: key}) } // TODO: BUG! Add a change set!
+		if(!map.ran){ map.at.emit({soul: soul}) } // TODO: BUG! Add a change set!
 		return ctx.chain;
 	}
 
@@ -340,6 +342,7 @@
 					chain._.at('soul').emit(on); 
 				});
 			};
+			//console.log("TON", at);
 			kick.c = -1
 			kick.chain = gun.chain();
 			kick.next = cb.call(kick.chain, opt.raw? at : (at.field || at.soul || at.not), kick);
@@ -1015,17 +1018,18 @@
 				tab.store.get(tab.prefix + key, function(err, data){
 					if(!data){ return } // let the peers handle no data.
 					if(err){ return cb(err) }
-					cb(err, data); // node
-					cb(err, Gun.is.node.soul.ify({}, Gun.is.node.soul(data))); // end
+					cb(err, cb.node = data); // node
+					cb(err, Gun.is.node.soul.ify({_: data._}, Gun.is.node.soul(data))); // end
 					cb(err, {}); // terminate
 				});
 			}(key, cb));
 			if(!(cb.local = opt.local)){
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
 					tab.request(url, null, tab.error(cb, "Error: Get failed through " + url, function(reply){
-						if(!p.graph && !Gun.obj.empty(cb.graph)){ // if we have local data
-							tab.put(p.graph = cb.graph, function(e,r){ // then sync it if we haven't already
-								Gun.log("Stateless handshake sync:", e, r);
+						if(!p.node && cb.node){ // if we have local data
+							//Gun.log("tab get <---", key);
+							tab.put(Gun.is.graph.ify(p.node = cb.node), function(e,r){ // then sync it if we haven't already
+								//Gun.log("Stateless handshake sync:", e, r);
 							}, {peers: tab.peers(url)}); // to the peer. // TODO: This forces local to flush again, not necessary.
 						}
 						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
@@ -1062,7 +1066,7 @@
 			if(Gun.text.is(cb)){ return (o = {})[cb] = {}, o }
 			if(cb && !cb.peers){ setTimeout(function(){
 				if(!cb.local){ console.log("Warning! You have no peers to connect to!") }
-				if(!(cb.graph || cb.node)){ cb() }
+				if(!(cb.graph || cb.node)){ cb(null, null) }
 			},1)}
 		}
 		tab.server = tab.server || function(req, res){
