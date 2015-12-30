@@ -1146,7 +1146,6 @@ describe('Gun', function(){
 			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
-				console.log("wait what?", done.keycb);
 				expect(done.keycb).to.be.ok();
 				expect(node.hello).to.be('key');
 				if(done.c){ return }
@@ -1444,16 +1443,16 @@ describe('Gun', function(){
 			});
 		});
 		
-		/* // TODO: Future feature!
-		it('put gun node', function(done){
+		it.skip('put gun node', function(done){
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
 			var amber = gun.put({age: 23, name: "Amber Nadal"});
 			mark.path('wife').put(amber, function(err){
 				expect(err).to.not.be.ok();
-				expect(false).to.be.ok(); // what whatttt???
+			});
+			mark.path('wife.name').val(function(val){
+				expect(val).to.be("Amber Nadal");
 			});
 		});
-		*/
 		
 		it('put val', function(done){
 			gun.put({hello: "world"}).val(function(val){
@@ -2250,7 +2249,7 @@ describe('Gun', function(){
 		});
 
 		it('init todo', function(done){
-			var gun = Gun(), todo = gun.get('init/todo');
+			var gun = Gun(), todo = gun.get('init/todo/defer');
 			todo.map().on(function(val, field){
 				expect(val).to.be('eat chocolate');
 				expect(field).to.be('random1');
