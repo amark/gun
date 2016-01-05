@@ -45,7 +45,7 @@
   "dependencies": {
     "aws-sdk": "~>2.0.0",
     "formidable": "~>1.0.15",
-    "ws": "~>0.8.0"
+    "ws": "~>1.0.1"
   },
   "devDependencies": {
     "mocha": "~>1.9.0"
