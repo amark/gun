@@ -349,7 +349,7 @@
 				if(!(meta = (node||{})[Gun._.meta]) || !(meta = meta[Gun._.state]) || !Gun.num.is(meta[field])){ 
 					return ctx.err = {err: Gun.log("No state on '" + field + "'!") } 
 				}
-			}) || ctx.err){ return ctx.err = ctx.err || {err: Gun.log("Invalid graph!")}, ctx }
+			}) || ctx.err){ return ctx.err = ctx.err || {err: Gun.log("Invalid graph!", prime)}, ctx }
 			function emit(at){
 				Gun.on('operating').emit(gun, at);
 			}
@@ -714,7 +714,7 @@
 					at.soul = opt.key.soul;
 					gun.__.by(opt.key.soul).node = Gun.union.ify(gun, opt.key.soul); // TODO: Check performance?
 					gun.__.by(opt.key.soul).node._['key'] = 'pseudo';
-					at.change = Gun.is.node.soul.ify(at.change || gun.__.by(at.soul).node, at.soul, true);
+					at.change = Gun.is.node.soul.ify(Gun.obj.copy(at.change || gun.__.by(at.soul).node), at.soul, true); // TODO: Check performance?
 					return;
 				}
 				var node = at.change || gun.__.graph[at.soul];
