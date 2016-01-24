@@ -3486,6 +3486,21 @@ describe('Gun', function(){
 				done();
 			})
 		});
+
+		it("no invalid graph", function(done){
+			var gun = Gun({wire:{
+				put: function(graph){
+					expect(Gun.is.graph(graph)).to.be.ok();
+					if(done.c){ return } if(done.on){ done(); done.c = 1 }
+				}
+			}}).get('example/todo/data/graph');
+			gun.on(function renderToDo(val){
+				done.on = true; 
+			});
+			setTimeout(function(){
+				gun.path(Gun.text.random()).put('hoorah');
+			},100)
+		});
 	});
 	
 	describe('Streams', function(){
