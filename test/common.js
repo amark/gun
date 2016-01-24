@@ -1054,7 +1054,7 @@ describe('Gun', function(){
 				done(); done.c = 1;
 			});
 		});
-		
+
 		describe('timeywimey', function(){ return;
 			
 			it('kitty', function(done){
@@ -1236,6 +1236,16 @@ describe('Gun', function(){
 			}
 		});
 		
+		it('get key no override', function(done){
+			var gun = Gun();
+			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
+				expect(Gun.is.node.soul(node)).to.be('cream/pie');
+				if(done.c){ done(); } done.c = 1;
+			});
+			gun.get('cream/pie').key('pie/cream');
+			gun.get('pie/cream').put({pie: 'cream'});
+		});
+
 		it('get key', function(done){
 			gun.get('yes/key', function(err, node){
 				expect(err).to.not.be.ok();
@@ -1427,7 +1437,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it.skip('put node get field', function(done){ // future feature.
+		it('put node get field', function(done){ // future feature.
 			var gun = Gun();
 			gun.put({_:{'#': 'soul/field'}, hi: 'lol', foo: 'bar'});//.key('key/field');
 			gun.get({'#': 'soul/field', '.': 'hi'}, function(err, val){
@@ -1559,7 +1569,7 @@ describe('Gun', function(){
 				},50);
 			},50);
 		});
-
+		
 		it('get path wire shallow swoop', function(done){
 			var gun = Gun();
 			var get = gun.get('slightly/shallow/path/swoop');
@@ -1597,7 +1607,9 @@ describe('Gun', function(){
 			var get = gun.get('hello/key/iso');
 			var puthi = get.put({hi: 'you'});
 			puthi.on(function(node){
+				if(done.hi){ return }
 				expect(node.hi).to.be('you');
+				done.hi = 1;
 			});
 			setTimeout(function(){
 				var get2 = gun.get('hello/key/iso');
@@ -1765,7 +1777,7 @@ describe('Gun', function(){
 				done();
 			}, 1);
 		});
-
+		
 		it('get path put', function(done){
 			gun.get('hello/world').path('hello').put('World').val(function(val){
 				expect(val).to.be('World');
@@ -2198,85 +2210,90 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('path should not slowdown', function(done){
+		it('path should not slowdown', function(done){
 			this.timeout(5000);
 			//this.timeout(60000);
 
-			Gun.log.debug = 100; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+			//Gun.log.debug = 100; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 			var gun = Gun({init: true}).put({
 			  history: {}
 			});
-			console.log("---------- setup data done -----------");
-			var prev, diff, max = 25, total = 10, largest = -1, gone = {};
+			//console.log("---------- setup data done -----------");
+			var prev, diff, max = 25, total = 100, largest = -1, gone = {};
+			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.path('history').map(function(time, index){
-			  //if(turns != index){ return }
-				diff = Gun.time.is() - time;
-			  //expect(gone[index]).to.not.be.ok();
+			  diff = Gun.time.is() - time;
+			  expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;
-			  console.log(turns, index, largest, diff);
-			  //expect(diff > max).to.not.be.ok();
+			  //console.log(turns, index, 'largest', largest, diff);
+			  expect(diff > max).to.not.be.ok();
 			});
 			//var p = gun.path('history');
-			console.log("-------- map set up -----------");
+			//console.log("-------- map set up -----------");
 			var turns = 0;
 			var many = setInterval(function(){
 				if(turns > total || (diff || 0) > (max + 5)){
-					return;
-			  	clearTimeout(many);
-			  	expect(diff).to.be.ok();
+					clearTimeout(many);
+			  	expect(Gun.num.is(diff)).to.be.ok();
 			  	if(done.c){ return } done(); done.c = 1;
+			  	//console.log(turns, largest);
 			  	return;
 			  }
+			  //if(turns === 233){ Gun.log.debug = 1; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~") }
 				prev = Gun.time.is();
 			  Gun.log.base = Gun.log.ref = Gun.log.fer = prev;
 			  var put = {}; put[turns += 1] = prev;
-			  //{11: 123456789}
-			  console.log("------------------", turns,"---------------------------")
-			  if(turns === 9){ Gun.log.debug = 1; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~") }
 			  gun.put({history: put});
-			  //p.put(put);
-			  //gun.path('history').put(put);
 			}, 1);
 		});
-		//return;
+		
 		it('path rel should not slowdown', function(done){
 			this.timeout(5000);
+			//this.timeout(60000);
 
 			//Gun.log.debug = 1; console.log("~~~~~ START ~~~~~~");
 			var gun = Gun(gopt).put({
 			  history: {}
 			});
-			var prev, diff, max = 100, total = 100;
+			//console.log("-------- DATA SET UP -----------");
+			var prev, diff, max = 100, total = 100, largest = -1, gone = {};
 			gun.path('history').map(function(entry, index){
 				//if(!entry){ return } // TODO: BUG! KNOWN BUG!!!!!!! FIX!!!!!
 				//console.log("WAT", index, entry);
 				//console.log("THE GRAPH\n", gun.__.graph);
+			  //expect(gone[index]).to.not.be.ok();
+				gone[index] = diff;
 			  diff = Gun.time.is() - (entry.time || prev);
-			  //console.log('turn', turns, 'diff', diff);
+			  largest = (largest < diff)? diff : largest;
+			  //console.log('turn', turns, 'index', index, 'diff', diff, 'largest', largest);
 			  expect(diff > max).to.not.be.ok();
 			});
 
 			var turns = 0;
-
+			//console.log("------------ PATH MAP SET UP --------------");
 			var many = setInterval(function(){
 				if(turns > total || diff > (max + 5)){
 			  	clearTimeout(many);
-			  	expect(diff).to.be.ok();
+			  	expect(Gun.num.is(diff)).to.be.ok();
 			  	if(done.c){ return } done(); done.c = 1;
 			  	return;
 			  }
 			  prev = Gun.time.is();
 			  Gun.log.base = Gun.log.ref = Gun.log.fer = prev;
-			  //console.log("-------------- TEST PUT BEGIN", turns + 1, "-----------------");
-			  gun.path(['history', turns += 1]).put({
+			  //if(turns === 0){ Gun.log.debug = 1; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"); }
+			  //console.log("-------------- ", turns + 1, "-----------------");
+			  var val = {
 			    x: 1,
 			    y: 1,
 			    axis: 'y',
 			    direction: 1,
 			    time: prev
-			  });
-			}, 1);
+			  }
+			  var put = {}; put[turns += 1] = val;
+			  gun.put({history: put});
+			  //gun.path(['history', turns += 1]).put({
+			},1);
 		});
 
 		it('val path put val', function(done){
@@ -2469,7 +2486,7 @@ describe('Gun', function(){
 		});
 
 		it('node path node path node path', function(done){
-			var gun = Gun();
+			var gun = Gun(gopt);
 			var data = gun.get('data');
 			gun.put({
 				a: 1,
@@ -2578,8 +2595,7 @@ describe('Gun', function(){
 		it('implicit put on empty get explicit not', function(done){
 			var gun = Gun().get('init/not').not();
 			gun.on(function(val){
-				expect(val.not).to.be(true);
-				if(done.c){ return } done.c = 1;
+				done.c = 1;
 			});
 			gun.put({not: true});
 			setTimeout(function(){
@@ -2679,7 +2695,6 @@ describe('Gun', function(){
 				expect(Gun.obj.empty(keynode, Gun._.meta)).to.not.be.ok();
 			});
 			gun.set(1); //.set(2).set(3).set(4); // if you set an object you'd have to do a `.back`
-			Gun.log.debug = 1; console.log("~~~~~~ START ~~~~~~~~");
 			gun.map(function(val, field){
 			//gun.map().val(function(val, field){ // TODO: SEAN! DON'T LET ME FORGET!
 				console.log("\n TEST 2+", field, val);
@@ -2704,12 +2719,13 @@ describe('Gun', function(){
 			var users = Gun().get('example').path('users');
 			users.path(Gun.text.random()).put('bob');
 			users.path(Gun.text.random()).put('sam');
-
-			users.val(function(v){
-				expect(Gun.is.rel(v)).to.not.be.ok();
-				expect(Object.keys(v).length).to.be(3);
-				done();
-			});
+			setTimeout(function(){
+				users.val(function(v){
+					expect(Gun.is.rel(v)).to.not.be.ok();
+					expect(Object.keys(v).length).to.be(3);
+					done();
+				});
+			},100);
 		});
 
 		it('peer 1 get key, peer 2 put key, peer 1 val', function(done){
@@ -2847,9 +2863,7 @@ describe('Gun', function(){
 			}); // this is now a list of passengers that we will map over.
 			var ctx = {n: 0, d: 0, l: 0};
 			passengers.map().val(function(passenger, id){
-				//console.log("~~~~~~~~ START ~~~~~~~~~"); Gun.log.debug = 1;
 				this.map().val(function(change, field){
-					//console.log("Passenger", passenger.name, "had", field, "change to:", change, '\n\n');
 					if('name' == field){ expect(change).to.be(passenger.name); ctx.n++ }
 					if('direction' == field){ expect(change).to.be(passenger.direction); ctx.d++ }
 					if('location' == field){
@@ -2865,10 +2879,25 @@ describe('Gun', function(){
 			});
 		});
 
+		it("put map", function(done){
+			var gun = Gun();
+			var get = gun.get('map/that');
+			var put = gun.put({a: 1, b: 2, c: 3}).key('map/that');
+			get.map(function(v,f){
+				if(1 === v){ done.a = true }
+				if(2 === v){ done.b = true }
+				if(3 === v){ done.c = true }
+				if(done.a && done.b && done.c){
+					if(done.done){ return }
+					done(); done.done = 1;
+				}
+			});
+		});
+
 		it("get map map val", function(done){ // Terje's bug
 			var gun = Gun({init: true}); // we can test GUN locally.
 			var passengers = gun.get('passengers/map').not(function(key){
-				this.put({randombob: {
+				gun.put({randombob: {
 					name: "Bob",
 					location: {'lat': '37.6159', 'lng': '-128.5'},
 					direction: '128.2'
@@ -2970,7 +2999,7 @@ describe('Gun', function(){
 			}, 100);
 		});
 
-		it.skip('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace // 
+		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace // 
 			var gun = Gun(gopt).get('players');
 			
 			gun.put({
@@ -2987,9 +3016,8 @@ describe('Gun', function(){
 			
 			// TODO: BUG! There is a variation of this, where we just do `.val` rather than `gun.val` and `.val` by itself (chained off of the sub-paths) doesn't even get called. :(
 			gun.on(function(players){ // this val is subscribed to the original put and therefore does not get any of the sub-path listeners, therefore it gets called EARLY with the original/old data rather than waiting for the sub-path data to "finish" and then get called.
-				console.log("DEM PLAYERS", players);
-				expect(players.taken).to.be(false);
 				expect(players.history).to.be(null);
+				expect(players.taken).to.be(false);
 				if(done.c){ return } done(); done.c = 1;
 			});
 		});
@@ -3285,7 +3313,7 @@ describe('Gun', function(){
 				},t || 10);
 			};
 			put({on: 'bus', not: 'transparent'});
-			put({on: null, not: 'torrent'}, 200);return;
+			put({on: null, not: 'torrent'}, 200);
 			put({on: 'sub', not: 'parent'}, 250, true);
 		});
 		
@@ -3459,8 +3487,8 @@ describe('Gun', function(){
 			})
 		});
 	});
-		
-	describe('Streams', function(){ return; // TODO: BUG! UNDO THIS!
+	
+	describe('Streams', function(){
 		var gun = Gun(), g = function(){
 			return Gun({wire: {get: ctx.get}});
 		}, ctx = {gen: 9, extra: 100, network: 2};
@@ -3472,13 +3500,13 @@ describe('Gun', function(){
 				var c = 0;
 				cb = cb || function(){};
 				key = key[Gun._.soul];
-				if('big' !== key){ return cb(null, null) }
+				if('big' !== key){ return cb(null) }
 				setTimeout(function badNetwork(){
 					c += 1;
 					var soul = Gun.is.node.soul(ref);
 					var graph = {};
 					var data = /*graph[soul] = */ {_: {'#': soul, '>': {}}};
-					if(!ref['f' + c]){ 
+					if(!ref['f' + c]){
 						return cb(null, data), cb(null, {});
 					}
 					data._[Gun._.state]['f' + c] = ref._[Gun._.state]['f' + c];
@@ -3501,7 +3529,7 @@ describe('Gun', function(){
 				gun.opt({wire: {get: ctx.get}});
 			});
 		});
-		
+
 		it('map chain', function(done){
 			var set = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
 			set.map().val(function(obj, field){
@@ -3593,7 +3621,7 @@ describe('Gun', function(){
 				}
 			}, true);
 		});
-		
+
 		it('get val', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			g().get('big').val(function(obj){
@@ -3603,10 +3631,11 @@ describe('Gun', function(){
 				var raw = Gun.obj.copy(ctx.get.fake);
 				delete raw._;
 				expect(obj).to.be.eql(raw);
+				Gun.log.debug = 0;
 				done();
 			});
 		});
-
+		
 		it('get big map val', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			var test = {c: 0, seen: {}};
