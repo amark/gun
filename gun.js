@@ -918,6 +918,7 @@
 					if(Gun.obj.has(gun.__.by(at.soul).node, at.field)){ return Gun.obj.del(at, 'not'), chain._.at(e).emit(at) }
 				} else
 				if(at.soul && gun.__.by(at.soul).node){ return Gun.obj.del(at, 'not'), chain._.at(e).emit(at) }
+				if(!at.not){ return }
 				var kick = function(next){
 					if(++kick.c){ return Gun.log("Warning! Multiple `not` resumes!"); }
 					next._.at.all(function(on ,e){ // TODO: BUG? Switch back to .at? I think .on is actually correct so it doesn't memorize. // TODO: BUG! What about other events?
