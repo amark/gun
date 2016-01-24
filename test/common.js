@@ -3501,6 +3501,85 @@ describe('Gun', function(){
 				gun.path(Gun.text.random()).put('hoorah');
 			},100)
 		});
+
+		it("no undefined field", function(done){
+			var gun = Gun();
+			var chat = gun.get('example/chat/data/graph/field').not(function(key){
+				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
+			});
+			chat.map().val(function renderToDo(val, field){
+				expect(field).to.be.ok();
+				expect(val.who).to.be.ok();
+				expect(val.when).to.be.ok();
+				expect(val.what).to.be.ok();
+				if(done.c >= 2){ return }
+				if(done.c === 1){ done() }
+				done.c = done.c || 0;
+				done.c += 1;
+			});
+			setTimeout(function(){
+				var msg = {};
+				msg.when = Gun.time.is();
+				msg.what = "lol!";
+				msg.who = "Alice";
+				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
+			},100);
+		});
+
+		it("simulate chat app", function(done){
+			var server = Gun();
+			var gopt = {wire:{
+				put: function(graph, cb){
+					Gun.union(server, graph);
+					cb(null);
+				}
+				,get: function(lex, cb){
+					setTimeout(function(){
+						var soul = lex[Gun._.soul];
+						var graph = server.__.graph;
+						//console.log('server replying', soul, graph);
+						if(!graph[soul]){
+							//console.log("replying to Alice...", null);
+							cb(null);
+							cb(null, {});
+							return;
+						}
+						var node = graph[soul];
+						//console.log("replying to Bob...", node);
+						cb(null, node);
+						cb(null, Gun.is.node.ify({}, soul));
+						cb(null, {});
+					},5);
+				}
+			}}
+			var gun = Gun(gopt);
+			var chat = gun.get('example/chat/data/graph/field').not(function(key){
+				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
+			});
+			chat.map().val(function renderToDo(val, field){
+				//console.log("ALICE", field, val);
+				expect(field).to.be.ok();
+				expect(val.who).to.be.ok();
+				expect(val.when).to.be.ok();
+				expect(val.what).to.be.ok();
+			});
+			setTimeout(function(){
+				var gun2 = Gun(gopt);
+				//Gun.log.debug =1; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+				var chat2 = gun2.get('example/chat/data/graph/field').not(function(key){
+					//console.log("BOB's key", key);
+					gun2.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
+				});
+				chat2.map().val(function renderToDo(val, field){
+					//console.log("BOB", field, val);
+					expect(field).to.be.ok();
+					expect(val.who).to.be.ok();
+					expect(val.when).to.be.ok();
+					expect(val.what).to.be.ok();
+					done();
+				});
+			},100);
+		});
 	});
 	
 	describe('Streams', function(){
