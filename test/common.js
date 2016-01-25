@@ -1240,7 +1240,8 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
 				expect(Gun.is.node.soul(node)).to.be('cream/pie');
-				if(done.c){ done(); } done.c = 1;
+				if(done.c >= 2){ return }
+				if(done.c){ done(); done.c = 2; return; } done.c = 1;
 			});
 			gun.get('cream/pie').key('pie/cream');
 			gun.get('pie/cream').put({pie: 'cream'});
@@ -1569,7 +1570,7 @@ describe('Gun', function(){
 				},50);
 			},50);
 		});
-		
+
 		it('get path wire shallow swoop', function(done){
 			var gun = Gun();
 			var get = gun.get('slightly/shallow/path/swoop');
@@ -1726,7 +1727,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 		
 		it('put key val', function(done){
@@ -1739,7 +1740,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 		
 		it('get val', function(done){
@@ -1751,7 +1752,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 
 		it('get path', function(done){
@@ -1763,7 +1764,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 		
 		it('get put path', function(done){
@@ -1775,7 +1776,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 		
 		it('get path put', function(done){
@@ -1787,7 +1788,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 		
 		it('get empty put', function(done){
@@ -1813,7 +1814,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.not.be.ok(); // CHANGELOG: API 0.3 BREAKING CHANGE, .put is suppose to be dependent on the previous chain, which means it SHOULD NOT PUT on an empty path.
 				done();
-			}, 1);
+			}, 100);
 		});
 
 		it('get empty put val implicit', function(done){
@@ -1847,7 +1848,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 
 		it('get path val', function(done){
@@ -1861,7 +1862,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.not.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 
 		it('get path val implicit', function(done){
@@ -1873,7 +1874,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				expect(done.c).to.be.ok();
 				done();
-			}, 1);
+			}, 100);
 		});
 
 		it('get not kick val', function(done){
@@ -1947,7 +1948,6 @@ describe('Gun', function(){
 				});
 			}, 500);
 		});
-
 		it('get not put val path val', function(done){
 			var todos = gun.get("examples/list/foobar").not(function(key){
 				this.put({
@@ -3276,7 +3276,7 @@ describe('Gun', function(){
 			var test = {c: 0}, u;
 			var gun = Gun();
 			var game = gun.get('some/not/yet/set/put/thing').not(function(key){
-				this.put({alias: {}}).key(key);
+				gun.put({alias: {}}).key(key);
 			});//.set();
 			var me = game.path('alias').on(function(val){
 				if(!done.put){ return }
@@ -3288,14 +3288,14 @@ describe('Gun', function(){
 				expect(self === game).to.not.be.ok();
 				expect(self === me).to.be.ok();
 				*/
-				done();
+				if(done.c){ return } done(); done.c = 1;
 			});
 			setTimeout(function(){
 				done.put = true;
 				me.put({a: 'b'});
 			},100);
 		});
-		
+
 		it("gun get empty set path empty later path put multi", function(done){ // Issue #99 #101, bug in survey and trace game. // ctx.halt
 			done.c = 0;
 			var gun = Gun();
@@ -3316,7 +3316,7 @@ describe('Gun', function(){
 			put({on: null, not: 'torrent'}, 200);
 			put({on: 'sub', not: 'parent'}, 250, true);
 		});
-		
+
 		it("ToDo", function(done){ // Simulate ToDo app!
 			var gun = Gun().get('example/todo/data');
 			gun.on(function renderToDo(val){

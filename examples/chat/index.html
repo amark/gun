@@ -25,7 +25,7 @@
 		</form>
 		<script>
 			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-			$.sort = function(when, e){ console.log('oh boy', when, e); return (when > ($('.sort', e)[$.text] || -Infinity))? e : $.sort(when, e.previousSibling) }
+			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || -Infinity))? e : $.sort(when, e.previousSibling) }
 			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
 			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
 
@@ -35,7 +35,6 @@
 				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
 			chat.map().val(function(msg, field){
-				console.log("SORT?", field, msg);
 				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;
 				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last.nextSibling)).id = 'msg-' + field;
 				$('.who', $msg)[$.text] = msg.who;
