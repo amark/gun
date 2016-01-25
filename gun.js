@@ -663,6 +663,7 @@
 					return true;
 				}
 				function stream(err, data, info){
+					Gun.on('wire.get').emit(ctx.by.chain, ctx, err, data, info);
 					if(err){
 						Gun.log(err.err || err);
 						ctx.cb.call(ctx.by.chain, err);
@@ -679,6 +680,7 @@
 					}
 				}
 				function wire(lex, cb, opt){
+					Gun.on('get.wire').emit(ctx.by.chain, ctx, lex, cb, opt);
 					if(Gun.fns.is(gun.__.opt.wire.get)){ return gun.__.opt.wire.get(lex, cb, opt) }
 					if(!Gun.log.count('no-wire-get')){ Gun.log("Warning! You have no persistence layer to get from!") }
 					cb(null); // This is in memory success, hardly "success" at all.
@@ -793,7 +795,7 @@
 						gun._.at('path:' + f).emit(fat).chain(opt.chain);
 					});
 				}
-				if(!ctx.end && ctx.by.end){
+				if(!ctx.end){
 					ctx.end = gun._.at('end').emit(at).chain(opt.chain);
 				}
 			},99);
@@ -884,10 +886,16 @@
 			return chain;
 		}
 
-		Gun.chain.val = (function(){	
-			Gun.on('operating').event(function(gun, at, end){
-				if(!Gun.obj.empty(at.change, Gun._.meta)){ return }
-				(end = gun.__.by(at.soul)).end = (end.end || 0) + 1;
+		Gun.chain.val = (function(){
+			Gun.on('get.wire').event(function(gun, ctx){
+				if(!ctx.soul){ return } var end;
+				(end = gun.__.by(ctx.soul)).end = (end.end || -1); // TODO: CLEAN UP! This should be per peer!
+			},-999);
+			Gun.on('wire.get').event(function(gun, ctx, err, data){
+				if(err || !ctx.soul){ return }
+				if(data && !Gun.obj.empty(data, Gun._.meta)){ return }
+				var end = gun.__.by(ctx.soul);
+				end.end = (!end.end || end.end < 0)? 1 : end.end + 1;
 			},-999);
 			return function(cb, opt){
 				var gun = this, args = Gun.list.slit.call(arguments);
@@ -900,7 +908,7 @@
 						return cb.hash[hash] = true, cb.call(ctx.by.chain || gun, Gun.obj.copy(node[at.field]), at.field);
 					}
 					if(!opt.empty && Gun.obj.empty(node, Gun._.meta)){ return } // TODO: CLEAN UP! .on already does this without the .raw!
-					if(!ctx.by.end){ return }
+					if(ctx.by.end < 0){ return }
 					return cb.hash[hash] = true, cb.call(ctx.by.chain || gun, Gun.obj.copy(node), field);
 				}
 				gun.on(val, {raw: true});
@@ -1090,7 +1098,7 @@
 	;(function(exports){ // TODO: BUG!!!! Remove the artificial setTimeout!!!!!
 		function s(){}
 		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-		s.get = function(key, cb){ setTimeout(function(){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) },20)} 
+		s.get = function(key, cb){ setTimeout(function(){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) },1)} 
 		s.del = function(key){ return store.removeItem(key) }
 		var store = this.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;
