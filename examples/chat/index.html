@@ -11,12 +11,14 @@
 			form .who { width: 10%; }
 			form .what { width: 80%; }
 			ul { list-style: none; padding: 0; }
+			ul .when {color: #555; font-size: 12pt; float: right; display: none; }
+			li:hover .when {display: inline;}
 		</style>
 		<ul><li class="hide">
-			<i class="when" style="color: #555; font-size: 12pt;">0</i>
 			<b class="who"></b>:
 			<span class="what"></span>
 			<u class="hide sort">0</u>
+			<i class="when">0</i>
 		</li></ul>
 		<form>
 			<input class="who" placeholder="alias">
@@ -25,34 +27,36 @@
 		</form>
 		<script>
 			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-			$.sort = function(when, e){ return (when > ($('.sort', e)[$.text] || -Infinity))? e : $.sort(when, e.previousSibling) }
+			;(function(){var H=HTMLElement,C=H.prototype; // jQuery chaining replacement!
+				for(var i in C){(function(j,i){if(j&&j!=i){
+					try{C[j]=C[j]||C[i]}catch(e){C[j]=function(){return this[i]}}
+				}}(i.replace(/[A-Z](.*)/g,''),i));
+			}}());
+			$.sort = function(g, e){ return (g > ($('.sort', e)[$.text] || -Infinity))? e : $.sort(g, e.previousSibling) }
 			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
-			($.model = $('ul li').cloneNode(true)).removeAttribute('class');
-
+		</script>
+		<script>
+			($.model = $('ul li').clone(true)).removeAttribute('class');
 			var gun = Gun(location.origin + '/gun');
-			var chat = gun.get('example/chat/data').not(function(key){
-				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
-			});
+			var chat = gun.get('example/chat/data');
 			chat.map().val(function(msg, field){
-				var $ul = $('ul'), $last = $.sort(field, $ul.lastChild), $msg;
-				($msg = $("#msg-" + field) || $ul.insertBefore($.model.cloneNode(true), $last.nextSibling)).id = 'msg-' + field;
+				var $ul = $('ul'), $last = $.sort(field, $ul.last()), $msg;
+				($msg = $("#msg-" + field) || $ul.insertBefore($.model.clone(true), $last.next())).id = 'msg-' + field;
 				$('.who', $msg)[$.text] = msg.who;
 				$('.what', $msg)[$.text] = msg.what;
-				$('.when', $msg)[$.text] = new Date(msg.when).toLocaleTimeString().toLowerCase();
+				$('.when', $msg)[$.text] = new Date(msg.when).toLocaleString().toLowerCase();
 				$('.sort', $msg)[$.text] = field;
-				if(document.body.scrollHeight - (window.scrollY + window.innerHeight) <= $ul.lastChild.scrollHeight + 50){
+				if(document.body.scrollHeight - (window.scrollY + window.innerHeight) <= $last.scrollHeight + 50){
 					window.scrollTo(0, document.body.scrollHeight);
 				}
 			});
-				
 			$('.who', $('form')).value = (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'';
 			$('.what', $('form')).focus();
 			$('form').onsubmit = function(e){
-				var msg = {};
-				msg.when = Gun.time.is();
+				var msg = {when: Gun.time.is()};
 				document.cookie = ('alias=' + (msg.who = $('.who', this).value || 'user' + Gun.text.random(6)));
 				msg.what = $('.what', this).value || '';
-				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
+				if(msg.what){ chat.path(msg.when + '_' + Gun.text.random(4)).put(msg) }
 				$('.what', this).value = '';
 				return (e && e.preventDefault()), false;
 			};

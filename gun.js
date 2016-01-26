@@ -1128,7 +1128,7 @@
 					if(!data){ return } // let the peers handle no data.
 					if(err){ return cb(err) }
 					cb(err, cb.node = data); // node
-					cb(err, Gun.is.node.soul.ify({_: data._}, Gun.is.node.soul(data))); // end
+					cb(err, Gun.is.node.soul.ify({}, Gun.is.node.soul(data))); // end
 					cb(err, {}); // terminate
 				});
 			}(soul, cb));
