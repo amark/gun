@@ -46,7 +46,8 @@ GUN is a realtime, distributed, offline-first, graph database engine.
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
  - [Saving relational or document based data](https://www.youtube.com/watch?v=cOO6wz1rZVY&feature=youtu.be) (06:59)
- - [GUN's YouTube channel](https://www.youtube.com/channel/UCQAtpf-zi9Pp4__2nToOM8g/playlists) also has videos
+ - [Everything you want to know about GUN](https://youtu.be/qJNDplwJ8aQ) (57:50) 2x speed recommended.
+ - [GUN's YouTube channel](https://www.youtube.com/channel/UCQAtpf-zi9Pp4__2nToOM8g/playlists) also has videos.
 
 ### <a name="gun-projects"></a>Projects
  - GUN users are encouraged to add their projects to this [running projects list](https://github.com/amark/gun/wiki/projects).
