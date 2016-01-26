@@ -1,38 +1,37 @@
 <html>
-	<body onload="ready()">
+	<body>
 		<h2>ToDo List</h2>
 
-		<form id="addToDo"><input id="todoItem" /><button>Add</button></form>
+		<form id="add"><input id="todo"/><button>Add</button></form>
 		<ul id="todos"></ul>
 
 		<script src="../../gun.js"></script>
-		<script>
-		// by Forrest Tait! Edited by Mark Nadal.
-		function ready(){
+		<script> // minimal jQuery polyfill
 			var $ = document.querySelector.bind(document);
-			var gun = Gun(location.origin + '/gun').get('example/todo/data');
-			gun.on(function renderToDo(val){
-				var todoHTML = '';
-				for(field in val) {
-					if(!val[field] || field == '_') continue;
-					todoHTML += '<li style="width:400px;height:2em;">'
-						+ (val[field]||'').toString().replace(/\</ig, '&lt;')
-						+ '<button style="float:right;" onclick=removeToDo("'+field+'")>X</button></li>';
-				}
-				$("#todos").innerHTML = todoHTML;
-			});
-			$("#addToDo").onsubmit = function(){
-				gun.path(Gun.text.random()).put(($("#todoItem").value||'').toString().replace(/\</ig, '&lt;'));
-				$("#todoItem").value = "";
-				return false;
+			function clean(text){ return String(text).replace(/\</ig, '&lt;') }
+		</script>
+		<script> // by Forrest Tait! Edited by Mark Nadal.
+			var gun = Gun(location.origin + '/gun');
+			var todo = gun.get('example/todo/data');
+			$("#add").onsubmit = function(){
+				todo.path(Gun.text.random()).put(clean($("#todo").value)); // add the HTML input's value to a random ID in the todo.
+				$("#todo").value = ""; // clear out the input's value so we can add more.
+				return false; // prevent the browser from reloading.
 			};
-			window.removeToDo = function(id){
-				gun.path(id).put(null);
+			todo.on(function(list){ // subscribe and listen to all updates on the todo.
+				var html = ''; // old school HTML strings! You should probably use a real template system.
+				for(field in list) { // iterate over the list to generate the HTML.
+					if(!list[field] || field == Gun._.meta) continue; // ignore nulled out values and metadata.
+					html += '<li>'
+						+ clean(list[field])
+						+ '<button style="float:right;" onclick=todone("'+field+'")>X</button>'
+					+ '</li>';
+				}
+				$("#todos").innerHTML = html; // set the HTML to our new list.
+			});
+			window.todone = function(field){
+				todo.path(field).put(null); // null out the todo item on this field ID.
 			}
-		}
-		function randomId(){
-			return ''+(new Date()).getTime()+Math.round((Math.random()*1000));
-		}
 		</script>
 	</body>
 </html>

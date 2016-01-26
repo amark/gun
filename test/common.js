@@ -3525,7 +3525,69 @@ describe('Gun', function(){
 				chat.path(msg.when + '_' + Gun.text.random(4)).put(msg);
 			},100);
 		});
-
+		/* // This test didn't work for what I was wanting to test :(, will either remove it or modify it if I think of a clever solution to test what I want to test.
+		it.only("simulate json app", function(done){
+			var peers = {};
+			peers.server = Gun();
+			function wipeServer(){
+				peers.server = Gun();
+			}
+			var gopt = {wire:{
+				put: function(graph, cb){
+					Gun.union(peers.server, graph);
+					cb(null);
+				}
+				,get: function(lex, cb){
+					setTimeout(function(){
+						var soul = lex[Gun._.soul];
+						if(peers.localStorage){
+							var g = peers.localStorage;
+							console.log("VIA LOCALSTORAGE!", lex, g[soul]);
+							if(g[soul]){
+								var n = g[soul];
+								cb(null, n);
+								cb(null, Gun.is.node.ify({}, soul));
+								cb(null, {});
+							}
+						}
+						setTimeout(function(){
+							var graph = peers.server.__.graph;
+							console.log("VIA the SERVER!!", lex, graph[soul]);
+							if(!graph[soul]){
+								cb(null);
+								cb(null, {});
+								return;
+							}
+							var node = graph[soul];
+							cb(null, node);
+							cb(null, Gun.is.node.ify({}, soul));
+							cb(null, {});
+						},5);
+					},5);
+				}
+			}}
+			peers.gun = Gun(gopt);
+			function reload(){
+				peers.localStorage = Gun.obj.copy(peers.gun.__.graph);
+				peers.gun2 = Gun(gopt);
+			}
+			var ref = peers.gun.get('example/json/data/test');
+			setTimeout(function(){
+				ref.path('hello').put("value");
+				setTimeout(function(){
+					wipeServer();
+					reload();
+					setTimeout(function(){
+						Gun.log.debug = 1; console.log("~~~~~~~~~~~~~~~~~~~");
+						var ref = peers.gun2.get('example/json/data/test');
+						ref.on(function(data){
+							console.log("on!", data);
+						});
+					},100);
+				},100);
+			},100);
+		});
+		*/
 		it("simulate chat app", function(done){
 			var server = Gun();
 			var gopt = {wire:{
