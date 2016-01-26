@@ -656,7 +656,8 @@
 				ctx.by = gun.__.by(ctx.soul);
 				ctx.by.chain = ctx.by.chain || gun.chain();
 				function load(lex){
-					var cached = gun.__.by(lex[Gun._.soul]).node;
+					var soul = lex[Gun._.soul];
+					var cached = gun.__.by(soul).node || gun.__.graph[soul];
 					if(ctx.force){ ctx.force = false }
 					else if(cached){ return false }
 					wire(lex, stream, ctx.opt);
@@ -719,8 +720,8 @@
 					at.change = Gun.is.node.soul.ify(Gun.obj.copy(at.change || gun.__.by(at.soul).node), at.soul, true); // TODO: Check performance?
 					return;
 				}
+				if(!(Gun.is.node.soul(gun.__.graph[at.soul], 'key') === 1)){ return }
 				var node = at.change || gun.__.graph[at.soul];
-				if(!(Gun.is.node.soul(node, 'key') === 1)){ return }
 				function map(rel, soul){ gun.__.gun.get(rel, cb, {key: ctx, chain: opt.chain || gun, force: opt.force}) }
 				ctx.halt = true;
 				Gun.is.node(node, map);

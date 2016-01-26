@@ -31,7 +31,6 @@
 
 			var gun = Gun(location.origin + '/gun');
 			var chat = gun.get('example/chat/data').not(function(key){
-				console.log("NOT KEY", key);
 				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
 			chat.map().val(function(msg, field){

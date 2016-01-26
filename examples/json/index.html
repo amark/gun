@@ -14,39 +14,38 @@
 			<span contenteditable="true">val</span>
 		</li>
 		<ul><li>
-			<form id="form" onsubmit="add()">
+			<form id="form">
 				<label>
 					<input id="field" placeholder="field">
 					<button type="submit">add</button>
 				</label>
 			</form>
 		</li></ul>
+		<script> // minimal jQuery polyfill
+			var $ = function(s, e){ return (e || document).querySelector(s) }
+			function clean(text){ return String(text).replace(/\</ig, '&lt;') }
+		</script>
 		<script>
-			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-
-			var ref = Gun(location.origin + '/gun').get('example/json/data');
-			ref/*.not(function(key){
-				console.log("does NOT exist", key);
-				return this.put({hello: "world!"}).key(key);
-			})*/.on(function(data){
-				console.log("ugggh", data);
-				for(var field in data){
-					if(field === '_'){ continue } // skip meta data!
-					var val = (data[field = field || ''] || '').toString(), id = field.replace(/[^A-z]/ig, ''), elem; // make data safe.
-					(elem = $('#' + id) || $('#data').appendChild($('#model').cloneNode(true))).id = id; // reuse or make element, set id.
-					$('b', elem).innerHTML = field.replace(/\</ig, '&lt;'); // escape and display field
-					$('span', elem).innerHTML = val.replace(/\</ig, '&lt;'); // escape and display value
-				}
-			});
+			var gun = Gun(location.origin + '/gun');
+			var ref = gun.get('example/json/data');
+			$('#form').onsubmit = function(e){
+				return ref.path( clean($('#field').value) ).put("value"), false; // add a new field, and cancel the form submit.
+			}
 			document.onkeyup = function(e){
 				if(!e || !e.target){ return } // ignore if no element!
 				if(!e.target.attributes.contenteditable){ return } // ignore if element content isn't editable!
-				ref.path((e.target.previousElementSibling.innerHTML||'').toString().replace(/\</ig, '&lt;')) // grab the label, which is in the previous element.
-				   .put( (e.target.innerHTML||'').toString().replace(/\</ig, '&lt;') ); // insert the value of the text in the current element.
+				ref.path(clean(e.target.previousElementSibling.innerHTML)) // grab the label, which is in the previous element.
+				   .put( clean(e.target.innerHTML) ); // insert the value of the text in the current element.
 			}
-			$('#form').onsubmit = function add(e){
-				return ref.path($('#field').value || '').put("value"), false; // add a new field, and cancel the form submit.
-			}
+			ref.on(function(data){
+				delete data._; // skip meta data!
+				for(var field in data){
+					var val = String(data[field]), id = field.replace(/[^A-z]/ig, ''), elem; // make data safe.
+					(elem = $('#' + id) || $('#data').appendChild($('#model').cloneNode(true))).id = id; // reuse or make element, set id.
+					$('b', elem).innerHTML = clean(field); // escape and display field
+					$('span', elem).innerHTML = clean(val); // escape and display value
+				}
+			});
 		</script>
 		<style>
 			html, body {
