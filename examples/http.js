@@ -1,4 +1,5 @@
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 80;
+var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 
 var Gun = require('gun');
 var gun = Gun({ 
@@ -20,6 +21,7 @@ var server = require('http').createServer(function(req, res){
 	}).pipe(res); // stream
 });
 gun.wsp(server);
-server.listen(port);
+server.listen(port, ip);
 
 console.log('Server started on port ' + port + ' with /gun');
+
