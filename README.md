@@ -1,6 +1,6 @@
 # gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9kb** gzipped.
+GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9KB** gzipped.
 
 ## Why?
 
@@ -11,7 +11,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Lightweigh
 
 ## Quickstart
 
-Try the [interactive tutorial](https://gun.js.org/think.html) in the browser (**5min** ~ average developer). Or run the NodeJS [demo example apps](#demos) (**5min** ~ average developer).
+Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer). Or run the NodeJS [demo example apps](#demos) (**5min** ~ average developer).
 
 ## Table of Contents
  - [Demos](#demos)
