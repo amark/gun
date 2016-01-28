@@ -1,17 +1,18 @@
-# gun
+# gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+===
 
-<a href="https://npmjs.org/package/gun"><img align="right" alt="npm downloads" src="https://img.shields.io/npm/dm/gun.svg?style=flat" /></a>
-<a href="https://travis-ci.org/amark/gun"><img align="right" alt="Build status" src="https://travis-ci.org/amark/gun.svg?branch=master" /></a>
-<a href="https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img align="right" alt="Gitter channel" src="https://badges.gitter.im/Join%20Chat.svg" /></a>
+GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9kb** gzipped.
 
-GUN is a realtime, distributed, offline-first, graph database engine.
+## Why?
 
-## But what makes gun **awesome**?
+ - **Realtime** - It may be trivial to get realtime updates with socket.io or something, but what you do not get is *state synchronization*. GUN does this for you out of the box, assuring that two users' simultaneous updates won't concurrently break each other.
+ - **Distributed** - GUN is peer-to-peer by design, meaning you have no centralized database server to maintain or that could crash. This lets you sleep through the night without worrying about database DevOps - we call this "NoDB". From that, you can build decentralized, federated, or centralized apps.
+ - **Offline-first** - GUN works even if your internet or cell reception doesn't. Users can still plug away and save data as normal, and then when the network comes back online GUN will automatically synchronize all the changes and handle any conflicts for you.
+ - **Graph** - Most databases force you to bend over backwards to match their storage constraints. But graphs are different, they let you have any data structure you want. Whether that be traditional tables with relations, document oriented trees, or tons of circular references. You choose.
 
- - **Realtime** - GUN shares data across connected peers in real-time.  There's no need for plugins, extensions, or anything else, just use gun as directed and enjoy realtime data sharing.
- - **Distributed** - GUN is peer-to-peer by design and doesn't rely on a central data server.  This results in all kinds of data deliciousness, including being able to work offline by default.  Peers can be configured into more traditional centralized or federated systems, as appropriate for application needs.
- - **Graph** - All data in gun is encapsulated as nodes in a graph.  Graphs allow data to be related in traditional table formats, as well as tree format, and circular formats.  In other words, gun lets your data needs determine your data storage structure.
+## Quickstart
 
+Try the [interactive tutorial](https://gun.js.org/think.html) in the browser (**5min** ~ average developer). Or run the NodeJS [demo example apps](#demos) (**5min** ~ average developer).
 
 ## Table of Contents
  - [Demos](#demos)
