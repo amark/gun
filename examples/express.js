@@ -14,7 +14,7 @@ var gun = Gun({
 	}
 });
 
-gun.attach(app);
+gun.wsp(app);
 app.use(express.static(__dirname)).listen(port);
 
 console.log('Server started on port ' + port + ' with /gun');
