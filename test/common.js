@@ -788,14 +788,13 @@ describe('Gun', function(){
 					x: 'hi'
 				}
 			}
-
 			expect(gun.__.graph['asdf'].x).to.not.be.ok();
 			var ctx = Gun.union(gun, prime, function(){
 				expect(gun.__.graph['asdf'].x).to.be('hi');
 				done();
 			});
 		});
-		
+
 		it('past', function(done){
 			var prime = {
 				'asdf': {
