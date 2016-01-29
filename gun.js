@@ -211,17 +211,13 @@
 			return Gun.is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
 		
-		Gun.is.val.as = function(v){ // check if it is a valid value and return the value if so,
-			return Gun.is.val(v)? v : null; // else return null.
-		}
-		
 		Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 			if(Gun.obj.is(v)){ // must be an object.
 				var id;
-				Gun.obj.map(v, function(soul, field){ // map over the object...
+				Gun.obj.map(v, function(s, f){ // map over the object...
 					if(id){ return id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-					if(field == Gun._.soul && Gun.text.is(soul)){ // the field should be '#' and have a text value.
-						id = soul; // we found the soul!
+					if(f == Gun._.soul && Gun.text.is(s)){ // the field should be '#' and have a text value.
+						id = s; // we found the soul!
 					} else {
 						return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
 					}
@@ -233,70 +229,69 @@
 			return false; // the value was not a valid soul relation.
 		}
 
-		Gun.is.rel.ify = function(s, rel){ return Gun.obj.as(rel = {}, Gun._.soul, s), rel } 
+		Gun.is.rel.ify = function(s){ var r = {}; return Gun.obj.put(r, Gun._.soul, s), r } // convert a soul into a relation and return it.
 		
-		Gun.is.node = function(node, cb, t){ // checks to see if an object is a valid node.
-			var soul;
-			if(!Gun.obj.is(node)){ return false } // must be an object.
-			if(soul = Gun.is.node.soul(node)){ // must have a soul on it.
-				return !Gun.obj.map(node, function(val, field){ // we invert this because the way we check for this is via a negation.
-					if(field == Gun._.meta){ return } // skip over the metadata.
-					if(!Gun.is.val(val)){ return true } // it is true that this is an invalid node.
-					if(cb){ cb.call(t, val, field, node) } // optionally callback each field/value.
+		Gun.is.node = function(n, cb, t){ var s; // checks to see if an object is a valid node.
+			if(!Gun.obj.is(n)){ return false } // must be an object.
+			if(s = Gun.is.node.soul(n)){ // must have a soul on it.
+				return !Gun.obj.map(n, function(v, f){ // we invert this because the way we check for this is via a negation.
+					if(f == Gun._.meta){ return } // skip over the metadata.
+					if(!Gun.is.val(v)){ return true } // it is true that this is an invalid node.
+					if(cb){ cb.call(t, v, f, n) } // optionally callback each field/value.
 				});
 			}
 			return false; // nope! This was not a valid node.
 		}
 
-		Gun.is.node.ify = function(vertex, soul, state, t){
-			vertex = Gun.is.node.soul.ify(vertex, soul, t);
-			Gun.obj.map(vertex, function(val, field){
-				if(Gun._.meta === field){ return }
-				Gun.is.node.state.ify([vertex], field, val, state = state || Gun.time.now());
+		Gun.is.node.ify = function(n, s, o){ // convert a shallow object into a node.
+			o = Gun.bi.is(o)? {force: o} : o || {}; // detect options.
+			n = Gun.is.node.soul.ify(n, s, o.force); // put a soul on it.
+			Gun.obj.map(n, function(v, f){ // iterate over each field/value.
+				if(Gun._.meta === f){ return } // ignore meta.
+				Gun.is.node.state.ify([n], f, v, o.state = o.state || Gun.time.now()); // and set the state for this field and value on this node.
 			});
-			return vertex;
+			return n; // This will only be a valid node if the object wasn't already deep!
 		}
 		
 		Gun.is.node.soul = function(n, s){ return (n && n._ && n._[s || Gun._.soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
 
-		Gun.is.node.soul.ify = function(n, s, t){
-			n = n || {};
-			n._ = n._ || {};
-			n._[Gun._.soul] = t? s : n._[Gun._.soul] || s || Gun.text.random();
+		Gun.is.node.soul.ify = function(n, s, o){ // put a soul on an object.
+			n = n || {}; // make sure it exists.
+			n._ = n._ || {}; // make sure meta exists.
+			n._[Gun._.soul] = o? s : n._[Gun._.soul] || s || Gun.text.random(); // if it already has a soul then use that instead - unless you force the soul you want with an option.
 			return n;
 		}
 
-		Gun.is.node.state = function(n, f){ return (f && n && n._ && n._[Gun._.state] && n._[Gun._.state][f]) || false }
+		Gun.is.node.state = function(n, f){ return (f && n && n._ && n._[Gun._.state] && Gun.num.is(n._[Gun._.state][f]))? n._[Gun._.state][f] : false } // convenience function to get the state on a field on a node and return it.
 
-		Gun.is.node.state.ify = function(l, f, v, s){
-			var u, l = l.reverse(), d = l[0];
-			Gun.list.map(l, function(n, i){
-				n = n || {};
-				if(u !== v && Gun.is.val(v)){ n[f] = v }
-				n._ = n._ || {};
-				n = n._[Gun._.state] = n._[Gun._.state] || {};
-				if(i = d._[Gun._.state][f]){ n[f] = i }
-				if(Gun.num.is(s)){ n[f] = s }
+		Gun.is.node.state.ify = function(l, f, v, state){ // put a field's state and value on some nodes.
+			l = Gun.list.is(l)? l : [l]; // handle a list of nodes or just one node.
+			var l = l.reverse(), d = l[0]; // we might want to inherit the state from the last node in the list.
+			Gun.list.map(l, function(n, i){ // iterate over each node.
+				n = n || {}; // make sure it exists.
+				if(Gun.is.val(v)){ n[f] = v } // if we have a value, then put it.
+				n._ = n._ || {}; // make sure meta exists.
+				n = n._[Gun._.state] = n._[Gun._.state] || {}; // make sure HAM state exists.
+				if(i = d._[Gun._.state][f]){ n[f] = i } // inherit the state!
+				if(Gun.num.is(state)){ n[f] = state } // or manually set the state.
 			});
 		}
 		
-		Gun.is.graph = function(graph, cb, fn, t){ // checks to see if an object is a valid graph.
+		Gun.is.graph = function(g, cb, fn, t){ // checks to see if an object is a valid graph.
 			var exist = false;
-			if(!Gun.obj.is(graph)){ return false } // must be an object.
-			return !Gun.obj.map(graph, function(node, soul){ // we invert this because the way we check for this is via a negation.
-				if(!node || soul !== Gun.is.node.soul(node) || !Gun.is.node(node, fn)){ return true } // it is true that this is an invalid graph.				 
-				(cb || function(){}).call(t, node, soul, function(fn){ // optional callback for each node.
-					if(fn){ Gun.is.node(node, fn, t) } // where we then have an optional callback for each field/value.
+			if(!Gun.obj.is(g)){ return false } // must be an object.
+			return !Gun.obj.map(g, function(n, s){ // we invert this because the way we check for this is via a negation.
+				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)){ return true } // it is true that this is an invalid graph.				 
+				(cb || function(){}).call(t, n, s, function(fn){ // optional callback for each node.
+					if(fn){ Gun.is.node(n, fn, t) } // where we then have an optional callback for each field/value.
 				});
 				exist = true;
 			}) && exist; // makes sure it wasn't an empty object.
 		}
 		
-		Gun.is.graph.ify = function(node){
-			var soul;
-			if(soul = Gun.is.node.soul(node)){
-				var graph = {}; graph[soul] = node;
-				return graph;
+		Gun.is.graph.ify = function(n){ var s; // wrap a node into a graph.
+			if(s = Gun.is.node.soul(n)){ // grab the soul from the node, if it is a node.
+				return Gun.obj.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
 			}
 		}
 
@@ -346,7 +341,7 @@
 			if(!prime){ ctx.err = {err: Gun.log("No data to merge!") } }
 			if(ctx.soul = Gun.is.node.soul(prime)){ prime = Gun.is.graph.ify(prime) }
 			if(!Gun.is.graph(prime, null, function(val, field, node){ var meta;
-				if(!(meta = (node||{})[Gun._.meta]) || !(meta = meta[Gun._.state]) || !Gun.num.is(meta[field])){ 
+				if(!Gun.num.is(Gun.is.node.state(node, field))){
 					return ctx.err = {err: Gun.log("No state on '" + field + "'!") } 
 				}
 			}) || ctx.err){ return ctx.err = ctx.err || {err: Gun.log("Invalid graph!", prime)}, ctx }
@@ -590,7 +585,7 @@
 						Gun.union(chain, Gun.is.node.soul.ify({}, soul)); // fire off an end node if there hasn't already been one, to comply with the wire spec.
 					}}).err){ return cb.call(chain, err), chain._.at('err').emit(err) } // now actually union the serialized data, emit error if any occur.
 					if(Gun.fns.is(end.wire = chain.__.opt.wire.put)){
-						function wcb(err, ok, info){ 
+						var wcb = function(err, ok, info){ 
 							if(err){ return Gun.log(err.err || err), cb.call(chain, err), chain._.at('err').emit(err) }
 							return cb.call(chain, err, ok);
 						}
@@ -736,7 +731,7 @@
 					if(at.soul === key || at.key === key){ return }
 					if(cb.hash[at.hash = at.hash || Gun.on.at.hash(at)]){ return } cb.hash[at.hash] = true;
 					ctx.obj = (1 === Gun.is.node.soul(ctx.node, 'key'))? Gun.obj.copy(ctx.node) : Gun.obj.put({}, at.soul, Gun.is.rel.ify(at.soul));
-					Gun.obj.as((ctx.put = Gun.is.node.ify(ctx.obj, key, null, true))._, 'key', 1);
+					Gun.obj.as((ctx.put = Gun.is.node.ify(ctx.obj, key, true))._, 'key', 1);
 					gun.__.gun.put(ctx.put, function(err, ok){cb.call(this, err, ok)}, {chain: opt.chain, key: true, init: true});
 				}
 				if(opt.soul){
@@ -960,7 +955,7 @@
 				if(at.soul){
 					if(ctx.by.node){ return }
 					var soul = Gun.text.random();
-					gun.__.gun.put(Gun.is.node.soul.ify({}, soul, {init: true}));
+					gun.__.gun.put(Gun.is.node.soul.ify({}, soul), null, {init: true});
 					gun.__.gun.key(at.soul, null, soul);
 				}
 			}, {raw: true});
