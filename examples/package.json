@@ -2,12 +2,12 @@
 	"name": "examples",
 	"main": "http.js",
 	"description": "Example gun apps"
-,	"version": "0.0.2"
+,	"version": "0.0.3"
 ,	"engines": {
 		"node": "~>0.10.x"
 	}
 ,	"dependencies": {
-		"express": "~>4.9.0",
+		"express": "~>4.13.4",
 		"gun": "~>0.3.0"
 	}
 ,	"scripts": {
