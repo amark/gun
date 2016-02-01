@@ -1,5 +1,5 @@
 ;(function(){
-	
+	//module.exports = require('../gun4');return;
 	function Gun(o){
 		var gun = this;
 		if(!Gun.is(gun)){ return new Gun(o) }
@@ -816,6 +816,7 @@
 					return chain;
 				}
 				gun._.at('path:' + path[0]).event(function(at){
+					if(opt.once){ this.off() }
 					if(opt.done){ this.off(); return } // TODO: BUG - THIS IS A FIX FOR A BUG! TEST #"context no double emit", COMMENT THIS LINE OUT AND SEE IT FAIL!
 					var ctx = {soul: at.soul, field: at.field, by: gun.__.by(at.soul)}, field = path[0];
 					var on = Gun.obj.as(cb.hash, at.hash, {off: function(){}});
