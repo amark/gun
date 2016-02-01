@@ -317,12 +317,20 @@ describe('Gun', function(){
 				expect(Gun.text.match("user/amber/cazzell", {'*': 'user/', '?': 'm/n'})).to.not.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '-': 'mad'})).to.be.ok();
 				expect(Gun.text.match("user/mad/person", {'*': 'user/', '-': 'mad'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '-': ['mark', 'nadal']})).to.not.be.ok();
+				expect(Gun.text.match("user/amber/rachel/cazzell", {'*': 'user/', '-': ['mark', 'nadal']})).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '+': 'ark'})).to.be.ok();
 				expect(Gun.text.match("user/mad/person", {'*': 'user/', '+': 'ark'})).to.not.be.ok();
-				expect(Gun.text.match("photo/kitten.jpg", {'*': 'photo/', '&': '.jpg'})).to.be.ok();
-				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '&': '.jpg'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['mark', 'nadal']})).to.be.ok();
+				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['nadal', 'mark']})).to.be.ok();
+				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['mark', 'amber']})).to.not.be.ok();
+				expect(Gun.text.match("user/mark/rachel/nadal/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.be.ok();
+				expect(Gun.text.match("user/mark/rachel/timothy/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.not.be.ok();
+				expect(Gun.text.match("photo/kitten.jpg", {'*': 'photo/', '!': '.jpg'})).to.be.ok();
+				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '!': '.jpg'})).to.not.be.ok();
 			});
 		});
+		
 		describe('List', function(){
 			it('slit',function(){
 				(function(){
@@ -484,7 +492,7 @@ describe('Gun', function(){
 			});
 		});
 	});
-
+	
 	describe('ify', function(){
 		var test, gun = Gun();
 		
@@ -2292,6 +2300,55 @@ describe('Gun', function(){
 			  var put = {}; put[turns += 1] = val;
 			  gun.put({history: put});
 			  //gun.path(['history', turns += 1]).put({
+			},1);
+		});
+
+		it.skip('paths rel should not slowdown', function(done){ // TODO: NEED TO ADD THIS NEW TEST!
+			this.timeout(5000);
+			//this.timeout(60000);
+
+			//Gun.log.debug = 1; console.log("~~~~~ START ~~~~~~");
+			var gun = Gun(gopt).put({
+			  history: {}
+			});
+			//console.log("-------- DATA SET UP -----------");
+			var prev, diff, max = 100, total = 100, largest = -1, gone = {};
+			gun.path('history').map(function(entry, index){
+				//if(!entry){ return } // TODO: BUG! KNOWN BUG!!!!!!! FIX!!!!!
+				//console.log("WAT", index, entry);
+				//console.log("THE GRAPH\n", gun.__.graph);
+			  //expect(gone[index]).to.not.be.ok();
+				gone[index] = diff;
+			  diff = Gun.time.is() - (entry.time || prev);
+			  largest = (largest < diff)? diff : largest;
+			  console.log('turn', turns, 'index', index, 'diff', diff, 'largest', largest);
+			  expect(diff > max).to.not.be.ok();
+			});
+
+			var turns = 0;
+			//console.log("------------ PATH MAP SET UP --------------");
+			var many = setInterval(function(){
+				if(turns > total || diff > (max + 5)){
+			  	clearTimeout(many);
+			  	expect(Gun.num.is(diff)).to.be.ok();
+			  	if(done.c){ return } done(); done.c = 1;
+			  	return;
+			  }
+			  prev = Gun.time.is();
+			  Gun.log.base = Gun.log.ref = Gun.log.fer = prev;
+			  //if(turns === 0){ Gun.log.debug = 1; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"); }
+			  //console.log("-------------- ", turns + 1, "-----------------");
+			  var val = {
+			  	TURN: turns + 1,
+			    x: 1,
+			    y: 1,
+			    axis: 'y',
+			    direction: 1,
+			    time: prev
+			  }
+			  //var put = {}; put[turns += 1] = val;
+			  //gun.put({history: put});
+			  gun.path(['history', turns += 1]).put(val);
 			},1);
 		});
 
