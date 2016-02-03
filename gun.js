@@ -1,5 +1,5 @@
 ;(function(){
-	//module.exports = require('../gun4');return;
+	module.exports = require('../gun4');return;
 	function Gun(o){
 		var gun = this;
 		if(!Gun.is(gun)){ return new Gun(o) }
