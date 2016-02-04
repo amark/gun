@@ -1100,7 +1100,7 @@
 	if(!this.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 
-	;(function(exports){ // TODO: BUG!!!! Remove the artificial setTimeout!!!!!
+	;(function(exports){
 		function s(){}
 		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
 		s.get = function(key, cb){ setTimeout(function(){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) },1)} 
@@ -1260,9 +1260,9 @@
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
 				if(1006 === c.code){ // websockets cannot be used
-					ws = r.ws.peers[opt.base] = false;
+					/*ws = r.ws.peers[opt.base] = false; // 1006 has mixed meanings, therefore we can no longer respect it.
 					r.transport(opt, cb);
-					return;
+					return;*/
 				}
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
 				setTimeout(function(){
