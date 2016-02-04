@@ -1,3 +1,8 @@
+'use strict';
+var path = require('path');
+var http = require('http');
+var fs = require('fs');
+
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 80;
 var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 
@@ -11,13 +16,13 @@ var gun = Gun({
 	}
 });
 
-var server = require('http').createServer(function(req, res){
+var server = http.createServer(function(req, res){
 	if(gun.wsp.server(req, res)){ 
 		return; // filters gun requests!
 	}
-	require('fs').createReadStream(require('path').join(__dirname, req.url)).on('error',function(){ // static files!
+	fs.createReadStream(path.join(__dirname, req.url)).on('error',function(){ // static files!
 		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.end(require('fs').readFileSync(require('path').join(__dirname, 'index.html'))); // or default to index
+		res.end(fs.readFileSync(path.join(__dirname, 'index.html'))); // or default to index
 	}).pipe(res); // stream
 });
 gun.wsp(server);
