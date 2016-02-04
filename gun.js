@@ -1261,9 +1261,9 @@
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
 				if(1006 === c.code){ // websockets cannot be used
-					ws = r.ws.peers[opt.base] = false;
+					/*ws = r.ws.peers[opt.base] = false;
 					r.transport(opt, cb);
-					return;
+					return;*/
 				}
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
 				setTimeout(function(){
