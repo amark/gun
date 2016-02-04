@@ -961,6 +961,18 @@
 			return chain;
 		}
 
+		Gun.chain.set = function(item, cb, opt){
+			var gun = this, ctx = {};
+			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun }
+			item.val(function(node){
+				if(ctx.done){ return } ctx.done = true;
+				var put = {}, soul = Gun.is.node.soul(node);
+				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
+				gun.put(Gun.obj.put(put, soul, Gun.is.rel.ify(soul)), cb, opt);
+			})
+			return gun;
+		}
+
 		Gun.chain.init = function(cb, opt){
 			var gun = this;
 			gun._.at('null').event(function(at){
