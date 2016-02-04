@@ -1714,7 +1714,8 @@ describe('Gun', function(){
 			});
 		});
 
-		it.skip('put gun node', function(done){
+		it('put gun node', function(done){
+			var gun = Gun();
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
 			var amber = gun.put({age: 23, name: "Amber Nadal"});
 			mark.path('wife').put(amber, function(err){
@@ -1722,6 +1723,27 @@ describe('Gun', function(){
 			});
 			mark.path('wife.name').val(function(val){
 				expect(val).to.be("Amber Nadal");
+				done();
+			});
+		});
+
+		it('put gun node on node', function(done){
+			var gun = Gun();
+			var mark = gun.put({age: 23, name: "Mark Nadal"});
+			var amber = gun.put({age: 23, name: "Amber Nadal"});
+			mark.put(amber, function(err){
+				expect(err).to.be.ok();
+				done();
+			});
+		});
+
+		it('put gun path on path', function(done){
+			var gun = Gun();
+			var mark = gun.put({age: 23, name: "Mark Nadal"});
+			var amber = gun.put({age: 23, name: "Amber Nadal"});
+			mark.path('wife').put(amber.path('age'), function(err){
+				expect(err).to.be.ok();
+				done();
 			});
 		});
 		
