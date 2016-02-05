@@ -1714,7 +1714,8 @@ describe('Gun', function(){
 			});
 		});
 
-		it.skip('put gun node', function(done){
+		it('put gun node', function(done){
+			var gun = Gun();
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
 			var amber = gun.put({age: 23, name: "Amber Nadal"});
 			mark.path('wife').put(amber, function(err){
@@ -1722,6 +1723,27 @@ describe('Gun', function(){
 			});
 			mark.path('wife.name').val(function(val){
 				expect(val).to.be("Amber Nadal");
+				done();
+			});
+		});
+
+		it('put gun node on node', function(done){
+			var gun = Gun();
+			var mark = gun.put({age: 23, name: "Mark Nadal"});
+			var amber = gun.put({age: 23, name: "Amber Nadal"});
+			mark.put(amber, function(err){
+				expect(err).to.be.ok();
+				done();
+			});
+		});
+
+		it('put gun path on path', function(done){
+			var gun = Gun();
+			var mark = gun.put({age: 23, name: "Mark Nadal"});
+			var amber = gun.put({age: 23, name: "Amber Nadal"});
+			mark.path('wife').put(amber.path('age'), function(err){
+				expect(err).to.be.ok();
+				done();
 			});
 		});
 		
@@ -3697,6 +3719,51 @@ describe('Gun', function(){
 					done();
 				});
 			},100);
+		});
+
+		it.skip("gun path via gun path", function(done){ // TODO: Future feature?
+			var gun = Gun();
+			var book = gun.put({ name: 'Potato Cooking' });
+			var author = gun.put({ name: 'Bob Bobson' });
+			author.path(book.path('name')).put(book);
+		});
+
+		it("gun set", function(done){
+			var gun = Gun();
+			var users = gun.get('users');
+			var alice = gun.put({name: 'alice', birth: Math.random()}).key('person/alice');
+			var bob = gun.put({name: 'bob', birth: Math.random()}).key('person/bob');
+			var carl = gun.put({name: 'carl', birth: Math.random()}).key('person/carl');
+			var dave = gun.put({name: 'dave', birth: Math.random()}).key('person/dave');
+
+			users.set(alice).set(bob).set(carl).set(dave);
+
+			alice.path('friends').set(bob).set(carl);
+			bob.path('friends').set(alice);
+			dave.path('friends').set(alice).set(carl);
+
+			var team = gun.get('team/lions').put({name: "Lions"});
+			team.path('members').set(alice).set(bob);
+
+			alice.path('team').put(team);
+			bob.path('team').put(team);
+
+			dave.path('friends').map().path('team.members').map().val(function(member){
+				//console.log("Dave's friend is on a team that has", member.name, "on it.");
+				if('alice' === member.name){
+					done.alice = true;
+				} else
+				if('bob' === member.name){
+					done.bob = true;
+				} else {
+					expect(member).to.not.be.ok();
+				}
+				if(done.alice && done.bob){
+					setTimeout(function(){
+						done();
+					},10);
+				}
+			});
 		});
 	});
 	

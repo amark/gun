@@ -548,13 +548,23 @@
 		Gun.chain.put = function(val, cb, opt){
 			opt = opt || {};
 			cb = cb || function(){}; cb.hash = {};
-			var gun = this, chain = gun.chain(), drift = Gun.time.now();
+			var gun = this, chain = gun.chain(), tmp = {val: val}, drift = Gun.time.now();
 			function put(at){
-				if(cb.hash[at.hash = at.hash || Gun.on.at.hash(at)]){ return } // if we have already seen this hash...
-				cb.hash[at.hash] = true; // else mark that we're processing the data (failure to write could still occur).
+				var val = tmp.val;
 				var ctx = {obj: val}; // prep the value for serialization
 				ctx.soul = at.field? at.soul : (at.at && at.at.soul) || at.soul; // figure out where we are
 				ctx.field = at.field? at.field : (at.at && at.at.field) || at.field; // did we come from some where?
+				if(Gun.is(val)){
+					if(!ctx.field){ return cb.call(chain, {err: ctx.err = Gun.log('No field to link node to!')}), chain._.at('err').emit(ctx.err) }
+					return val.val(function(node){
+						var soul = Gun.is.node.soul(node);
+						if(!soul){ return cb.call(chain, {err: ctx.err = Gun.log('Only a node can be linked! Not "' + node + '"!')}), chain._.at('err').emit(ctx.err) }
+						tmp.val = Gun.is.rel.ify(soul);
+						put(at);
+					});
+				}
+				if(cb.hash[at.hash = at.hash || Gun.on.at.hash(at)]){ return } // if we have already seen this hash...
+				cb.hash[at.hash] = true; // else mark that we're processing the data (failure to write could still occur).
 				ctx.by = chain.__.by(ctx.soul);
 				ctx.not = at.not || (at.at && at.at.not);
 				Gun.obj.del(at, 'not'); Gun.obj.del(at.at || at, 'not'); // the data is no longer not known! // TODO: BUG! It could have been asynchronous by the time we now delete these properties. Don't other parts of the code assume their deletion is synchronous?
@@ -951,6 +961,18 @@
 			return chain;
 		}
 
+		Gun.chain.set = function(item, cb, opt){
+			var gun = this, ctx = {};
+			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun }
+			item.val(function(node){
+				if(ctx.done){ return } ctx.done = true;
+				var put = {}, soul = Gun.is.node.soul(node);
+				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
+				gun.put(Gun.obj.put(put, soul, Gun.is.rel.ify(soul)), cb, opt);
+			})
+			return gun;
+		}
+
 		Gun.chain.init = function(cb, opt){
 			var gun = this;
 			gun._.at('null').event(function(at){
@@ -1100,7 +1122,7 @@
 	if(!this.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 
-	;(function(exports){ // TODO: BUG!!!! Remove the artificial setTimeout!!!!!
+	;(function(exports){
 		function s(){}
 		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
 		s.get = function(key, cb){ setTimeout(function(){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) },1)} 
@@ -1260,9 +1282,9 @@
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
 				if(1006 === c.code){ // websockets cannot be used
-					ws = r.ws.peers[opt.base] = false;
+					/*ws = r.ws.peers[opt.base] = false; // 1006 has mixed meanings, therefore we can no longer respect it.
 					r.transport(opt, cb);
-					return;
+					return;*/
 				}
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
 				setTimeout(function(){
