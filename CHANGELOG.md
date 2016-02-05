@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 0.3.3
+
+- You can now link nodes natively, `gun.get('mark').path('owner').put(gun.get('cat'))`!
+- Sets (or tables, collections, lists) are now easily done with `gun.get('users').set(gun.get('person/mark'))`.
+
+## 0.3.2
+
+Bug fixes.
+
+## 0.3.1
+
+Bug fixes.
+
 ## 0.3
 
 Migration Guide! Migrate by changing `.attach(` to `.wsp(` on your server if you have one with gun. Remove `.set()` (delete it), and change `.set($DATA)` (where you call set with something) to `.path('I' + Date.now() + 'R' + Gun.text.random(5)).put($DATA)`. If you have NodeJS style callbacks in your `.get` (which documentation previously recommended that you shouldn't) they previous took `err, graph` and now they take `err, node` (which means now using callback style is fine to use). Inside of `.not()` no longer use `return` or `this`, instead (probably) use `gun` and no `return`. If you are a module developer, use `opt.wire` now instead of `opt.hooks` and message Mark since he needs to talk to you since the wire protocol has changed.
