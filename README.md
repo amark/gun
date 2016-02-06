@@ -13,6 +13,8 @@ GUN is a realtime, distributed, offline-first, graph database engine. Lightweigh
 
 Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer). Or run the NodeJS [demo example apps](#demos) (**5min** ~ average developer).
 
+Jump right into the [gun playground](http://jsbin.com/miredog/edit?js,console) and start testing whatever functions you want.
+
 ## Table of Contents
  - [Demos](#demos)
    - [Videos](#videos)
