@@ -27,7 +27,7 @@
 			}
 			Type.text.match = function(t, o){ var r = false;
 				t = t || '';
-				o = o || {}; // {'~', '=', '*', '<', '>', '+', '-', '?', '!'} // ignore uppercase, exactly equal, anything after, lexically larger, lexically lesser, added in, subtacted from, questionable fuzzy match, and ends with.
+				o = Gun.text.is(o)? {'=': o} : o || {}; // {'~', '=', '*', '<', '>', '+', '-', '?', '!'} // ignore uppercase, exactly equal, anything after, lexically larger, lexically lesser, added in, subtacted from, questionable fuzzy match, and ends with.
 				if(Type.obj.has(o,'~')){ t = t.toLowerCase() }
 				if(Type.obj.has(o,'=')){ return t === o['='] }
 				if(Type.obj.has(o,'*')){ if(t.slice(0, o['*'].length) === o['*']){ r = true; t = t.slice(o['*'].length) } else { return false }}
@@ -205,6 +205,10 @@
 			,soul: '#' // a soul is a UUID of a node but it always points to the "latest" data known.
 			,field: '.' // a field is a property on a node which points to a value.
 			,state: '>' // other than the soul, we store HAM metadata.
+			,'#':'soul'
+			,'.':'field'
+			,'=':'value'
+			,'>':'state'
 		}
 		
 		Gun.is = function(gun){ return (gun instanceof Gun)? true : false } // check to see if it is a GUN instance.
@@ -239,6 +243,14 @@
 		}
 
 		Gun.is.rel.ify = function(s){ var r = {}; return Gun.obj.put(r, Gun._.soul, s), r } // convert a soul into a relation and return it.
+
+		Gun.is.lex = function(l){ var r = true;
+			if(!Gun.obj.is(l)){ return false }
+			Gun.obj.map(l, function(v,f){
+				if(!Gun.obj.has(Gun._,f) || !(Gun.text.is(v) || Gun.obj.is(v))){ return r = false }
+			}); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
+			return r;
+		}
 		
 		Gun.is.node = function(n, cb, t){ var s; // checks to see if an object is a valid node.
 			if(!Gun.obj.is(n)){ return false } // must be an object.
@@ -678,6 +690,7 @@
 					return true;
 				}
 				function stream(err, data, info){
+					//console.log("wire.get <--", err, data);
 					Gun.on('wire.get').emit(ctx.by.chain, ctx, err, data, info);
 					if(err){
 						Gun.log(err.err || err);
@@ -962,15 +975,17 @@
 		}
 
 		Gun.chain.set = function(item, cb, opt){
-			var gun = this, ctx = {};
-			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun }
-			item.val(function(node){
+			var gun = this, ctx = {}, chain;
+			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun } // TODO: Bug? Should we return not gun on error?
+			(ctx.chain = item.chain()).back = gun;
+			ctx.chain._ = item._;
+			item.val(function(node){ // TODO: BUG! Return proxy chain with back = list.
 				if(ctx.done){ return } ctx.done = true;
 				var put = {}, soul = Gun.is.node.soul(node);
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 				gun.put(Gun.obj.put(put, soul, Gun.is.rel.ify(soul)), cb, opt);
-			})
-			return gun;
+			});
+			return ctx.chain;
 		}
 
 		Gun.chain.init = function(cb, opt){
@@ -1125,7 +1140,7 @@
 	;(function(exports){
 		function s(){}
 		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-		s.get = function(key, cb){ setTimeout(function(){ return cb(null, Gun.obj.ify(store.getItem(key) || null)) },1)} 
+		s.get = function(key, cb){ /*setTimeout(function(){*/ return cb(null, Gun.obj.ify(store.getItem(key) || null)) /*},1)*/} 
 		s.del = function(key){ return store.removeItem(key) }
 		var store = this.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;
@@ -1136,6 +1151,7 @@
 		var tab = gun.tab = gun.tab || {};
 		tab.store = tab.store || Tab.store;
 		tab.request = tab.request || request;
+		tab.request.s = tab.request.s || {};
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
 		tab.prefix = tab.prefix || opt.prefix || 'gun/';
@@ -1144,11 +1160,7 @@
 			var soul = lex[Gun._.soul];
 			if(!soul){ return }
 			cb = cb || function(){};
-			cb.GET = true;
-			(opt = opt || {}).url = opt.url || {};
-			opt.headers = Gun.obj.copy(tab.headers);
-			opt.url.pathname = '/' + soul;
-			//Gun.log("tab get --->", lex);
+			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			(function local(soul, cb){
 				tab.store.get(tab.prefix + soul, function(err, data){
 					if(!data){ return } // let the peers handle no data.
@@ -1159,30 +1171,32 @@
 				});
 			}(soul, cb));
 			if(!(cb.local = opt.local)){
+				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Get failed!", function(reply){
+					setTimeout(function(){ tab.put(Gun.is.graph.ify(reply.body), function(){}, {local: true, peers: {}}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
+				});
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
-					tab.request(url, null, tab.error(cb, "Error: Get failed through " + url, function(reply){
-						if(!p.node && cb.node){ // if we have local data
-							//Gun.log("tab get <---", lex);
-							tab.put(Gun.is.graph.ify(p.node = cb.node), function(e,r){ // then sync it if we haven't already
-								//Gun.log("Stateless handshake sync:", e, r);
-							}, {peers: tab.peers(url)}); // to the peer. // TODO: This forces local to flush again, not necessary.
-						}
-						setTimeout(function(){ tab.put(reply.body, function(){}, {local: true}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
-					}), opt);
+					tab.request(url, lex, tab.request.s[opt.headers.id], opt);
 					cb.peers = true;
 				});
+				var node = gun.__.graph[soul];
+				if(node){
+					tab.put(Gun.is.graph.ify(node));
+				}
 			} tab.peers(cb);
 		}
 		tab.put = tab.put || function(graph, cb, opt){
+			//console.log("SAVE", graph);
 			cb = cb || function(){};
 			opt = opt || {};
+			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			Gun.is.graph(graph, function(node, soul){
 				if(!gun.__.graph[soul]){ return }
 				tab.store.put(tab.prefix + soul, gun.__.graph[soul]);
 			});
 			if(!(cb.local = opt.local)){
+				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Put failed!");
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					tab.request(url, graph, tab.error(cb, "Error: Put failed on " + url), {headers: tab.headers});
+					tab.request(url, graph, tab.request.s[opt.headers.id], opt);
 					cb.peers = true;
 				});
 			} tab.peers(cb);
@@ -1204,22 +1218,46 @@
 				if(!(cb.graph || cb.node)){ cb(null) }
 			},1)}
 		}
+		tab.msg = tab.msg || function(id){
+			if(!id){
+				return tab.msg.debounce[id = Gun.text.random(9)] = Gun.time.is(), id;
+			}
+			clearTimeout(tab.msg.clear);
+			tab.msg.clear = setTimeout(function(){
+				var now = Gun.time.is();
+				Gun.obj.map(tab.msg.debounce, function(t,id){
+					if(now - t < 1000 * 60 * 5){ return }
+					Gun.obj.del(tab.msg.debounce, id);
+				});
+			},500);
+			if(id = tab.msg.debounce[id]){ 
+				return tab.msg.debounce[id] = Gun.time.is(), id;
+			}
+		};
+		tab.msg.debounce = tab.msg.debounce || {};
 		tab.server = tab.server || function(req, res){
-			if(!req || !res || !req.url || !req.method){ return }
-			req.url = req.url.href? req.url : document.createElement('a');
-			req.url.href = req.url.href || req.url;
-			req.url.key = (req.url.pathname||'').replace(tab.server.regex,'').replace(/^\//i,'') || '';
-			req.method = req.body? 'put' : 'get';
-			if('get' == req.method){ return tab.server.get(req, res) }
-			if('put' == req.method || 'post' == req.method){ return tab.server.put(req, res) }
+			if(!req || !res || !req.body || !req.headers || !req.headers.id){ return }
+			if(tab.request.s[req.headers.rid]){ return tab.request.s[req.headers.rid](null, req) }
+			if(tab.msg(req.headers.id)){ return }
+			// TODO: Re-emit message to other peers if we have any non-overlaping ones.
+			if(req.headers.rid){ return } // no need to process
+			if(Gun.is.lex(req.body)){ return tab.server.get(req, res) }
+			else { return tab.server.put(req, res) }
 		}
 		tab.server.json = 'application/json';
 		tab.server.regex = gun.__.opt.route = gun.__.opt.route || opt.route || /^\/gun/i;
-		tab.server.get = function(){}
+		tab.server.get = function(req, cb){
+			var soul = req.body[Gun._.soul], node;
+			if(!(node = gun.__.graph[soul])){ return }
+			var reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}};
+			cb({headers: reply.headers, body: node});
+		}
 		tab.server.put = function(req, cb){
-			var reply = {headers: {'Content-Type': tab.server.json}};
+			var reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}}, keep;
 			if(!req.body){ return cb({headers: reply.headers, body: {err: "No body"}}) }
-			// TODO: Re-emit message to other peers if we have any non-overlaping ones.
+			if(!Gun.obj.is(req.body, function(node, soul){
+				if(gun.__.graph[soul]){ return true }
+			})){ return }
 			if(req.err = Gun.union(gun, req.body, function(err, ctx){
 				if(err){ return cb({headers: reply.headers, body: {err: err || "Union failed."}}) }
 				var ctx = ctx || {}; ctx.graph = {};
@@ -1227,7 +1265,7 @@
 				gun.__.opt.wire.put(ctx.graph, function(err, ok){
 					if(err){ return cb({headers: reply.headers, body: {err: err || "Failed."}}) }
 					cb({headers: reply.headers, body: {ok: ok || "Persisted."}});
-				}, {local: true});
+				}, {local: true, peers: {}});
 			}).err){ cb({headers: reply.headers, body: {err: req.err || "Union failed."}}) }
 		}
 		Gun.obj.map(gun.__.opt.peers, function(){ // only create server if peers and do it once by returning immediately.
@@ -1243,6 +1281,7 @@
 			opt = opt || (base.length? {base: base} : base);
 			opt.base = opt.base || base;
 			opt.body = opt.body || body;
+			cb = cb || function(){};
 			if(!opt.base){ return }
 			r.transport(opt, cb);
 		}
@@ -1300,7 +1339,7 @@
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (r.ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
 				//Gun.log("We have a pushed message!", res);
-				if(res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
+				if(res.body){ r.createServer.ing(res, function(res){ r(opt.base, null, null, res)}) } // emit extra events.
 			};
 			ws.onerror = function(e){ Gun.log(e); };
 			return true;
@@ -1345,7 +1384,7 @@
 					while(reply.body && reply.body.length && reply.body.shift){ // we're assuming an array rather than chunk encoding. :(
 						var res = reply.body.shift();
 						//Gun.log("-- go go go", res);
-						if(res && res.body){ r.createServer.ing(res, function(){}) } // emit extra events.
+						if(res && res.body){ r.createServer.ing(res, function(){ r(opt.base, null, null, res) }) } // emit extra events.
 					}
 				});
 			}, res.headers.poll);

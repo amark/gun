@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.4
+
+ - Breaking Change! `list.set(item)` returns the item's chain now, not the list chain.
+ - Client and Server GUN servers are now more up to spec, trimmed excess HTTP/REST header data.
+ - Gun.is.lex added.
+
 ## 0.3.3
 
 - You can now link nodes natively, `gun.get('mark').path('owner').put(gun.get('cat'))`!
