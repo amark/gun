@@ -435,7 +435,7 @@ describe('Gun', function(){
 				expect(Gun.is.val({a:1})).to.be(false);
 				expect(Gun.is.val(function(){})).to.be(false);
 			});
-			it('is soul',function(){
+			it('is rel',function(){
 				expect(Gun.is.rel({'#':'somesoulidhere'})).to.be('somesoulidhere');
 				expect(Gun.is.rel({'#':'somethingelsehere'})).to.be('somethingelsehere');
 				expect(Gun.is.rel({'#':'somesoulidhere', and: 'nope'})).to.be(false);
@@ -453,6 +453,17 @@ describe('Gun', function(){
 				expect(Gun.is.rel({})).to.be(false);
 				expect(Gun.is.rel({a:1})).to.be(false);
 				expect(Gun.is.rel(function(){})).to.be(false);
+			});
+			it('is lex',function(){
+				expect(Gun.is.lex({'#': 'soul'})).to.be(true);
+				expect(Gun.is.lex({'.': 'field'})).to.be(true);
+				expect(Gun.is.lex({'=': 'value'})).to.be(true);
+				expect(Gun.is.lex({'>': 'state'})).to.be(true);
+				expect(Gun.is.lex({'#': {'=': 'soul'}})).to.be(true);
+				expect(Gun.is.lex({'#': {'=': 'soul'}, '.': []})).to.be(false);
+				expect(Gun.is.lex({'#': {'=': 'soul'}, 'asdf': 'oye'})).to.be(false);
+				expect(Gun.is.lex()).to.be(false);
+				expect(Gun.is.lex('')).to.be(false);
 			});
 			it('is node',function(){
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}})).to.be(true);
@@ -3736,14 +3747,18 @@ describe('Gun', function(){
 			var carl = gun.put({name: 'carl', birth: Math.random()}).key('person/carl');
 			var dave = gun.put({name: 'dave', birth: Math.random()}).key('person/dave');
 
-			users.set(alice).set(bob).set(carl).set(dave);
+			users.set(alice);
+			users.set(bob);
+			users.set(carl);
+			users.set(dave);
 
-			alice.path('friends').set(bob).set(carl);
+			alice.path('friends').set(bob).back.set(carl);
 			bob.path('friends').set(alice);
-			dave.path('friends').set(alice).set(carl);
+			dave.path('friends').set(alice).back.set(carl);
 
 			var team = gun.get('team/lions').put({name: "Lions"});
-			team.path('members').set(alice).set(bob);
+			team.path('members').set(alice);
+			team.path('members').set(bob);
 
 			alice.path('team').put(team);
 			bob.path('team').put(team);
