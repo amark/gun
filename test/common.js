@@ -305,8 +305,9 @@ describe('Gun', function(){
 				t.tr = Gun.text.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
 			});
 			it('match',function(){
-				expect(Gun.text.match("user/mark", {'=': 'user/mark'})).to.be.ok();
+				expect(Gun.text.match("user/mark", 'user/mark')).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
 				expect(Gun.text.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o'})).to.be.ok();
@@ -363,6 +364,8 @@ describe('Gun', function(){
 				expect(Gun.obj.empty({a:false},{a:1})).to.be(true);
 				expect(Gun.obj.empty({a:false,b:1},'a')).to.be(false);
 				expect(Gun.obj.empty({a:false,b:1},{a:1})).to.be(false);
+				expect(Gun.obj.empty({a:false,b:1},{a:1,b:1})).to.be(true);
+				expect(Gun.obj.empty({a:false,b:1,c:3},{a:1,b:1})).to.be(false);
 				expect(Gun.obj.empty({1:1},'danger')).to.be(false);
 			});
 			it('copy',function(){
@@ -435,7 +438,7 @@ describe('Gun', function(){
 				expect(Gun.is.val({a:1})).to.be(false);
 				expect(Gun.is.val(function(){})).to.be(false);
 			});
-			it('is soul',function(){
+			it('is rel',function(){
 				expect(Gun.is.rel({'#':'somesoulidhere'})).to.be('somesoulidhere');
 				expect(Gun.is.rel({'#':'somethingelsehere'})).to.be('somethingelsehere');
 				expect(Gun.is.rel({'#':'somesoulidhere', and: 'nope'})).to.be(false);
@@ -453,6 +456,17 @@ describe('Gun', function(){
 				expect(Gun.is.rel({})).to.be(false);
 				expect(Gun.is.rel({a:1})).to.be(false);
 				expect(Gun.is.rel(function(){})).to.be(false);
+			});
+			it('is lex',function(){
+				expect(Gun.is.lex({'#': 'soul'})).to.be(true);
+				expect(Gun.is.lex({'.': 'field'})).to.be(true);
+				expect(Gun.is.lex({'=': 'value'})).to.be(true);
+				expect(Gun.is.lex({'>': 'state'})).to.be(true);
+				expect(Gun.is.lex({'#': {'=': 'soul'}})).to.be(true);
+				expect(Gun.is.lex({'#': {'=': 'soul'}, '.': []})).to.be(false);
+				expect(Gun.is.lex({'#': {'=': 'soul'}, 'asdf': 'oye'})).to.be(false);
+				expect(Gun.is.lex()).to.be(false);
+				expect(Gun.is.lex('')).to.be(false);
 			});
 			it('is node',function(){
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}})).to.be(true);
