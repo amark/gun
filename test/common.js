@@ -458,15 +458,18 @@ describe('Gun', function(){
 				expect(Gun.is.rel(function(){})).to.be(false);
 			});
 			it('is lex',function(){
-				expect(Gun.is.lex({'#': 'soul'})).to.be(true);
-				expect(Gun.is.lex({'.': 'field'})).to.be(true);
-				expect(Gun.is.lex({'=': 'value'})).to.be(true);
-				expect(Gun.is.lex({'>': 'state'})).to.be(true);
-				expect(Gun.is.lex({'#': {'=': 'soul'}})).to.be(true);
+				expect(Gun.is.lex({'#': 'soul'})).to.eql({soul: 'soul'});
+				expect(Gun.is.lex({'.': 'field'})).to.eql({field: 'field'});
+				expect(Gun.is.lex({'=': 'value'})).to.eql({value: 'value'});
+				expect(Gun.is.lex({'>': 'state'})).to.eql({state: 'state'});
+				expect(Gun.is.lex({'#': {'=': 'soul'}})).to.eql({soul: {'=': 'soul'}});
 				expect(Gun.is.lex({'#': {'=': 'soul'}, '.': []})).to.be(false);
 				expect(Gun.is.lex({'#': {'=': 'soul'}, 'asdf': 'oye'})).to.be(false);
 				expect(Gun.is.lex()).to.be(false);
 				expect(Gun.is.lex('')).to.be(false);
+			});
+			it('is lex ify',function(){
+				expect(Gun.is.lex.ify({'#': 'soul', '.': 'field', soul: 'foo', field: 'field', state: 0})).to.eql({'#': 'soul', '.': 'field', '>': 0});
 			});
 			it('is node',function(){
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}})).to.be(true);

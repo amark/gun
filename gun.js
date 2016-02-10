@@ -206,6 +206,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			,field: '.' // a field is a property on a node which points to a value.
 			,state: '>' // other than the soul, we store HAM metadata.
 			,value: '=' // the primitive value.
+		}
+		Gun.__ = {
+			'_':'meta'
 			,'#':'soul'
 			,'.':'field'
 			,'=':'value'
@@ -227,12 +230,41 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return Gun.is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
 
-		Gun.is.lex = function(l){ var r = true;
-			if(!Gun.obj.is(l)){ return false }
-			Gun.obj.map(l, function(v,f){
-				if(!Gun.obj.has(Gun._,f) || !(Gun.text.is(v) || Gun.obj.is(v))){ return r = false }
+		Gun.is.opt = function(opt,o){
+			Gun.obj.map(o, function(v,f){
+				if(Gun.list.is(opt[f])){
+					opt[f] = Gun.obj.map(opt[f], function(v,f,t){t(v,{sort: f})});
+				}
+				if(Gun.list.is(v)){
+					v = Gun.obj.map(v, function(v,f,t){t(v,{sort: f})});
+				}
+				if(Gun.obj.is(v)){
+					Gun.is.opt(opt[f] = opt[f] || {}, v);
+				} else 
+				if(!Gun.obj.has(opt,f)){
+					opt[f] = v;
+				}
+			});
+			return opt;
+		}
+
+		Gun.is.lex = function(lex){ var o = {}; // Validates a lex, and if it is returns a friendly lex.
+			if(!Gun.obj.is(lex)){ return false }
+			Gun.obj.map(lex, function(v,f){
+				if(!(Gun._[f] || Gun.__[f]) || !(Gun.text.is(v) || Gun.obj.is(v))){ return o = false }
+				o[Gun._[f]? f : Gun.__[f]] = v;
 			}); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
-			return r;
+			return o;
+		}
+
+		Gun.is.lex.ify = function(lex){ // Turns a friendly lex into a spec lex.
+			lex = lex || {};
+			Gun.list.map(Gun._, function(v, f){
+				if(!(Gun.obj.has(lex, v) || Gun.obj.has(lex, f))){ return }
+				lex[v] = lex[v] || lex[f];
+				Gun.obj.del(lex, f);
+			});
+			return lex;
 		}
 		
 		Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
@@ -255,13 +287,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 		Gun.is.rel.ify = function(s){ var r = {}; return Gun.obj.put(r, Gun._.soul, s), r } // convert a soul into a relation and return it.
 		
-		Gun.is.node = function(n, cb, t){ var s; // checks to see if an object is a valid node.
+		Gun.is.node = function(n, cb, o){ var s; // checks to see if an object is a valid node.
 			if(!Gun.obj.is(n)){ return false } // must be an object.
 			if(s = Gun.is.node.soul(n)){ // must have a soul on it.
 				return !Gun.obj.map(n, function(v, f){ // we invert this because the way we check for this is via a negation.
 					if(f == Gun._.meta){ return } // skip over the metadata.
 					if(!Gun.is.val(v)){ return true } // it is true that this is an invalid node.
-					if(cb){ cb.call(t, v, f, n) } // optionally callback each field/value.
+					if(cb){ cb.call(o, v, f, n) } // optionally callback each field/value.
 				});
 			}
 			return false; // nope! This was not a valid node.
@@ -299,13 +331,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return n;
 		}
 		
-		Gun.is.graph = function(g, cb, fn, t){ // checks to see if an object is a valid graph.
+		Gun.is.graph = function(g, cb, fn, o){ // checks to see if an object is a valid graph.
 			if(!Gun.obj.is(g) || Gun.obj.empty(g)){ return false } // must be an object.
 			return !Gun.obj.map(g, function(n, s){ // we invert this because the way we check for this is via a negation.
 				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)){ return true } // it is true that this is an invalid graph.
 				if(!Gun.fns.is(cb)){ return }			 
-				cb.call(t, n, s, function(fn){ // optional callback for each node.
-					if(fn){ Gun.is.node(n, fn, t) } // where we then have an optional callback for each field/value.
+				cb.call(o, n, s, function(fn){ // optional callback for each node.
+					if(fn){ Gun.is.node(n, fn, o) } // where we then have an optional callback for each field/value.
 				});
 			}); // makes sure it wasn't an empty object.
 		}
@@ -355,14 +387,14 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			var soul = Gun.is.node.soul(node);
 			if(!soul){ return }
 			opt = Gun.num.is(opt)? {state: opt} : opt || {};
-			var vertex = gun.__.graph[soul] = gun.__.graph[soul] || Gun.is.node.ify({}, soul), drift = opt.state || gun.__.opt.state();
+			var vertex = gun.__.graph[soul] = gun.__.graph[soul] || Gun.is.node.ify({}, soul), machine = opt.state || gun.__.opt.state();
 			Gun.obj.map(node._, function(v,f){
 				if(Gun.obj.has(Gun._, f)){ return }
 				Gun.obj.put(vertex._, f, v);
 			});
 			if(!Gun.is.node(node, function(value, field){
 				var is = Gun.is.node.state(node, field), cs = Gun.is.node.state(vertex, field), iv = Gun.is.rel(value) || value, cv = Gun.is.rel(vertex[field]) || vertex[field];
-				var HAM = Gun.HAM(drift, is, cs, iv, cv);
+				var HAM = Gun.HAM(machine, is, cs, iv, cv);
 				if(HAM.err){
 					root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", HAM.err); // this error should never happen.
 					return;
@@ -387,16 +419,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return vertex;
 		}
 
-		Gun.wire = function(data){
-
-		}
-
-
 		Gun.put = function(gun, graph, cb, opt){
+			opt = Gun.is.opt(opt || {}, gun.__.opt);
 			Gun.on('put').emit(gun, graph, function(err, ok){
-				var at = {ok: ok, err: err};
-				cb(at.err, at.ok);
-			}, opt || gun.__.opt);
+				var at = {ok: ok, err: err, opt: opt, graph: graph};
+				Gun.on('put.wire').emit(gun, at);
+				cb(at.err, at.ok, at);
+			}, opt);
 		}
 
 		Gun.on('put').event(function(gun, graph, cb, opt){
@@ -406,12 +435,14 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		});
 
 		Gun.get = function(gun, lex, cb, opt){
+			lex = Gun.is.lex(lex || {});
+			opt = Gun.is.opt(opt || {}, gun.__.opt);
 			Gun.on('get').emit(gun, lex, function(err, node){
-				var at = {lex: lex, node: node, err: err};
+				var at = {lex: lex, node: node, err: err, opt: opt};
 				Gun.on('get.wire').emit(gun, at);
 				Gun.on('chain').emit(gun, at);
-				cb(at.err, at.node);
-			}, opt || gun.__.opt);
+				cb(at.err, at.node, at);
+			}, opt);
 		}
 
 		Gun.on('get.wire').event(function(gun, at){
@@ -424,7 +455,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		});
 
 		Gun.on('chain').event(function(gun, at){
-			var lex = at.lex, soul = lex[Gun._.soul], field = lex[Gun._.field];
+			var lex = at.lex, soul = lex.soul, field = lex.field;
 			var graph = gun.__.graph, node = graph[soul], u;
 			if(soul){
 				at.node = node || at.node;
@@ -440,102 +471,6 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 		});
 
-		Gun.get.wire = function(lex, cb, opt){ return Gun.text.is(lex)? Gun.get.wire.from(lex, cb, opt) : Gun.get.wire.to(lex, cb, opt) }
-		Gun.get.wire.to = function(lex, cb, opt){
-			var t = '';
-			Gun.obj.map(lex, function(v,f){
-				if(!v){ return }
-				Gun.list.map(Gun.list.is(v)? v : [v], function(v){
-					t += f + "'" + Gun.put.wire.ify(v) + "'";
-				});
-			});
-			return t + '?';
-		}
-		Gun.get.wire.from = function(t, cb, opt){
-			if(!t){ return null }
-			var a = Gun.put.wire.from.parse(t), lex = {};
-			Gun.list.map([Gun._.soul, Gun._.field, Gun._.value, Gun._.state], function(sym, i){
-				if(!(i = a.indexOf(sym) + 1)){ return }
-				lex[sym] = Gun.put.wire.type(a[i]);
-			});
-			return lex;
-		}
-		// #soul.field
-		// "#soul.field=value>state"
-		// #messages>>1234567890 //{soul: 'messages', state: {'>': 1234567890}}
-
-		// #id$"msg"~who@to
-
-
-		Gun.put.wire = function(n, cb, opt){ return Gun.text.is(n)? Gun.put.wire.from(n, cb, opt) : Gun.put.wire.to(n, cb, opt) }
-		Gun.put.wire.ify = function(s){ var tmp;
-			if(Infinity === s || -Infinity === s){ return s }
-			if(tmp = Gun.is.rel(s)){ return '#' + JSON.stringify(tmp) }
-			return JSON.stringify(s)
-		}
-		Gun.put.wire.type = function(s){ var tmp;
-			if(Gun._.soul === s.charAt(0)){ return Gun.is.rel.ify(JSON.parse(s.slice(1))) }
-			if(String(Infinity) === s){ return Infinity }
-			if(String(-Infinity) === s){ return -Infinity }
-			return JSON.parse(s) 
-		}
-		Gun.put.wire.to = function(n, cb, opt){ var t, b;
-			if(!n || !(t = Gun.is.node.soul(n))){ return null }
-			cb = cb || function(){};
-			t = (b = "#'" + Gun.put.wire.ify(t) + "'");
-			var val = function(v,f, nv,nf){
-				var w = '', s = Gun.is.node.state(n,f), sw = '';
-				if(!s){ return }
-				w += ".'" + Gun.put.wire.ify(f) + "'";
-				console.log("yeah value?", v, Gun.put.wire.ify(v));
-				w += "='" + Gun.put.wire.ify(v) + "'";
-				if(s !== Gun.is.node.state(n,nf)){
-					w += ">'" + Gun.put.wire.ify(s) + "'";
-				} else {
-					sw = ">'" + Gun.put.wire.ify(s) + "'";
-				}
-				t += w;
-				w = b + w + sw;
-				cb(null, w);
-			}
-			var next = function(v,f){ // TODO: BUG! Missing adding meta data.
-				if(Gun._.meta === f){ return }
-				if(next.f){ 
-					val(next.v, next.f, v,f);
-				}
-				next.f = f;
-				next.v = v;
-			}
-			Gun.obj.map(n, next);
-			next();
-			return t;
-		}
-		Gun.put.wire.from = function(t, cb, opt){
-			if(!t){ return null }
-			var a = Gun.put.wire.from.parse(t);
-			Gun.list.map(a, function(v, i){
-				if(Gun._.soul === v){
-					Gun.is.node.soul.ify(n, Gun.put.wire.type(a[i]));
-					return;
-				}
-				if(Gun._.field === v){
-					var val = a.indexOf(Gun._.value,i), state = a.indexOf(Gun._.state,i);	
-					Gun.is.node.state.ify([n], Gun.put.wire.type(a[i]), Gun.put.wire.type(a[val+1]), Gun.put.wire.type(a[state+1]));
-					return;
-				}
-			})
-			return n;
-		}
-		Gun.put.wire.from.parse = function(t){
-			var a = [], s = -1, e = 0, end = 1, n = {};
-			while((e = t.indexOf("'", s + 1)) >= 0){
-				if(s === e || '\\' === t.charAt(e-1)){}else{
-					a.push(t.slice(s + 1,e));
-					s = e;
-				}
-			}
-			return a;
-		}
 	}(Gun));
 
 	Gun.chain = Gun.prototype;
@@ -588,7 +523,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 	Gun.on('put.ify').event(function(gun, at, val){
 		if(at.err){ return }
-		var soul = Gun.is.node.soul(at.node) || at.lex[Gun._.soul], field = at.lex[Gun._.field], value = val, state = gun.__.opt.state();
+		var soul = Gun.is.node.soul(at.node) || at.lex.soul, field = at.lex.field, value = val, state = gun.__.opt.state();
 		if(field){
 			value = Gun.obj.put({}, field, value);
 		}
@@ -692,19 +627,30 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}());
 
 	Gun.chain.get = function(lex, cb, opt){
-		var gun = this;
-		gun._.get = {
-			lex: Gun.obj.is(lex)? lex : Gun.is.rel.ify(lex),
-			opt: Gun.obj.is(opt)? opt : {},
-			cb: cb
-		};
+		var gun = this, get = gun._.get = {};
+		// opt takes 4 types of cbs - ok, err, not, and any.
+		get.opt = Gun.obj.is(opt)? Gun.is.opt(opt, {any: cb}) : Gun.obj.is(cb)? cb : {};
+		get.lex = Gun.obj.is(lex)? lex : Gun.is.rel.ify(lex);
+		if(Gun.fns.is(get.opt.any)){ Gun.get(get.lex, get.opt.any, get.opt) }
 		gun._.graph = {};
 		return gun;
 	}
 
 	Gun.chain.path = function(field, cb, opt){
-		var gun = this;
-		gun._.get.lex[Gun._.field] = Gun.text.ify(field) || '';
+		var gun = this, get = gun._.get = gun._.get || {lex: {}};
+		get.lex.field = Gun.text.ify(field) || '';
+		return gun;
+	}
+
+	Gun.chain.on = function(cb, opt){
+		var gun = this, get = gun._.get = gun._.get || {opt: {}};
+		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
+		get.opt.ok = opt.ok; // TODO: Multiple?
+		gun._.on = {on: true};
+		if(get.opt.ok){ Gun.get(gun, get.lex, function(err, node, at){
+			if(err || !node){ return }
+			get.opt.ok(Gun.obj.copy(node), at.lex.field);
+		}, get.opt) }
 		return gun;
 	}
 
@@ -712,7 +658,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		var gun = this, get = gun._.get;
 		if(!get){ return gun }
 		Gun.get(gun, get.lex, function(err, node){
-			var field = get.lex[Gun._.field];
+			var field = get.lex.field;
 			if(field && node){
 				var soul = Gun.is.rel(node[field]);
 				gun.get(soul).val(cb);
@@ -745,7 +691,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	Tab.on = Gun.on.create();
 
 	Gun.on('get').event(function(gun, lex, cb, opt){
-		Tab.store.get((opt.prefix || '') + lex[Gun._.soul], function(err, data){
+		Tab.store.get((opt.prefix || '') + lex.soul, function(err, data){
 			if(!data){ return } // let the peers handle no data.
 			cb(err, data); // node
 		});
@@ -770,7 +716,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	Gun.on('get').event(function(gun, lex, cb, opt){
 		var msg = {
 			'#': Gun.text.random(9), // msg ID
-			'$': lex // msg BODY
+			'$': Gun.is.lex.ify(lex) // msg BODY
 		};
 		Tab.on(msg['#']).event(cb);
 		Tab.peers(opt.peers || gun.__.opt.peers).send(msg);
@@ -968,7 +914,10 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		}
 		exports.request = r;
 	}(Tab));
+}({}));
 
+(function(){
+	if(!this.Gun){ return }
 	function Test(o){
 		var test = this;
 		if(!(test instanceof Test)){ return new Test(o) }
@@ -999,31 +948,31 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}
 	var gun = Gun('http://localhost:8080/gun');
 	window.SPAM = function(read){
-	localStorage.clear();
-	Test().it(1000).gen(function(i){
-		if(read){
-			gun.get('users').path(i).val(function(node){
-				console.log("node:", node);
-			});
-			return;
-		}
-		gun.get('users').path(i).put({
-			i: i,
-			name: Gun.text.random(),
-			birth: Gun.time.is(),
-			sex: 0.5 < Math.random()? true : false
-		}, function(){});
-	}).run(function(){});
+		localStorage.clear();
+		Test().it(1000).gen(function(i){
+			if(read){
+				gun.get('users').path(i).val(function(node){
+					console.log("node:", node);
+				});
+				return;
+			}
+			gun.get('users').path(i).put({
+				i: i,
+				name: Gun.text.random(),
+				birth: Gun.time.is(),
+				sex: 0.5 < Math.random()? true : false
+			}, function(){});
+		}).run(function(){});
 	}
-
-	return;
+}());
+/* EXTRA GUN UTILITY FUNCTIONS I MIGHT WANT TO KEEP
+(function(){
 	Gun().get('chat').path('messages').since(Gun().get('me').path('last')).map().val(function(msg){
-	
+
 	});
-	return;
 	Gun().get('chat').path('messages').last(100).map().val(function(msg){
 	});
-/*
+
 var peers = [
     peer1,
     peer2
@@ -1063,56 +1012,105 @@ Peers.server(function(req, res){
 
 // TODO: MARK / JESSE need to solve infinite circular loop on get flushing and put flushing.
 
-
-#MsgId$LEX~ALICE    <---     #TheMsgID@MsgId$NODE~CARL
-
 GUN = {'#': 'soul', '.': 'field', '=': 'value', '>': 'state'}
 MSG = {'#': 'id', '$': 'body', '@': 'to'}
 
-{
-	'#': {
-		'=': 'soul'
-	},
-	'.': {
-		'=': 'field'
-	}
+Gun.wire = function(data){
+
 }
+Gun.get.wire = function(lex, cb, opt){ return Gun.text.is(lex)? Gun.get.wire.from(lex, cb, opt) : Gun.get.wire.to(lex, cb, opt) }
+Gun.get.wire.to = function(lex, cb, opt){
+	var t = '';
+	Gun.obj.map(lex, function(v,f){
+		if(!v){ return }
+		Gun.list.map(Gun.list.is(v)? v : [v], function(v){
+			t += f + "'" + Gun.put.wire.ify(v) + "'";
+		});
+	});
+	return t + '?';
+}
+Gun.get.wire.from = function(t, cb, opt){
+	if(!t){ return null }
+	var a = Gun.put.wire.from.parse(t), lex = {};
+	Gun.list.map([Gun._.soul, Gun._.field, Gun._.value, Gun._.state], function(sym, i){
+		if(!(i = a.indexOf(sym) + 1)){ return }
+		lex[sym] = Gun.put.wire.type(a[i]);
+	});
+	return lex;
+}
+// #soul.field
+// "#soul.field=value>state"
+// #messages>>1234567890 //{soul: 'messages', state: {'>': 1234567890}}
+// #id$"msg"~who@to
 
-A -> ID1
-
-B <- ID1
-
-C <- ID1
-
-B -> RID 1ID2
-C -> RID 1ID3
-
-on connect
-	get in memory data
-	put in memory data
-
-----------------------
-Alice: Hi everyone!
-Alice: I'm interested in users.
-Alice: I'll answer my own question, I know about Alice, Bob, and Carl as Users.
-
-No response.
-----------------------
-
-Bob: Hi everyone!
-Bob: I'm interested in users.
-Bob: I'll answer my own question, I know about Bob and Alice as Users.
-
-Alice: Bob, did you know that Alice, Bob, and Carl are Users?
-Alice: Bob, I got your answer.
-
-
-
-{_:{'#': 'soul'}}
-
-
-{'#': 'users', '.': 'bob'}
-
-
+Gun.put.wire = function(n, cb, opt){ return Gun.text.is(n)? Gun.put.wire.from(n, cb, opt) : Gun.put.wire.to(n, cb, opt) }
+Gun.put.wire.ify = function(s){ var tmp;
+	if(Infinity === s || -Infinity === s){ return s }
+	if(tmp = Gun.is.rel(s)){ return '#' + JSON.stringify(tmp) }
+	return JSON.stringify(s)
+}
+Gun.put.wire.type = function(s){ var tmp;
+	if(Gun._.soul === s.charAt(0)){ return Gun.is.rel.ify(JSON.parse(s.slice(1))) }
+	if(String(Infinity) === s){ return Infinity }
+	if(String(-Infinity) === s){ return -Infinity }
+	return JSON.parse(s) 
+}
+Gun.put.wire.to = function(n, cb, opt){ var t, b;
+	if(!n || !(t = Gun.is.node.soul(n))){ return null }
+	cb = cb || function(){};
+	t = (b = "#'" + Gun.put.wire.ify(t) + "'");
+	var val = function(v,f, nv,nf){
+		var w = '', s = Gun.is.node.state(n,f), sw = '';
+		if(!s){ return }
+		w += ".'" + Gun.put.wire.ify(f) + "'";
+		console.log("yeah value?", v, Gun.put.wire.ify(v));
+		w += "='" + Gun.put.wire.ify(v) + "'";
+		if(s !== Gun.is.node.state(n,nf)){
+			w += ">'" + Gun.put.wire.ify(s) + "'";
+		} else {
+			sw = ">'" + Gun.put.wire.ify(s) + "'";
+		}
+		t += w;
+		w = b + w + sw;
+		cb(null, w);
+	}
+	var next = function(v,f){ // TODO: BUG! Missing adding meta data.
+		if(Gun._.meta === f){ return }
+		if(next.f){ 
+			val(next.v, next.f, v,f);
+		}
+		next.f = f;
+		next.v = v;
+	}
+	Gun.obj.map(n, next);
+	next();
+	return t;
+}
+Gun.put.wire.from = function(t, cb, opt){
+	if(!t){ return null }
+	var a = Gun.put.wire.from.parse(t);
+	Gun.list.map(a, function(v, i){
+		if(Gun._.soul === v){
+			Gun.is.node.soul.ify(n, Gun.put.wire.type(a[i]));
+			return;
+		}
+		if(Gun._.field === v){
+			var val = a.indexOf(Gun._.value,i), state = a.indexOf(Gun._.state,i);	
+			Gun.is.node.state.ify([n], Gun.put.wire.type(a[i]), Gun.put.wire.type(a[val+1]), Gun.put.wire.type(a[state+1]));
+			return;
+		}
+	})
+	return n;
+}
+Gun.put.wire.from.parse = function(t){
+	var a = [], s = -1, e = 0, end = 1, n = {};
+	while((e = t.indexOf("'", s + 1)) >= 0){
+		if(s === e || '\\' === t.charAt(e-1)){}else{
+			a.push(t.slice(s + 1,e));
+			s = e;
+		}
+	}
+	return a;
+}
+}());
 */
-}({}));
