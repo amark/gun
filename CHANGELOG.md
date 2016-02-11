@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.3.5
+
+ - Fixed server push.
+
 ## 0.3.4
 
  - Breaking Change! `list.set(item)` returns the item's chain now, not the list chain.
