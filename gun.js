@@ -257,14 +257,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return o;
 		}
 
-		Gun.is.lex.ify = function(lex){ // Turns a friendly lex into a spec lex.
+		Gun.is.lex.ify = function(lex){ var o = {}; // Turns a friendly lex into a spec lex.
 			lex = lex || {};
 			Gun.list.map(Gun._, function(v, f){
 				if(!(Gun.obj.has(lex, v) || Gun.obj.has(lex, f))){ return }
-				lex[v] = lex[v] || lex[f];
-				Gun.obj.del(lex, f);
+				o[v] = lex[v] || lex[f];
 			});
-			return lex;
+			return o;
 		}
 		
 		Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
@@ -389,7 +388,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			opt = Gun.num.is(opt)? {state: opt} : opt || {};
 			var vertex = gun.__.graph[soul] = gun.__.graph[soul] || Gun.is.node.ify({}, soul), machine = opt.state || gun.__.opt.state();
 			Gun.obj.map(node._, function(v,f){
-				if(Gun.obj.has(Gun._, f)){ return }
+				if(Gun.obj.has(Gun.__, f)){ return }
 				Gun.obj.put(vertex._, f, v);
 			});
 			if(!Gun.is.node(node, function(value, field){
@@ -407,7 +406,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 					Gun.is.node.state.ify(vertex, {field: field, value: value, state: is});
 					return;
 				}
-				if(state.defer){
+				if(HAM.defer){
 					/*upper.wait = true;
 					upper.call(state, vertex, field, incoming, ctx.incoming.state); // signals that there are still future modifications.
 					Gun.schedule(ctx.incoming.state, function(){
@@ -421,9 +420,11 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 		Gun.put = function(gun, graph, cb, opt){
 			opt = Gun.is.opt(opt || {}, gun.__.opt);
+			cb = cb || opt.any;
 			Gun.on('put').emit(gun, graph, function(err, ok){
+				if(err){ Gun.log(err) }
 				var at = {ok: ok, err: err, opt: opt, graph: graph};
-				Gun.on('put.wire').emit(gun, at);
+				Gun.on('ack').emit(gun, at);
 				cb(at.err, at.ok, at);
 			}, opt);
 		}
@@ -431,25 +432,32 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		Gun.on('put').event(function(gun, graph, cb, opt){
 			if(!Gun.is.graph(graph, function(node, soul){
 				Gun.HAM.node(gun, node);
-			})){ cb("Invalid graph!") }
+			})){ return cb({err: "Invalid graph!"})/*, this.pause()*/ }
 		});
 
 		Gun.get = function(gun, lex, cb, opt){
-			lex = Gun.is.lex(lex || {});
 			opt = Gun.is.opt(opt || {}, gun.__.opt);
+			lex = Gun.is.lex(lex || {});
+			cb = cb || opt.any;
 			Gun.on('get').emit(gun, lex, function(err, node){
+				if(err){ Gun.log(err) }
 				var at = {lex: lex, node: node, err: err, opt: opt};
-				Gun.on('get.wire').emit(gun, at);
 				Gun.on('chain').emit(gun, at);
 				cb(at.err, at.node, at);
 			}, opt);
 		}
 
-		Gun.on('get.wire').event(function(gun, at){
+		Gun.on('get').event(function(gun, lex, cb, opt){
+			var graph = gun.__.graph, node = graph[lex.soul];
+			if(node){ return cb(null, node)/*, this.pause()*/ }
+		});
+
+		Gun.on('chain').event(function(gun, at){
 			if(at.node){
 				at.node = Gun.HAM.node(gun, at.node);
 				if(!at.node){
-					at.err = at.err || "Invalid node!";
+					at.err = at.err || {err: "Invalid node!"};
+					//this.pause();
 				}
 			}
 		});
@@ -481,6 +489,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		root.__.by = root.__.by || function(f){ return gun.__.by[f] = gun.__.by[f] || {} };
 		root.__.graph = root.__.graph || {};
 		root.__.opt = root.__.opt || {};
+		root.__.opt.any = root.opt.any || function(){};
 		root.__.opt.uuid = root.__.opt.uuid || Gun.text.random;
 		root.__.opt.state = root.__.opt.state || Gun.time.is;
 		root.__.opt.wire = root.__.opt.wire || {};
@@ -509,36 +518,43 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		return gun;
 	}
 
-	Gun.chain.put = function(val, cb, opt){
-		var gun = this, get = gun._.get;
+	Gun.chain.put = function(data, cb, opt){
+		var gun = this, get = gun._.get, put = gun._.put || {};
+		put.opt = Gun.obj.is(opt)? Gun.is.opt(opt, {any: cb}) : Gun.obj.is(cb)? cb : {};
 		if(get){
-			Gun.get(gun, get.lex, function(err, node){
-				Gun.on('put.ify').emit(gun, {lex: get.lex, node: node, err: err}, val);
+			Gun.get(gun, get.lex, function(err, node, at){
+				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: data});
 			}, get.opt);
 		} else {
-			Gun.on('put.ify').emit(gun, {lex: {'#': gun.__.opt.uuid()}}, val);
+			Gun.on('put.ify').emit(gun, {lex: {soul: gun.__.opt.uuid()}, opt: put.opt, data: data});
 		}
 		return gun;
 	}
 
-	Gun.on('put.ify').event(function(gun, at, val){
-		if(at.err){ return }
-		var soul = Gun.is.node.soul(at.node) || at.lex.soul, field = at.lex.field, value = val, state = gun.__.opt.state();
-		if(field){
-			value = Gun.obj.put({}, field, value);
+	Gun.on('put.ify').event(function(gun, at){
+		if(at.err){
+			return Gun.obj.map([at.opt.any, at.opt.err], function(cb){
+				if(Gun.fns.is(cb)){ cb.call(gun, at.err) }
+			});
 		}
-		value = Gun.is.node.soul.ify(value, soul);
-		Gun.chain.put.ify(value, function(err, env){
-			if(err || !env || !env.graph){ return }
-			Gun.put(gun, env.graph, function(){}, {});
-		}, {node: function(env, cb){
-			var eat = env.at;
+		var soul = Gun.is.node.soul(at.node) || at.lex.soul, field = at.lex.field, data = at.data, state = gun.__.opt.state();
+		if(field){
+			data = Gun.obj.put({}, field, data);
+		}
+		data = Gun.is.node.soul.ify(data, soul);
+		Gun.chain.put.ify(data, function(err, env){
+			if(err || !env || !env.graph){
+				return Gun.obj.map([at.opt.any, at.opt.err], function(cb){
+					if(Gun.fns.is(cb)){ cb.call(gun, {err: Gun.log(err || "Serializer failed.")}) }
+				});
+			}
+			Gun.put(gun, env.graph, at.opt.any, at.opt);
+		}, {node: function(env, cb){ var eat = env.at;
 			if(1 === eat.path.length && at.node){
 				eat.soul = Gun.is.rel(at.node[eat.path[0]]);
 			}
 			cb(eat);
-		}, value: function(env){
-			var eat = env.at;
+		}, value: function(env){ var eat = env.at;
 			if(!eat.field){ return }
 			Gun.is.node.state.ify(eat.node, {field: eat.field, state: state});
 		}, uuid: gun.__.opt.uuid, state: state});
@@ -588,6 +604,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 					});
 					return;
 				}
+				//Gun.obj.has(Gun.__, field) ||
 				if(field.indexOf('.') != -1 || Gun.obj.has(reserved, field)){
 					return ctx.err = "Invalid field name on '" + ctx.at.path.join('.') + "'!";
 				}
@@ -642,7 +659,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		return gun;
 	}
 
-	Gun.chain.on = function(cb, opt){
+	/*Gun.chain.on = function(cb, opt){
 		var gun = this, get = gun._.get = gun._.get || {opt: {}};
 		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
 		get.opt.ok = opt.ok; // TODO: Multiple?
@@ -652,19 +669,19 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			get.opt.ok(Gun.obj.copy(node), at.lex.field);
 		}, get.opt) }
 		return gun;
-	}
+	}*/
 
-	Gun.chain.val = function(cb, opt){
+	Gun.chain.on = function(cb, opt){
 		var gun = this, get = gun._.get;
-		if(!get){ return gun }
-		Gun.get(gun, get.lex, function(err, node){
-			var field = get.lex.field;
-			if(field && node){
-				var soul = Gun.is.rel(node[field]);
-				gun.get(soul).val(cb);
-				return;
-			}
-			cb(node);
+		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
+		if(!get){ return gun } // TODO: In the future have it subscribe to all node changes!
+		get.opt = Gun.is.opt(opt, get.opt);
+		Gun.get(gun, get.lex, function(err, node, at){
+			if(err || !node){ return }
+			var field = get.lex.field || opt.field, soul;
+			if(!field || !(soul = Gun.is.rel(node[field]))){ return cb(node, field) }
+			opt.field = field;
+			gun.get(soul).on(cb, opt);
 		}, get.opt);
 		return gun;
 	}
@@ -719,7 +736,10 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			'$': Gun.is.lex.ify(lex) // msg BODY
 		};
 		Tab.on(msg['#']).event(cb);
-		Tab.peers(opt.peers || gun.__.opt.peers).send(msg);
+		Tab.peers(opt.peers).send(msg);
+		if(Gun.obj.empty(opt.peers)){
+			Tab.on(msg['#']).emit(null);
+		}
 	});
 
 	(function(exports){
@@ -731,13 +751,8 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		P.chain = P.prototype;
 		P.chain.send = function(msg){
 			Gun.obj.map(this.peers, function(peer, url){
-				Tab.request(url, msg, function(err, reply){ var body;
-					if(!reply || !(body = reply.body) || !body['@']){ return }
-					if(Gun.text.is(body['$'])){ 
-						err = err || body['$'];
-						Gun.obj.del(body, '$');
-					}
-					Tab.on(body['@']).emit(err, body['$']);
+				Tab.request(url, msg, function(err, reply){ var body = (reply||{}).body||{};
+					Tab.on(body['@'] || msg['#']).emit(err || body['!'], body['$']);
 				});
 			});
 		}
@@ -829,12 +844,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		r.ws.peers = {};
 		r.ws.cbs = {};
 		r.jsonp = function(opt, cb){
-			//Gun.log("jsonp send", opt);
 			r.jsonp.ify(opt, function(url){
-				//Gun.log(url);
 				if(!url){ return }
 				r.jsonp.send(url, function(err, reply){
-					//Gun.log("jsonp reply", reply);
 					cb(err, reply);
 					r.jsonp.poll(opt, reply);
 				}, opt.jsonp);
@@ -931,9 +943,11 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		var e = test._.i, i = 0;
 		var stack = test._.stack;
 		stack.push(fn);
+		//var to = setInterval(function(){ if(++i >= e){ return clearTimeout(to) }
 		while(++i <= e){
 			Gun.list.map(stack, function(fn){ fn(i) })
 		}
+		//},0);
 		return test;
 	}
 	Test.chain.it = function(i){
@@ -946,12 +960,12 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		test._.stack.push(fn);
 		return test;
 	}
-	var gun = Gun('http://localhost:8080/gun');
+	var gun = window.gun = Gun('http://localhost:8080/gun');
 	window.SPAM = function(read){
 		localStorage.clear();
 		Test().it(1000).gen(function(i){
 			if(read){
-				gun.get('users').path(i).val(function(node){
+				gun.get('users').path(i).on(function(node){
 					console.log("node:", node);
 				});
 				return;
@@ -961,7 +975,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				name: Gun.text.random(),
 				birth: Gun.time.is(),
 				sex: 0.5 < Math.random()? true : false
-			}, function(){});
+			}, function(err, ok){
+				console.log("put", err, ok, 'on', i);
+			});
 		}).run(function(){});
 	}
 }());
