@@ -1,4 +1,3 @@
-'use strict';
 var path = require('path');
 var http = require('http');
 var fs = require('fs');
@@ -29,4 +28,3 @@ gun.wsp(server);
 server.listen(port, ip);
 
 console.log('Server started on port ' + port + ' with /gun');
-
