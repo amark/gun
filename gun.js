@@ -130,33 +130,46 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
 		}(Util));
 		;(function(exports){ // On event emitter generic javascript utility.
-			function On(){};
-			On.create = function(){
-				var on = function(e){
-					on.event.e = e;
-					on.event.s[e] = on.event.s[e] || [];
-					return on;
-				};
-				on.emit = function(a){
-					var e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
-					exports.list.map(s, function(hear, i){
-						if(!hear.fn){ s.splice(i-1, 0); return; }
-						if(1 === l){ hear.fn(a); return; }
-						hear.fn.apply(hear, args);
-					});
-					if(!s.length){ delete on.event.s[e] }
-				}
-				on.event = function(fn, i){
-					var s = on.event.s[on.event.e]; if(!s){ return }
-					var e = {fn: fn, i: i || 0, off: function(){ return !(e.fn = false) }}; // TODO: PERFORMANCE! Prototype-ify this and reduce any on complexity.
-					return s.push(e), i? s.sort(sort) : i, e;
-				}
-				on.event.s = {};
+			function On(){ var on = this;
+				if(!On.is(on)){ return new On() }
+				return on.s = [], on.on;
+			};
+			On.is = function(on){ return (on instanceof On) }
+			On.chain = On.prototype;
+			var on = function(e){
+				on.event.e = e;
+				on.event.s[e] = on.event.s[e] || [];
 				return on;
+			};
+			On.chain.create = function(){ return On.call(null) }
+			On.chain.on = function(e, fn, i){
+				var on = this;
+				if(!e){ return on }
+				return on.e = e, fn? on.event(fn, i) : on;
+			}
+			On.chain.emit = function(a,b,c,d){
+				var on = this, e = on.e, s = on.s[e];
+				console.log("EMIT", a, 'to', s);
+				exports.list.map(s, function(at, i){
+					if(!at.on){ s.splice(i-1, 0); return; }
+					at.on(a,b,c,d);
+				});
+				if(s && !s.length){ delete on.s[e] }
+			}
+			function At(fn, i){ var at = this;
+				if(!At.is(at)){ return new At() }
+				at.on = fn;
+				at.i = i;
+			};
+			At.is = function(at){ return (at instanceof At) }
+			At.chain = On.prototype;
+			At.chain.off = function(){ Gun.obj.del(this,'on') }
+			On.chain.event = function(fn, i){
+				var on = this, e = on.e, s = on.s[e] = on.s[e] || [], at = At(fn, i);
+				return s.push(at), i? s.sort(sort) : i, at;
 			}
 			var sort = exports.list.sort('i');
-			exports.on = On.create();
-			exports.on.create = On.create;
+			exports.on = On();
 		}(Util));
 		;(function(exports){ // Generic javascript scheduler utility.
 			function s(state, cb, time){ // maybe use lru-cache?
@@ -438,10 +451,10 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 		Gun.get = function(gun, lex, cb, opt){
 			opt = Gun.is.opt(opt || {}, gun.__.opt);
-			console.log('GET', lex);
 			lex = Gun.is.lex(lex || {});
 			cb = cb || opt.any;
 			Gun.on('get').emit(gun, lex, function(err, node){
+				console.log("GET HOW MANY TIMES?", err, node);
 				if(err){ Gun.log(err) }
 				var at = {lex: lex, node: node, err: err, opt: opt};
 				Gun.on('chain').emit(gun, at);
@@ -648,49 +661,38 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 	Gun.chain.get = function(lex, cb, opt){ // opt takes 4 types of cbs - ok, err, not, and any.
 		var gun = this.chain(), get = gun._.get = {};
-		get.opt = Gun.obj.is(opt)? Gun.is.opt(opt, {any: cb}) : Gun.obj.is(cb)? cb : {};
-		get.lex = get.opt.lex || Gun.obj.is(lex)? lex : Gun.is.rel.ify(lex);
-		if(Gun.fns.is(get.opt.any)){ Gun.get(gun, get.lex, get.opt.any, get.opt) }
-		gun._.graph = {};
-		return gun;
+		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
+		get.opt = opt = Gun.is.opt(get.opt, opt);
+		get.lex = Gun.obj.is(lex)? lex : {soul: lex};
+		if(!opt.any){ return gun }
+		return Gun.get(gun, get.lex, function(err, node, at){
+			opt.any.call(gun, err, Gun.obj.copy(node), at);
+		}, get.opt);
 	}
 
-	Gun.is.opt.ify = function(cb, opt, as){
-		return opt = Gun.obj.is(cb)? cb : (opt || {})
-		return;
-		if(Gun.obj.is(cb)){
-			opt = cb || {};
-		}
-		if(Gun.fns.is(cb)){
-			opt = opt || {};
-			opt[as || 'any'] = cb;
-		}
-		return opt || {};
-	}
 	Gun.chain.path = function(field, cb, opt){
 		var gun = this, get = gun._.get = gun._.get || {lex: {}};
 		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
 		get.lex.field = field = Gun.text.ify(field) || '';
 		get.opt = Gun.is.opt(get.opt || {}, opt);
 		if(!opt.any){ return gun }
-		return Gun.get(gun, get.lex, function(err, node){
-			if(!Gun.obj.has(node, get.lex.field)){ return } // TODO: NOT!?
-			opt.any.call(gun, err, );
+		return Gun.get(gun, get.lex, function(err, node, at){
+			if(!Gun.obj.has(node, field = get.lex.field)){ return } // TODO: NOT!?
+			opt.any.call(gun, err, Gun.obj.copy(node[field]), field, at); // TODO: Wrong gun?
 		}, opt);
 	}
 
 	Gun.chain.on = function(cb, opt){
-		var gun = this, get = gun._.get = gun._.get || {};
-		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
-		get.opt = Gun.is.opt(opt, get.opt);
-		Gun.get(gun, get.lex, function(err, node, at){
+		var gun = this, get = gun._.get;
+		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).ok = Gun.fns.is(cb)? cb : null;
+		return Gun.get(gun, get.lex, function(err, node, at){
 			if(err || !node){ return }
-			var field = get.lex.field || opt.field, soul;
-			if(!field || !(soul = Gun.is.rel(node[field]))){ return cb(node, field) }
-			opt.field = field;
-			gun.get(soul).on(cb, opt);
-		}, get.opt);
-		return gun;
+			var lex = at.lex, field = lex.field, soul;
+			if(!field || !(soul = Gun.is.rel(node[field]))){ return cb.call(gun, Gun.obj.copy(node), field) } // TODO: Wrong gun?
+			cb.call(gun, Gun.obj.copy(node), field);
+			//opt.field = field;
+			//gun.get(soul).on(cb, opt);
+		}, opt);
 	}
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
@@ -1137,7 +1139,7 @@ Gun.put.wire.from.parse = function(t){
 }
 }());
 */
-
+/*
 ;(function(){ // make as separate module!
 	Gun.chain.sql = function(sql){
 		var gun = this;//.chain();
@@ -1166,3 +1168,4 @@ Gun.put.wire.from.parse = function(t){
 		var node = at.node;
 	});
 }());
+*/
