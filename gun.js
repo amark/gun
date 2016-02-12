@@ -231,6 +231,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		}
 
 		Gun.is.opt = function(opt,o){
+			opt = opt || {};
 			Gun.obj.map(o, function(v,f){
 				if(Gun.list.is(opt[f])){
 					opt[f] = Gun.obj.map(opt[f], function(v,f,t){t(v,{sort: f})});
@@ -437,6 +438,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 
 		Gun.get = function(gun, lex, cb, opt){
 			opt = Gun.is.opt(opt || {}, gun.__.opt);
+			console.log('GET', lex);
 			lex = Gun.is.lex(lex || {});
 			cb = cb || opt.any;
 			Gun.on('get').emit(gun, lex, function(err, node){
@@ -445,6 +447,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				Gun.on('chain').emit(gun, at);
 				cb(at.err, at.node, at);
 			}, opt);
+			return gun;
 		}
 
 		Gun.on('get').event(function(gun, lex, cb, opt){
@@ -643,38 +646,42 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		return ify;
 	}());
 
-	Gun.chain.get = function(lex, cb, opt){
-		var gun = this, get = gun._.get = {};
-		// opt takes 4 types of cbs - ok, err, not, and any.
+	Gun.chain.get = function(lex, cb, opt){ // opt takes 4 types of cbs - ok, err, not, and any.
+		var gun = this.chain(), get = gun._.get = {};
 		get.opt = Gun.obj.is(opt)? Gun.is.opt(opt, {any: cb}) : Gun.obj.is(cb)? cb : {};
-		get.lex = Gun.obj.is(lex)? lex : Gun.is.rel.ify(lex);
-		if(Gun.fns.is(get.opt.any)){ Gun.get(get.lex, get.opt.any, get.opt) }
+		get.lex = get.opt.lex || Gun.obj.is(lex)? lex : Gun.is.rel.ify(lex);
+		if(Gun.fns.is(get.opt.any)){ Gun.get(gun, get.lex, get.opt.any, get.opt) }
 		gun._.graph = {};
 		return gun;
 	}
 
+	Gun.is.opt.ify = function(cb, opt, as){
+		return opt = Gun.obj.is(cb)? cb : (opt || {})
+		return;
+		if(Gun.obj.is(cb)){
+			opt = cb || {};
+		}
+		if(Gun.fns.is(cb)){
+			opt = opt || {};
+			opt[as || 'any'] = cb;
+		}
+		return opt || {};
+	}
 	Gun.chain.path = function(field, cb, opt){
 		var gun = this, get = gun._.get = gun._.get || {lex: {}};
-		get.lex.field = Gun.text.ify(field) || '';
-		return gun;
+		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
+		get.lex.field = field = Gun.text.ify(field) || '';
+		get.opt = Gun.is.opt(get.opt || {}, opt);
+		if(!opt.any){ return gun }
+		return Gun.get(gun, get.lex, function(err, node){
+			if(!Gun.obj.has(node, get.lex.field)){ return } // TODO: NOT!?
+			opt.any.call(gun, err, );
+		}, opt);
 	}
 
-	/*Gun.chain.on = function(cb, opt){
-		var gun = this, get = gun._.get = gun._.get || {opt: {}};
-		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
-		get.opt.ok = opt.ok; // TODO: Multiple?
-		gun._.on = {on: true};
-		if(get.opt.ok){ Gun.get(gun, get.lex, function(err, node, at){
-			if(err || !node){ return }
-			get.opt.ok(Gun.obj.copy(node), at.lex.field);
-		}, get.opt) }
-		return gun;
-	}*/
-
 	Gun.chain.on = function(cb, opt){
-		var gun = this, get = gun._.get;
+		var gun = this, get = gun._.get = gun._.get || {};
 		opt = Gun.obj.is(opt)? Gun.is.opt(opt, {ok: cb}) : Gun.obj.is(cb)? cb : {};
-		if(!get){ return gun } // TODO: In the future have it subscribe to all node changes!
 		get.opt = Gun.is.opt(opt, get.opt);
 		Gun.get(gun, get.lex, function(err, node, at){
 			if(err || !node){ return }
@@ -960,10 +967,10 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		test._.stack.push(fn);
 		return test;
 	}
-	var gun = window.gun = Gun('http://localhost:8080/gun');
+	var gun = window.gun = Gun();//Gun('http://localhost:8080/gun');
 	window.SPAM = function(read){
-		localStorage.clear();
-		Test().it(1000).gen(function(i){
+		//localStorage.clear();
+		Test().it(10).gen(function(i){
 			if(read){
 				gun.get('users').path(i).on(function(node){
 					console.log("node:", node);
@@ -1130,3 +1137,32 @@ Gun.put.wire.from.parse = function(t){
 }
 }());
 */
+
+;(function(){ // make as separate module!
+	Gun.chain.sql = function(sql){
+		var gun = this;//.chain();
+		sql = gun._.sql = sql || {};
+		gun.select = function(sel){
+			sql.select = sel;
+			return gun;
+		}
+		gun.from = function(from){
+			sql.from = from;
+			gun.get(from).map();
+			return gun;
+		}
+		gun.where = function(where){
+			sql.where = where;
+			return gun;
+		}
+		return gun;
+	}
+
+	return;
+	Gun.on('chain').event(function(gun, at){
+		//console.log("sql stuff?", gun._, at.node);
+		var query = gun._.sql;
+		if(!query){ return }
+		var node = at.node;
+	});
+}());
