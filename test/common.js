@@ -331,7 +331,6 @@ describe('Gun', function(){
 				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '!': '.jpg'})).to.not.be.ok();
 			});
 		});
-		
 		describe('List', function(){
 			it('slit',function(){
 				(function(){
@@ -402,7 +401,62 @@ describe('Gun', function(){
 			});
 			*/
 		});
-
+		describe.only('On', function(){
+			it('chain', function(){
+				var on = Gun.on.create();
+				console.log("WHAT IS THIS?", on, on.create);
+				return;
+				expect(on('foo').emit).to.be.ok();
+				expect(on('foo').event).to.be.ok();
+				return;
+				/*
+				, c = 0;
+				var t2 = perf.now();
+				perf(function(i){
+					on('change').event(function(n){
+						c += 1;
+					});
+					on('change').emit(i);
+				*/
+			});
+			return;
+			it('subscribe', function(done){
+				var on = Gun.on; //.create();
+				on('foo', function(a){
+					root.console.log("foo first", a);
+					done.first = true;
+					expect(a).to.be(1);
+				});
+				on('foo').event(function(a){
+					root.console.log("foo second", a);
+					expect(a).to.be(1);
+					expect(done.first).to.be.ok();
+					done();
+				});
+				on('foo').emit(1);
+			});
+			return;
+			it('unsubscribe', function(done){
+				var on = Gun.on.create();
+				var un = on('foo', function(a){
+					this.off();
+					done.first = a;
+					expect(a).to.be(1);
+				});
+				on('foo').event(function(a){
+					console.log("what?", a);
+					expect(a).to.be(1);
+					expect(done.first).to.be(1);
+					if(a === 2){
+						done();
+					}
+				});
+				on('foo').emit(1);
+				on('foo').emit(2);
+				console.log(on('foo').s);
+			});
+		});
+		return;
 		describe('Gun Safety', function(){
 			var gun = Gun();
 			it('is',function(){
@@ -509,7 +563,7 @@ describe('Gun', function(){
 			});
 		});
 	});
-	
+	return;
 	describe('ify', function(){
 		var test, gun = Gun();
 		
