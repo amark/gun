@@ -584,7 +584,8 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: data});
 			}, function(err, node, at){
 				if(err || node || opt.init || gun.__.opt.init){ return }
-				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: at.opt, data: data});
+				at.lex.soul = at.lex.soul || gun.__.opt.uuid();
+				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: at.opt, data: {}});
 			});
 		} else {
 			Gun.on('put.ify').emit(gun, {lex: {soul: gun.__.opt.uuid()}, opt: put.opt, data: data});
