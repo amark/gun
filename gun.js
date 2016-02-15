@@ -552,6 +552,8 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		gun.back = gun.back || from;
 		gun.__ = gun.__ || from.__;
 		gun._ = gun._ || {};
+		gun._.lex = gun._.lex || {};
+		gun._.opt = gun._.opt || {};
 		return gun;
 	}
 
@@ -576,20 +578,16 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}
 
 	Gun.chain.put = function(data, cb, opt){
-		var gun = this, get = gun._.get, put = gun._.put || {};
+		var gun = this, get = gun._, put = {};
 		(put.opt = opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
-		if(get){
-			gun.chain.ify(gun, function(err, node, at){ // TODO: Write utility function that rewinds to top of the stack, then in the 'chain' event at the end write a utililty function that recurses back down.
-				console.log("PUT IT!", err, node, at);
-				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: data});
-			}, function(err, node, at){
-				if(err || node || opt.init || gun.__.opt.init){ return }
-				at.lex.soul = at.lex.soul || gun.__.opt.uuid();
-				Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: at.opt, data: {}});
-			});
-		} else {
-			Gun.on('put.ify').emit(gun, {lex: {soul: gun.__.opt.uuid()}, opt: put.opt, data: data});
-		}
+		gun.chain.ify(gun, function(err, node, at){ // TODO: Write utility function that rewinds to top of the stack, then in the 'chain' event at the end write a utililty function that recurses back down.
+			console.log("PUT IT!", err, node, at);
+			Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: data});
+		}, function(err, node, at){
+			if(err || node || opt.init || gun.__.opt.init){ return }
+			at.lex.soul = at.lex.soul || gun.__.opt.uuid();
+			Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: at.opt, data: {}});
+		});
 		return gun;
 	}
 
@@ -706,7 +704,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}());
 
 	Gun.chain.get = function(lex, cb, opt){ // opt takes 4 types of cbs - ok, err, not, and any.
-		var gun = this.chain(), get = gun._.get = {};
+		var gun = this.chain(), get = gun._;
 		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
 		get.opt = opt = Gun.is.opt(get.opt, opt);
 		get.lex = Gun.obj.is(lex)? lex : {soul: lex};
@@ -717,8 +715,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}
 
 	Gun.chain.path = function(field, cb, opt){
-		var gun = this, get = gun._.get = gun._.get || {lex: {}};
-		if(get.lex.field){ return gun.chain().path(field, cb, opt) }
+		var gun = this.chain(), get = gun._;
 		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
 		get.lex.field = field = Gun.text.ify(field) || '';
 		get.opt = Gun.is.opt(get.opt || {}, opt);
