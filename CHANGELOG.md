@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.3.6
+
+ - Fixed S3 typo.
+
 ## 0.3.5
 
  - Fixed server push.
