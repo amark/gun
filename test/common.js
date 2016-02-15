@@ -404,24 +404,11 @@ describe('Gun', function(){
 		describe.only('On', function(){
 			it('chain', function(){
 				var on = Gun.on.create();
-				console.log("WHAT IS THIS?", on, on.create);
-				return;
 				expect(on('foo').emit).to.be.ok();
 				expect(on('foo').event).to.be.ok();
-				return;
-				/*
-				, c = 0;
-				var t2 = perf.now();
-				perf(function(i){
-					on('change').event(function(n){
-						c += 1;
-					});
-					on('change').emit(i);
-				*/
 			});
-			return;
 			it('subscribe', function(done){
-				var on = Gun.on; //.create();
+				var on = Gun.on.create();
 				on('foo', function(a){
 					root.console.log("foo first", a);
 					done.first = true;
@@ -435,28 +422,99 @@ describe('Gun', function(){
 				});
 				on('foo').emit(1);
 			});
-			return;
 			it('unsubscribe', function(done){
 				var on = Gun.on.create();
-				var un = on('foo', function(a){
+				on('foo', function(a){
 					this.off();
 					done.first = a;
 					expect(a).to.be(1);
 				});
 				on('foo').event(function(a){
-					console.log("what?", a);
-					expect(a).to.be(1);
+					expect(a).to.be(done.second? 2 : 1);
 					expect(done.first).to.be(1);
+					done.second = true;
 					if(a === 2){
-						done();
+						setTimeout(function(){
+							expect(on('foo').s.foo.length).to.be(1);
+							done();
+						}, 10);
 					}
 				});
 				on('foo').emit(1);
 				on('foo').emit(2);
-				console.log(on('foo').s);
+			});
+			it('pause', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					if(2 === a){
+						done.first2 = true;
+						return;
+					}
+					this.pause();
+					setTimeout(function(){
+						expect(done.second).to.not.be.ok();
+						expect(done.second2).to.be.ok();
+						expect(done.first2).to.be.ok();
+						done();
+					});
+				});
+				on('foo').event(function(a){
+					if(2 === a){
+						done.second2 = true;
+					} else {
+						done.second = true;
+					}
+				});
+				on('foo').emit(1);
+				on('foo').emit(2);
+			});
+			it('resume', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var resume = this.pause();
+					setTimeout(function(){
+						expect(done.second).to.not.be.ok();
+						resume();
+					},10);
+				});
+				on('foo').event(function(a){
+					done.second = true;
+					done();
+				});
+				on('foo').emit(1);
+			});
+			it('double resume', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var resume = this.pause();
+					setTimeout(function(){
+						if(1 === a){
+							done.first1 = true;
+							expect(done.second).to.not.be.ok();
+						}
+						if(2 === a){
+							done.first2 = true;
+						}
+						resume();
+					},10);
+				});
+				on('foo').event(function(a){
+					done.second = true;
+					if(1 === a){
+						expect(done.first2).to.not.be.ok();
+						done.second1 = true;
+					}
+					if(2 === a){
+						expect(done.first2).to.be.ok();
+						if(done.second1){
+							done();
+						}
+					}
+				});
+				on('foo').emit(1);
+				on('foo').emit(2);
 			});
 		});
-		return;
 		describe('Gun Safety', function(){
 			var gun = Gun();
 			it('is',function(){
