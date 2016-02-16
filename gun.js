@@ -504,15 +504,15 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			var lex = at.lex, soul = lex.soul, field = lex.field;
 			var graph = gun.__.graph, node = graph[soul], u;
 			if(soul){
-				at.node = node || at.node;
 				if(soul !== Gun.is.node.soul(at.node)){
-					at.node = u;
+					at.node = Gun.obj.copy(node);
 				}
 			}
 			if(at.node && field){ // TODO: Multiples?
 				var ignore = Gun.obj.put({}, Gun._.meta, 1);
-				if(Gun.obj.empty(at.node, Gun.obj.put(ignore, field, 1))){ return }
-				at.node = Gun.is.node.ify(Gun.obj.put({}, field, at.node[field]), {soul: soul, state: Gun.is.node.state(at.node, field)});
+				if(!Gun.obj.empty(at.node, Gun.obj.put(ignore, field, 1))){
+					at.node = Gun.is.node.ify(Gun.obj.put({}, field, at.node[field]), {soul: soul, state: Gun.is.node.state(at.node, field)})
+				}
 			}
 		});
 
@@ -558,35 +558,66 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}
 
 	Gun.chain.chain.ify = function(gun, cb, fn){
-		var ctx = {stack: [], back: function(gun){
-			if(gun.back === gun){ return ctx.stack } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
-			ctx.stack.push(gun);
-			return ctx.back(gun.back);
-		}, i: 0, chain: function(i){
-			var gun = ctx.stack[i], get;
-			if(!gun){ return }
-			get = gun._.get || {};
-			Gun.get(gun, get.lex, function(err, node, at){
-				console.log("chain GET", err, node, at);
-				if(i === ctx.stack.length){ cb(err, node, at) }
+		// go BACK and find the FIRST soul, then fulfill everything since then.
+		var ctx = {stack: [], back: function(gun, at){
+			if(gun.back === gun){ return ctx.stack }
+			at = at || {lex: {}, opt: {}};
+			var lex = gun._.lex, opt = gun._.opt;
+			at.opt = Gun.is.opt(at.opt, opt);
+			if(lex.soul){
+				at.lex.soul = lex.soul;
+				ctx.stack.push(at);
+				return ctx.stack;
+			} else
+			if(lex.field){
+				if(at.lex.field){
+					ctx.stack.push(at);
+					return ctx.back(gun);
+				}
+				at.lex.field = lex.field;
+				return ctx.back(gun.back, at);
+			}
+			return ctx.back(gun.back, at);
+		}, i: 0, chain: function(i, prev){
+			var at = ctx.stack[i];
+			if(!at){ return cb(prev.err, prev.node, prev) }
+			if(prev && prev.node){
+				if(!at.lex.soul){
+					at.lex.soul = Gun.is.node.soul(prev.node[prev.lex.field]);
+				}
+			}
+			Gun.get(gun, at.lex, function(err, node, at){
+				if(i === ctx.stack.length){ return cb(err, node, at) }
 				if(fn){ fn(err, node, at) }
-				ctx.chain(ctx.i = i + 1) ;
-			}, get.opt);
+				ctx.chain(ctx.i = i + 1, at) ;
+			}, at.opt);
 		}};
 		ctx.stack = ctx.back(gun).reverse();
 		ctx.chain(ctx.i);
 	}
 
 	Gun.chain.put = function(data, cb, opt){
-		var gun = this, get = gun._, put = {};
+		var gun = this, get = gun._, put = {data: data};
 		(put.opt = opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).any = Gun.fns.is(cb)? cb : null;
 		gun.chain.ify(gun, function(err, node, at){ // TODO: Write utility function that rewinds to top of the stack, then in the 'chain' event at the end write a utililty function that recurses back down.
-			console.log("PUT IT!", err, node, at);
-			Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: data});
+			if(put.prev){
+				put.data = Gun.obj.put(put.prev, put.field, put.data);
+			}
+			put.root = put.root || put.data;
+			console.log("PUT IT!", err, node, put.root);
+			Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: put.opt, data: put.root});
 		}, function(err, node, at){
 			if(err || node || opt.init || gun.__.opt.init){ return }
-			at.lex.soul = at.lex.soul || gun.__.opt.uuid();
-			Gun.on('put.ify').emit(gun, {lex: at.lex, node: node, err: err, opt: at.opt, data: {}});
+			if(!put.root){
+				put.at = put.root = {};
+			}
+			put.at = Gun.is.node.soul.ify(put.at, at.lex.soul); // TODO: BUG! Key it, you mean.
+			if(at.lex.field){
+				put.prev = put.at;
+				put.field = at.lex.field;
+				put.at = Gun.obj.as(put.at, at.lex.field);
+			}
+			console.log("Implicit!", put.at);
 		});
 		return gun;
 	}
@@ -599,9 +630,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		}
 		var soul = Gun.is.node.soul(at.node) || at.lex.soul, field = at.lex.field, data = at.data, state = gun.__.opt.state();
 		if(field){
-			data = Gun.obj.put({}, field, data);
+			//data = Gun.obj.put({}, field, data);
 		}
-		data = Gun.is.node.soul.ify(data, soul);
+		//data = Gun.is.node.soul.ify(data, soul);
 		Gun.chain.put.ify(data, function(err, env){
 			if(err || !env || !env.graph){
 				return Gun.obj.map([at.opt.any, at.opt.err], function(cb){
@@ -738,13 +769,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	});
 
 	Gun.chain.on = function(cb, opt){
-		var gun = this, get = gun._.get;
+		var gun = this, get = gun._;
 		(opt = Gun.obj.is(cb)? cb : Gun.obj.is(opt)? opt : {}).ok = Gun.fns.is(cb)? cb : null;
-		return Gun.get(gun, get.lex, function(err, node, at){
+		return gun.chain.ify(gun, function(err, node, at){
 			var lex = at.lex, field = lex.field;
 			if(err || !node || (field && !Gun.obj.has(node, field))){ return }
 			cb.call(gun, Gun.obj.copy(field? node[field] : node), field); // TODO: Wrong gun?
-		}, opt);
+		});
 	}
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
@@ -1025,10 +1056,10 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 	}
 	var gun = window.gun = Gun();//Gun('http://localhost:8080/gun');
 	window.SPAM = function(read){
-		localStorage.clear();
+		//localStorage.clear();
 		Test().it(1).gen(function(i){
 			if(read){
-				gun.get('users').path(i).on(function(node){
+				gun.get('users').path(i).path('friend').on(function(node){
 					console.log("node:", node);
 				});
 				return;
