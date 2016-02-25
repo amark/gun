@@ -3780,6 +3780,22 @@ describe('Gun', function(){
 				}
 			});
 		});
+
+		it("localStorage", function(done){
+			var localStorage = localStorage || {clear:function(){}};
+			localStorage.clear();
+			var gun = Gun();
+
+
+			var text = Gun.text.random(1024 * 1024 * 6);
+			gun.put({i: text}, function(err, ok){
+				if(done.c){ return }
+				if(!err){ return done() }
+				var text = "If you are seeing this message, it means the localStorage error was caught successfully rather than it crashing and stopping replication to peers. Also, the error is now reported back to you via the put callback. Here it is!";
+				localStorage.clear();
+				done(); done.c = 1;
+			});
+		});
 	});
 	
 	describe('Streams', function(){
