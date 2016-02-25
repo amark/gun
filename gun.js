@@ -1139,8 +1139,8 @@
 
 	;(function(exports){
 		function s(){}
-		s.put = function(key, val){ return store.setItem(key, Gun.text.ify(val)) }
-		s.get = function(key, cb){ /*setTimeout(function(){*/ return cb(null, Gun.obj.ify(store.getItem(key) || null)) /*},1)*/} 
+		s.put = function(key, val, cb){ try{ store.setItem(key, Gun.text.ify(val)) }catch(e){if(cb)cb(e)} }
+		s.get = function(key, cb){ /*setTimeout(function(){*/ try{ cb(null, Gun.obj.ify(store.getItem(key) || null)) }catch(e){cb(e)} /*},1)*/} 
 		s.del = function(key){ return store.removeItem(key) }
 		var store = this.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;
@@ -1191,7 +1191,7 @@
 			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			Gun.is.graph(graph, function(node, soul){
 				if(!gun.__.graph[soul]){ return }
-				tab.store.put(tab.prefix + soul, gun.__.graph[soul]);
+				tab.store.put(tab.prefix + soul, gun.__.graph[soul], function(err){if(err){ cb({err: err}) }});
 			});
 			if(!(cb.local = opt.local)){
 				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Put failed!");
