@@ -3827,6 +3827,27 @@ describe('Gun', function(){
 				});
 			},100);
 		});
+
+		/*
+		depp.on(log).path('spouse').on(log).path('pet').on(log);
+		// 0) Depp & Heide & dog
+		// 1) dog
+		// 2) cat
+		// 3) cat
+		// 4) Julie & cat
+
+		depp.path('spouse.pet.name').on(log).put('pearls');
+		depp.path('spouse.pet.name').put('paws').on(log);
+		depp.path('spouse.pet.name').on(log).not(log);
+		// 0: fluffy
+		// 1: fluff
+		// 3: bacon
+		// 9: `.not` 
+
+		depp.path('spouse.pet.name').val().on(log);
+		// 0: fluffy
+		// 1: fluff
+		*/
 	});
 	
 	describe('Streams', function(){
