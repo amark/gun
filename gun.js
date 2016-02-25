@@ -976,6 +976,7 @@
 
 		Gun.chain.set = function(item, cb, opt){
 			var gun = this, ctx = {}, chain;
+			cb = cb || function(){};
 			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun } // TODO: Bug? Should we return not gun on error?
 			(ctx.chain = item.chain()).back = gun;
 			ctx.chain._ = item._;
