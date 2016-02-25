@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.3.7
+
+ - Catch localStorage errors.
+
 ## 0.3.6
 
  - Fixed S3 typo.
