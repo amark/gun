@@ -392,7 +392,9 @@
 							Gun.is.node.state.ify([vertex, change, node], field, val);
 						}
 						emit({soul: soul, field: field, value: val, state: state, change: change});
-					}, function(vertex, field, val){})(function(){
+					}, function(vertex, field, val, state){
+						Gun.on('deferred').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
+					})(function(){
 						emit({soul: soul, change: node});
 						if(opt.soul){ opt.soul(soul) }
 						if(!(ctx.count -= 1)){ ctx.cb() }
