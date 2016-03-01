@@ -401,7 +401,7 @@ describe('Gun', function(){
 			});
 			*/
 		});
-		describe.only('On', function(){
+		describe('On', function(){
 			it('chain', function(){
 				var on = Gun.on.create();
 				expect(on('foo').emit).to.be.ok();
@@ -410,12 +410,10 @@ describe('Gun', function(){
 			it('subscribe', function(done){
 				var on = Gun.on.create();
 				on('foo', function(a){
-					root.console.log("foo first", a);
 					done.first = true;
 					expect(a).to.be(1);
 				});
 				on('foo').event(function(a){
-					root.console.log("foo second", a);
 					expect(a).to.be(1);
 					expect(done.first).to.be.ok();
 					done();
@@ -435,7 +433,7 @@ describe('Gun', function(){
 					done.second = true;
 					if(a === 2){
 						setTimeout(function(){
-							expect(on('foo').s.foo.length).to.be(1);
+							expect(on('foo').s.ons.foo.length).to.be(1);
 							done();
 						}, 10);
 					}
@@ -443,20 +441,20 @@ describe('Gun', function(){
 				on('foo').emit(1);
 				on('foo').emit(2);
 			});
-			it('pause', function(done){
+			it('stop', function(done){
 				var on = Gun.on.create();
 				on('foo', function(a){
 					if(2 === a){
 						done.first2 = true;
 						return;
 					}
-					this.pause();
+					this.stop();
 					setTimeout(function(){
 						expect(done.second).to.not.be.ok();
 						expect(done.second2).to.be.ok();
 						expect(done.first2).to.be.ok();
 						done();
-					});
+					},10);
 				});
 				on('foo').event(function(a){
 					if(2 === a){
@@ -468,25 +466,26 @@ describe('Gun', function(){
 				on('foo').emit(1);
 				on('foo').emit(2);
 			});
-			it('resume', function(done){
+			it('go', function(done){
 				var on = Gun.on.create();
 				on('foo', function(a){
-					var resume = this.pause();
+					var go = this.stop(go);
 					setTimeout(function(){
 						expect(done.second).to.not.be.ok();
-						resume();
+						go();
 					},10);
 				});
 				on('foo').event(function(a){
 					done.second = true;
+					expect(a).to.be(1);
 					done();
 				});
 				on('foo').emit(1);
 			});
-			it('double resume', function(done){
+			it('double go', function(done){
 				var on = Gun.on.create();
 				on('foo', function(a){
-					var resume = this.pause();
+					var go = this.stop(go);
 					setTimeout(function(){
 						if(1 === a){
 							done.first1 = true;
@@ -495,7 +494,7 @@ describe('Gun', function(){
 						if(2 === a){
 							done.first2 = true;
 						}
-						resume();
+						go();
 					},10);
 				});
 				on('foo').event(function(a){
@@ -513,6 +512,113 @@ describe('Gun', function(){
 				});
 				on('foo').emit(1);
 				on('foo').emit(2);
+			});
+			it('double go different event', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var go = this.stop(go);
+					setTimeout(function(){
+						done.first1 = true;
+						go();
+					},10);
+				});
+				on('foo').event(function(a){
+					if(1 === a){
+						expect(done.first1).to.be.ok();
+						done();
+					}
+				});
+				on('foo').emit(1);
+				on('bar').emit(2);
+			});	
+			it('go params', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var go = this.stop(go);
+					setTimeout(function(){
+						expect(done.second).to.not.be.ok();
+						go(0);
+					},10);
+				});
+				on('foo').event(function(a){
+					done.second = true;
+					expect(a).to.be(0);
+					done();
+				});
+				on('foo').emit(1);
+			});
+			it('map', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var go = this.stop(go);
+					Gun.obj.map(a.it, function(v,f){
+						setTimeout(function(){
+							var emit = {field: 'where', soul: f};
+							go(emit);
+						},10);
+					})
+				});
+				on('foo').event(function(a){
+					var go = this.stop(go);
+					setTimeout(function(){
+						go({node: a.soul});
+					},100);
+				});
+				on('foo').end(function(a){
+					if('a' == a.node){
+						done.a = true;
+					} else {
+						expect(done.a).to.be.ok();
+						done();
+					}
+				}).emit({field: 'where', it: {a: 1, b: 2}});
+			});
+			it('map synchronous', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					var go = this.stop(go);
+					Gun.obj.map(a.node, function(v,f){
+						//setTimeout(function(){
+							var emit = {field: 'where', soul: f};
+							go(emit);
+						//},10);
+					})
+				});
+				on('foo').event(function(a){
+					var go = this.stop(go);
+					setTimeout(function(){
+						go({node: a.soul});
+					},100);
+				});
+				on('foo').end(function(a){
+					if('a' == a.node){
+						done.a = true;
+					} else {
+						expect(done.a).to.be.ok();
+						done();
+					}
+				}).emit({field: 'where', node: {a: 1, b: 2}});
+			});
+			it('map synchronous async', function(done){
+				var on = Gun.on.create();
+				on('foo', function(a){
+					expect(a.b).to.be(5);
+					done.first = true;
+				});
+				on('foo').event(function(a){
+					expect(a.b).to.be(5);
+					done.second = true;
+					var go = this.stop(go);
+					setTimeout(function(){
+						go({c: 9});
+					},100);
+				});
+				on('foo').end(function(a){
+					expect(a.c).to.be(9);
+					expect(done.first).to.be.ok();
+					expect(done.second).to.be.ok();
+					done();
+				}).emit({b: 5});
 			});
 		});
 		describe('Gun Safety', function(){
@@ -621,12 +727,11 @@ describe('Gun', function(){
 			});
 		});
 	});
-	return;
 	describe('ify', function(){
 		var test, gun = Gun();
 		
 		it('null', function(done){
-			Gun.ify(null)(function(err, ctx){
+			Gun.ify(null, function(err, ctx){
 				expect(err).to.be.ok(); 
 				done();
 			});
@@ -634,18 +739,18 @@ describe('Gun', function(){
 		
 		it('basic', function(done){
 			var data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
-			Gun.ify(data, null, {pure: true})(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok();
 				expect(ctx.err).to.not.be.ok();
 				expect(ctx.root).to.eql(data);
 				expect(ctx.root === data).to.not.ok();
 				done();
-			});
+			}, {pure: true});
 		});
-		
+
 		it('basic soul', function(done){
 			var data = {_: {'#': 'SOUL'}, a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
-			Gun.ify(data, null, {pure: true})(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok();
 				expect(ctx.err).to.not.be.ok();
 				
@@ -653,21 +758,21 @@ describe('Gun', function(){
 				expect(ctx.root === data).to.not.be.ok();
 				expect(Gun.is.node.soul(ctx.root) === Gun.is.node.soul(data));
 				done();
-			});
+			}, {pure: true});
 		});
 		
 		it('arrays', function(done){
 			var data = {before: {path: 'kill'}, one: {two: {lol: 'troll', three: [9, 8, 7, 6, 5]}}};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
-				expect(err.err.indexOf("one.two.three")).to.not.be(-1);
+				expect((err.err || err).indexOf("one.two.three")).to.not.be(-1);
 				done();
 			});
 		});
 		
 		it('undefined', function(done){
 			var data = {z: undefined, x: 'bye'};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -675,7 +780,7 @@ describe('Gun', function(){
 		
 		it('NaN', function(done){
 			var data = {a: NaN, b: 2};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -683,7 +788,7 @@ describe('Gun', function(){
 		
 		it('Infinity', function(done){ // SAD DAY PANDA BEAR :( :( :(... Mark wants Infinity. JSON won't allow.
 			var data = {a: 1, b: Infinity};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -691,7 +796,7 @@ describe('Gun', function(){
 		
 		it('function', function(done){
 			var data = {c: function(){}, d: 'hi'};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
 				done();
 			});
@@ -699,7 +804,7 @@ describe('Gun', function(){
 		
 		it('extraneous', function(done){
 			var data = {_: {'#': 'shhh', meta: {yay: 1}}, sneak: true};
-			Gun.ify(data)(function(err, ctx){
+			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok(); // extraneous metadata needs to be stored, but it can't be used for data.
 				done();
 			});
@@ -859,9 +964,10 @@ describe('Gun', function(){
 			}
 
 			expect(gun.__.graph['asdf']).to.not.be.ok();
-			var ctx = Gun.union(gun, prime);
-			expect(ctx.err).to.be.ok();
-		});
+			var ctx = Gun.HAM.graph(gun, prime);
+			console.log("????", ctx);
+			expect(ctx).to.not.be.ok();
+		});return;
 		
 		it('basic', function(done){
 			var prime = {
