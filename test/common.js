@@ -3796,6 +3796,49 @@ describe('Gun', function(){
 				done(); done.c = 1;
 			});
 		});
+
+		it("get context", function(done){
+			var gun = Gun();
+			var ref = gun.get('lol').get('foo').put({hello: 'world'});
+			gun.get('lol').val(function(implicit){
+				done.fail = true;
+				expect(implicit).to.not.be.ok();
+			});
+			gun.get('lol').not(function(){
+				done.please = true;
+			});
+			gun.get('foo').val(function(data){
+				expect(data.hello).to.be('world');
+				expect(done.fail).to.not.be.ok();
+				expect(done.please).to.be.ok();
+				done();
+			});
+		});
+
+		it.only("chaining val", function(done){
+			var gun = Gun();
+			gun.get('users').set(gun.put({name: 'alice'}));
+			gun.get('users').set(gun.put({name: 'bob'}));;
+			gun.get('users').val().map(function(person){
+				if(person.name === 'alice'){
+					done.alice = true;
+				}
+				if(person.name === 'bob'){
+					done.bob = true;
+				}
+				if(person.name === 'carl'){
+					done.carl = true;
+				}
+			});
+			gun.get('users').set(gun.put({name: 'carl'}));
+			setTimeout(function(){
+				console.log('wha?', done.alice, done.bob, done.carl);
+				expect(done.alice).to.be.ok();
+				expect(done.bob).to.be.ok();
+				expect(done.carl).to.not.be.ok();
+				done();
+			},10);
+		});
 	});
 	
 	describe('Streams', function(){

@@ -198,7 +198,7 @@
 
 	;(function(Gun){ // Gun specific utilities.
 		
-		Gun.version = 0.3;
+		Gun.version = 0.4; Gun.version_minor = 0;
 		
 		Gun._ = { // some reserved key words, these are not the only ones.
 			meta: '_' // all metadata of the node is stored in the meta property on the node.
@@ -554,6 +554,7 @@
 			gun.back = gun.back || from;
 			gun.__ = gun.__ || from.__;
 			gun._ = gun._ || {};
+			gun._.use = from._.use || 'on';
 			gun._.on = gun._.on || Gun.on.create();
 			gun._.at = gun._.at || Gun.on.at(gun._.on);
 			return gun;
@@ -642,7 +643,8 @@
 			} else { // else if we are on an existing chain then...
 				gun._.at('soul').map(put); // put data on every soul that flows through this chain.
 				var back = function(gun){
-					if(gun.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
+					if(back.get || gun.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
+					if(gun._.get){ back.get = true }
 					gun._.at('null').event(function(at){
 						if(opt.init || gun.__.opt.init){ return Gun.log("Warning! You have no context to `.put`", val, "!") }
 						gun.init();
@@ -720,6 +722,7 @@
 					if(load(ctx.lex)){ return }
 					Gun.on('get').emit(ctx.by.chain, at, ctx, ctx.opt, ctx.cb, ctx.lex);
 				}
+				ctx.by.chain._.get = ctx.lex;
 				ctx.opt.on = (ctx.opt.at || gun.__.at)(ctx.soul).event(on);
 				if(!ctx.opt.ran && !on.ran){ on.call(ctx.opt.on, {soul: ctx.soul}) }
 				return ctx.by.chain;
@@ -911,7 +914,7 @@
 				var ref = gun.__.by(at.soul).chain || gun;
 				Gun.is.node(at.change, each, {gun: ref, soul: at.soul});
 			}
-			gun.on(map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
+			gun[gun._.use](map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
 			if(gun === gun.back){ Gun.log('You have no context to `.map`!') }
 			return chain;
 		}
@@ -929,7 +932,8 @@
 			},-999);
 			return function(cb, opt){
 				var gun = this, args = Gun.list.slit.call(arguments);
-				cb = Gun.fns.is(cb)? cb : function(val, field){ root.console.log.apply(root.console, args.concat([field && (field += ':'), val])) }; cb.hash = {};
+				//cb = Gun.fns.is(cb)? cb : function(val, field){ root.console.log.apply(root.console, args.concat([field && (field += ':'), val])) }; cb.hash = {};
+				cb = cb || function(){}; cb.hash = {};
 				opt = opt || {};
 				function val(at){
 					var ctx = {by: gun.__.by(at.soul), at: at.at || at}, node = ctx.by.node, field = ctx.at.field, hash = Gun.on.at.hash({soul: ctx.at.key || ctx.at.soul, field: field});
@@ -943,6 +947,7 @@
 				}
 				gun.on(val, {raw: true});
 				if(gun === gun.back){ Gun.log('You have no context to `.val`!') }
+				gun._.use = 'val';
 				return gun;
 			}
 		}());
