@@ -727,7 +727,7 @@ describe('Gun', function(){
 			});
 		});
 	});
-	describe('ify', function(){
+	describe.only('ify', function(){
 		var test, gun = Gun();
 		
 		it('null', function(done){
@@ -806,6 +806,23 @@ describe('Gun', function(){
 			var data = {_: {'#': 'shhh', meta: {yay: 1}}, sneak: true};
 			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok(); // extraneous metadata needs to be stored, but it can't be used for data.
+				done();
+			});
+		});
+		
+		it('document', function(done){
+			var data = {users: {1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}}};
+			Gun.ify(data, function(err, ctx){
+				var soul, node;
+				expect(soul = Gun.is.rel(ctx.root.users)).to.be.ok();
+				node = ctx.graph[soul];
+				expect(soul = Gun.is.rel(node[1])).to.be.ok();
+				node = ctx.graph[soul];
+				expect(soul = Gun.is.rel(node.where)).to.be.ok();
+				node = ctx.graph[soul];
+				expect(node.lat).to.be.ok();
+				expect(node.lng).to.be.ok();
+				expect(node.i).to.be(1);
 				done();
 			});
 		});
