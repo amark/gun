@@ -2,7 +2,7 @@
 	<a href="http://gundb.io">
 		<img src='https://cldup.com/TEy9yGh45l.svg'
 			width='40%'
-			alt="gun logo" />
+			alt="gun" />
 	</a>
 </h1>
 
