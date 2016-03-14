@@ -1,4 +1,10 @@
-# [![gun](https://cldup.com/-Cq2s4HgZN.png)](http://gundb.io/)
+<h1>
+	<a href="http://gundb.io">
+		<img src='https://cldup.com/TEy9yGh45l.svg'
+			width='40%'
+			alt="gun logo" />
+	</a>
+</h1>
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
