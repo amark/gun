@@ -690,8 +690,9 @@ describe('Gun', function(){
 				expect(Gun.is.lex.ify({'#': 'soul', '.': 'field', soul: 'foo', field: 'field', state: 0})).to.eql({'#': 'soul', '.': 'field', '>': 0});
 			});
 			it('is node',function(){
+				var n;
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}})).to.be(true);
-				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}})).to.be(true);
+				expect(Gun.is.node(n = {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}})).to.be(true);
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}, g: Infinity})).to.be(false);
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, z: NaN, c: '', d: 'e'})).to.be(false);
 				expect(Gun.is.node({_:{'#':'somesoulidhere'}, a:0, b: 1, y: {_: 'cool'}, c: '', d: 'e'})).to.be(false);
@@ -701,10 +702,14 @@ describe('Gun', function(){
 				expect(Gun.is.node({_:{}})).to.be(false);
 				expect(Gun.is.node({_:{}, a:1})).to.be(false);
 				expect(Gun.is.node({'#':'somesoulidhere'})).to.be(false);
+				Gun.is.node(n, function(v,f){
+					//console.log("v/f", v,f);
+				});
 			});
 			it('is graph',function(){
+				var g;
 				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}}})).to.be(true);
-				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(true);
+				expect(Gun.is.graph(g = {'somesoulidhere': {_:{'#':'somesoulidhere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(true);
 				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(true);
 				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}})).to.be(true);
 				expect(Gun.is.graph({'somesoulidhere': {_:{'#':'somesoulidhere'}, a:0, b: 1, c: '', d: 'e', f: {'#':'somethingelsehere'}}, foo: 1, 'somethingelsehere': {_:{'#':'somethingelsehere'}}})).to.be(false);
@@ -724,10 +729,13 @@ describe('Gun', function(){
 				expect(Gun.is.graph({_:{}})).to.be(false);
 				expect(Gun.is.graph({_:{}, a:1})).to.be(false);
 				expect(Gun.is.graph({'#':'somesoulidhere'})).to.be(false);
+				Gun.is.graph(g, function(n,s){
+					//console.log("node/soul", n,s);
+				});
 			});
 		});
 	});
-	describe.only('ify', function(){
+	describe('ify', function(){
 		var test, gun = Gun();
 		
 		it('null', function(done){

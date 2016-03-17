@@ -61,7 +61,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 			Type.list.map = function(l, c, _){ return Type.obj.map(l, c, _) }
 			Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
-			Type.obj = {is: function(o){ return Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' }} // TODO: PERF HIT!
+			Type.obj = {is: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }} // TODO: PERF HIT! Fixed?
 			Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o } 
 			Type.obj.del = function(o, k){
 				if(!o){ return }
@@ -80,83 +80,90 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 			Type.obj.as = function(o, f, v){ return o[f] = o[f] || (arguments.length >= 3? v : {}) }
 			Type.obj.has = function(o, t){ return o && Object.prototype.hasOwnProperty.call(o, t) }
-			Type.obj.empty = function(o, n){
-				if(!o){ return true }
-				return Type.obj.map(o,function(v,i){ // TODO: PERF! CACHE!
+			;(function(){
+				function empty(v,i){ n = this.n;
 					if(n && (i === n || (Type.obj.is(n) && Type.obj.has(n, i)))){ return }
 					if(i){ return true }
-				})? false : true;
-			}
-			Type.obj.map = function(l, c, _){
-				var u, i = 0, x, r, rr, ll, lle, f = Type.fns.is(c),
-				t = function(k,v){  // TODO: PERF! CACHE! ?
+				}
+				Type.obj.empty = function(o, n){
+					if(!o){ return true }
+					return Type.obj.map(o,empty,{n:n})? false : true;
+				}
+			}());
+			;(function(){
+				function t(k,v){
 					if(2 === arguments.length){
-						rr = rr || {};
-						rr[k] = v;
+						t.r = t.r || {};
+						t.r[k] = v;
 						return;
-					} rr = rr || [];
-					rr.push(k);
+					} t.r = t.r || [];
+					t.r.push(k);
 				};
-				if(Object.keys && Type.obj.is(l)){
-					ll = Object.keys(l); lle = true;
-				}
-				if(Type.list.is(l) || ll){
-					x = (ll || l).length;
-					for(;i < x; i++){
-						var ii = (i + Type.list.index);
-						if(f){
-							r = lle? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
-							if(r !== u){ return r }
-						} else {
-							//if(Type.test.is(c,l[i])){ return ii } // should implement deep equality testing!
-							if(c === l[lle? ll[i] : i]){ return ll? ll[i] : ii } // use this for now
-						}
+				Type.obj.map = function(l, c, _){
+					var u, i = 0, x, r, ll, lle, f = Type.fns.is(c);
+					t.r = null;
+					if(Object.keys && Type.obj.is(l)){
+						ll = Object.keys(l); lle = true;
 					}
-				} else {
-					for(i in l){
-						if(f){
-							if(Type.obj.has(l,i)){
-								r = _? c.call(_, l[i], i, t) : c(l[i], i, t);
+					if(Type.list.is(l) || ll){
+						x = (ll || l).length;
+						for(;i < x; i++){
+							var ii = (i + Type.list.index);
+							if(f){
+								r = lle? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
 								if(r !== u){ return r }
+							} else {
+								//if(Type.test.is(c,l[i])){ return ii } // should implement deep equality testing!
+								if(c === l[lle? ll[i] : i]){ return ll? ll[i] : ii } // use this for now
 							}
-						} else {
-							//if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
-							if(c === l[i]){ return i } // use this for now
+						}
+					} else {
+						for(i in l){
+							if(f){
+								if(Type.obj.has(l,i)){
+									r = _? c.call(_, l[i], i, t) : c(l[i], i, t);
+									if(r !== u){ return r }
+								}
+							} else {
+								//if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
+								if(c === l[i]){ return i } // use this for now
+							}
 						}
 					}
+					return f? t.r : Type.list.index? 0 : -1;
 				}
-				return f? rr : Type.list.index? 0 : -1;
-			}
+			}());
 			Type.time = {};
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
 		}(Util));
 		;(function(exports){ // On event emitter generic javascript utility.
-			function Scope(){
-				var s = function(a,b,c){ return s.tag = a, b? s.event(b,c) : s }
-				s.emit = emit;
-				s.event = event;
-				s.create = Scope;
-				s.on = {};
-				return s;
+			function On(){};
+			On.create = function(){
+				var on = function(e){
+					on.event.e = e;
+					on.event.s[e] = on.event.s[e] || [];
+					return on;
+				};
+				on.emit = function(a){
+					var e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
+					exports.list.map(s, function(hear, i){
+						if(!hear.fn){ s.splice(i-1, 0); return; }
+						if(1 === l){ hear.fn(a); return; }
+						hear.fn.apply(hear, args);
+					});
+					if(!s.length){ delete on.event.s[e] }
+				}
+				on.event = function(fn, i){
+					var s = on.event.s[on.event.e]; if(!s){ return }
+					var e = {fn: fn, i: i || 0, off: function(){ return !(e.fn = false) }};
+					return s.push(e), i? s.sort(sort) : i, e;
+				}
+				on.event.s = {};
+				return on;
 			}
-			function emit(a){
-				var s = this, tag = s.tag, on = s.on[tag], i = -1, at;
-				if(!on){ on = s.on[tag] = [] }
-				while(at = on[i = 1 + i]){ at.on(a) }
-				return s;
-			}
-			function event(fn){
-				var s = this, tag = s.tag, on = s.on[tag], at = new At(fn, tag, s);
-				if(!on){ on = s.on[tag] = [] }
-				on.push(at);
-				return s;
-			}
-			function At(fn, tag, s){
-				this.on = fn;
-				this.tag = tag;
-				this.scope = s;
-			}
-			exports.on = Scope();
+			var sort = exports.list.sort('i');
+			exports.on = On.create();
+			exports.on.create = On.create;
 		}(Util));
 		;(function(exports){ // Generic javascript scheduler utility.
 			function s(state, cb, time){ // maybe use lru-cache?
@@ -269,47 +276,55 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return o;
 		}
 		
-		Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
-			if(Gun.obj.is(v)){ // must be an object.
-				var id;
-				Gun.obj.map(v, function(s, f){ // map over the object... // TODO: PERF! CACHE!
-					if(id){ return id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-					if(f == Gun._.soul && Gun.text.is(s)){ // the field should be '#' and have a text value.
-						id = s; // we found the soul!
-					} else {
-						return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
-					}
-				});
-				if(id){ // a valid id was found.
-					return id; // yay! Return it.
+		;(function(){
+			function map(s, f){ var o = this; // map over the object...
+				if(o.id){ return o.id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
+				if(f == Gun._.soul && Gun.text.is(s)){ // the field should be '#' and have a text value.
+					o.id = s; // we found the soul!
+				} else {
+					return o.id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
 				}
 			}
-			return false; // the value was not a valid soul relation.
-		}
+			Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+				if(Gun.obj.is(v)){ // must be an object.
+					var o = {};
+					Gun.obj.map(v, map, o);
+					if(o.id){ // a valid id was found.
+						return o.id; // yay! Return it.
+					}
+				}
+				return false; // the value was not a valid soul relation.
+			}
+		}());
 
 		Gun.is.rel.ify = function(s){ var r = {}; return Gun.obj.put(r, Gun._.soul, s), r } // convert a soul into a relation and return it.
 		
-		Gun.is.node = function(n, cb, o){ var s; // checks to see if an object is a valid node.
-			if(!Gun.obj.is(n)){ return false } // must be an object.
-			if(s = Gun.is.node.soul(n)){ // must have a soul on it.
-				return !Gun.obj.map(n, function(v, f){ // we invert this because the way we check for this is via a negation. // TODO: PERF! CACHE!
-					if(f == Gun._.meta){ return } // skip over the metadata.
-					if(!Gun.is.val(v)){ return true } // it is true that this is an invalid node.
-					if(cb){ cb.call(o, v, f, n) } // optionally callback each field/value.
-				});
+		;(function(){
+			function map(v, f){ // we invert this because the way we check for this is via a negation.
+				if(f == Gun._.meta){ return } // skip over the metadata.
+				if(!Gun.is.val(v)){ return true } // it is true that this is an invalid node.
+				if(this.cb){ this.cb.call(this.o, v, f, this.n) } // optionally callback each field/value.
 			}
-			return false; // nope! This was not a valid node.
-		}
-
-		Gun.is.node.ify = function(n, o){ // convert a shallow object into a node.
-			o = Gun.text.is(o)? {soul: o} : o || {};
-			n = Gun.is.node.soul.ify(n, o); // put a soul on it.
-			Gun.obj.map(n, function(v, f){ // iterate over each field/value. // TODO: PERF! CACHE!
+			Gun.is.node = function(n, cb, o){ var s; // checks to see if an object is a valid node.
+				if(!Gun.obj.is(n)){ return false } // must be an object.
+				if(s = Gun.is.node.soul(n)){ // must have a soul on it.
+					return !Gun.obj.map(n, map, {o:o,n:n,cb:cb});
+				}
+				return false; // nope! This was not a valid node.
+			}
+		}());
+		;(function(){
+			function map(v, f){ // iterate over each field/value.
 				if(Gun._.meta === f){ return } // ignore meta.
-				Gun.is.node.state.ify(n, {field: f, value: v, state: o.state = o.state || Gun.time.is()}); // and set the state for this field and value on this node.
-			});
-			return n; // This will only be a valid node if the object wasn't already deep!
-		}
+				Gun.is.node.state.ify(this.n, {field: f, value: v, state: this.o.state = this.o.state || Gun.time.is()}); // and set the state for this field and value on this node.
+			}
+			Gun.is.node.ify = function(n, o){ // convert a shallow object into a node.
+				o = Gun.text.is(o)? {soul: o} : o || {};
+				n = Gun.is.node.soul.ify(n, o); // put a soul on it.
+				Gun.obj.map(n, map, {n:n,o:o});
+				return n; // This will only be a valid node if the object wasn't already deep!
+			}
+		}());
 		
 		Gun.is.node.soul = function(n, o){ return (n && n._ && n._[o || Gun._.soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
 
@@ -332,17 +347,21 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			if(Gun.num.is(o.state)){ s[o.field] = o.state }
 			return n;
 		}
-		
-		Gun.is.graph = function(g, cb, fn, o){ // checks to see if an object is a valid graph.
-			if(!Gun.obj.is(g) || Gun.obj.empty(g)){ return false } // must be an object.
-			return !Gun.obj.map(g, function(n, s){ // we invert this because the way we check for this is via a negation. // TODO: PERF! CACHE!
-				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)){ return true } // it is true that this is an invalid graph.
-				if(!Gun.fns.is(cb)){ return }			 
-				cb.call(o, n, s, function(fn){ // optional callback for each node. // TODO: PERF! CACHE!
-					if(fn){ Gun.is.node(n, fn, o) } // where we then have an optional callback for each field/value.
-				});
-			}); // makes sure it wasn't an empty object.
-		}
+		;(function(){
+			function nf(fn){ // optional callback for each node.
+				if(fn){ Gun.is.node(nf.n, fn, nf.o) } // where we then have an optional callback for each field/value.
+			}
+			function map(n, s){ // we invert this because the way we check for this is via a negation.
+				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, this.fn)){ return true } // it is true that this is an invalid graph.
+				if(!Gun.fns.is(this.cb)){ return }	
+				nf.n = n; nf.o = this.o;	 
+				this.cb.call(nf.o, n, s, nf);
+			}
+			Gun.is.graph = function(g, cb, fn, o){ // checks to see if an object is a valid graph.
+				if(!Gun.obj.is(g) || Gun.obj.empty(g)){ return false } // must be an object.
+				return !Gun.obj.map(g, map, {fn:fn,cb:cb,o:o}); // makes sure it wasn't an empty object.
+			}
+		}());
 		
 		Gun.is.graph.ify = function(n){ var s; // wrap a node into a graph.
 			if(s = Gun.is.node.soul(n)){ // grab the soul from the node, if it is a node.
@@ -384,17 +403,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
 		}
 
-		Gun.HAM.node = function(gun, node, opt){
-			if(!node){ return }
-			var soul = Gun.is.node.soul(node);
-			if(!soul){ return }
-			opt = Gun.num.is(opt)? {state: opt} : opt || {};
-			var vertex = gun.__.graph[soul] = gun.__.graph[soul] || Gun.is.node.ify({}, soul), machine = opt.state || gun.__.opt.state();
-			Gun.obj.map(node._, function(v,f){ // TODO: PERF! CACHE!
+		;(function(){
+			function meta(v,f){
 				if(Gun.obj.has(Gun.__, f)){ return }
-				Gun.obj.put(vertex._, f, v);
-			});
-			if(!Gun.is.node(node, function(value, field){ // TODO: PERF! CACHE!
+				Gun.obj.put(this._, f, v);
+			}
+			function map(value, field){
+				var node = this.node, vertex = this.vertex, machine = this.machine; //opt = this.opt;
 				var is = Gun.is.node.state(node, field), cs = Gun.is.node.state(vertex, field), iv = Gun.is.rel(value) || value, cv = Gun.is.rel(vertex[field]) || vertex[field];
 				var HAM = Gun.HAM(machine, is, cs, iv, cv);
 				if(HAM.err){
@@ -417,9 +432,18 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 						if(ctx.incoming.state === upper.max){ (upper.last || function(){})() }
 					}, gun.__.opt.state);*/
 				}
-			})){ return }
-			return vertex;
-		}
+			}
+			Gun.HAM.node = function(gun, node, opt){
+				if(!node){ return }
+				var soul = Gun.is.node.soul(node);
+				if(!soul){ return }
+				opt = Gun.num.is(opt)? {state: opt} : opt || {};
+				var vertex = gun.__.graph[soul] = gun.__.graph[soul] || Gun.is.node.ify({}, soul), machine = opt.state || gun.__.opt.state();
+				Gun.obj.map(node._, meta, vertex);
+				if(!Gun.is.node(node, map, {node:node,vertex:vertex,machine:machine,opt:opt})){ return }
+				return vertex;
+			}
+		}());
 
 		Gun.HAM.graph = function(gun, graph){ var g = {};
 			if(!Gun.is.graph(graph, function(node, soul){ // TODO: PERF! CACHE!
@@ -428,16 +452,19 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 			return g;
 		}
 
-		Gun.put = function(gun, graph, cb, opt){
-			opt = Gun.is.opt(opt || {}, gun.__.opt);
-			cb = cb || opt.any || function(){};
-			Gun.on('put').emit(gun, graph, function(err, ok){ // TODO: PERF! CACHE!
-				if(err){ Gun.log(err) }
-				var at = {ok: ok, err: err, opt: opt, graph: graph};
-				Gun.on('ack').emit(gun, at);
-				cb(at.err, at.ok, at);
-			}, opt);
-		}
+		(function(){
+
+			Gun.put = function(gun, graph, cb, opt){
+				opt = Gun.is.opt(opt || {}, gun.__.opt);
+				cb = cb || opt.any || function(){};
+				Gun.on('put').emit(gun, graph, function(err, ok){ // TODO: PERF! CACHE!
+					if(err){ Gun.log(err) }
+					var at = {ok: ok, err: err, opt: opt, graph: graph};
+					Gun.on('ack').emit(gun, at);
+					cb(at.err, at.ok, at);
+				}, opt);
+			}
+		}())
 
 		Gun.on('put').event(function(gun, graph, cb, opt){
 			if(!Gun.is.graph(graph, function(node, soul){ // TODO: PERF! CACHE!
@@ -510,6 +537,14 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				var ctx = {at: {path: [], obj: data}, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true, end: cb};
 				if(!data){ return ctx.err = 'Serializer does not have correct parameters.', cb(ctx.err, ctx) }
 				ctx.at.node = ctx.root;
+				loop(ctx, opt);
+				unique(ctx);
+			}
+			var _soul = Gun._.soul;
+			function recurse(ctx, opt){
+
+			}
+			function loop(ctx, opt){
 				while(ctx.loop && !ctx.err){
 					seen(ctx, ctx.at);
 					normalize(ctx, opt);
@@ -519,9 +554,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 						ctx.loop = false;
 					}
 				}
-				unique(ctx);
 			}
-			var _soul = Gun._.soul;
 			function normnode(ctx, at, soul){
 				var opt = ctx.opt;
 				at.soul = at.soul || soul || Gun.is.node.soul(at.obj) || Gun.is.node.soul(at.node) || opt.uuid();
@@ -532,15 +565,16 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				}
 				unique(ctx);
 			}
+			function meta(v,f){ var ctx = this;
+				Gun.obj.put(ctx.at.node[ctx.at.field], f, Gun.obj.copy(v));
+			}
 			function map(val, field){
 				var ctx = this, opt = ctx.opt;
 				field = ctx.at.field = String(field);
 				ctx.at.value = val;
 				if(Gun._.meta == field){
 					Gun.obj.as(ctx.at.node, Gun._.meta);
-					Gun.obj.map(val, function(v,f){
-						Gun.obj.put(ctx.at.node[field], f, Gun.obj.copy(v));
-					});
+					Gun.obj.map(val, meta, ctx);
 					return;
 				}
 				//Gun.obj.has(Gun.__, field) ||
@@ -569,12 +603,6 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				opt.node(ctx, normnode);
 				Gun.obj.map(ctx.at.obj, map, ctx);
 			}
-			/*
-			function seen(ctx, at){
-				return Gun.list.map(ctx.seen, function(has){
-					if(at.obj === has.obj){ return has }
-				}) || (ctx.seen.push(at) && false);
-			}*/
 			function seen(ctx, at){
 				var arr = ctx.seen, i = arr.length, has;
 				while(i--){ has = arr[i];
@@ -582,21 +610,15 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				}
 				ctx.seen.push(at);
 			}
-			/*
 			function unique(ctx){
-				if(ctx.err || (!Gun.list.map(ctx.seen, function(at){
-					if(!at.soul){ return true }
-				}) && !ctx.loop)){ return ctx.end(ctx.err, ctx), ctx.end = function(){}; }
-			}*/
-			function unique(ctx){
-				if(ctx.err){ return ctx.end(ctx.err, ctx), ctx.end = function(){} }
+				if(ctx.err){ return ctx.end(ctx.err, ctx), ctx.end = noop }
 				if(ctx.loop){ return true }
 				var arr = ctx.seen, i = arr.length, at;
 				while(i--){ at = arr[i];
 					if(!at.soul){ return true }
 				}
 				ctx.end(ctx.err, ctx);
-				ctx.end = function(){};
+				ctx.end = noop;
 			}
 			var reserved = Gun.list.map([Gun._.meta, Gun._.soul, Gun._.field, Gun._.value, Gun._.state], function(v,i,t){
 				t(v,1);
@@ -832,7 +854,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 		Gun.chain.val = function(){ // val only called once per field, not changes. Chainable!
 
 		}
-	});//(Gun.chain));
+	}(Gun.chain));
 
 	;(function(chain){
 		//gun.get('users').path(i).path('where').put(pos);
@@ -872,9 +894,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				var lex = at.lex, field = at.lex.field;
 				if(field){ (put.node || put.root)[field] = put.data }
 				put.root = put.root || put.data;
-				localStorage['putroot'] = JSON.stringify(put.root);
+				//localStorage['putroot'] = JSON.stringify(put.root);
 				//localStorage[Gun.is.node.soul(put.root)] = JSON.stringify(put.root);
-				//gun.put.ify(gun, put.root, at, opt);
+				gun.put.ify(gun, put.root, at, opt);
 			}, function(at){
 				if(at.node){ return }
 				var lex = at.lex, soul = lex.soul, field = lex.field;
@@ -906,7 +928,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.4 !!!!!!!!!!!!!!!!!!!!!!");
 				Gun.is.node.state.ify(eat.node, {field: eat.field, state: opt.state});
 			}, uuid: gun.__.opt.uuid, state: opt.state});
 		};
-	}(Gun.chain));
+	});//(Gun.chain));
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
 	if(root.window){ window.Gun = Gun }

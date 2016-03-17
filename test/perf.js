@@ -19,7 +19,7 @@
 	setTimeout(function(){
 		stool.run();
 	},1);
-	stool.setup(function(){
+	stool.setup(window.setup = function(){
 			var list = [1,2,3];
 			var add = function(a,b){ return a + b };
 			var addprop = function(a,b){ return a.num + b.num };
@@ -1294,8 +1294,15 @@
 				};
 			}());
 			;(function(){
+				function map(node, soul){
+					Gun.tab.store.put(soul, node);
+				}
+				function ify(err, env){
+					if(err){ return }
+					Gun.obj.map(env.graph, map);
+				}
 				function on(cat){
-					console.log('PUT!', cat);
+					Gun.ify(cat.put.data, ify);
 				}
 				CHAINA7.chain.put = function(data, cb, opt){ 
 					var chain = this, at = chain._, put = at.put;
@@ -1307,8 +1314,38 @@
 				};
 			}());
 			var chaina7 = CHAINA7();
+			;(function(exports){ // On event emitter generic javascript utility.
+				function Scope(){
+					var s = function(a,b,c){ return s.tag = a, b? s.event(b,c) : s }
+					s.emit = emit;
+					s.event = event;
+					s.create = Scope;
+					s.on = {};
+					return s;
+				}
+				function emit(a){
+					var s = this, tag = s.tag, on = s.on[tag], i = -1, at;
+					if(!on){ on = s.on[tag] = [] }
+					while(at = on[i = 1 + i]){ at.on(a) }
+					return s;
+				}
+				function event(fn){
+					var s = this, tag = s.tag, on = s.on[tag], at = new At(fn, tag, s);
+					if(!on){ on = s.on[tag] = [] }
+					on.push(at);
+					return s;
+				}
+				function At(fn, tag, s){
+					this.on = fn;
+					this.tag = tag;
+					this.scope = s;
+				}
+				exports.on = Scope();
+			}(window));
 	});
-/*
+	stool.add('get path * 2 put', function(){
+		gun.get('users').path(i).path('where').put(pos);
+	});
 	stool.add('chain', function(){
 		chaina7.get('users').path(i).path('where').put(pos);
 	});
@@ -1316,6 +1353,7 @@
 	stool.add('chain', function(){
 		chaina6.get('users').path(i).path('where').put(pos);
 	});
+	return;
 	// Counter to performance advice other places, it seems faster to not declare the fields in advance!
 	stool.add('chain', function(){
 		chaina5.get('users').path(i).path('where').put(pos);
@@ -1395,14 +1433,12 @@
 	stool.add('chain nothing', function(){
 		chain.get('users').path(i).path('where').put(pos);
 	});
-	stool.add('get path * 2 put', function(){
-		gun.get('users').path(i).path('where').put(pos);
-	});
-*/
 	stool.add('Gun.ify', function(){
 		Gun.ify(data);
 	});
-	return;
+	stool.add('JSON.ify', function(){
+		JSON.stringify(data);
+	});
 	stool.add('on', function(){
 		on('data').emit(obj);
 	});
