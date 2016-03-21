@@ -1314,6 +1314,7 @@
 				};
 			}());
 			var chaina7 = CHAINA7();
+
 			;(function(exports){ // On event emitter generic javascript utility.
 				function Scope(){
 					var s = function(a,b,c){ return s.tag = a, b? s.event(b,c) : s }
@@ -1342,9 +1343,438 @@
 				}
 				exports.on = Scope();
 			}(window));
+
+			var u; function noop(){};
+			function CHAINA8(o){
+				if(!(this instanceof CHAINA8)){ return new CHAINA8(o) }
+				this._ = {lex: {}, put: {}, count: 0};
+				if(!(o instanceof CHAINA8)){ this.opt(o) }
+			};
+			CHAINA8.is = function(chain){ return chain instanceof CHAINA8 }
+			CHAINA8.get = function(chain, lex, cb){
+				var soul = lex.soul, graph = chain.__.graph, node;
+				if(node = graph[soul]){
+					return cb.call(chain, null, node);
+				}
+				cb.call(chain, null, node);
+			};
+			CHAINA8.state = Date.now || function(){ return new Date().getTime() }
+			CHAINA8.constructor = CHAINA8;
+			CHAINA8.chain = CHAINA8.prototype;
+			CHAINA8.chain.opt = function(o){
+				var chain = this;
+				chain.__ = chain.__ || chain._;
+				chain.__.graph = chain.__.graph || {};
+				return chain;
+			};
+			CHAINA8.chain.chain = function(){
+				var chain = new CHAINA8(this);
+				chain.__ = this.__;
+				chain.back = this;
+				return chain;
+			};
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.count++;
+					at.err = err;
+					at.node = node;
+					if(chain.next){ chain.next.on(at) }
+				}
+				CHAINA8.chain.get = function(soul, cb, opt){
+					var chain = this.chain(), at = chain._, lex = at.lex;
+					lex.soul = soul;
+					lex.opt = opt;
+					if(cb){
+						at.ok = cb;
+						CHAINA8.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.err = err;
+					at.node = node;
+					chain.on(at);
+				}
+				function on(cat){
+					var chain = this, at = chain._, node, vert, val;
+					at.count++;
+					at.err = cat.err;
+					if(node = cat.node){
+						if(val = node[field]){
+							at.node = vert = {};
+							vert[field] = val;
+						}
+					}
+					at.back = cat;
+					if(chain.next){ chain.next.on(at) }
+				}
+				CHAINA8.chain.path = function(field, cb, opt){ 
+					var chain = this.chain(), at = chain._, lex = at.lex
+					, back = this, from = back._, flex = from.lex, vert;
+					if(!field){
+						if(0 != field){
+							return chain;
+						}
+					}
+					lex.field = field = ''+field;
+					back.next = chain;
+					chain.on = on;
+					if(from.count){
+						chain.on(from);
+					} else
+					if(!flex.field){
+						lex.soul = flex.soul;
+						CHAINA8.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function map(node, soul){
+					Gun.tab.store.put(soul, node);
+				}
+				function ify(err, env){
+					if(err){ return }
+					Gun.obj.map(env.graph, map);
+				}
+				function wrap(cat, data){
+					if(!cat){ return data }
+					if(cat.lex.field){
+						data = Gun.obj.put({}, cat.lex.field, data);
+					}
+					data = Gun.is.node.soul.ify(data, cat.lex.soul);
+					if(cat.lex.soul){ return data }
+					if(cat !== cat.back){
+						return wrap(cat.back, data);
+					}
+					return data;
+				}
+				function on(cat){
+					var data = wrap(cat, cat.put.data);
+					Gun.ify(data, ify);
+				}
+				CHAINA8.chain.put = function(data, cb, opt){ 
+					var chain = this, at = chain._, put = at.put;
+					put.data = data;
+					put.state = CHAINA8.state();
+					chain.on = on;
+					if(at.count){ chain.on(at) }
+					return chain;
+				};
+			}());
+			var chaina8 = CHAINA8();
+
+			var u; function noop(){};
+			function CHAINA9(o){
+				if(!(this instanceof CHAINA9)){ return new CHAINA9(o) }
+				this._ = {lex: {}, put: {}, count: 0};
+				if(!(o instanceof CHAINA9)){ this.opt(o) }
+			};
+			CHAINA9.is = function(chain){ return chain instanceof CHAINA9 }
+			CHAINA9.get = function(chain, lex, cb){
+				var soul = lex.soul, graph = chain.__.graph, node;
+				if(node = graph[soul]){
+					return cb.call(chain, null, node);
+				}
+				cb.call(chain, null, node);
+			};
+			CHAINA9.state = Date.now || function(){ return new Date().getTime() }
+			CHAINA9.constructor = CHAINA9;
+			CHAINA9.chain = CHAINA9.prototype;
+			CHAINA9.chain.opt = function(o){
+				var chain = this;
+				chain.__ = chain.__ || chain._;
+				chain.__.graph = chain.__.graph || {};
+				return chain;
+			};
+			CHAINA9.chain.chain = function(){
+				var chain = new CHAINA9(this);
+				chain.__ = this.__;
+				chain.back = this;
+				return chain;
+			};
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.count++;
+					at.err = err;
+					at.node = node;
+					if(chain.next){ chain.next.on(at) }
+				}
+				CHAINA9.chain.get = function(soul, cb, opt){
+					var chain = this.chain(), at = chain._, lex = at.lex;
+					lex.soul = soul;
+					lex.opt = opt;
+					if(cb){
+						at.ok = cb;
+						CHAINA9.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.err = err;
+					at.node = node;
+					chain.on(at);
+				}
+				function on(cat){
+					var chain = this, at = chain._, node, vert, val;
+					at.count++;
+					at.err = cat.err;
+					if(node = cat.node){
+						if(val = node[field]){
+							at.node = vert = {};
+							vert[field] = val;
+						}
+					}
+					at.back = cat;
+					if(chain.next){ chain.next.on(at) }
+				}
+				CHAINA9.chain.path = function(field, cb, opt){ 
+					var chain = this.chain(), at = chain._, lex = at.lex
+					, back = this, from = back._, flex = from.lex, vert;
+					if(!field){
+						if(0 != field){
+							return chain;
+						}
+					}
+					lex.field = field = ''+field;
+					back.next = chain;
+					chain.on = on;
+					if(from.count){
+						chain.on(from);
+					} else
+					if(!flex.field){
+						lex.soul = flex.soul;
+						CHAINA9.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function wrap(cat, data){
+					if(!cat){ return data }
+					if(cat.lex.field){
+						data = Gun.obj.put({}, cat.lex.field, data);
+					}
+					data = Gun.is.node.soul.ify(data, cat.lex.soul);
+					if(cat.lex.soul){ return data }
+					if(cat !== cat.back){
+						return wrap(cat.back, data);
+					}
+					return data;
+				}
+				function on(cat){ var at = cat, state = Gun.time.is();
+					var data = wrap(cat, cat.put.data);
+					Gun.ify(data, end, {
+						node: function(env, cb){ var eat = env.at;
+							if(1 === eat.path.length && at.node){
+								eat.soul = Gun.is.rel(at.node[eat.path[0]]);
+							}
+							cb(env, eat);
+						}, value: function(env){ var eat = env.at;
+							if(!eat.field){ return }
+							Gun.is.node.state.ify(eat.node, {field: eat.field, state: state});
+						}, uuid: gun.__.opt.uuid, state: state
+					});
+				}
+				function ack(err, ok){
+					//if(Gun.fns.is(opt.any)){ opt.any.call(gun, err, ok) } // TODO: gun context!
+				}
+				function end(err, env){
+					if(err){ return }
+					Gun.put(gun, env.graph, ack, env.opt); // TODO: incorrect options!
+				}
+				CHAINA9.chain.put = function(data, cb, opt){ 
+					var chain = this, at = chain._, put = at.put;
+					put.data = data;
+					put.state = CHAINA9.state();
+					chain.on = on;
+					if(at.count){ chain.on(at) }
+					return chain;
+				};
+			}());
+			var chaina9 = CHAINA9();
+
+			var u; function noop(){};
+			function CHAINB1(o){
+				if(!(this instanceof CHAINB1)){ return new CHAINB1(o) }
+				this._ = {lex: {}, put: {}, count: 0};
+				if(!(o instanceof CHAINB1)){ this.opt(o) }
+			};
+			CHAINB1.is = function(chain){ return chain instanceof CHAINB1 }
+			CHAINB1.get = function(chain, lex, cb){
+				var soul = lex.soul, graph = chain.__.graph, node;
+				if(node = graph[soul]){
+					return cb.call(chain, null, node);
+				}
+				Gun.tab.store.get(soul, function(err, data){
+					graph[soul] = data;
+					cb.call(chain, err, data);
+				});
+			};
+			CHAINB1.state = Date.now || function(){ return new Date().getTime() }
+			CHAINB1.constructor = CHAINB1;
+			CHAINB1.chain = CHAINB1.prototype;
+			CHAINB1.chain.opt = function(o){
+				var chain = this;
+				chain.__ = chain.__ || chain._;
+				chain.__.graph = chain.__.graph || {};
+				return chain;
+			};
+			CHAINB1.chain.chain = function(){
+				var chain = new CHAINB1(this);
+				chain.__ = this.__;
+				chain.back = this;
+				return chain;
+			};
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.count++;
+					at.err = err;
+					at.node = node;
+					if(chain.next){ chain.next.run(at) }
+				}
+				CHAINB1.chain.get = function(soul, cb, opt){
+					var chain = this.chain(), at = chain._, lex = at.lex;
+					lex.soul = soul;
+					lex.opt = opt;
+					if(cb){
+						at.ok = cb;
+						CHAINB1.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			function got(err, node){
+				var chain = this, at = chain._;
+				at.err = err;
+				at.node = node;
+				chain.run(at);
+			}
+			;(function(){
+				function run(cat){
+					var chain = this, at = chain._, lex = at.lex, field = lex.field, node, vert, val;
+					at.count++;
+					at.err = cat.err;
+					if(node = cat.node){
+						if(val = Gun.is.rel(node[cat.lex.field])){
+							return CHAINB1.get(chain, {soul: val}, got);
+						}
+						if(val = node[field]){
+							at.node = vert = {};
+							vert[field] = val;
+						}
+					}
+					at.back = cat;
+					if(chain.next){ chain.next.run(at) }
+				}
+				CHAINB1.chain.path = function(field, cb, opt){ 
+					var chain = this.chain(), at = chain._, lex = at.lex
+					, back = this, from = back._, flex = from.lex, vert;
+					if(!field){
+						if(0 != field){
+							return chain;
+						}
+					}
+					lex.field = field = ''+field;
+					back.next = chain;
+					chain.run = run;
+					if(from.count){
+						chain.run(from);
+					} else
+					if(!flex.field){
+						lex.soul = flex.soul;
+						CHAINB1.get(chain, lex, got);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function wrap(cat, data){
+					if(!cat){ return data }
+					if(cat.lex.field){
+						data = Gun.obj.put({}, cat.lex.field, data);
+					}
+					data = Gun.is.node.soul.ify(data, cat.lex.soul);
+					if(cat.lex.soul){ return data }
+					if(cat !== cat.back){
+						return wrap(cat.back, data);
+					}
+					return data;
+				}
+				function run(cat){ var at = cat, state = Gun.time.is();
+					var data = wrap(cat, cat.put.data);
+					Gun.ify(data, end, {
+						node: function(env, cb){ var eat = env.at;
+							if(1 === eat.path.length && at.node){
+								eat.soul = Gun.is.rel(at.node[eat.path[0]]);
+							}
+							cb(env, eat);
+						}, value: function(env){ var eat = env.at;
+							if(!eat.field){ return }
+							Gun.is.node.state.ify(eat.node, {field: eat.field, state: state});
+						}, uuid: gun.__.opt.uuid, state: state
+					});
+				}
+				function ack(err, ok){
+					//if(Gun.fns.is(opt.any)){ opt.any.call(gun, err, ok) } // TODO: gun context!
+				}
+				function end(err, env){
+					if(err){ return }
+					Gun.put(gun, env.graph, ack, env.opt); // TODO: incorrect options!
+				}
+				CHAINB1.chain.put = function(data, cb, opt){ 
+					var chain = this, at = chain._, put = at.put;
+					put.data = data;
+					put.state = CHAINB1.state();
+					chain.run = run;
+					if(at.count){ chain.run(at) }
+					return chain;
+				};
+			}());
+			;(function(){
+				function run(cat){
+					var chain = this, lex = cat.lex, node = cat.node, field = lex.field, val;
+					if(field && (val = Gun.is.rel(node[field]))){
+						return CHAINB1.get(chain, {soul: val}, got);
+					}
+					chain.cb(cat.node);
+				}
+				CHAINB1.chain.on = function(cb){
+					var chain = this, at = chain._;
+					chain.run = run;
+					chain.cb = cb;
+					if(at.count){ chain.run(at) }
+					return chain;
+				}
+			}());
+			var chainb1 = CHAINB1();
 	});
+	localStorage.clear();
+	/*
 	stool.add('get path * 2 put', function(){
 		gun.get('users').path(i).path('where').put(pos);
+	});
+	*/
+	stool.add('chain', function(){
+		chainb1.get('users').path(i).path('where').on(function(node){
+			console.log(node);
+		});
+	});
+	stool.add('chain', function(){
+		chaina9.get('users').path(i).path('where').put(pos);
+	});
+	return;
+	stool.add('chain', function(){
+		chaina8.get('users').path(i).path('where').put(pos);
 	});
 	stool.add('chain', function(){
 		chaina7.get('users').path(i).path('where').put(pos);
@@ -1353,7 +1783,6 @@
 	stool.add('chain', function(){
 		chaina6.get('users').path(i).path('where').put(pos);
 	});
-	return;
 	// Counter to performance advice other places, it seems faster to not declare the fields in advance!
 	stool.add('chain', function(){
 		chaina5.get('users').path(i).path('where').put(pos);

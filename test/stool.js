@@ -49,6 +49,7 @@ function run() {
 		results[i].innerText = 'queued';
 		suite.add(titles[i].value, cases[i].value, {
 			'setup': common.value,
+			'onError': function(a,b,c){ console.log(a.message) },
 			'onCycle': (function (result) {
 				return function(event) {
 					if (event.target.aborted) return;
