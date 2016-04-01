@@ -12,6 +12,9 @@
 
 GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9KB** gzipped.
 
+
+[![1 minute demo of fault tolerance](http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg)](https://youtu.be/-i-11T5ZI9o)
+
 ## Why?
 
  - **Realtime** - It may be trivial to get realtime updates with socket.io or something, but what you do not get is *state synchronization*. GUN does this for you out of the box, assuring that two users' simultaneous updates won't concurrently break each other.
