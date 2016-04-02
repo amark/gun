@@ -47,6 +47,16 @@
 			var obj = {a: true, b: 1, c: 'Hello world!'};
 			var data = {users: {1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}}};
 
+			var any = function(err, node){
+				//console.log('any', err, node);
+			}
+			var ok = function(node, field){
+				//console.log('ok', field, node);
+			}
+			var err = function(err){
+				console.log(err);
+			}
+
 			function CHAIN(){}
 			CHAIN.chain = CHAIN.prototype;
 			CHAIN.chain.get = function(){ return this };
@@ -1757,13 +1767,225 @@
 				}
 			}());
 			var chainb1 = CHAINB1();
+
+			var u; function noop(){};
+			function CHAINB2(o){
+				if(!(this instanceof CHAINB2)){ return new CHAINB2(o) }
+				this._ = {lex: {}, put: {}, count: 0};
+				if(!(o instanceof CHAINB2)){ this.opt(o) }
+			};
+			CHAINB2.is = function(chain){ return chain instanceof CHAINB2 }
+			CHAINB2.get = function(chain, lex, cb){
+				var soul = lex.soul, graph = chain.__.graph, node;
+				if(node = graph[soul]){
+					return cb.call(chain, null, node);
+				}
+				Gun.tab.store.get(soul, function(err, data){
+					graph[soul] = data;
+					cb.call(chain, err, data);
+				});
+			};
+			CHAINB2.state = Date.now || function(){ return new Date().getTime() }
+			CHAINB2.constructor = CHAINB2;
+			CHAINB2.chain = CHAINB2.prototype;
+			CHAINB2.chain.opt = function(o){
+				var chain = this;
+				chain.__ = chain.__ || chain._;
+				chain.__.graph = chain.__.graph || {};
+				return chain;
+			};
+			CHAINB2.chain.chain = function(){
+				var chain = new CHAINB2(this);
+				chain.__ = this.__;
+				chain.back = this;
+				return chain;
+			};
+			;(function(){
+				function get(err, node){
+					var chain = this, at = chain._;
+					at.count++;
+					at.err = err;
+					at.node = node;
+					if(chain.next){ chain.next.run(at) }
+				}
+				CHAINB2.chain.get = function(soul, cb, opt){
+					var chain = this.chain(), at = chain._, lex = at.lex;
+					lex.soul = soul;
+					lex.opt = opt;
+					if(cb){
+						at.ok = cb;
+						CHAINB2.get(chain, lex, get);
+					}
+					return chain;
+				};
+			}());
+			function got(err, node){
+				var chain = this, at = chain._;
+				at.err = err;
+				at.node = node;
+				chain.run(at);
+			}
+			;(function(){
+				function run(cat){
+					var chain = this, at = chain._, lex = at.lex, field = lex.field, node, vert, val;
+					at.count++;
+					at.err = cat.err;
+					if(node = cat.node){
+						if(val = Gun.is.rel(node[cat.lex.field])){
+							return CHAINB2.get(chain, {soul: val}, got);
+						}
+						if(val = node[field]){
+							at.node = vert = {};
+							vert[field] = val;
+						}
+					}
+					at.back = cat;
+					if(chain.next){ chain.next.run(at) }
+				}
+				CHAINB2.chain.path = function(field, cb, opt){ 
+					var chain = this.chain(), at = chain._, lex = at.lex
+					, back = this, from = back._, flex = from.lex, vert;
+					if(!field){
+						if(0 != field){
+							return chain;
+						}
+					}
+					lex.field = field = ''+field;
+					back.next = chain;
+					chain.run = run;
+					if(from.count){
+						chain.run(from);
+					} else
+					if(!flex.field){
+						lex.soul = flex.soul;
+						CHAINB2.get(chain, lex, got);
+					}
+					return chain;
+				};
+			}());
+			;(function(){
+				function wrap(cat, data){
+					if(!cat){ return data }
+					if(cat.lex.field){
+						data = Gun.obj.put({}, cat.lex.field, data);
+					}
+					data = Gun.is.node.soul.ify(data, cat.lex.soul);
+					if(cat.lex.soul){ return data }
+					if(cat !== cat.back){
+						return wrap(cat.back, data);
+					}
+					return data;
+				}
+				function run(cat){ var at = cat, state = Gun.time.is();
+					var data = wrap(cat, cat.put.data);
+					/*end(null, {graph: {
+						users: {_: {'#': 'users', '>': {1: 9}}, 1: {'#': 'fdsa'}},
+						fdsa: {_: {'#': 'fdsa', '>': {where: 9}}, where: {'#': 'sadf'}},
+						sadf: {_: {'#': 'sadf', '>': {lat: 9, lng: 9, i: 9}}, lat: 0.123456789, lng: 0.987654321, i:1}
+					}});return;*/
+					Gun.ify(data, end, {
+						node: function(env, cb){ var eat = env.at;
+							if(1 === eat.path.length && at.node){
+								eat.soul = Gun.is.rel(at.node[eat.path[0]]);
+							}
+							cb(env, eat);
+						}, value: function(env){ var eat = env.at;
+							if(!eat.field){ return }
+							Gun.is.node.state.ify(eat.node, {field: eat.field, state: state});
+						}, uuid: gun.__.opt.uuid, state: state
+					});
+				}
+				function ack(err, ok){
+					//if(Gun.fns.is(opt.any)){ opt.any.call(gun, err, ok) } // TODO: gun context!
+				}
+				function end(err, env){
+					if(err){ return }
+					Gun.put(gun, env.graph, ack, env.opt); // TODO: incorrect options!
+				}
+				CHAINB2.chain.put = function(data, cb, opt){ 
+					var chain = this, at = chain._, put = at.put;
+					put.data = data;
+					put.state = CHAINB2.state();
+					chain.run = run;
+					if(at.count){ chain.run(at) }
+					return chain;
+				};
+			}());
+			;(function(){
+				function run(cat){
+					var chain = this, lex = cat.lex, node = cat.node, field = lex.field, val;
+					if(field && (val = Gun.is.rel(node[field]))){
+						return CHAINB2.get(chain, {soul: val}, got);
+					}
+					chain.cb(cat.node);
+				}
+				CHAINB2.chain.on = function(cb){
+					var chain = this, at = chain._;
+					chain.run = run;
+					chain.cb = cb;
+					if(at.count){ chain.run(at) }
+					return chain;
+				}
+			}());
+			var chainb2 = CHAINB2();
+
+			function gun_get(soul){
+				gun_get.as = 'a';
+				if(!gun_get.a) Gun.tab.store.get(soul, gun_get.load);
+				return gun_get;
+			}
+			gun_get.load = function(err,data){ gun_get[gun_get.as] = data }
+			gun_get.path = function(f){
+				var soul = Gun.is.rel(gun_get.a[f]);
+				gun_get.as = 'b';
+				if(!gun_get.b) Gun.tab.store.get(soul, gun_get.load);
+				return gun_get;
+			}
+			gun_get.pathing = function(f){
+				var soul = Gun.is.rel(gun_get.b[f]);
+				gun_get.as = 'c';
+				if(!gun_get.c) Gun.tab.store.get(soul, gun_get.load);
+				return gun_get;
+			}
+			gun_get.on = function(cb){
+				cb(gun_get.c);
+				return gun_get;
+			}
 	});
-	localStorage.clear();
 	/*
+	localStorage.clear();
 	stool.add('get path * 2 put', function(){
 		gun.get('users').path(i).path('where').put(pos);
 	});
 	*/
+	stool.add('get path path on', function(){
+		gun.get('users').path(i).path('where').on(ok);
+	});
+	stool.add('get path path', function(){
+		gun.get('users').path(i).path('where', any);
+	});
+	stool.add('get path', function(){
+		gun.get('users').path(i, any);
+	});
+	stool.add('get on', function(){
+		gun.get('users').on(ok);
+	});
+	stool.add('get', function(){
+		gun.get('users', any);
+	});
+	return;
+	stool.add('get path * 2 on', function(){
+		gun.get('users').path(i).path('where').on(function(node){
+			console.log(node);
+		});
+	});
+	return;
+	stool.add('chain', function(){
+		chainb2.get('users').path(i).path('where').on(function(node){
+			//console.log(node);
+		});
+	});
+	return;
 	stool.add('chain', function(){
 		chainb1.get('users').path(i).path('where').on(function(node){
 			console.log(node);
