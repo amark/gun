@@ -1952,12 +1952,11 @@
 				return gun_get;
 			}
 	});
-	/*
 	localStorage.clear();
 	stool.add('get path * 2 put', function(){
 		gun.get('users').path(i).path('where').put(pos);
 	});
-	*/
+	return;
 	stool.add('get path path on', function(){
 		gun.get('users').path(i).path('where').on(ok);
 	});
@@ -2087,6 +2086,7 @@
 	stool.add('Gun.ify', function(){
 		Gun.ify(data);
 	});
+	return;
 	stool.add('JSON.ify', function(){
 		JSON.stringify(data);
 	});
