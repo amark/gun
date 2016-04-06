@@ -824,14 +824,45 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			at.link.call({}, cat, at);
 		}
 		;(function(){
+			function wrap(cat, data){
+				if(!cat){ return data }
+				if(cat.lex.field){
+					data = Gun.obj.put({}, cat.lex.field, data);
+				}
+				data = Gun.is.node.soul.ify(data, cat.lex.soul);
+				if(cat.lex.soul){ return data }
+				if(cat !== cat.back){
+					return wrap(cat.back, data);
+				}
+				return data;
+			}	
+			function link(cat, at){
+				var data = wrap(cat, at.put.data); // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
+				var state = at.put.state;
+				Gun.ify(data, end, {
+					node: function(env, cb){ var eat = env.at;
+						if(1 === eat.path.length && at.node){
+							eat.soul = Gun.is.rel(at.node[eat.path[0]]);
+						}
+						cb(env, eat);
+					}, value: function(env){ var eat = env.at;
+						if(!eat.field){ return }
+						Gun.is.node.state.ify(eat.node, {field: eat.field, state: state});
+					}, uuid: gun.__.opt.uuid, state: state
+				});
+			}
+			function end(err, env){
+				if(err){ return }
+				Gun.put({}); // TODO: incorrect options!
+			}
 			Gun.chain.put = function(data, cb, opt){ 
-				var back = this, gun = back.chain(), at = gun._, put = at.put || {};
+				var back = this, gun = back.chain(), at = gun._, put = at.put || (at.put = {});
 				put.data = data;
+				put.state = Gun.time.is(); // TODO: BUG! Should use NTS capable stuff.
 				//put.state = opt.state();
 				back.on('chain', link, at);
 				if(!at.ran){
-					lex.soul = flex.soul;
-					Gun.get(at);
+					Gun.get(back._);
 				}
 				return gun;
 			};
@@ -880,6 +911,11 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 		;(function(){ var u;
 			function got(){ this.link.call({}, this, this) }
 			function link(cat, at){
+				if(!cat.node){ // TODO: I think this is fine, belonging here, but it might need to be pushed further down.
+					at.back = cat; // TODO: BUG! concerned about race conditions.
+					at.on('chain').emit(at);
+					return;
+				}
 				if(at.gun === cat.gun){
 					// TODO: opt.any
 					if(cat.node){
@@ -890,6 +926,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 							at.gun._.cache = cache;
 						}
 					}
+					// TODO: BUG! at.back = cat?
 					at.on('chain').emit(cat);
 					return;
 				}
