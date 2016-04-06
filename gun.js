@@ -550,7 +550,7 @@
 		}
 
 		Gun.chain.chain = function(s){
-			var from = this, gun = !from.back? from : Gun(from);
+			var from = this, gun = !from.back? from : new this.constructor(from);
 			gun.back = gun.back || from;
 			gun.__ = gun.__ || from.__;
 			gun._ = gun._ || {};
