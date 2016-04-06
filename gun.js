@@ -550,7 +550,7 @@
 		}
 
 		Gun.chain.chain = function(s){
-			var from = this, gun = !from.back? from : Gun(from);
+			var from = this, gun = !from.back? from : new this.constructor(from);
 			gun.back = gun.back || from;
 			gun.__ = gun.__ || from.__;
 			gun._ = gun._ || {};
@@ -1137,7 +1137,7 @@
 	};
 	console.debug = function(i, s){ return (Gun.log.debug && i === Gun.log.debug && Gun.log.debug++) && root.console.log.apply(root.console, arguments), s };
 	Gun.log.count = function(s){ return Gun.log.count[s] = Gun.log.count[s] || 0, Gun.log.count[s]++ }
-}());
+}.bind(this || module)());
 
 
 ;(function(Tab){
@@ -1152,7 +1152,7 @@
 		s.del = function(key){ return store.removeItem(key) }
 		var store = this.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;
-	}(Tab));
+	}.bind(this || module)(Tab));
 
 	Gun.on('opt').event(function(gun, opt){
 		opt = opt || {};
@@ -1437,4 +1437,4 @@
 		}
 		return r;
 	}());
-}({}));
+}.bind(this || module)({}));
