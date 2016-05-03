@@ -15,6 +15,7 @@
 	/*
 		******* START AT THE BOTTOM AND READ UP *******
 	*/
+	window.i = 1;
 	if(!this.stool){ return }
 	setTimeout(function(){
 		stool.run();
@@ -23,15 +24,19 @@
 			var list = [1,2,3];
 			var add = function(a,b){ return a + b };
 			var addprop = function(a,b){ return a.num + b.num };
-			var i = 1;
+			//var i = 1;
 			var pos = {lat: Math.random(), lng: Math.random(), i: i};
 			var f1 = function(a){ return a };
 			var f2 = function(a,b){ return b };
 			var f3 = function(a,b){ return a + b };
 			var f4 = function(a,b){ return b + a };
 			var f5 = function(a,b,c){ return a + b + c };
-			var gun = Gun();
-			var on = Gun.on.create();
+			//window.localStorage.clear();
+			var gun = window.gun = window.gun || Gun();
+			//gun.get('users').path(1).path('where').put(pos);
+			//var got = gun.get('hewo');
+			//got.put({hello: 'world'});
+			var on = Gun.on;
 			on('data', function(o){
 				o.a = false;
 			});
@@ -48,7 +53,7 @@
 			var data = {users: {1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}}};
 
 			var any = function(err, node){
-				//console.log('any', err, node);
+				console.log('any', err, node);
 			}
 			var ok = function(node, field){
 				//console.log('ok', field, node);
@@ -56,6 +61,23 @@
 			var err = function(err){
 				console.log(err);
 			}
+			function fn(){};
+
+			function Thing(){
+				this._ = {};
+			}
+			Thing.prototype.get = function(lex){
+				var gun = this, at = gun._;
+				return gun;
+			}
+			Thing.prototype.on = function(cb){
+				var gun = this, at = gun._;
+				if(at.cache){
+
+				}
+				return gun;
+			}
+			var thing = new Thing();
 
 			function CHAIN(){}
 			CHAIN.chain = CHAIN.prototype;
@@ -1951,12 +1973,38 @@
 				cb(gun_get.c);
 				return gun_get;
 			}
+			var hewo = {hello: "world"};
+			window.puti = window.puti || 0;
+			window.geti = window.geti || 0;
 	});
-	localStorage.clear();
+	//localStorage.clear();
+	/*
+	*/
+	stool.add('put', function(){
+		gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
+	});
+	stool.add('on', function(){
+		gun.get('users').path(1).path('where').on(ok);
+	});
+	return;
+	stool.add('put', function(){
+		gun.get(puti++).put(hewo, any);asdf;
+	});return;
+	stool.add('put', function(){
+		gun.get(geti++, any);
+	});
+	return;
+	stool.add('get', function(){
+		got.on(ok);
+	});
+	stool.add('get', function(){
+		gun.get('users', any);
+	});
+	return;
+	return;
 	stool.add('get path * 2 put', function(){
 		gun.get('users').path(i).path('where').put(pos);
 	});
-	return;
 	stool.add('get path path on', function(){
 		gun.get('users').path(i).path('where').on(ok);
 	});
@@ -1971,6 +2019,12 @@
 	});
 	stool.add('get', function(){
 		gun.get('users', any);
+	});
+	stool.add('get', function(){
+		got.on(ok);
+	});
+	stool.add('fnx2', function(){
+		thing.get('users').on(ok);
 	});
 	return;
 	stool.add('get path * 2 on', function(){
