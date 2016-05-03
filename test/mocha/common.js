@@ -2,7 +2,7 @@
 	root = env.window? env.window : root;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
-	root.Gun = root.Gun || require('../gun');
+	root.Gun = root.Gun || require('../../gun');
 }(this));
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
@@ -1300,11 +1300,11 @@ describe('Gun', function(){
 		});
 	});
 
-	describe('API', function(){
+	describe.only('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 				
-		it('gun chain separation', function(done){
+		it.skip('gun chain separation', function(done){
 			var gun = Gun();
 			
 			var c1 = gun.put({hello: 'world'});
@@ -1431,28 +1431,27 @@ describe('Gun', function(){
 		});
 		
 		it('put regex', function(done){
-			gun.put({num: /regex/i}, function(err, ok){
+			gun.put({reg: /regex/i}, function(err, ok){
 				expect(err).to.be.ok();
 				done();
 			});
 		});
-		
 		it('put node', function(done){
 			gun.put({hello: "world"}, function(err, ok){
 				expect(err).to.not.be.ok();
 				done();
 			});
 		});
-		
-		it('put node then value', function(done){
+
+		it.only('put node then value', function(done){
 			var ref = gun.put({hello: "world"});
-			
+
 			ref.put('hello', function(err, ok){
 				expect(err).to.be.ok();
 				done();
 			});
 		});
-		
+
 		it('put node then put', function(done){
 			gun.put({hello: "world"}).put({goodbye: "world"}, function(err, ok){
 				expect(err).to.not.be.ok();
@@ -1476,12 +1475,13 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
 			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
+				console.log('oye', err, node);
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
 				done.r = 1; if(done.c){ return } if(done.w){ done(); done.c = 1 };
 			});
-		});
+		});return;
 
 		it('put node key gun get', function(done){
 			gun.put({hello: "a key"}).key('yes/a/key', function(err, ok){
