@@ -1,10 +1,5 @@
 # CHANGELOG
 
-## 0.4.0
-
- - `val` has changed significantly.
- - Implicit `put` occur up to the last `get`, not everything on the chain (like gets chained off of other gets).
-
 ## 0.3.7
 
  - Catch localStorage errors.
