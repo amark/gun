@@ -2,8 +2,9 @@
 	root = env.window? env.window : root;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
-	root.Gun = root.Gun || require('../gun');
+	root.Gun = root.Gun || require('../src/index');
 }(this));
+
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
   var leaked = []
@@ -3797,17 +3798,17 @@ describe('Gun', function(){
 			});
 		});
 
-		it("get context", function(done){
+		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
 			var gun = Gun();
-			var ref = gun.get('lol').get('foo').put({hello: 'world'});
-			gun.get('lol').val(function(implicit){
+			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
+			gun.get('ctx/lol').val(function(implicit){
 				done.fail = true;
 				expect(implicit).to.not.be.ok();
 			});
-			gun.get('lol').not(function(){
+			gun.get('ctx/lol').not(function(){
 				done.please = true;
 			});
-			gun.get('foo').val(function(data){
+			gun.get('ctx/foo').val(function(data){
 				expect(data.hello).to.be('world');
 				expect(done.fail).to.not.be.ok();
 				expect(done.please).to.be.ok();
@@ -3815,7 +3816,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only("chaining val", function(done){
+		it.skip("chaining val", function(done){ // Not implemented yet!
 			var gun = Gun();
 			gun.get('users').set(gun.put({name: 'alice'}));
 			gun.get('users').set(gun.put({name: 'bob'}));;
