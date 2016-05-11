@@ -1471,12 +1471,12 @@ describe('Gun', function(){
 		});
 
 		it('put node key get', function(done){
-			Gun.log.debug = 1; console.log("-----------------------");
+			Gun.log.debug = 1; window.gun = gun; console.log("-----------------------");
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
 				console.log("****************************", err, ok);
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
-			}); return; gun.get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
+			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
 				console.log("2 ****************************", err, node);
 				console.log('oye', err, node);
 				expect(err).to.not.be.ok();

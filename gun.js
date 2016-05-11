@@ -862,9 +862,24 @@
 			};
 		}());
 		;(function(){
+			function key(err, node){ // TODO: Belongs someplace else!
+				var at = this;
+				var pseudo = is_node_ify({}, is_node_soul(node));
+				console.log("--------------------------------------------------")
+				is_node(node, function(n, f){
+					n = at.gun.__.graph[f];
+					console.log("oh", n);
+					is_node(n, function(v, f){
+						console.log(v, f, is_node_state(n, f));
+						is_node_state_ify(pseudo, {field: f, value: v, state: is_node_state(n, f) })
+					});
+				});
+				console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", pseudo, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+			}
 			function got(err, node){
 				var at = this;// opt = at.opt, cb;
-				at.on('any', [err, node]);
+				key.call(at, err, node);
+				at.on('any', [err, at.node]);
 				at.on('chain', at);
 			}
 			function cache(by, soul, back){
