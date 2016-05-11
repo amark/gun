@@ -1,4 +1,4 @@
-console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
+//console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 ;(function(){ var u;
 	function Gun(o){
 		if(!(this instanceof Gun)){ return new Gun(o) }
@@ -152,9 +152,13 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 					return;
 				}
 				if(emit){ emit(tag, arg, on, ctx) }
-				var i = 0, acts = on.s, l = acts.length, act;
+				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array),act;
 				for(i; i < l; i++){ act = acts[i];
-					act.fn(arg, act.at);
+					if(!arr){
+						act.fn.call(act.at, arg, act);
+					} else {
+						act.fn.apply(act.at, arg);
+					}
 					if(act.halt){
 						act.halt = false;
 						break;
@@ -170,11 +174,14 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			if(!at.gun || !at.lex){ return }
 			var mem = on.mem;
 			if(mem){
-				act.fn(mem, act.at);
+				if(mem instanceof Array){
+					act.fn.apply(act.at, mem);
+				} else {
+					act.fn.call(act.at, mem, act);
+				}
 				return;
 			}
 			if(!Gun.obj.empty(at.lex)){
-				console.debug(8, 'on Get', at.lex);
 				Gun.get(at);
 			}
 		}, function(tag, arg, on, at){
@@ -312,7 +319,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 		}());
 
-		Gun.is.rel.ify = function(s){ var r = {}; return Gun.obj.put(r, Gun._.soul, s), r } // convert a soul into a relation and return it.
+		Gun.is.rel.ify = function(s){ var r = {}; return obj_put(r, _soul, s), r } // convert a soul into a relation and return it.
 		
 		;(function(){
 			function map(v, f){ // we invert this because the way we check for this is via a negation.
@@ -528,13 +535,11 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 					at.ack = at.cb;
 					at.cb = function(err, ok){ // TODO: PERF! CACHE!
 						if(err){ Gun.log(err) }
-						console.debug(5, 'put ack', err, ok);
 						var cat = Gun.at.copy(at, {err: err, ok: ok});
 						Gun.on('ack', cat);
 						at.ack(cat.err, cat.ok, cat);
 					}
 				}
-				console.debug(4, 'GUN put', at);
 				Gun.on('put', at);
 				return at.gun;
 			}
@@ -558,7 +563,6 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 
 		;(function(){
 			function stream(at){
-				console.debug(9, 'get stream', at);
 				at.get(at.err, at.node);
 			}
 			function got(err, node){
@@ -583,11 +587,11 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 		}());
 
-		Gun.on('get', function(at){
+		Gun.on('get', function(at, ev){
 			var opt = at.opt;
 			if(opt.force){ return }
 			var lex = at.lex, gun = at.gun, graph = gun.__.graph, node = graph[lex.soul];
-			if(opt.memory || node){ return at.cb(null, node), this.stun() }
+			if(opt.memory || node){ return at.cb(null, node), ev.stun() }
 		});
 
 		Gun.on('stream', function(at){ var node;
@@ -726,7 +730,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 		}());
 	}(Gun));
 	var _soul = Gun._.soul, _meta = Gun._.meta, _state = Gun._.state;
-	var is_val = Gun.is.val, is_rel = Gun.is.rel, is_node = Gun.is.node, is_node_soul = is_node.soul, is_node_soul_ify = is_node_soul.ify, is_node_ify = is_node.ify, is_node_copy = is_node.copy, is_node_state = is_node.state, is_node_state_ify = is_node_state.ify, HAM_node = Gun.HAM.node;
+	var is_val = Gun.is.val, is_rel = Gun.is.rel, is_rel_ify = is_rel.ify, is_node = Gun.is.node, is_node_soul = is_node.soul, is_node_soul_ify = is_node_soul.ify, is_node_ify = is_node.ify, is_node_copy = is_node.copy, is_node_state = is_node.state, is_node_state_ify = is_node_state.ify, HAM_node = Gun.HAM.node;
 
 	Gun.chain = Gun.prototype;
 
@@ -762,14 +766,14 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			return gun;
 		}
 
-		function pop(cat, at){
-			var node = cat.node, lex = cat.lex, field = lex.field, rel;
+		function pop(cat, ev){
+			var at = this, node = cat.node, lex = cat.lex, field = lex.field, rel;
 			if(obj_has(node, field)){
 				if(rel = Gun.is.rel(node[field])){
 					return Gun.get(Gun.at.copy(at, {lex: {soul: rel}}));	
 				}
 			}
-			at.link.call({}, cat, at);
+			at.link(cat, ev);
 		}
 
 		;(function(){
@@ -786,10 +790,9 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 				}
 				return data;
 			}	
-			function link(cat, at){
-				console.debug(2, 'put link', cat, at);
+			function link(cat, ev){
 				// TODO: BUG! Pause execution chain, `var go = this.stop(go)`;
-				var put = at.put, data = wrap(cat, put.data), cb; // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
+				var at = this, put = at.put, data = wrap(cat, put.data), cb; // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
 				if(!data){
 					if((cb = put.any) && cb instanceof Function){
 						cb.call(at.gun, {err: Gun.log("No node exists to put " + (typeof at.put.data) + ' "' + at.put.data + '" in!')});
@@ -799,6 +802,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 				var state = at.put.state;
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at;
+						console.debug(2, 'soul', eat);
 						if(1 === eat.path.length && at.node){
 							eat.soul = Gun.is.rel(at.node[eat.path[0]]);
 						}
@@ -810,27 +814,29 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 				}, at);
 			}
 			function end(err, env, at){ var cb;
-				console.debug(3, 'put end', env.graph);
 				if(err){
 					if((cb = at.put.any) && cb instanceof Function){
 						cb.call(at.gun, {err: Gun.log(err)});
 					}
 					return; // TODO: BUG! Chain emit??
 				}
+				//console.log("??????????????????", at.lex);
+				at.lex.soul = at.lex.soul || is_node_soul(env.root);
 				at.cache = env.root;
 				Gun.put(Gun.at.copy(at, {graph: env.graph, cb: ack}));
 				// TODO: RESUME EXECUTION CHAIN.
 			}
 			function ack(err, ok){ var cb;
-				console.debug(6, 'acked', err, ok);
 				var at = this;
 				if((cb = at.put.any) && cb instanceof Function){
 					cb.call(at.gun, err, ok);
 				}
-				//at.on('chain', at);
+				console.debug(3, 'put done', at);
+				at.on('chain', at);
 			}
 			Gun.chain.put = function(data, cb, opt){
-				var gun = this, at = Gun.at.copy(gun._, {put: {}}), put = at.put;
+				var gun = this.back? this : this.chain(), at = Gun.at.copy(gun._, {put: {}}), put = at.put;
+				console.debug(1, 'put', data);
 				//var back = this, gun = back.chain(), at = gun._, put = at.put || (at.put = {});
 				put.any = cb;
 				put.data = data;
@@ -847,20 +853,18 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 				}
 				// END CACHE SHORTCUT
 				*/
-				console.debug(1, 'Gun.put', data);
-				if(gun.back){
-					at.on('chain', link, at);
+				if(!gun.back.back){
+					link.call(at, at);
 				} else {
-					link(at, at);
+					at.on('chain', link, at);
 				}
 				return gun;
 			};
 		}());
 		;(function(){
 			function got(err, node){
-				console.debug(10, 'get got', err, node);
 				var at = this;// opt = at.opt, cb;
-				at.on('any', node);
+				at.on('any', [err, node]);
 				at.on('chain', at);
 			}
 			function cache(by, soul, back){
@@ -871,6 +875,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 			Gun.chain.get = function(lex, cb, opt){
 				var gun, back = this, by = back.__.by, tmp;
+				console.debug(3, 'get', lex, back.__.graph);
 				if(typeof lex === 'string'){
 					if(!(gun = by[lex])){
 						gun = cache(by, lex, back);
@@ -879,6 +884,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 				if(tmp = lex[_soul]){
 					if(!(gun = by[tmp])){
 						gun = cache(by, tmp, back);
+						console.debug(4, 'yipes', gun);
 					}
 				} else
 				if(tmp = lex.soul){
@@ -887,29 +893,31 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 					}
 				}
 				if(cb && cb instanceof Function){
-					console.debug(7, 'get!', lex, gun);
 					gun._.on('any', cb, gun);
 				}
 				return gun;
 			}
 		}());
 		;(function(){
-			function index(cat, at){
-				var cex = cat.lex, lex = at.lex;
-				if(cex.soul === lex.soul){ return }
-				ctx.obj = (1 === is_node_soul(ctx.node, 'key'))? obj_copy(ctx.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
-				obj_as((ctx.put = is_node_ify(ctx.obj, key, true))._, 'key', 1);
-				at.gun.__.gun.put(ctx.put, function(err, ok){ cb.call(this, err, ok)}, {chain: opt.chain, key: true, init: true});
+			function index(cat, ev){
+				var at = this, cex = cat.lex, lex = at.lex;
+				//if(cex.soul === lex.soul){ return }
+				if(cex.soul === lex.key){ return }
+				at.obj = (1 === is_node_soul(cat.node, 'key'))? obj_copy(cat.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
+				obj_as((at.put = is_node_ify(at.obj, at.key, true))._, 'key', 1);
+				console.debug(4, 'keying', at, cat, 'save', at.put);
+				at.gun.__.gun.put(at.put, function(err, ok){ console.debug(5, 'what?', err, ok); at.any.call(this, err, ok)}/*, {chain: opt.chain, key: true, init: true}*/);
 			}
 			Gun.chain.key = function(key, cb, opt){
-				var gun = this;
-				gun.on('chain', index, gun._);
+				console.debug(3, 'key', key);
+				var gun = this, at = Gun.at.copy(gun._, {key: key, any: cb || function(){} });
+				gun.on('chain', index, at);
 				return gun;
 			}
 		}());
 		;(function(){ var u;
-			function got(){ fields.call({}, this, this) }
-			function link(cat, at){
+			function got(){ fields.call(this, this) }
+			function link(cat, ev){ var at = this;
 				if(!cat.node){ // TODO: I think this is fine, belonging here, but it might need to be pushed further down.
 					at.back = cat; // TODO: BUG! concerned about race conditions.
 					at.on('chain', at);
@@ -934,7 +942,7 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			function map(val, field){
 				this.at.on('path:' + field, this.cat);
 			}
-			function fields(cat, at){ var node;
+			function fields(cat, ev){ var at = this, node;
 				if(!(node = cat.node)){ return } // TODO: BUG! Still need to emit for fail cases.
 				var clex = cat.lex, cfield = clex.field, lex = at.lex, rel, val;
 				if(cfield && !lex.soul){
@@ -981,8 +989,8 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 		}());
 		;(function(){
-			function link(cat, at){
-				var opt = at.opt, node = cat.node, lex = at.lex, field = lex.field, cb;
+			function link(cat, ev){
+				var at = this, opt = at.opt, node = cat.node, lex = at.lex, field = lex.field, cb;
 				if(!(cb = opt.ok) || cat.err || !node || (field && !Gun.obj.has(node, field))){ return }
 				cb.call(cat.gun, at.gun._.cache = field? node[field] : node, field || at.gun._.lex.field); // TODO: Wrong gun?
 			}
@@ -1032,7 +1040,6 @@ console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 			}
 		}());
 	}(Gun.chain));
-
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
 	if(typeof window !== "undefined"){ (root = window).Gun = Gun }
 	if(typeof module !== "undefined" && module.exports){ module.exports = Gun }

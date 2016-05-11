@@ -1254,7 +1254,6 @@ describe('Gun', function(){
 		});
 		
 		it('ify graph', function(){
-			
 			var graph = {
 				'asdf': {
 					_: {'#': 'asdf', '>': {
@@ -1284,7 +1283,7 @@ describe('Gun', function(){
 					_: {'#': 'soul', '~': 1, '>': {
 						'asdf': Gun.time.is(),
 						'fdsa': Gun.time.is(),
-						'sadf': Gun.time.is(),
+						'sadf': Gun.time.is()
 					}},
 					'asdf': {'#': 'asdf'},
 					'fdsa': {'#': 'fdsa'},
@@ -1461,10 +1460,8 @@ describe('Gun', function(){
 		});
 
 		it('put node with soul get soul', function(done){
-			Gun.log.debug = 1; console.log("--------- START ----------");
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
-					console.log("**************************", err, node);
 					expect(err).to.not.be.ok();
 					expect(Gun.is.node.soul(node)).to.be('foo');
 					expect(node.hello).to.be('world');
@@ -1472,12 +1469,15 @@ describe('Gun', function(){
 					done(); done.c = 1;
 			})
 		});
-		return;
+
 		it('put node key get', function(done){
+			Gun.log.debug = 1; console.log("-----------------------");
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
+				console.log("****************************", err, ok);
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
-			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
+			}); return; gun.get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
+				console.log("2 ****************************", err, node);
 				console.log('oye', err, node);
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
