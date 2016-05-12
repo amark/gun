@@ -401,54 +401,49 @@ describe('Gun', function(){
 			});
 			*/
 		});
-		describe('On', function(){
-			it('chain', function(){
-				var on = Gun.on.create();
-				expect(on('foo').emit).to.be.ok();
-				expect(on('foo').event).to.be.ok();
-			});
+		describe.only('On', function(){
 			it('subscribe', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
+				var e = {on: Gun.on};
+				e.on('foo', function(a){
 					done.first = true;
 					expect(a).to.be(1);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a){
 					expect(a).to.be(1);
 					expect(done.first).to.be.ok();
 					done();
 				});
-				on('foo').emit(1);
+				e.on('foo', 1);
 			});
 			it('unsubscribe', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					this.off();
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					ev.off();
 					done.first = a;
 					expect(a).to.be(1);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a, ev){
 					expect(a).to.be(done.second? 2 : 1);
 					expect(done.first).to.be(1);
 					done.second = true;
 					if(a === 2){
 						setTimeout(function(){
-							expect(on('foo').s.ons.foo.length).to.be(1);
+							expect(e.ons.foo.s.length).to.be(1);
 							done();
 						}, 10);
 					}
 				});
-				on('foo').emit(1);
-				on('foo').emit(2);
+				e.on('foo', 1);
+				e.on('foo', 2);
 			});
-			it('stop', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
+			it('stun', function(done){
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
 					if(2 === a){
 						done.first2 = true;
 						return;
 					}
-					this.stop();
+					ev.stun();
 					setTimeout(function(){
 						expect(done.second).to.not.be.ok();
 						expect(done.second2).to.be.ok();
@@ -456,31 +451,31 @@ describe('Gun', function(){
 						done();
 					},10);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a, ev){
 					if(2 === a){
 						done.second2 = true;
 					} else {
 						done.second = true;
 					}
 				});
-				on('foo').emit(1);
-				on('foo').emit(2);
+				e.on('foo', 1);
+				e.on('foo', 2);
 			});
-			it('go', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+			it('resume', function(done){
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
 						expect(done.second).to.not.be.ok();
-						go();
+						resume();
 					},10);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a){
 					done.second = true;
 					expect(a).to.be(1);
 					done();
 				});
-				on('foo').emit(1);
+				e.on('foo', 1);
 			});
 			it('double go', function(done){
 				var on = Gun.on.create();
@@ -1299,7 +1294,7 @@ describe('Gun', function(){
 		});
 	});
 
-	describe.only('API', function(){
+	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 				
@@ -1471,20 +1466,16 @@ describe('Gun', function(){
 		});
 
 		it('put node key get', function(done){
-			Gun.log.debug = 1; window.gun = gun; console.log("-----------------------");
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
-				console.log("****************************", err, ok);
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
 			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
-				console.log("2 ****************************", err, node);
-				console.log('oye', err, node);
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
 				done.r = 1; if(done.c){ return } if(done.w){ done(); done.c = 1 };
 			});
-		});return;
+		});
 
 		it('put node key gun get', function(done){
 			gun.put({hello: "a key"}).key('yes/a/key', function(err, ok){
@@ -1498,25 +1489,27 @@ describe('Gun', function(){
 				done(); done.c = 1;
 			});
 		});
-		
+
 		it('gun key', function(){ // Revisit this behavior?
 			try{ gun.key('fail/key') }
 			catch(err){
 				expect(err).to.be.ok();
 			}
 		});
-		
+
 		it('get key no override', function(done){
 			var gun = Gun();
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
+				console.log("********************", err, node);
 				expect(Gun.is.node.soul(node)).to.be('cream/pie');
 				if(done.c >= 2){ return }
 				if(done.c){ done(); done.c = 2; return; } done.c = 1;
 			});
 			gun.get('cream/pie').key('pie/cream');
+			Gun.log.debug = 1; window.gun = gun; console.log("----------------");
 			gun.get('pie/cream').put({pie: 'cream'});
 		});
-
+		return;
 		it('get key', function(done){
 			gun.get('yes/key', function(err, node){
 				expect(err).to.not.be.ok();

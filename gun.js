@@ -8,7 +8,7 @@
 		
 	;(function(Util){ // Generic javascript utilities.
 		;(function(Type){
-			Type.fns = Type.fn = {is: function(fn){ return (fn && fn instanceof Function) }}
+			Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
 			Type.fn.apply = function(){}
 			Type.bi = {is: function(b){ return (b instanceof Boolean || typeof b == 'boolean') }}
 			Type.num = {is: function(n){ return !Type.list.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0) }}
@@ -144,6 +144,10 @@
 			Act.chain.stun = function(){
 				this.halt = true;
 			}
+			Act.chain.off = function(){
+				this.fn = noop;
+			}
+			function noop(){};
 			function Event(tag, arg, at, t){
 				var ctx = this, ons = ctx.ons || (ctx.ons = {}), on = ons[tag] || (ons[tag] = {s: []}), act, mem;
 				if(arg instanceof Function){
@@ -152,17 +156,29 @@
 					return;
 				}
 				if(emit){ emit(tag, arg, on, ctx) }
-				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array),act;
+				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), off, act;
 				for(i; i < l; i++){ act = acts[i];
 					if(!arr){
 						act.fn.call(act.at, arg, act);
 					} else {
 						act.fn.apply(act.at, arg);
 					}
+					if(noop === act.fn){
+						off = true;
+					}
 					if(act.halt){
 						act.halt = false;
 						break;
 					}
+				}
+				if(off){
+					var still = [];
+					for(i = 0; i < l; i++){ act = acts[i];
+						if(noop !== act.fn){
+							still.push(act);
+						}
+					}
+					on.s = still;
 				}
 				if(at && at instanceof Function){
 					at(arg, t);
@@ -464,13 +480,21 @@
 			}
 			Gun.HAM.node = function(gun, node, opt){
 				if(!node){ return }
-				var soul = is_node_soul(node);
-				if(!soul){ return }
-				var vertex = gun.__.graph[soul];
-				if(vertex === node){ return vertex }
-				vertex = gun.__.graph[soul] = vertex || is_node_ify({}, soul); 
 				opt = num_is(opt)? {state: opt} : opt || {};
-				var machine = opt.state || gun.__.opt.state();
+				if(gun instanceof Gun){
+					var soul = is_node_soul(node);
+					if(!soul){ return }
+					var vertex = gun.__.graph[soul];
+					if(vertex === node){ return vertex }
+					vertex = gun.__.graph[soul] = vertex || is_node_ify({}, soul);
+					var machine = opt.state || gun.__.opt.state();
+				} else {
+					var soul = is_node_soul(gun);
+					if(!soul){ return }
+					var vertex = gun;
+					if(vertex === node){ return vertex }
+					var machine = opt.state;
+				}
 				obj_map(node._, meta, vertex);
 				if(!is_node(node, map, {node:node,vertex:vertex,machine:machine,opt:opt})){ return }
 				return vertex;
@@ -555,15 +579,20 @@
 			});
 		}());
 
-		/*Gun.on('put', function(gun, graph, cb, opt){
-			Gun.is.graph(graph, function(node, soul){ // TODO: PERF! CACHE!
-				Gun.on('stream').emit(err, node);
+		Gun.on('put', function(at){ var to;
+			Gun.is.graph(at.graph, function(node, soul){ // TODO: PERF! CACHE!
+				if(!(to = at.gun.__.by[soul])){ return }
+				to._.on('stream', [null, node]);
 			});
-		});*/
+		});
 
 		;(function(){
 			function stream(at){
-				at.get(at.err, at.node);
+				if(at.get){
+					at.get(at.err, at.node);
+				} else {
+					at.on('chain', at);
+				}
 			}
 			function got(err, node){
 				if(err){ Gun.log(err) }
@@ -802,7 +831,6 @@
 				var state = at.put.state;
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at;
-						console.debug(2, 'soul', eat);
 						if(1 === eat.path.length && at.node){
 							eat.soul = Gun.is.rel(at.node[eat.path[0]]);
 						}
@@ -820,28 +848,50 @@
 					}
 					return; // TODO: BUG! Chain emit??
 				}
+				key.call(at, err, env); // TODO: Turn into an event emitter!
 				//console.log("??????????????????", at.lex);
 				at.lex.soul = at.lex.soul || is_node_soul(env.root);
 				at.cache = env.root;
 				Gun.put(Gun.at.copy(at, {graph: env.graph, cb: ack}));
 				// TODO: RESUME EXECUTION CHAIN.
 			}
+			function key(err, env){ // TODO: Belongs somewhere else!
+				var at = this;
+				if(at.put.opt.key){ return }
+				Gun.is.graph(env.graph, function(node, soul){
+					var key = {node: at.gun.__.graph[soul]}, tmp;
+					if(!Gun.is.node.soul(key.node, 'key')){ return }
+					//if(!gun.__.by(soul).end){ gun.__.by(soul).end = 1 }
+					Gun.is.node(key.node, function each(rel, s){
+						var n = at.gun.__.graph[s];
+						if(n && is_node_soul(n, 'key')){
+							is_node(n, each);
+							return;
+						}
+						rel = env.graph[s] = env.graph[s] || Gun.is.node.soul.ify({}, s);
+						Gun.is.node(node, function(v,f){
+							is_node_state_ify(rel, {field: f, value: v, state: is_node_state(node, f) });
+							//Gun.is.node.state.ify([rel, node], f, v)
+						});
+						Gun.obj.del(env.graph, soul);
+					});
+				});
+			}
 			function ack(err, ok){ var cb;
 				var at = this;
 				if((cb = at.put.any) && cb instanceof Function){
 					cb.call(at.gun, err, ok);
 				}
-				console.debug(3, 'put done', at);
 				at.on('chain', at);
 			}
 			Gun.chain.put = function(data, cb, opt){
 				var gun = this.back? this : this.chain(), at = Gun.at.copy(gun._, {put: {}}), put = at.put;
-				console.debug(1, 'put', data);
 				//var back = this, gun = back.chain(), at = gun._, put = at.put || (at.put = {});
 				put.any = cb;
 				put.data = data;
 				put.state = Gun.time.is(); // TODO: BUG! Should use NTS capable stuff.
 				//put.state = opt.state();
+				put.opt = opt || {};
 				/*
 				// START CACHE SHORTCUT
 				var cache, rel, from = back._, soul;
@@ -863,34 +913,37 @@
 		}());
 		;(function(){
 			function key(err, node){ // TODO: Belongs someplace else!
+				if(!is_node_soul(node, 'key')){ return }
 				var at = this;
 				var pseudo = is_node_ify({}, is_node_soul(node));
-				console.log("--------------------------------------------------")
 				is_node(node, function(n, f){
+					at.gun.get(f); // TODO: This is an ASYNC call assuming SYNC behavior.
 					n = at.gun.__.graph[f];
-					console.log("oh", n);
-					is_node(n, function(v, f){
-						console.log(v, f, is_node_state(n, f));
-						is_node_state_ify(pseudo, {field: f, value: v, state: is_node_state(n, f) })
-					});
+					HAM_node(pseudo, n);
 				});
-				console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", pseudo, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+				at.node = pseudo;
 			}
-			function got(err, node){
-				var at = this;// opt = at.opt, cb;
-				key.call(at, err, node);
-				at.on('any', [err, at.node]);
+			function link(cat){ var at = this;
+				key.call(at, cat.err, cat.node); // TODO: Turn into event emitter!
+				at.on('any', [cat.err, cat.node]);
+				at.on('chain', at);
+			}
+			function got(err, node){ var at = this;
+				key.call(at, err, node); // TODO: Turn into event emitter!
+				at.on('any', [err, node]);
+				if(err){ at.on('err', err) }
+				if(node){ at.on('ok', node) }
 				at.on('chain', at);
 			}
 			function cache(by, soul, back){
 				var gun = by[soul] = back.chain(), at = gun._;
 				at.lex.soul = soul;
 				at.get = got;
+				//at.on('chain', link, at);
 				return gun;
 			}
 			Gun.chain.get = function(lex, cb, opt){
 				var gun, back = this, by = back.__.by, tmp;
-				console.debug(3, 'get', lex, back.__.graph);
 				if(typeof lex === 'string'){
 					if(!(gun = by[lex])){
 						gun = cache(by, lex, back);
@@ -899,7 +952,6 @@
 				if(tmp = lex[_soul]){
 					if(!(gun = by[tmp])){
 						gun = cache(by, tmp, back);
-						console.debug(4, 'yipes', gun);
 					}
 				} else
 				if(tmp = lex.soul){
@@ -920,12 +972,10 @@
 				if(cex.soul === lex.key){ return }
 				at.obj = (1 === is_node_soul(cat.node, 'key'))? obj_copy(cat.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
 				obj_as((at.put = is_node_ify(at.obj, at.key, true))._, 'key', 1);
-				console.debug(4, 'keying', at, cat, 'save', at.put);
-				at.gun.__.gun.put(at.put, function(err, ok){ console.debug(5, 'what?', err, ok); at.any.call(this, err, ok)}/*, {chain: opt.chain, key: true, init: true}*/);
+				at.gun.__.gun.put(at.put, function(err, ok){ console.debug(5, 'what?', err, ok); at.any.call(this, err, ok)}, {/*chain: opt.chain,*/ key: true, init: true});
 			}
 			Gun.chain.key = function(key, cb, opt){
-				console.debug(3, 'key', key);
-				var gun = this, at = Gun.at.copy(gun._, {key: key, any: cb || function(){} });
+				var gun = this, at = Gun.at.copy(gun._, {key: key, any: cb || function(){}, opt: opt });
 				gun.on('chain', index, at);
 				return gun;
 			}
