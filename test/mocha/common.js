@@ -477,10 +477,10 @@ describe('Gun', function(){
 				});
 				e.on('foo', 1);
 			});
-			it('double go', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+			it('double resume', function(done){
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
 						if(1 === a){
 							done.first1 = true;
@@ -489,10 +489,10 @@ describe('Gun', function(){
 						if(2 === a){
 							done.first2 = true;
 						}
-						go();
+						resume();
 					},10);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a, ev){
 					done.second = true;
 					if(1 === a){
 						expect(done.first2).to.not.be.ok();
@@ -505,115 +505,117 @@ describe('Gun', function(){
 						}
 					}
 				});
-				on('foo').emit(1);
-				on('foo').emit(2);
+				e.on('foo', 1);
+				e.on('foo', 2);
 			});
-			it('double go different event', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+			it('double resume different event', function(done){
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
 						done.first1 = true;
-						go();
+						resume();
 					},10);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a){
 					if(1 === a){
 						expect(done.first1).to.be.ok();
 						done();
 					}
 				});
-				on('foo').emit(1);
-				on('bar').emit(2);
+				e.on('foo', 1);
+				e.on('bar', 2);
 			});	
-			it('go params', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+			it('resume params', function(done){
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
 						expect(done.second).to.not.be.ok();
-						go(0);
+						resume(0);
 					},10);
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a){
 					done.second = true;
 					expect(a).to.be(0);
 					done();
 				});
-				on('foo').emit(1);
+				e.on('foo', 1);
 			});
 			it('map', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					Gun.obj.map(a.it, function(v,f){
 						setTimeout(function(){
 							var emit = {field: 'where', soul: f};
-							go(emit);
+							resume(emit);
 						},10);
 					})
 				});
-				on('foo').event(function(a){
-					var go = this.stop(go);
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
-						go({node: a.soul});
+						resume({node: a.soul});
 					},100);
 				});
-				on('foo').end(function(a){
+				e.on('foo', function(a){
 					if('a' == a.node){
 						done.a = true;
 					} else {
 						expect(done.a).to.be.ok();
 						done();
 					}
-				}).emit({field: 'where', it: {a: 1, b: 2}});
+				});
+				e.on('foo', {field: 'where', it: {a: 1, b: 2}});
 			});
 			it('map synchronous', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
-					var go = this.stop(go);
+				var e = {on: Gun.on};
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					Gun.obj.map(a.node, function(v,f){
 						//setTimeout(function(){
 							var emit = {field: 'where', soul: f};
-							go(emit);
+							resume(emit);
 						//},10);
 					})
 				});
-				on('foo').event(function(a){
-					var go = this.stop(go);
+				e.on('foo', function(a, ev){
+					var resume = ev.stun(resume);
 					setTimeout(function(){
-						go({node: a.soul});
+						resume({node: a.soul});
 					},100);
 				});
-				on('foo').end(function(a){
+				e.on('foo', {field: 'where', node: {a: 1, b: 2}}, function(a){
+					expect(this.hi).to.be(1);
 					if('a' == a.node){
 						done.a = true;
 					} else {
 						expect(done.a).to.be.ok();
 						done();
 					}
-				}).emit({field: 'where', node: {a: 1, b: 2}});
+				}, {hi: 1});
 			});
 			it('map synchronous async', function(done){
-				var on = Gun.on.create();
-				on('foo', function(a){
+				var e = {on: Gun.on};
+				e.on('foo', function(a){
 					expect(a.b).to.be(5);
 					done.first = true;
 				});
-				on('foo').event(function(a){
+				e.on('foo', function(a, ev){
 					expect(a.b).to.be(5);
 					done.second = true;
-					var go = this.stop(go);
+					var resume = ev.stun(resume);
 					setTimeout(function(){
-						go({c: 9});
+						resume({c: 9});
 					},100);
 				});
-				on('foo').end(function(a){
+				e.on('foo', {b: 5}, function(a){
 					expect(a.c).to.be(9);
 					expect(done.first).to.be.ok();
 					expect(done.second).to.be.ok();
 					done();
-				}).emit({b: 5});
+				});
 			});
 		});
 		describe('Gun Safety', function(){

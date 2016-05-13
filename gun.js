@@ -135,29 +135,54 @@
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
 		}(Util));
 		;(function(exports, add, emit){ // On event emitter generic javascript utility.
-			function Act(fn, at, on){
+			function Act(tag, fn, at, on, ctx){
+				this.tag = tag;
 				this.fn = fn;
 				this.at = at;
 				this.on = on;
+				this.ctx = ctx;
 			}
 			Act.chain = Act.prototype;
 			Act.chain.stun = function(){
-				this.halt = true;
+				if(!arguments.length){
+					return this.halt = true;
+				}
+				var act = this, on = act.on, halt = {
+					resume: function(arg){
+						act.halt = false;
+						act.ctx.on(act.tag, (arguments.length?
+							1 === arguments.length? arg : Array.prototype.slice.call(arguments)
+						: halt.arg), halt.end, halt.as, act);
+					}, arg: on.arg,
+					end: on.end,
+					as: on.as
+				};
+				act.halt = 1;
+				return halt.resume;
 			}
 			Act.chain.off = function(){
 				this.fn = noop;
 			}
 			function noop(){};
-			function Event(tag, arg, at, t){
+			function Event(tag, arg, at, as, skip){
 				var ctx = this, ons = ctx.ons || (ctx.ons = {}), on = ons[tag] || (ons[tag] = {s: []}), act, mem;
 				if(arg instanceof Function){
-					on.s.push(act = new Act(arg, at, ctx));
+					on.s.push(act = new Act(tag, arg, at, on, ctx));
 					if(add){ add(tag, act, on, ctx) }
 					return;
 				}
 				if(emit){ emit(tag, arg, on, ctx) }
-				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), off, act;
+				on.arg = arg;
+				on.end = at;
+				on.as = as;
+				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), gap, off, act;
 				for(i; i < l; i++){ act = acts[i];
+					if(skip){
+						if(skip === act){
+							skip = false;
+						}
+						continue;
+					}
 					if(!arr){
 						act.fn.call(act.at, arg, act);
 					} else {
@@ -167,6 +192,9 @@
 						off = true;
 					}
 					if(act.halt){
+						if(1 === act.halt){
+							gap = true;
+						}
 						act.halt = false;
 						break;
 					}
@@ -180,8 +208,8 @@
 					}
 					on.s = still;
 				}
-				if(at && at instanceof Function){
-					at(arg, t);
+				if(!gap && at && at instanceof Function){
+					at.call(as, arg);
 				}
 				return;
 			}
