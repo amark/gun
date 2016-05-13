@@ -401,7 +401,7 @@ describe('Gun', function(){
 			});
 			*/
 		});
-		describe.only('On', function(){
+		describe('On', function(){
 			it('subscribe', function(done){
 				var e = {on: Gun.on};
 				e.on('foo', function(a){
@@ -569,7 +569,7 @@ describe('Gun', function(){
 				});
 				e.on('foo', {field: 'where', it: {a: 1, b: 2}});
 			});
-			it('map synchronous', function(done){
+			it.only('map synchronous', function(done){
 				var e = {on: Gun.on};
 				e.on('foo', function(a, ev){
 					var resume = ev.stun(resume);
@@ -839,112 +839,6 @@ describe('Gun', function(){
 		data._ = {'#': 'shhh', data: {yay: 1}, spin: data.both};
 		test = Gun.ify(data);
 		expect(test.err.meta).to.be.ok(); // TODO: Fail: this passes, somehow? Fix ify code!
-	});
-	
-	describe('Event Promise Back In Time', function(){ return; // TODO: I think this can be removed entirely now.
-		/*	
-			var ref = gun.put({field: 'value'}).key('field/value').get('field/value', function(){
-				expect()
-			});
-			setTimeout(function(){
-				ref.get('field/value', function(){
-					expect();
-				});
-			}, 50);
-			
-			A) Synchronous
-				1. fake (B)
-			B) Asychronous
-				1. In Memory
-					DONE
-				2. Will be in Memory
-					LISTEN to something SO WE CAN RESUME
-						DONE
-				3. Not in Memory
-					Ask others.
-						DONE
-		*/
-		it('A1', function(done){ // this has behavior of a .get(key) where we already have it in memory but need to fake async it.
-			var graph = {};
-			var keys = {};
-			graph['soul'] = {foo: 'bar'};
-			keys['some/key'] = graph['soul'];
-			
-			var ctx = {key: 'some/key'};
-			if(ctx.node = keys[ctx.key]){
-				console.log("yay we are synchronously in memory!");
-				setTimeout(function(){
-					expect(ctx.flag).to.be.ok();
-					expect(ctx.node.foo).to.be('bar');
-					done();
-				},0);
-				ctx.flag = true;
-			}
-		});
-		
-		it('B1', function(done){ // this has the behavior a .val() where we don't even know what is going on, we just want context.
-			var graph = {};
-			var keys = {};
-			
-			var ctx = {
-				promise: function(cb){
-					setTimeout(function(){
-						graph['soul'] = {foo: 'bar'};
-						keys['some/key'] = graph['soul'];
-						cb('soul');
-					},50);
-				}
-			};
-			if(ctx.node = keys[ctx.key]){
-				// see A1 test
-			} else {
-				ctx.promise(function(soul){
-					if(ctx.node = graph[soul]){
-						expect(ctx.node.foo).to.be('bar');
-						done();
-					} else {
-						// I don't know
-					}
-				});
-			}
-		});
-		
-		it('B2', function(done){ // this is the behavior of a .get(key) which synchronously follows a .put(obj).key(key) which fakes async.
-			var graph = {};
-			var keys = {};
-			
-			var ctx = {};
-			(function(data){ // put
-				setTimeout(function(){
-					graph['soul'] = data;
-					fn();
-				},10);
-				
-				ctx.promise = function(fn){
-					
-				}
-			}({field: "value"}));
-			
-			(function(key){ // key
-				keys[key] = true;
-				ctx.promise(function(){
-					keys[key] = node;
-				})
-			}('some/key'));
-			
-			(function(ctx){ // get
-				if(get.node = keys[get.key]){
-					
-				} else 
-				if(get.inbetweenMemory){
-					
-				} else {
-					loadFromDiskOrPeers(get.key, function(){
-						
-					});
-				}
-			}({key: 'some/key'}));
-		});
 	});
 	
 	describe('Schedule', function(){
@@ -1296,7 +1190,7 @@ describe('Gun', function(){
 		});
 	});
 
-	describe('API', function(){
+	describe.only('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 				
@@ -1404,7 +1298,7 @@ describe('Gun', function(){
 			});
 			
 		});
-		
+
 		it('put', function(done){
 			gun.put("hello", function(err, ok){
 				expect(err).to.be.ok();
@@ -1471,7 +1365,7 @@ describe('Gun', function(){
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
-			}).get('yes/key', function(err, node){ // CHANGELOG: API 0.3 BREAKING CHANGE FROM err, graph
+			}).get('yes/key', function(err, node){
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
@@ -1502,16 +1396,20 @@ describe('Gun', function(){
 		it('get key no override', function(done){
 			var gun = Gun();
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
-				console.log("********************", err, node);
 				expect(Gun.is.node.soul(node)).to.be('cream/pie');
+				if(done.c){ return }
+				if(node.cream && node.pie){
+					expect(node.cream).to.be('pie');
+					expect(node.pie).to.be('cream');
+					done(); done.c = 1;
+				} return;
 				if(done.c >= 2){ return }
 				if(done.c){ done(); done.c = 2; return; } done.c = 1;
 			});
 			gun.get('cream/pie').key('pie/cream');
-			Gun.log.debug = 1; window.gun = gun; console.log("----------------");
 			gun.get('pie/cream').put({pie: 'cream'});
 		});
-		return;
+
 		it('get key', function(done){
 			gun.get('yes/key', function(err, node){
 				expect(err).to.not.be.ok();
@@ -1529,11 +1427,12 @@ describe('Gun', function(){
 
 		it('get key null', function(done){
 			gun.get('yes/key').key('', function(err, ok){
+				console.log("WAT?", err, ok);
 				expect(err).to.be.ok();
 				done();
 			});
 		});
-		
+
 		it('key node has no key relations', function(done){
 			var gun = Gun();
 			gun.put({hello: 'world'}).key('hello/earth');
@@ -1542,27 +1441,32 @@ describe('Gun', function(){
 			gun.put({north: 'america'}).key('hello/galaxy');
 			gun.put({south: 'pole'}).key('hello/galaxy');
 			gun.get('hello/earth').key('hello/galaxy', function(err, ok){
+				console.log("111111111", err, ok);
 				expect(err).to.not.be.ok();
 			});
-			var node = gun.__.by('hello/earth').node;
+			var node = (gun.__.by['hello/earth']||{}).node || {};
 			expect(node['hello/galaxy']).to.not.be.ok();
 			gun.get('hello/earth', function(err, pseudo){
+				console.log("222222222222", err, pseudo);
 				expect(pseudo.hello).to.be('world');
 				expect(pseudo.continent).to.be('africa');
+				expect(pseudo.place).to.be('asia');
 				expect(pseudo.north).to.not.be.ok();
 			});
-			var galaxy = gun.__.by('hello/galaxy').node;
+			var galaxy = (gun.__.by['hello/galaxy']||{}).node || {};
 			expect(galaxy['hello/earth']).to.not.be.ok();
 			gun.get('hello/galaxy', function(err, pseudo){
-				if(done.c){ return }
+				//if(done.c){ return }
+				console.log("33333333333", err, pseudo);
 				expect(pseudo.hello).to.be('world');
 				expect(pseudo.south).to.be('pole');
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.continent).to.be('africa');
 				expect(pseudo.north).to.be('america');
-				done(); done.c = 1;
+				//done(); done.c = 1;
 			});
 		});
+return;
 
 		it('get node put node merge', function(done){
 			gun.get('hello/key', function(err, node){
