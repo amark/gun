@@ -9,7 +9,6 @@
 	;(function(Util){ // Generic javascript utilities.
 		;(function(Type){
 			Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
-			Type.fn.apply = function(){}
 			Type.bi = {is: function(b){ return (b instanceof Boolean || typeof b == 'boolean') }}
 			Type.num = {is: function(n){ return !Type.list.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0) }}
 			Type.text = {is: function(t){ return (typeof t == 'string') }}
@@ -145,11 +144,10 @@
 			Act.chain = Act.prototype;
 			Act.chain.stun = function(){
 				if(!arguments.length){
-					return this.halt = true;
+					return this.tmp.halt = true;
 				}
 				var act = this, on = act.on, halt = {
 					resume: function(arg){
-						act.halt = false;
 						act.ctx.on(act.tag, (arguments.length?
 							1 === arguments.length? arg : Array.prototype.slice.call(arguments)
 						: halt.arg), halt.end, halt.as, act);
@@ -157,7 +155,7 @@
 					end: on.end,
 					as: on.as
 				};
-				act.halt = 1;
+				act.tmp.halt = 1;
 				return halt.resume;
 			}
 			Act.chain.off = function(){
@@ -176,13 +174,14 @@
 				on.end = at;
 				on.as = as;
 				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), gap, off, act;
-				for(i; i < l; i++){ act = acts[i];
+				for(; i < l; i++){ act = acts[i];
 					if(skip){
 						if(skip === act){
 							skip = false;
 						}
 						continue;
 					}
+					var tmp = act.tmp = {};
 					if(!arr){
 						act.fn.call(act.at, arg, act);
 					} else {
@@ -191,11 +190,10 @@
 					if(noop === act.fn){
 						off = true;
 					}
-					if(act.halt){
-						if(1 === act.halt){
+					if(tmp.halt){
+						if(1 === tmp.halt){
 							gap = true;
 						}
-						act.halt = false;
 						break;
 					}
 				}
@@ -609,18 +607,15 @@
 
 		Gun.on('put', function(at){ var to;
 			Gun.is.graph(at.graph, function(node, soul){ // TODO: PERF! CACHE!
-				if(!(to = at.gun.__.by[soul])){ return }
-				to._.on('stream', [null, node]);
+				if(!(to = at.gun.__.by[soul]) || !to._.get){ return }
+				to._.get(null, node);
 			});
 		});
 
 		;(function(){
 			function stream(at){
-				if(at.get){
-					at.get(at.err, at.node);
-				} else {
-					at.on('chain', at);
-				}
+				if(!at.get){ console.log("WARNING! No at.get", at); }
+				at.get(at.err, at.node);
 			}
 			function got(err, node){
 				if(err){ Gun.log(err) }
@@ -651,13 +646,13 @@
 			if(opt.memory || node){ return at.cb(null, node), ev.stun() }
 		});
 
-		Gun.on('stream', function(at){ var node;
+		Gun.on('stream', function(at, ev){ var node;
 			if(!(node = at.node)){ return }
 			at.node = obj_copy(HAM_node(at.gun, node));
 			//at.node = obj_copy(Gun.HAM.node(gun, at.node)); // TODO: Cache the copied ones! So you don't have to recopy every time.
 			if(!at.node){
 				at.err = at.err || {err: "Invalid node!"};
-				this.stun();
+				ev.stun();
 			}
 		});
 
@@ -940,34 +935,20 @@
 			};
 		}());
 		;(function(){
-			function key(err, node){ // TODO: Belongs someplace else!
-				if(!is_node_soul(node, 'key')){ return }
+			function link(cat, ev){
 				var at = this;
-				var pseudo = is_node_ify({}, is_node_soul(node));
-				is_node(node, function(n, f){
-					at.gun.get(f); // TODO: This is an ASYNC call assuming SYNC behavior.
-					n = at.gun.__.graph[f];
-					HAM_node(pseudo, n);
-				});
-				at.node = pseudo;
-			}
-			function link(cat){ var at = this;
-				key.call(at, cat.err, cat.node); // TODO: Turn into event emitter!
 				at.on('any', [cat.err, cat.node]);
-				at.on('chain', at);
+				if(cat.err){ at.on('err', cat.err) }
+				if(cat.node){ at.on('ok', cat.node) }
+				at.on('chain', cat);
 			}
-			function got(err, node){ var at = this;
-				key.call(at, err, node); // TODO: Turn into event emitter!
-				at.on('any', [err, node]);
-				if(err){ at.on('err', err) }
-				if(node){ at.on('ok', node) }
-				at.on('chain', at);
+			function got(err, node){
+				Gun.on('chain', this, link, this);
 			}
 			function cache(by, soul, back){
 				var gun = by[soul] = back.chain(), at = gun._;
 				at.lex.soul = soul;
 				at.get = got;
-				//at.on('chain', link, at);
 				return gun;
 			}
 			Gun.chain.get = function(lex, cb, opt){
@@ -994,15 +975,33 @@
 			}
 		}());
 		;(function(){
+			Gun.on('chain', function(cat, e){ // TODO: Belongs someplace else!
+				if(!is_node_soul(cat.node, 'key')){ return }
+				var resume = e.stun(1), node = cat.node, pseudo = cat.pseudo = cat.pseudo || is_node_ify({}, is_node_soul(node));
+				is_node(node, function(n, f){
+					cat.gun.get(f, function(err, node){
+						if(!node){ return }
+						HAM_node(pseudo, node);
+						cat.node = pseudo;
+						resume();
+					});
+				});
+			});
 			function index(cat, ev){
 				var at = this, cex = cat.lex, lex = at.lex;
 				//if(cex.soul === lex.soul){ return }
 				if(cex.soul === lex.key){ return }
 				at.obj = (1 === is_node_soul(cat.node, 'key'))? obj_copy(cat.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
 				obj_as((at.put = is_node_ify(at.obj, at.key, true))._, 'key', 1);
-				at.gun.__.gun.put(at.put, function(err, ok){ console.debug(5, 'what?', err, ok); at.any.call(this, err, ok)}, {/*chain: opt.chain,*/ key: true, init: true});
+				at.gun.__.gun.put(at.put, function(err, ok){ at.any.call(this, err, ok)}, {/*chain: opt.chain,*/ key: true, init: true});
 			}
 			Gun.chain.key = function(key, cb, opt){
+				if(!key){
+					if(cb){
+						cb.call(this, {err: Gun.log('No key!')});
+					}
+					return this;
+				}
 				var gun = this, at = Gun.at.copy(gun._, {key: key, any: cb || function(){}, opt: opt });
 				gun.on('chain', index, at);
 				return gun;
