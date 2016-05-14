@@ -2,8 +2,9 @@
 	root = env.window? env.window : root;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
-	root.Gun = root.Gun || require('../gun');
+	root.Gun = root.Gun || require('../src/index');
 }(this));
+
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
   var leaked = []
@@ -3795,6 +3796,49 @@ describe('Gun', function(){
 				localStorage.clear();
 				done(); done.c = 1;
 			});
+		});
+
+		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
+			var gun = Gun();
+			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
+			gun.get('ctx/lol').val(function(implicit){
+				done.fail = true;
+				expect(implicit).to.not.be.ok();
+			});
+			gun.get('ctx/lol').not(function(){
+				done.please = true;
+			});
+			gun.get('ctx/foo').val(function(data){
+				expect(data.hello).to.be('world');
+				expect(done.fail).to.not.be.ok();
+				expect(done.please).to.be.ok();
+				done();
+			});
+		});
+
+		it.skip("chaining val", function(done){ // Not implemented yet!
+			var gun = Gun();
+			gun.get('users').set(gun.put({name: 'alice'}));
+			gun.get('users').set(gun.put({name: 'bob'}));;
+			gun.get('users').val().map(function(person){
+				if(person.name === 'alice'){
+					done.alice = true;
+				}
+				if(person.name === 'bob'){
+					done.bob = true;
+				}
+				if(person.name === 'carl'){
+					done.carl = true;
+				}
+			});
+			gun.get('users').set(gun.put({name: 'carl'}));
+			setTimeout(function(){
+				console.log('wha?', done.alice, done.bob, done.carl);
+				expect(done.alice).to.be.ok();
+				expect(done.bob).to.be.ok();
+				expect(done.carl).to.not.be.ok();
+				done();
+			},10);
 		});
 	});
 	
