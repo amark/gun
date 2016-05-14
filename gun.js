@@ -735,7 +735,12 @@
 					var key = {node: gun.__.graph[soul]};
 					if(!Gun.is.node.soul(key.node, 'key')){ return }
 					if(!gun.__.by(soul).end){ gun.__.by(soul).end = 1 }
-					Gun.is.node(key.node, function(rel, s){
+					Gun.is.node(key.node, function each(rel, s){
+						var n = gun.__.graph[s];
+						if(n && Gun.is.node.soul(n, 'key')){
+							Gun.is.node(n, each);
+							return;
+						}
 						rel = ctx.ify.graph[s] = ctx.ify.graph[s] || Gun.is.node.soul.ify({}, s);
 						Gun.is.node(node, function(v,f){ Gun.is.node.state.ify([rel, node], f, v) });
 						Gun.obj.del(ctx.ify.graph, soul);
@@ -839,7 +844,7 @@
 					return cb.call(chain, {err: Gun.log("Invalid path '" + path + "'!")}), chain; // then complain
 				} else { return this.path(path + '', cb, opt)  } } else { return this.path(path.split('.'), cb, opt) } } // else coerce upward to a list.
 				if(gun === gun.back){
-					cb.call(chain, opt.put? null : {err: Gun.log('You have no context to `.path`', path, '!')});
+					cb.call(chain, opt.put? null : {err: Gun.log('You have no context to `.path`', path, '!')}, opt.put? gun.__.graph[(path||[])[0]] : u);
 					return chain;
 				}
 				gun._.at('path:' + path[0]).event(function(at){
