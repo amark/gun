@@ -550,7 +550,7 @@
 		}
 
 		Gun.chain.chain = function(s){
-			var from = this, gun = !from.back? from : new this.constructor(from);
+			var from = this, gun = !from.back? from : Gun(from);
 			gun.back = gun.back || from;
 			gun.__ = gun.__ || from.__;
 			gun._ = gun._ || {};
@@ -642,7 +642,8 @@
 			} else { // else if we are on an existing chain then...
 				gun._.at('soul').map(put); // put data on every soul that flows through this chain.
 				var back = function(gun){
-					if(gun.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
+					if(back.get || gun.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
+					if(gun._.get){ back.get = true }
 					gun._.at('null').event(function(at){
 						if(opt.init || gun.__.opt.init){ return Gun.log("Warning! You have no context to `.put`", val, "!") }
 						gun.init();
@@ -721,6 +722,7 @@
 					Gun.on('get').emit(ctx.by.chain, at, ctx, ctx.opt, ctx.cb, ctx.lex);
 				}
 				ctx.opt.on = (ctx.opt.at || gun.__.at)(ctx.soul).event(on);
+				ctx.by.chain._.get = ctx.lex;
 				if(!ctx.opt.ran && !on.ran){ on.call(ctx.opt.on, {soul: ctx.soul}) }
 				return ctx.by.chain;
 			}
@@ -733,7 +735,12 @@
 					var key = {node: gun.__.graph[soul]};
 					if(!Gun.is.node.soul(key.node, 'key')){ return }
 					if(!gun.__.by(soul).end){ gun.__.by(soul).end = 1 }
-					Gun.is.node(key.node, function(rel, s){
+					Gun.is.node(key.node, function each(rel, s){
+						var n = gun.__.graph[s];
+						if(n && Gun.is.node.soul(n, 'key')){
+							Gun.is.node(n, each);
+							return;
+						}
 						rel = ctx.ify.graph[s] = ctx.ify.graph[s] || Gun.is.node.soul.ify({}, s);
 						Gun.is.node(node, function(v,f){ Gun.is.node.state.ify([rel, node], f, v) });
 						Gun.obj.del(ctx.ify.graph, soul);
@@ -837,7 +844,7 @@
 					return cb.call(chain, {err: Gun.log("Invalid path '" + path + "'!")}), chain; // then complain
 				} else { return this.path(path + '', cb, opt)  } } else { return this.path(path.split('.'), cb, opt) } } // else coerce upward to a list.
 				if(gun === gun.back){
-					cb.call(chain, opt.put? null : {err: Gun.log('You have no context to `.path`', path, '!')});
+					cb.call(chain, opt.put? null : {err: Gun.log('You have no context to `.path`', path, '!')}, opt.put? gun.__.graph[(path||[])[0]] : u);
 					return chain;
 				}
 				gun._.at('path:' + path[0]).event(function(at){

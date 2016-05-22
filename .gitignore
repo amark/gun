@@ -5,3 +5,5 @@ npm-debug.log
 .idea/
 *.bak
 *.new
+src/webpacked.js
+
