@@ -1417,17 +1417,16 @@ describe('Gun', function(){
 			}).key('hello/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.key = true;
-				if(done.yes){ done(); }
+				if(!done.c && done.yes){ done();done.c=1; }
 			}).key('yes/hello', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.yes = true;
-				if(done.key){ done(); }
+				if(!done.c && done.key){ done();done.c=1; }
 			});
 		});
 
 		it('get key null', function(done){
 			gun.get('yes/key').key('', function(err, ok){
-				console.log("WAT?", err, ok);
 				expect(err).to.be.ok();
 				done();
 			});
@@ -1441,32 +1440,41 @@ describe('Gun', function(){
 			gun.put({north: 'america'}).key('hello/galaxy');
 			gun.put({south: 'pole'}).key('hello/galaxy');
 			gun.get('hello/earth').key('hello/galaxy', function(err, ok){
-				console.log("111111111", err, ok);
 				expect(err).to.not.be.ok();
 			});
-			var node = (gun.__.by['hello/earth']||{}).node || {};
+			var node = (gun.__.get['hello/earth']||{}).node || {};
 			expect(node['hello/galaxy']).to.not.be.ok();
 			gun.get('hello/earth', function(err, pseudo){
-				console.log("222222222222", err, pseudo);
 				expect(pseudo.hello).to.be('world');
 				expect(pseudo.continent).to.be('africa');
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.north).to.not.be.ok();
 			});
-			var galaxy = (gun.__.by['hello/galaxy']||{}).node || {};
+			var galaxy = (gun.__.get['hello/galaxy']||{}).node || {};
 			expect(galaxy['hello/earth']).to.not.be.ok();
 			gun.get('hello/galaxy', function(err, pseudo){
-				//if(done.c){ return }
-				console.log("33333333333", err, pseudo);
+				if(done.c || !pseudo.hello || !pseudo.south || !pseudo.place || !pseudo.continent || !pseudo.north){ return }
 				expect(pseudo.hello).to.be('world');
 				expect(pseudo.south).to.be('pole');
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.continent).to.be('africa');
 				expect(pseudo.north).to.be('america');
-				//done(); done.c = 1;
+				done(); done.c = 1;
 			});
 		});
-return;
+
+		function soulnode(gun, kn, r){
+			r = r || [];
+			Gun.is.node(kn, function(node, s){
+				var n = gun.__.graph[s];
+				if(Gun.is.node.soul(n, 'key')){
+					soulnode(gun, n, r);
+					return;
+				}
+				r.push(s);
+			});
+			return r;
+		}
 
 		it('get node put node merge', function(done){
 			gun.get('hello/key', function(err, node){
@@ -1477,12 +1485,9 @@ return;
 			}).put({hi: 'you'}, function(err, ok){
 				expect(err).to.not.be.ok();
 				var keynode = gun.__.graph[done.soul], soul;
-				var c = 0;
 				expect(keynode.hi).to.not.be.ok();
-				Gun.is.node(keynode, function(node, s){
-					soul = s;
-					expect(c++).to.not.be.ok();
-				});
+				var c = soulnode(gun, keynode), soul = c[0];
+				expect(c.length).to.be(1);
 				var node = gun.__.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
@@ -1538,11 +1543,8 @@ return;
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
 				var keynode = gun.__.graph[done.soul], soul;
-				var c = 0;
-				Gun.is.node(keynode, function(node, s){
-					soul = s;
-					expect(c++).to.not.be.ok();
-				});
+				var c = soulnode(gun, keynode), soul = c[0];
+				expect(c.length).to.be(1);
 				var node = gun.__.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('overwritten');
@@ -1557,7 +1559,7 @@ return;
 		});
 
 		it('get key path put', function(done){
-			var gun = Gun().put({foo:'lol'}).key('key/path/put');
+			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
 			data.path('foo').put('epic');
 			data.val(function(val, field){
@@ -1590,12 +1592,13 @@ return;
 		it('put node path rel', function(done){
 			gun.put({foo: {bar: 'lol'}}).path('foo', function(err, val, field){
 				if(done.end){ return } // it is okay for path's callback to be called multiple times.
+				console.log("oye", err, val, field);
 				expect(err).to.not.be.ok();
 				expect(field).to.be('foo');
 				expect(val.bar).to.be('lol');
 				done(); done.end = true;
 			});
-		});
+		});return;
 
 		it('get node path', function(done){
 			gun.get('hello/key').path('hi', function(err, val, field){
@@ -1665,7 +1668,7 @@ return;
 				expect(root.yay).to.not.be.ok();
 				expect(Gun.is.rel(root.hi)).to.be.ok();
 				expect(Gun.is.rel(root.hi)).to.not.be(soul);
-				var node = gun.__.by(Gun.is.rel(root.hi)).node;
+				var node = gun.__.get(Gun.is.rel(root.hi)).node;
 				expect(node.yay).to.be('value');
 				if(done.sub){ expect(done.sub).to.be(Gun.is.rel(root.hi)) }
 				else { done.sub = Gun.is.rel(root.hi) }

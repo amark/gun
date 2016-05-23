@@ -1978,6 +1978,7 @@
 			window.geti = window.geti || 0;
 			localStorage.clear();
 			gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
+			//var ok = function(a,b){ console.log('wat', a,b) }
 			var val = gun.get('users').path(1).path('where').val(ok);
 	});
 	//localStorage.clear();
@@ -1990,7 +1991,7 @@
 		val.val(ok);
 	});
 	stool.add('on', function(){
-		gun.get('users').path(1).path('where').val(ok);
+		gun.get('users').path(1)/*.path('where')*/.val(ok);
 	});
 	return;
 	stool.add('put', function(){
