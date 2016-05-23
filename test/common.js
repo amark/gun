@@ -2251,8 +2251,8 @@ describe('Gun', function(){
 			});
 		});
 
-		it('path should not slowdown', function(done){
-			this.timeout(5000);
+		it('path should not slow down', function(done){
+			this.timeout(10000);
 			//this.timeout(60000);
 
 			//Gun.log.debug = 100; console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
