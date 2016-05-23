@@ -550,10 +550,11 @@
 		}
 
 		Gun.chain.chain = function(s){
-			var from = this, gun = !from.back? from : Gun(from);
+			var from = this, gun = !from.back? from : new this.constructor(from);//Gun(from);
+			gun._ = gun._ || {};
+			gun._.back = gun.back || from;
 			gun.back = gun.back || from;
 			gun.__ = gun.__ || from.__;
-			gun._ = gun._ || {};
 			gun._.on = gun._.on || Gun.on.create();
 			gun._.at = gun._.at || Gun.on.at(gun._.on);
 			return gun;
@@ -603,7 +604,7 @@
 								Gun.obj.as(env.graph, Gun.obj.as(eat.node._, Gun._.soul, eat.soul), eat.node);
 								cb(eat, eat.soul);
 							}; path.opt = {put: true};
-							(ctx.not)? path() : ((at.field || at.at)? gun.back : gun).path(eat.path || [], path, path.opt);
+							(ctx.not)? path() : ((at.field || at.at)? gun._.back : gun).path(eat.path || [], path, path.opt);
 						}
 					}
 					if(!eat.field){ return }
@@ -1130,8 +1131,9 @@
 	}(Gun));
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
-	if(root.window){ window.Gun = Gun }
+	if(root.window){ (root = window).Gun = Gun }
 	if(typeof module !== "undefined" && module.exports){ module.exports = Gun }
+	if(typeof global !== "undefined"){ root = global; }
 	root.console = root.console || {log: function(s){ return s }}; // safe for old browsers
 	var console = {
 		log: function(s){return root.console.log.apply(root.console, arguments), s},
