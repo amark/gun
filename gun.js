@@ -629,7 +629,7 @@
 						cb.call(chain, null); // This is in memory success, hardly "success" at all.
 					}
 					if(ctx.field){
-						return gun.back.path(ctx.field, null, {chain: opt.chain || chain});
+						return gun._.back.path(ctx.field, null, {chain: opt.chain || chain});
 					}
 					if(ctx.not){
 						return gun.__.gun.get(ctx.soul, null, {chain: opt.chain || chain});
@@ -643,13 +643,13 @@
 			} else { // else if we are on an existing chain then...
 				gun._.at('soul').map(put); // put data on every soul that flows through this chain.
 				var back = function(gun){
-					if(back.get || gun.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
+					if(back.get || gun._.back === gun || gun._.not){ return } // TODO: CLEAN UP! Would be ideal to accomplish this in a more ideal way.
 					if(gun._.get){ back.get = true }
-					gun._.at('null').event(function(at){
+					gun._.at('null').event(function(at){ this.off();
 						if(opt.init || gun.__.opt.init){ return Gun.log("Warning! You have no context to `.put`", val, "!") }
 						gun.init();
 					}, -999);
-					return back(gun.back);
+					return back(gun._.back);
 				};
 				if(!opt.init && !gun.__.opt.init){ back(gun) }
 			}
@@ -1004,6 +1004,7 @@
 			gun._.at('null').event(function(at){
 				if(!at.not){ return } // TODO: BUG! This check is synchronous but it could be asynchronous!
 				var ctx = {by: gun.__.by(at.soul)};
+				this.off();
 				if(at.field){
 					if(Gun.obj.has(ctx.by.node, at.field)){ return }
 					gun._.at('soul').emit({soul: at.soul, field: at.field, not: true});
