@@ -1,17 +1,17 @@
 (function(){
-
-var stool = {};
+var console = window.console || {log: function(s){alert(s)}};
+var stool = {}; // rewritten entirely to use jQuery.
 var suite;
 
 function abort() {
 	if (!suite || (suite && !suite.running)) return;
 
 	suite.abort();
-	var results = document.getElementsByClassName('result');
-	for (var i = 0; i < results.length; i++) {
-		if (results[i].classList.contains('running'))
-			results[i].innerText = 'aborted';
-	}
+	$('.result').each(function(){
+		if($(this).is('.running')){
+			$(this).text('aborted');
+		}
+	});
 	return stool;
 }
 stool.abort = abort;
@@ -19,11 +19,9 @@ stool.abort = abort;
 function clear() {
 	if (suite && suite.running) abort();
 
-	var results = document.getElementsByClassName('result');
-	for (var i = 0; i < results.length; i++) {
-		results[i].innerText = '';
-		results[i].classList.remove('running');
-	}
+	$('.results').each(function(){
+		$(this).text('').removeClass('running');
+	});
 	return stool;
 }
 stool.clear = clear;
@@ -31,72 +29,70 @@ stool.clear = clear;
 function run() {
 	abort();
 
-	var titles = document.getElementsByClassName('title');
-	var cases = document.getElementsByClassName('case');
-	var results = document.getElementsByClassName('result');
-	var common = document.getElementById('common');
+	var titles = $('.title');
+	var cases = $('.case');
+	var results = $('.result');
+	var common = $('#common');
 
 	suite = new Benchmark.Suite;
 	suite.on('complete', function() {
-		console.log(this);
-		document.body.classList.remove('running');
+		$('body').removeClass('running');
 	});
 
-	document.body.classList.add('running');
+	$('body').addClass('running');
 
-	for (var i = 0; i < cases.length; i++) {
-		results[i].classList.add('running');
-		results[i].innerText = 'queued';
+	results.each(function(i){
+		var result = $(this).addClass('running').text('queued');
 		suite.add(titles[i].value, cases[i].value, {
-			'setup': common.value,
-			'onError': function(a,b,c){ console.log(a.message) },
+			'setup': common.val(),
+			'onError': function(a,b,c){ console.log(a.message.message) },
 			'onCycle': (function (result) {
 				return function(event) {
 					if (event.target.aborted) return;
-					result.innerText = Math.round(event.target.hz).toLocaleString() + ' ops/sec';
+					result.text(Math.round(event.target.hz).toLocaleString() + ' ops/sec');
 				};
-			})(results[i]),
+			})(result),
 			'onComplete': (function (result) {
 				return function(event) {
 					if (event.target.aborted) return;
-					result.innerText = Math.round(event.target.hz).toLocaleString() + ' ops/sec';
-					result.classList.remove('running');
+					result.text(Math.round(event.target.hz).toLocaleString() + ' ops/sec');
+					result.removeClass('running');
 				};
-			})(results[i])
+			})(result)
 		});
-	}
+	});
 
 	suite.run({ 'async': true });
 	return stool;
 }
 stool.run = run;
 
+//wat;
 function add(title, code) {
 	var html = '<td><button class="remove" tabindex="-1">Remove</button></td><td class="inputs"><input type="text" class="title input" placeholder="Label"><textarea rows="6" class="case input" placeholder="Code"></textarea></td><td class="result"></td>'
-	var s = document.getElementById('suite');
-	var tr = document.createElement('tr');
-	tr.innerHTML = html;
-	tr.getElementsByClassName('remove')[0].onclick = (function (tr) {
+	var s = $('#suite');
+	var tr = $('<tr>');
+	tr.html(html);
+	tr.find('.remove')[0].onclick = (function (tr) {
 		return function () {
 			tr.remove();
 			clear();
 		};
 	})(tr);
 
-	var inputs = tr.getElementsByClassName('input');
-	for (var i = 0; i < inputs.length; i++) {
-		inputs[i].onkeydown = function () {
+	var inputs = tr.find('.input').each(function(){
+		this.onkeydown = function () {
 			abort();
-			var shareResult = document.getElementById('share-result');
-			shareResult.href = shareResult.innerText = '';
+			var shareResult = $('#share-result').text('');
+			shareResult.attr('href', '');
 		}
-	}
+	});
 	if(code){
 		code = stool.text(code);
-		tr.getElementsByClassName('title')[0].value = title;
-		tr.getElementsByClassName('case')[0].value = code;
+		tr.find('.title').val(title);
+		tr.find('.case').val(code);
 	}
-	s.appendChild(tr);
+	s.append(tr);
 
 	clear();
 
@@ -105,8 +101,8 @@ function add(title, code) {
 stool.add = add;
 
 function setup(code){
-	var common = document.getElementById('common');
-	common.value = stool.text(code);
+	var common = $('#common');
+	common.val(stool.text(code));
 	return stool;
 }
 stool.setup = setup;

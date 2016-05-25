@@ -1928,7 +1928,7 @@ describe('Gun', function(){
 		
 		it('get put path', function(done){
 			gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val, field){
-				console.log("WAT?", field, val);
+				console.log("WOW", field, val);
 				expect(val).to.be('Mark');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
