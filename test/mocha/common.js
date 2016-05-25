@@ -3852,6 +3852,273 @@ describe('Gun', function(){
 			},100);
 		});
 
+		it.skip("gun path via gun path", function(done){ // TODO: Future feature?
+			var gun = Gun();
+			var book = gun.put({ name: 'Potato Cooking' });
+			var author = gun.put({ name: 'Bob Bobson' });
+			author.path(book.path('name')).put(book);
+		});
+
+		it("gun set", function(done){
+			var gun = Gun();
+			var users = gun.get('users');
+			var alice = gun.put({name: 'alice', birth: Math.random()}).key('person/alice');
+			var bob = gun.put({name: 'bob', birth: Math.random()}).key('person/bob');
+			var carl = gun.put({name: 'carl', birth: Math.random()}).key('person/carl');
+			var dave = gun.put({name: 'dave', birth: Math.random()}).key('person/dave');
+
+			users.set(alice);
+			users.set(bob);
+			users.set(carl);
+			users.set(dave);
+
+			alice.path('friends').set(bob).back.set(carl);
+			bob.path('friends').set(alice);
+			dave.path('friends').set(alice).back.set(carl);
+
+			var team = gun.get('team/lions').put({name: "Lions"});
+			team.path('members').set(alice);
+			team.path('members').set(bob);
+
+			alice.path('team').put(team);
+			bob.path('team').put(team);
+
+			dave.path('friends').map().path('team.members').map().val(function(member){
+				//console.log("Dave's friend is on a team that has", member.name, "on it.");
+				if('alice' === member.name){
+					done.alice = true;
+				} else
+				if('bob' === member.name){
+					done.bob = true;
+				} else {
+					expect(member).to.not.be.ok();
+				}
+				if(done.alice && done.bob){
+					setTimeout(function(){
+						done();
+					},10);
+				}
+			});
+		});
+
+		it("localStorage", function(done){
+			var localStorage = localStorage || {clear:function(){}};
+			localStorage.clear();
+			var gun = Gun();
+
+
+			var text = Gun.text.random(1024 * 1024 * 6);
+			gun.put({i: text}, function(err, ok){
+				if(done.c){ return }
+				if(!err){ return done() }
+				var text = "If you are seeing this message, it means the localStorage error was caught successfully rather than it crashing and stopping replication to peers. Also, the error is now reported back to you via the put callback. Here it is!";
+				localStorage.clear();
+				done(); done.c = 1;
+			});
+		});
+
+		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
+			var gun = Gun();
+			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
+			gun.get('ctx/lol').val(function(implicit){
+				done.fail = true;
+				expect(implicit).to.not.be.ok();
+			});
+			gun.get('ctx/lol').not(function(){
+				done.please = true;
+			});
+			gun.get('ctx/foo').val(function(data){
+				expect(data.hello).to.be('world');
+				expect(done.fail).to.not.be.ok();
+				expect(done.please).to.be.ok();
+				done();
+			});
+		});
+
+		it.skip("chaining val", function(done){ // Not implemented yet!
+			var gun = Gun();
+			gun.get('users').set(gun.put({name: 'alice'}));
+			gun.get('users').set(gun.put({name: 'bob'}));;
+			gun.get('users').val().map(function(person){
+				if(person.name === 'alice'){
+					done.alice = true;
+				}
+				if(person.name === 'bob'){
+					done.bob = true;
+				}
+				if(person.name === 'carl'){
+					done.carl = true;
+				}
+			});
+			gun.get('users').set(gun.put({name: 'carl'}));
+			setTimeout(function(){
+				console.log('wha?', done.alice, done.bob, done.carl);
+				expect(done.alice).to.be.ok();
+				expect(done.bob).to.be.ok();
+				expect(done.carl).to.not.be.ok();
+				done();
+			},10);
+		});
+
+    it.skip('Deep async change not updating', function (done) { // Issue #167 TODO: NEEDS TO BE ADDED TO 0.5 BRANCH!
+			// object nested three layers deep
+			// must be at least three layers
+			var obj = { 1: { 2: { data: false } } }
+
+			// define gun and place the deep object
+			gun = Gun().get('deep change').put(obj)
+
+			// listen for changes
+			Gun.log.debug = 1; console.log("------------------");
+			gun.path('1.2.data').on(function (data) {
+				console.log("??????", data);
+			  if (data) {
+			    // gun will never receive the "true" update
+			    done();
+			  }
+			})
+
+			// asynchronously set data
+			// synchronous deviations will succeed
+			setTimeout(function () {
+			  obj[1][2].data = true
+			  gun.put(obj);
+			}, 50)
+    });
+
+    it('should allow more than 2 items depthwise', function (done) { // Issue #186
+    		var gun = Gun();
+    		var list = gun.get('list');
+        // create a list two layers deep
+        list.put({
+            depth: 1,
+            next: {
+                depth: 2
+            }
+        });
+
+        //Gun.log.verbose=true;Gun.log.debug=1;console.log("----------------------");
+        // append a third item
+        list.path('next').put({
+            to: {
+                depth: 3
+            }
+        });
+        setTimeout(function(){
+
+	        //list.path('next').val('wat');
+
+	        //console.log("!!!!!!", gun.__.graph);
+
+	        // try to read the third item
+	        list.path('next.to').val(function () { // TODO: BUG! If this is 'next.next' as with the data, then it fails.
+	            done();
+	        });
+      	},100);
+    });
+
+    it("Batch put status update not save", function(done){ // TODO: ADD TO 0.5 BRANCH. Stefdv's bug.
+    	var obj = {
+				a: 1,
+				b: 2,
+				c: 3,
+				d: 4,
+				e: 5,
+				f: 6,
+				g: 7,
+				h: 8,
+				i: 9,
+				j: 10,
+				k: 11,
+				l: 12,
+				m: 13,
+				n: 14,
+				o: 15,
+				p: 16,
+				q: 17,
+				r: 18,
+				s: 19,
+				t: 20
+			}
+
+			var bsmi = {
+				group1: {
+					item1: {
+						10: Gun.obj.copy(obj)
+					}
+				}/*,
+				group2: {
+					item2: {
+						10: Gun.obj.copy(obj)
+					}
+				}*/
+			}
+
+			var gun = Gun();
+			var BSMI = gun.get('bsmi').put(bsmi);
+
+			// path is <group><itemId><powerRail>
+			//BSMI  is a set  holding all items
+			//var allPaths = ["1116.1116-A7001.10","1354.1354-E1930.10"]
+			var allPaths = ["group1.item1.10"];//,"group2.item2.10"]
+			allPaths.forEach(function(path) {
+				BSMI.path(path).put({status:false});
+			});
+			setTimeout(function(){
+				BSMI.path(allPaths[0]).val(function(a,b,c){
+					expect(a.a).to.be(1);
+					expect(a.b).to.be(2);
+					expect(a.c).to.be(3);
+					expect(a.d).to.be(4);
+					expect(a.e).to.be(5);
+					expect(a.f).to.be(6);
+					expect(a.g).to.be(7);
+					expect(a.h).to.be(8);
+					expect(a.i).to.be(9);
+					expect(a.j).to.be(10);
+					expect(a.k).to.be(11);
+					expect(a.l).to.be(12);
+					expect(a.m).to.be(13);
+					expect(a.n).to.be(14);
+					expect(a.o).to.be(15);
+					expect(a.p).to.be(16);
+					expect(a.q).to.be(17);
+					expect(a.r).to.be(18);
+					expect(a.s).to.be(19);
+					expect(a.t).to.be(20);
+					expect(a.status).to.be(false);
+					done();
+				});
+			},100);
+    });
+
+    it("Don't put on parents", function(done){ // TODO: ADD TO 0.5 BRANCH! // Another Stefdv find.
+			var test = gun.get('test');
+			test.path('try.this.at.lvl4').put({msg:'hoi'})
+			test.val(function(node,b){
+				delete node._;
+				expect(Gun.obj.empty(node, 'try')).to.be.ok();
+				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.try)]);
+
+				delete node._;
+				expect(Gun.obj.empty(node, 'this')).to.be.ok();
+				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.this)]);
+
+				delete node._;
+				expect(Gun.obj.empty(node, 'at')).to.be.ok();
+				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.at)]);
+
+				delete node._;
+				expect(Gun.obj.empty(node, 'lvl4')).to.be.ok();
+				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.lvl4)]);
+
+				delete node._;
+				expect(Gun.obj.empty(node, 'msg')).to.be.ok();
+				expect(node.msg).to.be('hoi');
+				done();
+			});
+    });
+
 		/*
 		depp.on(log).path('spouse').on(log).path('pet').on(log);
 		// 0) Depp & Heide & dog
