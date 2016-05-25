@@ -217,6 +217,7 @@
 						}
 					}
 					on.s = still;
+					// TODO: PERF! MEMORY! If still.length === 0, delete event.
 				}
 				if(!gap && at && at instanceof Function){
 					at.call(as, arg);
@@ -581,6 +582,7 @@
 				at.ack(cat.err, cat.ok, cat);
 			}
 			Gun.on('put', function(at, ev){
+				//console.log("???????????????????????", at, ev);
 				if(is_graph(at.graph)){ return }
 				at.cb({err: "Invalid graph!"});
 				ev.stun();
@@ -769,7 +771,7 @@
 			return ify;
 		}());
 	}(Gun));
-	var _soul = Gun._.soul, _meta = Gun._.meta, _state = Gun._.state;
+	var _soul = Gun._.soul, _field = Gun._.field, _meta = Gun._.meta, _state = Gun._.state;
 	var is_val = Gun.is.val, is_rel = Gun.is.rel, is_rel_ify = is_rel.ify, is_node = Gun.is.node, is_node_soul = is_node.soul, is_node_soul_ify = is_node_soul.ify, is_node_ify = is_node.ify, is_node_copy = is_node.copy, is_node_state = is_node.state, is_node_state_ify = is_node_state.ify, HAM_node = Gun.HAM.node, is_graph = Gun.is.graph;
 
 	Gun.chain = Gun.prototype;
@@ -794,7 +796,7 @@
 				if(!opt[f]){ return }
 				at.opt[f] = opt[f] || at.opt[f];
 			});
-			if(!stun){ Gun.on('opt', opt) }
+			if(!stun){ Gun.on('opt', {gun: gun, opt: opt}) }
 			return gun;
 		}
 
@@ -803,18 +805,6 @@
 			gun.back = back;
 			gun.__ = back.__;
 			return gun;
-		}
-
-		function pop(cat, ev){
-			var at = this, node = cat.node, lex = cat.lex, field = lex.field, rel;
-			if(obj_has(node, field)){
-				if(rel = Gun.is.rel(node[field])){
-					return Gun.get(Gun.obj.to(at, {lex: {soul: rel}}));	
-				}
-			}
-			if(at.link){
-				at.link(cat, ev);
-			}
 		}
 
 		;(function(){
@@ -831,14 +821,15 @@
 				put.any = cb;
 				put.data = data;
 				put.state = (opt.state || opts.state)();
-				at.on('chain', link, at);
+				at.on('chain', link, at); // TODO: ONE?
 				return gun;
 			};
 			function link(cat, ev){ ev.off(); // TODO: BUG!
 				var at = this, put = at.put, data, cb;
 				if(cat.err){ return }
 				if(!cat.node && (put.opt.init || cat.gun.__.opt.init)){ return }
-				if(!(data = wrap(cat, put.data))){ // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
+				// TODO: BUG! `at` doesn't have correct backwards data!
+				if(!(data = wrap(at, put.data))){ // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
 					if((cb = put.any) && cb instanceof Function){
 						cb.call(at.gun, {err: Gun.log("No node exists to put " + (typeof at.put.data) + ' "' + at.put.data + '" in!')});
 					}
@@ -850,8 +841,8 @@
 				}*/
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at;
-						if(1 === eat.path.length && at.node){
-							eat.soul = is_rel(at.node[eat.path[0]]);
+						if(1 === eat.path.length && cat.node){
+							eat.soul = is_rel(cat.node[eat.path[0]]);
 						}
 						cb(env, eat);
 					}, value: function(env){ var eat = env.at;
@@ -904,10 +895,10 @@
 					if(!(gun = get[lex])){
 						gun = cache(get, lex, back);
 						if((tmp = gun._.lex).field){
-							if(!back._.ons.chain.s.length){ // TODO: CLEAN UP!
+							if(!back._.ons.chain || !back._.ons.chain.s.length){ // TODO: CLEAN UP! // TODO: ONE?
 								back._.on('chain', link, gun._);
 							}
-							back._.on('field:' + tmp.field, field, gun._);
+							back._.on('field:' + tmp.field, field, gun._); // TODO: ONE?
 						}
 					}
 				} else
@@ -919,21 +910,28 @@
 				if(num_is(lex)){
 					return back.get(''+lex, cb, opt);
 				} else
-				if(tmp = lex[_soul]){
+				if(tmp = lex.soul){
+					if(lex.field){
+						gun = back.chain();
+						gun._.stream = cb;
+						gun._.lex = lex;
+						Gun.get(gun._);
+						return gun;
+					}
 					if(!(gun = get[tmp])){
 						gun = cache(get, tmp, back);
 					}
 				} else
-				if(tmp = lex.soul){
+				if(tmp = lex[_soul]){
+					if(lex[_field]){
+						return back.get({soul: tmp, field: lex[_field]}, cb, opt);
+					}
 					if(!(gun = get[tmp])){
 						gun = cache(get, tmp, back);
-						if(tmp = lex.field){
-							//cache(gun._.get, tmp, gun);
-						}
 					}
 				}
 				if(cb && cb instanceof Function){
-					gun._.on('any', cb, gun); // TODO: Perf! Batch!
+					gun._.on('any', pop(cb), gun); // TODO: Perf! Batch! // TODO: API CHANGE? Having to use pop is annoying. Should we support NodeJS style callbacks anymore?
 				}
 				return gun;
 			}
@@ -954,19 +952,16 @@
 			function stream(err, node){
 				Gun.on('chain', this, link, this);
 			}
-			function link(cat, ev){ var at = this;
-				at.gun._.val = cat.node; // TODO: CLEANER!
-				var err = cat.err, node = cat.node, cex = cat.lex, lex = at.lex, rel, val;
-				if(lex.field && cex.field){
+			function link(cat, ev){ var at = this, u;
+				var err = cat.err, node = cat.node, cex = cat.lex, lex = at.lex, field = lex.field, rel, val;
+				if(lex !== cex && lex.field && cex.field){
 					if(obj_has(node, cex.field) && (rel = is_rel(val = node[cex.field]))){
 						return Gun.get(Gun.obj.to(at, {lex: {soul: rel, field: lex.field}}));
 					}
 				}
-				var field = lex.field;
-				console.log("length?", at.ons);
-				at.on('any', [err, (field && node)? node[field] : node, field]); // TODO: Revisit!
+				at.on('any', [err, (field && node)? node[field] : node, field, cat]); // TODO: Revisit!
 				if(err){ at.on('err', err) }
-				if(node){ at.on('ok', (field && node)? node[field] : node, field) } // TODO: Revisit!
+				if(node){ at.on('ok', [(field && node)? node[field] : node, field, cat]) } // TODO: Revisit!
 				is_node(node, map, {cat: cat, at: at});
 				at.on('chain', cat);
 			}
@@ -986,10 +981,10 @@
 					return this;
 				}
 				var gun = this, at = Gun.obj.to(gun._, {key: key, any: cb || function(){}, opt: opt });
-				gun.on('chain', index, at);
+				gun.on('chain', index, at); // TODO: ONE?
 				return gun;
 			}	
-			function index(cat, ev){
+			function index(cat, ev){ ev.off(); // TODO: BUG!
 				var at = this, cex = cat.lex, lex = at.lex;
 				//if(cex.soul === lex.soul){ return }
 				if(cex.soul === at.key){ return }
@@ -1036,30 +1031,36 @@
 			});
 		}());
 		Gun.chain.path = function(field, cb, opt){
-			return this.get(field, cb, opt || {path: true});
+			var back = this, gun = back, tmp;
+			if(typeof field === 'string'){
+				tmp = field.split((opt && opt.split) || '.');
+				if(1 === tmp.length){
+					return back.get(field, cb, opt || {path: true});
+				}
+				field = tmp;
+			}
+			if(field instanceof Array){
+				if(field.length > 1){
+					(gun = back.path(field.slice(1), cb, opt)).back = back;
+				} else {
+					gun = back.get(field[0], cb, opt || {path: true});
+				}
+				return gun;
+			}
+			if(!field && 0 != field){
+				field = '';
+			}
+			return this.get(''+field, cb, opt || {path: true});
 		}
 		;(function(){
 			Gun.chain.on = function(cb, opt, t){
 				var gun = this, at = gun._;
 				if(typeof cb === 'string'){ return at.on(cb, opt, t) }
-				//opt = Gun.fns.is(opt)? {any: opt, to: Gun.text.is(cb)? cb : u} : Gun.fns.is(cb)? {ok: cb, opt: opt} : {opt: opt};
 				if(cb && cb instanceof Function){
-					at.on('ok', cb, gun);
-					//var at = Gun.obj.to(at, {ok: cb, link: link});
-					//at.on('chain', pop, at);
+					at.on('ok', pop(cb), gun);
 				}
 				return gun;
 			}
-			function link(cat, ev){
-				var at = this, node = cat.node, lex = at.lex, field = lex.field, cb;
-				if(!(cb = at.ok) || cat.err || !node || (field && !Gun.obj.has(node, field))){ return }
-				cb.call(cat.gun, at.gun._.cache = field? node[field] : node, field || at.gun._.lex.field); // TODO: Wrong gun?
-			}
-			/*
-			function got(err, node){
-				this.ok.call(this.gun, node, this.lex.field);
-			}
-			*/
 		}());
 		;(function(){
 			Gun.chain.val = function(cb, opt, t){
@@ -1072,16 +1073,39 @@
 					return gun;
 				}
 				if(cb){
-					var at = Gun.obj.to(at, {get: got, ok: cb});
-					at.on('chain', pop, at);
+					at.on('ok', pop(cb, {off: true, at: at}), gun); // TODO: ONE?
 				}
 				return gun;
 			}
-			function got(err, node){
-				this.gun._.val = node;
-				this.ok.call(this.gun, node, this.lex.field);
-			}
 		}());
+
+		function pop(cb, opt){ // TODO: CLEAN UP! This is an ugly piece of junk.
+			return function(a, b, c, d, e){
+				var t = this, arg = [a,b,c,d,e], f;
+				if(c && Gun.is(c.gun)){
+					f = true; arg = [null, a,b,c,d]; // IE6 says it can unshift, but it can't. :(
+				}
+				if((rel = is_rel(arg[1]))
+				|| (arg[1] && arg[2] && (rel = is_rel(arg[1][arg[2]])))){
+					return Gun.get(arg[3].gun, {soul: rel}, function(err, data){
+						arg[0] = err; arg[1] = data;
+						if(opt && opt.at){ opt.at.val = arg[1] }
+						if(arg[4] && 'ok' == arg[4].tag){ 
+							if(f && obj_empty(arg[1], _meta)){ return }
+							arg[4].off(); // TODO: BUG! for plurals
+						}
+						cb.apply(t, f? arg.slice(1) : arg);
+					});
+				}
+				if(opt && opt.at){ opt.at.val = arg[1] }
+				if(arg[4] && 'ok' == arg[4].tag){ 
+					if(f && obj_empty(arg[1], _meta)){ return }
+					arg[4].off(); // TODO: BUG! For plurals.
+				}
+				cb.apply(t, f? arg.slice(1) : arg);
+			}
+		}
+
 	}(Gun.chain));
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
 	if(typeof window !== "undefined"){ (root = window).Gun = Gun }
@@ -1126,6 +1150,7 @@
 
 	Gun.on('put', function(at){
 		var gun = at.gun, graph = at.graph, opt = at.opt;
+		opt.peers = opt.peers || gun.__.opt.peers; // TODO: CLEAN UP!
 		if(Gun.obj.empty(opt.peers)){
 			if(!Gun.log.count('no-wire-put')){ Gun.log("Warning! You have no peers to replicate to!") }
 			at.cb(null);
@@ -1136,9 +1161,10 @@
 			'#': Gun.text.random(9), // msg ID
 			'$': graph // msg BODY
 		};
-		Tab.on(msg['#'], function(err, ok){
+		Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
 			at.cb(err, ok);
 		});
+		console.log("PUT SEND", msg);
 		Tab.peers(opt.peers).send(msg);
 	});
 
@@ -1152,7 +1178,7 @@
 			'#': Gun.text.random(9), // msg ID
 			'$': Gun.is.lex.ify(lex) // msg BODY
 		};
-		Tab.on(msg['#'], function(err, data){
+		Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
 			at.cb(err, data);
 		});
 		Tab.peers(opt.peers).send(msg);
@@ -1167,6 +1193,7 @@
 		P.chain = P.prototype;
 		function map(peer, url){
 			var msg = this;
+			console.log("PEER SEND", peer, msg);
 			Tab.request(url, msg, function(err, reply){ var body = (reply||{}).body||{};
 				Tab.on(body['@'] || msg['#'], err || body['!'], body['$']);
 			});

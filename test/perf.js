@@ -16,6 +16,7 @@
 		******* START AT THE BOTTOM AND READ UP *******
 	*/
 	window.i = 1;
+	window.localStorage = window.localStorage || {clear: function(){}};
 	if(!this.stool){ return }
 	setTimeout(function(){
 		stool.run();
@@ -56,6 +57,7 @@
 				//console.log('any', err, node);
 			}
 			var ok = function(node, field){
+				//$('#log').append(field  + ' ' + Gun.text.ify(node));
 				//console.log('ok', field, node);
 			}
 			var err = function(err){
@@ -1979,6 +1981,7 @@
 			localStorage.clear();
 			gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
 			//var ok = function(a,b){ console.log('wat', a,b) }
+	//Gun.log.debug=1;console.log("------------------");
 			var val = gun.get('users').path(1).path('where').val(ok);
 	});
 	//localStorage.clear();
@@ -1991,7 +1994,7 @@
 		val.val(ok);
 	});
 	stool.add('on', function(){
-		gun.get('users').path(1)/*.path('where')*/.val(ok);
+		gun.get('users').path(1).path('where').val(ok);
 	});
 	return;
 	stool.add('put', function(){
