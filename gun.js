@@ -582,7 +582,6 @@
 				at.ack(cat.err, cat.ok, cat);
 			}
 			Gun.on('put', function(at, ev){
-				//console.log("???????????????????????", at, ev);
 				if(is_graph(at.graph)){ return }
 				at.cb({err: "Invalid graph!"});
 				ev.stun();
@@ -952,7 +951,7 @@
 			function stream(err, node){
 				Gun.on('chain', this, link, this);
 			}
-			function link(cat, ev){ var at = this, u;
+			function link(cat, ev){ var at = this, u; // TODO: What if this was a Gun.on('chain')?
 				var err = cat.err, node = cat.node, cex = cat.lex, lex = at.lex, field = lex.field, rel, val;
 				if(lex !== cex && lex.field && cex.field){
 					if(obj_has(node, cex.field) && (rel = is_rel(val = node[cex.field]))){
@@ -1065,7 +1064,7 @@
 		;(function(){
 			Gun.chain.val = function(cb, opt, t){
 				var gun = this, at = gun._;
-				if(at.val){ // TODO: Not null!
+				if(at.val || null === at.val){
 					cb.call(gun, at.val, at.lex.field);
 					return gun;
 				}
@@ -1090,17 +1089,21 @@
 					return Gun.get(arg[3].gun, {soul: rel}, function(err, data){
 						arg[0] = err; arg[1] = data;
 						if(opt && opt.at){ opt.at.val = arg[1] }
+						if(arg[3] && arg[3].gun){ arg[3].val = arg[1] }
+						if(t && t.gun){ t.val = arg[1] }
 						if(arg[4] && 'ok' == arg[4].tag){ 
 							if(f && obj_empty(arg[1], _meta)){ return }
-							arg[4].off(); // TODO: BUG! for plurals
+							if(opt && opt.off){ arg[4].off(); } // TODO: BUG! for plurals
 						}
 						cb.apply(t, f? arg.slice(1) : arg);
 					});
 				}
 				if(opt && opt.at){ opt.at.val = arg[1] }
+				if(arg[3] && arg[3].gun){ arg[3].val = arg[1] }
+				if(t && t.gun){ t.val = arg[1] }
 				if(arg[4] && 'ok' == arg[4].tag){ 
 					if(f && obj_empty(arg[1], _meta)){ return }
-					arg[4].off(); // TODO: BUG! For plurals.
+					if(opt && opt.off){ arg[4].off(); } // TODO: BUG! For plurals.
 				}
 				cb.apply(t, f? arg.slice(1) : arg);
 			}
@@ -1164,12 +1167,12 @@
 		Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
 			at.cb(err, ok);
 		});
-		console.log("PUT SEND", msg);
-		Tab.peers(opt.peers).send(msg);
+		Tab.peers(opt.peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 	});
 
 	Gun.on('get', function(at){
-		var opt = at.opt, lex = at.lex;
+		var gun = at.gun, opt = at.opt, lex = at.lex;
+		opt.peers = opt.peers || gun.__.opt.peers; // TODO: CLEAN UP!
 		if(Gun.obj.empty(opt.peers)){
 			if(!Gun.log.count('no-wire-get')){ Gun.log("Warning! You have no peers to get from!") }
 			return;
@@ -1181,7 +1184,71 @@
 		Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
 			at.cb(err, data);
 		});
-		Tab.peers(opt.peers).send(msg);
+		Tab.peers(opt.peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
+	});
+
+	Gun.on('opt', function(at){ // TODO: BUG! Does not respect separate instances!!!
+		if(Tab.server){ return }
+		var gun = at.gun, server = Tab.server = {};
+		server.sid = Gun.text.random();
+		Tab.request.createServer(function(req, res){
+			if(!req || !res || !req.body || !req.headers){ return }
+			var msg = req.body;
+			// AUTH for non-replies.
+			if(server.msg(msg['#'])){ return }
+			//server.on('network', Gun.obj.copy(req)); // Unless we have WebRTC, not needed.
+			if(msg['@']){ // no need to process.
+				if(Tab.ons[msg['@'] || msg['#']]){
+					Tab.on(msg['@'] || msg['#'], [msg['!'], msg['$']]);
+				}
+				return 
+			}
+			if(Gun.is.lex(msg['$'])){ return server.get(req, res) }
+			else { return server.put(req, res) }
+		});
+		server.get = function(req, cb){
+			var body = req.body, lex = body['$'], opt;
+			if(!(node = gun.__.graph[lex[Gun._.soul]])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
+			cb({body: {
+				'#': server.msg(),
+				'@': body['#'],
+				'$': node
+			}});
+		}
+		server.put = function(req, cb){
+			var body = req.body, graph = body['$'];
+			if(!(graph = Gun.obj.map(graph, function(node, soul, map){ // filter out what we don't have in memory.
+				if(!gun.__.graph[soul]){ return }
+				map(soul, node);
+			}))){ return }
+			Gun.put(gun, graph, function(err, ok){
+				return cb({body: {
+					'#': server.msg(),
+					'@': body['#'],
+					'$': ok,
+					'!': err
+				}});
+			}, {websocket: false});
+		}
+		server.msg = function(id){
+			if(!id){
+				return server.msg.debounce[id = Gun.text.random(9)] = Gun.time.is(), id;
+			}
+			clearTimeout(server.msg.clear);
+			server.msg.clear = setTimeout(function(){
+				var now = Gun.time.is();
+				Gun.obj.map(server.msg.debounce, function(t,id){
+					if((now - t) < (1000 * 60 * 5)){ return }
+					Gun.obj.del(server.msg.debounce, id);
+				});
+			},500);
+			if(server.msg.debounce[id]){ 
+				return server.msg.debounce[id] = Gun.time.is(), id;
+			}
+			server.msg.debounce[id] = Gun.time.is();
+			return;
+		};	
+		server.msg.debounce = server.msg.debounce || {};
 	});
 
 	(function(exports){
@@ -1192,14 +1259,17 @@
 		P.is = function(p){ return (p instanceof P) }
 		P.chain = P.prototype;
 		function map(peer, url){
-			var msg = this;
-			console.log("PEER SEND", peer, msg);
+			var msg = this.msg;
+			var opt = this.opt || {};
+			opt.out = true;
+			Tab.request(url, msg, null, opt);
+			return;
 			Tab.request(url, msg, function(err, reply){ var body = (reply||{}).body||{};
-				Tab.on(body['@'] || msg['#'], err || body['!'], body['$']);
-			});
+				Tab.on(body['@'] || msg['#'], [err || body['!'], body['$']]);
+			}, this.opt);
 		}
-		P.chain.send = function(msg){
-			Gun.obj.map(this.peers, map, msg);
+		P.chain.send = function(msg, opt){
+			Gun.obj.map(this.peers, map, {msg: msg, opt: opt});
 		}
 		exports.peers = P;
 	}(Tab));
@@ -1246,7 +1316,7 @@
 				if(opt.body){ req.body = opt.body }
 				if(opt.url){ req.url = opt.url }
 				req.headers = req.headers || {};
-				if(!ws.cbs[req.headers['ws-rid']]){
+				if(!opt.out && !ws.cbs[req.headers['ws-rid']]){
 					ws.cbs[req.headers['ws-rid'] = 'WS' + (+ new Date()) + '.' + Math.floor((Math.random()*65535)+1)] = function(err,res){
 						if(!res || res.body || res.end){ delete ws.cbs[req.headers['ws-rid']] }
 						cb(err,res);
@@ -1282,8 +1352,7 @@
 				if(!res){ return }
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
-				//Gun.log("We have a pushed message!", res);
-				if(res.body){ r.createServer.ing(res, function(res){ r(opt.base, null, null, res)}) } // emit extra events.
+				if(res.body){ r.createServer.ing(res, function(res){ res.out = true; r(opt.base, null, null, res)}) } // emit extra events.
 			};
 			ws.onerror = function(e){ (ws||{}).err = e };
 			return true;
