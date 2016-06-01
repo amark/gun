@@ -5,15 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "test": "mocha test/mocha"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amark/gun.git"
   },
   "keywords": [
-	"gun",
-	"gunDB",
+    "gun",
+    "gunDB",
     "graph",
     "document",
     "key",
@@ -48,6 +48,8 @@
     "ws": "~>1.0.1"
   },
   "devDependencies": {
-    "mocha": "~>1.9.0"
+    "mocha": "~>1.9.0",
+    "panic-server": "~>0.2.4",
+    "selenium-webdriver": "~>2.53.2"
   }
 }

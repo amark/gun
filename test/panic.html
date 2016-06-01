@@ -1,0 +1,14 @@
+<html>
+	<body>
+		<script src="panic.js"></script>
+		<script>
+			panic.server(location.origin);
+			console.log('Connecting to', location.origin);
+		</script>
+		<script src="expect.js"></script>
+		<script src="gun.js"></script>
+		<script>
+			var gun = Gun(location.origin + '/gun');
+		</script>
+	</body>
+</html>
