@@ -1,3 +1,5 @@
+require('./holy/grail');
+
 describe('PANIC!', function(){
 	this.timeout(1000 * 100);
 
@@ -35,7 +37,7 @@ describe('PANIC!', function(){
 	function min(n, done, list){
 		list = list || clients;
 		function ready() {
-			if (list.len() >= n) {
+			if (list.length >= n) {
 				done();
 				list.removeListener('add', ready);
 				return true;
@@ -46,7 +48,7 @@ describe('PANIC!', function(){
 		}
 	}
 
-	function gunify(ctx, done){
+	function gunify(done, ctx){
 		var s = document.createElement('script');
 		s.src = 'gun.js';
 		s.onload = done;
@@ -69,7 +71,7 @@ describe('PANIC!', function(){
 				var sync = gun.get('sync');
 				sync.put({hello: 'world'})
 			}).then(function(){
-				return bob.run(function(ctx, done){
+				return bob.run(function(done, ctx){
 					var sync = gun.get('sync');
 					sync.on(function(val){
 						if(val.hello === 'world'){
