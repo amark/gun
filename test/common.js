@@ -1352,9 +1352,11 @@ describe('Gun', function(){
 			});
 		});
 
-		it('put node with soul get soul', function(done){
+		it.only('put node with soul get soul', function(done){
+			Gun.log.debug=1;console.log("--------------------------");
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
+					console.log("huh?", err, node);
 					expect(err).to.not.be.ok();
 					expect(Gun.is.node.soul(node)).to.be('foo');
 					expect(node.hello).to.be('world');
@@ -1583,15 +1585,14 @@ describe('Gun', function(){
 		
 		it('put node path path', function(done){
 			var gun = Gun();
-			Gun.log.debug=1;console.log("----------------------------------");
-			gun.put({hello: {little: 'world'}}).path('hello').path('little', function(err, val, field){
+			var g = gun.put({hello: {little: 'world'}}).path('hello').path('little', function(err, val, field){
 				if(done.end){ return } // it is okay for path's callback to be called multiple times.
 				expect(err).to.not.be.ok();
 				expect(field).to.be('little');
 				expect(val).to.be('world');
 				done(); done.end = true;
 			});
-		});return;
+		});
 
 		it('put node path rel', function(done){
 			gun.put({foo: {bar: 'lol'}}).path('foo', function(err, val, field){
@@ -1617,8 +1618,9 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.put({_:{'#': 'soul/field'}, hi: 'lol', foo: 'bar'});//.key('key/field');
 			gun.get({'#': 'soul/field', '.': 'hi'}, function(err, val){
-				expect(val.hi).to.be('lol');
-				expect(Gun.obj.has(val,'foo')).to.not.be.ok();
+				//expect(val.hi).to.be('lol'); // TODO: REVISE API?
+				expect(val).to.be('lol');
+				//expect(Gun.obj.has(val,'foo')).to.not.be.ok();
 				done();
 			})
 		});
@@ -1767,7 +1769,7 @@ describe('Gun', function(){
 				expect(val).to.be('are');
 				expect(field).to.be('you');
 				done();
-			})
+			});
 		});
 
 		it('get node path put object merge isolated', function(done){
@@ -1778,6 +1780,8 @@ describe('Gun', function(){
 			var puthi = get.put({hi: 'you'});
 			puthi.on(function(node){
 				if(done.hi){ return }
+				//console.log(1, node);
+				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 				done.hi = 1;
 			});
@@ -1787,8 +1791,11 @@ describe('Gun', function(){
 				path2._.id = 'path2';
 				var putyay = path2.put({yay: "value"});
 				putyay.on(function(node, field){
+					if(done.yay){ return }
+					//console.log(2, field, node);
 					expect(field).to.be('hi');
 					expect(node.yay).to.be('value');
+					done.yay = true;
 				});
 				setTimeout(function(){
 					var get3 = gun.get('hello/key/iso');
@@ -1796,9 +1803,10 @@ describe('Gun', function(){
 					path3._.id = 'path3';
 					var puthappy = path3.put({happy: "faces"});
 					puthappy.on(function(node, field){
+						//console.log(3, field, node);
 						expect(field).to.be('hi');
-						expect(node.yay).to.be('value');
 						expect(node.happy).to.be('faces');
+						expect(node.yay).to.be('value');
 						setTimeout(function(){
 							done();
 						},200);
@@ -1931,6 +1939,7 @@ describe('Gun', function(){
 		});
 		
 		it('get put path', function(done){
+			Gun.log.debug=1;console.log("-------------------------");
 			gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val, field){
 				console.log("WAT?", field, val);
 				expect(val).to.be('Mark');
