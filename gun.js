@@ -239,8 +239,9 @@
 			exports.on = Event;
 		}(Util, function add(tag, act, on, ctx){ // Gun specific extensions
 			var mem = on.mem;
-			typeof console !== 'undefined' && console.debug(9, 'ON', tag, mem);
-			typeof console !== 'undefined' && console.debug(10, 'SO! The problem is that subsequent event listeners trigger lazy again, but the should queue for the results of the one already trying to finish or else you will get wrong results.');
+			typeof console !== 'undefined' && console.debug(107, 'ON', tag, mem);
+			typeof console !== 'undefined' && console.debug(104, 'ON', tag, mem);
+			typeof console !== 'undefined' && console.debug(15, 'ON', tag, mem);
 			if(mem){
 				if(mem instanceof Array){
 					act.fn.apply(act.at, mem.concat(act));
@@ -609,6 +610,7 @@
 			});
 			function map(node, soul){
 				//Gun.get.got.call(this, null, node);
+				console.debug(23, 'put map', soul, node);
 				Gun.get.got.call(this.gun.__.gun.get(soul)._, null, node);
 			}
 		}());
@@ -627,21 +629,23 @@
 						stream: cb
 					}
 				}
-				console.debug(5, 'GET', at.lex);
+				console.debug(109, 'GET', at.lex);
 				Gun.on('get', at); // TODO: What is the cleanest way to reply if there is no responses, without assuming drivers do reply or not?
 				return at.gun;
 			}
 			Gun.get.got = got;
 			function got(err, node){ var at = this;
-				if(err){ Gun.log(err) }
 				if(!at.stream){ var soul;
 					if(!node && !at.lex.soul){ return }
 					at = at.gun.__.gun.get(is_node_soul(node) || at.lex.soul)._;
 				}
+				console.debug(24, 'stream', node);
 				Gun.on('stream', Gun.obj.to(at, {err: err, change: node}), stream);
 			}
 			function stream(at){
 				if(!at.stream){ console.log("WARNING! No at.stream", at); }
+				console.debug(25, 'stream', at);
+				console.debug(112, 'GET', at);
 				at.stream(at.err, at.change);
 			}
 		}());
@@ -651,7 +655,6 @@
 			if(opt.force){ return }
 			var lex = at.lex, gun = at.gun, graph = gun.__.graph, node = graph[lex.soul];
 			if(opt.memory || node){ return at.cb(null, node), ev.stun() }
-			console.debug(6, 'not in memory');
 		});
 
 		Gun.on('stream', function(at, ev){ var node;
@@ -805,6 +808,7 @@
 			if(!at){
 				at = gun.__ = gun._;
 				at.graph = {};
+				at.on('chain', at);
 			}
 			at.opt.uuid = opt.uuid || Gun.text.random;
 			at.opt.state = opt.state || Gun.time.is;
@@ -829,38 +833,39 @@
 		}
 
 		;(function(){
-			Gun.chain.put = function(data, cb, opt){
-				var back = this, gun, at, put, opts = back.__.opt;
-				opt = opt || {};
-				if(back.back){
-					gun = back;
-				} else {
-					// TODO: API CHANGE!!! NO implicit set here!
-					console.debug(1, 'put');
-					gun = back.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
-				}
-				at = Gun.obj.to(gun._, {put: put = {opt: opt}});
-				put.any = cb;
-				put.data = data;
-				put.state = (opt.state || opts.state)();
-				console.debug(3, 'put put', data);
-				at.on('chain', link, at); // TODO: ONE?
+			Gun.chain.put = function(data, cb, opt){ opt = opt || {};
+				var back = this, opts = back.__.opt, gun, at, put;
+				console.debug(100, 'put', data);
+				gun = (back.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
+				at = Gun.obj.to(gun._, {put: put = {
+					state: (opt.state || opts.state)(),
+					data: data,
+					opt: opt,
+					any: cb
+				}});
+				//at.flag.write = (at.flag.write || 0) + 1; // TODO: BUG! BAD IDEA!!!
+				console.debug(16, 'put', data);
+				console.debug(106, 'put', data);
+				back._.on('chain', link, at); // TODO: ONE?
 				return gun;
 			};
 			function link(cat, ev){ ev.off(); // TODO: BUG!
-				console.log(8, 'putting', cat);
 				var at = this, put = at.put, data, cb;
+				//at.flag.write--; // TODO: CLEAN UP! Locks are dumb.
+				console.debug(18, 'putting', at.put.data);
+				console.debug(12, 'putting', at.put.data);
 				if(cat.err){ return }
 				if(!cat.node && (put.opt.init || cat.gun.__.opt.init)){ return }
 				// TODO: BUG! `at` doesn't have correct backwards data!
-				if(!(data = wrap(at, put.data))){ // TODO: PERF! Wrap could create a graph version, rather than a document verison that THEN has to get flattened.
+				if(!(data = wrap(at, put.data, cat.lex.soul))){ // TODO: PERF! Wrap could create a graph version, rather than a document version that THEN has to get flattened.
 					if((cb = put.any) && cb instanceof Function){
 						cb.call(at.gun, {err: Gun.log("No node exists to put " + (typeof at.put.data) + ' "' + at.put.data + '" in!')});
 					}
 					return;
 				}
+				console.debug(28, 'putting', data);
+				console.debug(21, 'putting', at.put.data);
 				ev.stun();
-				//put.resume = ev.stun(put.resume);
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at, tmp;
 						if(1 === eat.path.length && cat.node){
@@ -873,13 +878,13 @@
 					}, uuid: at.gun.__.opt.uuid, state: put.state
 				}, at);
 			}
-			function wrap(at, data){ var tmp;
+			function wrap(at, data, soul){ var tmp;
 				if(!at){ return data }
 				if(tmp = at.lex.field){
 					data = obj_put({}, tmp, data);
 				} else 
 				if(!obj_is(data)){ return }
-				data = is_node_soul_ify(data, tmp = at.lex.soul);
+				data = is_node_soul_ify(data, tmp = soul || at.lex.soul);
 				if(tmp){ return data }
 				if(tmp = at.gun.back){
 					return wrap(tmp._, data);
@@ -893,9 +898,15 @@
 					}
 					return; // TODO: BUG! Chain emit??
 				}
+				if(at.put.opt.key === 'pie/cream'){ console.log("&&&&&&&&&&&&&&&&&&&", env.graph) }
+				Gun.log.debug===19 && console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", at.put.opt);
+				Gun.log.debug===29 && console.debug(29, '~~~~~~~~~~~~~~~~~~~~~~~~~ MARK COME BACK HERE WHERE ON EARTH IS PIE/CREAM CREATION??? IT HAPPENS RIGHT AFTERWARDS, BUT WHY?????? PUT', env.graph, at.put.opt);
 				Gun.on('normalize', Gun.obj.to(at, {err: err, graph: env.graph, env: env}), wire);
 			}
 			function wire(at){
+				console.debug(22, 'PUT', at.graph);
+				console.debug(19, 'PUT', at.graph);
+				console.debug(13, 'PUT', at.graph);
 				Gun.put(Gun.obj.to(at, {cb: ack}));
 			}
 			function ack(err, ok){ var at = this, cb;
@@ -913,37 +924,57 @@
 					}
 					return this;
 				}
-				var gun = this, at = Gun.obj.to(gun._, {key: key, any: cb || function(){}, opt: opt });
+				console.debug(7, 'key', key);
+				console.debug(3, 'key', key);
+				console.debug(102, 'key', key, this);
+				var gun = this, at = Gun.obj.to(gun._, {key: key, ref: gun.__.gun.get(key), any: cb || function(){}, opt: opt });
 				gun.on('chain', index, at); // TODO: ONE?
 				return gun;
 			}	
 			function index(cat, ev){ ev.off(); // TODO: BUG!
 				var at = this, cex = cat.lex, lex = at.lex;
+				console.debug(15, 'key', at.key, cat);
 				//if(cex.soul === lex.soul){ return }
-				if(cex.soul === at.key){ return }
-				at.obj = (1 === is_node_soul(cat.node, 'key'))? obj_copy(cat.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
+				at.soul = is_node_soul(cat.node);
+				if(!at.soul || cex.soul === at.key){ return }
+				at.obj = obj_put({}, _soul, 1);
+				at.obj = obj_put(at.obj, _soul + at.soul, is_rel_ify(at.soul));
+				at.put = is_node_ify(at.obj, at.key);
+				/*at.obj = (1 === is_node_soul(cat.node, 'key'))? obj_copy(cat.node) : obj_put({}, lex.soul, is_rel_ify(lex.soul));
 				obj_as((at.put = is_node_ify(at.obj, at.key, true))._, 'key', 1);
-				at.gun.__.gun.put(at.put, at.any, {key: true, init: false});
+				if(at.key === 'pie/cream'){ console.log("????????????????", at, cat, at.put) }
+				*/
+				console.debug(105, '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~key', at.key, cat, at.put);
+				at.ref.put(at.put, at.any, {key: at.key, init: false});
 			}
 			Gun.on('chain', function(cat, e){
-				if(!is_node_soul(cat.node, 'key')){ return }
+				console.debug(114, 'key chain', cat);
+				//if(!is_node_soul(cat.node, 'key')){ return }
+				if(!cat.node || !cat.node[_soul]){ return } // TODO: Note! If you are going to use 'change' the ordering in which the data is streamed to you is important. If you wait until you have '#' to say it is a keynode, but you received '#soul' fields earlier, you'll miss them.
 				var resume = e.stun(1), node = cat.change, field = cat.lex.field, pseudo = cat.gun._.pseudo || (cat.gun._.pseudo = cat.gun._.node = is_node_ify({}, is_node_soul(cat.node)));
 				pseudo._.key = 'pseudo';
 				cat.seen = cat.seen || {}; // TODO: There is a better way.
-				'hello/world' === is_node_soul(node) && console.log("scan", node);
-				is_node(node, function(n, f){ // TODO: PERF! BAD! Filter out items we've already seen.
-					if(cat.seen[f]){ return } cat.seen[f] = true; // TODO: There is a better way.
+					console.debug(21, 'keyify', node, cat.gun);
+				//if(Gun.log.debug===22){ debugger }
+				console.debug(31, 'keyify', node);
+				is_node(node, function(n, f){
+					if(cat.seen[f]){ return } cat.seen[f] = true; // TODO: CLEAN UP! There is a better way. // TODO: BUG! What if somebody unkeys something?
 					//cat.gun.__.gun.get(Gun.obj.to(cat.lex, {soul: f}), on);
+						console.debug(22, 'keyize', f);
+					console.debug(32, 'keyize', f);
 					if(field){
 						cat.gun.__.gun.get(f).path(field, on);
 					} else {
 						cat.gun.__.gun.get(f, on);
 					}
 					function on(err, node, field, at){
+						console.debug(33, 'key got', node);
 						if(!node){ return }
 						HAM_node(pseudo, node);
 						cat.node = pseudo;
 						cat.change = at.change;
+							console.debug(23, 'pseudo', cat.node);
+						console.debug(34, 'pseudo', cat.node);
 						resume();
 					}
 				});
@@ -951,8 +982,10 @@
 			Gun.on('normalize', function(cat){
 				var at = cat, env = at.env;
 				if(at.put.opt.key){ return }
+				console.debug(30, 'normalize', env.graph);
 				is_graph(env.graph, function(node, soul){
 					var key = {node: at.gun.__.graph[soul]}, tmp;
+					console.debug(31, 'normalize', env.graph, key, at.gun.__.gun.get(soul)._);
 					if(!is_node_soul(key.node, 'key')){ return }
 					is_node(key.node, function each(rel, s){
 						var n = at.gun.__.graph[s]; // TODO: BUG! Should we actually load the item or only use what is in memory?
@@ -975,10 +1008,19 @@
 				if(!opt || !opt.path){ var back = this.__.gun; } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this;
 				var get = back._.get || (back._.get = {}), tmp;
+				console.debug(9, 'get', lex);
+				console.debug(8, 'get', lex);
+				console.debug(6, 'get', lex);
+				console.debug(5, 'get', lex);
+				console.debug(4, 'get', lex);
 				console.debug(2, 'get', lex);
+				console.debug(101, 'get', lex);
+				console.debug(103, 'get', lex);
+				console.debug(110, 'get', lex);
 				if(typeof lex === 'string'){
 					if(!(gun = get[lex])){
 						gun = cache(get, lex, back);
+						('yes/key' === lex) && (gun._.FOOBAR = true);
 					}
 				} else
 				if(!lex && 0 != lex){ // TODO: BUG!?
@@ -1009,75 +1051,93 @@
 						return gun.path(tmp, cb, opt);
 					}
 				}
-				console.debug(7, 'get', lex);
 				if(cb && cb instanceof Function){
 					//gun._.on('any', pop(cb), gun); // TODO: Perf! Batch! // TODO: API CHANGE? Having to use pop is annoying. Should we support NodeJS style callbacks anymore?
-					console.debug(8, 'getting');
+					console.debug(111, 'get any');
 					gun._.on('any', cb, gun); // TODO: Perf! Batch! // TODO: API CHANGE? Having to use pop is annoying. Should we support NodeJS style callbacks anymore?
 				}
 				return gun;
 			}
 			function cache(get, key, back){
 				var gun = get[key] = back.chain(), at = gun._;
-				at.lazy = lazy;
+				at.flag = {};
 				if(!back.back){
+					back._.lazy = at.lazy = lazy;
 					at.stream = stream;
 					at.lex.soul = key;
+					//back._.on('#' + key, soul, at);
 				} else {
 					var lex = at.lex, cat = back._, flex = cat.lex;
-					lex.field = key;
 					if(!flex.field && flex.soul){
 						lex.soul = flex.soul;
 					}
-					back._.on('field:' + key, field, at);
+					lex.field = key;
+					back._.on('.' + key, field, at);
 				}
 				return gun;
 			}
 			function lazy(at){ var cat = this;
+				//if(at === cat){ return }
 				if(at.path && at.path.wait){ return } // means we're being lazy again.
-				console.debug(4, 'lazy', at);
+				if(at.flag.loading || cat.flag.loading){ return }
+				at.flag.loading = cat.flag.loading = true; // TODO: CLEAN UP!!!!
 				var lex = at.lex;
 				if(!lex.soul){
 					if(!(lex.soul = is_rel(cat.value))){
 						return; // TODO: BUG! Handle async case.
 					}
 				}
+				console.debug(108, 'lazy');
 				Gun.get(at);
 			};
 			function stream(err, node){
 				//Gun.on('chain', this);
-				Gun.on('chain', this, link, this);
+				console.debug(26, 'stream', node);
+				console.debug(30, 'stream', node);
+				console.debug(20, 'stream', node);
+				console.debug(113, 'stream', node);
+				Gun.on('chain', this, soul, this);
 			}
-			//Gun.on('chain', link); 
-			function link(cat, ev){ var at = this, u;
+			/*Gun.on('chain', function(cat){
+				cat.on('#' + is_node_soul(cat.node) || cat.lex.soul, cat);
+			});*/ 
+			function soul(cat, ev){ var at = this, u;
+				console.debug(115, 'soul', at, cat);
+				console.debug(27, 'stream', at, cat);
+				console.debug(17, 'stream', at, cat);
+				console.debug(11, 'stream', at, cat);
+				if(at.flag.write){ return at.on('chain', cat) } // TODO: CLEAN UP! Locks are annoying/bad.
+				console.debug(22, 'stream', at, cat);
 				//at.value = cat.value = cat.node;
 				var err = cat.err, node = cat.node, cex = cat.lex, lex = at.lex, field = lex.field, rel, val;
 				if(at.path && is_node_soul(node) === at.path.rel){ field = u }
 				at.on('any', [err, (field && node)? node[field] : node, lex.field, cat]) // TODO: Revisit!
 				if(err){ at.on('err', err) }
 				if(node){ at.on('ok', [(field && node)? node[field] : node, lex.field, cat]) } // TODO: Revisit!
-				at.on('chain', cat);
+				console.debug(14, 'stream', at, cat, at.gun._.write);
+				console.debug(116, 'soul', at, cat);
+				at.on('chain', cat); // TODO: BUG! Logically, sorry, we're going to have to make `get` be an event listener so that way things like `put` can step inbetween and pause the stream and perform async logic.
 				if(at.path && field){ return }
 				is_node(cat.change, map, {cat: cat, at: at}) || obj_map(at.get, map, {cat: cat, at: at}); // TODO: Cleaner way? Necessary to pass error/nots down the chain for implicit puts.
 			}
 			function map(val, field){
-				this.at.on('field:' + field, this.cat);
+				this.at.on('.' + field, this.cat);
 			}
 			function field(cat, ev){ var at = this;
 				var node = cat.node, lex, field, rel;
 				if(!at.path){ at.path = {} }
-				if(!node){ return link.call(at, cat, ev) } // TODO: Errors and nots?
+				if(!node){ return soul.call(at, cat, ev) } // TODO: Errors and nots?
 				(lex = at.lex).soul = is_node_soul(node);
 				if(at.value === node[field = lex.field] && obj_has(at, 'value')){ return }
 				if(at.path.ev){ at.path.ev.off() }
 				at.value = node[field];
 				if(rel = at.path.rel = is_rel(at.value)){
-					at.path.wait = true;
-					at.path.ev = at.gun.__.gun.get(rel)._.on('chain', link, at);
-					at.path.wait = false;
+					at.path.wait = true; // TODO: CLEAN UP!!!!!
+					at.path.ev = at.gun.__.gun.get(rel)._.on('chain', soul, at);
+					at.path.wait = false; // TODO: CLEAN UP!!!!
 					return;
 				}
-				link.call(at, cat, ev);
+				soul.call(at, cat, ev);
 			}
 		}());
 		Gun.chain.path = function(field, cb, opt){
@@ -1185,12 +1245,10 @@
 	;(function(){
 		function get(err, data, at){
 			if(!data && !Gun.obj.empty(at.opt.peers)){ return } // let the peers handle no data.
-			console.log("ouch");
 			at.cb(err, data); // node
 		}
 		Gun.on('get', function(at){
 			var opt = at.opt, lex = at.lex;
-			console.debug(7, 'get ASYNC');
 			Tab.store.get((opt.prefix || '') + lex.soul, get, at);
 		});
 	}());
@@ -1330,10 +1388,14 @@
 	;(function(exports){ var u;
 		function s(){}
 		s.put = function(key, val, cb){ try{ store.setItem(key, Gun.text.ify(val));if(cb)cb(null) }catch(e){if(cb)cb(e)} }
-		s.get = function(key, cb, t){ setTimeout(function(){
+		s.get = function(key, cb, t){ //console.log('ASYNC localStorage');setTimeout(function(){
 			try{ cb(null, Gun.obj.ify(store.getItem(key) || null), t);
 			}catch(e){ cb(e,u,t)}
-		},1) } 
+		}//,1) }
+		s.get = function(key, cb, t){ console.log("ASYNC localStorage")
+			var data = Gun.obj.ify(store.getItem(key));
+			setTimeout(function(){ cb(null, data, t) },1);
+		} 
 		s.del = function(key){ return store.removeItem(key) }
 		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;

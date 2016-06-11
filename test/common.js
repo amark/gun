@@ -1351,9 +1351,8 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
-		it.only('put node with soul get soul', function(done){
-			Gun.log.debug=1;console.log("--------------------------");
+		
+		it('put node with soul get soul', function(done){
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
 					console.log("huh?", err, node);
@@ -1364,18 +1363,37 @@ describe('Gun', function(){
 					done(); done.c = 1;
 			})
 		});
-
-		it('put node key get', function(done){
+		/*
+		it('put node with soul get soul tweak', function(done){
+			Gun().put({_: {'#': 'foo'}, hello: 'world'});
+			setTimeout(function(){
+				var gun = Gun();
+				gun.put({_: {'#': 'foo'}, boo: 'bear'})
+					.get({'#': 'foo'}, function(err, node){
+						if(done.c >= 1){ return }
+						expect(Gun.is.node.soul(node)).to.be('foo');
+						expect(err).to.not.be.ok();
+						expect(node.boo).to.be('bear');
+						//if(!done.c){ return done.c = 1 } done.c = 2;
+						//expect(node.hello).to.be('world'); // This data DOES exist, it just hasn't been read (since we only wrote).
+						done(); done.c = 2;
+				})
+			},100);
+		});
+		*/
+		it.only('put node key get', function(done){
+			Gun.log.debug=100;console.log("------------------------");
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
 			}).get('yes/key', function(err, node){
+				console.log("****************", err, node);return;
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
 				done.r = 1; if(done.c){ return } if(done.w){ done(); done.c = 1 };
 			});
-		});
+		});return;
 
 		it('put node key gun get', function(done){
 			gun.put({hello: "a key"}).key('yes/a/key', function(err, ok){
@@ -1395,11 +1413,13 @@ describe('Gun', function(){
 			catch(err){
 				expect(err).to.be.ok();
 			}
-		});
+		});return
 
-		it('get key no override', function(done){
+		it.only('get key no override', function(done){
 			var gun = Gun();
+			Gun.log.debug=1;console.log("----------------------");
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
+				console.log("********************", err, node)
 				expect(Gun.is.node.soul(node)).to.be('cream/pie');
 				if(done.c){ return }
 				if(node.cream && node.pie){
