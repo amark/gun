@@ -1355,7 +1355,6 @@ describe('Gun', function(){
 		it('put node with soul get soul', function(done){
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
-					console.log("huh?", err, node);
 					expect(err).to.not.be.ok();
 					expect(Gun.is.node.soul(node)).to.be('foo');
 					expect(node.hello).to.be('world');
@@ -1381,26 +1380,24 @@ describe('Gun', function(){
 			},100);
 		});
 		*/
-		it.only('put node key get', function(done){
-			Gun.log.debug=100;console.log("------------------------");
+		it('put node key get', function(done){
 			gun.put({hello: "key"}).key('yes/key', function(err, ok){
 				expect(err).to.not.be.ok();
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
 			}).get('yes/key', function(err, node){
-				console.log("****************", err, node);return;
 				expect(err).to.not.be.ok();
 				expect(Gun.is.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
 				done.r = 1; if(done.c){ return } if(done.w){ done(); done.c = 1 };
 			});
-		});return;
+		});
 
 		it('put node key gun get', function(done){
 			gun.put({hello: "a key"}).key('yes/a/key', function(err, ok){
 				expect(err).to.not.be.ok();
 			});
-			
 			gun.get('yes/a/key', function(err, node){
+				//console.log("??????", err, node);return;
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('a key');
 				if(done.c){ return }
@@ -1413,13 +1410,11 @@ describe('Gun', function(){
 			catch(err){
 				expect(err).to.be.ok();
 			}
-		});return
+		});
 
-		it.only('get key no override', function(done){
+		it('get key no override', function(done){
 			var gun = Gun();
-			Gun.log.debug=1;console.log("----------------------");
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
-				console.log("********************", err, node)
 				expect(Gun.is.node.soul(node)).to.be('cream/pie');
 				if(done.c){ return }
 				if(node.cream && node.pie){
@@ -1487,11 +1482,12 @@ describe('Gun', function(){
 			});
 		});
 
-		function soulnode(gun, kn, r){
+		function soulnode(gun, kn, r){ // TODO: WARNING! Key implementation has changed significantly. Tests are somewhat hardcoded, sad day.
 			r = r || [];
 			Gun.is.node(kn, function(node, s){
+				if('##' === s || !(s = s.slice(1,-1))){ return }
 				var n = gun.__.graph[s];
-				if(Gun.is.node.soul(n, 'key')){
+				if(Gun.obj.has(n, '##')){
 					soulnode(gun, n, r);
 					return;
 				}
@@ -1959,9 +1955,7 @@ describe('Gun', function(){
 		});
 		
 		it('get put path', function(done){
-			Gun.log.debug=1;console.log("-------------------------");
 			gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val, field){
-				console.log("WAT?", field, val);
 				expect(val).to.be('Mark');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -1970,7 +1964,7 @@ describe('Gun', function(){
 				expect(done.c).to.be.ok();
 				done();
 			}, 100);
-		});return;
+		});
 		
 		it('get path put', function(done){
 			gun.get('hello/world').path('hello').put('World').val(function(val){
@@ -2141,6 +2135,7 @@ describe('Gun', function(){
 				});
 			}, 500);
 		});
+
 		it('get not put val path val', function(done){
 			var todos = gun.get("examples/list/foobar").not(function(key){
 				this.put({
@@ -2283,11 +2278,12 @@ describe('Gun', function(){
 				expect(Gun.is.rel(val.pet)).to.be.ok();
 				done();
 			});
-		});
+		});return;
 
 		it('put partial sub merge', function(done){
 			var gun = Gun();
 			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').val(function(mark){
+				console.log("VAL1", mark);
 				done.marksoul = Gun.is.node.soul(mark);
 				expect(mark.name).to.be("Mark");
 			});
@@ -2295,6 +2291,7 @@ describe('Gun', function(){
 			
 			setTimeout(function(){
 				mark.put({citizen: "USA", wife: {citizen: "USA"}}).val(function(mark){
+					console.log("VAL2", mark, gun);
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
 					expect(mark.citizen).to.be("USA");
@@ -2308,7 +2305,7 @@ describe('Gun', function(){
 					});
 				});
 			}, 500);
-		});
+		});return;
 
 		it('path path', function(done){
 			var deep = gun.put({some: {deeply: {nested: 'value'}}});
