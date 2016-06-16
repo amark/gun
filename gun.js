@@ -2,7 +2,7 @@
 ;(function(){ var u;
 	function Gun(o){
 		if(!(this instanceof Gun)){ return new Gun(o) }
-		this._ = {gun: this, lex: {}, opt: {}, on: Gun.on, ons: {}, flag: {}};
+		this._ = {gun: this, val: {}, lex: {}, opt: {}, on: Gun.on, ons: {}};
 		if(!(o instanceof Gun)){ this.opt(o) }
 	}
 		
@@ -240,7 +240,7 @@
 		}(Util, function add(tag, act, on, ctx){ // Gun specific extensions
 			var mem = on.mem;
 			//typeof console !== 'undefined' && console.debug(4, 'ON', tag, mem);
-			//typeof console !== 'undefined' && console.debug(8, 'ON', tag, mem);
+			typeof console !== 'undefined' && console.debug(2, 'ON', tag, mem);
 			//typeof console !== 'undefined' && console.debug(6, 'ON', tag, mem);
 			if(mem){
 				if(mem instanceof Array){
@@ -833,15 +833,14 @@
 		}
 
 		;(function(){
-			Gun.chain.put = function(data, cb, opt){ opt = opt || {};
-				var back = this, opts = back.__.opt, gun, at, put, u;
+			Gun.chain.put = function(data, cb, opt){
+				var back = this, opts = back.__.opt, gun, at, u;
+				opt = opt || {};
+				opt.any = cb;
+				opt.data = data;
+				opt.state = (opt.state || opts.state)();
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
-				at = Gun.obj.to(gun._, {put: put = {
-					state: (opt.state || opts.state)(),
-					data: data,
-					opt: opt,
-					any: cb
-				}});
+				at = Gun.obj.to(gun._, {opt: opt});
 				var ev = back._.on('any', link, at);
 				if(at.lex.soul && !ev.done){ // TODO: CLEAN UP!!!!
 					link.call(at, null, u, u, at, ev);
@@ -849,14 +848,13 @@
 				return gun;
 			};
 			function link(e,v,f, cat, ev){ ev.done = true; ev.off(); // TODO: BUG!
-				var at = this, put = at.put, data, cb;
-				//at.flag.write--; // TODO: CLEAN UP! Locks are dumb.
+				var at = this, put = at.opt, data, cb;
 				if(cat.err){ return }
-				if(!cat.node && (put.opt.init || cat.gun.__.opt.init)){ return }
+				if(!cat.node && (put.init || cat.gun.__.opt.init)){ return }
 				// TODO: BUG! `at` doesn't have correct backwards data!
 				if(!(data = wrap(at, put.data, cat.lex.soul))){ // TODO: PERF! Wrap could create a graph version, rather than a document version that THEN has to get flattened.
 					if((cb = put.any) && cb instanceof Function){
-						cb.call(at.gun, {err: Gun.log("No node exists to put " + (typeof at.put.data) + ' "' + at.put.data + '" in!')});
+						cb.call(at.gun, {err: Gun.log("No node exists to put " + (typeof put.data) + ' "' + put.data + '" in!')});
 					}
 					return;
 				}
@@ -864,7 +862,7 @@
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at, tmp;
 						if(1 === eat.path.length && cat.node){
-							eat.soul = (tmp = is_rel(at.value))? tmp : is_rel(cat.node[eat.path[0]]); // TODO: BUG! Need to handle paths that aren't loaded yet.
+							eat.soul = (tmp = is_rel(at.val.ue))? tmp : (tmp = is_node_soul(at.val.ue))? tmp : is_rel(cat.node[eat.path[0]]); // TODO: BUG! Need to handle paths that aren't loaded yet.
 						}
 						cb(env, eat);
 					}, value: function(env){ var eat = env.at;
@@ -889,7 +887,7 @@
 			}	
 			function end(err, env, at){ var cb;
 				if(err){
-					if((cb = at.put.any) && cb instanceof Function){
+					if((cb = at.opt.any) && cb instanceof Function){
 						cb.call(at.gun, {err: Gun.log(err)});
 					}
 					return; // TODO: BUG! Chain emit??
@@ -900,7 +898,7 @@
 				Gun.put(Gun.obj.to(at, {cb: ack}));
 			}
 			function ack(err, ok){ var at = this, cb;
-				if((cb = at.put.any) && cb instanceof Function){
+				if((cb = at.opt.any) && cb instanceof Function){
 					cb.call(at.gun, err, ok);
 				}
 			}
@@ -972,8 +970,7 @@
 			});
 			Gun.on('normalize', function(cat){ // TODO: CLEAN UP!!!!
 				var at = cat, env = at.env;
-				if(!at.put){ return }
-				if(at.put.opt.key){ return }
+				if(at.opt.key){ return }
 				is_graph(env.graph, function(node, soul){ // TODO: CLEAN ALL OF THIS UP!
 					var key = {node: at.gun.__.graph[soul]}, tmp;
 					if(!obj_has(key.node, keyed.on)){ return } // TODO: BUG! Should iterate over it anyways to check for non #soul# properties to port.
@@ -1058,15 +1055,15 @@
 			function lazy(at){ var cat = this;
 				//if(at === cat){ return }
 				if(at.path && at.path.wait){ return } // TODO: CLEAN UP!!! // means we're being lazy again.
-				if(at.flag.loading){ return } // TODO: CLEAN UP!!!1
-				at.flag.loading = true; // TODO: CLEAN UP!!!!
-				if(!obj_has(cat.flag, 'loading')){ 
-					cat.flag.loading = true; // TODO: CLEAN UP!!!
+				if(at.val.loading){ return } // TODO: CLEAN UP!!!1
+				at.val.loading = true; // TODO: CLEAN UP!!!!
+				if(!obj_has(cat.val, 'loading')){ 
+					cat.val.loading = true; // TODO: CLEAN UP!!!
 				}
 				var lex = at.lex;
 				if(!lex.soul){
-					if(!(lex.soul = is_rel(cat.value))){
-						if(!cat.flag.loading){
+					if(!(lex.soul = is_rel(cat.val.ue))){
+						if(!cat.val.loading){
 							//console.log("UTOH", at.lex);
 							cat.on('.' + at.lex.field, cat); // TODO: CLEAN UP!!!!!
 						}
@@ -1088,18 +1085,20 @@
 			/*Gun.on('chain', function(cat){
 				cat.on('#' + is_node_soul(cat.node) || cat.lex.soul, cat);
 			});*/
-			function any(cat, ev){ var at = this, u;
-				if(at && at.flag){ at.flag.loading = false } // TODO: Clean up! Ugly.
+			function any(cat, ev){ var at = this, tmp, u;
+				at.val.loading = false; // TODO: Clean up! Ugly.
 				var err = cat.err, node = cat.node, lex = at.lex, field = lex.field;
-				if(at.path && is_node_soul(node) === at.path.rel){ field = u } // TODO: CLEAN UP!!! It is important that this one does not have the same logic as the `chain` one. Why?
-				at.on('any', [err, (field && node)? node[field] : node, lex.field, cat], chain, at);
+				if(at.path && is_node_soul(node) === at.path.rel){ field = u } // TODO: CLEAN UP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! It is important that this one does not have the same logic as the `chain` one. Why?
+				tmp = (field && node)? node[field] : node;
+				if(!field && !obj_empty(tmp, _meta)){ at.val.ue = tmp }
+				at.on('any', [err, tmp, lex.field, cat], chain, at);
 			}
 			function chain(args){ var at = this;
 				var err = args[0], val = args[1], field = args[2], cat = args[3];
 				if(err){ at.on('err', [err, field, cat]) }
 				if(val){ at.on('ok', [val, field, cat]) }
 				at.on('chain', cat);
-				if(at.path){ // TODO: CLEAN UP!!! UGLY HIDEOUS CLEAN UP!
+				if(at.path){ // TODO: CLEAN UP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! UGLY HIDEOUS CLEAN UP!
 					if(!at.path.rel || (is_node_soul(cat.node) === at.path.rel)){ field = u }
 					if(field){ return }
 				}
@@ -1109,14 +1108,14 @@
 				this.at.on('.' + field, this.cat);
 			}
 			function field(cat, ev){ var at = this;
-				var node = cat.node, lex, field, rel;
+				var node = cat.node, val = at.val, lex, field, rel;
 				if(!at.path){ at.path = {} }
 				if(!node){ return any.call(at, cat, ev) } // TODO: Errors and nots?
 				(lex = at.lex).soul = is_node_soul(node);
-				if(at.value === node[field = lex.field] && obj_has(at, 'value')){ return }
+				if(val.ue === node[field = lex.field] && obj_has(val, 'ue')){ return }
 				if(at.path.ev){ at.path.ev.off() }
-				at.value = node[field];
-				if(rel = at.path.rel = is_rel(at.value)){
+				val.ue = node[field];
+				if(rel = at.path.rel = is_rel(val.ue)){
 					at.path.wait = true; // TODO: CLEAN UP!!!!!
 					at.path.ev = at.gun.__.gun.get(rel)._.on('chain', any, at);
 					at.path.wait = false; // TODO: CLEAN UP!!!!
@@ -1166,12 +1165,9 @@
 		}());
 		;(function(){
 			Gun.chain.val = function(cb, opt, t){
-				var gun = this, at = gun._;
-				if(at.val || null === at.val){ // TODO: BUG! Clean up!!!! be consistent in use. Not at.val vs at.value .
-					cb.call(gun, at.value || (null === at.value? at.value : at.val), at.lex.field);
-					return gun;
-				}
-				if(at.vals){
+				var gun = this, at = gun._, value = at.val.ue;
+				if(value || null === value){
+					cb.call(gun, value, at.lex.field);
 					return gun;
 				}
 				if(cb){

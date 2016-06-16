@@ -1808,7 +1808,6 @@ describe('Gun', function(){
 				var putyay = path2.put({yay: "value"});
 				putyay.on(function(node, field){
 					if(done.yay){ return }
-					//console.log(2, field, node);
 					expect(field).to.be('hi');
 					expect(node.yay).to.be('value');
 					done.yay = true;
@@ -2276,6 +2275,7 @@ describe('Gun', function(){
 				expect(val.phd).to.be.ok();
 				expect(val.age).to.be(23);
 				expect(Gun.is.rel(val.pet)).to.be.ok();
+				console.log("pet's master!", val, gun);
 				done();
 			});
 		});return;
