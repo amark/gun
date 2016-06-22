@@ -1499,10 +1499,12 @@ describe('Gun', function(){
 		it('get node put node merge', function(done){
 			gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
+				//console.log("get", err, node);
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('key');
 				done.soul = Gun.is.node.soul(node);
 			}).put({hi: 'you'}, function(err, ok){
+				//console.log("pat", err, ok);
 				expect(err).to.not.be.ok();
 				var keynode = gun.__.graph[done.soul], soul;
 				expect(keynode.hi).to.not.be.ok();
@@ -1512,6 +1514,7 @@ describe('Gun', function(){
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
+				//console.log("on", node);
 				if(done.c){ return }
 				//expect(done.soul).to.be(Gun.is.node.soul(node)); // TODO: DISCUSSION! This has changed?
 				expect(node.hi).to.be('you');
@@ -2140,9 +2143,11 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
-		it('get put null', function(done){
+		
+		it.only('get put null', function(done){
+			Gun.log.debug=1;console.log("-------------------------");
 			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
+				console.log("***********", val, field);
 				expect(field).to.be('last');
 				expect(val.some).to.be('object');
 			}).put(null).val(function(val, field){
@@ -2150,7 +2155,7 @@ describe('Gun', function(){
 				expect(val).to.be(null);
 				done();
 			});
-		});
+		});return;
 
 		it('Gun get put null', function(done){ // flip flop bug
 			var gun = Gun();
