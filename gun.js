@@ -1427,12 +1427,15 @@
 
 	(function(exports){
 		function r(base, body, cb, opt){
-			opt = opt || (base.length? {base: base} : base);
-			opt.base = opt.base || base;
-			opt.body = opt.body || body;
+			var o = base.length? {base: base} : {};
+			o.base = opt.base || base;
+			o.body = opt.body || body;
+			o.headers = opt.headers;
+			o.url = opt.url;
+			o.out = opt.out;
 			cb = cb || function(){};
-			if(!opt.base){ return }
-			r.transport(opt, cb);
+			if(!o.base){ return }
+			r.transport(o, cb);
 		}
 		r.createServer = function(fn){ r.createServer.s.push(fn) }
 		r.createServer.ing = function(req, cb){
