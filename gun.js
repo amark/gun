@@ -1173,7 +1173,8 @@
 			var soul = lex[Gun._.soul];
 			if(!soul){ return }
 			cb = cb || function(){};
-			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
+			var ropt = {};
+			(ropt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			(function local(soul, cb){
 				tab.store.get(tab.prefix + soul, function(err, data){
 					if(!data){ return } // let the peers handle no data.
@@ -1184,11 +1185,11 @@
 				});
 			}(soul, cb));
 			if(!(cb.local = opt.local)){
-				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Get failed!", function(reply){
+				tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Get failed!", function(reply){
 					setTimeout(function(){ tab.put(Gun.is.graph.ify(reply.body), function(){}, {local: true, peers: {}}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
 				});
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
-					tab.request(url, lex, tab.request.s[opt.headers.id], opt);
+					tab.request(url, lex, tab.request.s[ropt.headers.id], ropt);
 					cb.peers = true;
 				});
 				var node = gun.__.graph[soul];
@@ -1198,18 +1199,18 @@
 			} tab.peers(cb);
 		}
 		tab.put = tab.put || function(graph, cb, opt){
-			//console.log("SAVE", graph);
 			cb = cb || function(){};
 			opt = opt || {};
-			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
+			var ropt = {};
+			(ropt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			Gun.is.graph(graph, function(node, soul){
 				if(!gun.__.graph[soul]){ return }
 				tab.store.put(tab.prefix + soul, gun.__.graph[soul], function(err){if(err){ cb({err: err}) }});
 			});
 			if(!(cb.local = opt.local)){
-				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Put failed!");
+				tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Put failed!");
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					tab.request(url, graph, tab.request.s[opt.headers.id], opt);
+					tab.request(url, graph, tab.request.s[ropt.headers.id], ropt);
 					cb.peers = true;
 				});
 			} tab.peers(cb);
@@ -1287,16 +1288,21 @@
 		gun.__.opt.wire.get = gun.__.opt.wire.get || tab.get;
 		gun.__.opt.wire.put = gun.__.opt.wire.put || tab.put;
 		gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
+
+		Tab.request = request;
+		Gun.Tab = Tab;
 	});
 
 	var request = (function(){
 		function r(base, body, cb, opt){
-			opt = opt || (base.length? {base: base} : base);
-			opt.base = opt.base || base;
-			opt.body = opt.body || body;
+			var o = base.length? {base: base} : {};
+			o.base = opt.base || base;
+			o.body = opt.body || body;
+			o.headers = opt.headers;
+			o.url = opt.url;
 			cb = cb || function(){};
-			if(!opt.base){ return }
-			r.transport(opt, cb);
+			if(!o.base){ return }
+			r.transport(o, cb);
 		}
 		r.createServer = function(fn){ r.createServer.s.push(fn) }
 		r.createServer.ing = function(req, cb){
@@ -1328,7 +1334,8 @@
 				return true;
 			}
 			if(ws === false){ return }
-			ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
+			try{ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
+			}catch(e){}
 			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
 			ws.onclose = window.onbeforeunload = function(c){
 				if(!c){ return }
