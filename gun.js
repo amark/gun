@@ -127,9 +127,17 @@
 			}
 			Type.time = {};
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
-			Type.time.now = function(t){
-				return ((t=t||Type.time.is()) > (Type.time.now.last || -Infinity)? (Type.time.now.last = t) : Type.time.now(t + 1)) + (Type.time.now.drift || 0); // TODO: BUG? Should this go on the inside?
-			};
+			Type.time.now = (function(){
+			    var time = Type.time.is, last = -Infinity, n = 0, d = 1000;
+			    return function(){
+			        var t = time();
+			        if(last < t){
+			            n = 0;
+			            return last = t;
+			        }
+			        return last = t + ((n += 1) / d);
+			    }
+			}());
 		}(Util));
 		;(function(exports){ // On event emitter generic javascript utility.
 			function On(){};
