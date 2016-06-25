@@ -618,6 +618,113 @@ describe('Gun', function(){
 				});
 			});
 		});
+		describe('flow', function(){
+			var i = 0;
+			function flow(){
+				var f = function(arg){
+					var cb = f.cb? f.cb.fn : f.fn;
+					if(cb){
+						f.cb = cb;
+						var ff = flow();
+						ff.f = f;
+						cb(ff);
+						return;
+					}
+					if(f.f){
+						f.f(arg);
+						f.cb = 0;
+						return;	
+					}
+				}, cb;
+				f.flow = function(fn){
+					cb = (cb || f).fn = fn;
+					return f;
+				};
+				return f;
+			}
+			it('intermittent interruption', function(done){
+				//var f = flow();
+				var f = {flow: flow}
+				f.flow(function(f){
+					console.log(1);
+					f.flow(function(f){
+						console.log(2);
+						f({yes: 'please'});
+					});
+					setTimeout(function(){
+						f.flow(function(f){
+							console.log(2.1);
+							f({forever: 'there'});
+						});
+						f({strange: 'places'});
+						console.log("-----");
+						f({earlier: 'location'});
+					},100);
+				});
+				f.flow(function(f){
+					console.log(3);
+					f({ok: 'now'});
+				});
+				f.flow(function(f){
+					console.log(4);
+				});
+				setTimeout(function(){
+					f({hello: 'world'});
+				}, 100);
+			});
+			var i = 0;
+			function next(arg){ var n = this;
+				if(100 < i++){ return }
+				if(arg instanceof Function){
+					if(!n.to){ return n.fn = arg, n }
+					var f = {next: next, fn: arg};
+					n.last = (n.last || n).to = f;
+					return n;
+				}
+				if(n.to){
+					var sub = {next: next, from: n.to};
+					n.to.fn(sub);
+					return;
+				}
+				if(n.from){
+					n.from.next(arg);
+					return;
+				}
+			}
+			it.only('intermittent interruptions', function(done){
+				//var f = flow();
+				var f = {next: next}
+				f.next(function(f){
+					console.log(1, f);
+					f.next(function(f){
+						console.log(2, f);
+						f.next({yes: 'please'});
+					});
+					setTimeout(function(){
+						f.next(function(f){
+							console.log(2.1, f);
+							f.next({forever: 'there'});
+						});
+						f.next({strange: 'places'});
+						//console.log("-----");
+						//f.next({earlier: 'location'});
+					},100);
+				});
+				f.next(function(f){
+					console.log(3);
+					f.next({ok: 'now'});
+				});
+				f.next(function(f){
+					console.log(4);
+				});
+				setTimeout(function(){
+					f.next({hello: 'world'});
+					setTimeout(function(){
+						console.log(f);
+					},500);
+				}, 100);
+			});
+		});
 		describe('Gun Safety', function(){
 			var gun = Gun();
 			it('is',function(){
@@ -2144,7 +2251,7 @@ describe('Gun', function(){
 			});
 		});
 		
-		it.only('get put null', function(done){
+		it('get put null', function(done){
 			Gun.log.debug=1;console.log("-------------------------");
 			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
 				console.log("***********", val, field);
