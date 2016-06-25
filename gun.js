@@ -206,6 +206,7 @@
 						continue;
 					}
 					var tmp = act.tmp = {};
+					//console.log("!!!!ChAiN!!!!", i);
 					if(!arr){
 						act.fn.call(act.at, arg, act);
 					} else {
@@ -243,6 +244,10 @@
 			var mem = on.mem;
 			//typeof console !== 'undefined' && console.debug(4, 'ON', tag, mem);
 			typeof console !== 'undefined' && console.debug(6, 'ON', tag, mem);
+			if('chain' === tag){
+				if(typeof console === 'undefined'){ return }
+				//console.log("<<<<ChAiN>>>>", on.s.length, on);
+			}
 			if(mem){
 				if(mem instanceof Array){
 					act.fn.apply(act.at, mem.concat(act));
