@@ -676,21 +676,28 @@ describe('Gun', function(){
 			function next(arg){ var n = this;
 				if(100 < i++){ return }
 				if(arg instanceof Function){
-					if(!n.to){ return n.fn = arg, n }
+					if(!n.fn){ console.debug(2, 'yupe'); return n.fn = arg, n }
 					var f = {next: next, fn: arg};
 					n.last = (n.last || n).to = f;
+					console.debug(3, 'continue on', n);
 					return n;
 				}
-				if(n.to){
+				//if(n.to){
+				if(n.fn){
+					console.debug(6, 'third arg', arg, n.fn.toString());
+					console.debug(4, 'second arg', arg, n);
+					console.debug(1, 'first arg', arg);
 					var sub = {next: next, from: n.to};
-					n.to.fn(sub);
+					n.fn(sub);
 					return;
 				}
 				if(n.from){
+					console.debug(5, 'third arg', arg, n);
 					n.from.next(arg);
 					return;
 				}
 			}
+			console.debug = function(i, s){ return (Gun.log.debug && i === Gun.log.debug && Gun.log.debug++) && root.console.log.apply(root.console, arguments), s };
 			it.only('intermittent interruptions', function(done){
 				//var f = flow();
 				var f = {next: next}
@@ -718,9 +725,11 @@ describe('Gun', function(){
 					console.log(4);
 				});
 				setTimeout(function(){
+					console.log("START!", f);
+					Gun.log.debug=1;
 					f.next({hello: 'world'});
 					setTimeout(function(){
-						console.log(f);
+						console.log(window.foo = f);
 					},500);
 				}, 100);
 			});
