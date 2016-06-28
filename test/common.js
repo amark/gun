@@ -674,63 +674,51 @@ describe('Gun', function(){
 			});
 			var i = 0;
 			function next(arg){ var n = this;
-				if(100 < i++){ return }
 				if(arg instanceof Function){
-					if(!n.fn){ console.debug(2, 'yupe'); return n.fn = arg, n }
-					var f = {next: next, fn: arg};
+					if(!n.fn){ return n.fn = arg, n }
+					var f = {next: next, fn: arg, first: n.first || n};
 					n.last = (n.last || n).to = f;
-					console.debug(3, 'continue on', n);
 					return n;
 				}
-				//if(n.to){
 				if(n.fn){
-					console.debug(6, 'third arg', arg, n.fn.toString());
-					console.debug(4, 'second arg', arg, n);
-					console.debug(1, 'first arg', arg);
-					var sub = {next: next, from: n.to};
+					var sub = {next: next, from: n.to || (n.first || {}).from};
 					n.fn(sub);
 					return;
 				}
 				if(n.from){
-					console.debug(5, 'third arg', arg, n);
 					n.from.next(arg);
 					return;
 				}
 			}
-			console.debug = function(i, s){ return (Gun.log.debug && i === Gun.log.debug && Gun.log.debug++) && root.console.log.apply(root.console, arguments), s };
 			it.only('intermittent interruptions', function(done){
 				//var f = flow();
 				var f = {next: next}
 				f.next(function(f){
-					console.log(1, f);
+					//console.log(1, f);
 					f.next(function(f){
-						console.log(2, f);
+						//console.log(2, f);
 						f.next({yes: 'please'});
 					});
 					setTimeout(function(){
 						f.next(function(f){
-							console.log(2.1, f);
+							//console.log(2.1, f);
 							f.next({forever: 'there'});
 						});
 						f.next({strange: 'places'});
 						//console.log("-----");
-						//f.next({earlier: 'location'});
+						f.next({earlier: 'location'});
 					},100);
 				});
 				f.next(function(f){
-					console.log(3);
+					//console.log(3);
 					f.next({ok: 'now'});
 				});
 				f.next(function(f){
-					console.log(4);
+					//console.log(4);
+					done();
 				});
 				setTimeout(function(){
-					console.log("START!", f);
-					Gun.log.debug=1;
 					f.next({hello: 'world'});
-					setTimeout(function(){
-						console.log(window.foo = f);
-					},500);
 				}, 100);
 			});
 		});
@@ -4325,6 +4313,26 @@ describe('Gun', function(){
 			});
     });
 
+    it("Deep not fails to fire", function(done){ // @d3x0r's bug!
+    	var gun = Gun().get("org.d3x0r.voxelarium.local." + Gun.text.random());
+
+	    var player = gun.path( "player" );
+
+	    player.path("id").not(function(){
+    		done.not = true;
+        //console.log("Not is run!");
+        var id = 'fluffy';
+        var world = 0;
+        player.path("id").put(id);
+        player.path("world_id").put(world);
+	    }).val(function(data){
+        //console.log("we have value!", data);
+        expect(done.not).to.be.ok();
+        expect(data).to.be('fluffy');
+        done();
+	    });
+
+  	});
 		/*
 		depp.on(log).path('spouse').on(log).path('pet').on(log);
 		// 0) Depp & Heide & dog
