@@ -1693,6 +1693,7 @@ describe('Gun', function(){
 		it.only('get key path put', function(done){
 			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
+			Gun.log.debug=1;console.log("-----------------------");
 			data.path('foo').put('epic');
 			data.val(function(val, field){
 				console.log("***************", field, val);

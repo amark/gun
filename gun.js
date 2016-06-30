@@ -852,6 +852,7 @@
 				opt.state = (opt.state || opts.state)();
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
 				at = Gun.obj.to(gun._, {opt: opt});
+				console.debug(2, 'put', data);
 				if(false && at.lex.soul){
 					link.call(at, at, nev);
 				} else {
@@ -988,6 +989,7 @@
 					is_node_state_ify(change = change || {}, {field: ff, value: n, state: is_node_state(node, ff)});
 				});
 				function on(err, node, field, at){
+					console.debug(6, 'key chain', node, cat.lex);
 					if(!node){ return }
 					cat.node = pseudo = HAM_node(pseudo, node);
 					cat.change = at.change;
@@ -1027,6 +1029,7 @@
 				if(!opt || !opt.path){ var back = this.__.gun; } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this;
 				var get = back._.get || (back._.get = {}), tmp;
+				console.debug(1, 'get', lex);
 				if(typeof lex === 'string'){
 					if(!(gun = get[lex])){
 						gun = cache(get, lex, back);
@@ -1116,6 +1119,8 @@
 					}
 					return;
 				}
+				console.debug(5, 'stream', err, node, this.lex);
+				console.debug(4, 'stream', err, node, this.lex);
 				Gun.on('chain', this, chain, this);
 			}
 			/*Gun.on('chain', function(cat){
@@ -1127,7 +1132,9 @@
 				var err = cat.err, node = cat.node, lex = at.lex, field = at.val.rel? u : lex.field;
 				tmp = at.val.ue = (field && node)? node[field] : node;
 				if(is_rel(tmp) || (!field && obj_empty(tmp, _meta))){ at.val.ue = u }
+				console.debug(7, 'chain', at.change);
 				at.on('chain', at);
+				console.debug(8, '+chain', at.change);
 				if(!field){ is_node(at.change, map, {cat: cat, at: at}) }
 			}
 			function map(val, field){
@@ -1213,6 +1220,7 @@
 				if(cb){
 					(opt = opt || {}).ok = cb;
 					opt.off = true;
+					console.debug(3, 'val', value);
 					at.on('chain', ok, opt);
 				}
 				return gun;
