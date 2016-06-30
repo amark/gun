@@ -643,56 +643,60 @@ describe('Gun', function(){
 				return f;
 			}
 			it('intermittent interruption', function(done){
-				//var f = flow();
-				var f = {flow: flow}
+				var f = flow();
+				//var f = {flow: flow}
 				f.flow(function(f){
-					console.log(1);
+					//console.log(1);
 					f.flow(function(f){
-						console.log(2);
+						//console.log(2);
 						f({yes: 'please'});
 					});
 					setTimeout(function(){
 						f.flow(function(f){
-							console.log(2.1);
+							//console.log(2.1);
 							f({forever: 'there'});
 						});
 						f({strange: 'places'});
-						console.log("-----");
+						//console.log("-----");
 						f({earlier: 'location'});
 					},100);
 				});
 				f.flow(function(f){
-					console.log(3);
+					//console.log(3);
 					f({ok: 'now'});
 				});
 				f.flow(function(f){
-					console.log(4);
+					//console.log(4);
+					done();
 				});
 				setTimeout(function(){
 					f({hello: 'world'});
 				}, 100);
 			});
 			var i = 0;
-			function next(arg){ var n = this;
-				if(arg instanceof Function){
-					if(!n.fn){ return n.fn = arg, n }
-					var f = {next: next, fn: arg, first: n.first || n};
-					n.last = (n.last || n).to = f;
-					return n;
+			;(function(exports){
+				function next(arg){ var n = this;
+					if(arg instanceof Function){
+						if(!n.fn){ return n.fn = arg, n }
+						var f = {next: next, fn: arg, first: n.first || n};
+						n.last = (n.last || n).to = f;
+						return n;
+					}
+					if(n.fn){
+						var sub = {next: next, from: n.to || (n.first || {}).from};
+						n.fn(sub);
+						return;
+					}
+					if(n.from){
+						n.from.next(arg);
+						return;
+					}
 				}
-				if(n.fn){
-					var sub = {next: next, from: n.to || (n.first || {}).from};
-					n.fn(sub);
-					return;
-				}
-				if(n.from){
-					n.from.next(arg);
-					return;
-				}
-			}
-			it.only('intermittent interruptions', function(done){
+				exports.next = next;
+			}(Gun));
+			it('intermittent interruptions', function(done){
 				//var f = flow();
-				var f = {next: next}
+				var f = {next: Gun.next}; // for now
 				f.next(function(f){
 					//console.log(1, f);
 					f.next(function(f){
@@ -715,6 +719,7 @@ describe('Gun', function(){
 				});
 				f.next(function(f){
 					//console.log(4);
+					if(!done.a){ return done.a = true }
 					done();
 				});
 				setTimeout(function(){
@@ -1685,11 +1690,12 @@ describe('Gun', function(){
 			});
 		});
 
-		it('get key path put', function(done){
+		it.only('get key path put', function(done){
 			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
 			data.path('foo').put('epic');
 			data.val(function(val, field){
+				console.log("***************", field, val);
 				expect(val.foo).to.be('epic');
 				expect(Gun.is.node.soul(val)).to.be('key/path/put');
 				done();
@@ -2248,10 +2254,35 @@ describe('Gun', function(){
 			});
 		});
 		
+		/* WHILE THIS BEHAVIOR LOOKS ATTRACTIVE, IT APPEARS TO BE DECIDEDLY BAD? IGNORE FOR NOW.
+		it('chain ordering', function(done){
+			gun.get('order/first', function(){ // this has a race condition against the third get. However if it fulfills first...
+				//console.log('callback', 0);
+				done.zero = true;
+				expect(done.one).to.not.be.ok();
+				expect(done.two).to.not.be.ok();
+				gun.get('order/second', function(){ // then this guy should be run before the third get, since it is queued first relative to this soul.
+					//console.log('callback', 1);
+					done.one = true;
+					expect(done.zero).to.be.ok();
+					expect(done.one).to.be.ok();
+					expect(done.two).to.not.be.ok();
+				});
+			});
+			
+			gun.get('order/second', function(){
+				//console.log('callback', 2);
+				done.two = true;
+				expect(done.zero).to.be.ok();
+				expect(done.one).to.be.ok();
+				expect(done.two).to.be.ok();
+				done();
+			});
+		});
+		*/
+		
 		it('get put null', function(done){
-			Gun.log.debug=1;console.log("-------------------------");
 			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
-				console.log("***********", val, field);
 				expect(field).to.be('last');
 				expect(val.some).to.be('object');
 			}).put(null).val(function(val, field){

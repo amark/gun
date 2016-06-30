@@ -2,7 +2,7 @@
 ;(function(){ var u;
 	function Gun(o){
 		if(!(this instanceof Gun)){ return new Gun(o) }
-		this._ = {gun: this, val: {}, lex: {}, opt: {}, on: Gun.on, ons: {}};
+		this._ = {gun: this, val: {}, lex: {}, opt: {}, on: Gun.on, ons: {}, flow: {next: Gun.next}};
 		if(!(o instanceof Gun)){ this.opt(o) }
 	}
 		
@@ -184,13 +184,14 @@
 				}
 				if(arg instanceof Function){
 					act = new Act(tag, arg, at, on, ctx);
-					on.s.push(act);
 					if(add){
-						add(tag, act, on, ctx);
-						/*if(noop === act.fn){ // TODO: This should be faster, but perf is showing it slower? Note: Have to move it above the push line and uncomment the bottom line in add.
-							return;
-						}*/
+						add(tag, act, on, ctx); // TODO: CLEAN UP! The bottom two features should be implemented inside of add as the extension. This, if it returns, should return immediately. But if it doesn't do anything, continue with default behavior.
+						if(noop === act.fn){ // TODO: This should be faster, but perf is showing it slower? Note: Have to move it above the push line and uncomment the bottom line in add.
+							return act;
+						}
+						if(-1 < act.i){ return act }
 					}
+					on.s.push(act);
 					return act;
 				}
 				if(emit){ emit(tag, arg, on, ctx) }
@@ -206,7 +207,6 @@
 						continue;
 					}
 					var tmp = act.tmp = {};
-					//console.log("!!!!ChAiN!!!!", i);
 					if(!arr){
 						act.fn.call(act.at, arg, act);
 					} else {
@@ -230,9 +230,9 @@
 						}
 					}
 					on.s = still;
-					//if(0 === still.length){ // TODO: BUG! If we clean up the events themselves when no longer needed by deleting this code, it causes some tests to fail.
-					//	delete ons[tag];
-					//}
+					if(0 === still.length){ // TODO: BUG! If we clean up the events themselves when no longer needed by deleting this code, it causes some tests to fail.
+						delete ons[tag];
+					}
 				}
 				if(!gap && at && at instanceof Function){
 					at.call(as, arg);
@@ -241,13 +241,7 @@
 			}
 			exports.on = Event;
 		}(Util, function add(tag, act, on, ctx){ // Gun specific extensions
-			var mem = on.mem;
-			//typeof console !== 'undefined' && console.debug(4, 'ON', tag, mem);
-			typeof console !== 'undefined' && console.debug(6, 'ON', tag, mem);
-			if('chain' === tag){
-				if(typeof console === 'undefined'){ return }
-				//console.log("<<<<ChAiN>>>>", on.s.length, on);
-			}
+			var mem = on.mem, tmp;
 			if(mem){
 				if(mem instanceof Array){
 					act.fn.apply(act.at, mem.concat(act));
@@ -256,11 +250,16 @@
 				}
 				return;
 			}
+			if(!ctx.gun){ return }
+			if(tmp = ctx.gun.chain.sort){
+				on.s.splice(act.i = tmp - 1, 0, act);
+				ctx.gun.chain.sort = 0;
+			}
 			if(!ctx.lazy){ return }
 			var at = act.at? act.at.gun? act.at : ctx : ctx;
 			if(!at.gun){ return }
 			ctx.lazy(at, tag);
-			//if(on.mem){ add(tag, act, on, ctx) } // for synchronous async actions.
+			if(on.mem){ add(tag, act, on, ctx) } // for synchronous async actions.
 		}, function(tag, arg, on, at){
 			on.mem = arg;
 		}));
@@ -851,21 +850,18 @@
 				opt.any = cb;
 				opt.data = data;
 				opt.state = (opt.state || opts.state)();
-				console.debug(1, 'put', data);
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
 				at = Gun.obj.to(gun._, {opt: opt});
 				if(false && at.lex.soul){
-					link.call(at, at, ev);
+					link.call(at, at, nev);
 				} else {
-					console.debug(9, 'put', data, back._.lex);
-					console.debug(3, 'put', data, back._);
 					(at.lex.soul? gun : back)._.on('chain', link, at);
 				}
 				return gun;
 			};
-			var noop = function(){}, ev = {off: noop, stun: noop};
+			var noop = function(){}, nev = {off: noop, stun: noop};
 			function link(cat, ev){ ev.off(); // TODO: BUG!
-				var at = this, put = at.opt, data, cb;
+				var at = this, put = at.opt, data, cb, u, c = 0;
 				if(cat.err){ return }
 				if(!cat.node && (put.init || cat.gun.__.opt.init)){ return }
 				// TODO: BUG! `at` doesn't have correct backwards data!
@@ -876,18 +872,22 @@
 					return;
 				}
 				ev.stun();
-				console.debug(13, 'putting', data);
 				Gun.ify(data, end, {
 					node: function(env, cb){ var eat = env.at, tmp;
+						function load(err,node,f,c,ev){ ev.off();
+							eat.soul = is_node_soul(node);
+							cb(env, eat);
+						}
 						if(eat.path.length){
 							tmp = {path: true};
 							var ref = put.gun || at.gun /*at.lex.field? at.gun._.back : at.gun*/, path = eat.path, l = path.length-1, i = 0;
 							for(i; i < l; i++){ ref = ref.get(path[i], null, tmp) }
-							console.debug(14, 'eat', path, ref);
-							ref.get(path[i], function(err,node,f,c,ev){ ev.off();
-								eat.soul = is_node_soul(node);
-								cb(env, eat);
-							}, tmp);
+							if(!cat.node){
+								load(null, u, path[i], cat, nev);
+								return;
+							}
+							ref.chain.sort = ++c;
+							ref.get(path[i], load, tmp);
 							return;
 						}
 						if(1 === eat.path.length && cat.node){
@@ -954,6 +954,7 @@
 				at.obj = obj_put({}, '##', 1);
 				at.obj = obj_put(at.obj, '#'+at.soul+'#', is_rel_ify(at.soul));
 				at.put = is_node_ify(at.obj, at.key);
+				at.ref.chain.sort = 1;
 				at.ref.put(at.put, at.any, {key: at.key, init: false});
 			}
 			function keyed(f){
@@ -1026,10 +1027,6 @@
 				if(!opt || !opt.path){ var back = this.__.gun; } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this;
 				var get = back._.get || (back._.get = {}), tmp;
-				console.debug(15, 'get', lex);
-				console.debug(16, 'MARK!!!! COME BACK HERE!!!! You are currently trying to get the path that happens inside of a put to have higher priority than the path that happened synchronously after the put.');
-				console.debug(5, 'get', lex);
-				console.debug(2, 'get', lex);
 				if(typeof lex === 'string'){
 					if(!(gun = get[lex])){
 						gun = cache(get, lex, back);
@@ -1081,7 +1078,6 @@
 						lex.soul = flex.soul;
 					}
 					lex.field = key;
-					console.debug(6, 'cache', lex);
 					back._.on('.' + key, field, at);
 				}
 				return gun;
@@ -1093,7 +1089,7 @@
 				if(lex.field){
 					lex.soul = lex.soul || cat.val.rel;
 					cat.on('chain', function(ct, e){
-						console.log("egack!");
+						//console.log("egack!");
 						// TODO: BUG!! This isn't good for chunking? It assumes the entire node will be replied.
 						if(lex.soul && 1 === at.val.loading){ return }
 						e.off();
@@ -1104,14 +1100,12 @@
 						//lazy.call(cat, at);
 					}, at);
 				}
-				console.debug(7, 'lazy', at.lex, cat.lex, cat.val.loading);
 				at.val.loading = 2; // TODO: CLEAN UP!!!!
 				if(!lex.soul){ return }
 				if(at.val !== cat.val && cat.val.loading){ return }
 				if(!obj_has(cat.val, 'loading')){ 
 					cat.val.loading = true; // TODO: CLEAN UP!!!
 				}
-				console.debug(4, 'lazy', at.lex);
 				Gun.get(at);
 			};
 			function stream(err, node){ var tmp;
@@ -1122,7 +1116,6 @@
 					}
 					return;
 				}
-				console.debug(11, 'stream', err, node, this.lex);
 				Gun.on('chain', this, chain, this);
 			}
 			/*Gun.on('chain', function(cat){
@@ -1134,7 +1127,6 @@
 				var err = cat.err, node = cat.node, lex = at.lex, field = at.val.rel? u : lex.field;
 				tmp = at.val.ue = (field && node)? node[field] : node;
 				if(is_rel(tmp) || (!field && obj_empty(tmp, _meta))){ at.val.ue = u }
-				console.debug(12, 'chain', at.change);
 				at.on('chain', at);
 				if(!field){ is_node(at.change, map, {cat: cat, at: at}) }
 			}
@@ -1219,8 +1211,6 @@
 					return gun;
 				}
 				if(cb){
-					console.debug(10, 'val', value);
-					console.debug(8, 'val', value);
 					(opt = opt || {}).ok = cb;
 					opt.off = true;
 					at.on('chain', ok, opt);
