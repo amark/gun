@@ -491,14 +491,33 @@
 			Gun.val.ify = function(){
 
 			}
-			Gun.node = {};
-			Gun.node.ify = function(){
-
-			}
+			;(function(){
+				var Node = Gun.node = {};
+				Node.soul = function(n, o){ return (n && n._ && n._[o || _soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
+				Node.soul.ify = function(n, o){ // put a soul on an object.
+					o = (typeof o === 'string')? {soul: o} : o || {};
+					n = n || {}; // make sure it exists.
+					n._ = n._ || {}; // make sure meta exists.
+					n._[_soul] = o.soul || n._[_soul] || text_random(); // put the soul on it.
+					return n;
+				}
+				;(function(){
+					function map(v, f){ // iterate over each field/value.
+						if(_meta === f){ return } // ignore meta.
+						is_node_state_ify(this.n, {field: f, value: v, state: this.o.state = this.o.state || Gun.time.is()}); // and set the state for this field and value on this node.
+					}
+					Node.ify = function(n, o){ // convert a shallow object into a node.
+						o = (typeof o === 'string')? {soul: o} : o || {};
+						n = Node.soul.ify(n, o); // put a soul on it.
+						obj_map(n, map, {n:n,o:o});
+						return n; // This will only be a valid node if the object wasn't already deep!
+					}
+				}());
+			}());
 			;(function(){
 				var console = window.console;
-				Gun.graph = {};
-				Gun.graph.ify = function(obj){
+				var Graph = Gun.graph = {};
+				Graph.ify = function(obj){
 					var env = {root: {}, graph: {}, seen: []}, at = {path: [], obj: obj};
 					at.node = env.root;
 					node(env, at);
