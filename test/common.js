@@ -1623,7 +1623,6 @@ describe('Gun', function(){
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
-				//console.log("on", node);
 				if(done.c){ return }
 				//expect(done.soul).to.be(Gun.is.node.soul(node)); // TODO: DISCUSSION! This has changed?
 				expect(node.hi).to.be('you');
@@ -1882,15 +1881,16 @@ describe('Gun', function(){
 			},100)
 		});
 
-		it('get put, put deep', function(done){
+		it.only('get put, put deep', function(done){
 			var gun = window.gun = Gun();
 			var get = gun.get('put/deep/ish');
 			get.put({});
 			get.val(function(data){
-				//console.log("first", data);
+				console.log("first", data);
 				expect(Gun.is.rel(data.very)).to.be.ok();
 			});
 			setTimeout(function(){
+				Gun.log.debug=1;console.log("--------------------------");
 				var put = get.put({
 					very: {
 						deep: {
@@ -1900,6 +1900,7 @@ describe('Gun', function(){
 						}
 					}
 				});
+				return;
 				setTimeout(function(){
 					put.val(function(data){
 						//console.log("YAY!", data);return;
@@ -2472,24 +2473,33 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('put partial sub merge', function(done){
+		/* // NOT CRITICAL! Come back to this later.
+		it('key get', function(done){
+			var gun = Gun();
+			gun.get('key/get').put({yay: 'something'}).key('index/yay');
+			gun.get('index/yay', function(err, node){
+				console.log("um?", err, node, gun);
+				done();
+			});
+		});
+		*/
+
+		it('put partial sub merge', function(done){
 			var gun = Gun();
 			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').val(function(mark){
-				console.log("VAL1", mark);
+				//console.log("VAL1", mark);
 				done.marksoul = Gun.is.node.soul(mark);
 				expect(mark.name).to.be("Mark");
 			});
 			mark.put({age: 23, wife: {age: 23}});
 			setTimeout(function(){
-				Gun.log.debug=1;console.log("---------------------");
 				mark.put({citizen: "USA", wife: {citizen: "USA"}}).val(function(mark){
-					console.log("VAL2", mark, gun);
-					return;
+					//console.log("VAL2", mark, gun);
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
 					expect(mark.citizen).to.be("USA");
 					this.path('wife').on(function(Amber){ // TODO: turn this .on back into a .val
-						console.log("VAL3", Amber);
+						//console.log("VAL3", Amber);
 						if(done.c){ return }
 						expect(done.c).to.not.be.ok(); // RELATED TO BELOW #"CONTEXT NO DOUBLE EMIT".
 						expect(Amber.name).to.be("Amber");

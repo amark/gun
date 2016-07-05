@@ -1986,7 +1986,6 @@
 	});
 	//localStorage.clear();
 	/*
-	*/
 	stool.add('put', function(){
 		gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
 	});
@@ -2146,6 +2145,10 @@
 	});
 	stool.add('chain nothing', function(){
 		chain.get('users').path(i).path('where').put(pos);
+	});
+	*/
+	stool.add('Gun.ify', function(){
+		Gun.graph.ify(data);
 	});
 	stool.add('Gun.ify', function(){
 		Gun.ify(data);

@@ -486,6 +486,69 @@
 			}
 		}
 
+		;(function(){ // NEW API?
+			Gun.val = {};
+			Gun.val.ify = function(){
+
+			}
+			Gun.node = {};
+			Gun.node.ify = function(){
+
+			}
+			;(function(){
+				var console = window.console;
+				Gun.graph = {};
+				Gun.graph.ify = function(obj){
+					var env = {root: {}, graph: {}, seen: []}, at = {path: [], obj: obj};
+					at.node = env.root;
+					node(env, at);
+					return env.graph;
+				}
+				function node(env, at){ var tmp;
+					at = at || env.at;
+					if(tmp = seen(env, at)){ return tmp }
+					if(!at.node){ at.node = {} }
+					if(!at.node._){ at.node._ = {} }
+					if(!at.node._['#']){ 
+						env.graph[at.node._['#'] = Gun.text.random()] = at.node;
+					}
+					obj_map(at.obj, map, {env: env, at: at});
+					return at;
+				}
+				function it(obj){
+					return !text_is(obj) && (obj_map(obj, it.is) || obj_is(obj))
+				}
+				it.is = function(v,f){ return true }
+				function map(v,f){ 
+					var env = this.env, at = this.at;
+					if(it(v)){
+						at.node[f] = {'#': node(env, {obj: v, path: at.path.concat(f)}).node._['#']};
+					} else {
+						at.node[f] = v;
+					}
+				}
+				function seen(env, at){
+					var arr = env.seen, i = arr.length, has;
+					while(i--){ has = arr[i];
+						if(at.obj === has.obj){ return has }
+					}
+					arr.push(at);
+				}
+
+				// test
+				var g = Gun.graph.ify({
+					you: {
+						are: {
+							very: 'right'
+						}
+					},
+					my: 'lad'
+				});
+				console.log("GRAPH!", g);
+			}());
+			
+		}());
+
 		Gun.HAM = function(machineState, incomingState, currentState, incomingValue, currentValue){
 			if(machineState < incomingState){
 				return {defer: true}; // the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
@@ -664,7 +727,7 @@
 			}
 		}());
 
-		Gun.on('get', function(at, ev){ // TODO: BUG! What if field isn't in memory? Then we need to still pass the lex out to the peers.
+		Gun.on('get', function(at, ev){
 			var opt = at.opt;
 			if(opt.force){ return }
 			var lex = at.lex, gun = at.gun, graph = gun.__.graph, node = graph[lex.soul], field;
@@ -839,10 +902,32 @@
 
 		Gun.chain.chain = function(cb){
 			var back = this, gun = new this.constructor(back);
-			gun._.back = back; // TODO: API CHANGE!
+			gun._.back = back._; // TODO: API CHANGE!
 			gun.back = back;
 			gun.__ = back.__;
 			return gun;
+		}
+
+		Gun.chain.Back = function(n, opt){
+			if(-1 === n){
+				return this.__.gun;
+			}
+			var gun = this, at = gun._;
+			opt = opt || {};
+			if(typeof n === 'string'){
+				n = n.split(opt.split || '.');
+			}
+			if(n instanceof Array){
+				var i = 0, l = n.length, o = {}, tmp = at, u;
+				for(i; i < l; i++){
+					tmp = (tmp||o)[n[i]];
+				}
+				if(at.back && u === tmp){
+					return at.back.gun.Back(n, opt);
+				} else {
+					return tmp;
+				}
+			}
 		}
 
 		;(function(){
@@ -854,12 +939,12 @@
 				opt.state = (opt.state || opts.state)();
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
 				at = Gun.obj.to(gun._, {opt: opt});
-				console.debug(1, 'put', data);
 				//gun._.on = on;
 				if(false && at.lex.soul){
 					link.call(at, at, nev);
 				} else {
-					Gun.on.call((at.lex.soul? gun : back)._, 'chain', link, at);
+					(at.lex.soul? gun : back)._.on('chain', link, at);
+					//Gun.on.call((at.lex.soul? gun : back)._, 'chain', link, at);
 				}
 				if(0 < at.val.w){ at.val.ue = u }
 				return gun;
@@ -880,7 +965,7 @@
 			}
 			var noop = function(){}, nev = {off: noop, stun: noop};
 			function link(cat, ev){ ev.off(); // TODO: BUG!
-				var at = this, put = at.opt, data, cb, u;
+				var at = this, put = at.opt, tmp = {on: Gun.on}, data, cb, u;
 				if(cat.err){ return }
 				if(!cat.node && (put.init || cat.gun.__.opt.init)){ return }
 				// TODO: BUG! `at` doesn't have correct backwards data!
@@ -892,30 +977,49 @@
 				}
 				ev.stun();
 				at.val.w = 1;
-				console.debug(2, 'putting', data);
+				console.debug(1, 'putting', data);
 				Gun.ify(data, end, {
-					node: function(env, cb){ var eat = env.at, tmp;
-						function load(err,node,f,c,ev){ ev.off();
-							console.debug(4, 'ate', node);
-							eat.soul = is_node_soul(node);
-							cb(env, eat);
+					node: function(env, cb){ var eat = env.at;
+						if(!cat.node){
+							return cb(env, eat);
 						}
+						console.debug(6, 'eat', eat.path);
+						console.debug(5, 'eat', eat.path);
+						console.debug(4, 'eat', eat.path);
+						console.debug(3, 'eat', eat.path);
+						function each(f, p){
+							if(!p){ return }
+							tmp.on(p, function(data){
+								var soul = is_node_soul(data);
+								if(!data || !soul){
+									cb(env, eat);
+									tmp.on(f, is_node_ify({}, eat.soul));
+									return; 
+								}
+								get(soul, f);
+							});
+						}
+						function get(soul, f){
+							// TODO: BUG!!!! What about cases where it is an index/pseudo key? What about this function responding multiple times?
+							Gun.get(cat.gun, {soul: soul, field: f}, function(err, data){
+								eat.soul = is_rel((data||{})[f]);
+								console.log("What?", soul, f, eat.soul);
+								cb(env, eat);
+								tmp.on(f, is_node_ify({}, eat.soul));
+							});
+						}
+						var soul = is_node_soul(cat.val.ue) || is_node_soul(cat.node) || cat.lex.soul;
 						if(eat.path.length){
-							tmp = {path: true};
-							var ref = put.gun || at.gun /*at.lex.field? at.gun._.back : at.gun*/, path = eat.path, l = path.length-1, i = 0;
-							for(i; i < l; i++){ ref = ref.get(path[i], null, tmp) }
-							if(!cat.node){
-								load(null, u, path[i], cat, nev);
-								return;
+							var path = eat.path, i = 0, l = path.length, f;
+							for(i; i < l; i++){
+								each(path[i], f);
+								f = path[i];
 							}
-							console.debug(3, 'eat', path);
-							ref.chain.sort = 1;
-							ref.get(path[i], load, tmp);
+							get(soul, path[0]);
 							return;
 						}
-						if(1 === eat.path.length && cat.node){
-							eat.soul = (tmp = is_rel(at.val.ue))? tmp : (tmp = is_node_soul(at.val.ue))? tmp : is_rel(cat.node[eat.path[0]]); // TODO: BUG! Need to handle paths that aren't loaded yet.
-						}
+						eat.soul = soul;
+						console.debug(2, 'eat', eat, cat, soul);
 						cb(env, eat);
 					}, value: function(env){ var eat = env.at;
 						if(!eat.field){ return }
@@ -949,8 +1053,9 @@
 			}
 			function wire(at){
 				//at.gun._.on = Gun.on;
+				at.val.w = -1;
 				Gun.put(Gun.obj.to(at, {cb: ack}));
-				at.gun._.on(true);
+				//at.gun._.on(true);
 			}
 			function ack(err, ok){ var at = this, cb;
 				if((cb = at.opt.any) && cb instanceof Function){
@@ -1053,7 +1158,6 @@
 				if(!opt || !opt.path){ var back = this.__.gun; } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this;
 				var get = back._.get || (back._.get = {}), tmp;
-				console.debug(4, 'get', lex);
 				if(typeof lex === 'string'){
 					if(!(gun = get[lex])){
 						gun = cache(get, lex, back);
@@ -1088,7 +1192,6 @@
 				}
 				if(cb && cb instanceof Function){
 					(opt = opt || {}).any = cb;
-					console.debug(5, 'get cb');
 					gun._.on('chain', any, opt);
 				}
 				return gun;
@@ -1119,9 +1222,7 @@
 				var lex = at.lex;
 				if(lex.field){
 					lex.soul = lex.soul || cat.val.rel;
-				console.debug(6, 'lazy', at.lex);
 					cat.on('chain', function(ct, e){
-				console.log(7, 'lazy', at.lex);
 						//console.log("egack!");
 						// TODO: BUG!! This isn't good for chunking? It assumes the entire node will be replied.
 						if(lex.soul && 1 === at.val.loading){ return }
@@ -1258,7 +1359,6 @@
 				}
 				if(cb){
 					(opt = opt || {}).ok = cb;
-					console.debug(3, 'val', value);
 					at.on('chain', val, opt);
 				}
 				return gun;
