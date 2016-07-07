@@ -538,7 +538,6 @@
 						else if(typeof o === 'string'){ o = {soul: o} }
 						else if(o instanceof Function){ o = {field: o} }
 						var n = o.node || (o.node = {});
-						if()
 						n = Node.soul.ify(n, o); // put a soul on it.
 						obj_map(obj, map, {n:n,o:o});
 						return n; // This will only be a valid node if the object wasn't already deep!
@@ -564,7 +563,7 @@
 				function node(env, at){ var tmp;
 					at = at || env.at;
 					if(tmp = seen(env, at)){ return tmp }
-					at.node = Gun.node.ify(at.obj, map, {env: env, at: at});
+					Gun.node.ify(at.obj, map, {env: env, at: at});
 					return at;
 				}
 				function map(v,f){ 
@@ -938,11 +937,14 @@
 			}
 			at.opt.uuid = opt.uuid || Gun.text.random;
 			at.opt.state = opt.state || Gun.is.state;
+			at.opt.peers = at.opt.peers || {};
 			if(text_is(opt)){ opt = {peers: opt} }
 			if(list_is(opt)){ opt = {peers: opt} }
 			if(text_is(opt.peers)){ opt.peers = [opt.peers] }
 			if(list_is(opt.peers)){ opt.peers = obj_map(opt.peers, function(n,f,m){m(n,{})}) }
-			at.opt.peers = opt.peers || at.opt.peers || {};
+			Gun.obj.map(opt.peers, function(v, f){
+				at.opt.peers[f] = v;
+			});
 			Gun.obj.map(['key', 'path', 'map', 'not', 'init'], function(f){
 				if(!opt[f]){ return }
 				at.opt[f] = opt[f] || at.opt[f];
@@ -983,12 +985,21 @@
 
 		;(function(){
 			Gun.chain.put = function(data, cb, opt){
+				var back = this, gun;
+				opt = opt || {};
+				opt.any = cb;
+				opt.data = data;
+				opt.state = (opt.state || back.Back('opt.state') || Gun.state)();
+				gun = (back._.back && back) || back.Back(-1).get(Gun.node.soul(data) || (opt.uuid || back.Back('opt.uuid') || Gun.text.random)());
+				Gun.graph.ify(data, node, value);
+				/*
 				var back = this, opts = back.__.opt, gun, at, u;
 				opt = opt || {};
 				opt.any = cb;
 				opt.data = data;
 				opt.state = (opt.state || opts.state)();
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
+				*/
 				at = Gun.obj.to(gun._, {opt: opt});
 				//gun._.on = on;
 				if(false && at.lex.soul){
