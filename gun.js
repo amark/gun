@@ -487,10 +487,41 @@
 		}
 
 		;(function(){ // NEW API?
-			Gun.val = {};
-			Gun.val.ify = function(){
-
-			}
+			;(function(){
+				var Val = Gun.val = {};
+				Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
+					var u;
+					if(v === u){ return false }
+					if(v === null){ return true } // "deletes", nulling out fields.
+					if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
+					if(Gun.bi.is(v) // by "binary" we mean boolean.
+					|| Gun.num.is(v)
+					|| Gun.text.is(v)){ // by "text" we mean strings.
+						return true; // simple values are valid.
+					}
+					return Val.is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+				}
+				;(function(){
+					Val.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+						if(v && !v[_meta] && obj_is(v)){ // must be an object.
+							var o = {};
+							obj_map(v, map, o);
+							if(o.id){ // a valid id was found.
+								return o.id; // yay! Return it.
+							}
+						}
+						return false; // the value was not a valid soul relation.
+					}
+					function map(s, f){ var o = this; // map over the object...
+						if(o.id){ return o.id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
+						if(f == _soul && text_is(s)){ // the field should be '#' and have a text value.
+							o.id = s; // we found the soul!
+						} else {
+							return o.id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
+						}
+					}
+				}());
+			}());
 			;(function(){
 				var Node = Gun.node = {};
 				Node.soul = function(n, o){ return (n && n._ && n._[o || _soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
@@ -502,23 +533,28 @@
 					return n;
 				}
 				;(function(){
-					function map(v, f){ // iterate over each field/value.
-						if(_meta === f){ return } // ignore meta.
-						is_node_state_ify(this.n, {field: f, value: v, state: this.o.state = this.o.state || Gun.time.is()}); // and set the state for this field and value on this node.
-					}
-					Node.ify = function(n, o){ // convert a shallow object into a node.
-						o = (typeof o === 'string')? {soul: o} : o || {};
-						n = Node.soul.ify(n, o); // put a soul on it.
-						obj_map(n, map, {n:n,o:o});
+					Node.ify = function(obj, o, t){ // returns a node from a shallow object.
+						if(!o){ o = {} }
+						else if(typeof o === 'string'){ o = {soul: o} }
+						else if(o instanceof Function){ o = {field: o} }
+						var n = Node.soul.ify(n, o); // put a soul on it.
+						o.field? obj_map(obj, o.field, t) : obj_map(obj, map, {n:n,o:o});
 						return n; // This will only be a valid node if the object wasn't already deep!
+					}
+					function map(v, f){ var cb; // iterate over each field/value.
+						if(_meta === f){ return } // ignore meta.
+						if(!Gun.val.is(v)){ return } // ignore invalid values.
+						this.n[f] = v;
 					}
 				}());
 			}());
 			;(function(){
 				var console = window.console;
 				var Graph = Gun.graph = {};
-				Graph.ify = function(obj){
-					var env = {root: {}, graph: {}, seen: []}, at = {path: [], obj: obj};
+				Graph.ify = function(obj, o, t){
+					if(!o){ o = {} }
+					else if(o instanceof Function){ o.field = o }
+					var env = {root: {}, graph: {}, seen: [], opt: o, t: t}, at = {path: [], obj: obj};
 					at.node = env.root;
 					node(env, at);
 					return env.graph;
@@ -526,20 +562,14 @@
 				function node(env, at){ var tmp;
 					at = at || env.at;
 					if(tmp = seen(env, at)){ return tmp }
-					if(!at.node){ at.node = {} }
-					if(!at.node._){ at.node._ = {} }
-					if(!at.node._['#']){ 
-						env.graph[at.node._['#'] = Gun.text.random()] = at.node;
-					}
-					obj_map(at.obj, map, {env: env, at: at});
+					at.node = Gun.node.ify(at.obj, map, {env: env, at: at});
 					return at;
 				}
-				function it(obj){
-					return !text_is(obj) && (obj_map(obj, it.is) || obj_is(obj))
-				}
-				it.is = function(v,f){ return true }
 				function map(v,f){ 
 					var env = this.env, at = this.at;
+					if(Gun.val.is(v)){
+						at.node[f] = v; 
+					}
 					if(it(v)){
 						at.node[f] = {'#': node(env, {obj: v, path: at.path.concat(f)}).node._['#']};
 					} else {
