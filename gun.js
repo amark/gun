@@ -537,8 +537,10 @@
 						if(!o){ o = {} }
 						else if(typeof o === 'string'){ o = {soul: o} }
 						else if(o instanceof Function){ o = {field: o} }
-						var n = Node.soul.ify(n, o); // put a soul on it.
-						o.field? obj_map(obj, o.field, t) : obj_map(obj, map, {n:n,o:o});
+						var n = o.node || (o.node = {});
+						if()
+						n = Node.soul.ify(n, o); // put a soul on it.
+						obj_map(obj, map, {n:n,o:o});
 						return n; // This will only be a valid node if the object wasn't already deep!
 					}
 					function map(v, f){ var cb; // iterate over each field/value.
