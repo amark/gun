@@ -1173,7 +1173,8 @@
 		opt = opt || {};
 		var tab = gun.tab = gun.tab || {};
 		tab.store = tab.store || Tab.store;
-		tab.request = tab.request || request;
+		tab.request = tab.request || Gun.request;
+		if(!tab.request){ throw new Error("Default GUN driver could not find default network abstraction.") }
 		tab.request.s = tab.request.s || {};
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
@@ -1299,12 +1300,16 @@
 		gun.__.opt.wire.put = gun.__.opt.wire.put || tab.put;
 		gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
 
-		Tab.request = request;
+		Tab.request = tab.request;
 		Gun.Tab = Tab;
 	});
 
+}.bind(this || module)({}));
+
+
+;(function(Tab){
 	var request = (function(){
-		function r(base, body, cb, opt){
+		function r(base, body, cb, opt){ opt = opt || {};
 			var o = base.length? {base: base} : {};
 			o.base = opt.base || base;
 			o.body = opt.body || body;
@@ -1312,6 +1317,7 @@
 			o.url = opt.url;
 			cb = cb || function(){};
 			if(!o.base){ return }
+			if(opt.WebSocket){ o.WebSocket = opt.WebSocket }
 			r.transport(o, cb);
 		}
 		r.createServer = function(fn){ r.createServer.s.push(fn) }
@@ -1327,7 +1333,7 @@
 			r.jsonp(opt, cb);
 		}
 		r.ws = function(opt, cb){
-			var ws, WS = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
+			var ws, WS = opt.WebSocket || window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
 			if(!WS){ return }
 			if(ws = r.ws.peers[opt.base]){
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
@@ -1347,7 +1353,7 @@
 			try{ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
 			}catch(e){}
 			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
-			ws.onclose = window.onbeforeunload = function(c){
+			ws.onclose = function(c){
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
 				if(1006 === c.code){ // websockets cannot be used
@@ -1360,6 +1366,7 @@
 					r.ws(opt, function(){}); // opt here is a race condition, is it not? Does this matter?
 				}, r.back *= r.backoff);
 			};
+			if(typeof window !== "undefined"){ window.onbeforeunload = ws.onclose; }
 			ws.onmessage = function(m){
 				if(!m || !m.data){ return }
 				var res;
@@ -1377,6 +1384,9 @@
 		r.ws.peers = {};
 		r.ws.cbs = {};
 		r.jsonp = function(opt, cb){
+			if(typeof window === "undefined"){
+				return cb("JSONP is currently browser only.");
+			}
 			//Gun.log("jsonp send", opt);
 			r.jsonp.ify(opt, function(url){
 				//Gun.log(url);
@@ -1459,4 +1469,6 @@
 		}
 		return r;
 	}());
+	if(typeof window !== "undefined"){ Gun.request = request }
+	if(typeof module !== "undefined" && module.exports){ module.exports.request = request }
 }.bind(this || module)({}));
