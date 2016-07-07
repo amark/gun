@@ -1,14 +1,15 @@
+//client.js writes data up to a listening hub.js, which relays to a server.js that reads the data.
+
 var http = require('http');
 
 var Gun = require('../../index');
 var gun = Gun({ 
-	file: 'data.json'
+	file: 'http.json'
 });
 
 
-gun.get('data').put({a: {data: 1}, b: {data: 2}});
 var server = http.createServer(function(req, res){});
 gun.wsp(server);
-server.listen(8081);
+server.listen(8080);
 
-console.log('Server started on port ' + 8081 + ' with /gun');
+console.log('Server started on port ' + 8080 + ' with /gun');
