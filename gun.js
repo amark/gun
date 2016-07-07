@@ -1317,7 +1317,6 @@
 			o.url = opt.url;
 			cb = cb || function(){};
 			if(!o.base){ return }
-			if(opt.WebSocket){ o.WebSocket = opt.WebSocket }
 			r.transport(o, cb);
 		}
 		r.createServer = function(fn){ r.createServer.s.push(fn) }
@@ -1333,7 +1332,7 @@
 			r.jsonp(opt, cb);
 		}
 		r.ws = function(opt, cb){
-			var ws, WS = opt.WebSocket || window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
+			var ws, WS = r.WebSocket || window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
 			if(!WS){ return }
 			if(ws = r.ws.peers[opt.base]){
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
@@ -1375,10 +1374,9 @@
 				if(!res){ return }
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (r.ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
-				//Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer.ing(res, function(res){ r(opt.base, null, null, res)}) } // emit extra events.
 			};
-			ws.onerror = function(e){ Gun.log(e); };
+			ws.onerror = function(e){ console.log(e); };
 			return true;
 		}
 		r.ws.peers = {};
