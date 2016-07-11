@@ -144,7 +144,7 @@
 			Type.time = {};
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
 		}(Util));
-		;(function(exports, add, emit){ // On event emitter generic javascript utility.
+		;(function(exports){ // On event emitter generic javascript utility.
 			function Act(tag, fn, at, on, ctx){
 				this.tag = tag;
 				this.fn = fn;
@@ -175,7 +175,7 @@
 			}
 			function noop(){};
 			function Event(tag, arg, at, as, skip){
-				var ctx = this, ons = ctx.ons || (ctx.ons = {}), on = ons[tag] || (ons[tag] = {s: []}), act, mem;
+				var ctx = this, ons = ctx.ons || (ctx.ons = {}), on = ons[tag] || (ons[tag] = {s: []}), act, mem, E = Event.ons;
 				//typeof console !== 'undefined' && console.debug(102, 'on', tag, arg, 'ons', ctx, ons);
 				if(!arg){
 					if(1 === arguments.length){ // Performance drops significantly even though `arguments.length` should be okay to use.
@@ -184,9 +184,9 @@
 				}
 				if(arg instanceof Function){
 					act = new Act(tag, arg, at, on, ctx);
-					if(add){
-						add(tag, act, on, ctx); // TODO: CLEAN UP! The bottom two features should be implemented inside of add as the extension. This, if it returns, should return immediately. But if it doesn't do anything, continue with default behavior.
-						if(noop === act.fn){ // TODO: This should be faster, but perf is showing it slower? Note: Have to move it above the push line and uncomment the bottom line in add.
+					if(E && E.add && ctx !== Event){
+						Event.on('add', [tag, act, on, ctx]);
+						if(noop === act.fn){
 							return act;
 						}
 						if(-1 < act.i){ return act }
@@ -194,7 +194,9 @@
 					on.s.push(act);
 					return act;
 				}
-				if(emit){ emit(tag, arg, on, ctx) }
+				if(E && E.emit && ctx !== Event){
+					Event.on('emit', [tag, arg, on, ctx]); 
+				}
 				on.arg = arg;
 				on.end = at;
 				on.as = as;
@@ -239,30 +241,9 @@
 				}
 				return;
 			}
+			Event.on = Event;
 			exports.on = Event;
-		}(Util, function add(tag, act, on, ctx){ // Gun specific extensions
-			var mem = on.mem, tmp;
-			if(mem){
-				if(mem instanceof Array){
-					act.fn.apply(act.at, mem.concat(act));
-				} else {
-					act.fn.call(act.at, mem, act);
-				}
-				return;
-			}
-			if(!ctx.gun){ return }
-			if(tmp = ctx.gun.chain.sort){
-				on.s.splice(act.i = tmp - 1, 0, act);
-				ctx.gun.chain.sort = 0;
-			}
-			if(!ctx.lazy){ return }
-			var at = act.at? act.at.gun? act.at : ctx : ctx;
-			if(!at.gun){ return }
-			ctx.lazy(at, tag);
-			if(on.mem){ add(tag, act, on, ctx) } // for synchronous async actions.
-		}, function(tag, arg, on, at){
-			on.mem = arg;
-		}));
+		}(Util));
 		;(function(exports){ // Generic javascript scheduler utility.
 			function s(state, cb, time){ // maybe use lru-cache?
 				s.time = time || Gun.time.is;
@@ -523,8 +504,46 @@
 				}());
 			}());
 			;(function(){
+				var State = Gun.state = function(){
+					var t = time();
+					if(last < t){
+						n = 0;
+						return last = t;
+					}
+					return last = t + ((n += 1) / d);
+				}
+				var time = Gun.time.is, last = -Infinity, n = 0, d = 1000;
+				State.ify = function(o, f, s){ // put a field's state and value on an object.
+					o = o || {}; // make sure it exists.
+					obj_as(o, _meta); // states must be stored somewhere, this is where we assume it will be.
+					var tmp = obj_as(o._, _state); // grab the states data.
+					if(num_is(s)){ tmp[f] = s } // add the valid state.
+					return o;
+				}
+				;(function(){
+					State.map = function(cb, s, t){ var u;
+						var o = obj_is(o = cb || s)? o : null;
+						cb = fn_is(cb = cb || s)? cb : null;
+						if(o && !cb){
+							s = num_is(s)? s : State();
+							obj_map(o, map, {o:cb,s:s});
+							return o;
+						}
+						t = t || obj_is(s)? s : u;
+						s = num_is(s)? s : State();
+						return function(v, f, o){
+							State.ify(o, f, s);
+							if(cb){
+								cb.call(t, v, f, o);
+							}
+						}
+					}
+					function map(v,f){ State.ify(this.o, f, this.s) }
+				}());
+			}());
+			;(function(){
 				var Node = Gun.node = {};
-				Node.soul = function(n, o){ return (n && n._ && n._[o || _soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
+				Node.soul = function(n, o){ return (n && n._ && n._[o || _soul]) } // convenience function to check to see if there is a soul on a node and return it.
 				Node.soul.ify = function(n, o){ // put a soul on an object.
 					o = (typeof o === 'string')? {soul: o} : o || {};
 					n = n || {}; // make sure it exists.
@@ -536,46 +555,65 @@
 					Node.ify = function(obj, o, t){ // returns a node from a shallow object.
 						if(!o){ o = {} }
 						else if(typeof o === 'string'){ o = {soul: o} }
-						else if(o instanceof Function){ o = {field: o} }
-						var n = o.node || (o.node = {});
-						n = Node.soul.ify(n, o); // put a soul on it.
-						obj_map(obj, map, {n:n,o:o});
-						return n; // This will only be a valid node if the object wasn't already deep!
+						else if(o instanceof Function){ o = {map: o} }
+						if(o.node = o.map? o.map.call(t, obj) : Node.soul.ify(o.node || {}, o)){
+							obj_map(obj, map, {o:o,t:t});
+						}
+						return o.node; // This will only be a valid node if the object wasn't already deep!
 					}
-					function map(v, f){ var cb; // iterate over each field/value.
-						if(_meta === f){ return } // ignore meta.
-						if(!Gun.val.is(v)){ return } // ignore invalid values.
-						this.n[f] = v;
+					function map(v, f){ var o = this.o, tmp, u; // iterate over each field/value.
+						if(o.map){
+							tmp = o.map.call(this.t, v, ''+f, o.node);
+							if(u !== tmp && o.node){ o.node[f] = tmp }
+							return;
+						}
+						if(Gun.val.is(v)){ 
+							o.node[f] = v;
+						}
 					}
 				}());
 			}());
 			;(function(){
-				var console = window.console;
 				var Graph = Gun.graph = {};
 				Graph.ify = function(obj, o, t){
 					if(!o){ o = {} }
-					else if(o instanceof Function){ o.field = o }
-					var env = {root: {}, graph: {}, seen: [], opt: o, t: t}, at = {path: [], obj: obj};
-					at.node = env.root;
+					else if(o instanceof Function){ o.map = o }
+					var env = {graph: {}, seen: [], opt: o, t: t}, at = {path: [], obj: obj};
 					node(env, at);
 					return env.graph;
 				}
 				function node(env, at){ var tmp;
-					at = at || env.at;
 					if(tmp = seen(env, at)){ return tmp }
-					Gun.node.ify(at.obj, map, {env: env, at: at});
+					if(Gun.node.ify(at.obj, map, {env: env, at: at})){
+						env.graph[Gun.node.soul(at.node)] = at.node;
+					}
 					return at;
 				}
-				function map(v,f){ 
-					var env = this.env, at = this.at;
-					if(Gun.val.is(v)){
-						at.node[f] = v; 
+				function map(v,f,n){ 
+					var env = this.env, opt = env.opt, at = this.at, is = Gun.val.is(v), tmp;
+					if(tmp = opt.map){
+						tmp(v,f,n);
 					}
-					if(it(v)){
-						at.node[f] = {'#': node(env, {obj: v, path: at.path.concat(f)}).node._['#']};
-					} else {
-						at.node[f] = v;
+					if(!is && !obj_is(v)){
+						if(tmp = opt.invalid){
+							v = tmp(v,f,n);
+							if(!obj_is(v)){
+								return v;
+							}
+						} else {
+							env.err = "Invalid value at '" + at.path.concat(f).join('.') + "'!";
+							return;
+						}
 					}
+					if(!f){
+						return at.node = Gun.node.soul.ify({});
+					}
+					if(is){
+						return v;
+					}
+					tmp = node(env, {obj: v, path: at.path.concat(f)});
+					if(!tmp.node){ return }
+					return {'#': Gun.node.soul(tmp.node)};
 				}
 				function seen(env, at){
 					var arr = env.seen, i = arr.length, has;
@@ -585,16 +623,18 @@
 					arr.push(at);
 				}
 
-				// test
-				var g = Gun.graph.ify({
-					you: {
-						are: {
-							very: 'right'
-						}
-					},
-					my: 'lad'
-				});
-				console.log("GRAPH!", g);
+				setTimeout(function(){
+					// test
+					var g = Gun.graph.ify({
+						you: {
+							are: {
+								very: 'right'
+							}
+						},
+						my: 'lad'
+					});
+					console.log("GRAPH!", g);
+				},1);
 			}());
 			
 		}());
@@ -985,6 +1025,7 @@
 
 		;(function(){
 			Gun.chain.put = function(data, cb, opt){
+				/*
 				var back = this, gun;
 				opt = opt || {};
 				opt.any = cb;
@@ -992,14 +1033,13 @@
 				opt.state = (opt.state || back.Back('opt.state') || Gun.state)();
 				gun = (back._.back && back) || back.Back(-1).get(Gun.node.soul(data) || (opt.uuid || back.Back('opt.uuid') || Gun.text.random)());
 				Gun.graph.ify(data, node, value);
-				/*
+				*/
 				var back = this, opts = back.__.opt, gun, at, u;
 				opt = opt || {};
 				opt.any = cb;
 				opt.data = data;
 				opt.state = (opt.state || opts.state)();
 				gun = (back._.back && back) || back.__.gun.get(is_node_soul(data) || (opt.uuid || opts.uuid)());
-				*/
 				at = Gun.obj.to(gun._, {opt: opt});
 				//gun._.on = on;
 				if(false && at.lex.soul){
@@ -1065,7 +1105,7 @@
 							// TODO: BUG!!!! What about cases where it is an index/pseudo key? What about this function responding multiple times?
 							Gun.get(cat.gun, {soul: soul, field: f}, function(err, data){
 								eat.soul = is_rel((data||{})[f]);
-								console.log("What?", soul, f, eat.soul);
+								//console.log("What?", soul, f, eat.soul);
 								cb(env, eat);
 								tmp.on(f, is_node_ify({}, eat.soul));
 							});
@@ -1258,13 +1298,11 @@
 				}
 				return gun;
 			}
-			function cache(get, key, back){
+			function cache(get, key, back){ // First layer of caching.
 				var gun = get[key] = back.chain(), at = gun._;
-				back._.lazy = at.lazy = lazy;
 				if(!back._.back){
-					at.stream = stream;
 					at.lex.soul = key;
-					//back._.on('#' + key, soul, at);
+					back._.on.call(at, '#' + key, key, at);
 				} else {
 					var lex = at.lex, cat = back._, flex = cat.lex;
 					if(!flex.field && flex.soul){
@@ -1272,26 +1310,48 @@
 					}
 					lex.field = key;
 					if(obj_empty(get, key)){ // only do this once
-						back._.on('chain', path, back._);
+						back._.on.call(at, 'chain', path, back._);
 					}
-					back._.on('.' + key, field, at);
+					back._.on.call(at, '.' + key, field, at);
 				}
 				return gun;
 			}
-			function lazy(at){ var cat = this; // TODO: CLEAN UP! While kinda ugly, I think the logic is working quite nicely now. So maybe not clean.
+			Gun.on.on('add', function(tag, act, on, at){ // Gun specific extensions to the event emitter
+				if(!at.gun || !at.ons){ return }
+				var mem = on.mem, tmp;
+				if(mem){
+					if(mem instanceof Array){
+						act.fn.apply(act.at, mem.concat(act));
+					} else {
+						act.fn.call(act.at, mem, act);
+					}
+					return;
+				}
+				if(tmp = at.gun.chain.sort){ // TODO: Clean up, remove?
+					on.s.splice(act.i = tmp - 1, 0, act);
+					at.gun.chain.sort = 0;
+				}
+				lazy(at, tag);
+				if(on.mem){ add(tag, act, on, at) } // for synchronous async actions.
+			});
+			Gun.on.on('emit', function(tag, arg, on, at){
+				if(!at.gun || !at.ons){ return }
+				on.mem = arg;
+			});
+			function lazy(at){// TODO: CLEAN UP! While kinda ugly, I think the logic is working quite nicely now. So maybe not clean.
 				if(at.val.loading){ return }
 				at.val.loading = 1; // TODO: CLEAN UP!!!!
-				var lex = at.lex;
+				var lex = at.lex, cat = at.back || at;
 				if(lex.field){
 					lex.soul = lex.soul || cat.val.rel;
-					cat.on('chain', function(ct, e){
+					at.on('chain', function(ct, e){
 						//console.log("egack!");
 						// TODO: BUG!! This isn't good for chunking? It assumes the entire node will be replied.
 						if(lex.soul && 1 === at.val.loading){ return }
 						e.off();
 						//if(ct.err || !ct.node){ return cat.on('.' + lex.field, ct) }
 						if(obj_has(ct.change, lex.field)){ return }
-						else { return cat.on('.' + lex.field, ct) }
+						else { return at.on('.' + lex.field, ct) }
 						//lex.soul = is_node_soul(ct.node);
 						//lazy.call(cat, at);
 					}, at);
@@ -1304,6 +1364,11 @@
 				}
 				Gun.get(at);
 			};
+			function lazy(at){
+				var lex = at.lex;
+				if(!lex.field){ return }
+				Gun.get(at);
+			}
 			function stream(err, node){ var tmp;
 				//Gun.on('chain', this);
 				if(!this.node && this.change){
@@ -1318,6 +1383,7 @@
 				cat.on('#' + is_node_soul(cat.node) || cat.lex.soul, cat);
 			});*/
 			function chain(cat, ev){ var at = Gun.obj.to(this), tmp, u;
+				console.log('GOT', cat);
 				at.val.loading = false; // TODO: Clean up! Ugly.
 				at.change = cat.change;
 				var err = cat.err, node = cat.node, lex = at.lex, field = at.val.rel? u : lex.field;
