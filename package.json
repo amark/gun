@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "test": "mocha"
+    "test": "mocha",
+    "unbuild": "node lib/unbuild.js"
   },
   "repository": {
     "type": "git",
