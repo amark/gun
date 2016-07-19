@@ -764,23 +764,23 @@ describe('Gun', function(){
 				expect(Gun.val.is(function(){})).to.be(false);
 			});
 			it('is rel',function(){
-				expect(Gun.val.is.rel({'#':'somesoulidhere'})).to.be('somesoulidhere');
-				expect(Gun.val.is.rel({'#':'somethingelsehere'})).to.be('somethingelsehere');
-				expect(Gun.val.is.rel({'#':'somesoulidhere', and: 'nope'})).to.be(false);
-				expect(Gun.val.is.rel({or: 'nope', '#':'somesoulidhere'})).to.be(false);
-				expect(Gun.val.is.rel(false)).to.be(false);
-				expect(Gun.val.is.rel(true)).to.be(false);
-				expect(Gun.val.is.rel('')).to.be(false);
-				expect(Gun.val.is.rel('a')).to.be(false);
-				expect(Gun.val.is.rel(0)).to.be(false);
-				expect(Gun.val.is.rel(1)).to.be(false);
-				expect(Gun.val.is.rel(Infinity)).to.be(false); // boohoo :(
-				expect(Gun.val.is.rel(NaN)).to.be(false);
-				expect(Gun.val.is.rel([])).to.be(false);
-				expect(Gun.val.is.rel([1])).to.be(false);
-				expect(Gun.val.is.rel({})).to.be(false);
-				expect(Gun.val.is.rel({a:1})).to.be(false);
-				expect(Gun.val.is.rel(function(){})).to.be(false);
+				expect(Gun.val.rel.is({'#':'somesoulidhere'})).to.be('somesoulidhere');
+				expect(Gun.val.rel.is({'#':'somethingelsehere'})).to.be('somethingelsehere');
+				expect(Gun.val.rel.is({'#':'somesoulidhere', and: 'nope'})).to.be(false);
+				expect(Gun.val.rel.is({or: 'nope', '#':'somesoulidhere'})).to.be(false);
+				expect(Gun.val.rel.is(false)).to.be(false);
+				expect(Gun.val.rel.is(true)).to.be(false);
+				expect(Gun.val.rel.is('')).to.be(false);
+				expect(Gun.val.rel.is('a')).to.be(false);
+				expect(Gun.val.rel.is(0)).to.be(false);
+				expect(Gun.val.rel.is(1)).to.be(false);
+				expect(Gun.val.rel.is(Infinity)).to.be(false); // boohoo :(
+				expect(Gun.val.rel.is(NaN)).to.be(false);
+				expect(Gun.val.rel.is([])).to.be(false);
+				expect(Gun.val.rel.is([1])).to.be(false);
+				expect(Gun.val.rel.is({})).to.be(false);
+				expect(Gun.val.rel.is({a:1})).to.be(false);
+				expect(Gun.val.rel.is(function(){})).to.be(false);
 			});
 			it.skip('is lex',function(){
 				expect(Gun.is.lex({'#': 'soul'})).to.eql({soul: 'soul'});
@@ -1444,14 +1444,13 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('put node', function(done){
-			console.debug.i = 1;
+		it('put node', function(done){
 			gun.put({hello: "world"}, function(err, ok){
 				expect(err).to.not.be.ok();
 				done();
 			});
 		});
-		return;
+
 		it('put node then value', function(done){
 			var ref = gun.put({hello: "world"});
 
@@ -1472,7 +1471,7 @@ describe('Gun', function(){
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
 					expect(err).to.not.be.ok();
-					expect(Gun.is.node.soul(node)).to.be('foo');
+					expect(Gun.node.soul(node)).to.be('foo');
 					expect(node.hello).to.be('world');
 					if(done.c){ return }
 					done(); done.c = 1;
@@ -1486,11 +1485,12 @@ describe('Gun', function(){
 				gun.put({_: {'#': 'foo'}, boo: 'bear'})
 					.get({'#': 'foo'}, function(err, node){
 						if(done.c >= 1){ return }
-						expect(Gun.is.node.soul(node)).to.be('foo');
+						console.log("**********", err, node);
+						expect(Gun.node.soul(node)).to.be('foo');
 						expect(err).to.not.be.ok();
 						expect(node.boo).to.be('bear');
 						//if(!done.c){ return done.c = 1 } done.c = 2;
-						//expect(node.hello).to.be('world'); // This data DOES exist, it just hasn't been read (since we only wrote).
+						//expect(node.hello).to.be('world');
 						done(); done.c = 2;
 				})
 			},100);
@@ -1502,7 +1502,7 @@ describe('Gun', function(){
 				done.w = 1; if(done.c){ return } if(done.r){ done(); done.c = 1 };
 			}).get('yes/key', function(err, node){
 				expect(err).to.not.be.ok();
-				expect(Gun.is.node.soul(node)).to.be('yes/key');
+				expect(Gun.node.soul(node)).to.be('yes/key');
 				expect(node.hello).to.be('key');
 				done.r = 1; if(done.c){ return } if(done.w){ done(); done.c = 1 };
 			});
@@ -1513,7 +1513,6 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 			});
 			gun.get('yes/a/key', function(err, node){
-				//console.log("??????", err, node);return;
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('a key');
 				if(done.c){ return }
@@ -1531,7 +1530,7 @@ describe('Gun', function(){
 		it('get key no override', function(done){
 			var gun = Gun();
 			gun.put({cream: 'pie'}).key('cream/pie').get('cream/pie', function(err, node){
-				expect(Gun.is.node.soul(node)).to.be('cream/pie');
+				expect(Gun.node.soul(node)).to.be('cream/pie');
 				if(done.c){ return }
 				if(node.cream && node.pie){
 					expect(node.cream).to.be('pie');
@@ -1567,7 +1566,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it('key node has no key relations', function(done){
+		it.only('key node has no key relations', function(done){
 			var gun = Gun();
 			gun.put({hello: 'world'}).key('hello/earth');
 			gun.put({continent: 'africa'}).key('hello/earth');
@@ -1577,7 +1576,8 @@ describe('Gun', function(){
 			gun.get('hello/earth').key('hello/galaxy', function(err, ok){
 				expect(err).to.not.be.ok();
 			});
-			var node = (gun.__.get['hello/earth']||{}).node || {};
+			var node = gun.Back(-1)._.graph['hello/earth'] || {}; // TODO: IS THIS CORRECT?
+			console.log("node", node);
 			expect(node['hello/galaxy']).to.not.be.ok();
 			gun.get('hello/earth', function(err, pseudo){
 				expect(pseudo.hello).to.be('world');
@@ -1585,7 +1585,8 @@ describe('Gun', function(){
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.north).to.not.be.ok();
 			});
-			var galaxy = (gun.__.get['hello/galaxy']||{}).node || {};
+			var galaxy = gun.Back(-1)._.graph['hello/galaxy'] || {}; // TODO: IS THIS CORRECT?
+			console.log("galaxy", galaxy, gun);
 			expect(galaxy['hello/earth']).to.not.be.ok();
 			gun.get('hello/galaxy', function(err, pseudo){
 				if(done.c || !pseudo.hello || !pseudo.south || !pseudo.place || !pseudo.continent || !pseudo.north){ return }
@@ -1600,9 +1601,9 @@ describe('Gun', function(){
 
 		function soulnode(gun, kn, r){ // TODO: WARNING! Key implementation has changed significantly. Tests are somewhat hardcoded, sad day.
 			r = r || [];
-			Gun.is.node(kn, function(node, s){
+			Gun.node.is(kn, function(node, s){
 				if('##' === s || !(s = s.slice(1,-1))){ return }
-				var n = gun.__.graph[s];
+				var n = gun.Back(-1)._.graph[s];
 				if(Gun.obj.has(n, '##')){
 					soulnode(gun, n, r);
 					return;
@@ -1613,16 +1614,19 @@ describe('Gun', function(){
 		}
 
 		it('get node put node merge', function(done){
+			console.debug.i = 1;console.log('-------------------------');
 			gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
-				//console.log("get", err, node);
+				console.log(4, "get", err, node);
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('key');
-				done.soul = Gun.is.node.soul(node);
+				done.soul = Gun.node.soul(node);
 			}).put({hi: 'you'}, function(err, ok){
-				//console.log("pat", err, ok);
+				console.debug(12, "pat", err, ok);
 				expect(err).to.not.be.ok();
-				var keynode = gun.__.graph[done.soul], soul;
+				var keynode = gun.Back(-1)._.path[done.soul]._.put, soul;
+				console.log("OH NO", done.soul, keynode)
+				return;
 				expect(keynode.hi).to.not.be.ok();
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
@@ -1630,13 +1634,14 @@ describe('Gun', function(){
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
+				console.log("******************", node);
 				if(done.c){ return }
 				//expect(done.soul).to.be(Gun.is.node.soul(node)); // TODO: DISCUSSION! This has changed?
 				expect(node.hi).to.be('you');
 				expect(node.hello).to.be('key');
 				done(); done.c = 1;
 			});
-		});
+		});return;
 
 		it('get null put node never', function(done){ // TODO: GET returns nothing, and then doing a PUT?
 			gun.get(null, function(err, ok){
