@@ -1292,10 +1292,10 @@
 			}
 			function map(data, key){
 				var cat = this.cat, gun = cat.gun.get(key), at = gun._;
-				/*if(cat.graph && cat.put[key]){ // TODO: Duh, HAM.union assumes nodes not graphs. So this won't work.
-					cat.graph[key] = cat.put[key];
-				}*/
-				at.put = (cat.put||empty)[key] || data; 
+				if(cat.graph){
+					cat.graph[key] = Gun.HAM.union(cat.graph[key] || data, data) || cat.graph[key] || data;
+				}
+				at.put = (cat.graph||cat.put||empty)[key] || data; // TODO: BUG! Is this okay?
 				gun.on('in',{
 					put: data,
 					get: key,
@@ -1472,6 +1472,7 @@
 			}
 
 			function ok(cat, ev){ var opt = this; opt.run = true;
+				// TODO: BUG! Need to use at.put > cat.put for merged cache?
 				if(!cat.put && !obj_has(cat, 'put')){ return }
 				if(opt.as){
 					opt.ok.call(opt.as, cat, ev);
@@ -1494,8 +1495,9 @@
 			}
 
 			function val(cat, ev, to){ var opt = this;
-				var value = cat.put;
-				if(!value && !obj_has(cat, 'put')){
+				// TODO: BUG! Need to use at.put > cat.put for merged cache?
+				var data = cat.put;
+				if(!data && !obj_has(cat, 'put')){
 					return;
 				}
 				clearTimeout(opt.to);
@@ -1506,7 +1508,7 @@
 					return;
 				}
 				ev.off();	
-				opt.ok.call(cat.gun, value, cat.get);
+				opt.ok.call(cat.gun, data, cat.get); // TODO: BUG! opt.gun?
 			}
 			var obj = Gun.obj, obj_has = obj.has, obj_to = obj.to;
 		}());

@@ -1566,7 +1566,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('key node has no key relations', function(done){
+		it('key node has no key relations', function(done){
 			var gun = Gun();
 			gun.put({hello: 'world'}).key('hello/earth');
 			gun.put({continent: 'africa'}).key('hello/earth');
@@ -1577,7 +1577,6 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 			});
 			var node = gun.Back(-1)._.graph['hello/earth'] || {}; // TODO: IS THIS CORRECT?
-			console.log("node", node);
 			expect(node['hello/galaxy']).to.not.be.ok();
 			gun.get('hello/earth', function(err, pseudo){
 				expect(pseudo.hello).to.be('world');
@@ -1586,7 +1585,6 @@ describe('Gun', function(){
 				expect(pseudo.north).to.not.be.ok();
 			});
 			var galaxy = gun.Back(-1)._.graph['hello/galaxy'] || {}; // TODO: IS THIS CORRECT?
-			console.log("galaxy", galaxy, gun);
 			expect(galaxy['hello/earth']).to.not.be.ok();
 			gun.get('hello/galaxy', function(err, pseudo){
 				if(done.c || !pseudo.hello || !pseudo.south || !pseudo.place || !pseudo.continent || !pseudo.north){ return }
@@ -1595,6 +1593,8 @@ describe('Gun', function(){
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.continent).to.be('africa');
 				expect(pseudo.north).to.be('america');
+				expect(pseudo['hello/earth']).to.not.be.ok();
+				expect(pseudo['#hello/earth#']).to.not.be.ok();
 				done(); done.c = 1;
 			});
 		});
@@ -1624,13 +1624,12 @@ describe('Gun', function(){
 			}).put({hi: 'you'}, function(err, ok){
 				console.debug(12, "pat", err, ok);
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.path[done.soul]._.put, soul;
+				var keynode = gun.Back(-1)._.graph[done.soul], soul;
 				console.log("OH NO", done.soul, keynode)
-				return;
 				expect(keynode.hi).to.not.be.ok();
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.__.graph[soul];
+				var node = gun.Back(-1)._.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
