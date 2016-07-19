@@ -1979,14 +1979,21 @@
 			window.puti = window.puti || 0;
 			window.geti = window.geti || 0;
 			localStorage.clear();
+			var hey = gun.get('heylo');
+			//var ok = function(a,b){ console.log('wat', a,b) }
 			/*
 			gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
-			//var ok = function(a,b){ console.log('wat', a,b) }
 			//Gun.log.debug=1;console.log("------------------");
 			var val = gun.get('users').path(1).path('where').val(ok);
 			*/
 	});
 	//localStorage.clear();
+	stool.add('put', function(){
+		hey.put({hello: "world"});
+	});
+	stool.add('put', function(){
+		hey.val(ok);
+	});return;
 	/*
 	stool.add('put', function(){
 		gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
