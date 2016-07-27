@@ -840,6 +840,44 @@ describe('Gun', function(){
 					//console.log("node/soul", n,s);
 				});
 			});
+			it('graph ify', function(done){
+				function map(v,f,n){
+					done.m = true;
+				}
+				var graph = Gun.graph.ify({
+					_: {'#': 'yay'},
+					a: 1
+				}, map);
+				expect(graph).to.eql({
+					yay: {
+						_: {'#': 'yay'},
+						a: 1
+					}
+				});
+				expect(done.m).to.be.ok();
+				var graph = Gun.graph.ify({
+					_: {'#': 'yay', '>': {a: 9}},
+					a: 1
+				}, map);
+				expect(graph).to.eql({
+					yay: {
+						_: {'#': 'yay', '>': {a: 9}},
+						a: 1
+					}
+				});
+				var map = Gun.state.map(map, 9);
+				var graph = Gun.graph.ify({
+					_: {'#': 'yay', '>': {a: 1}},
+					a: 1
+				}, map);
+				expect(graph).to.eql({
+					yay: {
+						_: {'#': 'yay', '>': {a: 9}},
+						a: 1
+					}
+				});
+				done();
+			});
 		});
 	});
 	describe('ify', function(){
@@ -998,7 +1036,6 @@ describe('Gun', function(){
 
 			expect(gun.__.graph['asdf']).to.not.be.ok();
 			var ctx = Gun.HAM.graph(gun, prime);
-			console.log("????", ctx);
 			expect(ctx).to.not.be.ok();
 		});return;
 		
@@ -1614,18 +1651,14 @@ describe('Gun', function(){
 		}
 
 		it('get node put node merge', function(done){
-			console.debug.i = 1;console.log('-------------------------');
 			gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
-				console.log(4, "get", err, node);
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('key');
 				done.soul = Gun.node.soul(node);
 			}).put({hi: 'you'}, function(err, ok){
-				console.debug(12, "pat", err, ok);
 				expect(err).to.not.be.ok();
 				var keynode = gun.Back(-1)._.graph[done.soul], soul;
-				console.log("OH NO", done.soul, keynode)
 				expect(keynode.hi).to.not.be.ok();
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
@@ -1633,14 +1666,13 @@ describe('Gun', function(){
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
-				console.log("******************", node);
 				if(done.c){ return }
 				//expect(done.soul).to.be(Gun.is.node.soul(node)); // TODO: DISCUSSION! This has changed?
 				expect(node.hi).to.be('you');
 				expect(node.hello).to.be('key');
 				done(); done.c = 1;
 			});
-		});return;
+		});
 
 		it('get null put node never', function(done){ // TODO: GET returns nothing, and then doing a PUT?
 			gun.get(null, function(err, ok){
@@ -1663,6 +1695,7 @@ describe('Gun', function(){
 				done.err = err;
 				expect(err).to.not.be.ok();
 				expect(data).to.not.be.ok();
+				console.debug(10, '******', err, data);
 			}).put({testing: 'stuff'}, function(err, ok){
 				done.flag = true;
 			});
@@ -1680,14 +1713,14 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
-				done.soul = Gun.is.node.soul(node);
+				done.soul = Gun.node.soul(node);
 			}).put({hi: 'overwritten'}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.__.graph[done.soul], soul;
+				var keynode = gun.Back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.__.graph[soul];
+				var node = gun.Back(-1)._.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('overwritten');
 				done.w = 1; if(done.r){ done(); done.c = 1 };
@@ -1699,19 +1732,20 @@ describe('Gun', function(){
 				done.r = 1; if(done.w){ done(); done.c = 1 };
 			});
 		});
-
+		
 		it('get key path put', function(done){
 			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
 			data.path('foo').put('epic');
 			data.val(function(val, field){
 				expect(val.foo).to.be('epic');
-				expect(Gun.is.node.soul(val)).to.be('key/path/put');
+				expect(Gun.node.soul(val)).to.be('key/path/put');
 				done();
 			});
 		});
 
 		it('put node path', function(done){
+			var gun = Gun();
 			gun.put({hello: 'world'}).path('hello', function(err, val, field){
 				if(done.end){ return } // it is okay for path's callback to be called multiple times.
 				expect(err).to.not.be.ok();
@@ -1741,6 +1775,7 @@ describe('Gun', function(){
 				done(); done.end = true;
 			});
 		});
+
 		it('get node path', function(done){
 			gun.get('hello/key').path('hi', function(err, val, field){
 				if(done.end){ return } // it is okay for path's callback to be called multiple times.
@@ -1767,14 +1802,14 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 				if(done.soul){ return }
 				expect(node.hi).to.be('overwritten');
-				done.soul = Gun.is.node.soul(node);
+				done.soul = Gun.node.soul(node);
 			}).path('hi').put('again', function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.__.graph[done.soul], soul;
+				var keynode = gun.Back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.__.graph[done.sub = soul];
+				var node = gun.Back(-1)._.graph[done.sub = soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('again');
 				done.w = 1; if(done.r){ done(); done.c = 1 };
@@ -1787,37 +1822,40 @@ describe('Gun', function(){
 		});
 
 		it('get node path put object', function(done){
-			gun.get('hello/key', function(err, node){
+			console.debug.i=1;console.log("----------------------");
+			var foo = gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
 				expect(err).to.not.be.ok();
 				expect(node.hi).to.be('again');
 				expect(node.hello).to.be('key');
-				done.soul = Gun.is.node.soul(node);
+				done.soul = Gun.node.soul(node);
+				console.debug(3, '****', err, node, done.soul);
 			}).path('hi').put({yay: "value"}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.__.graph[done.soul], soul;
+				var keynode = gun.Back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var root = gun.__.graph[soul];
+				var root = gun.Back(-1)._.graph[soul];
 				expect(root.hello).to.be('key');
 				expect(root.yay).to.not.be.ok();
-				expect(Gun.is.rel(root.hi)).to.be.ok();
-				expect(Gun.is.rel(root.hi)).to.not.be(soul);
-				var node = gun.__.graph[Gun.is.rel(root.hi)];
+				expect(Gun.val.rel.is(root.hi)).to.be.ok();
+				expect(Gun.val.rel.is(root.hi)).to.not.be(soul);
+				var node = gun.Back(-1)._.graph[Gun.val.rel.is(root.hi)];
 				expect(node.yay).to.be('value');
-				if(done.sub){ expect(done.sub).to.be(Gun.is.rel(root.hi)) }
-				else { done.sub = Gun.is.rel(root.hi) }
+				if(done.sub){ expect(done.sub).to.be(Gun.val.rel.is(root.hi)) }
+				else { done.sub = Gun.val.rel.is(root.hi) }
 				done.w = 1; if(done.r){ done(); done.c = 1 };
 			}).on(function(node, field){
+				console.log("******************", field, node);return;
 				if(done.c){ return }
 				expect(field).to.be('hi');
 				expect(node.yay).to.be('value');
-				if(done.sub){ expect(done.sub).to.be(Gun.is.node.soul(node)) }
-				else { done.sub = Gun.is.node.soul(node) }
+				if(done.sub){ expect(done.sub).to.be(Gun.node.soul(node)) }
+				else { done.sub = Gun.node.soul(node) }
 				done.r = 1; if(done.w){ done(); done.c = 1 };
 			});
-		});
+		});return;
 
 		it('get path wire', function(done){
 			var gun = Gun();
