@@ -1142,7 +1142,7 @@
 	}(Gun));
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
-	if(root.window){ (root = window).Gun = Gun }
+	if(typeof window !== "undefined"){ (root = window).Gun = Gun }
 	if(typeof module !== "undefined" && module.exports){ module.exports = Gun }
 	if(typeof global !== "undefined"){ root = global; }
 	root.console = root.console || {log: function(s){ return s }}; // safe for old browsers
