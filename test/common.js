@@ -1348,7 +1348,7 @@ describe('Gun', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 				
-		it('gun chain separation', function(done){ return done(); // TODO: UNDO!
+		it.skip('gun chain separation', function(done){ // TODO: UNDO!
 			var gun = Gun();
 			
 			var c1 = gun.put({hello: 'world'});
@@ -1366,7 +1366,7 @@ describe('Gun', function(){
 			});
 		});
 
-		describe('timeywimey', function(){ return; // TODO: UNDO!
+		describe.skip('timeywimey', function(){ // TODO: UNDO!
 			
 			it('kitty', function(done){
 				var g1 = gun.put({hey: 'kitty'}).key('timeywimey/kitty');
@@ -1490,7 +1490,6 @@ describe('Gun', function(){
 
 		it('put node then value', function(done){
 			var ref = gun.put({hello: "world"});
-
 			ref.put('hello', function(err, ok){
 				expect(err).to.be.ok();
 				done();
@@ -1695,7 +1694,6 @@ describe('Gun', function(){
 				done.err = err;
 				expect(err).to.not.be.ok();
 				expect(data).to.not.be.ok();
-				console.debug(10, '******', err, data);
 			}).put({testing: 'stuff'}, function(err, ok){
 				done.flag = true;
 			});
@@ -1765,7 +1763,7 @@ describe('Gun', function(){
 				done(); done.end = true;
 			});
 		});
-		
+
 		it('put node path rel', function(done){
 			gun.put({foo: {bar: 'lol'}}).path('foo', function(err, val, field){
 				if(done.end){ return } // it is okay for path's callback to be called multiple times.
@@ -1822,14 +1820,12 @@ describe('Gun', function(){
 		});
 
 		it('get node path put object', function(done){
-			console.debug.i=1;console.log("----------------------");
 			var foo = gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
 				expect(err).to.not.be.ok();
 				expect(node.hi).to.be('again');
 				expect(node.hello).to.be('key');
 				done.soul = Gun.node.soul(node);
-				console.debug(3, '****', err, node, done.soul);
 			}).path('hi').put({yay: "value"}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
@@ -1847,7 +1843,6 @@ describe('Gun', function(){
 				else { done.sub = Gun.val.rel.is(root.hi) }
 				done.w = 1; if(done.r){ done(); done.c = 1 };
 			}).on(function(node, field){
-				console.log("******************", field, node);return;
 				if(done.c){ return }
 				expect(field).to.be('hi');
 				expect(node.yay).to.be('value');
@@ -1855,7 +1850,7 @@ describe('Gun', function(){
 				else { done.sub = Gun.node.soul(node) }
 				done.r = 1; if(done.w){ done(); done.c = 1 };
 			});
-		});return;
+		});
 
 		it('get path wire', function(done){
 			var gun = Gun();
@@ -1888,7 +1883,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var g = Gun(); // TODO: NOTE! This will not work for in-memory only. This means it might not be viable as a test for core.
 				g.get('test').path('you', function(e,d){
-					if(done.c){ return }
+					if(!d || done.c){ return }
 					expect(d.are).to.be('cool');
 					done.c = true;
 					setTimeout(function(){
@@ -1900,17 +1895,16 @@ describe('Gun', function(){
 		});
 
 		it('get put, Gun get path to path', function(done){ // For testing lazy eval that it works on cb style.
-			setTimeout(function(){done();},1000);return;
 			var gun = Gun();
 			gun.get('test1').put({you: {are: 'cool'}});
 			setTimeout(function(){
-
 				var g = Gun(); // TODO: NOTE! This will not work for in-memory only. This means it might not be viable as a test for core.
 				var p = g.get('test1').path('you');
 				setTimeout(function(){
 					p.path('are', function(e,d){
+						if(!d || done.c){ return }
 						expect(d).to.be('cool');
-						done();
+						done();done.c = true;
 					});
 				},100);
 
@@ -1923,24 +1917,26 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var g = Gun(); // TODO: NOTE! This will not work for in-memory only. This means it might not be viable as a test for core.
 				var p = g.get('test2').path('you').path('are', function(e,d){
+					if(!d || done.c){ return }
 					expect(d).to.be('cool');
-					done();
+					done();done.c=true;
 				});
-
-			},100)
+			},100);
 		});
 
-		//it.only(
-		it('get put, put deep', function(done){
+		it.only('get put, put deep', function(done){
+		//it('get put, put deep', function(done){
 			var gun = window.gun = Gun();
 			var get = gun.get('put/deep/ish');
+			console.debug.i=1;console.log('---------------------------');
 			get.put({});
-			get.val(function(data){
+			get.val(function(data){ // TODO: API CHANGE! Empty objects should react.
 				console.log("first", data);
-				expect(Gun.is.rel(data.very)).to.be.ok();
-			});
+				expect(Gun.val.rel.is(data.very)).to.be.ok();
+			}, {wait: 10000});
+			console.log("@@@@@", get._.on.toString());
 			setTimeout(function(){
-				Gun.log.debug=1;console.log("--------------------------");
+				console.log("@@@@@", get._.on.toString());
 				var put = get.put({
 					very: {
 						deep: {
@@ -1950,16 +1946,21 @@ describe('Gun', function(){
 						}
 					}
 				});
+				console.log("vvvvvvvvvvvvvvvvvv");
 				return;
 				setTimeout(function(){
 					put.val(function(data){
-						//console.log("YAY!", data);return;
-						expect(Gun.is.rel(data.very)).to.be.ok();
+						expect(Gun.val.rel.is(data.very)).to.be.ok();
 						done.val = true;
 					});
 					var p = put.path('very');
 					p.put({we: 'have gone!'});
 					setTimeout(function(){
+						p.val(function(data){
+							//console.log("p", data);
+							expect(data.we).to.be('have gone!');
+							expect(Gun.val.rel.is(data.deep)).to.be.ok();
+						});
 						p.put('EXPLODE');
 						setTimeout(function(){
 							expect(done.val).to.be.ok();
@@ -1968,7 +1969,7 @@ describe('Gun', function(){
 					},50);
 				},250);
 			},50);
-		});
+		});return;
 
 		it('get path wire shallow swoop', function(done){
 			var gun = Gun();
