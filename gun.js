@@ -918,6 +918,11 @@
 			}
 			function each(val, field){
 				//if(!Gun.is.rel(val)){ path.call(this.gun, null, val, field);return;}
+				if(opt.node){
+					if(!Gun.is.rel(val)){
+						return;
+					}
+				}
 				cb.hash[this.soul + field] = cb.hash[this.soul + field] || this.gun.path(field, path, {chain: chain, via: 'map'}); // TODO: path should reuse itself! We shouldn't have to do it ourselves.
 				// TODO:
 				// 1. Ability to turn off an event. // automatically happens within path since reusing is manual?
