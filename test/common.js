@@ -1934,9 +1934,9 @@ describe('Gun', function(){
 				console.log("first", data);
 				expect(Gun.val.rel.is(data.very)).to.be.ok();
 			}, {wait: 10000});
-			console.log("@@@@@", get._.on.toString());
+			console.log("@@@@@", get._.on.toString().slice(0,20));
 			setTimeout(function(){
-				console.log("@@@@@", get._.on.toString());
+				console.log("@@@@@", get._.on.toString().slice(0,20));
 				var put = get.put({
 					very: {
 						deep: {
