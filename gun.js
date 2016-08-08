@@ -127,9 +127,17 @@
 			}
 			Type.time = {};
 			Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()) }
-			Type.time.now = function(t){
-				return ((t=t||Type.time.is()) > (Type.time.now.last || -Infinity)? (Type.time.now.last = t) : Type.time.now(t + 1)) + (Type.time.now.drift || 0); // TODO: BUG? Should this go on the inside?
-			};
+			Type.time.now = (function(){
+			    var time = Type.time.is, last = -Infinity, n = 0, d = 1000;
+			    return function(){
+			        var t = time();
+			        if(last < t){
+			            n = 0;
+			            return last = t;
+			        }
+			        return last = t + ((n += 1) / d);
+			    }
+			}());
 		}(Util));
 		;(function(exports){ // On event emitter generic javascript utility.
 			function On(){};
@@ -530,13 +538,15 @@
 			var gun = this, root = (gun.__ && gun.__.gun)? gun.__.gun : (gun._ = gun.__ = {gun: gun}).gun.chain(); // if root does not exist, then create a root chain.
 			root.__.by = root.__.by || function(f){ return gun.__.by[f] = gun.__.by[f] || {} };
 			root.__.graph = root.__.graph || {};
-			root.__.opt = root.__.opt || {};
+			root.__.opt = root.__.opt || {peers: {}};
 			root.__.opt.wire = root.__.opt.wire || {};
 			if(Gun.text.is(opt)){ opt = {peers: opt} }
 			if(Gun.list.is(opt)){ opt = {peers: opt} }
 			if(Gun.text.is(opt.peers)){ opt.peers = [opt.peers] }
 			if(Gun.list.is(opt.peers)){ opt.peers = Gun.obj.map(opt.peers, function(n,f,m){ m(n,{}) }) }
-			root.__.opt.peers = opt.peers || gun.__.opt.peers || {};
+			Gun.obj.map(opt.peers, function(v, f){
+				root.__.opt.peers[f] = v;
+			});
 			Gun.obj.map(opt.wire, function(h, f){
 				if(!Gun.fns.is(h)){ return }
 				root.__.opt.wire[f] = h;
@@ -908,6 +918,11 @@
 			}
 			function each(val, field){
 				//if(!Gun.is.rel(val)){ path.call(this.gun, null, val, field);return;}
+				if(opt.node){
+					if(!Gun.is.rel(val)){
+						return;
+					}
+				}
 				cb.hash[this.soul + field] = cb.hash[this.soul + field] || this.gun.path(field, path, {chain: chain, via: 'map'}); // TODO: path should reuse itself! We shouldn't have to do it ourselves.
 				// TODO:
 				// 1. Ability to turn off an event. // automatically happens within path since reusing is manual?
@@ -1132,7 +1147,7 @@
 	}(Gun));
 
 	var root = this || {}; // safe for window, global, root, and 'use strict'.
-	if(root.window){ (root = window).Gun = Gun }
+	if(typeof window !== "undefined"){ (root = window).Gun = Gun }
 	if(typeof module !== "undefined" && module.exports){ module.exports = Gun }
 	if(typeof global !== "undefined"){ root = global; }
 	root.console = root.console || {log: function(s){ return s }}; // safe for old browsers
@@ -1163,7 +1178,8 @@
 		opt = opt || {};
 		var tab = gun.tab = gun.tab || {};
 		tab.store = tab.store || Tab.store;
-		tab.request = tab.request || request;
+		tab.request = tab.request || Gun.request;
+		if(!tab.request){ throw new Error("Default GUN driver could not find default network abstraction.") }
 		tab.request.s = tab.request.s || {};
 		tab.headers = opt.headers || {};
 		tab.headers['gun-sid'] = tab.headers['gun-sid'] || Gun.text.random(); // stream id
@@ -1173,7 +1189,8 @@
 			var soul = lex[Gun._.soul];
 			if(!soul){ return }
 			cb = cb || function(){};
-			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
+			var ropt = {};
+			(ropt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			(function local(soul, cb){
 				tab.store.get(tab.prefix + soul, function(err, data){
 					if(!data){ return } // let the peers handle no data.
@@ -1184,11 +1201,11 @@
 				});
 			}(soul, cb));
 			if(!(cb.local = opt.local)){
-				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Get failed!", function(reply){
+				tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Get failed!", function(reply){
 					setTimeout(function(){ tab.put(Gun.is.graph.ify(reply.body), function(){}, {local: true, peers: {}}) },1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
 				});
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){ var p = {};
-					tab.request(url, lex, tab.request.s[opt.headers.id], opt);
+					tab.request(url, lex, tab.request.s[ropt.headers.id], ropt);
 					cb.peers = true;
 				});
 				var node = gun.__.graph[soul];
@@ -1198,18 +1215,18 @@
 			} tab.peers(cb);
 		}
 		tab.put = tab.put || function(graph, cb, opt){
-			//console.log("SAVE", graph);
 			cb = cb || function(){};
 			opt = opt || {};
-			(opt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
+			var ropt = {};
+			(ropt.headers = Gun.obj.copy(tab.headers)).id = tab.msg();
 			Gun.is.graph(graph, function(node, soul){
 				if(!gun.__.graph[soul]){ return }
 				tab.store.put(tab.prefix + soul, gun.__.graph[soul], function(err){if(err){ cb({err: err}) }});
 			});
 			if(!(cb.local = opt.local)){
-				tab.request.s[opt.headers.id] = tab.error(cb, "Error: Put failed!");
+				tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Put failed!");
 				Gun.obj.map(opt.peers || gun.__.opt.peers, function(peer, url){
-					tab.request(url, graph, tab.request.s[opt.headers.id], opt);
+					tab.request(url, graph, tab.request.s[ropt.headers.id], ropt);
 					cb.peers = true;
 				});
 			} tab.peers(cb);
@@ -1287,16 +1304,25 @@
 		gun.__.opt.wire.get = gun.__.opt.wire.get || tab.get;
 		gun.__.opt.wire.put = gun.__.opt.wire.put || tab.put;
 		gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
+
+		Tab.request = tab.request;
+		Gun.Tab = Tab;
 	});
 
+}.bind(this || module)({}));
+
+
+;(function(Tab){
 	var request = (function(){
-		function r(base, body, cb, opt){
-			opt = opt || (base.length? {base: base} : base);
-			opt.base = opt.base || base;
-			opt.body = opt.body || body;
+		function r(base, body, cb, opt){ opt = opt || {};
+			var o = base.length? {base: base} : {};
+			o.base = opt.base || base;
+			o.body = opt.body || body;
+			o.headers = opt.headers;
+			o.url = opt.url;
 			cb = cb || function(){};
-			if(!opt.base){ return }
-			r.transport(opt, cb);
+			if(!o.base){ return }
+			r.transport(o, cb);
 		}
 		r.createServer = function(fn){ r.createServer.s.push(fn) }
 		r.createServer.ing = function(req, cb){
@@ -1311,7 +1337,7 @@
 			r.jsonp(opt, cb);
 		}
 		r.ws = function(opt, cb){
-			var ws, WS = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
+			var ws, WS = r.WebSocket || window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
 			if(!WS){ return }
 			if(ws = r.ws.peers[opt.base]){
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
@@ -1328,9 +1354,10 @@
 				return true;
 			}
 			if(ws === false){ return }
-			ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
+			try{ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
+			}catch(e){}
 			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
-			ws.onclose = window.onbeforeunload = function(c){
+			ws.onclose = function(c){
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
 				if(1006 === c.code){ // websockets cannot be used
@@ -1343,6 +1370,7 @@
 					r.ws(opt, function(){}); // opt here is a race condition, is it not? Does this matter?
 				}, r.back *= r.backoff);
 			};
+			if(typeof window !== "undefined"){ window.onbeforeunload = ws.onclose; }
 			ws.onmessage = function(m){
 				if(!m || !m.data){ return }
 				var res;
@@ -1351,15 +1379,17 @@
 				if(!res){ return }
 				res.headers = res.headers || {};
 				if(res.headers['ws-rid']){ return (r.ws.cbs[res.headers['ws-rid']]||function(){})(null, res) }
-				//Gun.log("We have a pushed message!", res);
 				if(res.body){ r.createServer.ing(res, function(res){ r(opt.base, null, null, res)}) } // emit extra events.
 			};
-			ws.onerror = function(e){ Gun.log(e); };
+			ws.onerror = function(e){ console.log(e); };
 			return true;
 		}
 		r.ws.peers = {};
 		r.ws.cbs = {};
 		r.jsonp = function(opt, cb){
+			if(typeof window === "undefined"){
+				return cb("JSONP is currently browser only.");
+			}
 			//Gun.log("jsonp send", opt);
 			r.jsonp.ify(opt, function(url){
 				//Gun.log(url);
@@ -1442,4 +1472,6 @@
 		}
 		return r;
 	}());
+	if(typeof window !== "undefined"){ Gun.request = request }
+	if(typeof module !== "undefined" && module.exports){ module.exports.request = request }
 }.bind(this || module)({}));
