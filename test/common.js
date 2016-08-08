@@ -3799,7 +3799,7 @@ describe('Gun', function(){
 		});
 
 		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
-			var gun = Gun();
+    	var gun = Gun();
 			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
 			gun.get('ctx/lol').val(function(implicit){
 				done.fail = true;
@@ -3975,29 +3975,31 @@ describe('Gun', function(){
 
     it("Don't put on parents", function(done){ // TODO: ADD TO 0.5 BRANCH! // Another Stefdv find.
 			var test = gun.get('test');
-			test.path('try.this.at.lvl4').put({msg:'hoi'})
-			test.val(function(node,b){
-				delete node._;
-				expect(Gun.obj.empty(node, 'try')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.try)]);
+			test.path('try.this.at.lvl4').put({msg:'hoi'});
+			setTimeout(function(){ // TODO: Is this cheating??
+				test.val(function(node,b){
+					delete node._;
+					expect(Gun.obj.empty(node, 'try')).to.be.ok();
+					node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.try)]);
 
-				delete node._;
-				expect(Gun.obj.empty(node, 'this')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.this)]);
+					delete node._;
+					expect(Gun.obj.empty(node, 'this')).to.be.ok();
+					node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.this)]);
+					
+					delete node._;
+					expect(Gun.obj.empty(node, 'at')).to.be.ok();
+					node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.at)]);
 
-				delete node._;
-				expect(Gun.obj.empty(node, 'at')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.at)]);
+					delete node._;
+					expect(Gun.obj.empty(node, 'lvl4')).to.be.ok();
+					node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.lvl4)]);
 
-				delete node._;
-				expect(Gun.obj.empty(node, 'lvl4')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.is.rel(node.lvl4)]);
-
-				delete node._;
-				expect(Gun.obj.empty(node, 'msg')).to.be.ok();
-				expect(node.msg).to.be('hoi');
-				done();
-			});
+					delete node._;
+					expect(Gun.obj.empty(node, 'msg')).to.be.ok();
+					expect(node.msg).to.be('hoi');
+					done();
+				});
+			},100);
     });
 	});
 	
