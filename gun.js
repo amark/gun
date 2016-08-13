@@ -267,6 +267,14 @@
 		Act.chain.off = function(){
 			this.fn = noop;
 		}
+		Act.chain.emit = function(arg){
+			var act = this, arr = (arg instanceof Array);
+			if(!arr){
+				act.fn.call(act.as, arg, act);
+			} else {
+				act.fn.apply(act.as, arg.concat(act));
+			}
+		}
 		function noop(){};
 		module.exports = Scope();
 	})(require, './src/on');
@@ -276,16 +284,17 @@
 		
 		function Chain(create, opt){
 			opt = opt || {};
-			opt.chain = opt.chain || 'chain';
-			opt.back = opt.back || 'back';
+			opt.id = opt.id || '#';
+			opt.rid = opt.rid || '@';
 			opt.uuid = opt.uuid || function(){
 				return (+new Date()) + Math.random();
 			};
-			opt.id = opt.id || '#';
-			opt.rid = opt.rid || '@';
+			var on = On.scope();
+			/*
+			opt.chain = opt.chain || 'chain';
+			opt.back = opt.back || 'back';
 
 			var proto = create.prototype;
-			var on = create.on = On.scope();
 			
 			proto.chain = function(){
 				var chain = new this.constructor(), _, tmp;
@@ -308,6 +317,7 @@
 				tmp.on(tag, arg, eas, as);
 				return this;
 			}
+			*/
 
 			on.next = function(chain){
 				var as = chain._, on = as.on;
@@ -322,7 +332,8 @@
 						return chain;
 					}
 					if(arguments.length){
-						queue.push([a,b,c,d]);
+						on.call(as, a,b,c,d); // TODO: BUG? Nothing will ever work without being able to call the original though!
+						//queue.push([a,b,c,d]);
 						return chain;
 					}
 					as.on = on;
@@ -345,7 +356,7 @@
 			var ask = on.ask = function(cb, as){
 				if(!ask.on){ ask.on = On.scope() }
 				var id = opt.uuid();
-				ask.on(id, cb, as);
+				if(cb){ ask.on(id, cb, as) }
 				return id;
 			}
 			ask._ = opt.id;
@@ -367,17 +378,11 @@
 					}
 					return;
 				}
-				/*
-				if(opt.chain !== act.tag){ return }
-				if(!(tmp = act.ctx) || !(tmp = tmp.back) || !(last = tmp._)){ return }
-				if(last.on){ tmp = last }
-				tmp.on(opt.back, act.ctx);
-				if(act.on.last){ event(act) } // for synchronous async actions.	
-				*/	
 			});
 
 			on.on('emit', function(ev){
 				ev.on.last = ev.arg;
+				/*
 				var ctx = ev.ctx, tmp, u;
 				if(opt.back !== ev.tag){ return }
 				if(!(ctx = ev.ctx)){ return }
@@ -385,10 +390,11 @@
 				if(!tmp || ctx === tmp){ return }
 				tmp.on(opt.back, ev.arg);
 				ev.arg = u;
+				*/
 			});
-			return proto;
+			return on;
 		}
-
+		/*
 		function backward(scope, ev){ var tmp;
 			if(!scope || !scope.on){ return }
 			//if(scope.on('back').length){
@@ -397,8 +403,9 @@
 			}
 			return backward((scope.back||backward)._, ev);
 		}
+		*/
 		module.exports = Chain;
-	})(require, './src/chain');
+	})(require, './src/onify');
 
 	;require(function(module){
 		// Generic javascript scheduler utility.
@@ -854,10 +861,21 @@
 		Gun.node = require('./node');
 		Gun.state = require('./state');
 		Gun.graph = require('./graph');
+
+		Gun.on = require('./onify')();
 		
+		/*
 		var opt = {chain: 'in', back: 'out', extend: 'root', id: Gun._.soul};
 		Gun.chain = require('./chain')(Gun, opt);
 		Gun.chain.chain.opt = opt;
+		*/
+		(Gun.chain = Gun.prototype).chain = function(){
+			var chain = new this.constructor(), _;
+			_ = chain._ || (chain._ = {});
+			_.root = this._.root;
+			_.back = this;
+			return chain;
+		}
 
 		;(function(){
 
@@ -889,7 +907,6 @@
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
-				console.log("OUT!", at, cat);
 				if(at.put){
 					cat.on('in', at);
 				}
@@ -936,7 +953,7 @@
 					data = graph[key]; // TODO! BUG/PERF! COPY!?
 				}
 				at.put = data; // TODO: Should be merged! Even for non-root level items.
-				gun.on('in',{
+				gun.on('in', {
 					put: data,
 					get: key,
 					gun: gun,
@@ -1155,11 +1172,10 @@
 					as.data = obj_put({}, tmp, as.data);
 					return as.ref = back;
 				});
-				console.debug(3, 'put...', as.soul, as.data, as.ref._.get);
-				console.debug(2, 'put...', as.soul, as.data, as.ref._.get);
-				console.debug(1, 'put...', as.soul, as.data, as.ref._.get);
-				as.ref.get.any(node, {as: as, gun: as.ref});
-				if(!as.ran){ as.next = as.next || Gun.on.next(as.ref) }
+				as.ref.any(any, {as: as});
+				if(!as.ran){
+					as.next = as.next || Gun.on.next(as.ref);
+				}
 				return gun;
 			};
 
@@ -1183,6 +1199,7 @@
 					});
 					as.next();
 				}
+				console.debug(2, "putting", as);
 				as.next(function(){
 					Gun.graph.ify(as.data, env, as);
 				});
@@ -1212,22 +1229,23 @@
 				as.next();
 			}
 
-			function node(at, ev){ var as = this;
-				console.log("put?put?put?", at, as);
+			function any(at, ev){ var as = this;
+				console.log("put?put?put?", at, ev);
 				as.ran = true;
-				ev.off(ev.stun());
 				if(at.err){ return }
 				var cat = as.ref._, data = at.put, opt = as.opt, root;
 				if(u === data){
 					if(opt.init || as.gun.Back('opt.init')){
 						return;
 					}
+					console.debug(1, "init");
 					(as.next || as.ref).on('in', {
 						put: (as.not || as.gun.Back(-1) === cat.back)? Gun.node.ify({}, as.soul = as.soul || cat.get || (opt.uuid || as.gun.Back('opt.uuid') || Gun.text.random)()) : u,
 						get: as.not = cat.get 
 					});
 					return;
 				}
+				ev.off(ev.stun()); // TODO: BUG? Right place?
 				if(!(as.soul = Gun.node.soul(data))){
 					if(as.path && obj_is(as.data)){
 						as.soul = (opt.uuid || as.gun.Back('opt.uuid') || Gun.text.random)();
@@ -1253,7 +1271,6 @@
 						return;
 					}
 				}
-				console.debug(5, 'put?', as.soul, as.data)
 				as.ref.put(as.data, opt.any, opt, as);
 			}
 			// -------------------------------------------------------------
@@ -1415,7 +1432,7 @@
 					}
 				}
 				if(cb && cb instanceof Function){
-					((opt = opt || {}).gun = opt.gun || gun).get.any(cb, opt);
+					((opt = opt || {}).gun = opt.gun || gun).any(cb, opt);
 				}
 				return gun;
 			}
@@ -1423,45 +1440,84 @@
 				var cat = back._, path = cat.path, gun = back.chain(), at = gun._;
 				if(!path){ path = cat.path = {} }
 				path[at.get = key] = gun;
+				/*
+				*/
 				Gun.on('path', at);
-				gun.on('in', input, at); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
+				//gun.on('in', input, at); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 				gun.on('out', output, at); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
-				gun.on('ack', ack, at);
 				return gun;
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, root = gun.Back(-1), put, get, tmp;
-				console.debug(7, 'out', at, cat);
-				if((get = at.get)){
-					at = Gun.obj.to(at, {});
-					if(typeof get === 'string'){
-						get = at.get = Gun.obj.put({}, (root === cat.back? _soul : _field), get);
-					}
-					/*
-					if(!cat.ask){
-						cat.ask = obj_put({}, _sid, Gun.on.ask(ask, cat));
-					}
-					if(at[_sid]){
-						console.debug(8, 'out', at.get, cat);
-						console.debug(5, 'out', at.get, cat);
-						cat.ask[at[_sid]] = 0;
-					}
-					at[_sid] = cat.ask[_sid];
-					//if(cat.ask.ing){ return }
-					//cat.ask.ing = true;
-					*/
-					if(root === cat.back){
-						if(!get[_soul]){
-							get[_soul] = cat.get; 
-						}
+				if(at.get && !at.get[_soul]){
+					if(cat.ask){
+						return;
 					} else {
-						get[_field] = cat.get;
+						cat.back.on('in', cat.ask = from, cat);
+					}
+					if(typeof at.get === 'string'){
+				 		at.get = obj_put({}, (root === cat.back? _soul : _field), at.get);
+					}
+					at = obj_to(at, {get: obj_to(at.get)});
+					if(root === cat.back){
+						if(!at.get[_soul]){
+							at.get[_soul] = cat.get; 
+						}
+						at[_sid] = at[_sid] || Gun.on.ask(ask, cat);
+					} else {
+						at.get[_field] = cat.get;
 					}
 				}
-				console.debug(9, 'out', at, cat);
-				console.debug(6, 'out?', at.get);
 				cat.back.on('out', at);
 			}
+			function from(at, ev){ var cat = this;
+				if(at.err){
+					console.log("from ERROR");
+					return;
+					cat.on('in', at);
+					return;
+				}
+				var put = at.put, get = cat.get;
+				if(u === put){
+					console.log("from NOT");
+					cat.on('in', {
+						get: get,
+						via: at
+					});
+					return;
+				}
+				if(obj_has(put, get)){
+					ev.off();
+					// TODO: Currently we do not have to emit the data ourselves, as teh parent winds up doing it anyways. Will this stay true?
+					cat.on('in', input, cat);
+					return;
+				}
+				var soul = Gun.node.soul(put);
+				if(!soul){
+					console.log("from NO SOUL");
+					return;
+					cat.on('in', {
+						get: get,
+						via: at
+					});
+					return;
+				}
+				if(at.via && at.via['@'] === cat.ask){
+					console.log("from NOT FIELD");
+					ev.off();
+					cat.on('in', {
+						get: get,
+						via: at
+					});
+					return;
+				}
+				if(!(cat.ask instanceof Function)){ return }
+				var get = obj_put({}, _field, get);
+				get[_soul] = soul;
+				cat.ask = Gun.on.ask();
+				cat.on('out', {'#': cat.ask, get: get});
+			}
+			/*
 			function ask(at){ var cat = this;
 				if(at.err){
 					return; // TODO: BUG!!! Log it.
@@ -1473,6 +1529,19 @@
 					return;
 				}
 				cat.gun.Back(-1).on('in', at);
+			}
+			*/
+			function ask(cat, ev){ var at = this;
+				//at.ask = false;
+				ev.off();
+				if(cat.err){
+					return;
+				}
+				if(u === cat.put){
+					at.on('in', cat);
+					return;
+				}
+				at.gun.Back(-1).on('in', cat);
 			}
 			function all(v,f){
 				if(0 !== v){ return }
@@ -1495,7 +1564,8 @@
 				if(!(gun = path[key])){ return }
 				if(cat.put && obj_has(cat.put, key)){ data = cat.put[key] } // But use the actual data.
 				gun._.change = cat.change[key];
-				gun.on('in',{
+				console.log("map input", key, data);
+				gun.on('in', {
 					put: data,
 					get: key,
 					gun: gun,
@@ -1503,6 +1573,9 @@
 				});
 			}
 			function value(at, ev){
+				/*
+					TODO: BUG!!!! Need to make requests for every sub-path so things are lazily evaluated.
+				*/
 				var cat = this, rel = Gun.val.rel.is(cat.change), tmp, u;
 				if(!rel){ return }
 				//if(!rel || rel === cat.rel){ return }
@@ -1518,34 +1591,29 @@
 				//cat.link.gun = cat.gun.Back(-1).get(rel).on(input, cat.link.opt); // TODO: BUG!? Don't use `gun.on` so that way get/put don't depend upon `.chain.on`?
 				cat.link.gun = cat.gun.Back(-1).get(rel).on(input, cat.link.opt); // TODO: BUG!? Don't use `gun.on` so that way get/put don't depend upon `.chain.on`?
 			}
-			Gun.chain.get.any = function(cb, opt){
-				if(!cb || !opt.gun){ return }
-				opt.any = opt.any || cb;
-				opt.gun.on('in', any, opt);
-				if(opt.ran){ return } // Useless if data is already known to be successful. We don't need to ask for anything.
-				console.debug(4, 'put... out');
-				opt.gun.on('ack', ack);
-				opt.gun.on('out', {
-					gun: opt.gun, get: opt.gun._.get
-					//,'#': Gun.on.ask(ack, opt) 
-				});
+			Gun.chain.any = function(cb, opt){
+				if(!cb){ return this }
+				var gun = this, at = gun._, as = {gun: gun, any: cb, opt: opt || {}};
+				
+				gun.on('in', any, as);
+				if(!as.run){
+					gun.on('out', {get: at.get});
+				}
+				return gun;
 			}
-			function any(at, ev){ var opt = this;
-				opt.ran = true;
+			function any(at, ev){ var as = this;
+				as.run = true;
+				var opt = as.opt;
+				console.log("ANY!", opt);
 				if(opt.as){
-					opt.any.call(opt.as, at, ev);
+					as.any.call(opt.as, at, ev);
 					return;
 				}
 				var value = at.put;
 				if(value && value[Gun._.soul] && Gun.val.rel.is(value)){ return } // TODO: Meh?
-				opt.any.call(at.gun || opt.gun, at.err, at.put, at.get, at, ev);
+				as.any.call(at.gun || as.gun, at.err, at.put, at.get, at, ev);
 			}
-			function ack(ack, ev){ var at = this;
-				console.log("Ack :(", ack, at);
-				any.call(at, {err: ack.err}, ev);
-				at.gun.on('ack', ack);
-			}
-			var obj = Gun.obj, obj_has = obj.has;
+			var obj = Gun.obj, obj_has = obj.has, obj_to = obj.to;
 			var empty = {}, u;
 			var _soul = Gun._.soul, _field = Gun._.field, _sid = Gun.on.ask._, _rid = Gun.on.ack._;
 		}());
@@ -1587,12 +1655,14 @@
 				return s;
 			}
 			keyed._ = '##';
+			/*
 			Gun.on('path', function(at){
 				var gun = at.gun;
 				if(gun.Back(-1) !== at.back){ return }
 				gun.on('in', pseudo, gun._);
 				gun.on('out', normalize, gun._);
 			});
+			*/
 			function normalize(at){ var cat = this;
 				if(!at.put){
 					if(at.get){
@@ -1702,18 +1772,26 @@
 		}
 
 		;(function(){
-			Gun.chain.chain.opt.on = function(cb, opt){
-				if(!cb){ return this }
+			Gun.chain.on = function(tag, arg, eas, as){
+			//Gun.chain.chain.opt.on = function(cb, opt){
+				var gun = this, at = gun._, tmp;
+				if(!at.on){ at.on = Gun.on }
+				if(typeof tag === 'string'){
+					at.on(tag, arg, eas, as);
+					return gun;
+				}
+				var opt = arg;
 				opt = (true === opt)? {change: 1} : opt || {};
-				opt.gun = opt.gun || this;
-				opt.ok = cb;
-				var tmp, at = opt.gun._;
+				opt.gun = opt.gun || gun;
+				opt.ok = tag;
 				opt.event = at.on('in', ok, opt);
 				if(opt.as && (tmp = opt.as.ons)){
 					(tmp['@$'] || (tmp['@$'] = {s: []})).s.push(opt.event);
 				}
-				if(!opt.ran){
-					at.on('out', {gun: opt.gun, get: at.get});
+				if(u !== at.put){
+					opt.event.emit(at);
+				} else {
+					at.on('out', Gun.obj.to(at));
 				}
 				return this;
 			}
@@ -1739,7 +1817,7 @@
 
 			Gun.chain.val = function(cb, opt){
 				var gun = this, at = gun._, value = at.put;
-				if(value || u !== value){
+				if(u !== value){
 					if(obj_empty(value, Gun._.meta) && !(opt && opt.empty)){ // TODO: PERF! Deprecate!???
 						
 					} else {
@@ -1850,9 +1928,9 @@
 				if(!lex || !(soul = lex[Gun._.soul])){ return }
 				data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
 				if(!data){ return } // localStorage isn't trustworthy to say "not found".
-				//gun.Back(-1).on('in', {put: Gun.graph.node(data)});
-				Gun.on.ack(at, {put: Gun.graph.node(data)});
-				// TODO: BUG? What about acking straight back?
+				if(lex['.']){var tmp = data[lex['.']];data = {_: data._};if(tmp){data[lex['.']] = tmp}}
+				console.log("local get", data);
+				gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
 				},100);
 			}
 			Gun.on('put', put);
@@ -1865,7 +1943,7 @@
 				if(!peers || Gun.obj.empty(peers)){
 					setTimeout(function(){
 					Gun.log.once('peers', "Warning! You have no peers to connect to!");
-					Gun.on.ack(at, {});
+					at.gun.Back(-1).on('in', {'@': at['#']});
 					},100);
 					return;
 				}
