@@ -1924,18 +1924,69 @@ describe('Gun', function(){
 			},100);
 		});
 
+		it('any any not', function(done){
+			var s = Gun.state.map();
+			s.soul = 'a';
+			Gun.on('put', {put: Gun.graph.ify({b: 1, c: 2}, s)});
+			function cb(e,d,f,a){
+				console.log('cb', e,d,f,a);
+				if('b' === f && 1 === d){
+					done.b = true;
+				}
+				if('c' === f && 2 === d){
+					done.c = true;
+				}
+				if('d' === f && !d){
+					done.d = true;
+				}
+				if(done.done){ return }
+				if(done.b && done.c && done.d){
+					done.done = true;
+					done();
+				}
+			}
+			gun.get('a').path('b').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('a').path('c').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('a').path('d').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+		});
+
+		it('any not any not any not', function(done){
+			function cb(e,d,f,a){
+				console.log('cb', e,d,f,a);
+				if('b' === f && !d){
+					done.b = true;
+				}
+				if('c' === f && !d){
+					done.c = true;
+				}
+				if('d' === f && !d){
+					done.d = true;
+				}
+				if(done.b && done.c && done.d){
+					done();
+				}
+			}
+			gun.get('x').path('b').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('x').path('c').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('x').path('d').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+		});
+
 		it.only('get put, put deep', function(done){
 		//it('get put, put deep', function(done){
 			var gun = window.gun = Gun();
 			var get = gun.get('put/deep/ish');
 			console.debug.i=1;console.log('---------------------------');
 			get.put({});
+			console.log("after put");
+			return;
 			get.val(function(data){ // TODO: API CHANGE! Empty objects should react.
 				console.log("first", data);
 				expect(Gun.val.rel.is(data.very)).to.be.ok();
 			}, {wait: 10000});
+			console.log("after val");
 			console.log("@@@@@", get._.on.toString().slice(0,20));
 			setTimeout(function(){
+				return;
 				console.log("@@@@@", get._.on.toString().slice(0,20));
 				var put = get.put({
 					very: {
@@ -1946,6 +1997,7 @@ describe('Gun', function(){
 						}
 					}
 				});
+				console.log("after put");
 				console.log("vvvvvvvvvvvvvvvvvv");
 				return;
 				setTimeout(function(){
