@@ -33,7 +33,7 @@
 			var f4 = function(a,b){ return b + a };
 			var f5 = function(a,b,c){ return a + b + c };
 			//window.localStorage.clear();
-			var gun = window.gun = window.gun || Gun();
+			var g = window.g = window.g || Gun();
 			//gun.get('users').path(1).path('where').put(pos);
 			//var got = gun.get('hewo');
 			//got.put({hello: 'world'});
@@ -1979,7 +1979,7 @@
 			window.puti = window.puti || 0;
 			window.geti = window.geti || 0;
 			localStorage.clear();
-			var hey = gun.get('heylo');
+			var gun = g.get('heylo');
 			//var ok = function(a,b){ console.log('wat', a,b) }
 			/*
 			gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
@@ -1988,11 +1988,21 @@
 			*/
 	});
 	//localStorage.clear();
-	stool.add('put', function(){
-		hey.put({hello: "world"});
+	stool.add('nothing', function(){
+		// do nothing
 	});
-	stool.add('put', function(){
-		hey.val(ok);
+	stool.add('write', function(){
+		gun.put({hello: "world"});
+	});
+	stool.add('read', function(){
+		gun.val(ok);
+	});return;
+	// without variable caching:
+	stool.add('write', function(){
+		gun.get('hi').put({hello: "world"});
+	});
+	stool.add('read', function(){
+		gun.get('hi').val(ok);
 	});return;
 	/*
 	stool.add('put', function(){
