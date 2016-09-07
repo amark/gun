@@ -64,7 +64,6 @@ import Console from './console';
 Gun.log = Console;
 
 import {opt as Bind} from './bindings';
-Bind(Gun);
 
 import Request from './request';
 Gun.request = Request;
