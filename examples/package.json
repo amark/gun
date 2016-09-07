@@ -7,8 +7,7 @@
 		"node": "~>0.10.x"
 	}
 ,	"dependencies": {
-		"express": "~>4.13.4",
-		"gun": "~>0.3.0"
+		"express": "~>4.13.4"
 	}
 ,	"scripts": {
         "start": "node http.js",

@@ -4,7 +4,7 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || pro
 var express = require('express');
 var app = express();
 
-var Gun = require('gun');
+var Gun = require('../');
 var gun = Gun({
 	file: 'data.json',
 	s3: {
