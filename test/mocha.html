@@ -1,19 +1,27 @@
+<!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>GUN Tests</title>
-		<link rel="stylesheet" href="./mocha.css"/>
+		<link rel="stylesheet" href="../node_modules/mocha/mocha.css"/>
 		<script src="./json2.js"></script>
-		<script src="./mocha.js"></script>
+		<script src="../node_modules/mocha/mocha.js"></script>
 		<script>mocha.setup({ui:'bdd',globals:[]});</script>
 		<script src="./expect.js"></script>
-		<script></script>
-		<script src="../gun.js"></script>
+		<script>
+			var onLoad = function () {
+				var runner = mocha.run();
+				runner.allowUncaught = true;
+			}
+			
+		</script>
+		<script src="../dist/gun.js"></script>
 		<script src="./common.js"></script>
 		<style>
 		</style>
 	  </head>
 	</head>
-	<body onload="mocha.run()">
+	<body onload="onLoad()">
 		<h1>GUN Tests</h1>
 		Warning! You cannot run these tests in the background, this tab must be in active focus.
 		<div id="debug"></div>

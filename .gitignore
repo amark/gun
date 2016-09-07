@@ -7,3 +7,4 @@ npm-debug.log
 *.new
 src/webpacked.js
 
+/.tmp

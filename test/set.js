@@ -1,5 +1,5 @@
 (function(){ return;
-	var Gun = require('../gun');
+	var Gun = require('../dist/gun');
 	var done = function(){};
 	
 	var gun = Gun().get('set').set(), i = 0;

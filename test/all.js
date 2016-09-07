@@ -2,7 +2,7 @@ describe('All', function(){
 	return;
 	var expect = global.expect = require("./expect");
 
-	var Gun = Gun || require('../gun');
+	var Gun = Gun || require('../dist/gun');
 	(typeof window === 'undefined') && require('../lib/file');
 	
 	var gun = Gun({file: 'data.json'});

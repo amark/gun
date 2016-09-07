@@ -5,15 +5,18 @@
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "test": "mocha"
+    "test": "mocha",
+    "build": "webpack",
+    "w": "webpack 'mocha!test/abc.js' --options webpack.config.js --watch",
+    "watch": "mocha-webpack --webpack-config webpack.config.js  \"test/abc.js\" --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amark/gun.git"
   },
   "keywords": [
-	"gun",
-	"gunDB",
+    "gun",
+    "gunDB",
     "graph",
     "document",
     "key",
@@ -48,6 +51,16 @@
     "ws": "~>1.0.1"
   },
   "devDependencies": {
-    "mocha": "~>1.9.0"
+    "babel-core": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-es2015-modules-simple-amd": "^0.3.0",
+    "babel-preset-es2015": "^6.14.0",
+    "eslint": "^3.4.0",
+    "eslint-loader": "^1.5.0",
+    "mocha": "~>3.0.0",
+    "mocha-loader": "^0.7.1",
+    "mocha-webpack": "^0.6.0",
+    "webpack": "^1.13.2"
   }
 }

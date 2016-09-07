@@ -1,6 +1,6 @@
 (function(){
 	return; // this file is for temporary testings and shouldn't get run.
-	var Gun = require('../gun');
+	var Gun = require('../dist/gun');
 	var gun = Gun();
 	Gun.log.verbose = true;
 

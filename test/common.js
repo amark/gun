@@ -1,7 +1,7 @@
 (function(env){
-	root = env.window? env.window : root;
+	var root = env.window? env.window : global;
 	env.window && root.localStorage && root.localStorage.clear();
-	root.Gun = root.Gun || require('../gun');
+	root.Gun = root.Gun || require('../dist/gun');
 	//root.Gun = root.Gun || require('../src/index');
 }(this));
 
@@ -14,6 +14,7 @@ var gleak = {globals: {}, check: function(){ // via tobyho
 (function(env){
 	for (var key in (gleak.globe = env)){ gleak.globals[key] = true }
 }(this));
+
 
 describe('Performance', function(){ return; // performance tests
 	var console = root.console || {log: function(){}};
