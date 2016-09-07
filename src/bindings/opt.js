@@ -1,10 +1,13 @@
 /**
  * Created by Paul on 9/7/2016.
  */
-import Tab from './communication';
 
+import Tab from './communication';
+import Events from '../events';
+// import Obj from '../utilities/obj';
+// import IsNode from '../is/node';
 let Bindings = function (Gun) {
-  Gun.on('opt').event(function (gun, opt) {
+  Events('opt').event(function (gun, opt) {
     opt = opt || {};
     var tab = gun.tab = gun.tab || {};
     tab.store = tab.store || Tab.store;

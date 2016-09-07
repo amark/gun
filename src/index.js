@@ -54,7 +54,8 @@ Gun.HAM = HAM;
 Gun.union = Union;
 
 import Chaining from './chaining';
-Chaining(Gun);
+Object.assign(Gun.prototype, Chaining);
+Gun.chain = Gun.prototype;
 
 import Serializer from './serializer';
 Gun.ify = Serializer;
@@ -62,7 +63,7 @@ Gun.ify = Serializer;
 import Console from './console';
 Gun.log = Console;
 
-import Bind from './bindings';
+import {opt as Bind} from './bindings';
 Bind(Gun);
 
 import Request from './request';

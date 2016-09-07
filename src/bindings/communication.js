@@ -2,8 +2,8 @@
  * Created by Paul on 9/7/2016.
  */
 
-import Text from './utilities/text';
-import Obj from './utilities/obj';
+import Text from '../utilities/text';
+import Obj from '../utilities/obj';
 
 // let Communication = function (Gun) {
   let Tab = {};

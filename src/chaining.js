@@ -2,10 +2,11 @@
  * Created by Paul on 9/7/2016.
  */
 
-let Chaining = (Gun) => {
-  Gun.chain = Gun.prototype;
+import {get, key, path, val} from './bindings';
 
-  Gun.chain.opt = function (opt, stun) {
+let Chaining = {};
+
+  Chaining.opt = function (opt, stun) {
     opt = opt || {};
     var gun = this, root = (gun.__ && gun.__.gun) ? gun.__.gun : (gun._ = gun.__ = {gun: gun}).gun.chain(); // if root does not exist, then create a root chain.
     root.__.by = root.__.by || function (f) {
@@ -47,9 +48,9 @@ let Chaining = (Gun) => {
       Gun.on('opt').emit(root, opt)
     }
     return gun;
-  }
+  };
 
-  Gun.chain.chain = function (s) {
+  Chaining.chain = function (s) {
     var from = this, gun = !from.back ? from : new this.constructor(from);//Gun(from);
     gun._ = gun._ || {};
     gun._.back = gun.back || from;
@@ -58,9 +59,9 @@ let Chaining = (Gun) => {
     gun._.on = gun._.on || Gun.on.create();
     gun._.at = gun._.at || Gun.on.at(gun._.on);
     return gun;
-  }
+  };
 
-  Gun.chain.put = function (val, cb, opt) {
+  Chaining.put = function (val, cb, opt) {
     opt = opt || {};
     cb = cb || function () {
       };
@@ -209,37 +210,10 @@ let Chaining = (Gun) => {
     }
     chain.back = gun.back;
     return chain;
-  }
+  };
 
-  Gun.chain.get = (function () {
-    Gun.on('operating').event(function (gun, at) {
-      if (!gun.__.by(at.soul).node) {
-        gun.__.by(at.soul).node = gun.__.graph[at.soul]
-      }
-      if (at.field) {
-        return
-      } // TODO: It would be ideal to reuse HAM's field emit.
-      gun.__.on(at.soul).emit(at);
-    });
-    Gun.on('get').event(function (gun, at, ctx, opt, cb) {
-      if (ctx.halt) {
-        return
-      } // TODO: CLEAN UP with event emitter option?
-      at.change = at.change || gun.__.by(at.soul).node;
-      if (opt.raw) {
-        return cb.call(opt.on, at)
-      }
-      if (!ctx.cb.no) {
-        cb.call(ctx.by.chain, null, Gun.obj.copy(ctx.node || gun.__.by(at.soul).node))
-      }
-      gun._.at('soul').emit(at).chain(opt.chain);
-    }, 0);
-    Gun.on('get').event(function (gun, at, ctx) {
-      if (ctx.halt) {
-        ctx.halt = false;
-        return
-      } // TODO: CLEAN UP with event emitter option?
-    }, Infinity);
+  Chaining.get = (function () {
+    get();
     return function (lex, cb, opt) { // get opens up a reference to a node and loads it.
       var gun = this, ctx = {
         opt: opt || {},
@@ -326,56 +300,8 @@ let Chaining = (Gun) => {
     }
   }());
 
-  Gun.chain.key = (function () {
-    Gun.on('put').event(function (gun, at, ctx, opt, cb) {
-      if (opt.key) {
-        return
-      }
-      Gun.is.graph(ctx.ify.graph, function (node, soul) {
-        var key = {node: gun.__.graph[soul]};
-        if (!Gun.is.node.soul(key.node, 'key')) {
-          return
-        }
-        if (!gun.__.by(soul).end) {
-          gun.__.by(soul).end = 1
-        }
-        Gun.is.node(key.node, function each(rel, s) {
-          var n = gun.__.graph[s];
-          if (n && Gun.is.node.soul(n, 'key')) {
-            Gun.is.node(n, each);
-            return;
-          }
-          rel = ctx.ify.graph[s] = ctx.ify.graph[s] || Gun.is.node.soul.ify({}, s);
-          Gun.is.node(node, function (v, f) {
-            Gun.is.node.state.ify([rel, node], f, v)
-          });
-          Gun.obj.del(ctx.ify.graph, soul);
-        })
-      });
-    });
-    Gun.on('get').event(function (gun, at, ctx, opt, cb) {
-      if (ctx.halt) {
-        return
-      } // TODO: CLEAN UP with event emitter option?
-      if (opt.key && opt.key.soul) {
-        at.soul = opt.key.soul;
-        gun.__.by(opt.key.soul).node = Gun.union.ify(gun, opt.key.soul); // TODO: Check performance?
-        gun.__.by(opt.key.soul).node._['key'] = 'pseudo';
-        at.change = Gun.is.node.soul.ify(Gun.obj.copy(at.change || gun.__.by(at.soul).node), at.soul, true); // TODO: Check performance?
-        return;
-      }
-      if (!(Gun.is.node.soul(gun.__.graph[at.soul], 'key') === 1)) {
-        return
-      }
-      var node = at.change || gun.__.graph[at.soul];
-
-      function map(rel, soul) {
-        gun.__.gun.get(rel, cb, {key: ctx, chain: opt.chain || gun, force: opt.force})
-      }
-
-      ctx.halt = true;
-      Gun.is.node(node, map);
-    }, -999);
+  Chaining.key = (function () {
+    key();
     return function (key, cb, opt) {
       var gun = this;
       opt = Gun.text.is(opt) ? {soul: opt} : opt || {};
@@ -414,7 +340,7 @@ let Chaining = (Gun) => {
     }
   }());
 
-  Gun.chain.on = function (cb, opt) { // on subscribes to any changes on the souls.
+  Chaining.on = function (cb, opt) { // on subscribes to any changes on the souls.
     var gun = this, u;
     opt = Gun.obj.is(opt) ? opt : {change: opt};
     cb = cb || function () {
@@ -444,51 +370,10 @@ let Chaining = (Gun) => {
       Gun.log('You have no context to `.on`!')
     }
     return gun;
-  }
+  };
 
-  Gun.chain.path = (function () {
-    Gun.on('get').event(function (gun, at, ctx, opt, cb, lex) {
-      if (ctx.halt) {
-        return
-      } // TODO: CLEAN UP with event emitter option?
-      if (opt.path) {
-        at.at = opt.path
-      }
-      var xtc = {soul: lex[Gun._.soul], field: lex[Gun._.field]};
-      xtc.change = at.change || gun.__.by(at.soul).node;
-      if (xtc.field) { // TODO: future feature!
-        if (!Gun.obj.has(xtc.change, xtc.field)) {
-          return
-        }
-        ctx.node = Gun.is.node.soul.ify({}, at.soul); // TODO: CLEAN UP! ctx.node usage.
-        Gun.is.node.state.ify([ctx.node, xtc.change], xtc.field, xtc.change[xtc.field]);
-        at.change = ctx.node;
-        at.field = xtc.field;
-      }
-    }, -99);
-    Gun.on('get').event(function (gun, at, ctx, opt, cb, lex) {
-      if (ctx.halt) {
-        return
-      } // TODO: CLEAN UP with event emitter option?
-      var xtc = {};
-      xtc.change = at.change || gun.__.by(at.soul).node;
-      if (!opt.put) { // TODO: CLEAN UP be nice if path didn't have to worry about this.
-        Gun.is.node(xtc.change, function (v, f) {
-          var fat = Gun.on.at.copy(at);
-          fat.field = f;
-          fat.value = v;
-          Gun.obj.del(fat, 'at'); // TODO: CLEAN THIS UP! It would be nice in every other function every where else it didn't matter whether there was a cascading at.at.at.at or not, just and only whether the current context as a field or should rely on a previous field. But maybe that is the gotcha right there?
-          fat.change = fat.change || xtc.change;
-          if (v = Gun.is.rel(fat.value)) {
-            fat = {soul: v, at: fat}
-          }
-          gun._.at('path:' + f).emit(fat).chain(opt.chain);
-        });
-      }
-      if (!ctx.end) {
-        ctx.end = gun._.at('end').emit(at).chain(opt.chain);
-      }
-    }, 99);
+  Chaining.path = (function () {
+    path();
     return function (path, cb, opt) {
       opt = opt || {};
       cb = cb || (function () {
@@ -589,7 +474,7 @@ let Chaining = (Gun) => {
     }
   }());
 
-  Gun.chain.map = function (cb, opt) {
+  Chaining.map = function (cb, opt) {
     var u, gun = this, chain = gun.chain();
     cb = cb || function () {
       };
@@ -628,26 +513,10 @@ let Chaining = (Gun) => {
       Gun.log('You have no context to `.map`!')
     }
     return chain;
-  }
+  };
 
-  Gun.chain.val = (function () {
-    Gun.on('get.wire').event(function (gun, ctx) {
-      if (!ctx.soul) {
-        return
-      }
-      var end;
-      (end = gun.__.by(ctx.soul)).end = (end.end || -1); // TODO: CLEAN UP! This should be per peer!
-    }, -999);
-    Gun.on('wire.get').event(function (gun, ctx, err, data) {
-      if (err || !ctx.soul) {
-        return
-      }
-      if (data && !Gun.obj.empty(data, Gun._.meta)) {
-        return
-      }
-      var end = gun.__.by(ctx.soul);
-      end.end = (!end.end || end.end < 0) ? 1 : end.end + 1;
-    }, -999);
+  Chaining.val = (function () {
+    val();
     return function (cb, opt) {
       var gun = this, args = Gun.list.slit.call(arguments);
       cb = Gun.fns.is(cb) ? cb : function (val, field) {
@@ -686,7 +555,7 @@ let Chaining = (Gun) => {
     }
   }());
 
-  Gun.chain.not = function (cb, opt) {
+  Chaining.not = function (cb, opt) {
     var gun = this, chain = gun.chain();
     cb = cb || function () {
       };
@@ -726,9 +595,9 @@ let Chaining = (Gun) => {
     }
     chain._.not = true; // TODO: CLEAN UP! Would be ideal if we could accomplish this in a more elegant way.
     return chain;
-  }
+  };
 
-  Gun.chain.set = function (item, cb, opt) {
+  Chaining.set = function (item, cb, opt) {
     var gun = this, ctx = {}, chain;
     cb = cb || function () {
       };
@@ -749,9 +618,9 @@ let Chaining = (Gun) => {
       gun.put(Gun.obj.put(put, soul, Gun.is.rel.ify(soul)), cb, opt);
     });
     return ctx.chain;
-  }
+  };
 
-  Gun.chain.init = function (cb, opt) {
+  Chaining.init = function (cb, opt) {
     var gun = this;
     gun._.at('null').event(function (at) {
       if (!at.not) {
@@ -776,7 +645,6 @@ let Chaining = (Gun) => {
       }
     }, {raw: true});
     return gun;
-  }
-};
+  };
 
 export default Chaining;
