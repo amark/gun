@@ -7,6 +7,7 @@
     "start": "node examples/http.js 8080",
     "test": "mocha",
     "build": "webpack",
+    "check": "webpack && mocha --reporter dot",
     "w": "webpack 'mocha!test/abc.js' --options webpack.config.js --watch",
     "watch": "mocha-webpack --webpack-config webpack.config.js  \"test/abc.js\" --watch"
   },

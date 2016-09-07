@@ -1,53 +1,112 @@
 /**
  * Created by Paul on 9/7/2016.
  */
+import List from './utilities/list';
 
-let Events = (Type) => {
-
-  function On() {
-  }
-  On.create = function () {
-    var on = function (e) {
-      on.event.e = e;
-      on.event.s[e] = on.event.s[e] || [];
-      return on;
-    };
-    on.emit = function (a) {
-      var e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
-      Type.list.map(s, function (hear, i) {
-        if (!hear.fn) {
-          s.splice(i - 1, 0);
-          return;
-        }
-        if (1 === l) {
-          hear.fn(a);
-          return;
-        }
-        hear.fn.apply(hear, args);
-      });
-      if (!s.length) {
-        delete on.event.s[e]
-      }
-    };
-    on.event = function (fn, i) {
-      var s = on.event.s[on.event.e];
-      if (!s) {
-        return
-      }
-      var e = {
-        fn: fn, i: i || 0, off: function () {
-          return !(e.fn = false)
-        }
-      };
-      return s.push(e), i ? s.sort(sort) : i, e;
-    }
-    on.event.s = {};
+function On() { }
+On.create = function () {
+  var on = function (e) {
+    on.event.e = e;
+    on.event.s[e] = on.event.s[e] || [];
     return on;
   };
-  var sort = Type.list.sort('i');
-  Type.on = On.create();
-  Type.on.create = On.create;
-
+  on.emit = function (a) {
+    var e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
+    List.map(s, function (hear, i) {
+      if (!hear.fn) {
+        s.splice(i - 1, 0);
+        return;
+      }
+      if (1 === l) {
+        hear.fn(a);
+        return;
+      }
+      hear.fn.apply(hear, args);
+    });
+    if (!s.length) {
+      delete on.event.s[e]
+    }
+  };
+  on.event = function (fn, i) {
+    var s = on.event.s[on.event.e];
+    if (!s) {
+      return
+    }
+    var e = {
+      fn: fn, i: i || 0, off: function () {
+        return !(e.fn = false)
+      }
+    };
+    return s.push(e), i ? s.sort(sort) : i, e;
+  }
+  on.event.s = {};
+  return on;
 };
+var sort = List.sort('i');
+
+let Events =  On.create()
+
+Events.create = On.create;
+
+Events.at = function (on) { // On event emitter customized for gun.
+    var proxy = function (e) {
+      return proxy.e = e, proxy
+    }
+    proxy.emit = function (at) {
+      if (at.soul) {
+        at.hash = Events.at.hash(at);
+        //Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at;
+        Gun.obj.as(proxy.mem, proxy.e)[at.hash] = at;
+      }
+      if (proxy.all.cb) {
+        proxy.all.cb(at, proxy.e)
+      }
+      on(proxy.e).emit(at);
+      return {
+        chain: function (c) {
+          if (!c || !c._ || !c._.at) {
+            return
+          }
+          return c._.at(proxy.e).emit(at)
+        }
+      };
+    }
+    proxy.only = function (cb) {
+      if (proxy.only.cb) {
+        return
+      }
+      return proxy.event(proxy.only.cb = cb);
+    }
+    proxy.all = function (cb) {
+      proxy.all.cb = cb;
+      Gun.obj.map(proxy.mem, function (mem, e) {
+        Gun.obj.map(mem, function (at, i) {
+          cb(at, e);
+        });
+      });
+    }
+    proxy.event = function (cb, i) {
+      i = on(proxy.e).event(cb, i);
+      return Gun.obj.map(proxy.mem[proxy.e], function (at) {
+        i.stat = {first: true};
+        cb.call(i, at);
+      }), i.stat = {}, i;
+    }
+    proxy.map = function (cb, i) {
+      return proxy.event(cb, i);
+    };
+    proxy.mem = {};
+    return proxy;
+  }
+
+Events.at.hash = function (at) {
+    return (at.at && at.at.soul) ? at.at.soul + (at.at.field || '') : at.soul + (at.field || '')
+  };
+
+Events.at.copy = function (at) {
+    return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function (v, f, t) {
+      t(f, v)
+    })
+  }
 
 export default Events;

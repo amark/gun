@@ -16,10 +16,10 @@ function Gun(o) {
 //TODO: Refactor to have a better organization of the things. Sometimes 2 Gun's identical objects must be sent
 
 import Utilities from './utilities';
-Utilities(Gun, Gun);
+Utilities(Gun);
 
 import Events from './events';
-Events(Gun);
+Gun.on = Events;
 
 import Scheduler from './scheduler';
 Scheduler(Gun);
@@ -31,7 +31,7 @@ import Chaining from './chaining';
 Chaining(Gun);
 
 import Serializer from './serializer';
-Serializer(Gun);
+Gun.ify = Serializer;
 
 var root = this || {};
 //TODO: Check why is needed to fake console

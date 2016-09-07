@@ -56,7 +56,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(1), __webpack_require__(2), __webpack_require__(3), __webpack_require__(8), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(1), __webpack_require__(6), __webpack_require__(7), __webpack_require__(12), __webpack_require__(8), __webpack_require__(9), __webpack_require__(10), __webpack_require__(11)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined") {
 	    factory(module, exports, require('./utilities'), require('./events'), require('./scheduler'), require('./specific'), require('./chaining'), require('./serializer'), require('./communication'), require('./request'));
 	  } else {
@@ -112,9 +112,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //TODO: Refactor to have a better organization of the things. Sometimes 2 Gun's identical objects must be sent
 
-	  (0, _utilities2.default)(Gun, Gun);
+	  (0, _utilities2.default)(Gun);
 
-	  (0, _events2.default)(Gun);
+	  // Events(Gun);
+	  Gun.on = _events2.default;
 
 	  (0, _scheduler2.default)(Gun);
 
@@ -122,7 +123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  (0, _chaining2.default)(Gun);
 
-	  (0, _serializer2.default)(Gun);
+	  Gun.ify = _serializer2.default;
 
 	  var root = undefined || {};
 	  //TODO: Check why is needed to fake console
@@ -160,303 +161,62 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(2), __webpack_require__(4), __webpack_require__(3), __webpack_require__(5)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined") {
-	    factory(module, exports);
+	    factory(module, exports, require('./text'), require('./list'), require('./obj'), require('./time'));
 	  } else {
 	    var mod = {
 	      exports: {}
 	    };
-	    factory(mod, mod.exports);
-	    global.utilities = mod.exports;
+	    factory(mod, mod.exports, global.text, global.list, global.obj, global.time);
+	    global.index = mod.exports;
 	  }
-	})(this, function (module, exports) {
+	})(this, function (module, exports, _text, _list, _obj, _time) {
 	  'use strict';
 
 	  Object.defineProperty(exports, "__esModule", {
 	    value: true
 	  });
+
+	  var _text2 = _interopRequireDefault(_text);
+
+	  var _list2 = _interopRequireDefault(_list);
+
+	  var _obj2 = _interopRequireDefault(_obj);
+
+	  var _time2 = _interopRequireDefault(_time);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
 	  /**
 	   * Created by Paul on 9/7/2016.
 	   */
 
-	  var Utilities = function Utilities(Gun, Type) {
-	    // ;(function(Type){
-	    Type.fns = {
+	  var Utilities = function Utilities(Gun) {
+	    Gun.fns = {
 	      is: function is(fn) {
-	        return fn instanceof Function ? true : false;
+	        return fn instanceof Function;
 	      }
 	    };
-	    Type.bi = {
+	    Gun.bi = {
 	      is: function is(b) {
-	        return b instanceof Boolean || typeof b == 'boolean' ? true : false;
+	        return b instanceof Boolean || typeof b == 'boolean';
 	      }
 	    };
-	    Type.num = {
+	    Gun.num = {
 	      is: function is(n) {
-	        return !Type.list.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0);
+	        return !_list2.default.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0);
 	      }
 	    };
-	    Type.text = {
-	      is: function is(t) {
-	        return typeof t == 'string' ? true : false;
-	      }
-	    };
-	    Type.text.ify = function (t) {
-	      if (Type.text.is(t)) {
-	        return t;
-	      }
-	      if (typeof JSON !== "undefined") {
-	        return JSON.stringify(t);
-	      }
-	      return t && t.toString ? t.toString() : t;
-	    };
-	    Type.text.random = function (l, c) {
-	      var s = '';
-	      l = l || 24; // you are not going to make a 0 length random number, so no need to check type
-	      c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
-	      while (l > 0) {
-	        s += c.charAt(Math.floor(Math.random() * c.length));
-	        l--;
-	      }
-	      return s;
-	    };
-	    Type.text.match = function (t, o) {
-	      var r = false;
-	      t = t || '';
-	      o = Gun.text.is(o) ? { '=': o } : o || {}; // {'~', '=', '*', '<', '>', '+', '-', '?', '!'} // ignore uppercase, exactly equal, anything after, lexically larger, lexically lesser, added in, subtacted from, questionable fuzzy match, and ends with.
-	      if (Type.obj.has(o, '~')) {
-	        t = t.toLowerCase();
-	      }
-	      if (Type.obj.has(o, '=')) {
-	        return t === o['='];
-	      }
-	      if (Type.obj.has(o, '*')) {
-	        if (t.slice(0, o['*'].length) === o['*']) {
-	          r = true;
-	          t = t.slice(o['*'].length);
-	        } else {
-	          return false;
-	        }
-	      }
-	      if (Type.obj.has(o, '!')) {
-	        if (t.slice(-o['!'].length) === o['!']) {
-	          r = true;
-	        } else {
-	          return false;
-	        }
-	      }
-	      if (Type.obj.has(o, '+')) {
-	        if (Type.list.map(Type.list.is(o['+']) ? o['+'] : [o['+']], function (m) {
-	          if (t.indexOf(m) >= 0) {
-	            r = true;
-	          } else {
-	            return true;
-	          }
-	        })) {
-	          return false;
-	        }
-	      }
-	      if (Type.obj.has(o, '-')) {
-	        if (Type.list.map(Type.list.is(o['-']) ? o['-'] : [o['-']], function (m) {
-	          if (t.indexOf(m) < 0) {
-	            r = true;
-	          } else {
-	            return true;
-	          }
-	        })) {
-	          return false;
-	        }
-	      }
-	      if (Type.obj.has(o, '>')) {
-	        if (t > o['>']) {
-	          r = true;
-	        } else {
-	          return false;
-	        }
-	      }
-	      if (Type.obj.has(o, '<')) {
-	        if (t < o['<']) {
-	          r = true;
-	        } else {
-	          return false;
-	        }
-	      }
-	      function fuzzy(t, f) {
-	        var n = -1,
-	            i = 0,
-	            c;
-	        for (; c = f[i++];) {
-	          if (!~(n = t.indexOf(c, n + 1))) {
-	            return false;
-	          }
-	        }
-	        return true;
-	      } // via http://stackoverflow.com/questions/9206013/javascript-fuzzy-search
-	      if (Type.obj.has(o, '?')) {
-	        if (fuzzy(t, o['?'])) {
-	          r = true;
-	        } else {
-	          return false;
-	        }
-	      } // change name!
-	      return r;
-	    };
-	    Type.list = {
-	      is: function is(l) {
-	        return l instanceof Array ? true : false;
-	      }
-	    };
-	    Type.list.slit = Array.prototype.slice;
-	    Type.list.sort = function (k) {
-	      // creates a new sort function based off some field
-	      return function (A, B) {
-	        if (!A || !B) {
-	          return 0;
-	        }
-	        A = A[k];
-	        B = B[k];
-	        if (A < B) {
-	          return -1;
-	        } else if (A > B) {
-	          return 1;
-	        } else {
-	          return 0;
-	        }
-	      };
-	    };
-	    Type.list.map = function (l, c, _) {
-	      return Type.obj.map(l, c, _);
-	    };
-	    Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
-	    Type.obj = {
-	      is: function is(o) {
-	        return !o || !o.constructor ? false : o.constructor === Object ? true : !o.constructor.call || o.constructor.toString().match(/\[native\ code\]/) ? false : true;
-	      }
-	    };
-	    Type.obj.put = function (o, f, v) {
-	      return (o || {})[f] = v, o;
-	    };
-	    Type.obj.del = function (o, k) {
-	      if (!o) {
-	        return;
-	      }
-	      o[k] = null;
-	      delete o[k];
-	      return true;
-	    };
-	    Type.obj.ify = function (o) {
-	      if (Type.obj.is(o)) {
-	        return o;
-	      }
-	      try {
-	        o = JSON.parse(o);
-	      } catch (e) {
-	        o = {};
-	      }
-	      ;
-	      return o;
-	    };
-	    Type.obj.copy = function (o) {
-	      // because http://web.archive.org/web/20140328224025/http://jsperf.com/cloning-an-object/2
-	      return !o ? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
-	    };
-	    Type.obj.as = function (b, f, d) {
-	      return b[f] = b[f] || (arguments.length >= 3 ? d : {});
-	    };
-	    Type.obj.has = function (o, t) {
-	      return o && Object.prototype.hasOwnProperty.call(o, t);
-	    };
-	    Type.obj.empty = function (o, n) {
-	      if (!o) {
-	        return true;
-	      }
-	      return Type.obj.map(o, function (v, i) {
-	        if (n && (i === n || Type.obj.is(n) && Type.obj.has(n, i))) {
-	          return;
-	        }
-	        if (i) {
-	          return true;
-	        }
-	      }) ? false : true;
-	    };
-	    Type.obj.map = function (l, c, _) {
-	      var u,
-	          i = 0,
-	          ii = 0,
-	          x,
-	          r,
-	          rr,
-	          ll,
-	          lle,
-	          f = Type.fns.is(c),
-	          t = function t(k, v) {
-	        if (2 === arguments.length) {
-	          rr = rr || {};
-	          rr[k] = v;
-	          return;
-	        }
-	        rr = rr || [];
-	        rr.push(k);
-	      };
-	      if (Object.keys && Type.obj.is(l)) {
-	        ll = Object.keys(l);
-	        lle = true;
-	      }
-	      if (Type.list.is(l) || ll) {
-	        x = (ll || l).length;
-	        for (; i < x; i++) {
-	          ii = i + Type.list.index;
-	          if (f) {
-	            r = lle ? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
-	            if (r !== u) {
-	              return r;
-	            }
-	          } else {
-	            //if(Type.test.is(c,l[i])){ return ii } // should implement deep equality testing!
-	            if (c === l[lle ? ll[i] : i]) {
-	              return ll ? ll[i] : ii;
-	            } // use this for now
-	          }
-	        }
-	      } else {
-	        for (i in l) {
-	          if (f) {
-	            if (Type.obj.has(l, i)) {
-	              r = _ ? c.call(_, l[i], i, t) : c(l[i], i, t);
-	              if (r !== u) {
-	                return r;
-	              }
-	            }
-	          } else {
-	            //if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
-	            if (c === l[i]) {
-	              return i;
-	            } // use this for now
-	          }
-	        }
-	      }
-	      return f ? rr : Type.list.index ? 0 : -1;
-	    };
-	    Type.time = {};
-	    Type.time.is = function (t) {
-	      return t ? t instanceof Date : +new Date().getTime();
-	    };
-	    Type.time.now = function () {
-	      var time = Type.time.is,
-	          last = -Infinity,
-	          n = 0,
-	          d = 1000;
-	      return function () {
-	        var t = time();
-	        if (last < t) {
-	          n = 0;
-	          return last = t;
-	        }
-	        return last = t + (n += 1) / d;
-	      };
-	    }();
-	    // }(Util));
+
+	    Gun.text = _text2.default;
+	    Gun.list = _list2.default; //(Gun)
+	    Gun.obj = _obj2.default; //(Gun)
+	    Gun.time = _time2.default;
 	  };
 
 	  exports.default = Utilities;
@@ -469,6 +229,301 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(3), __webpack_require__(4)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports, require('./obj'), require('./list'));
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports, global.obj, global.list);
+	    global.text = mod.exports;
+	  }
+	})(this, function (module, exports, _obj, _list) {
+	  'use strict';
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+
+	  var _obj2 = _interopRequireDefault(_obj);
+
+	  var _list2 = _interopRequireDefault(_list);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Text = {
+	    is: function is(t) {
+	      return typeof t == 'string';
+	    }
+	  };
+	  Text.ify = function (t) {
+	    if (Text.is(t)) {
+	      return t;
+	    }
+	    if (typeof JSON !== "undefined") {
+	      return JSON.stringify(t);
+	    }
+	    return t && t.toString ? t.toString() : t;
+	  };
+	  Text.random = function (l, c) {
+	    var s = '';
+	    l = l || 24; // you are not going to make a 0 length random number, so no need to check type
+	    c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
+	    while (l > 0) {
+	      s += c.charAt(Math.floor(Math.random() * c.length));
+	      l--;
+	    }
+	    return s;
+	  };
+	  Text.match = function (t, o) {
+	    var r = false;
+	    t = t || '';
+	    o = Text.is(o) ? { '=': o } : o || {}; // {'~', '=', '*', '<', '>', '+', '-', '?', '!'} // ignore uppercase, exactly equal, anything after, lexically larger, lexically lesser, added in, subtacted from, questionable fuzzy match, and ends with.
+	    if (_obj2.default.has(o, '~')) {
+	      t = t.toLowerCase();
+	    }
+	    if (_obj2.default.has(o, '=')) {
+	      return t === o['='];
+	    }
+	    if (_obj2.default.has(o, '*')) {
+	      if (t.slice(0, o['*'].length) === o['*']) {
+	        r = true;
+	        t = t.slice(o['*'].length);
+	      } else {
+	        return false;
+	      }
+	    }
+	    if (_obj2.default.has(o, '!')) {
+	      if (t.slice(-o['!'].length) === o['!']) {
+	        r = true;
+	      } else {
+	        return false;
+	      }
+	    }
+	    if (_obj2.default.has(o, '+')) {
+	      if (_list2.default.map(_list2.default.is(o['+']) ? o['+'] : [o['+']], function (m) {
+	        if (t.indexOf(m) >= 0) {
+	          r = true;
+	        } else {
+	          return true;
+	        }
+	      })) {
+	        return false;
+	      }
+	    }
+	    if (_obj2.default.has(o, '-')) {
+	      if (_list2.default.map(_list2.default.is(o['-']) ? o['-'] : [o['-']], function (m) {
+	        if (t.indexOf(m) < 0) {
+	          r = true;
+	        } else {
+	          return true;
+	        }
+	      })) {
+	        return false;
+	      }
+	    }
+	    if (_obj2.default.has(o, '>')) {
+	      if (t > o['>']) {
+	        r = true;
+	      } else {
+	        return false;
+	      }
+	    }
+	    if (_obj2.default.has(o, '<')) {
+	      if (t < o['<']) {
+	        r = true;
+	      } else {
+	        return false;
+	      }
+	    }
+	    function fuzzy(t, f) {
+	      var n = -1,
+	          i = 0,
+	          c;
+	      for (; c = f[i++];) {
+	        if (!~(n = t.indexOf(c, n + 1))) {
+	          return false;
+	        }
+	      }
+	      return true;
+	    } // via http://stackoverflow.com/questions/9206013/javascript-fuzzy-search
+	    if (_obj2.default.has(o, '?')) {
+	      if (fuzzy(t, o['?'])) {
+	        r = true;
+	      } else {
+	        return false;
+	      }
+	    } // change name!
+	    return r;
+	  };
+
+	  exports.default = Text;
+	  module.exports = exports['default'];
+	});
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(4)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports, require('./list'));
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports, global.list);
+	    global.obj = mod.exports;
+	  }
+	})(this, function (module, exports, _list) {
+	  'use strict';
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+
+	  var _list2 = _interopRequireDefault(_list);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
+	  var Obj = {
+	    is: function is(o) {
+	      return !o || !o.constructor ? false : o.constructor === Object ? true : !o.constructor.call || o.constructor.toString().match(/\[native\ code\]/) ? false : true;
+	    }
+	  }; /**
+	      * Created by Paul on 9/7/2016.
+	      */
+
+	  Obj.put = function (o, f, v) {
+	    return (o || {})[f] = v, o;
+	  };
+	  Obj.del = function (o, k) {
+	    if (!o) {
+	      return;
+	    }
+	    o[k] = null;
+	    delete o[k];
+	    return true;
+	  };
+	  Obj.ify = function (o) {
+	    if (Obj.is(o)) {
+	      return o;
+	    }
+	    try {
+	      o = JSON.parse(o);
+	    } catch (e) {
+	      o = {};
+	    }
+	    ;
+	    return o;
+	  };
+	  Obj.copy = function (o) {
+	    // because http://web.archive.org/web/20140328224025/http://jsperf.com/cloning-an-object/2
+	    return !o ? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
+	  };
+	  Obj.as = function (b, f, d) {
+	    return b[f] = b[f] || (arguments.length >= 3 ? d : {});
+	  };
+	  Obj.has = function (o, t) {
+	    return o && Object.prototype.hasOwnProperty.call(o, t);
+	  };
+	  Obj.empty = function (o, n) {
+	    if (!o) {
+	      return true;
+	    }
+	    return Obj.map(o, function (v, i) {
+	      if (n && (i === n || Obj.is(n) && Obj.has(n, i))) {
+	        return;
+	      }
+	      if (i) {
+	        return true;
+	      }
+	    }) ? false : true;
+	  };
+	  Obj.map = function (l, c, _) {
+	    var u,
+	        i = 0,
+	        ii = 0,
+	        x,
+	        r,
+	        rr,
+	        ll,
+	        lle,
+	        f = Gun.fns.is(c),
+	        t = function t(k, v) {
+	      if (2 === arguments.length) {
+	        rr = rr || {};
+	        rr[k] = v;
+	        return;
+	      }
+	      rr = rr || [];
+	      rr.push(k);
+	    };
+	    if (Object.keys && Obj.is(l)) {
+	      ll = Object.keys(l);
+	      lle = true;
+	    }
+	    if (_list2.default.is(l) || ll) {
+	      x = (ll || l).length;
+	      for (; i < x; i++) {
+	        ii = i + _list2.default.index;
+	        if (f) {
+	          r = lle ? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
+	          if (r !== u) {
+	            return r;
+	          }
+	        } else {
+	          //if(Gun.test.is(c,l[i])){ return ii } // should implement deep equality testing!
+	          if (c === l[lle ? ll[i] : i]) {
+	            return ll ? ll[i] : ii;
+	          } // use this for now
+	        }
+	      }
+	    } else {
+	      for (i in l) {
+	        if (f) {
+	          if (Obj.has(l, i)) {
+	            r = _ ? c.call(_, l[i], i, t) : c(l[i], i, t);
+	            if (r !== u) {
+	              return r;
+	            }
+	          }
+	        } else {
+	          //if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
+	          if (c === l[i]) {
+	            return i;
+	          } // use this for now
+	        }
+	      }
+	    }
+	    return f ? rr : _list2.default.index ? 0 : -1;
+	  };
+
+	  exports.default = Obj;
+	  module.exports = exports['default'];
+	});
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
 	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined") {
 	    factory(module, exports);
@@ -477,10 +532,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      exports: {}
 	    };
 	    factory(mod, mod.exports);
-	    global.events = mod.exports;
+	    global.list = mod.exports;
 	  }
 	})(this, function (module, exports) {
-	  'use strict';
+	  "use strict";
 
 	  Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -489,62 +544,243 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * Created by Paul on 9/7/2016.
 	   */
 
-	  var Events = function Events(Type) {
-	    // ;(function(exports){ // On event emitter generic javascript utility.
-	    function On() {}
-	    On.create = function () {
-	      var on = function on(e) {
-	        on.event.e = e;
-	        on.event.s[e] = on.event.s[e] || [];
-	        return on;
-	      };
-	      on.emit = function (a) {
-	        var e = on.event.e,
-	            s = on.event.s[e],
-	            args = arguments,
-	            l = args.length;
-	        Type.list.map(s, function (hear, i) {
-	          if (!hear.fn) {
-	            s.splice(i - 1, 0);
-	            return;
-	          }
-	          if (1 === l) {
-	            hear.fn(a);
-	            return;
-	          }
-	          hear.fn.apply(hear, args);
-	        });
-	        if (!s.length) {
-	          delete on.event.s[e];
-	        }
-	      };
-	      on.event = function (fn, i) {
-	        var s = on.event.s[on.event.e];
-	        if (!s) {
-	          return;
-	        }
-	        var e = {
-	          fn: fn, i: i || 0, off: function off() {
-	            return !(e.fn = false);
-	          }
-	        };
-	        return s.push(e), i ? s.sort(sort) : i, e;
-	      };
-	      on.event.s = {};
+	  var List = {
+	    is: function is(l) {
+	      return l instanceof Array;
+	    }
+	  };
+	  List.slit = Array.prototype.slice;
+	  List.sort = function (k) {
+	    // creates a new sort function based off some field
+	    return function (A, B) {
+	      if (!A || !B) {
+	        return 0;
+	      }
+	      A = A[k];
+	      B = B[k];
+	      if (A < B) {
+	        return -1;
+	      } else if (A > B) {
+	        return 1;
+	      } else {
+	        return 0;
+	      }
+	    };
+	  };
+	  List.map = function (l, c, _) {
+	    return Gun.obj.map(l, c, _);
+	  };
+	  List.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
+
+	  exports.default = List;
+	  module.exports = exports["default"];
+	});
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports);
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports);
+	    global.time = mod.exports;
+	  }
+	})(this, function (module, exports) {
+	  "use strict";
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Time = {};
+	  Time.is = function (t) {
+	    return t ? t instanceof Date : +new Date().getTime();
+	  };
+	  Time.now = function () {
+	    var time = Time.is,
+	        last = -Infinity,
+	        n = 0,
+	        d = 1000;
+	    return function () {
+	      var t = time();
+	      if (last < t) {
+	        n = 0;
+	        return last = t;
+	      }
+	      return last = t + (n += 1) / d;
+	    };
+	  }();
+
+	  exports.default = Time;
+	  module.exports = exports["default"];
+	});
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(4)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports, require('./utilities/list'));
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports, global.list);
+	    global.events = mod.exports;
+	  }
+	})(this, function (module, exports, _list) {
+	  'use strict';
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+
+	  var _list2 = _interopRequireDefault(_list);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
+	  // let Events = (Type) => {
+
+	  function On() {} /**
+	                    * Created by Paul on 9/7/2016.
+	                    */
+
+	  On.create = function () {
+	    var on = function on(e) {
+	      on.event.e = e;
+	      on.event.s[e] = on.event.s[e] || [];
 	      return on;
 	    };
-	    var sort = Type.list.sort('i');
-	    Type.on = On.create();
-	    Type.on.create = On.create;
-	    // }(Util));
+	    on.emit = function (a) {
+	      var e = on.event.e,
+	          s = on.event.s[e],
+	          args = arguments,
+	          l = args.length;
+	      _list2.default.map(s, function (hear, i) {
+	        if (!hear.fn) {
+	          s.splice(i - 1, 0);
+	          return;
+	        }
+	        if (1 === l) {
+	          hear.fn(a);
+	          return;
+	        }
+	        hear.fn.apply(hear, args);
+	      });
+	      if (!s.length) {
+	        delete on.event.s[e];
+	      }
+	    };
+	    on.event = function (fn, i) {
+	      var s = on.event.s[on.event.e];
+	      if (!s) {
+	        return;
+	      }
+	      var e = {
+	        fn: fn, i: i || 0, off: function off() {
+	          return !(e.fn = false);
+	        }
+	      };
+	      return s.push(e), i ? s.sort(sort) : i, e;
+	    };
+	    on.event.s = {};
+	    return on;
 	  };
+	  var sort = _list2.default.sort('i');
+
+	  var Events = On.create();
+
+	  // let Zon = On.create();
+	  Events.create = On.create;
+
+	  Events.at = function (on) {
+	    // On event emitter customized for gun.
+	    var proxy = function proxy(e) {
+	      return proxy.e = e, proxy;
+	    };
+	    proxy.emit = function (at) {
+	      if (at.soul) {
+	        at.hash = Events.at.hash(at);
+	        //Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at;
+	        Gun.obj.as(proxy.mem, proxy.e)[at.hash] = at;
+	      }
+	      if (proxy.all.cb) {
+	        proxy.all.cb(at, proxy.e);
+	      }
+	      on(proxy.e).emit(at);
+	      return {
+	        chain: function chain(c) {
+	          if (!c || !c._ || !c._.at) {
+	            return;
+	          }
+	          return c._.at(proxy.e).emit(at);
+	        }
+	      };
+	    };
+	    proxy.only = function (cb) {
+	      if (proxy.only.cb) {
+	        return;
+	      }
+	      return proxy.event(proxy.only.cb = cb);
+	    };
+	    proxy.all = function (cb) {
+	      proxy.all.cb = cb;
+	      Gun.obj.map(proxy.mem, function (mem, e) {
+	        Gun.obj.map(mem, function (at, i) {
+	          cb(at, e);
+	        });
+	      });
+	    };
+	    proxy.event = function (cb, i) {
+	      i = on(proxy.e).event(cb, i);
+	      return Gun.obj.map(proxy.mem[proxy.e], function (at) {
+	        i.stat = { first: true };
+	        cb.call(i, at);
+	      }), i.stat = {}, i;
+	    };
+	    proxy.map = function (cb, i) {
+	      return proxy.event(cb, i);
+	    };
+	    proxy.mem = {};
+	    return proxy;
+	  };
+
+	  Events.at.hash = function (at) {
+	    return at.at && at.at.soul ? at.at.soul + (at.at.field || '') : at.soul + (at.field || '');
+	  };
+
+	  Events.at.copy = function (at) {
+	    return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function (v, f, t) {
+	      t(f, v);
+	    });
+	  };
+
+	  //   Type.on = Zon;
+	  // };
 
 	  exports.default = Events;
 	  module.exports = exports['default'];
 	});
 
 /***/ },
-/* 3 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -622,7 +858,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 4 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -1457,7 +1693,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 5 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -1482,156 +1718,153 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * Created by Paul on 9/7/2016.
 	   */
 
-	  var Serializer = function Serializer(Gun) {
-	    var ify = function ify(data, cb, opt) {
-	      opt = opt || {};
-	      cb = cb || function (env, cb) {
-	        cb(env.at, Gun.is.node.soul(env.at.obj) || Gun.is.node.soul(env.at.node) || Gun.text.random());
-	      };
-	      var end = function end(fn) {
-	        ctx.end = fn || function () {};
-	        unique(ctx);
-	      },
-	          ctx = { at: { path: [], obj: data }, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true };
-	      if (!data) {
-	        return ctx.err = { err: Gun.log('Serializer does not have correct parameters.') }, end;
-	      }
-	      if (ctx.opt.start) {
-	        Gun.is.node.soul.ify(ctx.root, ctx.opt.start);
-	      }
-	      ctx.at.node = ctx.root;
-	      while (ctx.loop && !ctx.err) {
-	        seen(ctx, ctx.at);
-	        map(ctx, cb);
-	        if (ctx.queue.length) {
-	          ctx.at = ctx.queue.shift();
-	        } else {
-	          ctx.loop = false;
-	        }
-	      }
-	      return end;
+	  var ify = function ify(data, cb, opt) {
+	    opt = opt || {};
+	    cb = cb || function (env, cb) {
+	      cb(env.at, Gun.is.node.soul(env.at.obj) || Gun.is.node.soul(env.at.node) || Gun.text.random());
 	    };
-	    var map = function map(ctx, cb) {
-	      var u,
-	          rel = function rel(at, soul) {
-	        at.soul = at.soul || soul || Gun.is.node.soul(at.obj) || Gun.is.node.soul(at.node);
-	        if (!ctx.opt.pure) {
-	          ctx.graph[at.soul] = Gun.is.node.soul.ify(at.node, at.soul);
-	          if (ctx.at.field) {
-	            Gun.is.node.state.ify([at.node], at.field, u, ctx.opt.state);
-	          }
+	    var end = function end(fn) {
+	      ctx.end = fn || function () {};
+	      unique(ctx);
+	    },
+	        ctx = { at: { path: [], obj: data }, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true };
+	    if (!data) {
+	      return ctx.err = { err: Gun.log('Serializer does not have correct parameters.') }, end;
+	    }
+	    if (ctx.opt.start) {
+	      Gun.is.node.soul.ify(ctx.root, ctx.opt.start);
+	    }
+	    ctx.at.node = ctx.root;
+	    while (ctx.loop && !ctx.err) {
+	      seen(ctx, ctx.at);
+	      map(ctx, cb);
+	      if (ctx.queue.length) {
+	        ctx.at = ctx.queue.shift();
+	      } else {
+	        ctx.loop = false;
+	      }
+	    }
+	    return end;
+	  };
+	  var map = function map(ctx, cb) {
+	    var u,
+	        rel = function rel(at, soul) {
+	      at.soul = at.soul || soul || Gun.is.node.soul(at.obj) || Gun.is.node.soul(at.node);
+	      if (!ctx.opt.pure) {
+	        ctx.graph[at.soul] = Gun.is.node.soul.ify(at.node, at.soul);
+	        if (ctx.at.field) {
+	          Gun.is.node.state.ify([at.node], at.field, u, ctx.opt.state);
 	        }
-	        Gun.list.map(at.back, function (rel) {
-	          rel[Gun._.soul] = at.soul;
-	        });
-	        unique(ctx);
-	      },
-	          it;
-	      Gun.obj.map(ctx.at.obj, function (val, field) {
-	        ctx.at.val = val;
-	        ctx.at.field = field;
-	        it = cb(ctx, rel, map) || true;
-	        if (field === Gun._.meta) {
-	          ctx.at.node[field] = Gun.obj.copy(val); // TODO: BUG! Is this correct?
-	          return;
-	        }
-	        if (String(field).indexOf('.') != -1 || false && notValidField(field)) {
-	          // TODO: BUG! Do later for ACID "consistency" guarantee.
-	          return ctx.err = { err: Gun.log("Invalid field name on '" + ctx.at.path.join('.') + "'!") };
-	        }
-	        if (!Gun.is.val(val)) {
-	          var at = { obj: val, node: {}, back: [], path: [field] },
-	              tmp = {},
-	              was;
-	          at.path = (ctx.at.path || []).concat(at.path || []);
-	          if (!Gun.obj.is(val)) {
-	            return ctx.err = { err: Gun.log("Invalid value at '" + at.path.join('.') + "'!") };
-	          }
-	          if (was = seen(ctx, at)) {
-	            tmp[Gun._.soul] = Gun.is.node.soul(was.node) || null;
-	            (was.back = was.back || []).push(ctx.at.node[field] = tmp);
-	          } else {
-	            ctx.queue.push(at);
-	            tmp[Gun._.soul] = null;
-	            at.back.push(ctx.at.node[field] = tmp);
-	          }
-	        } else {
-	          ctx.at.node[field] = Gun.obj.copy(val);
-	        }
+	      }
+	      Gun.list.map(at.back, function (rel) {
+	        rel[Gun._.soul] = at.soul;
 	      });
-	      if (!it) {
-	        cb(ctx, rel);
+	      unique(ctx);
+	    },
+	        it;
+	    Gun.obj.map(ctx.at.obj, function (val, field) {
+	      ctx.at.val = val;
+	      ctx.at.field = field;
+	      it = cb(ctx, rel, map) || true;
+	      if (field === Gun._.meta) {
+	        ctx.at.node[field] = Gun.obj.copy(val); // TODO: BUG! Is this correct?
+	        return;
 	      }
-	    };
-	    var unique = function unique(ctx) {
-	      if (ctx.err || !Gun.list.map(ctx.seen, function (at) {
-	        if (!at.soul) {
-	          return true;
-	        }
-	      }) && !ctx.loop) {
-	        return ctx.end(ctx.err, ctx), ctx.end = function () {};
+	      if (String(field).indexOf('.') != -1 || false && notValidField(field)) {
+	        // TODO: BUG! Do later for ACID "consistency" guarantee.
+	        return ctx.err = { err: Gun.log("Invalid field name on '" + ctx.at.path.join('.') + "'!") };
 	      }
-	    };
-	    var seen = function seen(ctx, at) {
-	      return Gun.list.map(ctx.seen, function (has) {
-	        if (at.obj === has.obj) {
-	          return has;
+	      if (!Gun.is.val(val)) {
+	        var at = { obj: val, node: {}, back: [], path: [field] },
+	            tmp = {},
+	            was;
+	        at.path = (ctx.at.path || []).concat(at.path || []);
+	        if (!Gun.obj.is(val)) {
+	          return ctx.err = { err: Gun.log("Invalid value at '" + at.path.join('.') + "'!") };
 	        }
-	      }) || ctx.seen.push(at) && false;
-	    };
-	    ify.wire = function (n, cb, opt) {
-	      return Gun.text.is(n) ? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt);
-	    };
-	    ify.wire.to = function (n, cb, opt) {
-	      var t, b;
-	      if (!n || !(t = Gun.is.node.soul(n))) {
-	        return null;
+	        if (was = seen(ctx, at)) {
+	          tmp[Gun._.soul] = Gun.is.node.soul(was.node) || null;
+	          (was.back = was.back || []).push(ctx.at.node[field] = tmp);
+	        } else {
+	          ctx.queue.push(at);
+	          tmp[Gun._.soul] = null;
+	          at.back.push(ctx.at.node[field] = tmp);
+	        }
+	      } else {
+	        ctx.at.node[field] = Gun.obj.copy(val);
 	      }
-	      cb = cb || function () {};
-	      t = b = "#'" + JSON.stringify(t) + "'";
-	      Gun.obj.map(n, function (v, f) {
-	        if (Gun._.meta === f) {
-	          return;
-	        }
-	        var w = '',
-	            s = Gun.is.node.state(n, f);
-	        if (!s) {
-	          return;
-	        }
-	        w += ".'" + JSON.stringify(f) + "'";
-	        w += "='" + JSON.stringify(v) + "'";
-	        w += ">'" + JSON.stringify(s) + "'";
-	        t += w;
-	        w = b + w;
-	        cb(null, w);
-	      });
-	      return t;
-	    };
-	    ify.wire.from = function (n, cb, opt) {
-	      if (!n) {
-	        return null;
+	    });
+	    if (!it) {
+	      cb(ctx, rel);
+	    }
+	  };
+	  var unique = function unique(ctx) {
+	    if (ctx.err || !Gun.list.map(ctx.seen, function (at) {
+	      if (!at.soul) {
+	        return true;
 	      }
-	      var a = [],
-	          s = -1,
-	          e = 0,
-	          end = 1;
-	      while ((e = n.indexOf("'", s + 1)) >= 0) {
-	        if (s === e || '\\' === n.charAt(e - 1)) {} else {
-	          a.push(n.slice(s + 1, e));
-	          s = e;
-	        }
+	    }) && !ctx.loop) {
+	      return ctx.end(ctx.err, ctx), ctx.end = function () {};
+	    }
+	  };
+	  var seen = function seen(ctx, at) {
+	    return Gun.list.map(ctx.seen, function (has) {
+	      if (at.obj === has.obj) {
+	        return has;
 	      }
-	      return a;
-	    };
-	    Gun.ify = ify;
+	    }) || ctx.seen.push(at) && false;
+	  };
+	  ify.wire = function (n, cb, opt) {
+	    return Gun.text.is(n) ? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt);
+	  };
+	  ify.wire.to = function (n, cb, opt) {
+	    var t, b;
+	    if (!n || !(t = Gun.is.node.soul(n))) {
+	      return null;
+	    }
+	    cb = cb || function () {};
+	    t = b = "#'" + JSON.stringify(t) + "'";
+	    Gun.obj.map(n, function (v, f) {
+	      if (Gun._.meta === f) {
+	        return;
+	      }
+	      var w = '',
+	          s = Gun.is.node.state(n, f);
+	      if (!s) {
+	        return;
+	      }
+	      w += ".'" + JSON.stringify(f) + "'";
+	      w += "='" + JSON.stringify(v) + "'";
+	      w += ">'" + JSON.stringify(s) + "'";
+	      t += w;
+	      w = b + w;
+	      cb(null, w);
+	    });
+	    return t;
+	  };
+	  ify.wire.from = function (n, cb, opt) {
+	    if (!n) {
+	      return null;
+	    }
+	    var a = [],
+	        s = -1,
+	        e = 0,
+	        end = 1;
+	    while ((e = n.indexOf("'", s + 1)) >= 0) {
+	      if (s === e || '\\' === n.charAt(e - 1)) {} else {
+	        a.push(n.slice(s + 1, e));
+	        s = e;
+	      }
+	    }
+	    return a;
 	  };
 
-	  exports.default = Serializer;
+	  exports.default = ify;
 	  module.exports = exports['default'];
 	});
 
 /***/ },
-/* 6 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -1893,7 +2126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 7 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -2164,31 +2397,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(13), __webpack_require__(17)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined") {
-	    factory(module, exports);
+	    factory(module, exports, require('../is'), require('./union'));
 	  } else {
 	    var mod = {
 	      exports: {}
 	    };
-	    factory(mod, mod.exports);
-	    global.specific = mod.exports;
+	    factory(mod, mod.exports, global.is, global.union);
+	    global.index = mod.exports;
 	  }
-	})(this, function (module, exports) {
+	})(this, function (module, exports, _is, _union) {
 	  'use strict';
 
 	  Object.defineProperty(exports, "__esModule", {
 	    value: true
 	  });
+
+	  var _is2 = _interopRequireDefault(_is);
+
+	  var _union2 = _interopRequireDefault(_union);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
 	  /**
 	   * Created by Paul on 9/7/2016.
 	   */
-
 	  var SpecificUtils = function SpecificUtils(Gun) {
 	    Gun.version = 0.3;
 
@@ -2203,172 +2446,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      '>': 'state'
 	    };
 
-	    Gun.is = function (gun) {
-	      return gun instanceof Gun ? true : false;
-	    }; // check to see if it is a GUN instance.
-
-	    Gun.is.val = function (v) {
-	      // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
-	      if (v === null) {
-	        return true;
-	      } // "deletes", nulling out fields.
-	      if (v === Infinity) {
-	        return false;
-	      } // we want this to be, but JSON does not support it, sad face.
-	      if (Gun.bi.is(v) // by "binary" we mean boolean.
-	      || Gun.num.is(v) || Gun.text.is(v)) {
-	        // by "text" we mean strings.
-	        return true; // simple values are valid.
-	      }
-	      return Gun.is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
-	    };
-
-	    Gun.is.rel = function (v) {
-	      // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
-	      if (Gun.obj.is(v)) {
-	        // must be an object.
-	        var id;
-	        Gun.obj.map(v, function (s, f) {
-	          // map over the object...
-	          if (id) {
-	            return id = false;
-	          } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-	          if (f == Gun._.soul && Gun.text.is(s)) {
-	            // the field should be '#' and have a text value.
-	            id = s; // we found the soul!
-	          } else {
-	            return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
-	          }
-	        });
-	        if (id) {
-	          // a valid id was found.
-	          return id; // yay! Return it.
-	        }
-	      }
-	      return false; // the value was not a valid soul relation.
-	    };
-
-	    Gun.is.rel.ify = function (s) {
-	      var r = {};
-	      return Gun.obj.put(r, Gun._.soul, s), r;
-	    }; // convert a soul into a relation and return it.
-
-	    Gun.is.lex = function (l) {
-	      var r = true;
-	      if (!Gun.obj.is(l)) {
-	        return false;
-	      }
-	      Gun.obj.map(l, function (v, f) {
-	        if (!Gun.obj.has(Gun._, f) || !(Gun.text.is(v) || Gun.obj.is(v))) {
-	          return r = false;
-	        }
-	      }); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
-	      return r;
-	    };
-
-	    Gun.is.node = function (n, cb, t) {
-	      var s; // checks to see if an object is a valid node.
-	      if (!Gun.obj.is(n)) {
-	        return false;
-	      } // must be an object.
-	      if (s = Gun.is.node.soul(n)) {
-	        // must have a soul on it.
-	        return !Gun.obj.map(n, function (v, f) {
-	          // we invert this because the way we check for this is via a negation.
-	          if (f == Gun._.meta) {
-	            return;
-	          } // skip over the metadata.
-	          if (!Gun.is.val(v)) {
-	            return true;
-	          } // it is true that this is an invalid node.
-	          if (cb) {
-	            cb.call(t, v, f, n);
-	          } // optionally callback each field/value.
-	        });
-	      }
-	      return false; // nope! This was not a valid node.
-	    };
-
-	    Gun.is.node.ify = function (n, s, o) {
-	      // convert a shallow object into a node.
-	      o = Gun.bi.is(o) ? { force: o } : o || {}; // detect options.
-	      n = Gun.is.node.soul.ify(n, s, o.force); // put a soul on it.
-	      Gun.obj.map(n, function (v, f) {
-	        // iterate over each field/value.
-	        if (Gun._.meta === f) {
-	          return;
-	        } // ignore meta.
-	        Gun.is.node.state.ify([n], f, v, o.state = o.state || Gun.time.now()); // and set the state for this field and value on this node.
-	      });
-	      return n; // This will only be a valid node if the object wasn't already deep!
-	    };
-
-	    Gun.is.node.soul = function (n, s) {
-	      return n && n._ && n._[s || Gun._.soul] || false;
-	    }; // convenience function to check to see if there is a soul on a node and return it.
-
-	    Gun.is.node.soul.ify = function (n, s, o) {
-	      // put a soul on an object.
-	      n = n || {}; // make sure it exists.
-	      n._ = n._ || {}; // make sure meta exists.
-	      n._[Gun._.soul] = o ? s : n._[Gun._.soul] || s || Gun.text.random(); // if it already has a soul then use that instead - unless you force the soul you want with an option.
-	      return n;
-	    };
-
-	    Gun.is.node.state = function (n, f) {
-	      return f && n && n._ && n._[Gun._.state] && Gun.num.is(n._[Gun._.state][f]) ? n._[Gun._.state][f] : false;
-	    }; // convenience function to get the state on a field on a node and return it.
-
-	    Gun.is.node.state.ify = function (l, f, v, state) {
-	      // put a field's state and value on some nodes.
-	      l = Gun.list.is(l) ? l : [l]; // handle a list of nodes or just one node.
-	      var l = l.reverse(),
-	          d = l[0]; // we might want to inherit the state from the last node in the list.
-	      Gun.list.map(l, function (n, i) {
-	        // iterate over each node.
-	        n = n || {}; // make sure it exists.
-	        if (Gun.is.val(v)) {
-	          n[f] = v;
-	        } // if we have a value, then put it.
-	        n._ = n._ || {}; // make sure meta exists.
-	        n = n._[Gun._.state] = n._[Gun._.state] || {}; // make sure HAM state exists.
-	        if (i = d._[Gun._.state][f]) {
-	          n[f] = i;
-	        } // inherit the state!
-	        if (Gun.num.is(state)) {
-	          n[f] = state;
-	        } // or manually set the state.
-	      });
-	    };
-
-	    Gun.is.graph = function (g, cb, fn, t) {
-	      // checks to see if an object is a valid graph.
-	      var exist = false;
-	      if (!Gun.obj.is(g)) {
-	        return false;
-	      } // must be an object.
-	      return !Gun.obj.map(g, function (n, s) {
-	        // we invert this because the way we check for this is via a negation.
-	        if (!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)) {
-	          return true;
-	        } // it is true that this is an invalid graph.
-	        (cb || function () {}).call(t, n, s, function (fn) {
-	          // optional callback for each node.
-	          if (fn) {
-	            Gun.is.node(n, fn, t);
-	          } // where we then have an optional callback for each field/value.
-	        });
-	        exist = true;
-	      }) && exist; // makes sure it wasn't an empty object.
-	    };
-
-	    Gun.is.graph.ify = function (n) {
-	      var s; // wrap a node into a graph.
-	      if (s = Gun.is.node.soul(n)) {
-	        // grab the soul from the node, if it is a node.
-	        return Gun.obj.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
-	      }
-	    };
+	    Gun.is = _is2.default;
 
 	    Gun.HAM = function (machineState, incomingState, currentState, incomingValue, currentValue) {
 	      // TODO: Lester's comments on roll backs could be vulnerable to divergence, investigate!
@@ -2409,249 +2487,530 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return { err: "you have not properly handled recursion through your data or filtered it as JSON" };
 	    };
 
-	    Gun.union = function (gun, prime, cb, opt) {
-	      // merge two graphs into the first.
-	      var opt = opt || Gun.obj.is(cb) ? cb : {};
-	      var ctx = { graph: gun.__.graph, count: 0 };
-	      ctx.cb = function () {
-	        cb = Gun.fns.is(cb) ? cb() && null : null;
-	      };
-	      if (!ctx.graph) {
-	        ctx.err = { err: Gun.log("No graph!") };
-	      }
-	      if (!prime) {
-	        ctx.err = { err: Gun.log("No data to merge!") };
-	      }
-	      if (ctx.soul = Gun.is.node.soul(prime)) {
-	        prime = Gun.is.graph.ify(prime);
-	      }
-	      if (!Gun.is.graph(prime, null, function (val, field, node) {
-	        var meta;
-	        if (!Gun.num.is(Gun.is.node.state(node, field))) {
-	          return ctx.err = { err: Gun.log("No state on '" + field + "'!") };
-	        }
-	      }) || ctx.err) {
-	        return ctx.err = ctx.err || { err: Gun.log("Invalid graph!", prime) }, ctx;
-	      }
-	      function emit(at) {
-	        Gun.on('operating').emit(gun, at);
-	      }
-
-	      (function union(graph, prime) {
-	        var prime = Gun.obj.map(prime, function (n, s, t) {
-	          t(n);
-	        }).sort(function (A, B) {
-	          var s = Gun.is.node.soul(A);
-	          if (graph[s]) {
-	            return 1;
-	          }
-	          return 0;
-	        });
-	        ctx.count += 1;
-	        ctx.err = Gun.list.map(prime, function (node, soul) {
-	          soul = Gun.is.node.soul(node);
-	          if (!soul) {
-	            return { err: Gun.log("Soul missing or mismatching!") };
-	          }
-	          ctx.count += 1;
-	          var vertex = graph[soul];
-	          if (!vertex) {
-	            graph[soul] = vertex = Gun.is.node.ify({}, soul);
-	          }
-	          Gun.union.HAM(vertex, node, function (vertex, field, val, state) {
-	            Gun.on('historical').emit(gun, { soul: soul, field: field, value: val, state: state, change: node });
-	            gun.__.on('historical').emit({ soul: soul, field: field, change: node });
-	          }, function (vertex, field, val, state) {
-	            if (!vertex) {
-	              return;
-	            }
-	            var change = Gun.is.node.soul.ify({}, soul);
-	            if (field) {
-	              Gun.is.node.state.ify([vertex, change, node], field, val);
-	            }
-	            emit({ soul: soul, field: field, value: val, state: state, change: change });
-	          }, function (vertex, field, val, state) {
-	            Gun.on('deferred').emit(gun, { soul: soul, field: field, value: val, state: state, change: node });
-	          })(function () {
-	            emit({ soul: soul, change: node });
-	            if (opt.soul) {
-	              opt.soul(soul);
-	            }
-	            if (!(ctx.count -= 1)) {
-	              ctx.cb();
-	            }
-	          }); // TODO: BUG? Handle error!
-	        });
-	        ctx.count -= 1;
-	      })(ctx.graph, prime);
-	      if (!ctx.count) {
-	        ctx.cb();
-	      }
-	      return ctx;
-	    };
-
-	    Gun.union.ify = function (gun, prime, cb, opt) {
-	      if (gun) {
-	        gun = gun.__ && gun.__.graph ? gun.__.graph : gun;
-	      }
-	      if (Gun.text.is(prime)) {
-	        if (gun && gun[prime]) {
-	          prime = gun[prime];
-	        } else {
-	          return Gun.is.node.ify({}, prime);
-	        }
-	      }
-	      var vertex = Gun.is.node.soul.ify({}, Gun.is.node.soul(prime)),
-	          prime = Gun.is.graph.ify(prime) || prime;
-	      if (Gun.is.graph(prime, null, function (val, field) {
-	        var node;
-
-	        function merge(a, f, v) {
-	          Gun.is.node.state.ify(a, f, v);
-	        }
-
-	        if (Gun.is.rel(val)) {
-	          node = gun ? gun[field] || prime[field] : prime[field];
-	        }
-	        Gun.union.HAM(vertex, node, function () {}, function (vert, f, v) {
-	          merge([vertex, node], f, v);
-	        }, function () {})(function (err) {
-	          if (err) {
-	            merge([vertex], field, val);
-	          }
-	        });
-	      })) {
-	        return vertex;
-	      }
-	    };
-
-	    Gun.union.HAM = function (vertex, delta, lower, now, upper) {
-	      upper.max = -Infinity;
-	      now.end = true;
-	      delta = delta || {};
-	      vertex = vertex || {};
-	      Gun.obj.map(delta._, function (v, f) {
-	        if (Gun._.state === f || Gun._.soul === f) {
-	          return;
-	        }
-	        vertex._[f] = v;
-	      });
-	      if (!Gun.is.node(delta, function update(incoming, field) {
-	        now.end = false;
-	        var ctx = { incoming: {}, current: {} },
-	            state;
-	        ctx.drift = Gun.time.now(); // DANGEROUS!
-	        ctx.incoming.value = Gun.is.rel(incoming) || incoming;
-	        ctx.current.value = Gun.is.rel(vertex[field]) || vertex[field];
-	        ctx.incoming.state = Gun.num.is(ctx.tmp = ((delta._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
-	        ctx.current.state = Gun.num.is(ctx.tmp = ((vertex._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
-	        upper.max = ctx.incoming.state > upper.max ? ctx.incoming.state : upper.max;
-	        state = Gun.HAM(ctx.drift, ctx.incoming.state, ctx.current.state, ctx.incoming.value, ctx.current.value);
-	        if (state.err) {
-	          root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err); // this error should never happen.
-	          return;
-	        }
-	        if (state.state || state.historical || state.current) {
-	          lower.call(state, vertex, field, incoming, ctx.incoming.state);
-	          return;
-	        }
-	        if (state.incoming) {
-	          now.call(state, vertex, field, incoming, ctx.incoming.state);
-	          return;
-	        }
-	        if (state.defer) {
-	          upper.wait = true;
-	          upper.call(state, vertex, field, incoming, ctx.incoming.state); // signals that there are still future modifications.
-	          Gun.schedule(ctx.incoming.state, function () {
-	            update(incoming, field);
-	            if (ctx.incoming.state === upper.max) {
-	              (upper.last || function () {})();
-	            }
-	          });
-	        }
-	      })) {
-	        return function (fn) {
-	          if (fn) {
-	            fn({ err: 'Not a node!' });
-	          }
-	        };
-	      }
-	      if (now.end) {
-	        now.call({}, vertex);
-	      } // TODO: Should HAM handle empty updates? YES.
-	      return function (fn) {
-	        upper.last = fn || function () {};
-	        if (!upper.wait) {
-	          upper.last();
-	        }
-	      };
-	    };
-
-	    Gun.on.at = function (on) {
-	      // On event emitter customized for gun.
-	      var proxy = function proxy(e) {
-	        return proxy.e = e, proxy;
-	      };
-	      proxy.emit = function (at) {
-	        if (at.soul) {
-	          at.hash = Gun.on.at.hash(at);
-	          //Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at;
-	          Gun.obj.as(proxy.mem, proxy.e)[at.hash] = at;
-	        }
-	        if (proxy.all.cb) {
-	          proxy.all.cb(at, proxy.e);
-	        }
-	        on(proxy.e).emit(at);
-	        return {
-	          chain: function chain(c) {
-	            if (!c || !c._ || !c._.at) {
-	              return;
-	            }
-	            return c._.at(proxy.e).emit(at);
-	          }
-	        };
-	      };
-	      proxy.only = function (cb) {
-	        if (proxy.only.cb) {
-	          return;
-	        }
-	        return proxy.event(proxy.only.cb = cb);
-	      };
-	      proxy.all = function (cb) {
-	        proxy.all.cb = cb;
-	        Gun.obj.map(proxy.mem, function (mem, e) {
-	          Gun.obj.map(mem, function (at, i) {
-	            cb(at, e);
-	          });
-	        });
-	      };
-	      proxy.event = function (cb, i) {
-	        i = on(proxy.e).event(cb, i);
-	        return Gun.obj.map(proxy.mem[proxy.e], function (at) {
-	          i.stat = { first: true };
-	          cb.call(i, at);
-	        }), i.stat = {}, i;
-	      };
-	      proxy.map = function (cb, i) {
-	        return proxy.event(cb, i);
-	      };
-	      proxy.mem = {};
-	      return proxy;
-	    };
-
-	    Gun.on.at.hash = function (at) {
-	      return at.at && at.at.soul ? at.at.soul + (at.at.field || '') : at.soul + (at.field || '');
-	    };
-
-	    Gun.on.at.copy = function (at) {
-	      return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function (v, f, t) {
-	        t(f, v);
-	      });
-	    };
+	    Gun.union = _union2.default;
 	  };
 
 	  exports.default = SpecificUtils;
 	  module.exports = exports['default'];
+	});
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(14), __webpack_require__(15), __webpack_require__(16)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports, require('./rel'), require('./node'), require('./graph'));
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports, global.rel, global.node, global.graph);
+	    global.index = mod.exports;
+	  }
+	})(this, function (module, exports, _rel, _node, _graph) {
+	  'use strict';
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+
+	  var _rel2 = _interopRequireDefault(_rel);
+
+	  var _node2 = _interopRequireDefault(_node);
+
+	  var _graph2 = _interopRequireDefault(_graph);
+
+	  function _interopRequireDefault(obj) {
+	    return obj && obj.__esModule ? obj : {
+	      default: obj
+	    };
+	  }
+
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Is = function Is(gun) {
+	    return gun instanceof Gun ? true : false;
+	  }; // check to see if it is a GUN instance.
+
+	  Is.val = function (v) {
+	    // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
+	    if (v === null) {
+	      return true;
+	    } // "deletes", nulling out fields.
+	    if (v === Infinity) {
+	      return false;
+	    } // we want this to be, but JSON does not support it, sad face.
+	    if (Gun.bi.is(v) // by "binary" we mean boolean.
+	    || Gun.num.is(v) || Gun.text.is(v)) {
+	      // by "text" we mean strings.
+	      return true; // simple values are valid.
+	    }
+	    return Is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+	  };
+
+	  //rel
+
+	  Is.rel = _rel2.default;
+
+	  Is.lex = function (l) {
+	    var r = true;
+	    if (!Gun.obj.is(l)) {
+	      return false;
+	    }
+	    Gun.obj.map(l, function (v, f) {
+	      if (!Gun.obj.has(Gun._, f) || !(Gun.text.is(v) || Gun.obj.is(v))) {
+	        return r = false;
+	      }
+	    }); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
+	    return r;
+	  };
+
+	  //node
+
+	  Is.node = _node2.default;
+	  //graph
+
+	  Is.graph = _graph2.default;
+
+	  exports.default = Is;
+	  module.exports = exports['default'];
+	});
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports);
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports);
+	    global.rel = mod.exports;
+	  }
+	})(this, function (module, exports) {
+	  "use strict";
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Rel = function Rel(v) {
+	    // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+	    if (Gun.obj.is(v)) {
+	      // must be an object.
+	      var id;
+	      Gun.obj.map(v, function (s, f) {
+	        // map over the object...
+	        if (id) {
+	          return id = false;
+	        } // if ID is already defined AND we're still looping through the object, it is considered invalid.
+	        if (f == Gun._.soul && Gun.text.is(s)) {
+	          // the field should be '#' and have a text value.
+	          id = s; // we found the soul!
+	        } else {
+	          return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
+	        }
+	      });
+	      if (id) {
+	        // a valid id was found.
+	        return id; // yay! Return it.
+	      }
+	    }
+	    return false; // the value was not a valid soul relation.
+	  };
+
+	  Rel.ify = function (s) {
+	    var r = {};
+	    return Gun.obj.put(r, Gun._.soul, s), r;
+	  }; // convert a soul into a relation and return it.
+
+	  exports.default = Rel;
+	  module.exports = exports["default"];
+	});
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports);
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports);
+	    global.node = mod.exports;
+	  }
+	})(this, function (module, exports) {
+	  "use strict";
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Node = function Node(n, cb, t) {
+	    var s; // checks to see if an object is a valid node.
+	    if (!Gun.obj.is(n)) {
+	      return false;
+	    } // must be an object.
+	    if (s = Node.soul(n)) {
+	      // must have a soul on it.
+	      return !Gun.obj.map(n, function (v, f) {
+	        // we invert this because the way we check for this is via a negation.
+	        if (f == Gun._.meta) {
+	          return;
+	        } // skip over the metadata.
+	        if (!Gun.is.val(v)) {
+	          return true;
+	        } // it is true that this is an invalid node.
+	        if (cb) {
+	          cb.call(t, v, f, n);
+	        } // optionally callback each field/value.
+	      });
+	    }
+	    return false; // nope! This was not a valid node.
+	  };
+
+	  Node.ify = function (n, s, o) {
+	    // convert a shallow object into a node.
+	    o = Gun.bi.is(o) ? { force: o } : o || {}; // detect options.
+	    n = Node.soul.ify(n, s, o.force); // put a soul on it.
+	    Gun.obj.map(n, function (v, f) {
+	      // iterate over each field/value.
+	      if (Gun._.meta === f) {
+	        return;
+	      } // ignore meta.
+	      Node.state.ify([n], f, v, o.state = o.state || Gun.time.now()); // and set the state for this field and value on this node.
+	    });
+	    return n; // This will only be a valid node if the object wasn't already deep!
+	  };
+
+	  Node.soul = function (n, s) {
+	    return n && n._ && n._[s || Gun._.soul] || false;
+	  }; // convenience function to check to see if there is a soul on a node and return it.
+
+	  Node.soul.ify = function (n, s, o) {
+	    // put a soul on an object.
+	    n = n || {}; // make sure it exists.
+	    n._ = n._ || {}; // make sure meta exists.
+	    n._[Gun._.soul] = o ? s : n._[Gun._.soul] || s || Gun.text.random(); // if it already has a soul then use that instead - unless you force the soul you want with an option.
+	    return n;
+	  };
+
+	  Node.state = function (n, f) {
+	    return f && n && n._ && n._[Gun._.state] && Gun.num.is(n._[Gun._.state][f]) ? n._[Gun._.state][f] : false;
+	  }; // convenience function to get the state on a field on a node and return it.
+
+	  Node.state.ify = function (l, f, v, state) {
+	    // put a field's state and value on some nodes.
+	    l = Gun.list.is(l) ? l : [l]; // handle a list of nodes or just one node.
+	    var l = l.reverse(),
+	        d = l[0]; // we might want to inherit the state from the last node in the list.
+	    Gun.list.map(l, function (n, i) {
+	      // iterate over each node.
+	      n = n || {}; // make sure it exists.
+	      if (Gun.is.val(v)) {
+	        n[f] = v;
+	      } // if we have a value, then put it.
+	      n._ = n._ || {}; // make sure meta exists.
+	      n = n._[Gun._.state] = n._[Gun._.state] || {}; // make sure HAM state exists.
+	      if (i = d._[Gun._.state][f]) {
+	        n[f] = i;
+	      } // inherit the state!
+	      if (Gun.num.is(state)) {
+	        n[f] = state;
+	      } // or manually set the state.
+	    });
+	  };
+
+	  exports.default = Node;
+	  module.exports = exports["default"];
+	});
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports);
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports);
+	    global.graph = mod.exports;
+	  }
+	})(this, function (module, exports) {
+	  "use strict";
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Graph = function Graph(g, cb, fn, t) {
+	    // checks to see if an object is a valid graph.
+	    var exist = false;
+	    if (!Gun.obj.is(g)) {
+	      return false;
+	    } // must be an object.
+	    return !Gun.obj.map(g, function (n, s) {
+	      // we invert this because the way we check for this is via a negation.
+	      if (!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)) {
+	        return true;
+	      } // it is true that this is an invalid graph.
+	      (cb || function () {}).call(t, n, s, function (fn) {
+	        // optional callback for each node.
+	        if (fn) {
+	          Gun.is.node(n, fn, t);
+	        } // where we then have an optional callback for each field/value.
+	      });
+	      exist = true;
+	    }) && exist; // makes sure it wasn't an empty object.
+	  };
+
+	  Graph.ify = function (n) {
+	    var s; // wrap a node into a graph.
+	    if (s = Gun.is.node.soul(n)) {
+	      // grab the soul from the node, if it is a node.
+	      return Gun.obj.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
+	    }
+	  };
+
+	  exports.default = Graph;
+	  module.exports = exports["default"];
+	});
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  } else if (typeof exports !== "undefined") {
+	    factory(module, exports);
+	  } else {
+	    var mod = {
+	      exports: {}
+	    };
+	    factory(mod, mod.exports);
+	    global.union = mod.exports;
+	  }
+	})(this, function (module, exports) {
+	  "use strict";
+
+	  Object.defineProperty(exports, "__esModule", {
+	    value: true
+	  });
+	  /**
+	   * Created by Paul on 9/7/2016.
+	   */
+
+	  var Union = function Union(gun, prime, cb, opt) {
+	    // merge two graphs into the first.
+	    var opt = opt || Gun.obj.is(cb) ? cb : {};
+	    var ctx = { graph: gun.__.graph, count: 0 };
+	    ctx.cb = function () {
+	      cb = Gun.fns.is(cb) ? cb() && null : null;
+	    };
+	    if (!ctx.graph) {
+	      ctx.err = { err: Gun.log("No graph!") };
+	    }
+	    if (!prime) {
+	      ctx.err = { err: Gun.log("No data to merge!") };
+	    }
+	    if (ctx.soul = Gun.is.node.soul(prime)) {
+	      prime = Gun.is.graph.ify(prime);
+	    }
+	    if (!Gun.is.graph(prime, null, function (val, field, node) {
+	      var meta;
+	      if (!Gun.num.is(Gun.is.node.state(node, field))) {
+	        return ctx.err = { err: Gun.log("No state on '" + field + "'!") };
+	      }
+	    }) || ctx.err) {
+	      return ctx.err = ctx.err || { err: Gun.log("Invalid graph!", prime) }, ctx;
+	    }
+	    function emit(at) {
+	      Gun.on('operating').emit(gun, at);
+	    }
+
+	    (function union(graph, prime) {
+	      var prime = Gun.obj.map(prime, function (n, s, t) {
+	        t(n);
+	      }).sort(function (A, B) {
+	        var s = Gun.is.node.soul(A);
+	        if (graph[s]) {
+	          return 1;
+	        }
+	        return 0;
+	      });
+	      ctx.count += 1;
+	      ctx.err = Gun.list.map(prime, function (node, soul) {
+	        soul = Gun.is.node.soul(node);
+	        if (!soul) {
+	          return { err: Gun.log("Soul missing or mismatching!") };
+	        }
+	        ctx.count += 1;
+	        var vertex = graph[soul];
+	        if (!vertex) {
+	          graph[soul] = vertex = Gun.is.node.ify({}, soul);
+	        }
+	        Union.HAM(vertex, node, function (vertex, field, val, state) {
+	          Gun.on('historical').emit(gun, { soul: soul, field: field, value: val, state: state, change: node });
+	          gun.__.on('historical').emit({ soul: soul, field: field, change: node });
+	        }, function (vertex, field, val, state) {
+	          if (!vertex) {
+	            return;
+	          }
+	          var change = Gun.is.node.soul.ify({}, soul);
+	          if (field) {
+	            Gun.is.node.state.ify([vertex, change, node], field, val);
+	          }
+	          emit({ soul: soul, field: field, value: val, state: state, change: change });
+	        }, function (vertex, field, val, state) {
+	          Gun.on('deferred').emit(gun, { soul: soul, field: field, value: val, state: state, change: node });
+	        })(function () {
+	          emit({ soul: soul, change: node });
+	          if (opt.soul) {
+	            opt.soul(soul);
+	          }
+	          if (!(ctx.count -= 1)) {
+	            ctx.cb();
+	          }
+	        }); // TODO: BUG? Handle error!
+	      });
+	      ctx.count -= 1;
+	    })(ctx.graph, prime);
+	    if (!ctx.count) {
+	      ctx.cb();
+	    }
+	    return ctx;
+	  };
+
+	  Union.ify = function (gun, prime, cb, opt) {
+	    if (gun) {
+	      gun = gun.__ && gun.__.graph ? gun.__.graph : gun;
+	    }
+	    if (Gun.text.is(prime)) {
+	      if (gun && gun[prime]) {
+	        prime = gun[prime];
+	      } else {
+	        return Gun.is.node.ify({}, prime);
+	      }
+	    }
+	    var vertex = Gun.is.node.soul.ify({}, Gun.is.node.soul(prime)),
+	        prime = Gun.is.graph.ify(prime) || prime;
+	    if (Gun.is.graph(prime, null, function (val, field) {
+	      var node;
+
+	      function merge(a, f, v) {
+	        Gun.is.node.state.ify(a, f, v);
+	      }
+
+	      if (Gun.is.rel(val)) {
+	        node = gun ? gun[field] || prime[field] : prime[field];
+	      }
+	      Union.HAM(vertex, node, function () {}, function (vert, f, v) {
+	        merge([vertex, node], f, v);
+	      }, function () {})(function (err) {
+	        if (err) {
+	          merge([vertex], field, val);
+	        }
+	      });
+	    })) {
+	      return vertex;
+	    }
+	  };
+
+	  Union.HAM = function (vertex, delta, lower, now, upper) {
+	    upper.max = -Infinity;
+	    now.end = true;
+	    delta = delta || {};
+	    vertex = vertex || {};
+	    Gun.obj.map(delta._, function (v, f) {
+	      if (Gun._.state === f || Gun._.soul === f) {
+	        return;
+	      }
+	      vertex._[f] = v;
+	    });
+	    if (!Gun.is.node(delta, function update(incoming, field) {
+	      now.end = false;
+	      var ctx = { incoming: {}, current: {} },
+	          state;
+	      ctx.drift = Gun.time.now(); // DANGEROUS!
+	      ctx.incoming.value = Gun.is.rel(incoming) || incoming;
+	      ctx.current.value = Gun.is.rel(vertex[field]) || vertex[field];
+	      ctx.incoming.state = Gun.num.is(ctx.tmp = ((delta._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
+	      ctx.current.state = Gun.num.is(ctx.tmp = ((vertex._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
+	      upper.max = ctx.incoming.state > upper.max ? ctx.incoming.state : upper.max;
+	      state = Gun.HAM(ctx.drift, ctx.incoming.state, ctx.current.state, ctx.incoming.value, ctx.current.value);
+	      if (state.err) {
+	        root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err); // this error should never happen.
+	        return;
+	      }
+	      if (state.state || state.historical || state.current) {
+	        lower.call(state, vertex, field, incoming, ctx.incoming.state);
+	        return;
+	      }
+	      if (state.incoming) {
+	        now.call(state, vertex, field, incoming, ctx.incoming.state);
+	        return;
+	      }
+	      if (state.defer) {
+	        upper.wait = true;
+	        upper.call(state, vertex, field, incoming, ctx.incoming.state); // signals that there are still future modifications.
+	        Gun.schedule(ctx.incoming.state, function () {
+	          update(incoming, field);
+	          if (ctx.incoming.state === upper.max) {
+	            (upper.last || function () {})();
+	          }
+	        });
+	      }
+	    })) {
+	      return function (fn) {
+	        if (fn) {
+	          fn({ err: 'Not a node!' });
+	        }
+	      };
+	    }
+	    if (now.end) {
+	      now.call({}, vertex);
+	    } // TODO: Should HAM handle empty updates? YES.
+	    return function (fn) {
+	      upper.last = fn || function () {};
+	      if (!upper.wait) {
+	        upper.last();
+	      }
+	    };
+	  };
+
+	  exports.default = Union;
+	  module.exports = exports["default"];
 	});
 
 /***/ }
