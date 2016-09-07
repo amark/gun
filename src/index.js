@@ -13,19 +13,45 @@ function Gun(o) {
   return gun.opt(o);
 }
 
-//TODO: Refactor to have a better organization of the things. Sometimes 2 Gun's identical objects must be sent
+Gun.version = 0.3;
 
-import Utilities from './utilities';
-Utilities(Gun);
+Gun._ = { // some reserved key words, these are not the only ones.
+  meta: '_' // all metadata of the node is stored in the meta property on the node.
+  , soul: '#' // a soul is a UUID of a node but it always points to the "latest" data known.
+  , field: '.' // a field is a property on a node which points to a value.
+  , state: '>' // other than the soul, we store HAM metadata.
+  , '#': 'soul'
+  , '.': 'field'
+  , '=': 'value'
+  , '>': 'state'
+};
+
+import { fns, bi, num } from './utilities';
+Gun.fns = fns;
+Gun.bi = bi;
+Gun.num = num;
+
+import Text from './utilities/text'
+import List from './utilities/list'
+import Obj from './utilities/obj'
+import Time from './utilities/time'
+Gun.text = Text;
+Gun.list = List;
+Gun.obj = Obj;
+Gun.time = Time;
 
 import Events from './events';
 Gun.on = Events;
 
-import Scheduler from './scheduler';
-Scheduler(Gun);
+import Schedule from './scheduler';
+Gun.schedule = Schedule;
 
-import SpecificUtils from './specific';
-SpecificUtils(Gun);
+import Is from './is';
+Gun.is = Is;
+
+import {Union, HAM} from './specific';
+Gun.HAM = HAM;
+Gun.union = Union;
 
 import Chaining from './chaining';
 Chaining(Gun);
@@ -33,32 +59,13 @@ Chaining(Gun);
 import Serializer from './serializer';
 Gun.ify = Serializer;
 
-var root = this || {};
-//TODO: Check why is needed to fake console
-root.console = root.console || {
-    log: function (s) {
-      return s
-    }
-  }; // safe for old browsers
-var console = {
-  log: function (s) {
-    return root.console.log.apply(root.console, arguments), s
-  },
-  Log: Gun.log = function (s) {
-    return (!Gun.log.squelch && root.console.log.apply(root.console, arguments)), s
-  }
-};
-console.debug = function (i, s) {
-  return (Gun.log.debug && i === Gun.log.debug && Gun.log.debug++) && root.console.log.apply(root.console, arguments), s
-};
-Gun.log.count = function (s) {
-  return Gun.log.count[s] = Gun.log.count[s] || 0, Gun.log.count[s]++
-};
+import Console from './console';
+Gun.log = Console;
 
-import Communication from './communication';
-Communication(Gun, Gun);
+import Bind from './bindings';
+Bind(Gun);
 
 import Request from './request';
-Gun.request = Request();
+Gun.request = Request;
 
 export default Gun;

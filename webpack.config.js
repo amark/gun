@@ -11,7 +11,7 @@ module.exports = {
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
-  // devtool: 'sourcemap',
+  devtool: 'sourcemap',
   module: {
     loaders: [
       {
