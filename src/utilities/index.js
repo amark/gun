@@ -2,7 +2,7 @@
  * Created by Paul on 9/7/2016.
  */
 
-import List from './list'
+import List from './definitions/list'
 
  let fns = {
     is: function (fn) {

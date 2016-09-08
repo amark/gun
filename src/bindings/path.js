@@ -6,6 +6,7 @@ import Events from '../events';
 import IsNode from '../is/node';
 import IsRel from '../is/rel';
 import Obj from '../utilities/obj';
+import Reserved from '../reserved';
 
 let Bindings = function () {
   Events('get').event(function (gun, at, ctx, opt, cb, lex) {
@@ -15,7 +16,7 @@ let Bindings = function () {
     if (opt.path) {
       at.at = opt.path
     }
-    var xtc = {soul: lex[Gun._.soul], field: lex[Gun._.field]};
+    var xtc = {soul: lex[Reserved.soul], field: lex[Reserved.field]};
     xtc.change = at.change || gun.__.by(at.soul).node;
     if (xtc.field) { // TODO: future feature!
       if (!Obj.has(xtc.change, xtc.field)) {

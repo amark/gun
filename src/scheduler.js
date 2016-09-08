@@ -4,6 +4,7 @@
 
 import List from './utilities/list';
 import Time from './utilities/time';
+import Utils from './utilities';
 
 let schedule = function (state, cb) { // maybe use lru-cache?
   schedule.waiting.push({
@@ -35,7 +36,7 @@ schedule.check = function () {
         return
       }
       if (wait.when <= now) {
-        if (Gun.fns.is(wait.event)) {
+        if (Utils.fns.is(wait.event)) {
           setTimeout(function () {
             wait.event()
           }, 0);

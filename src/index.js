@@ -15,16 +15,9 @@ function Gun(o) {
 
 Gun.version = 0.3;
 
-Gun._ = { // some reserved key words, these are not the only ones.
-  meta: '_' // all metadata of the node is stored in the meta property on the node.
-  , soul: '#' // a soul is a UUID of a node but it always points to the "latest" data known.
-  , field: '.' // a field is a property on a node which points to a value.
-  , state: '>' // other than the soul, we store HAM metadata.
-  , '#': 'soul'
-  , '.': 'field'
-  , '=': 'value'
-  , '>': 'state'
-};
+//TODO: for the sake of tests
+import Reserved from './reserved';
+Gun._ = Reserved;
 
 import { fns, bi, num } from './utilities';
 Gun.fns = fns;
@@ -57,6 +50,7 @@ import Chaining from './chaining';
 Object.assign(Gun.prototype, Chaining);
 Gun.chain = Gun.prototype;
 
+//TODO: tests again
 import Serializer from './serializer';
 Gun.ify = Serializer;
 

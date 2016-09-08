@@ -6,10 +6,16 @@ import Tab from './communication';
 import Events from '../events';
 import Text from '../utilities/text';
 import Time from '../utilities/time';
-import request from '../request';
 import Obj from '../utilities/obj';
-import GunIs from '../is';
+import Union from '../specific/union';
+import request from '../request';
+import GunIs from '../is/base';
+
+import IsNode from '../is/node';
+import IsGraph from '../is/graph';
+
 import Log from '../console';
+import Reserved from '../reserved';
 
 let Bindings = function () {
   Events('opt').event(function (gun, opt) {
@@ -28,7 +34,7 @@ let Bindings = function () {
         if (!lex) {
           return
         }
-        var soul = lex[Gun._.soul];
+        var soul = lex[Reserved.soul];
         if (!soul) {
           return
         }
@@ -45,14 +51,14 @@ let Bindings = function () {
               return cb(err)
             }
             cb(err, cb.node = data); // node
-            cb(err, GunIs.node.soul.ify({}, GunIs.node.soul(data))); // end
+            cb(err, IsNode.soul.ify({}, IsNode.soul(data))); // end
             cb(err, {}); // terminate
           });
         }(soul, cb));
         if (!(cb.local = opt.local)) {
           tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Get failed!", function (reply) {
             setTimeout(function () {
-              tab.put(GunIs.graph.ify(reply.body), function () {
+              tab.put(IsGraph.ify(reply.body), function () {
               }, {local: true, peers: {}})
             }, 1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
           });
@@ -63,7 +69,7 @@ let Bindings = function () {
           });
           var node = gun.__.graph[soul];
           if (node) {
-            tab.put(GunIs.graph.ify(node));
+            tab.put(IsGraph.ify(node));
           }
         }
         tab.peers(cb);
@@ -74,7 +80,7 @@ let Bindings = function () {
         opt = opt || {};
         var ropt = {};
         (ropt.headers = Obj.copy(tab.headers)).id = tab.msg();
-        GunIs.graph(graph, function (node, soul) {
+        IsGraph(graph, function (node, soul) {
           if (!gun.__.graph[soul]) {
             return
           }
@@ -165,7 +171,7 @@ let Bindings = function () {
     tab.server.json = 'application/json';
     tab.server.regex = gun.__.opt.route = gun.__.opt.route || opt.route || /^\/gun/i;
     tab.server.get = function (req, cb) {
-      var soul = req.body[Gun._.soul], node;
+      var soul = req.body[Reserved.soul], node;
       if (!(node = gun.__.graph[soul])) {
         return
       }
@@ -184,13 +190,13 @@ let Bindings = function () {
         })) {
         return
       }
-      if (req.err = Gun.union(gun, req.body, function (err, ctx) {
+      if (req.err = Union(gun, req.body, function (err, ctx) {
           if (err) {
             return cb({headers: reply.headers, body: {err: err || "Union failed."}})
           }
           var ctx = ctx || {};
           ctx.graph = {};
-          GunIs.graph(req.body, function (node, soul) {
+          IsGraph(req.body, function (node, soul) {
             ctx.graph[soul] = gun.__.graph[soul]
           });
           gun.__.opt.wire.put(ctx.graph, function (err, ok) {

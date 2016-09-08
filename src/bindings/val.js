@@ -4,6 +4,7 @@
 
 import Events from '../events';
 import Obj from '../utilities/obj';
+import Reserved from '../reserved';
 
 let Bindings = function () {
   Events('get.wire').event(function (gun, ctx) {
@@ -17,7 +18,7 @@ let Bindings = function () {
     if (err || !ctx.soul) {
       return
     }
-    if (data && !Obj.empty(data, Gun._.meta)) {
+    if (data && !Obj.empty(data, Reserved.meta)) {
       return
     }
     var end = gun.__.by(ctx.soul);

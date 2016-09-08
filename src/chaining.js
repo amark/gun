@@ -5,11 +5,19 @@
 import {get, key, path, val} from './bindings';
 import Text from './utilities/text';
 import List from './utilities/list';
+import Time from './utilities/time';
 import Obj from './utilities/obj';
 import Union from './specific/union';
-import GunIs from './is';
+import GunIs from './is/base';
+
+import IsNode from './is/node';
+
 import Events from './events';
 import Log from './console';
+import Utils from './utilities';
+import Reserved from './reserved';
+import Serializer from './serializer';
+import IsRel from './is/rel';
 
 let Chaining = {};
 
@@ -40,7 +48,7 @@ let Chaining = {};
       root.__.opt.peers[f] = v;
     });
     Obj.map(opt.wire, function (h, f) {
-      if (!Gun.fns.is(h)) {
+      if (!Utils.fns.is(h)) {
         return
       }
       root.__.opt.wire[f] = h;
@@ -73,7 +81,7 @@ let Chaining = {};
     cb = cb || function () {
       };
     cb.hash = {};
-    var gun = this, chain = gun.chain(), tmp = {val: val}, drift = Gun.time.now();
+    var gun = this, chain = gun.chain(), tmp = {val: val}, drift = Time.now();
 
     function put(at) {
       var val = tmp.val;
@@ -85,11 +93,11 @@ let Chaining = {};
           return cb.call(chain, {err: ctx.err = Log('No field to link node to!')}), chain._.at('err').emit(ctx.err)
         }
         return val.val(function (node) {
-          var soul = GunIs.node.soul(node);
+          var soul = IsNode.soul(node);
           if (!soul) {
             return cb.call(chain, {err: ctx.err = Log('Only a node can be linked! Not "' + node + '"!')}), chain._.at('err').emit(ctx.err)
           }
-          tmp.val = GunIs.rel.ify(soul);
+          tmp.val = IsRel.ify(soul);
           put(at);
         });
       }
@@ -116,12 +124,12 @@ let Chaining = {};
         if (!eat.node._) {
           eat.node._ = {}
         }
-        if (!eat.node._[Gun._.state]) {
-          eat.node._[Gun._.state] = {}
+        if (!eat.node._[Reserved.state]) {
+          eat.node._[Reserved.state] = {}
         }
-        if (!GunIs.node.soul(eat.node)) {
+        if (!IsNode.soul(eat.node)) {
           if (ctx.obj === eat.obj) {
-            Obj.as(env.graph, eat.soul = Obj.as(eat.node._, Gun._.soul, GunIs.node.soul(eat.obj) || ctx.soul), eat.node);
+            Obj.as(env.graph, eat.soul = Obj.as(eat.node._, Reserved.soul, IsNode.soul(eat.obj) || ctx.soul), eat.node);
             cb(eat, eat.soul);
           } else {
             var path = function (err, node) {
@@ -135,8 +143,8 @@ let Chaining = {};
               if (err) {
                 env.err = err
               }
-              eat.soul = GunIs.node.soul(node) || GunIs.node.soul(eat.obj) || GunIs.node.soul(eat.node) || Text.random();
-              Obj.as(env.graph, Obj.as(eat.node._, Gun._.soul, eat.soul), eat.node);
+              eat.soul = IsNode.soul(node) || IsNode.soul(eat.obj) || IsNode.soul(eat.node) || Text.random();
+              Obj.as(env.graph, Obj.as(eat.node._, Reserved.soul, eat.soul), eat.node);
               cb(eat, eat.soul);
             };
             path.opt = {put: true};
@@ -146,7 +154,7 @@ let Chaining = {};
         if (!eat.field) {
           return
         }
-        eat.node._[Gun._.state][eat.field] = drift;
+        eat.node._[Reserved.state][eat.field] = drift;
       }
 
       function end(err, ify) {
@@ -160,12 +168,12 @@ let Chaining = {};
               if (chain.__.by(soul).end) {
                 return
               }
-              Union(chain, GunIs.node.soul.ify({}, soul)); // fire off an end node if there hasn't already been one, to comply with the wire spec.
+              Union(chain, IsNode.soul.ify({}, soul)); // fire off an end node if there hasn't already been one, to comply with the wire spec.
             }
           }).err) {
           return cb.call(chain, err), chain._.at('err').emit(err)
         } // now actually union the serialized data, emit error if any occur.
-        if (Gun.fns.is(end.wire = chain.__.opt.wire.put)) {
+        if (Utils.fns.is(end.wire = chain.__.opt.wire.put)) {
           var wcb = function (err, ok, info) {
             if (err) {
               return Log(err.err || err), cb.call(chain, err), chain._.at('err').emit(err)
@@ -188,11 +196,11 @@ let Chaining = {};
         chain.get(ctx.soul, null, {chain: opt.chain || chain, at: gun._.at})
       }
 
-      Gun.ify(ctx.obj, soul, {pure: true})(end); // serialize the data!
+      Serializer(ctx.obj, soul, {pure: true})(end); // serialize the data!
     }
 
     if (gun === gun.back) { // if we are the root chain...
-      put({soul: GunIs.node.soul(val) || Text.random(), not: true}); // then cause the new chain to save data!
+      put({soul: IsNode.soul(val) || Text.random(), not: true}); // then cause the new chain to save data!
     } else { // else if we are on an existing chain then...
       gun._.at('soul').map(put); // put data on every soul that flows through this chain.
       var back = function (gun) {
@@ -226,7 +234,7 @@ let Chaining = {};
         opt: opt || {},
         cb: cb || function () {
         },
-        lex: (Text.is(lex) || Gun.num.is(lex)) ? GunIs.rel.ify(lex) : lex,
+        lex: (Text.is(lex) || Utils.num.is(lex)) ? IsRel.ify(lex) : lex,
       };
       ctx.force = ctx.opt.force;
       if (cb !== ctx.cb) {
@@ -235,13 +243,13 @@ let Chaining = {};
       if (!Obj.is(ctx.lex)) {
         return ctx.cb.call(gun = gun.chain(), {err: Log('Invalid get request!', lex)}), gun
       }
-      if (!(ctx.soul = ctx.lex[Gun._.soul])) {
+      if (!(ctx.soul = ctx.lex[Reserved.soul])) {
         return ctx.cb.call(gun = this.chain(), {err: Log('No soul to get!')}), gun
       } // TODO: With `.all` it'll be okay to not have an exact match!
       ctx.by = gun.__.by(ctx.soul);
       ctx.by.chain = ctx.by.chain || gun.chain();
       function load(lex) {
-        var soul = lex[Gun._.soul];
+        var soul = lex[Reserved.soul];
         var cached = gun.__.by(soul).node || gun.__.graph[soul];
         if (ctx.force) {
           ctx.force = false
@@ -271,7 +279,7 @@ let Chaining = {};
         if (err = Union(ctx.by.chain, data).err) {
           ctx.cb.call(ctx.by.chain, err);
           return ctx.by.chain._.at('err').emit({
-            soul: GunIs.node.soul(data) || ctx.soul,
+            soul: IsNode.soul(data) || ctx.soul,
             err: err.err || err
           }).chain(ctx.opt.chain);
         }
@@ -279,7 +287,7 @@ let Chaining = {};
 
       function wire(lex, cb, opt) {
         Events('get.wire').emit(ctx.by.chain, ctx, lex, cb, opt);
-        if (Gun.fns.is(gun.__.opt.wire.get)) {
+        if (Utils.fns.is(gun.__.opt.wire.get)) {
           return gun.__.opt.wire.get(lex, cb, opt)
         }
         if (!Log.count('no-wire-get')) {
@@ -327,8 +335,8 @@ let Chaining = {};
           return
         }
         cb.hash[at.hash] = true;
-        ctx.obj = (1 === GunIs.node.soul(ctx.node, 'key')) ? Obj.copy(ctx.node) : Obj.put({}, at.soul, GunIs.rel.ify(at.soul));
-        Obj.as((ctx.put = GunIs.node.ify(ctx.obj, key, true))._, 'key', 1);
+        ctx.obj = (1 === IsNode.soul(ctx.node, 'key')) ? Obj.copy(ctx.node) : Obj.put({}, at.soul, IsRel.ify(at.soul));
+        Obj.as((ctx.put = IsNode.ify(ctx.obj, key, true))._, 'key', 1);
         gun.__.gun.put(ctx.put, function (err, ok) {
           cb.call(this, err, ok)
         }, {chain: opt.chain, key: true, init: true});
@@ -367,7 +375,7 @@ let Chaining = {};
       if (opt.change) {
         change = at.change
       }
-      if (!opt.empty && Obj.empty(change, Gun._.meta)) {
+      if (!opt.empty && Obj.empty(change, Reserved.meta)) {
         return
       }
       cb.call(ctx.by.chain || gun, Obj.copy(at.field ? change[at.field] : change), at.field || (at.at && at.at.field));
@@ -393,7 +401,7 @@ let Chaining = {};
       var gun = this, chain = gun.chain(), f, c, u;
       if (!List.is(path)) {
         if (!Text.is(path)) {
-          if (!Gun.num.is(path)) { // if not a list, text, or number
+          if (!Utils.num.is(path)) { // if not a list, text, or number
             return cb.call(chain, {err: Log("Invalid path '" + path + "'!")}), chain; // then complain
           } else {
             return this.path(path + '', cb, opt)
@@ -422,9 +430,9 @@ let Chaining = {};
         else {
           on.off()
         }
-        if (ctx.rel = (GunIs.rel(at.value) || GunIs.rel(at.at && at.at.value))) {
+        if (ctx.rel = (IsRel(at.value) || IsRel(at.at && at.at.value))) {
           if (opt.put && 1 === path.length) {
-            return cb.call(ctx.by.chain || chain, null, GunIs.node.soul.ify({}, ctx.rel));
+            return cb.call(ctx.by.chain || chain, null, IsNode.soul.ify({}, ctx.rel));
           }
           var get = function (err, node) {
             if (!err && 1 !== path.length) {
@@ -486,8 +494,8 @@ let Chaining = {};
     cb = cb || function () {
       };
     cb.hash = {};
-    opt = Gun.bi.is(opt) ? {change: opt} : opt || {};
-    opt.change = Gun.bi.is(opt.change) ? opt.change : true;
+    opt = Utils.bi.is(opt) ? {change: opt} : opt || {};
+    opt.change = Utils.bi.is(opt.change) ? opt.change : true;
     function path(err, val, field) {
       if (err || (val === u)) {
         return
@@ -496,9 +504,9 @@ let Chaining = {};
     }
 
     function each(val, field) {
-      //if(!GunIs.rel(val)){ path.call(this.gun, null, val, field);return;}
+      //if(!IsRel(val)){ path.call(this.gun, null, val, field);return;}
       if (opt.node) {
-        if (!GunIs.rel(val)) {
+        if (!IsRel(val)) {
           return;
         }
       }
@@ -512,7 +520,7 @@ let Chaining = {};
 
     function map(at) {
       var ref = gun.__.by(at.soul).chain || gun;
-      GunIs.node(at.change, each, {gun: ref, soul: at.soul});
+      IsNode(at.change, each, {gun: ref, soul: at.soul});
     }
 
     gun.on(map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
@@ -526,7 +534,7 @@ let Chaining = {};
     val();
     return function (cb, opt) {
       var gun = this, args = List.slit.call(arguments);
-      cb = Gun.fns.is(cb) ? cb : function (val, field) {
+      cb = Utils.fns.is(cb) ? cb : function (val, field) {
         root.console.log.apply(root.console, args.concat([field && (field += ':'), val]))
       };
       cb.hash = {};
@@ -545,7 +553,7 @@ let Chaining = {};
         if (at.field && Obj.has(node, at.field)) {
           return cb.hash[hash] = true, cb.call(ctx.by.chain || gun, Obj.copy(node[at.field]), at.field);
         }
-        if (!opt.empty && Obj.empty(node, Gun._.meta)) {
+        if (!opt.empty && Obj.empty(node, Reserved.meta)) {
           return
         } // TODO: CLEAN UP! .on already does this without the .raw!
         if (ctx.by.end < 0) {
@@ -618,11 +626,11 @@ let Chaining = {};
         return
       }
       ctx.done = true;
-      var put = {}, soul = GunIs.node.soul(node);
+      var put = {}, soul = IsNode.soul(node);
       if (!soul) {
         return cb.call(gun, {err: Log('Only a node can be linked! Not "' + node + '"!')})
       }
-      gun.put(Obj.put(put, soul, GunIs.rel.ify(soul)), cb, opt);
+      gun.put(Obj.put(put, soul, IsRel.ify(soul)), cb, opt);
     });
     return ctx.chain;
   };
@@ -647,7 +655,7 @@ let Chaining = {};
           return
         }
         var soul = Text.random();
-        gun.__.gun.put(GunIs.node.soul.ify({}, soul), null, {init: true});
+        gun.__.gun.put(IsNode.soul.ify({}, soul), null, {init: true});
         gun.__.gun.key(at.soul, null, soul);
       }
     }, {raw: true});

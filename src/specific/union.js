@@ -1,69 +1,84 @@
 /**
  * Created by Paul on 9/7/2016.
  */
+import Reserved from '../reserved';
+import Obj from '../utilities/obj';
+import Log from '../console';
+// import GunIs from '../is';
+import IsNode from '../is/node';
+import IsRel from '../is/rel';
+import IsGraph from '../is/graph';
+import Utils from '../utilities';
+import Text from '../utilities/text';
+import List from '../utilities/list';
+import Time from '../utilities/time';
+import schedule from '../scheduler';
+
+import HAM from '../specific/ham';
+import Events from '../events';
 
 let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
-  var opt = opt || Gun.obj.is(cb) ? cb : {};
+  var opt = opt || Obj.is(cb) ? cb : {};
   var ctx = {graph: gun.__.graph, count: 0};
   ctx.cb = function () {
-    cb = Gun.fns.is(cb) ? cb() && null : null;
+    cb = Utils.fns.is(cb) ? cb() && null : null;
   }
   if (!ctx.graph) {
-    ctx.err = {err: Gun.log("No graph!")}
+    ctx.err = {err: Log("No graph!")}
   }
   if (!prime) {
-    ctx.err = {err: Gun.log("No data to merge!")}
+    ctx.err = {err: Log("No data to merge!")}
   }
-  if (ctx.soul = Gun.is.node.soul(prime)) {
-    prime = Gun.is.graph.ify(prime)
+  if (ctx.soul = IsNode.soul(prime)) {
+    prime = IsGraph.ify(prime)
   }
-  if (!Gun.is.graph(prime, null, function (val, field, node) {
+  if (!IsGraph(prime, null, function (val, field, node) {
       var meta;
-      if (!Gun.num.is(Gun.is.node.state(node, field))) {
-        return ctx.err = {err: Gun.log("No state on '" + field + "'!")}
+      if (!Utils.num.is(IsNode.state(node, field))) {
+        return ctx.err = {err: Log("No state on '" + field + "'!")}
       }
     }) || ctx.err) {
-    return ctx.err = ctx.err || {err: Gun.log("Invalid graph!", prime)}, ctx
+    return ctx.err = ctx.err || {err: Log("Invalid graph!", prime)}, ctx
   }
   function emit(at) {
-    Gun.on('operating').emit(gun, at);
+    Events('operating').emit(gun, at);
   }
 
   (function union(graph, prime) {
-    var prime = Gun.obj.map(prime, function (n, s, t) {
+    var prime = Obj.map(prime, function (n, s, t) {
       t(n)
     }).sort(function (A, B) {
-      var s = Gun.is.node.soul(A);
+      var s = IsNode.soul(A);
       if (graph[s]) {
         return 1
       }
       return 0;
     });
     ctx.count += 1;
-    ctx.err = Gun.list.map(prime, function (node, soul) {
-      soul = Gun.is.node.soul(node);
+    ctx.err = List.map(prime, function (node, soul) {
+      soul = IsNode.soul(node);
       if (!soul) {
-        return {err: Gun.log("Soul missing or mismatching!")}
+        return {err: Log("Soul missing or mismatching!")}
       }
       ctx.count += 1;
       var vertex = graph[soul];
       if (!vertex) {
-        graph[soul] = vertex = Gun.is.node.ify({}, soul)
+        graph[soul] = vertex = IsNode.ify({}, soul)
       }
       Union.HAM(vertex, node, function (vertex, field, val, state) {
-        Gun.on('historical').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
+        Events('historical').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
         gun.__.on('historical').emit({soul: soul, field: field, change: node});
       }, function (vertex, field, val, state) {
         if (!vertex) {
           return
         }
-        var change = Gun.is.node.soul.ify({}, soul);
+        var change = IsNode.soul.ify({}, soul);
         if (field) {
-          Gun.is.node.state.ify([vertex, change, node], field, val);
+          IsNode.state.ify([vertex, change, node], field, val);
         }
         emit({soul: soul, field: field, value: val, state: state, change: change});
       }, function (vertex, field, val, state) {
-        Gun.on('deferred').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
+        Events('deferred').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
       })(function () {
         emit({soul: soul, change: node});
         if (opt.soul) {
@@ -86,22 +101,22 @@ Union.ify = function (gun, prime, cb, opt) {
   if (gun) {
     gun = (gun.__ && gun.__.graph) ? gun.__.graph : gun
   }
-  if (Gun.text.is(prime)) {
+  if (Text.is(prime)) {
     if (gun && gun[prime]) {
       prime = gun[prime];
     } else {
-      return Gun.is.node.ify({}, prime);
+      return IsNode.ify({}, prime);
     }
   }
-  var vertex = Gun.is.node.soul.ify({}, Gun.is.node.soul(prime)), prime = Gun.is.graph.ify(prime) || prime;
-  if (Gun.is.graph(prime, null, function (val, field) {
+  var vertex = IsNode.soul.ify({}, IsNode.soul(prime)), prime = IsGraph.ify(prime) || prime;
+  if (IsGraph(prime, null, function (val, field) {
       var node;
 
       function merge(a, f, v) {
-        Gun.is.node.state.ify(a, f, v)
+        IsNode.state.ify(a, f, v)
       }
 
-      if (Gun.is.rel(val)) {
+      if (IsRel(val)) {
         node = gun ? gun[field] || prime[field] : prime[field]
       }
       Union.HAM(vertex, node, function () {
@@ -123,22 +138,22 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
   now.end = true;
   delta = delta || {};
   vertex = vertex || {};
-  Gun.obj.map(delta._, function (v, f) {
-    if (Gun._.state === f || Gun._.soul === f) {
+  Obj.map(delta._, function (v, f) {
+    if (Reserved.state === f || Reserved.soul === f) {
       return
     }
     vertex._[f] = v;
   });
-  if (!Gun.is.node(delta, function update(incoming, field) {
+  if (!IsNode(delta, function update(incoming, field) {
       now.end = false;
       var ctx = {incoming: {}, current: {}}, state;
-      ctx.drift = Gun.time.now(); // DANGEROUS!
-      ctx.incoming.value = Gun.is.rel(incoming) || incoming;
-      ctx.current.value = Gun.is.rel(vertex[field]) || vertex[field];
-      ctx.incoming.state = Gun.num.is(ctx.tmp = ((delta._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
-      ctx.current.state = Gun.num.is(ctx.tmp = ((vertex._ || {})[Gun._.state] || {})[field]) ? ctx.tmp : -Infinity;
+      ctx.drift = Time.now(); // DANGEROUS!
+      ctx.incoming.value = IsRel(incoming) || incoming;
+      ctx.current.value = IsRel(vertex[field]) || vertex[field];
+      ctx.incoming.state = Utils.num.is(ctx.tmp = ((delta._ || {})[Reserved.state] || {})[field]) ? ctx.tmp : -Infinity;
+      ctx.current.state = Utils.num.is(ctx.tmp = ((vertex._ || {})[Reserved.state] || {})[field]) ? ctx.tmp : -Infinity;
       upper.max = ctx.incoming.state > upper.max ? ctx.incoming.state : upper.max;
-      state = Gun.HAM(ctx.drift, ctx.incoming.state, ctx.current.state, ctx.incoming.value, ctx.current.value);
+      state = HAM(ctx.drift, ctx.incoming.state, ctx.current.state, ctx.incoming.value, ctx.current.value);
       if (state.err) {
         root.console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", state.err); // this error should never happen.
         return;
@@ -154,7 +169,7 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
       if (state.defer) {
         upper.wait = true;
         upper.call(state, vertex, field, incoming, ctx.incoming.state); // signals that there are still future modifications.
-        Gun.schedule(ctx.incoming.state, function () {
+        schedule(ctx.incoming.state, function () {
           update(incoming, field);
           if (ctx.incoming.state === upper.max) {
             (upper.last || function () {

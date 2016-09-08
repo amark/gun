@@ -2,6 +2,7 @@
  * Created by Paul on 9/7/2016.
  */
 import List from './utilities/list';
+import Obj from './utilities/obj';
 
 function On() { }
 On.create = function () {
@@ -55,8 +56,8 @@ Events.at = function (on) { // On event emitter customized for gun.
     proxy.emit = function (at) {
       if (at.soul) {
         at.hash = Events.at.hash(at);
-        //Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at;
-        Gun.obj.as(proxy.mem, proxy.e)[at.hash] = at;
+        //Obj.as(proxy.mem, proxy.e)[at.soul] = at;
+        Obj.as(proxy.mem, proxy.e)[at.hash] = at;
       }
       if (proxy.all.cb) {
         proxy.all.cb(at, proxy.e)
@@ -79,15 +80,15 @@ Events.at = function (on) { // On event emitter customized for gun.
     }
     proxy.all = function (cb) {
       proxy.all.cb = cb;
-      Gun.obj.map(proxy.mem, function (mem, e) {
-        Gun.obj.map(mem, function (at, i) {
+      Obj.map(proxy.mem, function (mem, e) {
+        Obj.map(mem, function (at, i) {
           cb(at, e);
         });
       });
     }
     proxy.event = function (cb, i) {
       i = on(proxy.e).event(cb, i);
-      return Gun.obj.map(proxy.mem[proxy.e], function (at) {
+      return Obj.map(proxy.mem[proxy.e], function (at) {
         i.stat = {first: true};
         cb.call(i, at);
       }), i.stat = {}, i;
@@ -104,7 +105,7 @@ Events.at.hash = function (at) {
   };
 
 Events.at.copy = function (at) {
-    return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function (v, f, t) {
+    return Obj.del(at, 'hash'), Obj.map(at, function (v, f, t) {
       t(f, v)
     })
   }
