@@ -2,10 +2,10 @@
  * Created by Paul on 9/7/2016.
  */
 
-import opt from './opt';
-import get from './get';
-import key from './key';
-import path from './path';
-import val from './val';
+import optBindings from './opt';
+import getBindings from './get';
+import keyBindings from './key';
+import pathBindings from './path';
+import valBindings from './val';
 
-export {opt, get, key, path, val};
+export {optBindings, getBindings, keyBindings, pathBindings, valBindings};
