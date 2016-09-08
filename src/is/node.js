@@ -4,10 +4,12 @@
 import Reserved from '../reserved';
 import Obj from '../utilities/obj';
 import Utils from '../utilities';
-import GunIs from '../is/base';
+import Is from '../is/base';
 import Time from '../utilities/time';
 import List from '../utilities/list';
 import Text from '../utilities/text';
+
+let GunIsVal = Is.val;
 
 let Node = function (n, cb, t) {
   var s; // checks to see if an object is a valid node.
@@ -19,7 +21,7 @@ let Node = function (n, cb, t) {
       if (f == Reserved.meta) {
         return
       } // skip over the metadata.
-      if (!GunIs.val(v)) {
+      if (!GunIsVal(v)) {
         return true
       } // it is true that this is an invalid node.
       if (cb) {
@@ -62,7 +64,7 @@ Node.state.ify = function (l, f, v, state) { // put a field's state and value on
   var l = l.reverse(), d = l[0]; // we might want to inherit the state from the last node in the list.
   List.map(l, function (n, i) { // iterate over each node.
     n = n || {}; // make sure it exists.
-    if (GunIs.val(v)) {
+    if (GunIsVal(v)) {
       n[f] = v
     } // if we have a value, then put it.
     n._ = n._ || {}; // make sure meta exists.

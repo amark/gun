@@ -9,13 +9,15 @@ import Time from '../utilities/time';
 import Obj from '../utilities/obj';
 import Union from '../specific/union';
 import request from '../request';
-import GunIs from '../is/base';
+import Is from '../is/base';
 
 import IsNode from '../is/node';
 import IsGraph from '../is/graph';
 
 import Log from '../console';
 import Reserved from '../reserved';
+
+let GunIsLex = Is.lex;
 
 let Bindings = function () {
   Events('opt').event(function (gun, opt) {
@@ -161,7 +163,7 @@ let Bindings = function () {
         if (req.headers.rid) {
           return
         } // no need to process
-        if (GunIs.lex(req.body)) {
+        if (GunIsLex(req.body)) {
           return tab.server.get(req, res)
         }
         else {
@@ -217,8 +219,7 @@ let Bindings = function () {
     gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
 
     Tab.request = tab.request;
-    Gun.Tab = Tab;
   });
 };
 
-export default Bindings();
+export default Bindings;

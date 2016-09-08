@@ -57,6 +57,7 @@ Gun.ify = Serializer;
 import Console from './console';
 Gun.log = Console;
 
+//TODO: sucks, why event binding and not direct call
 import {opt as Bind} from './bindings';
 
 import Request from './request';

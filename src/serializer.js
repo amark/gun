@@ -2,12 +2,14 @@
  * Created by Paul on 9/7/2016.
  */
 import IsNode from './is/node';
-import GunIs from './is/base';
+import Is from './is/base';
 import List from './utilities/list';
 import Obj from './utilities/obj';
 import Log from './console';
 import Text from './utilities/text';
 import Reserved from './reserved';
+
+let GunIsVal = Is.val;
 
 let ify = (data, cb, opt) => {
   opt = opt || {};
@@ -62,7 +64,7 @@ let map = (ctx, cb) => {
     if (String(field).indexOf('.') != -1 || (false && notValidField(field))) { // TODO: BUG! Do later for ACID "consistency" guarantee.
       return ctx.err = {err: Log("Invalid field name on '" + ctx.at.path.join('.') + "'!")};
     }
-    if (!GunIs.val(val)) {
+    if (!GunIsVal(val)) {
       var at = {obj: val, node: {}, back: [], path: [field]}, tmp = {}, was;
       at.path = (ctx.at.path || []).concat(at.path || []);
       if (!Obj.is(val)) {

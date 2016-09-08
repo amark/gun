@@ -145,11 +145,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Object.assign(Gun.prototype, _chaining2.default);
 	  Gun.chain = Gun.prototype;
 	
-	  //TODO: tests again
+	  //
 	
 	  Gun.ify = _serializer2.default;
 	
 	  Gun.log = _console2.default;
+	
+	  //TODO: sucks, why event binding and not direct call
 	
 	  Gun.request = _request2.default;
 	
@@ -894,26 +896,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //node for the sake of tests
 	
 	
-	  // let Is = function (gun) {
-	  //   return (gun instanceof Gun);
-	  // }; // check to see if it is a GUN instance.
-	  //
-	  // Is.val = function (v) { // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
-	  //   if (v === null) {
-	  //     return true
-	  //   } // "deletes", nulling out fields.
-	  //   if (v === Infinity) {
-	  //     return false
-	  //   } // we want this to be, but JSON does not support it, sad face.
-	  //   if (Utils.bi.is(v) // by "binary" we mean boolean.
-	  //     || Utils.num.is(v)
-	  //     || Text.is(v)) { // by "text" we mean strings.
-	  //     return true; // simple values are valid.
-	  //   }
-	  //   return Is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
-	  // };
-	
-	  //rel
+	  //rel for the sake of tests
 	
 	  _base2.default.node = _node2.default;
 	  //graph for the sake of tests
@@ -930,17 +913,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(2), __webpack_require__(5), __webpack_require__(4), __webpack_require__(1)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module, exports, __webpack_require__(2), __webpack_require__(5), __webpack_require__(4), __webpack_require__(1), __webpack_require__(13)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined") {
-	    factory(module, exports, require('../utilities'), require('../utilities/obj'), require('../utilities/text'), require('../reserved'));
+	    factory(module, exports, require('../utilities'), require('../utilities/obj'), require('../utilities/text'), require('../reserved'), require('./rel'));
 	  } else {
 	    var mod = {
 	      exports: {}
 	    };
-	    factory(mod, mod.exports, global.utilities, global.obj, global.text, global.reserved);
+	    factory(mod, mod.exports, global.utilities, global.obj, global.text, global.reserved, global.rel);
 	    global.base = mod.exports;
 	  }
-	})(this, function (module, exports, _utilities, _obj, _text, _reserved) {
+	})(this, function (module, exports, _utilities, _obj, _text, _reserved, _rel) {
 	  'use strict';
 	
 	  Object.defineProperty(exports, "__esModule", {
@@ -955,19 +938,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  var _reserved2 = _interopRequireDefault(_reserved);
 	
+	  var _rel2 = _interopRequireDefault(_rel);
+	
 	  function _interopRequireDefault(obj) {
 	    return obj && obj.__esModule ? obj : {
 	      default: obj
 	    };
 	  }
 	
-	  /**
-	   * Created by Paul on 9/8/2016.
-	   */
+	  //TODO: sucks, I have to remove the Gun reference or to move it somehow.
 	  var Is = function Is(gun) {
 	    return gun instanceof Gun;
 	  }; // check to see if it is a GUN instance.
 	
+	  /**
+	   * Created by Paul on 9/8/2016.
+	   */
 	  Is.val = function (v) {
 	    // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
 	    if (v === null) {
@@ -981,7 +967,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // by "text" we mean strings.
 	      return true; // simple values are valid.
 	    }
-	    return Is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+	    return (0, _rel2.default)(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 	  };
 	
 	  Is.lex = function (l) {
@@ -1116,6 +1102,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  }
 	
+	  var GunIsVal = _base2.default.val; /**
+	                                      * Created by Paul on 9/7/2016.
+	                                      */
+	
+	
 	  var Node = function Node(n, cb, t) {
 	    var s; // checks to see if an object is a valid node.
 	    if (!_obj2.default.is(n)) {
@@ -1128,7 +1119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (f == _reserved2.default.meta) {
 	          return;
 	        } // skip over the metadata.
-	        if (!_base2.default.val(v)) {
+	        if (!GunIsVal(v)) {
 	          return true;
 	        } // it is true that this is an invalid node.
 	        if (cb) {
@@ -1137,10 +1128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	    }
 	    return false; // nope! This was not a valid node.
-	  }; /**
-	      * Created by Paul on 9/7/2016.
-	      */
-	
+	  };
 	
 	  Node.ify = function (n, s, o) {
 	    // convert a shallow object into a node.
@@ -1180,7 +1168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _list2.default.map(l, function (n, i) {
 	      // iterate over each node.
 	      n = n || {}; // make sure it exists.
-	      if (_base2.default.val(v)) {
+	      if (GunIsVal(v)) {
 	        n[f] = v;
 	      } // if we have a value, then put it.
 	      n._ = n._ || {}; // make sure meta exists.
@@ -2649,6 +2637,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * Created by Paul on 9/7/2016.
 	   */
 	
+	  var GunIsLex = _base2.default.lex;
+	
 	  var Bindings = function Bindings() {
 	    (0, _events2.default)('opt').event(function (gun, opt) {
 	      opt = opt || {};
@@ -2790,7 +2780,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (req.headers.rid) {
 	          return;
 	        } // no need to process
-	        if (_base2.default.lex(req.body)) {
+	        if (GunIsLex(req.body)) {
 	          return tab.server.get(req, res);
 	        } else {
 	          return tab.server.put(req, res);
@@ -2848,11 +2838,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      gun.__.opt.wire.key = gun.__.opt.wire.key || tab.key;
 	
 	      _communication2.default.request = tab.request;
-	      Gun.Tab = _communication2.default;
 	    });
 	  };
 	
-	  exports.default = Bindings();
+	  exports.default = Bindings;
 	  module.exports = exports['default'];
 	});
 
@@ -3635,6 +3624,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  }
 	
+	  var GunIsVal = _base2.default.val; /**
+	                                      * Created by Paul on 9/7/2016.
+	                                      */
+	
+	
 	  var ify = function ify(data, cb, opt) {
 	    opt = opt || {};
 	    cb = cb || function (env, cb) {
@@ -3662,10 +3656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	    return end;
-	  }; /**
-	      * Created by Paul on 9/7/2016.
-	      */
-	
+	  };
 	  var map = function map(ctx, cb) {
 	    var u,
 	        rel = function rel(at, soul) {
@@ -3694,7 +3685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // TODO: BUG! Do later for ACID "consistency" guarantee.
 	        return ctx.err = { err: (0, _console2.default)("Invalid field name on '" + ctx.at.path.join('.') + "'!") };
 	      }
-	      if (!_base2.default.val(val)) {
+	      if (!GunIsVal(val)) {
 	        var at = { obj: val, node: {}, back: [], path: [field] },
 	            tmp = {},
 	            was;

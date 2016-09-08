@@ -5,7 +5,9 @@ import Utils from '../utilities';
 import Obj from '../utilities/obj';
 import Text from '../utilities/text';
 import Reserved from '../reserved';
+import Rel from './rel';
 
+//TODO: sucks, I have to remove the Gun reference or to move it somehow.
 let Is = function (gun) {
   return (gun instanceof Gun);
 }; // check to see if it is a GUN instance.
@@ -22,7 +24,7 @@ Is.val = function (v) { // Valid values are a subset of JSON: null, binary, numb
     || Text.is(v)) { // by "text" we mean strings.
     return true; // simple values are valid.
   }
-  return Is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+  return Rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 };
 
 Is.lex = function (l) {
