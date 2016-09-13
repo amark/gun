@@ -19,15 +19,10 @@ Gun.version = 0.3;
 import Reserved from './reserved';
 Gun._ = Reserved;
 
-import { fns, bi, num } from './utilities';
+import { fns, bi, num, Text, List, Obj, Time } from './utilities';
 Gun.fns = fns;
 Gun.bi = bi;
 Gun.num = num;
-
-import Text from './utilities/text'
-import List from './utilities/list'
-import Obj from './utilities/obj'
-import Time from './utilities/time'
 Gun.text = Text;
 Gun.list = List;
 Gun.obj = Obj;
@@ -43,7 +38,7 @@ import Is from './is';
 Gun.is = Is;
 
 import {Union, HAM} from './specific';
-Gun.HAM = HAM;
+// Gun.HAM = HAM;
 Gun.union = Union;
 
 import Chaining from './chaining';
@@ -57,10 +52,10 @@ Gun.ify = Serializer;
 import Console from './console';
 Gun.log = Console;
 
-//TODO: sucks, why event binding and not direct call
-import {opt as Bind} from './bindings';
+//TODO: sucks, why event binding and not direct call?
+import opt from './bindings/opt';
 
-import Request from './request';
-Gun.request = Request;
+// import Request from './request';
+// Gun.request = Request;
 
 export default Gun;

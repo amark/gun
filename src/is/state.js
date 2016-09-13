@@ -3,7 +3,7 @@
  */
 import Reserved from '../reserved';
 import List from '../utilities/list';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Is from '../is/base';
 let GunIsVal = Is.val;
 

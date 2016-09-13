@@ -3,7 +3,7 @@
  */
 import Reserved from '../reserved';
 import Obj from '../utilities/obj';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Is from '../is/base';
 import Time from '../utilities/time';
 

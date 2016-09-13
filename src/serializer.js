@@ -11,34 +11,6 @@ import Reserved from './reserved';
 
 let GunIsVal = Is.val;
 
-let ify = (data, cb, opt) => {
-  opt = opt || {};
-  cb = cb || function (env, cb) {
-      cb(env.at, IsNode.soul(env.at.obj) || IsNode.soul(env.at.node) || Text.random())
-    };
-  var end = function (fn) {
-    ctx.end = fn || function () {
-      };
-    unique(ctx);
-  }, ctx = {at: {path: [], obj: data}, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true};
-  if (!data) {
-    return ctx.err = {err: Log('Serializer does not have correct parameters.')}, end
-  }
-  if (ctx.opt.start) {
-    IsNode.soul.ify(ctx.root, ctx.opt.start)
-  }
-  ctx.at.node = ctx.root;
-  while (ctx.loop && !ctx.err) {
-    seen(ctx, ctx.at);
-    map(ctx, cb);
-    if (ctx.queue.length) {
-      ctx.at = ctx.queue.shift();
-    } else {
-      ctx.loop = false;
-    }
-  }
-  return end;
-};
 let map = (ctx, cb) => {
   var u, rel = function (at, soul) {
     at.soul = at.soul || soul || IsNode.soul(at.obj) || IsNode.soul(at.node);
@@ -103,9 +75,40 @@ let seen = (ctx, at) => {
       }
     }) || (ctx.seen.push(at) && false);
 };
+
+let ify = (data, cb, opt) => {
+  opt = opt || {};
+  cb = cb || function (env, cb) {
+      cb(env.at, IsNode.soul(env.at.obj) || IsNode.soul(env.at.node) || Text.random())
+    };
+  var end = function (fn) {
+    ctx.end = fn || function () {
+      };
+    unique(ctx);
+  }, ctx = {at: {path: [], obj: data}, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true};
+  if (!data) {
+    return ctx.err = {err: Log('Serializer does not have correct parameters.')}, end
+  }
+  if (ctx.opt.start) {
+    IsNode.soul.ify(ctx.root, ctx.opt.start)
+  }
+  ctx.at.node = ctx.root;
+  while (ctx.loop && !ctx.err) {
+    seen(ctx, ctx.at);
+    map(ctx, cb);
+    if (ctx.queue.length) {
+      ctx.at = ctx.queue.shift();
+    } else {
+      ctx.loop = false;
+    }
+  }
+  return end;
+};
+
 ify.wire = (n, cb, opt) => {
   return Text.is(n) ? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt)
 };
+
 ify.wire.to = (n, cb, opt) => {
   var t, b;
   if (!n || !(t = IsNode.soul(n))) {
@@ -131,6 +134,7 @@ ify.wire.to = (n, cb, opt) => {
   });
   return t;
 };
+
 ify.wire.from = (n, cb, opt) => {
   if (!n) {
     return null
@@ -145,6 +149,5 @@ ify.wire.from = (n, cb, opt) => {
   }
   return a;
 };
-
 
 export default ify;

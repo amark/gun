@@ -4,7 +4,7 @@
 
 import List from './utilities/list';
 import Time from './utilities/time';
-import Utils from './utilities';
+import Utils from './utilities/base';
 
 let schedule = function (state, cb) { // maybe use lru-cache?
   schedule.waiting.push({

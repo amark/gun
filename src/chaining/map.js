@@ -2,7 +2,7 @@
  * Created by Paul on 9/8/2016.
  */
 
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import IsRel from '../is/rel';
 import IsNode from '../is/node';
 import Log from '../console';

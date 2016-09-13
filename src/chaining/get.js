@@ -2,7 +2,7 @@
  * Created by Paul on 9/8/2016.
  */
 import Union from '../specific/union';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Text from '../utilities/text';
 import Obj from '../utilities/obj';
 import Reserved from '../reserved';

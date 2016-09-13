@@ -1,7 +1,7 @@
 /**
  * Created by Paul on 9/8/2016.
  */
-import Utils from './index';
+import Utils from './base';
 import List from './definitions/list'
 import Obj from './definitions/obj'
 

@@ -13,7 +13,7 @@ import Log from '../console';
 import Events from '../events';
 import Reserved from '../reserved';
 import Union from '../specific/union';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 
 export default function (val, cb, opt) {
   opt = opt || {};

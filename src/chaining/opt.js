@@ -4,7 +4,7 @@
 import Text from '../utilities/text';
 import List from '../utilities/list';
 import Obj from '../utilities/obj';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Events from '../events';
 
 export default function (opt, stun) {

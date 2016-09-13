@@ -5,7 +5,7 @@ import { valBindings} from '../bindings';
 import List from '../utilities/list';
 import Obj from '../utilities/obj';
 import Events from '../events';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Reserved from '../reserved';
 import Log from '../console';
 

@@ -2,7 +2,7 @@
  * Created by Paul on 9/8/2016.
  */
 import { pathBindings } from '../bindings';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Text from '../utilities/text';
 import List from '../utilities/list';
 import Obj from '../utilities/obj';

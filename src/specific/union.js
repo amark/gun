@@ -8,7 +8,7 @@ import Log from '../console';
 import IsNode from '../is/node';
 import IsRel from '../is/rel';
 import IsGraph from '../is/graph';
-import Utils from '../utilities';
+import Utils from '../utilities/base';
 import Text from '../utilities/text';
 import List from '../utilities/list';
 import Time from '../utilities/time';
