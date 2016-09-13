@@ -5,30 +5,30 @@ export default function (reServer) {
 
   let wsx = function (opt, cb) {
     //TODO: why? r.WebSocket || . The rest looks pretty useless, but to remove later.
-    var ws, WS =  window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
+    var ws, WS =  window.WebSocket;
     if (!WS) {
-      return
+      return;
     }
     if (ws = wsx.peers[opt.base]) {
       if (!ws.readyState) {
         return setTimeout(function () {
           wsx(opt, cb)
-        }, 10), true
+        }, 10), true;
       }
       var req = {};
       if (opt.headers) {
-        req.headers = opt.headers
+        req.headers = opt.headers;
       }
       if (opt.body) {
-        req.body = opt.body
+        req.body = opt.body;
       }
       if (opt.url) {
-        req.url = opt.url
+        req.url = opt.url;
       }
       req.headers = req.headers || {};
       wsx.cbs[req.headers['ws-rid'] = 'WS' + (+new Date()) + '.' + Math.floor((Math.random() * 65535) + 1)] = function (err, res) {
         if (res.body || res.end) {
-          delete wsx.cbs[req.headers['ws-rid']]
+          delete wsx.cbs[req.headers['ws-rid']];
         }
         cb(err, res);
       };
@@ -36,7 +36,7 @@ export default function (reServer) {
       return true;
     }
     if (ws === false) {
-      return
+      return;
     }
     try {
       ws = wsx.peers[opt.base] = new WS(opt.base.replace('http', 'ws'));
@@ -44,14 +44,14 @@ export default function (reServer) {
     }
     ws.onopen = function (o) {
       wsx.back = 2;
-      wsx(opt, cb)
+      wsx(opt, cb);
     };
     ws.onclose = function (c) {
       if (!c) {
-        return
+        return;
       }
       if (ws && ws.close instanceof Function) {
-        ws.close()
+        ws.close();
       }
       if (1006 === c.code) { // websockets cannot be used
         /*ws = ws.peers[opt.base] = false; // 1006 has mixed meanings, therefore we can no longer respect it.
@@ -69,21 +69,21 @@ export default function (reServer) {
     }
     ws.onmessage = function (m) {
       if (!m || !m.data) {
-        return
+        return;
       }
       var res;
       try {
         res = JSON.parse(m.data);
       } catch (e) {
-        return
+        return;
       }
       if (!res) {
-        return
+        return;
       }
       res.headers = res.headers || {};
       if (res.headers['ws-rid']) {
         return (wsx.cbs[res.headers['ws-rid']] || function () {
-        })(null, res)
+        })(null, res);
       }
       if (res.body) {
         reServer(res, opt.base);
@@ -101,4 +101,3 @@ export default function (reServer) {
 
   return wsx;
 }
-

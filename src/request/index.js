@@ -2,8 +2,19 @@
  * Created by Paul on 9/7/2016.
  */
 
-import jsonp from './jsonp';
-import ws from './ws';
+import createServer from './createServer';
+
+import jsonpx from './jsonp';
+import wsx from './ws';
+
+function reServer(res, base) {
+  createServer.ing(res, function (res) {
+    r(base, null, null, res)
+  });
+}
+
+let ws = wsx(reServer);
+let jsonp = jsonpx(reServer);
 
 function r(base, body, cb, opt) {
   opt = opt || {};
@@ -12,43 +23,11 @@ function r(base, body, cb, opt) {
   o.body = opt.body || body;
   o.headers = opt.headers;
   o.url = opt.url;
-  cb = cb || function () {
-    };
-  if (!o.base) {
-    return
-  }
-  r.transport(o, cb);
+  cb = cb || function () { };
+
+  o.base && !ws(o, cb) && jsonp(o, cb);
 }
 
-r.createServer = function (fn) {
-  r.createServer.s.push(fn)
-};
-r.createServer.ing = function (req, cb) {
-  var i = r.createServer.s.length;
-  while (i--) {
-    (r.createServer.s[i] || function () {
-    })(req, cb)
-  }
-};
-r.createServer.s = [];
-
-r.transport = function (opt, cb) {
-  //Gun.log("TRANSPORT:", opt);
-  if (r.ws(opt, cb)) {
-    return
-  }
-  r.jsonp(opt, cb);
-};
-
-function reServer(res, base) {
-  r.createServer.ing(res, function (res) {
-    r(base, null, null, res)
-  });
-}
-
-
-r.ws = ws(reServer);
-r.jsonp = jsonp(reServer);
-
+r.createServer = createServer;
 
 export default r;

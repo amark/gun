@@ -7,7 +7,6 @@ import Text from '../utilities/text';
 import Reserved from '../reserved';
 import Rel from './rel';
 
-//TODO: sucks, I have to remove the Gun reference or to move it somehow.
 let Is = function (gun) {
   return (!!gun && gun.constructor && gun.constructor.name === 'Gun');
 }; // check to see if it is a GUN instance.

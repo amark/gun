@@ -23,7 +23,7 @@ export default function (reServer) {
     jsonp.ify(opt, function (url) {
       //Gun.log(url);
       if (!url) {
-        return
+        return;
       }
       jsonp.send(url, function (reply) {
         //Gun.log("jsonp reply", reply);
@@ -51,14 +51,14 @@ export default function (reServer) {
   };
   jsonp.poll = function (opt, res) {
     if (!opt || !opt.base || !res || !res.headers || !res.headers.poll) {
-      return
+      return;
     }
     (jsonp.poll.s = jsonp.poll.s || {})[opt.base] = jsonp.poll.s[opt.base] || setTimeout(function () { // TODO: Need to optimize for Chrome's 6 req limit?
         //Gun.log("polling again");
         var o = {base: opt.base, headers: {pull: 1}};
         each(opt.headers, function (v, i) {
-          o.headers[i] = v
-        })
+          o.headers[i] = v;
+        });
         jsonp(o, function (err, reply) {
           delete jsonp.poll.s[opt.base];
           while (reply.body && reply.body.length && reply.body.shift) { // we're assuming an array rather than chunk encoding. :(
@@ -114,4 +114,3 @@ export default function (reServer) {
 
   return jsonp;
 }
-// export default jsonp;
