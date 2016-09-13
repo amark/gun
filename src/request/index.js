@@ -2,8 +2,8 @@
  * Created by Paul on 9/7/2016.
  */
 
-import createServer from  './createServer';
-// import createRequest from  './createRequest';
+import jsonp from './jsonp';
+import ws from './ws';
 
 function r(base, body, cb, opt) {
   opt = opt || {};
@@ -12,18 +12,43 @@ function r(base, body, cb, opt) {
   o.body = opt.body || body;
   o.headers = opt.headers;
   o.url = opt.url;
-  cb = cb || function () { };
+  cb = cb || function () {
+    };
   if (!o.base) {
-    return;
+    return
   }
-
-  //Gun.log("TRANSPORT:", opt);
-  if (ws(opt, r, cb)) {
-    return;
-  }
-  jsonp(opt, cb);
+  r.transport(o, cb);
 }
 
-r.createServer = createServer;
+r.createServer = function (fn) {
+  r.createServer.s.push(fn)
+};
+r.createServer.ing = function (req, cb) {
+  var i = r.createServer.s.length;
+  while (i--) {
+    (r.createServer.s[i] || function () {
+    })(req, cb)
+  }
+};
+r.createServer.s = [];
+
+r.transport = function (opt, cb) {
+  //Gun.log("TRANSPORT:", opt);
+  if (r.ws(opt, cb)) {
+    return
+  }
+  r.jsonp(opt, cb);
+};
+
+function reServer(res, base) {
+  r.createServer.ing(res, function (res) {
+    r(base, null, null, res)
+  });
+}
+
+
+r.ws = ws(reServer);
+r.jsonp = jsonp(reServer);
+
 
 export default r;
