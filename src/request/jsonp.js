@@ -1,21 +1,34 @@
 /**
  * Created by Paul on 9/7/2016.
  */
+import createServer from './createServer';
+import createRequest from  './createRequest';
+
+let each = function (obj, cb) {
+  if (!obj || !cb) {
+    return
+  }
+  for (var i in obj) {
+    if (obj.hasOwnProperty(i)) {
+      cb(obj[i], i);
+    }
+  }
+};
 
 let jsonp = function (opt, cb) {
   if (typeof window === "undefined") {
     return cb("JSONP is currently browser only.");
   }
   //Gun.log("jsonp send", opt);
-  r.jsonp.ify(opt, function (url) {
+  jsonp.ify(opt, function (url) {
     //Gun.log(url);
     if (!url) {
       return
     }
-    r.jsonp.send(url, function (reply) {
+    jsonp.send(url, function (reply) {
       //Gun.log("jsonp reply", reply);
       cb(null, reply);
-      r.jsonp.poll(opt, reply);
+      jsonp.poll(opt, reply);
     }, opt.jsonp);
   });
 };
@@ -40,19 +53,19 @@ jsonp.poll = function (opt, res) {
   if (!opt || !opt.base || !res || !res.headers || !res.headers.poll) {
     return
   }
-  (r.jsonp.poll.s = r.jsonp.poll.s || {})[opt.base] = r.jsonp.poll.s[opt.base] || setTimeout(function () { // TODO: Need to optimize for Chrome's 6 req limit?
+  (jsonp.poll.s = jsonp.poll.s || {})[opt.base] = jsonp.poll.s[opt.base] || setTimeout(function () { // TODO: Need to optimize for Chrome's 6 req limit?
       //Gun.log("polling again");
       var o = {base: opt.base, headers: {pull: 1}};
-      r.each(opt.headers, function (v, i) {
+      each(opt.headers, function (v, i) {
         o.headers[i] = v
       })
-      r.jsonp(o, function (err, reply) {
-        delete r.jsonp.poll.s[opt.base];
+      jsonp(o, function (err, reply) {
+        delete jsonp.poll.s[opt.base];
         while (reply.body && reply.body.length && reply.body.shift) { // we're assuming an array rather than chunk encoding. :(
           var res = reply.body.shift();
           //Gun.log("-- go go go", res);
           if (res && res.body) {
-            r.createServer.ing(res, function () {
+            createServer.ing(res, function () {
               r(opt.base, null, null, res)
             })
           } // emit extra events.
@@ -66,13 +79,13 @@ jsonp.ify = function (opt, cb) {
     q = opt.url.pathname + q;
   }
   q = opt.base + q;
-  r.each((opt.url || {}).query, function (v, i) {
+  each((opt.url || {}).query, function (v, i) {
     q += uri(i) + '=' + uri(v) + '&'
   });
   if (opt.headers) {
     q += uri('`') + '=' + uri(JSON.stringify(opt.headers)) + '&'
   }
-  if (r.jsonp.max < q.length) {
+  if (jsonp.max < q.length) {
     return cb()
   }
   q += uri('jsonp') + '=' + uri(opt.jsonp = 'P' + Math.floor((Math.random() * 65535) + 1));
@@ -87,7 +100,7 @@ jsonp.ify = function (opt, cb) {
     }
     w = uri(w);
     var i = 0, l = w.length
-      , s = r.jsonp.max - (q.length + wls(l.toString()).length);
+      , s = jsonp.max - (q.length + wls(l.toString()).length);
     if (s < 0) {
       return cb()
     }

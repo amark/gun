@@ -53,9 +53,9 @@ import Console from './console';
 Gun.log = Console;
 
 //TODO: sucks, why event binding and not direct call?
-import opt from './bindings/opt';
+import {opt as Bind} from './bindings';
 
-// import Request from './request';
-// Gun.request = Request;
+import Request from './request';
+Gun.request = Request;
 
 export default Gun;

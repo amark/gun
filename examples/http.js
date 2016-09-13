@@ -6,7 +6,7 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || pro
 var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 
 var Gun = require('../');
-// require('../lib/wsp')(Gun);
+
 var gun = Gun({
 	file: 'data.json',
 	s3: {

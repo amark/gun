@@ -2,8 +2,8 @@
  * Created by Paul on 9/7/2016.
  */
 
-import jsonp from './jsonp';
-import ws from './ws';
+import createServer from  './createServer';
+// import createRequest from  './createRequest';
 
 function r(base, body, cb, opt) {
   opt = opt || {};
@@ -12,45 +12,18 @@ function r(base, body, cb, opt) {
   o.body = opt.body || body;
   o.headers = opt.headers;
   o.url = opt.url;
-  cb = cb || function () {
-    };
+  cb = cb || function () { };
   if (!o.base) {
-    return
+    return;
   }
-  r.transport(o, cb);
+
+  //Gun.log("TRANSPORT:", opt);
+  if (ws(opt, r, cb)) {
+    return;
+  }
+  jsonp(opt, cb);
 }
 
-r.createServer = function (fn) {
-  r.createServer.s.push(fn)
-};
-r.createServer.ing = function (req, cb) {
-  var i = r.createServer.s.length;
-  while (i--) {
-    (r.createServer.s[i] || function () {
-    })(req, cb)
-  }
-};
-r.createServer.s = [];
-r.back = 2;
-r.backoff = 2;
-r.transport = function (opt, cb) {
-  //Gun.log("TRANSPORT:", opt);
-  if (r.ws(opt, cb)) {
-    return
-  }
-  r.jsonp(opt, cb);
-};
-r.ws = ws;
-r.jsonp = jsonp;
-r.each = function (obj, cb) {
-  if (!obj || !cb) {
-    return
-  }
-  for (var i in obj) {
-    if (obj.hasOwnProperty(i)) {
-      cb(obj[i], i);
-    }
-  }
-};
+r.createServer = createServer;
 
 export default r;

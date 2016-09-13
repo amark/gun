@@ -9,7 +9,7 @@ import Rel from './rel';
 
 //TODO: sucks, I have to remove the Gun reference or to move it somehow.
 let Is = function (gun) {
-  return (gun instanceof Gun);
+  return (!!gun && gun.constructor && gun.constructor.name === 'Gun');
 }; // check to see if it is a GUN instance.
 
 Is.val = function (v) { // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.

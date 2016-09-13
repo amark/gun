@@ -5,7 +5,6 @@
 import Text from '../utilities/text';
 import Obj from '../utilities/obj';
 
-// let Tab = {};
 let s = { };
 
 s.put = function (key, val, cb) {
@@ -33,7 +32,5 @@ let store = (typeof localStorage === 'undefined') ? {
   }, getItem: function () {
   }
 } : localStorage;
-
-// Tab.store = s;
 
 export default s;
