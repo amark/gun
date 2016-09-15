@@ -2,7 +2,8 @@
  * Created by Paul on 9/7/2016.
  */
 
-import store from './store';
+import store from '../store';
+import localStore from '../localStorage';
 import Events from '../events';
 import Text from '../utilities/text';
 import Time from '../utilities/time';
@@ -22,7 +23,9 @@ let GunIsLex = Is.lex;
 let Bindings = Events('opt').event(function (gun, opt) {
   opt = opt || {};
   var tab = gun.tab = gun.tab || {};
-  tab.store = tab.store || store;
+  if(!tab.store) {
+    tab.store = store(opt.store || localStore);
+  }
   tab.request = tab.request || request;
   if (!tab.request) {
     throw new Error("Default GUN driver could not find default network abstraction.")
