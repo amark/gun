@@ -14,8 +14,8 @@ import IsRel from '../is/rel';
 
 export default (function () {
   getBindings();
-  return function (lex, cb, opt) { // get opens up a reference to a node and loads it.
-    var gun = this, ctx = {
+  return function get(lex, cb, opt) { // get opens up a reference to a node and loads it.
+    let gun = this, ctx = {
       opt: opt || {},
       cb: cb || function () {
       },
@@ -34,8 +34,8 @@ export default (function () {
     ctx.by = gun.__.by(ctx.soul);
     ctx.by.chain = ctx.by.chain || gun.chain();
     function load(lex) {
-      var soul = lex[Reserved.soul];
-      var cached = gun.__.by(soul).node || gun.__.graph[soul];
+      let soul = lex[Reserved.soul];
+      let cached = gun.__.by(soul).node || gun.__.graph[soul];
       if (ctx.force) {
         ctx.force = false
       }

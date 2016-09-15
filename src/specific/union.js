@@ -18,11 +18,11 @@ import HAM from '../specific/ham';
 import Events from '../events';
 
 let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
-  var opt = opt || Obj.is(cb) ? cb : {};
-  var ctx = {graph: gun.__.graph, count: 0};
+  opt = opt || Obj.is(cb) ? cb : {};
+  let ctx = {graph: gun.__.graph, count: 0};
   ctx.cb = function () {
     cb = Utils.fns.is(cb) ? cb() && null : null;
-  }
+  };
   if (!ctx.graph) {
     ctx.err = {err: Log("No graph!")}
   }
@@ -33,7 +33,7 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
     prime = IsGraph.ify(prime)
   }
   if (!IsGraph(prime, null, function (val, field, node) {
-      var meta;
+      let meta;
       if (!Utils.num.is(IsNode.state(node, field))) {
         return ctx.err = {err: Log("No state on '" + field + "'!")}
       }
@@ -45,10 +45,10 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
   }
 
   (function union(graph, prime) {
-    var prime = Obj.map(prime, function (n, s, t) {
+    prime = Obj.map(prime, function (n, s, t) {
       t(n)
     }).sort(function (A, B) {
-      var s = IsNode.soul(A);
+      let s = IsNode.soul(A);
       if (graph[s]) {
         return 1
       }
@@ -61,7 +61,7 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
         return {err: Log("Soul missing or mismatching!")}
       }
       ctx.count += 1;
-      var vertex = graph[soul];
+      let vertex = graph[soul];
       if (!vertex) {
         graph[soul] = vertex = IsNode.ify({}, soul)
       }
@@ -72,7 +72,7 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
         if (!vertex) {
           return
         }
-        var change = IsNode.soul.ify({}, soul);
+        let change = IsNode.soul.ify({}, soul);
         if (field) {
           IsNode.state.ify([vertex, change, node], field, val);
         }
@@ -108,9 +108,10 @@ Union.ify = function (gun, prime, cb, opt) {
       return IsNode.ify({}, prime);
     }
   }
-  var vertex = IsNode.soul.ify({}, IsNode.soul(prime)), prime = IsGraph.ify(prime) || prime;
+  let vertex = IsNode.soul.ify({}, IsNode.soul(prime));
+  prime = IsGraph.ify(prime) || prime;
   if (IsGraph(prime, null, function (val, field) {
-      var node;
+      let node;
 
       function merge(a, f, v) {
         IsNode.state.ify(a, f, v)
@@ -146,7 +147,7 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
   });
   if (!IsNode(delta, function update(incoming, field) {
       now.end = false;
-      var ctx = {incoming: {}, current: {}}, state;
+      let ctx = {incoming: {}, current: {}}, state;
       ctx.drift = Time.now(); // DANGEROUS!
       ctx.incoming.value = IsRel(incoming) || incoming;
       ctx.current.value = IsRel(vertex[field]) || vertex[field];

@@ -22,10 +22,15 @@ let GunIsLex = Is.lex;
 
 let Bindings = Events('opt').event(function (gun, opt) {
   opt = opt || {};
-  var tab = gun.tab = gun.tab || {};
+  let tab = gun.tab = gun.tab || {};
+
   if(!tab.store) {
     tab.store = store(opt.store || localStore);
   }
+  tab.prefix = tab.prefix || (opt.prefix || opt.prefix === '' ? opt.prefix : void 0);
+  if(tab.prefix === void 0)
+    tab.prefix = 'gun/';
+
   tab.request = tab.request || request;
   if (!tab.request) {
     throw new Error("Default GUN driver could not find default network abstraction.")
@@ -33,26 +38,25 @@ let Bindings = Events('opt').event(function (gun, opt) {
   tab.request.s = tab.request.s || {};
   tab.headers = opt.headers || {};
   tab.headers['gun-sid'] = tab.headers['gun-sid'] || Text.random(); // stream id
-  tab.prefix = tab.prefix || opt.prefix || 'gun/';
   tab.get = tab.get || function (lex, cb, opt) {
       if (!lex) {
         return
       }
-      var soul = lex[Reserved.soul];
+      let soul = lex[Reserved.soul];
       if (!soul) {
         return
       }
       cb = cb || function () {
         };
-      var ropt = {};
+      let ropt = {};
       (ropt.headers = Obj.copy(tab.headers)).id = tab.msg();
       (function local(soul, cb) {
         tab.store.get(tab.prefix + soul, function (err, data) {
           if (!data) {
-            return
+            return;
           } // let the peers handle no data.
           if (err) {
-            return cb(err)
+            return cb(err);
           }
           cb(err, cb.node = data); // node
           cb(err, IsNode.soul.ify({}, IsNode.soul(data))); // end
@@ -67,11 +71,11 @@ let Bindings = Events('opt').event(function (gun, opt) {
           }, 1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
         });
         Obj.map(opt.peers || gun.__.opt.peers, function (peer, url) {
-          var p = {};
+          let p = {};
           tab.request(url, lex, tab.request.s[ropt.headers.id], ropt);
           cb.peers = true;
         });
-        var node = gun.__.graph[soul];
+        let node = gun.__.graph[soul];
         if (node) {
           tab.put(IsGraph.ify(node));
         }
@@ -82,15 +86,15 @@ let Bindings = Events('opt').event(function (gun, opt) {
       cb = cb || function () {
         };
       opt = opt || {};
-      var ropt = {};
+      let ropt = {};
       (ropt.headers = Obj.copy(tab.headers)).id = tab.msg();
       IsGraph(graph, function (node, soul) {
         if (!gun.__.graph[soul]) {
-          return
+          return;
         }
         tab.store.put(tab.prefix + soul, gun.__.graph[soul], function (err) {
           if (err) {
-            cb({err: err})
+            cb({err: err});
           }
         });
       });
@@ -138,7 +142,7 @@ let Bindings = Events('opt').event(function (gun, opt) {
       }
       clearTimeout(tab.msg.clear);
       tab.msg.clear = setTimeout(function () {
-        var now = Time.is();
+        let now = Time.is();
         Obj.map(tab.msg.debounce, function (t, id) {
           if (now - t < 1000 * 60 * 5) {
             return
@@ -175,21 +179,21 @@ let Bindings = Events('opt').event(function (gun, opt) {
   tab.server.json = 'application/json';
   tab.server.regex = gun.__.opt.route = gun.__.opt.route || opt.route || /^\/gun/i;
   tab.server.get = function (req, cb) {
-    var soul = req.body[Reserved.soul], node;
+    let soul = req.body[Reserved.soul], node;
     if (!(node = gun.__.graph[soul])) {
-      return
+      return;
     }
-    var reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}};
+    let reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}};
     cb({headers: reply.headers, body: node});
   };
   tab.server.put = function (req, cb) {
-    var reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}}, keep;
+    let reply = {headers: {'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg()}}, keep;
     if (!req.body) {
-      return cb({headers: reply.headers, body: {err: "No body"}})
+      return cb({headers: reply.headers, body: {err: "No body"}});
     }
     if (!Obj.is(req.body, function (node, soul) {
         if (gun.__.graph[soul]) {
-          return true
+          return true;
         }
       })) {
       return
@@ -198,19 +202,19 @@ let Bindings = Events('opt').event(function (gun, opt) {
         if (err) {
           return cb({headers: reply.headers, body: {err: err || "Union failed."}})
         }
-        var ctx = ctx || {};
+        ctx = ctx || {};
         ctx.graph = {};
         IsGraph(req.body, function (node, soul) {
-          ctx.graph[soul] = gun.__.graph[soul]
+          ctx.graph[soul] = gun.__.graph[soul];
         });
         gun.__.opt.wire.put(ctx.graph, function (err, ok) {
           if (err) {
-            return cb({headers: reply.headers, body: {err: err || "Failed."}})
+            return cb({headers: reply.headers, body: {err: err || "Failed."}});
           }
           cb({headers: reply.headers, body: {ok: ok || "Persisted."}});
         }, {local: true, peers: {}});
       }).err) {
-      cb({headers: reply.headers, body: {err: req.err || "Union failed."}})
+      cb({headers: reply.headers, body: {err: req.err || "Union failed."}});
     }
   };
   Obj.map(gun.__.opt.peers, function () { // only create server if peers and do it once by returning immediately.

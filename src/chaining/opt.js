@@ -9,9 +9,9 @@ import Events from '../events';
 
 export default function (opt, stun) {
   opt = opt || {};
-  var gun = this, root = (gun.__ && gun.__.gun) ? gun.__.gun : (gun._ = gun.__ = {gun: gun}).gun.chain(); // if root does not exist, then create a root chain.
+  let gun = this, root = (gun.__ && gun.__.gun) ? gun.__.gun : (gun._ = gun.__ = {gun: gun}).gun.chain(); // if root does not exist, then create a root chain.
   root.__.by = root.__.by || function (f) {
-      return gun.__.by[f] = gun.__.by[f] || {}
+      return gun.__.by[f] = gun.__.by[f] || {};
     };
   root.__.graph = root.__.graph || {};
   root.__.opt = root.__.opt || {peers: {}};

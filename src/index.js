@@ -3,7 +3,7 @@
  */
 
 function Gun(o) {
-  var gun = this;
+  let gun = this;
   if (!Gun.is(gun)) {
     return new Gun(o)
   }

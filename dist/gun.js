@@ -477,7 +477,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function fuzzy(t, f) {
 	      var n = -1,
 	          i = 0,
-	          c;
+	          c = void 0;
 	      for (; c = f[i++];) {
 	        if (!~(n = t.indexOf(c, n + 1))) {
 	          return false;
@@ -566,14 +566,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 	
 	  exports.default = function (l, c, _) {
-	    var u,
+	    var u = void 0,
 	        i = 0,
 	        ii = 0,
-	        x,
-	        r,
-	        rr,
-	        ll,
-	        lle,
+	        x = void 0,
+	        r = void 0,
+	        rr = void 0,
+	        ll = void 0,
+	        lle = void 0,
 	        f = _base2.default.fns.is(c),
 	        t = function t(k, v) {
 	      if (2 === arguments.length) {
@@ -1184,7 +1184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // import GunIs from '../is';
 	  var Union = function Union(gun, prime, cb, opt) {
 	    // merge two graphs into the first.
-	    var opt = opt || _obj2.default.is(cb) ? cb : {};
+	    opt = opt || _obj2.default.is(cb) ? cb : {};
 	    var ctx = { graph: gun.__.graph, count: 0 };
 	    ctx.cb = function () {
 	      cb = _base2.default.fns.is(cb) ? cb() && null : null;
@@ -1199,7 +1199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      prime = _graph2.default.ify(prime);
 	    }
 	    if (!(0, _graph2.default)(prime, null, function (val, field, node) {
-	      var meta;
+	      var meta = void 0;
 	      if (!_base2.default.num.is(_node2.default.state(node, field))) {
 	        return ctx.err = { err: (0, _console2.default)("No state on '" + field + "'!") };
 	      }
@@ -1211,7 +1211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    (function union(graph, prime) {
-	      var prime = _obj2.default.map(prime, function (n, s, t) {
+	      prime = _obj2.default.map(prime, function (n, s, t) {
 	        t(n);
 	      }).sort(function (A, B) {
 	        var s = _node2.default.soul(A);
@@ -1277,10 +1277,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return _node2.default.ify({}, prime);
 	      }
 	    }
-	    var vertex = _node2.default.soul.ify({}, _node2.default.soul(prime)),
-	        prime = _graph2.default.ify(prime) || prime;
+	    var vertex = _node2.default.soul.ify({}, _node2.default.soul(prime));
+	    prime = _graph2.default.ify(prime) || prime;
 	    if ((0, _graph2.default)(prime, null, function (val, field) {
-	      var node;
+	      var node = void 0;
 	
 	      function merge(a, f, v) {
 	        _node2.default.state.ify(a, f, v);
@@ -1315,7 +1315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!(0, _node2.default)(delta, function update(incoming, field) {
 	      now.end = false;
 	      var ctx = { incoming: {}, current: {} },
-	          state;
+	          state = void 0;
 	      ctx.drift = _time2.default.now(); // DANGEROUS!
 	      ctx.incoming.value = (0, _rel2.default)(incoming) || incoming;
 	      ctx.current.value = (0, _rel2.default)(vertex[field]) || vertex[field];
@@ -1469,7 +1469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	  var Node = function Node(n, cb, t) {
-	    var s; // checks to see if an object is a valid node.
+	    var s = void 0; // checks to see if an object is a valid node.
 	    if (!_obj2.default.is(n)) {
 	      return false;
 	    } // must be an object.
@@ -1627,33 +1627,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  }
 	
+	  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+	    return typeof obj;
+	  } : function (obj) {
+	    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+	  };
+	
 	  var Rel = function Rel(v) {
 	    // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 	    if (_obj2.default.is(v)) {
-	      // must be an object.
-	      var id;
-	      _obj2.default.map(v, function (s, f) {
-	        // map over the object...
+	      var _ret = function () {
+	        // must be an object.
+	        var id = void 0;
+	        _obj2.default.map(v, function (s, f) {
+	          // map over the object...
+	          if (id) {
+	            return id = false;
+	          } // if ID is already defined AND we're still looping through the object, it is considered invalid.
+	          if (f == _reserved2.default.soul && _text2.default.is(s)) {
+	            // the field should be '#' and have a text value.
+	            id = s; // we found the soul!
+	          } else {
+	            return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
+	          }
+	        });
 	        if (id) {
-	          return id = false;
-	        } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-	        if (f == _reserved2.default.soul && _text2.default.is(s)) {
-	          // the field should be '#' and have a text value.
-	          id = s; // we found the soul!
-	        } else {
-	          return id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
+	          // a valid id was found.
+	          return {
+	            v: id
+	          }; // yay! Return it.
 	        }
-	      });
-	      if (id) {
-	        // a valid id was found.
-	        return id; // yay! Return it.
-	      }
+	      }();
+	
+	      if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 	    }
 	    return false; // the value was not a valid soul relation.
-	  }; /**
-	      * Created by Paul on 9/7/2016.
-	      */
-	
+	  };
 	
 	  Rel.ify = function (s) {
 	    var r = {};
@@ -1765,8 +1774,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  state.ify = function (l, f, v, state) {
 	    // put a field's state and value on some nodes.
 	    l = _list2.default.is(l) ? l : [l]; // handle a list of nodes or just one node.
-	    var l = l.reverse(),
-	        d = l[0]; // we might want to inherit the state from the last node in the list.
+	    l = l.reverse();
+	    var d = l[0]; // we might want to inherit the state from the last node in the list.
 	    _list2.default.map(l, function (n, i) {
 	      // iterate over each node.
 	      n = n || {}; // make sure it exists.
@@ -1915,7 +1924,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  Graph.ify = function (n) {
-	    var s; // wrap a node into a graph.
+	    var s = void 0; // wrap a node into a graph.
 	    if (s = _node2.default.soul(n)) {
 	      // grab the soul from the node, if it is a node.
 	      return _obj2.default.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
@@ -2190,7 +2199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } // if the data is a primitive and there is no context for it yet, then we have an error.
 	      // TODO: BUG? gun.get(key).path(field).put() isn't doing it as pseudo.
 	      function soul(env, cb, map) {
-	        var eat;
+	        var eat = void 0;
 	        if (!env || !(eat = env.at) || !env.at.node) {
 	          return;
 	        }
@@ -2205,23 +2214,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _obj2.default.as(env.graph, eat.soul = _obj2.default.as(eat.node._, _reserved2.default.soul, _node2.default.soul(eat.obj) || ctx.soul), eat.node);
 	            cb(eat, eat.soul);
 	          } else {
-	            var path = function path(err, node) {
-	              if (path.opt && path.opt.on && path.opt.on.off) {
-	                path.opt.on.off();
-	              }
-	              if (path.opt.done) {
-	                return;
-	              }
-	              path.opt.done = true;
-	              if (err) {
-	                env.err = err;
-	              }
-	              eat.soul = _node2.default.soul(node) || _node2.default.soul(eat.obj) || _node2.default.soul(eat.node) || _text2.default.random();
-	              _obj2.default.as(env.graph, _obj2.default.as(eat.node._, _reserved2.default.soul, eat.soul), eat.node);
-	              cb(eat, eat.soul);
-	            };
-	            path.opt = { put: true };
-	            ctx.not ? path() : (at.field || at.at ? gun._.back : gun).path(eat.path || [], path, path.opt);
+	            (function () {
+	              var path = function path(err, node) {
+	                if (path.opt && path.opt.on && path.opt.on.off) {
+	                  path.opt.on.off();
+	                }
+	                if (path.opt.done) {
+	                  return;
+	                }
+	                path.opt.done = true;
+	                if (err) {
+	                  env.err = err;
+	                }
+	                eat.soul = _node2.default.soul(node) || _node2.default.soul(eat.obj) || _node2.default.soul(eat.node) || _text2.default.random();
+	                _obj2.default.as(env.graph, _obj2.default.as(eat.node._, _reserved2.default.soul, eat.soul), eat.node);
+	                cb(eat, eat.soul);
+	              };
+	              path.opt = { put: true };
+	              ctx.not ? path() : (at.field || at.at ? gun._.back : gun).path(eat.path || [], path, path.opt);
+	            })();
 	          }
 	        }
 	        if (!eat.field) {
@@ -2395,7 +2406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	  var map = function map(ctx, cb) {
-	    var u,
+	    var u = void 0,
 	        rel = function rel(at, soul) {
 	      at.soul = at.soul || soul || _node2.default.soul(at.obj) || _node2.default.soul(at.node);
 	      if (!ctx.opt.pure) {
@@ -2409,7 +2420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	      unique(ctx);
 	    },
-	        it;
+	        it = void 0;
 	    _obj2.default.map(ctx.at.obj, function (val, field) {
 	      ctx.at.val = val;
 	      ctx.at.field = field;
@@ -2425,7 +2436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (!GunIsVal(val)) {
 	        var at = { obj: val, node: {}, back: [], path: [field] },
 	            tmp = {},
-	            was;
+	            was = void 0;
 	        at.path = (ctx.at.path || []).concat(at.path || []);
 	        if (!_obj2.default.is(val)) {
 	          return ctx.err = { err: (0, _console2.default)("Invalid value at '" + at.path.join('.') + "'!") };
@@ -2497,7 +2508,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  ify.wire.to = function (n, cb, opt) {
-	    var t, b;
+	    var t = void 0,
+	        b = void 0;
 	    if (!n || !(t = _node2.default.soul(n))) {
 	      return null;
 	    }
@@ -2592,7 +2604,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  exports.default = function () {
 	    (0, _bindings.getBindings)();
-	    return function (lex, cb, opt) {
+	    return function get(lex, cb, opt) {
 	      // get opens up a reference to a node and loads it.
 	      var gun = this,
 	          ctx = {
@@ -2790,9 +2802,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var Bindings = (0, _events2.default)('opt').event(function (gun, opt) {
 	    opt = opt || {};
 	    var tab = gun.tab = gun.tab || {};
+	
 	    if (!tab.store) {
 	      tab.store = (0, _store2.default)(opt.store || _localStorage2.default);
 	    }
+	    tab.prefix = tab.prefix || (opt.prefix || opt.prefix === '' ? opt.prefix : void 0);
+	    if (tab.prefix === void 0) tab.prefix = 'gun/';
+	
 	    tab.request = tab.request || _request2.default;
 	    if (!tab.request) {
 	      throw new Error("Default GUN driver could not find default network abstraction.");
@@ -2800,7 +2816,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    tab.request.s = tab.request.s || {};
 	    tab.headers = opt.headers || {};
 	    tab.headers['gun-sid'] = tab.headers['gun-sid'] || _text2.default.random(); // stream id
-	    tab.prefix = tab.prefix || opt.prefix || 'gun/';
 	    tab.get = tab.get || function (lex, cb, opt) {
 	      if (!lex) {
 	        return;
@@ -2939,7 +2954,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    tab.server.regex = gun.__.opt.route = gun.__.opt.route || opt.route || /^\/gun/i;
 	    tab.server.get = function (req, cb) {
 	      var soul = req.body[_reserved2.default.soul],
-	          node;
+	          node = void 0;
 	      if (!(node = gun.__.graph[soul])) {
 	        return;
 	      }
@@ -2948,7 +2963,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    tab.server.put = function (req, cb) {
 	      var reply = { headers: { 'Content-Type': tab.server.json, rid: req.headers.id, id: tab.msg() } },
-	          keep;
+	          keep = void 0;
 	      if (!req.body) {
 	        return cb({ headers: reply.headers, body: { err: "No body" } });
 	      }
@@ -2963,7 +2978,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (err) {
 	          return cb({ headers: reply.headers, body: { err: err || "Union failed." } });
 	        }
-	        var ctx = ctx || {};
+	        ctx = ctx || {};
 	        ctx.graph = {};
 	        (0, _graph2.default)(req.body, function (node, soul) {
 	          ctx.graph[soul] = gun.__.graph[soul];
@@ -3031,10 +3046,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    s.get = function (key, cb) {
 	      /*setTimeout(function(){*/
 	      try {
-	        // let item = store.getItem(key);
-	        // if(x.then) {
-	        //
-	        // }
 	        store.getItem(key, function (err, val) {
 	          if (err) return cb(err);
 	          cb(null, _obj2.default.ify(val || null));
@@ -3293,10 +3304,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	          delete jsonp.poll.s[opt.base];
 	          while (reply.body && reply.body.length && reply.body.shift) {
 	            // we're assuming an array rather than chunk encoding. :(
-	            var res = reply.body.shift();
+	            var _res = reply.body.shift();
 	            //Gun.log("-- go go go", res);
-	            if (res && res.body) {
-	              reServer(res, opt.base);
+	            if (_res && _res.body) {
+	              reServer(_res, opt.base);
 	            } // emit extra events.
 	          }
 	        });
@@ -3394,36 +3405,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var wsx = function wsx(opt, cb) {
 	      //TODO: why? r.WebSocket || . The rest looks pretty useless, but to remove later.
-	      var ws,
+	      var ws = void 0,
 	          WS = window.WebSocket;
 	      if (!WS) {
 	        return;
 	      }
 	      if (ws = wsx.peers[opt.base]) {
-	        if (!ws.readyState) {
-	          return setTimeout(function () {
-	            wsx(opt, cb);
-	          }, 10), true;
-	        }
-	        var req = {};
-	        if (opt.headers) {
-	          req.headers = opt.headers;
-	        }
-	        if (opt.body) {
-	          req.body = opt.body;
-	        }
-	        if (opt.url) {
-	          req.url = opt.url;
-	        }
-	        req.headers = req.headers || {};
-	        wsx.cbs[req.headers['ws-rid'] = 'WS' + +new Date() + '.' + Math.floor(Math.random() * 65535 + 1)] = function (err, res) {
-	          if (res.body || res.end) {
-	            delete wsx.cbs[req.headers['ws-rid']];
+	        var _ret = function () {
+	          if (!ws.readyState) {
+	            return {
+	              v: (setTimeout(function () {
+	                wsx(opt, cb);
+	              }, 10), true)
+	            };
 	          }
-	          cb(err, res);
-	        };
-	        ws.send(JSON.stringify(req));
-	        return true;
+	          var req = {};
+	          if (opt.headers) {
+	            req.headers = opt.headers;
+	          }
+	          if (opt.body) {
+	            req.body = opt.body;
+	          }
+	          if (opt.url) {
+	            req.url = opt.url;
+	          }
+	          req.headers = req.headers || {};
+	          wsx.cbs[req.headers['ws-rid'] = 'WS' + +new Date() + '.' + Math.floor(Math.random() * 65535 + 1)] = function (err, res) {
+	            if (res.body || res.end) {
+	              delete wsx.cbs[req.headers['ws-rid']];
+	            }
+	            cb(err, res);
+	          };
+	          ws.send(JSON.stringify(req));
+	          return {
+	            v: true
+	          };
+	        }();
+	
+	        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 	      }
 	      if (ws === false) {
 	        return;
@@ -3459,7 +3478,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!m || !m.data) {
 	          return;
 	        }
-	        var res;
+	        var res = void 0;
 	        try {
 	          res = JSON.parse(m.data);
 	        } catch (e) {
@@ -3489,6 +3508,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return wsx;
 	  };
 	
+	  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+	    return typeof obj;
+	  } : function (obj) {
+	    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+	  };
+
 	  module.exports = exports['default'];
 	});
 
@@ -3791,7 +3816,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (!ctx.soul) {
 	        return;
 	      }
-	      var end;
+	      var end = void 0;
 	      (end = gun.__.by(ctx.soul)).end = end.end || -1; // TODO: CLEAN UP! This should be per peer!
 	    }, -999);
 	    (0, _events2.default)('wire.get').event(function (gun, ctx, err, data) {
@@ -3952,9 +3977,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      cb.hash = {};
 	      var gun = this,
 	          chain = gun.chain(),
-	          f,
-	          c,
-	          u;
+	          f = void 0,
+	          c = void 0,
+	          u = void 0;
 	      if (!_list2.default.is(path)) {
 	        if (!_text2.default.is(path)) {
 	          if (!_base2.default.num.is(path)) {
@@ -4072,7 +4097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 	
 	  exports.default = function (cb, opt) {
-	    var u,
+	    var u = void 0,
 	        gun = this,
 	        chain = gun.chain();
 	    cb = cb || function () {};
@@ -4335,7 +4360,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  exports.default = function (item, cb, opt) {
 	    var gun = this,
 	        ctx = {},
-	        chain;
+	        chain = void 0;
 	    cb = cb || function () {};
 	    if (!(0, _base2.default)(item)) {
 	      return cb.call(gun, { err: (0, _console2.default)('Set only supports node references currently!') }), gun;
@@ -4478,7 +4503,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  exports.default = function (cb, opt) {
 	    // on subscribes to any changes on the souls.
 	    var gun = this,
-	        u;
+	        u = void 0;
 	    opt = _obj2.default.is(opt) ? opt : { change: opt };
 	    cb = cb || function () {};
 	    function map(at) {

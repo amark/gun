@@ -27,7 +27,7 @@ Is.val = function (v) { // Valid values are a subset of JSON: null, binary, numb
 };
 
 Is.lex = function (l) {
-  var r = true;
+  let r = true;
   if (!Obj.is(l)) {
     return false
   }

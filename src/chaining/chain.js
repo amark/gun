@@ -4,7 +4,7 @@
 import Events from '../events';
 
 export default function (s) {
-  var from = this, gun = !from.back ? from : new this.constructor(from);//Gun(from);
+  let from = this, gun = !from.back ? from : new this.constructor(from);//Gun(from);
   gun._ = gun._ || {};
   gun._.back = gun.back || from;
   gun.back = gun.back || from;

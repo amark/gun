@@ -6,7 +6,7 @@ import List from './definitions/list'
 import Obj from './definitions/obj'
 
 export default function (l, c, _) {
-  var u, i = 0, ii = 0, x, r, rr, ll, lle, f = Utils.fns.is(c),
+  let u, i = 0, ii = 0, x, r, rr, ll, lle, f = Utils.fns.is(c),
     t = function (k, v) {
       if (2 === arguments.length) {
         rr = rr || {};

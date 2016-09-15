@@ -6,7 +6,7 @@ let each = function (obj, cb) {
   if (!obj || !cb) {
     return
   }
-  for (var i in obj) {
+  for (let i in obj) {
     if (obj.hasOwnProperty(i)) {
       cb(obj[i], i);
     }
@@ -33,7 +33,7 @@ export default function (reServer) {
     });
   };
   jsonp.send = function (url, cb, id) {
-    var js = document.createElement('script');
+    let js = document.createElement('script');
     js.src = url;
     window[js.id = id] = function (res) {
       cb(res);
@@ -55,14 +55,14 @@ export default function (reServer) {
     }
     (jsonp.poll.s = jsonp.poll.s || {})[opt.base] = jsonp.poll.s[opt.base] || setTimeout(function () { // TODO: Need to optimize for Chrome's 6 req limit?
         //Gun.log("polling again");
-        var o = {base: opt.base, headers: {pull: 1}};
+        let o = {base: opt.base, headers: {pull: 1}};
         each(opt.headers, function (v, i) {
           o.headers[i] = v;
         });
         jsonp(o, function (err, reply) {
           delete jsonp.poll.s[opt.base];
           while (reply.body && reply.body.length && reply.body.shift) { // we're assuming an array rather than chunk encoding. :(
-            var res = reply.body.shift();
+            let res = reply.body.shift();
             //Gun.log("-- go go go", res);
             if (res && res.body) {
               reServer(res, opt.base);
@@ -72,7 +72,7 @@ export default function (reServer) {
       }, res.headers.poll);
   };
   jsonp.ify = function (opt, cb) {
-    var uri = encodeURIComponent, q = '?';
+    let uri = encodeURIComponent, q = '?';
     if (opt.url && opt.url.pathname) {
       q = opt.url.pathname + q;
     }
@@ -89,7 +89,7 @@ export default function (reServer) {
     q += uri('jsonp') + '=' + uri(opt.jsonp = 'P' + Math.floor((Math.random() * 65535) + 1));
     if (opt.body) {
       q += '&';
-      var w = opt.body, wls = function (w, l, s) {
+      let w = opt.body, wls = function (w, l, s) {
         return uri('%') + '=' + uri(w + '-' + (l || w) + '/' + (s || w)) + '&' + uri('$') + '=';
       };
       if (typeof w != 'string') {
@@ -97,7 +97,7 @@ export default function (reServer) {
         q += uri('^') + '=' + uri('json') + '&';
       }
       w = uri(w);
-      var i = 0, l = w.length
+      let i = 0, l = w.length
         , s = jsonp.max - (q.length + wls(l.toString()).length);
       if (s < 0) {
         return cb()

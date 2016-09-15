@@ -16,13 +16,13 @@ export default (function () {
   return function (path, cb, opt) {
     opt = opt || {};
     cb = cb || (function () {
-        var cb = function () {
+        let cb = function () {
         };
         cb.no = true;
         return cb
       }());
     cb.hash = {};
-    var gun = this, chain = gun.chain(), f, c, u;
+    let gun = this, chain = gun.chain(), f, c, u;
     if (!List.is(path)) {
       if (!Text.is(path)) {
         if (!Utils.num.is(path)) { // if not a list, text, or number
@@ -43,8 +43,8 @@ export default (function () {
         this.off();
         return
       } // TODO: BUG - THIS IS A FIX FOR A BUG! TEST #"context no double emit", COMMENT THIS LINE OUT AND SEE IT FAIL!
-      var ctx = {soul: at.soul, field: at.field, by: gun.__.by(at.soul)}, field = path[0];
-      var on = Obj.as(cb.hash, at.hash, {
+      let ctx = {soul: at.soul, field: at.field, by: gun.__.by(at.soul)}, field = path[0];
+      let on = Obj.as(cb.hash, at.hash, {
         off: function () {
         }
       });
@@ -58,7 +58,7 @@ export default (function () {
         if (opt.put && 1 === path.length) {
           return cb.call(ctx.by.chain || chain, null, IsNode.soul.ify({}, ctx.rel));
         }
-        var get = function (err, node) {
+        let get = function (err, node) {
           if (!err && 1 !== path.length) {
             return
           }
@@ -97,7 +97,7 @@ export default (function () {
       if (at.at && at.at.field === path[0]) {
         return
       } // TODO: BUG! THIS FIXES SO MANY PROBLEMS BUT DOES IT CATCH VARYING SOULS EDGE CASE?
-      var ctx = {by: gun.__.by(at.soul)};
+      let ctx = {by: gun.__.by(at.soul)};
       if (Obj.has(ctx.by.node, path[0])) {
         return
       }

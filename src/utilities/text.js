@@ -20,7 +20,7 @@ Text.ify = function (t) {
     return (t && t.toString) ? t.toString() : t;
   }
 Text.random = function (l, c) {
-  var s = '';
+  let s = '';
   l = l || 24; // you are not going to make a 0 length random number, so no need to check type
   c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
   while (l > 0) {
@@ -28,9 +28,9 @@ Text.random = function (l, c) {
     l--
   }
   return s;
-}
+};
 Text.match = function (t, o) {
-  var r = false;
+  let r = false;
   t = t || '';
   o = Text.is(o) ? {'=': o} : o || {}; // {'~', '=', '*', '<', '>', '+', '-', '?', '!'} // ignore uppercase, exactly equal, anything after, lexically larger, lexically lesser, added in, subtacted from, questionable fuzzy match, and ends with.
   if (Obj.has(o, '~')) {
@@ -91,7 +91,7 @@ Text.match = function (t, o) {
     }
   }
   function fuzzy(t, f) {
-    var n = -1, i = 0, c;
+    let n = -1, i = 0, c;
     for (; c = f[i++];) {
       if (!~(n = t.indexOf(c, n + 1))) {
         return false

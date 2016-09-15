@@ -23,13 +23,13 @@ schedule.set = function (future) {
   if (Infinity <= (schedule.soonest = future)) {
     return
   }
-  var now = Time.now(); // WAS time.is() TODO: Hmmm, this would make it hard for every gun instance to have their own version of time.
+  let now = Time.now(); // WAS time.is() TODO: Hmmm, this would make it hard for every gun instance to have their own version of time.
   future = (future <= now) ? 0 : (future - now);
   clearTimeout(schedule.id);
   schedule.id = setTimeout(schedule.check, future);
 };
 schedule.check = function () {
-  var now = Time.now(), soonest = Infinity; // WAS time.is() TODO: Same as above about time. Hmmm.
+  let now = Time.now(), soonest = Infinity; // WAS time.is() TODO: Same as above about time. Hmmm.
   schedule.waiting.sort(schedule.sort);
   schedule.waiting = List.map(schedule.waiting, function (wait, i, map) {
       if (!wait) {

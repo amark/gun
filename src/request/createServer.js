@@ -9,7 +9,7 @@ let createServer = function (fn) {
 };
 
 createServer.ing = function (req, cb) {
-  var i = s.length;
+  let i = s.length;
   while (i--) {
     (s[i] || function () { })(req, cb);
   }

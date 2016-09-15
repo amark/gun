@@ -9,7 +9,7 @@ export default function (store) {
   if(!(store.setItem && store.getItem && store.removeItem)) {
     throw new Error("Storage driver incompatible.")
   }
-  let s = {};
+  let s = { };
   s.put = function (key, val, cb) {
     try {
       store.setItem(key, Text.ify(val), function (err) {

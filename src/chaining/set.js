@@ -9,7 +9,7 @@ import IsNode from '../is/node';
 import Obj from '../utilities/obj';
 
 export default function (item, cb, opt) {
-  var gun = this, ctx = {}, chain;
+  let gun = this, ctx = {}, chain;
   cb = cb || function () {
     };
   if (!GunIs(item)) {
@@ -22,7 +22,7 @@ export default function (item, cb, opt) {
       return
     }
     ctx.done = true;
-    var put = {}, soul = IsNode.soul(node);
+    let put = {}, soul = IsNode.soul(node);
     if (!soul) {
       return cb.call(gun, {err: Log('Only a node can be linked! Not "' + node + '"!')})
     }

@@ -8,33 +8,32 @@ import Reserved from '../reserved';
 import Log from '../console';
 
 export default function (cb, opt) { // on subscribes to any changes on the souls.
-  var gun = this, u;
+  let gun = this, u;
   opt = Obj.is(opt) ? opt : {change: opt};
-  cb = cb || function () {
-    };
+  cb = cb || function () { };
   function map(at) {
     opt.on = opt.on || this;
-    var ctx = {by: gun.__.by(at.soul)}, change = ctx.by.node;
+    let ctx = {by: gun.__.by(at.soul)}, change = ctx.by.node;
     if (opt.on.stat && opt.on.stat.first) {
-      (at = Events.at.copy(at)).change = ctx.by.node
+      (at = Events.at.copy(at)).change = ctx.by.node;
     }
     if (opt.raw) {
-      return cb.call(opt.on, at)
+      return cb.call(opt.on, at);
     }
     if (opt.once) {
-      this.off()
+      this.off();
     }
     if (opt.change) {
-      change = at.change
+      change = at.change;
     }
     if (!opt.empty && Obj.empty(change, Reserved.meta)) {
-      return
+      return;
     }
     cb.call(ctx.by.chain || gun, Obj.copy(at.field ? change[at.field] : change), at.field || (at.at && at.at.field));
   };
   opt.on = gun._.at('soul').map(map);
   if (gun === gun.back) {
-    Log('You have no context to `.on`!')
+    Log('You have no context to `.on`!');
   }
   return gun;
 };

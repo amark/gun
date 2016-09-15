@@ -7,7 +7,7 @@ import Text from '../utilities/text';
 
 let Rel = function (v) { // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
   if (Obj.is(v)) { // must be an object.
-    var id;
+    let id;
     Obj.map(v, function (s, f) { // map over the object...
       if (id) {
         return id = false
@@ -26,8 +26,8 @@ let Rel = function (v) { // this defines whether an object is a soul relation or
 };
 
 Rel.ify = function (s) {
-  var r = {};
+  let r = {};
   return Obj.put(r, Reserved.soul, s), r
-} // convert a soul into a relation and return it.
+}; // convert a soul into a relation and return it.
 
 export default Rel;

@@ -5,7 +5,7 @@ import Obj from '../utilities/obj'
 import IsNode from '../is/node';
 
 let Graph = function (g, cb, fn, t) { // checks to see if an object is a valid graph.
-  var exist = false;
+  let exist = false;
   if (!Obj.is(g)) { return false } // must be an object.
   return !Obj.map(g, function (n, s) { // we invert this because the way we check for this is via a negation.
       if (!n || s !== IsNode.soul(n) || !IsNode(n, fn)) {
@@ -22,7 +22,7 @@ let Graph = function (g, cb, fn, t) { // checks to see if an object is a valid g
 };
 
 Graph.ify = function (n) {
-  var s; // wrap a node into a graph.
+  let s; // wrap a node into a graph.
   if (s = IsNode.soul(n)) { // grab the soul from the node, if it is a node.
     return Obj.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
   }

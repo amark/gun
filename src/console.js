@@ -2,7 +2,7 @@
  * Created by Paul on 9/7/2016.
  */
 
-var root = this || {};
+let root = this || {};
 //TODO: Check why is needed to fake console
 root.console = root.console || {
     log: function (s) {
@@ -10,7 +10,7 @@ root.console = root.console || {
     }
   }; // safe for old browsers
 let GLog = {};
-var console = {
+let console = {
   log: function (s) {
     return root.console.log.apply(root.console, arguments), s
   },

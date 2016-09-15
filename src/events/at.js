@@ -4,9 +4,9 @@
 import Obj from '../utilities/obj';
 
 let At = function (on) { // On event emitter customized for gun.
-  var proxy = function (e) {
+  let proxy = function (e) {
     return proxy.e = e, proxy
-  }
+  };
   proxy.emit = function (at) {
     if (at.soul) {
       at.hash = At.hash(at);

@@ -12,7 +12,7 @@ import Reserved from './reserved';
 let GunIsVal = Is.val;
 
 let map = (ctx, cb) => {
-  var u, rel = function (at, soul) {
+  let u, rel = function (at, soul) {
     at.soul = at.soul || soul || IsNode.soul(at.obj) || IsNode.soul(at.node);
     if (!ctx.opt.pure) {
       ctx.graph[at.soul] = IsNode.soul.ify(at.node, at.soul);
@@ -37,7 +37,7 @@ let map = (ctx, cb) => {
       return ctx.err = {err: Log("Invalid field name on '" + ctx.at.path.join('.') + "'!")};
     }
     if (!GunIsVal(val)) {
-      var at = {obj: val, node: {}, back: [], path: [field]}, tmp = {}, was;
+      let at = {obj: val, node: {}, back: [], path: [field]}, tmp = {}, was;
       at.path = (ctx.at.path || []).concat(at.path || []);
       if (!Obj.is(val)) {
         return ctx.err = {err: Log("Invalid value at '" + at.path.join('.') + "'!")};
@@ -81,7 +81,7 @@ let ify = (data, cb, opt) => {
   cb = cb || function (env, cb) {
       cb(env.at, IsNode.soul(env.at.obj) || IsNode.soul(env.at.node) || Text.random())
     };
-  var end = function (fn) {
+  let end = function (fn) {
     ctx.end = fn || function () {
       };
     unique(ctx);
@@ -110,7 +110,7 @@ ify.wire = (n, cb, opt) => {
 };
 
 ify.wire.to = (n, cb, opt) => {
-  var t, b;
+  let t, b;
   if (!n || !(t = IsNode.soul(n))) {
     return null
   }
@@ -121,7 +121,7 @@ ify.wire.to = (n, cb, opt) => {
     if (Reserved.meta === f) {
       return
     }
-    var w = '', s = IsNode.state(n, f);
+    let w = '', s = IsNode.state(n, f);
     if (!s) {
       return
     }
@@ -139,7 +139,7 @@ ify.wire.from = (n, cb, opt) => {
   if (!n) {
     return null
   }
-  var a = [], s = -1, e = 0, end = 1;
+  let a = [], s = -1, e = 0, end = 1;
   while ((e = n.indexOf("'", s + 1)) >= 0) {
     if (s === e || '\\' === n.charAt(e - 1)) {
     } else {

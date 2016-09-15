@@ -13,7 +13,8 @@ let state = function (n, f) {
 
 state.ify = function (l, f, v, state) { // put a field's state and value on some nodes.
   l = List.is(l) ? l : [l]; // handle a list of nodes or just one node.
-  var l = l.reverse(), d = l[0]; // we might want to inherit the state from the last node in the list.
+  l = l.reverse();
+  let d = l[0]; // we might want to inherit the state from the last node in the list.
   List.map(l, function (n, i) { // iterate over each node.
     n = n || {}; // make sure it exists.
     if (GunIsVal(v)) {

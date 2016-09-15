@@ -13,20 +13,20 @@ import state from './state';
 let GunIsVal = Is.val;
 
 let Node = function (n, cb, t) {
-  var s; // checks to see if an object is a valid node.
+  let s; // checks to see if an object is a valid node.
   if (!Obj.is(n)) {
-    return false
+    return false;
   } // must be an object.
   if (s = Node.soul(n)) { // must have a soul on it.
     return !Obj.map(n, function (v, f) { // we invert this because the way we check for this is via a negation.
       if (f == Reserved.meta) {
-        return
+        return;
       } // skip over the metadata.
       if (!GunIsVal(v)) {
-        return true
+        return true;
       } // it is true that this is an invalid node.
       if (cb) {
-        cb.call(t, v, f, n)
+        cb.call(t, v, f, n);
       } // optionally callback each field/value.
     });
   }

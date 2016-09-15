@@ -7,9 +7,9 @@ Time.is = function (t) {
   return t ? t instanceof Date : (+new Date().getTime())
 }
 Time.now = (function () {
-    var time = Time.is, last = -Infinity, n = 0, d = 1000;
+    let time = Time.is, last = -Infinity, n = 0, d = 1000;
     return function () {
-      var t = time();
+      let t = time();
       if (last < t) {
         n = 0;
         return last = t;

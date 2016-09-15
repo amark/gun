@@ -12,21 +12,20 @@ import Log from '../console';
 export default  (function () {
   keyBindings();
   return function (key, cb, opt) {
-    var gun = this;
+    let gun = this;
     opt = Text.is(opt) ? {soul: opt} : opt || {};
-    cb = cb || function () {
-      };
+    cb = cb || function () { };
     cb.hash = {};
     if (!Text.is(key) || !key) {
       return cb.call(gun, {err: Log('No key!')}), gun
     }
     function index(at) {
-      var ctx = {node: gun.__.graph[at.soul]};
+      let ctx = {node: gun.__.graph[at.soul]};
       if (at.soul === key || at.key === key) {
-        return
+        return;
       }
       if (cb.hash[at.hash = at.hash || Events.at.hash(at)]) {
-        return
+        return;
       }
       cb.hash[at.hash] = true;
       ctx.obj = (1 === IsNode.soul(ctx.node, 'key')) ? Obj.copy(ctx.node) : Obj.put({}, at.soul, IsRel.ify(at.soul));

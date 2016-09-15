@@ -13,7 +13,7 @@ let Bindings = function () {
       return
     }
     IsGraph(ctx.ify.graph, function (node, soul) {
-      var key = {node: gun.__.graph[soul]};
+      let key = {node: gun.__.graph[soul]};
       if (!IsNode.soul(key.node, 'key')) {
         return
       }
@@ -21,7 +21,7 @@ let Bindings = function () {
         gun.__.by(soul).end = 1
       }
       IsNode(key.node, function each(rel, s) {
-        var n = gun.__.graph[s];
+        let n = gun.__.graph[s];
         if (n && IsNode.soul(n, 'key')) {
           IsNode(n, each);
           return;
@@ -48,7 +48,7 @@ let Bindings = function () {
     if (!(IsNode.soul(gun.__.graph[at.soul], 'key') === 1)) {
       return
     }
-    var node = at.change || gun.__.graph[at.soul];
+    let node = at.change || gun.__.graph[at.soul];
 
     function map(rel, soul) {
       gun.__.gun.get(rel, cb, {key: ctx, chain: opt.chain || gun, force: opt.force})

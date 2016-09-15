@@ -8,7 +8,7 @@ import IsNode from '../is/node';
 import Log from '../console';
 
 export default function (cb, opt) {
-  var u, gun = this, chain = gun.chain();
+  let u, gun = this, chain = gun.chain();
   cb = cb || function () {
     };
   cb.hash = {};
@@ -37,7 +37,7 @@ export default function (cb, opt) {
   }
 
   function map(at) {
-    var ref = gun.__.by(at.soul).chain || gun;
+    let ref = gun.__.by(at.soul).chain || gun;
     IsNode(at.change, each, {gun: ref, soul: at.soul});
   }
 

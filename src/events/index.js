@@ -6,13 +6,13 @@ import At from './at';
 
 function On() { }
 On.create = function () {
-  var on = function (e) {
+  let on = function (e) {
     on.event.e = e;
     on.event.s[e] = on.event.s[e] || [];
     return on;
   };
   on.emit = function (a) {
-    var e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
+    let e = on.event.e, s = on.event.s[e], args = arguments, l = args.length;
     List.map(s, function (hear, i) {
       if (!hear.fn) {
         s.splice(i - 1, 0);
@@ -29,11 +29,11 @@ On.create = function () {
     }
   };
   on.event = function (fn, i) {
-    var s = on.event.s[on.event.e];
+    let s = on.event.s[on.event.e];
     if (!s) {
       return
     }
-    var e = {
+    let e = {
       fn: fn, i: i || 0, off: function () {
         return !(e.fn = false)
       }
@@ -43,7 +43,7 @@ On.create = function () {
   on.event.s = {};
   return on;
 };
-var sort = List.sort('i');
+let sort = List.sort('i');
 
 let Events =  On.create()
 

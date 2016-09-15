@@ -20,11 +20,11 @@ export default function (val, cb, opt) {
   cb = cb || function () {
     };
   cb.hash = {};
-  var gun = this, chain = gun.chain(), tmp = {val: val}, drift = Time.now();
+  let gun = this, chain = gun.chain(), tmp = {val: val}, drift = Time.now();
 
   function put(at) {
-    var val = tmp.val;
-    var ctx = {obj: val}; // prep the value for serialization
+    let val = tmp.val;
+    let ctx = {obj: val}; // prep the value for serialization
     ctx.soul = at.field ? at.soul : (at.at && at.at.soul) || at.soul; // figure out where we are
     ctx.field = at.field ? at.field : (at.at && at.at.field) || at.field; // did we come from some where?
     if (GunIs(val)) {
@@ -32,7 +32,7 @@ export default function (val, cb, opt) {
         return cb.call(chain, {err: ctx.err = Log('No field to link node to!')}), chain._.at('err').emit(ctx.err)
       }
       return val.val(function (node) {
-        var soul = IsNode.soul(node);
+        let soul = IsNode.soul(node);
         if (!soul) {
           return cb.call(chain, {err: ctx.err = Log('Only a node can be linked! Not "' + node + '"!')}), chain._.at('err').emit(ctx.err)
         }
@@ -56,7 +56,7 @@ export default function (val, cb, opt) {
     } // if the data is a primitive and there is no context for it yet, then we have an error.
     // TODO: BUG? gun.get(key).path(field).put() isn't doing it as pseudo.
     function soul(env, cb, map) {
-      var eat;
+      let eat;
       if (!env || !(eat = env.at) || !env.at.node) {
         return
       }
@@ -71,7 +71,7 @@ export default function (val, cb, opt) {
           Obj.as(env.graph, eat.soul = Obj.as(eat.node._, Reserved.soul, IsNode.soul(eat.obj) || ctx.soul), eat.node);
           cb(eat, eat.soul);
         } else {
-          var path = function (err, node) {
+          let path = function (err, node) {
             if (path.opt && path.opt.on && path.opt.on.off) {
               path.opt.on.off()
             }
@@ -113,16 +113,16 @@ export default function (val, cb, opt) {
         return cb.call(chain, err), chain._.at('err').emit(err)
       } // now actually union the serialized data, emit error if any occur.
       if (Utils.fns.is(end.wire = chain.__.opt.wire.put)) {
-        var wcb = function (err, ok, info) {
+        let wcb = function (err, ok, info) {
           if (err) {
-            return Log(err.err || err), cb.call(chain, err), chain._.at('err').emit(err)
+            return Log(err.err || err), cb.call(chain, err), chain._.at('err').emit(err);
           }
           return cb.call(chain, err, ok);
-        }
+        };
         end.wire(ify.graph, wcb, opt);
       } else {
         if (!Log.count('no-wire-put')) {
-          Log("Warning! You have no persistence layer to save to!")
+          Log("Warning! You have no persistence layer to save to!");
         }
         cb.call(chain, null); // This is in memory success, hardly "success" at all.
       }

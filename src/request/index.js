@@ -18,7 +18,7 @@ let jsonp = jsonpx(reServer);
 
 function r(base, body, cb, opt) {
   opt = opt || {};
-  var o = base.length ? {base: base} : {};
+  let o = base.length ? {base: base} : {};
   o.base = opt.base || base;
   o.body = opt.body || body;
   o.headers = opt.headers;

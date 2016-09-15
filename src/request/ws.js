@@ -5,7 +5,7 @@ export default function (reServer) {
 
   let wsx = function (opt, cb) {
     //TODO: why? r.WebSocket || . The rest looks pretty useless, but to remove later.
-    var ws, WS =  window.WebSocket;
+    let ws, WS =  window.WebSocket;
     if (!WS) {
       return;
     }
@@ -15,7 +15,7 @@ export default function (reServer) {
           wsx(opt, cb)
         }, 10), true;
       }
-      var req = {};
+      let req = {};
       if (opt.headers) {
         req.headers = opt.headers;
       }
@@ -71,7 +71,7 @@ export default function (reServer) {
       if (!m || !m.data) {
         return;
       }
-      var res;
+      let res;
       try {
         res = JSON.parse(m.data);
       } catch (e) {
