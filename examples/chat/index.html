@@ -46,9 +46,10 @@
 
       var options = {
         store: store,
-        prefix: ''
+        prefix: '',
+        peers: {}
       };
-      options[location.origin + '/gun'] = {};
+      options.peers[location.origin + '/gun'] = {};
 			var gun = Gun(options);
 //			var gun = Gun(location.origin + '/gun');
 			var chat = gun.get('chat/data');
