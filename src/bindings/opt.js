@@ -33,21 +33,20 @@ let Bindings = Events('opt').event(function (gun, opt) {
 
   tab.request = tab.request || request;
   if (!tab.request) {
-    throw new Error("Default GUN driver could not find default network abstraction.")
+    throw new Error("Default GUN driver could not find default network abstraction.");
   }
   tab.request.s = tab.request.s || {};
   tab.headers = opt.headers || {};
   tab.headers['gun-sid'] = tab.headers['gun-sid'] || Text.random(); // stream id
   tab.get = tab.get || function (lex, cb, opt) {
       if (!lex) {
-        return
+        return;
       }
       let soul = lex[Reserved.soul];
       if (!soul) {
-        return
+        return;
       }
-      cb = cb || function () {
-        };
+      cb = cb || function () { };
       let ropt = {};
       (ropt.headers = Obj.copy(tab.headers)).id = tab.msg();
       (function local(soul, cb) {
@@ -66,8 +65,7 @@ let Bindings = Events('opt').event(function (gun, opt) {
       if (!(cb.local = opt.local)) {
         tab.request.s[ropt.headers.id] = tab.error(cb, "Error: Get failed!", function (reply) {
           setTimeout(function () {
-            tab.put(IsGraph.ify(reply.body), function () {
-            }, {local: true, peers: {}})
+            tab.put(IsGraph.ify(reply.body), function () { }, {local: true, peers: {}});
           }, 1); // and flush the in memory nodes of this graph to localStorage after we've had a chance to union on it.
         });
         Obj.map(opt.peers || gun.__.opt.peers, function (peer, url) {
@@ -83,8 +81,7 @@ let Bindings = Events('opt').event(function (gun, opt) {
       tab.peers(cb);
     };
   tab.put = tab.put || function (graph, cb, opt) {
-      cb = cb || function () {
-        };
+      cb = cb || function () { };
       opt = opt || {};
       let ropt = {};
       (ropt.headers = Obj.copy(tab.headers)).id = tab.msg();
@@ -114,24 +111,24 @@ let Bindings = Events('opt').event(function (gun, opt) {
         return cb({err: Log(err || error)});
       }
       if (fn) {
-        fn(reply)
+        fn(reply);
       }
       cb(null, reply.body);
     }
   };
   tab.peers = function (cb, o) {
     if (Text.is(cb)) {
-      return (o = {})[cb] = {}, o
+      return (o = {})[cb] = {}, o;
     }
     if (cb && !cb.peers) {
       setTimeout(function () {
         if (!cb.local) {
           if (!Log.count('no-peers')) {
-            Log("Warning! You have no peers to connect to!")
+            Log("Warning! You have no peers to connect to!");
           }
         }
         if (!(cb.graph || cb.node)) {
-          cb(null)
+          cb(null);
         }
       }, 1)
     }
@@ -145,7 +142,7 @@ let Bindings = Events('opt').event(function (gun, opt) {
         let now = Time.is();
         Obj.map(tab.msg.debounce, function (t, id) {
           if (now - t < 1000 * 60 * 5) {
-            return
+            return;
           }
           Obj.del(tab.msg.debounce, id);
         });
@@ -157,23 +154,23 @@ let Bindings = Events('opt').event(function (gun, opt) {
   tab.msg.debounce = tab.msg.debounce || {};
   tab.server = tab.server || function (req, res) {
       if (!req || !res || !req.body || !req.headers || !req.headers.id) {
-        return
+        return;
       }
       if (tab.request.s[req.headers.rid]) {
-        return tab.request.s[req.headers.rid](null, req)
+        return tab.request.s[req.headers.rid](null, req);
       }
       if (tab.msg(req.headers.id)) {
-        return
+        return;
       }
       // TODO: Re-emit message to other peers if we have any non-overlaping ones.
       if (req.headers.rid) {
-        return
+        return;
       } // no need to process
       if (GunIsLex(req.body)) {
-        return tab.server.get(req, res)
+        return tab.server.get(req, res);
       }
       else {
-        return tab.server.put(req, res)
+        return tab.server.put(req, res);
       }
     };
   tab.server.json = 'application/json';
@@ -196,11 +193,11 @@ let Bindings = Events('opt').event(function (gun, opt) {
           return true;
         }
       })) {
-      return
+      return;
     }
     if (req.err = Union(gun, req.body, function (err, ctx) {
         if (err) {
-          return cb({headers: reply.headers, body: {err: err || "Union failed."}})
+          return cb({headers: reply.headers, body: {err: err || "Union failed."}});
         }
         ctx = ctx || {};
         ctx.graph = {};

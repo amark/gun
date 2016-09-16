@@ -6,15 +6,15 @@ import IsNode from '../is/node';
 
 let Graph = function (g, cb, fn, t) { // checks to see if an object is a valid graph.
   let exist = false;
-  if (!Obj.is(g)) { return false } // must be an object.
+  if (!Obj.is(g)) { return false; } // must be an object.
   return !Obj.map(g, function (n, s) { // we invert this because the way we check for this is via a negation.
       if (!n || s !== IsNode.soul(n) || !IsNode(n, fn)) {
-        return true
+        return true;
       } // it is true that this is an invalid graph.
       (cb || function () {
       }).call(t, n, s, function (fn) { // optional callback for each node.
         if (fn) {
-          IsNode(n, fn, t)
+          IsNode(n, fn, t);
         } // where we then have an optional callback for each field/value.
       });
       exist = true;

@@ -10,21 +10,20 @@ import Obj from '../utilities/obj';
 
 export default function (item, cb, opt) {
   let gun = this, ctx = {}, chain;
-  cb = cb || function () {
-    };
+  cb = cb || function () { };
   if (!GunIs(item)) {
-    return cb.call(gun, {err: Log('Set only supports node references currently!')}), gun
+    return cb.call(gun, {err: Log('Set only supports node references currently!')}), gun;
   } // TODO: Bug? Should we return not gun on error?
   (ctx.chain = item.chain()).back = gun;
   ctx.chain._ = item._;
   item.val(function (node) { // TODO: BUG! Return proxy chain with back = list.
     if (ctx.done) {
-      return
+      return;
     }
     ctx.done = true;
     let put = {}, soul = IsNode.soul(node);
     if (!soul) {
-      return cb.call(gun, {err: Log('Only a node can be linked! Not "' + node + '"!')})
+      return cb.call(gun, {err: Log('Only a node can be linked! Not "' + node + '"!')});
     }
     gun.put(Obj.put(put, soul, IsRel.ify(soul)), cb, opt);
   });

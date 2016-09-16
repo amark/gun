@@ -24,21 +24,21 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
     cb = Utils.fns.is(cb) ? cb() && null : null;
   };
   if (!ctx.graph) {
-    ctx.err = {err: Log("No graph!")}
+    ctx.err = {err: Log("No graph!")};
   }
   if (!prime) {
-    ctx.err = {err: Log("No data to merge!")}
+    ctx.err = {err: Log("No data to merge!")};
   }
   if (ctx.soul = IsNode.soul(prime)) {
-    prime = IsGraph.ify(prime)
+    prime = IsGraph.ify(prime);
   }
   if (!IsGraph(prime, null, function (val, field, node) {
       let meta;
       if (!Utils.num.is(IsNode.state(node, field))) {
-        return ctx.err = {err: Log("No state on '" + field + "'!")}
+        return ctx.err = {err: Log("No state on '" + field + "'!")};
       }
     }) || ctx.err) {
-    return ctx.err = ctx.err || {err: Log("Invalid graph!", prime)}, ctx
+    return ctx.err = ctx.err || {err: Log("Invalid graph!", prime)}, ctx;
   }
   function emit(at) {
     Events('operating').emit(gun, at);
@@ -46,11 +46,11 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
 
   (function union(graph, prime) {
     prime = Obj.map(prime, function (n, s, t) {
-      t(n)
+      t(n);
     }).sort(function (A, B) {
       let s = IsNode.soul(A);
       if (graph[s]) {
-        return 1
+        return 1;
       }
       return 0;
     });
@@ -58,19 +58,19 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
     ctx.err = List.map(prime, function (node, soul) {
       soul = IsNode.soul(node);
       if (!soul) {
-        return {err: Log("Soul missing or mismatching!")}
+        return {err: Log("Soul missing or mismatching!")};
       }
       ctx.count += 1;
       let vertex = graph[soul];
       if (!vertex) {
-        graph[soul] = vertex = IsNode.ify({}, soul)
+        graph[soul] = vertex = IsNode.ify({}, soul);
       }
       Union.HAM(vertex, node, function (vertex, field, val, state) {
         Events('historical').emit(gun, {soul: soul, field: field, value: val, state: state, change: node});
         gun.__.on('historical').emit({soul: soul, field: field, change: node});
       }, function (vertex, field, val, state) {
         if (!vertex) {
-          return
+          return;
         }
         let change = IsNode.soul.ify({}, soul);
         if (field) {
@@ -82,24 +82,24 @@ let Union = function (gun, prime, cb, opt) { // merge two graphs into the first.
       })(function () {
         emit({soul: soul, change: node});
         if (opt.soul) {
-          opt.soul(soul)
+          opt.soul(soul);
         }
         if (!(ctx.count -= 1)) {
-          ctx.cb()
+          ctx.cb();
         }
       }); // TODO: BUG? Handle error!
     });
     ctx.count -= 1;
   })(ctx.graph, prime);
   if (!ctx.count) {
-    ctx.cb()
+    ctx.cb();
   }
   return ctx;
 };
 
 Union.ify = function (gun, prime, cb, opt) {
   if (gun) {
-    gun = (gun.__ && gun.__.graph) ? gun.__.graph : gun
+    gun = (gun.__ && gun.__.graph) ? gun.__.graph : gun;
   }
   if (Text.is(prime)) {
     if (gun && gun[prime]) {
@@ -114,11 +114,11 @@ Union.ify = function (gun, prime, cb, opt) {
       let node;
 
       function merge(a, f, v) {
-        IsNode.state.ify(a, f, v)
+        IsNode.state.ify(a, f, v);
       }
 
       if (IsRel(val)) {
-        node = gun ? gun[field] || prime[field] : prime[field]
+        node = gun ? gun[field] || prime[field] : prime[field];
       }
       Union.HAM(vertex, node, function () {
       }, function (vert, f, v) {
@@ -126,11 +126,11 @@ Union.ify = function (gun, prime, cb, opt) {
       }, function () {
       })(function (err) {
         if (err) {
-          merge([vertex], field, val)
+          merge([vertex], field, val);
         }
       })
     })) {
-    return vertex
+    return vertex;
   }
 };
 
@@ -141,7 +141,7 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
   vertex = vertex || {};
   Obj.map(delta._, function (v, f) {
     if (Reserved.state === f || Reserved.soul === f) {
-      return
+      return;
     }
     vertex._[f] = v;
   });
@@ -173,15 +173,14 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
         schedule(ctx.incoming.state, function () {
           update(incoming, field);
           if (ctx.incoming.state === upper.max) {
-            (upper.last || function () {
-            })()
+            (upper.last || function () { })()
           }
         });
       }
     })) {
     return function (fn) {
       if (fn) {
-        fn({err: 'Not a node!'})
+        fn({err: 'Not a node!'});
       }
     }
   }
@@ -189,10 +188,9 @@ Union.HAM = function (vertex, delta, lower, now, upper) {
     now.call({}, vertex)
   } // TODO: Should HAM handle empty updates? YES.
   return function (fn) {
-    upper.last = fn || function () {
-      };
+    upper.last = fn || function () { };
     if (!upper.wait) {
-      upper.last()
+      upper.last();
     }
   }
 };

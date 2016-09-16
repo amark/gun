@@ -13,10 +13,10 @@ let Is = function (gun) {
 
 Is.val = function (v) { // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
   if (v === null) {
-    return true
+    return true;
   } // "deletes", nulling out fields.
   if (v === Infinity) {
-    return false
+    return false;
   } // we want this to be, but JSON does not support it, sad face.
   if (Utils.bi.is(v) // by "binary" we mean boolean.
     || Utils.num.is(v)
@@ -29,11 +29,11 @@ Is.val = function (v) { // Valid values are a subset of JSON: null, binary, numb
 Is.lex = function (l) {
   let r = true;
   if (!Obj.is(l)) {
-    return false
+    return false;
   }
   Obj.map(l, function (v, f) {
     if (!Obj.has(Reserved, f) || !(Text.is(v) || Obj.is(v))) {
-      return r = false
+      return r = false;
     }
   }); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
   return r;

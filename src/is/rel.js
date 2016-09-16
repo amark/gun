@@ -10,7 +10,7 @@ let Rel = function (v) { // this defines whether an object is a soul relation or
     let id;
     Obj.map(v, function (s, f) { // map over the object...
       if (id) {
-        return id = false
+        return id = false;
       } // if ID is already defined AND we're still looping through the object, it is considered invalid.
       if (f == Reserved.soul && Text.is(s)) { // the field should be '#' and have a text value.
         id = s; // we found the soul!
@@ -27,7 +27,7 @@ let Rel = function (v) { // this defines whether an object is a soul relation or
 
 Rel.ify = function (s) {
   let r = {};
-  return Obj.put(r, Reserved.soul, s), r
+  return Obj.put(r, Reserved.soul, s), r;
 }; // convert a soul into a relation and return it.
 
 export default Rel;

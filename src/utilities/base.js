@@ -13,11 +13,11 @@ import List from './definitions/list'
     is: function (b) {
       return (b instanceof Boolean || typeof b == 'boolean');
     }
-  }
+  };
 let num = {
     is: function (n) {
       return !List.is(n) && (Infinity === n || n - parseFloat(n) + 1 >= 0)
     }
-  }
+  };
 
 export default {fns, bi, num};

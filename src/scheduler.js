@@ -33,12 +33,12 @@ schedule.check = function () {
   schedule.waiting.sort(schedule.sort);
   schedule.waiting = List.map(schedule.waiting, function (wait, i, map) {
       if (!wait) {
-        return
+        return;
       }
       if (wait.when <= now) {
         if (Utils.fns.is(wait.event)) {
           setTimeout(function () {
-            wait.event()
+            wait.event();
           }, 0);
         }
       } else {

@@ -14,7 +14,7 @@ export default (function () {
   return function (cb, opt) {
     let gun = this, args = List.slit.call(arguments);
     cb = Utils.fns.is(cb) ? cb : function (val, field) {
-      root.console.log.apply(root.console, args.concat([field && (field += ':'), val]))
+      root.console.log.apply(root.console, args.concat([field && (field += ':'), val]));
     };
     cb.hash = {};
     opt = opt || {};

@@ -16,10 +16,9 @@ export default (function () {
   return function (path, cb, opt) {
     opt = opt || {};
     cb = cb || (function () {
-        let cb = function () {
-        };
+        let cb = function () { };
         cb.no = true;
-        return cb
+        return cb;
       }());
     cb.hash = {};
     let gun = this, chain = gun.chain(), f, c, u;
@@ -28,10 +27,10 @@ export default (function () {
         if (!Utils.num.is(path)) { // if not a list, text, or number
           return cb.call(chain, {err: Log("Invalid path '" + path + "'!")}), chain; // then complain
         } else {
-          return this.path(path + '', cb, opt)
+          return this.path(path + '', cb, opt);
         }
       } else {
-        return this.path(path.split('.'), cb, opt)
+        return this.path(path.split('.'), cb, opt);
       }
     } // else coerce upward to a list.
     if (gun === gun.back) {
@@ -41,18 +40,17 @@ export default (function () {
     gun._.at('path:' + path[0]).event(function (at) {
       if (opt.done) {
         this.off();
-        return
+        return;
       } // TODO: BUG - THIS IS A FIX FOR A BUG! TEST #"context no double emit", COMMENT THIS LINE OUT AND SEE IT FAIL!
       let ctx = {soul: at.soul, field: at.field, by: gun.__.by(at.soul)}, field = path[0];
       let on = Obj.as(cb.hash, at.hash, {
-        off: function () {
-        }
+        off: function () { }
       });
       if (at.soul === on.soul) {
-        return
+        return;
       }
       else {
-        on.off()
+        on.off();
       }
       if (ctx.rel = (IsRel(at.value) || IsRel(at.at && at.at.value))) {
         if (opt.put && 1 === path.length) {
@@ -60,7 +58,7 @@ export default (function () {
         }
         let get = function (err, node) {
           if (!err && 1 !== path.length) {
-            return
+            return;
           }
           cb.call(this, err, node, field);
         };
@@ -74,18 +72,18 @@ export default (function () {
         return;
       }
       if (1 === path.length) {
-        cb.call(ctx.by.chain || chain, null, at.value, ctx.field)
+        cb.call(ctx.by.chain || chain, null, at.value, ctx.field);
       }
       chain._.at('soul').emit(at).chain(opt.chain);
     });
     gun._.at('null').only(function (at) {
       if (!at.field) {
-        return
+        return;
       }
       if (at.not) {
         gun.put({}, null, {init: true});
         if (opt.init || gun.__.opt.init) {
-          return
+          return;
         }
       }
       (at = Events.at.copy(at)).field = path[0];
@@ -95,11 +93,11 @@ export default (function () {
     gun._.at('end').event(function (at) {
       this.off();
       if (at.at && at.at.field === path[0]) {
-        return
+        return;
       } // TODO: BUG! THIS FIXES SO MANY PROBLEMS BUT DOES IT CATCH VARYING SOULS EDGE CASE?
       let ctx = {by: gun.__.by(at.soul)};
       if (Obj.has(ctx.by.node, path[0])) {
-        return
+        return;
       }
       (at = Events.at.copy(at)).field = path[0];
       at.not = true;

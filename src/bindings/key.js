@@ -10,15 +10,15 @@ import Obj from '../utilities/obj';
 let Bindings = function () {
   Events('put').event(function (gun, at, ctx, opt, cb) {
     if (opt.key) {
-      return
+      return;
     }
     IsGraph(ctx.ify.graph, function (node, soul) {
       let key = {node: gun.__.graph[soul]};
       if (!IsNode.soul(key.node, 'key')) {
-        return
+        return;
       }
       if (!gun.__.by(soul).end) {
-        gun.__.by(soul).end = 1
+        gun.__.by(soul).end = 1;
       }
       IsNode(key.node, function each(rel, s) {
         let n = gun.__.graph[s];
@@ -28,7 +28,7 @@ let Bindings = function () {
         }
         rel = ctx.ify.graph[s] = ctx.ify.graph[s] || IsNode.soul.ify({}, s);
         IsNode(node, function (v, f) {
-          IsNode.state.ify([rel, node], f, v)
+          IsNode.state.ify([rel, node], f, v);
         });
         Obj.del(ctx.ify.graph, soul);
       })
@@ -36,7 +36,7 @@ let Bindings = function () {
   });
   Events('get').event(function (gun, at, ctx, opt, cb) {
     if (ctx.halt) {
-      return
+      return;
     } // TODO: CLEAN UP with event emitter option?
     if (opt.key && opt.key.soul) {
       at.soul = opt.key.soul;
@@ -46,12 +46,12 @@ let Bindings = function () {
       return;
     }
     if (!(IsNode.soul(gun.__.graph[at.soul], 'key') === 1)) {
-      return
+      return;
     }
     let node = at.change || gun.__.graph[at.soul];
 
     function map(rel, soul) {
-      gun.__.gun.get(rel, cb, {key: ctx, chain: opt.chain || gun, force: opt.force})
+      gun.__.gun.get(rel, cb, {key: ctx, chain: opt.chain || gun, force: opt.force});
     }
 
     ctx.halt = true;

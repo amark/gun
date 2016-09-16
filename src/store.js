@@ -16,25 +16,23 @@ export default function (store) {
         if(err) return cb(err);
       });
     } catch (e) {
-      if (cb)cb(e)
+      if (cb)cb(e);
     }
   };
   s.get = function (key, cb) { /*setTimeout(function(){*/
     try {
       store.getItem(key, function (err, val) {
         if(err) return cb(err);
-        cb(null, Obj.ify(val || null))
+        cb(null, Obj.ify(val || null));
       });
 
     } catch (e) {
-      cb(e)
+      cb(e);
     }
     /*},1)*/
   };
   s.del = function (key) {
-    return store.removeItem(key, function (err) {
-
-    })
+    return store.removeItem(key, function (err) { cb(err) });
   };
   return s;
 };

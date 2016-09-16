@@ -30,7 +30,7 @@ export default function (cb, opt) { // on subscribes to any changes on the souls
       return;
     }
     cb.call(ctx.by.chain || gun, Obj.copy(at.field ? change[at.field] : change), at.field || (at.at && at.at.field));
-  };
+  }
   opt.on = gun._.at('soul').map(map);
   if (gun === gun.back) {
     Log('You have no context to `.on`!');

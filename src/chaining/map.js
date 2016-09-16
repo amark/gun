@@ -9,14 +9,13 @@ import Log from '../console';
 
 export default function (cb, opt) {
   let u, gun = this, chain = gun.chain();
-  cb = cb || function () {
-    };
+  cb = cb || function () { };
   cb.hash = {};
   opt = Utils.bi.is(opt) ? {change: opt} : opt || {};
   opt.change = Utils.bi.is(opt.change) ? opt.change : true;
   function path(err, val, field) {
     if (err || (val === u)) {
-      return
+      return;
     }
     cb.call(this, val, field);
   }
@@ -43,7 +42,7 @@ export default function (cb, opt) {
 
   gun.on(map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
   if (gun === gun.back) {
-    Log('You have no context to `.map`!')
+    Log('You have no context to `.map`!');
   }
   return chain;
 };

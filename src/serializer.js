@@ -55,23 +55,22 @@ let map = (ctx, cb) => {
     }
   });
   if (!it) {
-    cb(ctx, rel)
+    cb(ctx, rel);
   }
 };
 let unique = (ctx) => {
   if (ctx.err || (!List.map(ctx.seen, function (at) {
       if (!at.soul) {
-        return true
+        return true;
       }
     }) && !ctx.loop)) {
-    return ctx.end(ctx.err, ctx), ctx.end = function () {
-    };
+    return ctx.end(ctx.err, ctx), ctx.end = function () { };
   }
 };
 let seen = (ctx, at) => {
   return List.map(ctx.seen, function (has) {
       if (at.obj === has.obj) {
-        return has
+        return has;
       }
     }) || (ctx.seen.push(at) && false);
 };
@@ -79,18 +78,18 @@ let seen = (ctx, at) => {
 let ify = (data, cb, opt) => {
   opt = opt || {};
   cb = cb || function (env, cb) {
-      cb(env.at, IsNode.soul(env.at.obj) || IsNode.soul(env.at.node) || Text.random())
+      cb(env.at, IsNode.soul(env.at.obj) || IsNode.soul(env.at.node) || Text.random());
     };
   let end = function (fn) {
-    ctx.end = fn || function () {
-      };
+    //TODO: detect from where is this 'ctx'
+    ctx.end = fn || function () { };
     unique(ctx);
   }, ctx = {at: {path: [], obj: data}, root: {}, graph: {}, queue: [], seen: [], opt: opt, loop: true};
   if (!data) {
-    return ctx.err = {err: Log('Serializer does not have correct parameters.')}, end
+    return ctx.err = {err: Log('Serializer does not have correct parameters.')}, end;
   }
   if (ctx.opt.start) {
-    IsNode.soul.ify(ctx.root, ctx.opt.start)
+    IsNode.soul.ify(ctx.root, ctx.opt.start);
   }
   ctx.at.node = ctx.root;
   while (ctx.loop && !ctx.err) {
@@ -106,24 +105,24 @@ let ify = (data, cb, opt) => {
 };
 
 ify.wire = (n, cb, opt) => {
-  return Text.is(n) ? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt)
+  return Text.is(n) ? ify.wire.from(n, cb, opt) : ify.wire.to(n, cb, opt);
 };
 
 ify.wire.to = (n, cb, opt) => {
   let t, b;
   if (!n || !(t = IsNode.soul(n))) {
-    return null
+    return null;
   }
   cb = cb || function () {
     };
   t = (b = "#'" + JSON.stringify(t) + "'");
   Obj.map(n, function (v, f) {
     if (Reserved.meta === f) {
-      return
+      return;
     }
     let w = '', s = IsNode.state(n, f);
     if (!s) {
-      return
+      return;
     }
     w += ".'" + JSON.stringify(f) + "'";
     w += "='" + JSON.stringify(v) + "'";
@@ -137,12 +136,11 @@ ify.wire.to = (n, cb, opt) => {
 
 ify.wire.from = (n, cb, opt) => {
   if (!n) {
-    return null
+    return null;
   }
   let a = [], s = -1, e = 0, end = 1;
   while ((e = n.indexOf("'", s + 1)) >= 0) {
-    if (s === e || '\\' === n.charAt(e - 1)) {
-    } else {
+    if (s === e || '\\' === n.charAt(e - 1)) { } else {
       a.push(n.slice(s + 1, e));
       s = e;
     }

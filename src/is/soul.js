@@ -5,7 +5,7 @@ import Reserved from '../reserved';
 import Text from '../utilities/text';
 
 let soul = function (n, s) {
-  return (n && n._ && n._[s || Reserved.soul]) || false
+  return (n && n._ && n._[s || Reserved.soul]) || false;
 }; // convenience function to check to see if there is a soul on a node and return it.
 
 soul.ify = function (n, s, o) { // put a soul on an object.

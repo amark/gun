@@ -40,8 +40,7 @@ export default function (reServer) {
     }
     try {
       ws = wsx.peers[opt.base] = new WS(opt.base.replace('http', 'ws'));
-    } catch (e) {
-    }
+    } catch (e) { }
     ws.onopen = function (o) {
       wsx.back = 2;
       wsx(opt, cb);
@@ -60,8 +59,7 @@ export default function (reServer) {
       }
       ws = wsx.peers[opt.base] = null; // this will make the next request try to reconnect
       setTimeout(function () {
-        wsx(opt, function () {
-        }); // opt here is a race condition, is it not? Does this matter?
+        wsx(opt, function () { }); // opt here is a race condition, is it not? Does this matter?
       }, wsx.back *= wsx.backoff);
     };
     if (typeof window !== "undefined") {

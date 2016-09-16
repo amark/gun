@@ -23,7 +23,7 @@ export default function (cb, opt) {
     }
     if (at.soul) {
       if (ctx.by.node) {
-        return
+        return;
       }
       let soul = Text.random();
       gun.__.gun.put(IsNode.soul.ify({}, soul), null, {init: true});

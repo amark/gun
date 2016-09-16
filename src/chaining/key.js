@@ -17,7 +17,7 @@ export default  (function () {
     cb = cb || function () { };
     cb.hash = {};
     if (!Text.is(key) || !key) {
-      return cb.call(gun, {err: Log('No key!')}), gun
+      return cb.call(gun, {err: Log('No key!')}), gun;
     }
     function index(at) {
       let ctx = {node: gun.__.graph[at.soul]};
@@ -31,7 +31,7 @@ export default  (function () {
       ctx.obj = (1 === IsNode.soul(ctx.node, 'key')) ? Obj.copy(ctx.node) : Obj.put({}, at.soul, IsRel.ify(at.soul));
       Obj.as((ctx.put = IsNode.ify(ctx.obj, key, true))._, 'key', 1);
       gun.__.gun.put(ctx.put, function (err, ok) {
-        cb.call(this, err, ok)
+        cb.call(this, err, ok);
       }, {chain: opt.chain, key: true, init: true});
     }
 

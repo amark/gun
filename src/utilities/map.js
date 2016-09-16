@@ -27,12 +27,12 @@ export default function (l, c, _) {
       if (f) {
         r = lle ? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
         if (r !== u) {
-          return r
+          return r;
         }
       } else {
         //if(Gun.test.is(c,l[i])){ return ii } // should implement deep equality testing!
         if (c === l[lle ? ll[i] : i]) {
-          return ll ? ll[i] : ii
+          return ll ? ll[i] : ii;
         } // use this for now
       }
     }
@@ -42,13 +42,13 @@ export default function (l, c, _) {
         if (Obj.has(l, i)) {
           r = _ ? c.call(_, l[i], i, t) : c(l[i], i, t);
           if (r !== u) {
-            return r
+            return r;
           }
         }
       } else {
         //if(a.test.is(c,l[i])){ return i } // should implement deep equality testing!
         if (c === l[i]) {
-          return i
+          return i;
         } // use this for now
       }
     }

@@ -5,7 +5,8 @@
 let Time = {};
 Time.is = function (t) {
   return t ? t instanceof Date : (+new Date().getTime())
-}
+};
+
 Time.now = (function () {
     let time = Time.is, last = -Infinity, n = 0, d = 1000;
     return function () {

@@ -14,10 +14,10 @@ export default function (cb, opt) {
   function not(at, e) {
     if (at.field) {
       if (Obj.has(gun.__.by(at.soul).node, at.field)) {
-        return Obj.del(at, 'not'), chain._.at(e).emit(at)
+        return Obj.del(at, 'not'), chain._.at(e).emit(at);
       }
     } else if (at.soul && gun.__.by(at.soul).node) {
-      return Obj.del(at, 'not'), chain._.at(e).emit(at)
+      return Obj.del(at, 'not'), chain._.at(e).emit(at);
     }
     if (!at.not) {
       return;

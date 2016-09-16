@@ -327,7 +327,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return l instanceof Array;
 	    }
 	  };
+	
 	  List.slit = Array.prototype.slice;
+	
 	  List.sort = function (k) {
 	    // creates a new sort function based off some field
 	    return function (A, B) {
@@ -673,6 +675,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Obj.put = function (o, f, v) {
 	    return (o || {})[f] = v, o;
 	  };
+	
 	  Obj.del = function (o, k) {
 	    if (!o) {
 	      return;
@@ -681,6 +684,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    delete o[k];
 	    return true;
 	  };
+	
 	  Obj.ify = function (o) {
 	    if (Obj.is(o)) {
 	      return o;
@@ -690,16 +694,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } catch (e) {
 	      o = {};
 	    }
-	    ;
+	
 	    return o;
 	  };
+	
 	  Obj.copy = function (o) {
 	    // because http://web.archive.org/web/20140328224025/http://jsperf.com/cloning-an-object/2
 	    return !o ? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
 	  };
+	
 	  Obj.as = function (b, f, d) {
 	    return b[f] = b[f] || (arguments.length >= 3 ? d : {});
 	  };
+	
 	  Obj.has = function (o, t) {
 	    return o && Object.prototype.hasOwnProperty.call(o, t);
 	  };
@@ -793,6 +800,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Time.is = function (t) {
 	    return t ? t instanceof Date : +new Date().getTime();
 	  };
+	
 	  Time.now = function () {
 	    var time = Time.is,
 	        last = -Infinity,
@@ -2307,7 +2315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        // else if we are on an existing chain then...
-	        gun._.at('soul').map(put);;
+	        gun._.at('soul').map(put);
 	        if (!opt.init && !gun.__.opt.init) {
 	          back(gun);
 	        }
@@ -3056,7 +3064,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      /*},1)*/
 	    };
 	    s.del = function (key) {
-	      return store.removeItem(key, function (err) {});
+	      return store.removeItem(key, function (err) {
+	        cb(err);
+	      });
 	    };
 	    return s;
 	  };
@@ -3579,7 +3589,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    (0, _events2.default)('get').event(function (gun, at, ctx) {
 	      if (ctx.halt) {
 	        ctx.halt = false;
-	        return;
 	      } // TODO: CLEAN UP with event emitter option?
 	    }, Infinity);
 	  };
@@ -4526,7 +4535,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return;
 	      }
 	      cb.call(ctx.by.chain || gun, _obj2.default.copy(at.field ? change[at.field] : change), at.field || at.at && at.at.field);
-	    };
+	    }
 	    opt.on = gun._.at('soul').map(map);
 	    if (gun === gun.back) {
 	      (0, _console2.default)('You have no context to `.on`!');

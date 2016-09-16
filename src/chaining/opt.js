@@ -17,17 +17,17 @@ export default function (opt, stun) {
   root.__.opt = root.__.opt || {peers: {}};
   root.__.opt.wire = root.__.opt.wire || {};
   if (Text.is(opt)) {
-    opt = {peers: opt}
+    opt = {peers: opt};
   }
   if (List.is(opt)) {
-    opt = {peers: opt}
+    opt = {peers: opt};
   }
   if (Text.is(opt.peers)) {
-    opt.peers = [opt.peers]
+    opt.peers = [opt.peers];
   }
   if (List.is(opt.peers)) {
     opt.peers = Obj.map(opt.peers, function (n, f, m) {
-      m(n, {})
+      m(n, {});
     })
   }
   Obj.map(opt.peers, function (v, f) {
@@ -35,18 +35,18 @@ export default function (opt, stun) {
   });
   Obj.map(opt.wire, function (h, f) {
     if (!Utils.fns.is(h)) {
-      return
+      return;
     }
     root.__.opt.wire[f] = h;
   });
   Obj.map(['key', 'on', 'path', 'map', 'not', 'init'], function (f) {
     if (!opt[f]) {
-      return
+      return;
     }
     root.__.opt[f] = opt[f] || root.__.opt[f];
   });
   if (!stun) {
-    Events('opt').emit(root, opt)
+    Events('opt').emit(root, opt);
   }
   return gun;
 };

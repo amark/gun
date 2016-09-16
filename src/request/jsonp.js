@@ -4,7 +4,7 @@
 
 let each = function (obj, cb) {
   if (!obj || !cb) {
-    return
+    return;
   }
   for (let i in obj) {
     if (obj.hasOwnProperty(i)) {
@@ -42,8 +42,7 @@ export default function (reServer) {
       window[cb.id] = null; // TODO: BUG: This needs to handle chunking!
       try {
         delete window[cb.id];
-      } catch (e) {
-      }
+      } catch (e) { }
     };
     js.async = true;
     document.getElementsByTagName('head')[0].appendChild(js);
@@ -78,13 +77,13 @@ export default function (reServer) {
     }
     q = opt.base + q;
     each((opt.url || {}).query, function (v, i) {
-      q += uri(i) + '=' + uri(v) + '&'
+      q += uri(i) + '=' + uri(v) + '&';
     });
     if (opt.headers) {
-      q += uri('`') + '=' + uri(JSON.stringify(opt.headers)) + '&'
+      q += uri('`') + '=' + uri(JSON.stringify(opt.headers)) + '&';
     }
     if (jsonp.max < q.length) {
-      return cb()
+      return cb();
     }
     q += uri('jsonp') + '=' + uri(opt.jsonp = 'P' + Math.floor((Math.random() * 65535) + 1));
     if (opt.body) {
@@ -100,7 +99,7 @@ export default function (reServer) {
       let i = 0, l = w.length
         , s = jsonp.max - (q.length + wls(l.toString()).length);
       if (s < 0) {
-        return cb()
+        return cb();
       }
       while (w) {
         cb(q + wls(i, (i = i + s), l) + w.slice(0, i));

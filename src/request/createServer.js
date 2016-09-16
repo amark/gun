@@ -5,7 +5,7 @@
 let s = [];
 
 let createServer = function (fn) {
-  s.push(fn)
+  s.push(fn);
 };
 
 createServer.ing = function (req, cb) {

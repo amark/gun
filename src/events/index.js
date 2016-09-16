@@ -25,27 +25,27 @@ On.create = function () {
       hear.fn.apply(hear, args);
     });
     if (!s.length) {
-      delete on.event.s[e]
+      delete on.event.s[e];
     }
   };
   on.event = function (fn, i) {
     let s = on.event.s[on.event.e];
     if (!s) {
-      return
+      return;
     }
     let e = {
       fn: fn, i: i || 0, off: function () {
-        return !(e.fn = false)
+        return !(e.fn = false);
       }
     };
     return s.push(e), i ? s.sort(sort) : i, e;
-  }
+  };
   on.event.s = {};
   return on;
 };
 let sort = List.sort('i');
 
-let Events =  On.create()
+let Events =  On.create();
 
 Events.create = On.create;
 

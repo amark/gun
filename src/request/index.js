@@ -9,7 +9,7 @@ import wsx from './ws';
 
 function reServer(res, base) {
   createServer.ing(res, function (res) {
-    r(base, null, null, res)
+    r(base, null, null, res);
   });
 }
 
