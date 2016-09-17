@@ -1350,7 +1350,7 @@
 					if(res.body || res.end){ delete r.ws.cbs[req.headers['ws-rid']] }
 					cb(err,res);
 				}
-				ws.send(JSON.stringify(req),function(err) {});
+				ws.send(JSON.stringify(req),function(err){})
 				return true;
 			}
 			if(ws === false){ return }
