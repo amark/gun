@@ -4375,6 +4375,165 @@ describe('Gun', function(){
 			});
 		});
 
+		it("get users map path path any", function(done){
+			var gun = Gun();
+			var check = {};
+			gun.get('g/n/m/f').map().path('spouse').path('work').any(function(e,v,f){
+				console.log("********", f,v, this);
+				check[v.name] = true;
+				if(check["ACME INC"] && check["GUN INC"]){
+					done();
+				}
+			});
+			gun.put({_:{'#':'g/n/m/f'},
+				alice: {
+					name: "alice",
+					age: 24,
+					spouse: {
+						name: "carl",
+						age: 25,
+						work: {
+							name: "GUN INC"
+						}
+					},
+					bout: {huh:1}
+				},
+				bob: {
+					name: "bob",
+					age: 26,
+					spouse: {
+						name: "diana",
+						age: 27,
+						work: {
+							name: "ACME INC"
+						}
+					}
+				},
+			});
+		});
+
+		it("get users map path path val after", function(done){
+			var gun = Gun();
+			gun.put({_:{'#':'g/n/m/f/a'},
+				alice: {
+					name: "alice",
+					age: 24,
+					spouse: {
+						name: "carl",
+						age: 25,
+						work: {
+							name: "GUN INC"
+						}
+					},
+					bout: {huh:1}
+				},
+				bob: {
+					name: "bob",
+					age: 26,
+					spouse: {
+						name: "diana",
+						age: 27,
+						work: {
+							name: "ACME INC"
+						}
+					}
+				},
+			});
+			setTimeout(function(){
+				//console.debug.i=1;console.log("----------------------");
+				var check = {};
+				gun.get('g/n/m/f/a').map().path('spouse').path('work').any(function(e,v,f){
+					console.log("********", f,v, this);
+					check[v.name] = true;
+					if(check["ACME INC"] && check["GUN INC"]){
+						done();
+					}
+				});
+			},100);
+		});
+
+		it.only("get users map path path any later", function(done){
+			var gun = Gun();
+			gun.get('g/n/m/f/l').map().path('spouse').path('work');
+			gun.put({_:{'#':'g/n/m/f/l'},
+				alice: {
+					name: "alice",
+					age: 24,
+					spouse: {
+						name: "carl",
+						age: 25,
+						work: {
+							name: "GUN INC"
+						}
+					},
+					bout: {huh:1}
+				},
+				bob: {
+					name: "bob",
+					age: 26,
+					spouse: {
+						name: "diana",
+						age: 27,
+						work: {
+							name: "ACME INC"
+						}
+					}
+				},
+			});
+			setTimeout(function(){
+				var work = {};
+				console.log("..........", gun);
+				return;
+				gun.get('g/n/m/f').map().path('spouse').path('work').any(function(e,v,f){
+					console.log("********", f,v, this);
+					return;
+					check[v.name] = true;
+					if(check["ACME INC"] && check["GUN INC"]){
+						done();
+					}
+				});
+			},100);
+		});
+
+		it("get graph node field ref", function(done){
+			var gun = Gun();
+			gun.put({data: {a: 1, b: 2}}, null, 'g/n/f')
+			console.debug.i=1;console.log("-----------------");
+			gun.get('g/n/f').path('data').path('a').any(function(b,a){
+				console.log(":D", a,b);
+				expect(a).to.be(1);
+				done();
+			});
+		});
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
+		return;
 		it.only("get map path val", function(done){ // Terje's bug
 			var gun = Gun();
 			var ctx = {l: -1, d: 0};
@@ -4409,13 +4568,15 @@ describe('Gun', function(){
 
 		it.only("FILT ER FILTER", function(done){
 			var g = Gun();
-			var a = gun.put({age: 24, name: "alice"});
+			var a = gun.put({});
 			var b = gun.put({age: 19, name: "bob"});
 
 			console.debug.i=1;console.log("~~~~~~~~~~~~~~~~~~~~~~~~~");
-			(window.ALICE = a.filter()).path('name').on(function(a,b){
+			(window.ALICE = a.filter()).path('spouse.name').on(function(a,b){
 				console.log("1", b,a);
 			});
+
+			a.put({age: 24, name: "alice", spouse: {name: "carl"}});
 			return;
 			b.filter().on(function(a,b){
 				console.log("2", b,a);
