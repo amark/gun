@@ -41,9 +41,20 @@ import {Union, HAM} from './specific';
 // Gun.HAM = HAM;
 Gun.union = Union;
 
-import Chaining from './chaining';
-Object.assign(Gun.prototype, Chaining);
 Gun.chain = Gun.prototype;
+import {opt, chain, put, get, key, on, path, map, val, not, set, init} from './chaining';
+Gun.chain.opt = opt;
+Gun.chain.chain = chain;
+Gun.chain.put = put;
+Gun.chain.get = get;
+Gun.chain.key = key;
+Gun.chain.on = on;
+Gun.chain.path = path;
+Gun.chain.map = map;
+Gun.chain.val = val;
+Gun.chain.not = not;
+Gun.chain.set = set;
+Gun.chain.init = init;
 
 //TODO: tests again
 import Serializer from './serializer';

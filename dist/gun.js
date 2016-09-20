@@ -81,8 +81,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  var _is2 = _interopRequireDefault(_is);
 	
-	  var _chaining2 = _interopRequireDefault(_chaining);
-	
 	  var _serializer2 = _interopRequireDefault(_serializer);
 	
 	  var _console2 = _interopRequireDefault(_console);
@@ -133,8 +131,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Gun.HAM = HAM;
 	  Gun.union = _specific.Union;
 	
-	  Object.assign(Gun.prototype, _chaining2.default);
 	  Gun.chain = Gun.prototype;
+	
+	  Gun.chain.opt = _chaining.opt;
+	  Gun.chain.chain = _chaining.chain;
+	  Gun.chain.put = _chaining.put;
+	  Gun.chain.get = _chaining.get;
+	  Gun.chain.key = _chaining.key;
+	  Gun.chain.on = _chaining.on;
+	  Gun.chain.path = _chaining.path;
+	  Gun.chain.map = _chaining.map;
+	  Gun.chain.val = _chaining.val;
+	  Gun.chain.not = _chaining.not;
+	  Gun.chain.set = _chaining.set;
+	  Gun.chain.init = _chaining.init;
 	
 	  //TODO: tests again
 	
