@@ -61,8 +61,6 @@
     "eslint": "^3.4.0",
     "eslint-loader": "^1.5.0",
     "mocha": "~>3.0.0",
-    "mocha-loader": "^0.7.1",
-    "mocha-webpack": "^0.6.0",
     "webpack": "^1.13.2"
   }
 }
