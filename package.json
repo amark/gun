@@ -3,7 +3,13 @@
   "version": "0.3.993",
   "description": "Graph engine",
   "main": "index.js",
+  "per-env": {
+    "TRAVIS": {
+      "NODE_ENV": "test"
+    }
+  },
   "scripts": {
+    "preinstall": "npm install per-env && per-env",
     "start": "node examples/http.js 8080",
     "test": "mocha",
     "build": "webpack",
