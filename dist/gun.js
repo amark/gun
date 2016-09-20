@@ -2488,6 +2488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      cb(env.at, _node2.default.soul(env.at.obj) || _node2.default.soul(env.at.node) || _text2.default.random());
 	    };
 	    var end = function end(fn) {
+	      //TODO: detect from where is this 'ctx'
 	      ctx.end = fn || function () {};
 	      unique(ctx);
 	    },
@@ -3446,7 +3447,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            cb(err, res);
 	          };
-	          ws.send(JSON.stringify(req));
+	          ws.send(JSON.stringify(req), function (err) {});
 	          return {
 	            v: true
 	          };

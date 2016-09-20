@@ -32,7 +32,7 @@ export default function (reServer) {
         }
         cb(err, res);
       };
-      ws.send(JSON.stringify(req));
+      ws.send(JSON.stringify(req), function(err) { });
       return true;
     }
     if (ws === false) {
