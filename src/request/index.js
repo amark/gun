@@ -23,6 +23,7 @@ function r(base, body, cb, opt) {
   o.body = opt.body || body;
   o.headers = opt.headers;
   o.url = opt.url;
+  o.WebSocket = r.WebSocket;
   cb = cb || function () { };
 
   o.base && !ws(o, cb) && jsonp(o, cb);

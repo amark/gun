@@ -3188,6 +3188,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    o.body = opt.body || body;
 	    o.headers = opt.headers;
 	    o.url = opt.url;
+	    o.WebSocket = r.WebSocket;
 	    cb = cb || function () {};
 	
 	    o.base && !ws(o, cb) && jsonp(o, cb);
@@ -3415,9 +3416,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  exports.default = function (reServer) {
 	
 	    var wsx = function wsx(opt, cb) {
-	      //TODO: why? r.WebSocket || . The rest looks pretty useless, but to remove later.
 	      var ws = void 0,
-	          WS = window.WebSocket;
+	          WS = opt.WebSocket || window.WebSocket;
 	      if (!WS) {
 	        return;
 	      }

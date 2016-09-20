@@ -4,8 +4,7 @@
 export default function (reServer) {
 
   let wsx = function (opt, cb) {
-    //TODO: why? r.WebSocket || . The rest looks pretty useless, but to remove later.
-    let ws, WS =  window.WebSocket;
+    let ws, WS =  opt.WebSocket ||window.WebSocket;
     if (!WS) {
       return;
     }
