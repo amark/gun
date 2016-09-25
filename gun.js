@@ -22,8 +22,7 @@
 	;require(function(module){
 		// Generic javascript utilities.
 		var Type = {};
-		//Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
-		Type.fns = Type.fn = {is: function(fn){ return (!!fn && 'function' == typeof fn) }}
+		Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
 		Type.bi = {is: function(b){ return (b instanceof Boolean || typeof b == 'boolean') }}
 		Type.num = {is: function(n){ return !list_is(n) && ((n - parseFloat(n) + 1) >= 0 || Infinity === n || -Infinity === n) }}
 		Type.text = {is: function(t){ return (typeof t == 'string') }}
@@ -176,7 +175,7 @@
 					}
 				}
 				if(arg instanceof Function){
-					(act = (as instanceof Act)? as : new Act(tag, arg, as, on, ctx)).tmp = {};
+					act = new Act(tag, arg, as, on, ctx);
 					if(O && O.event && ctx !== On){
 						On.on('event', act);
 						if(noop === act.fn){
@@ -223,8 +222,8 @@
 					}
 				}
 				if(off){
-					var still = [], i = 0, acts = on.s, l = acts.length; // in case the list has mutated since.
-					for(; i < l; i++){ act = acts[i];
+					var still = [];
+					for(i = 0; i < l; i++){ act = acts[i];
 						if(noop !== act.fn){
 							still.push(act);
 						}
@@ -258,6 +257,17 @@
 			}
 			var act = this, on = act.on, halt = {
 				resume: function(arg){
+					/*
+						TODO: BUG!
+						TODO: BUG!
+						TODO: BUG!
+						TODO: BUG!
+						TODO: BUG!
+						Why does our map not get updates?
+						Portions do if we do not use .key to save the initial data.
+						Which makes me think it relates to pseudo, however it doesn't fully work if I get rid of that.
+						Why why why? Probably something to do with map events and memoizing?
+					*/
 					act.ctx.on(act.tag, (arguments.length?
 						1 === arguments.length? arg : Array.prototype.slice.call(arguments)
 					: halt.arg), halt.end, halt.as, act);
@@ -295,49 +305,34 @@
 			};
 			var on = On.scope();
 
-			on.stun = function(chain){
-				var stun = function(ev){
-					if(stun.off && stun === this.stun){
-						this.stun = null;
-						return false;
-					}
-					if(on.stun.skip){
-						return false;
-					}
-					if(ev){
-						ev.cb = ev.fn;
-						ev.off();
-						res.queue.push(ev);
-					}
-					return true;
-				}, res = stun.res = function(tmp, as){
-					if(stun.off){ return }
-					if(tmp instanceof Function){
-						on.stun.skip = true;
-						tmp.call(as);
-						on.stun.skip = false;
+			on.stun = function(chain, fn, as){
+				var res = function(n){
+					if(1 === n){
+						at.stun.skip = 1;
 						return;
 					}
-					stun.off = true;
-					var i = 0, q = res.queue, l = q.length, act;
-					res.queue = [];
-					if(stun === at.stun){
-						at.stun = null;
+					if(at.stun === stun){
+						delete at.stun;	
 					}
-					for(i; i < l; i++){ act = q[i];
-						act.fn = act.cb;
-						act.cb = null;
-						on.stun.skip = true;
-						act.ctx.on(act.tag, act.fn, act);
-						on.stun.skip = false;
+					off = true;
+					var i = 0, q = res.queue, l = q.length, c, v;
+					for(i; i < l; i++){ v = q[i];
+						c = v[0];
+						v = v[1];
+						c.on('in', v.get, v);
 					}
-				}, at = chain._;
-				res.back = at.stun || (at.back||{_:{}})._.stun;
-				if(res.back){
-					res.back.next = stun;
+				}, at = chain._, off, stun = at.stun = function(arg){
+					if(off){
+						delete this.stun;
+						return false;
+					}
+					if(at.stun.skip){
+						return at.stun.skip = false;
+					}
+					res.queue.push([this, arg]);
+					return true;
 				}
 				res.queue = [];
-				at.stun = stun; 
 				return res;
 			}
 
@@ -355,16 +350,24 @@
 				return true;
 			}
 			on.ack._ = opt.rid;
+			/*
+			on.on('event', function event(act){
+				var last = act.on.last, tmp;
+				if(last){
+					if(last instanceof Array){
+						act.fn.apply(act.as, last.concat(act));
+					} else {
+						act.fn.call(act.as, last, act);
+					}
+					if(last !== act.on.last){
+						event(act);
+					}
+					return;
+				}
+			});*/
 
 			on.on('event', function event(act){
 				var last = act.on.last, tmp;
-				if('in' === act.tag && Gun.chain.get.input !== act.fn){
-					if((tmp = act.ctx) && tmp.stun){
-						if(tmp.stun(act)){
-							return;
-						}
-					}
-				}
 				if(last){
 					if(act.on.map){
 						Gun.obj.map(act.on.map, function(v,f){ // TODO: BUG! Gun is not available in this module.
@@ -377,6 +380,7 @@
 					if(last !== act.on.last){
 						event(act);
 					}
+					return;
 				}
 			});
 			function emit(last, act, event, ev){
@@ -403,6 +407,16 @@
 			});
 			return on;
 		}
+		/*
+		function backward(scope, ev){ var tmp;
+			if(!scope || !scope.on){ return }
+			//if(scope.on('back').length){
+			if((tmp = scope.ons) && (tmp = tmp[ev]) && tmp.s.length){
+				return scope;
+			}
+			return backward((scope.back||backward)._, ev);
+		}
+		*/
 		module.exports = Chain;
 	})(require, './src/onify');
 
@@ -862,7 +876,19 @@
 		Gun.graph = require('./graph');
 
 		Gun.on = require('./onify')();
-		Gun.chain = Gun.prototype;
+		
+		/*
+		var opt = {chain: 'in', back: 'out', extend: 'root', id: Gun._.soul};
+		Gun.chain = require('./chain')(Gun, opt);
+		Gun.chain.chain.opt = opt;
+		*/
+		(Gun.chain = Gun.prototype).chain = function(){
+			var chain = new this.constructor(), _;
+			_ = chain._ || (chain._ = {});
+			_.root = this._.root;
+			_.back = this;
+			return chain;
+		}
 
 		;(function(){
 
@@ -883,6 +909,7 @@
 					}
 					tmp[f] = v;
 				});
+				Gun.on('opt', at);
 				return gun;
 			}
 			function root(at){
@@ -895,7 +922,7 @@
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
 				if(at.put){
-					cat.on('in', obj_to(at, {'#': 0, gun: cat.gun}));
+					cat.on('in', obj_to(at, {gun: cat.gun}));
 				}
 				if(!at.gun){
 					at = Gun.obj.to(at, {gun: gun});
@@ -909,37 +936,34 @@
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field];
 				if(node && (!field || obj_has(node, field))){
-					if(field){
-						node = Gun.obj.put({_: node._}, field, node[field]);
-					}
+					// TODO: BUG!!! Shouldn't this ack?????
 					cat.on('in', {
-						'@': at['#'],
 						put: Gun.graph.node(node), // TODO: BUG! Clone node!
+						get: soul
 					});
 					return;
 				}
 				Gun.on('get', at);
 			}
 			function input(at){ var cat = this;
-				if(at.err || u === at.put){
+				if(at['@'] || at.err || u === at.put){
 					at.gun = at.gun || cat.gun;
 					Gun.on.ack(at['@'], at);
 					return;
 				}
 				if(cat.graph){
-					Gun.obj.map(at.put, ham, {at: at, cat: cat}); // all unions must happen first, sadly.
+					Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
 				}
-				Gun.obj.map(at.put, map, {at: at, cat: cat});
+				Gun.obj.map(at.put, map, {at: at, cat: this});
 			}
 			function ham(data, key){
 				var cat = this.cat, graph = cat.graph;
 				graph[key] = Gun.HAM.union(graph[key] || data, data) || graph[key];
 			}
 			function map(data, key){
-				var cat = this.cat, graph = cat.graph, next = cat.next || (cat.next = {}), gun, at;
-				gun = next[key] || (next[key] = cat.gun.get(key));
-				(at = gun._).soul = key;
-				at.change = data;
+				var cat = this.cat, graph = cat.graph, path = cat.path || (cat.path = {}), gun, at;
+				gun = path[key] || (path[key] = cat.gun.get(key));
+				(at = gun._).change = data;
 				if(graph){
 					data = graph[key]; // TODO! BUG/PERF! COPY!?
 				}
@@ -1029,7 +1053,7 @@
 			Gun.HAM.union = function(vertex, node, opt){
 				if(!node || !vertex || !node._ || !vertex._){ return }
 				opt = num_is(opt)? {machine: opt} : {machine: (+new Date)};
-				opt.union = Gun.obj.copy(vertex); // TODO: PERF! This will slow things down!
+				opt.union = Gun.obj.copy(vertex);
 				opt.vertex = vertex;
 				opt.node = node;
 				obj_map(node._, meta, opt.union);
@@ -1118,7 +1142,7 @@
 				as.ref.any(any, {as: as, '.': null});
 				if(!as.out){
 					as.res = as.res || Gun.on.stun(as.ref);
-					as.gun._.stun = as.ref._.stun;
+					as.gun._.stun = as.ref._.stun; // TODO: BUG! These stuns need to be attached all the way down, not just one level.
 				}
 				return gun;
 			};
@@ -1138,34 +1162,34 @@
 
 			function batch(){ var as = this;
 				if(!as.graph || obj_map(as.stun, no)){ return }
-				(as.res||iife)(function(){
-					as.ref.on('out', {
-						gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
-						'#': Gun.on.ask(function(ack, ev){ ev.off(); // One response is good enough for us currently. Later we may want to adjust this.
-							if(!as.opt.any){ return }
-							as.opt.any.call(as.opt.as || as.gun, ack.err, ack.ok);
-						}, as.opt)
-					});
-				}, as);
+				as.ref.on('out', {
+					gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
+					'#': Gun.on.ask(function(ack, ev){
+						if(ack && 0 === ack.ok){ return }
+						ev.off(); // One response is good enough for us currently. Later we may want to adjust this.
+						if(!as.opt.any){ return }
+						as.opt.any.call(as.opt.as || as.gun, ack.err, ack.ok);
+					}, as.opt)
+				});
 				if(as.res){ as.res() }
 			} function no(v,f){ if(v){ return true } }
 
 			function map(v,f,n, at){ var as = this;
 				if(f || !at.path.length){ return }
-				(as.res||iife)(function(){
-					var path = at.path, ref = as.ref, opt = as.opt;
-					var i = 0, l = path.length;
-					for(i; i < l; i++){
-						ref = ref.get(path[i], null, {path: true}); // TODO: API change! We won't need 'path: true' anymore.
-					}
-					if(as.not || Gun.node.soul(at.obj)){
-						at.soul(Gun.node.soul(at.obj) || (as.opt.uuid || as.gun.Back('opt.uuid') || Gun.text.random)());
-						return;
-					}
-					console.log("LAAAME", at.path, v);
-					(as.stun = as.stun || {})[path] = true;
-					ref.any(soul, {as: {at: at, as: as}, '.': null});
-				}, {as: as, at: at});
+				var path = at.path, ref = as.ref, opt = as.opt;
+				var i = 0, l = path.length;
+				for(i; i < l; i++){
+					ref = ref.get(path[i], null, {path: true}); // TODO: API change! We won't need 'path: true' anymore.
+				}
+				if(as.not || Gun.node.soul(at.obj)){
+					at.soul(Gun.node.soul(at.obj) || (as.opt.uuid || as.gun.Back('opt.uuid') || Gun.text.random)());
+					return;
+				}
+				(as.stun = as.stun || {})[path] = true;
+				if(as.res){
+					as.res(1);
+				}
+				ref.any(soul, {as: {at: at, as: as}, '.': null});
 			}
 
 			function soul(at, ev){ var as = this.as, cat = this.at;
@@ -1186,17 +1210,6 @@
 					if(opt.init || as.gun.Back('opt.init')){
 						return;
 					}
-					if(!at.get){
-						if(!cat.get){
-							return;
-						}
-						any.call(as, {
-							put: as.data,
-							get: as.not = as.soul = cat.get
-						}, ev);
-						return;
-					}
-					//console.log("HOLY BALONY", at, as);
 					/*
 						TODO: THIS WHOLE SECTION NEEDS TO BE CLEANED UP!
 						Implicit behavior should be much cleaner. Right now it is hacky.
@@ -1267,32 +1280,16 @@
 				as.ref.put(as.data, opt.any, opt, as);
 			}
 			var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put;
-			var u, empty = {}, noop = function(){}, iife = function(fn,as){fn.call(as||empty)};
+			var u, noop = function(){};
 		}());
 
 		;(function(){
-
-			Gun.chain.chain = function(){
-				var chain = new this.constructor(), _;
-				_ = chain._ || (chain._ = {});
-				_.root = this._.root;
-				_.back = this;
-				Gun.on('chain', _);
-				console.debug(5, 'chain');
-				chain.on('in', input, _); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
-				chain.on('out', output, _); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
-				return chain;
-			}
-
 			Gun.chain.get = function(lex, cb, opt){
 				if(!opt || !opt.path){ var back = this.Back(-1); } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this, cat = back._;
-				var next = cat.next || empty, tmp;
-				console.debug(6, 'get', lex);
-				console.debug(3, 'get', lex);
-				console.debug(2, 'get', lex);
+				var path = cat.path || empty, tmp;
 				if(typeof lex === 'string'){
-					if(!(gun = next[lex])){
+					if(!(gun = path[lex])){
 						gun = cache(lex, back);
 					}
 				} else
@@ -1305,7 +1302,7 @@
 					return back.get(''+lex, cb, opt);
 				} else
 				if(tmp = lex.soul){
-					if(!(gun = next[tmp])){
+					if(!(gun = path[tmp])){
 						gun = cache(tmp, back);
 					}
 					if(tmp = lex.field){
@@ -1314,7 +1311,7 @@
 					}
 				} else
 				if(tmp = lex[_soul]){
-					if(!(gun = next[tmp])){
+					if(!(gun = path[tmp])){
 						gun = cache(tmp, back);
 					}
 					if(tmp = lex[_field]){
@@ -1322,20 +1319,22 @@
 						return gun.get(tmp, cb, opt);
 					}
 				}
-				if(tmp = cat.stun){ // TODO: Refactor?
+				if(tmp = cat.stun){
 					gun._.stun = gun._.stun || tmp;
 				}
 				if(cb && cb instanceof Function){
-					gun.any(cb, opt);
+					((opt = opt || {}).gun = opt.gun || gun).any(cb, opt);
 				}
 				return gun;
 			}
 			function cache(key, back){
-				console.debug(7, 'cache', key, back);
-				console.debug(4, 'cache', key, back);
-				var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
-				if(!next){ next = cat.next = {} }
-				next[at.get = key] = gun;
+				var cat = back._, path = cat.path, gun = back.chain(), at = gun._;
+				if(!path){ path = cat.path = {} }
+				path[at.get = key] = gun;
+				at.stun = at.stun || cat.stun; // TODO: BUG! Clean up! This is kinda ugly. These need to be attached all the way down regardless of whether a gun chain has been cached or not for the first time. 
+				Gun.on('path', at);
+				//gun.on('in', input, at); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
+				gun.on('out', output, at); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
 				return gun;
 			}
 			function output(at){
@@ -1343,243 +1342,163 @@
 				if(!at.gun){
 					at.gun = gun;
 				}
-				if(get = at.get){
-					if(!get[_soul]){
-						if(obj_has(get, _field)){
-							get = get[_field];
-							if((cat.ask = cat.ask || {})[get || node_]){ return }
-							cat.ask._ = cat.ask._ || {};
-							if(get){ cat.ask[get] = cat.ask._['.'] = 1 }
-							tmp = false;
-							console.debug(11, 'out', cat.get, get, cat.ask);
-							cat.on('in', function(tac, ev){ ev.off(); // TODO: BUG! What happens when this is `.map`ed?
-								console.debug(13, 'out', get, tac, rel);
-								console.debug(12, 'out', get, tac, rel);
-								input.call(cat, tac, ev);
-								tmp = true;
+				console.debug(10, 'out', cat.get, at.get);
+				if(at.get && !at.get[_soul]){
+					if(typeof at.get === 'string'){ // request for soul!
+						if(cat.ask){
+							if(cat.ask[at.get]){
 								return;
-								var put = tac.put, rel = tac.put;
-								if(!(rel = (Gun.node.soul(put) || Gun.val.rel.is(put)))){
-									if(!get){ return }
-									// Nots require some special treatment.
-									at.gun.on('in', {
-										get: get,
-										gun: at.gun, 
+							}
+							cat.ask[at.get] = at['#'] || 1;
+							cat.on('in', function(tac, ev){ ev.off();
+								var tmp = tac.put;
+								if(tmp && u !== tmp[at.get] && (tmp = (cat.path||empty)[at.get])){
+									tmp = tmp._;
+									tmp.change = tac.put[at.get];
+									tmp.put = tac.put[at.get];
+									// TODO: Could we pass it to input/map function since they already do this?
+									tmp.on('in', {
+										get: at.get,
+										put: tac.put[at.get],
+										gun: tmp.gun,
 										via: tac
-									});
+									})
 									return;
 								}
-								ask(cat, rel);
-								tmp = true;
+								if(!(tmp = Gun.node.soul(tmp = tac.put) || Gun.val.rel.is(tmp))){
+									tmp = (cat.path||empty)[at.get];
+									if(!tmp){ return }
+									tmp.on('in', {get: at.get, gun:tmp});
+									return;
+								}
+								cat.ask[at.get] = 0;
+								tmp = {'#': tmp, '.': at.get};
+								tmp = {gun: at.gun, get: tmp};
+								tmp['#'] = Gun.on.ask(ack, tmp);
+								at.gun.on('out', tmp);
 							}).off();
-							if(tmp){ return }
-							if(!cat.get){ return }
-							if(root === cat.back){
-								if(get){ cat.ask[get] = -1 }
-								at.gun.on('out', {
-									get: {'#': cat.get, '.': get},
-									'#': Gun.on.ask(ack, at.gun),
-									gun: at.gun
-								});
-								return;
-							}
-							console.debug(10, 'out', cat.get, get, cat.ask);
-							cat.back.on('out', {
-								get: obj_put({}, _field, cat.get),
-								gun: gun
-							});
-							return;
-						} else {
-							if(cat.ask){ return }
-							cat.ask = {_:{'*':1}};
-							if(!cat.get){ return }
-							if(root === cat.back){
-								cat.ask._['*'] = -1;
-								gun.on('out', {
-									get: {'#': cat.get},
-									'#': Gun.on.ask(ack, gun),
-									gun: gun
-								});
-								return;
-							}
-							console.debug(9, 'any out', cat.get, cat.ask);
-							cat.back.on('out', {
-								get: obj_put({}, _field, cat.get),
-								gun: gun
-							});
 							return;
 						}
+						cat.ask = obj_put({}, at.get, at['#'] || 1);
+						gun.on('in', input, cat);
+						if(root === cat.back){
+							cat.ask[at.get] = 0;
+							tmp = {'#': cat.get, '.': at.get};
+							tmp = {gun: at.gun, get: tmp};
+							tmp['#'] = Gun.on.ask(ack, tmp);
+							at.gun.on('out', tmp);
+							return;
+						}
+						console.debug(7, 'out', cat.get, at.get, cat.ask);
+						cat.back.on('out', {
+							gun: cat.gun,
+							get: cat.get
+						});
+						return;
+					} else
+					if(at.get instanceof Function){
+						if(!cat.ask){
+							var opt = at.opt || {};
+							tmp = obj_has(opt, '.'); // TODO: CLEAN UP!
+							cat.ask = tmp? {} : {_:1}; // TODO: CLEAN UP!
+							gun.on('in', input, cat);
+							if(root === cat.back){
+								if(cat.ask && cat.ask._){ cat.ask._ = 0 } // TODO: CLEAN UP!
+								if(tmp && opt['.']){ cat.ask[opt['.']] = 0 } // TODO: CLEAN UP!
+								tmp = tmp? {'#': cat.get, '.': opt['.']} : {'#': cat.get}; // TODO: CLEAN UP!
+								tmp = {gun: at.gun, get: tmp};
+								tmp['#'] = Gun.on.ask(ack, tmp);
+								cat.back.on('out', tmp);
+							} else {
+								console.debug(6, 'out', cat.get);
+								cat.back.on('out', {
+									gun: cat.gun,
+									get: cat.get
+								});
+							}
+						}
+						console.debug(9, 'out', cat.get);
+						if(cat.stun && cat.stun(at)){ return }
+						gun.on('in', at.get, at);
+						return;
 					}
 				}
 				cat.back.on('out', at);
 			}
-			function input(at, ev){
-				var cat = this, gun = at.gun, coat = gun._, change = coat.change, tmp;
-				//coat.id = coat.id || Gun.text.random(5); // TOD: BUG! This allows for 1B item entropy in memory. In the future, people might want to expand this to be larger.
-				if(at.via && (tmp = at.via['@'])){
-					Gun.on.ack(tmp, at);
-					if(at.err){ return }
+			function input(at, ev){ var cat = this, tmp;
+				cat.id = cat.id || Gun.text.random(5); // TOD: BUG! This allows for 1B item entropy in memory. In the future, people might want to expand this to be larger.
+				if(at.err){
+					console.log("Please report this as an issue! In.err"); // TODO: BUG!
+					return;
 				}
+				console.debug(10, 'input', at, cat.get);
 				if(value.call(cat, at, ev)){
 					return;
 				}
-				obj_map(change, map, {at: at, cat: cat}); // Important because `values` sometimes `ask`s for things which changes what the `changes` are.
-				//ask(cat, Gun.node.soul(change));
+				if(tmp = cat.link){
+					if(tmp = tmp.res){
+						// TODO: BUG! Ordering of the change set? What if the proxied object has a change but the parent has a happened too. Pretend that the parent changed the field such that it no longer point to the proxy. But in the changeset it might get iterated over last, thus it the update will get triggered here now for the proxy, even though this update is suppose to unsubscribe itself. Or what if this ordering is inconsistent? Or is this just basically impossible from the API's put perspective?
+						tmp(cat); // TODO: BUG! What about via? Do we need to clone this?
+					}
+				}
+				obj_map(cat.change, map, {at: at, cat: cat});
 			}
 			Gun.chain.get.input = input;
 			function value(at, ev){
-				var cat = this, gun = at.gun, put = at.put, coat = gun._, rel, tmp;
-				//if(!cat.field){
-				if(!cat.get){
-					if(Gun.val.is(put)){
-						return true;
-					}
-					return;
-				}
-				if(gun !== cat.gun){
-					if(cat.link){
-						//if(cat.field){
-							cat.field = cat.field || cat.get;
-							cat.change = coat.change;
-							cat.put = at.put;
-						//}
-						cat.link.res(at); // MODIFY AT?
-						return;
-					}
-					//return;
-				}
-				if(!(rel = Gun.val.rel.is(put))){
-					if(Gun.val.is(put)){
-						return true;
-					}
-
-					return;
-				}
-				if(coat.link && rel === coat.link.rel){
-					if(gun !== cat.gun && Gun.val.rel.is(put) && obj_has(coat, 'put')){
-						// TODO: BUG! at.gun does seem to be correct, BUT should it be changed AGAIN to the gun relation?
-						at.put = coat.put;
-						at.gun = coat.link.ref;
-						// TODO: BUG!!!!! The `input` iterates off of `change` though. Right now it seemed to work, but in what cases is `change` not known for things like `.map` becuase it is purely dynamic?
-						return;
-					}
-					return true;
-				}
-				tmp = coat.link = {rel: rel, ref: coat.root.get(rel)};//, res: ev.stun(rel), as: cat};
-				tmp.res = ev.stun(rel); tmp.as = cat;
-				tmp.ref.on('in', input, coat);
-				//tmp.ref.on('in', input, cat);
-			}
-			function values(at, ev){
-				var gun = at.gun, coat = gun._, cat = this, put = at.put, tmp;
+				//var cat = this, is = (u === at.put) || Gun.val.is(at.put), rel = Gun.val.rel.is(at.put), tmp, u;
+				var cat = this, put = cat.change, rel, tmp, u;
 				if(u === put){
 					not(cat, at);
 					return true;
 				}
-				if(tmp = Gun.node.soul(put)){
-					if(cat.root === cat.back){
-						ask(cat, tmp);
-						return;
-					}
-					if(coat.link && tmp === coat.link.rel){
-						if(at.via && coat.back === at.via.gun){ // PERFORMANCE HACK! Prevent duplicate events.
-							ev.stun(); // PERFORMANCE HACK! Prevent duplicate events.
-							return true; // PERFORMANCE HACK! Prevent duplicate events.
-						}
-						ask(cat, tmp);
-						if(cat !== coat){
-							return;
-						}
-						coat.link.res(at);
-						return;
-					}
-					put = Gun.val.rel.ify(tmp);
+				if(!cat.link && Gun.node.soul(put) && (rel = Gun.node.soul(at.put))){
+				console.debug(11, 'value', put);
+					ask(cat, rel);
+					return false;
 				}
-				if(!(tmp = Gun.val.rel.is(put))){
-					if(Gun.val.is(put)){
-						not(cat, at);
-						return true;
-					}
-					for(var i in put){tmp = true;break} // TODO: Meh? Is it iterable?
-					if(tmp){
-						return;
+				if(!(rel = Gun.val.rel.is(put))){
+					if(!Gun.val.is(put)){
+						return false;
 					}
 					not(cat, at);
 					return true;
 				}
-				coat.put = u;
-				if(coat.link){
-					if(coat.link.rel === tmp){
-						tmp = coat.link.ref._;
-						coat.change = tmp.change;
-						at.put = tmp.put;
-						coat.put = at.put;
+				//cat.change = at.put;
+				if(cat.link){
+					if(rel === cat.link.rel){
 						ev.stun();
-						return true;
+						tmp = cat.link.ref._;
+						cat.change = tmp.change;
+						cat.put = at.put = tmp.put; // TODO: BUG! Mutating at event? Needed for certain tests, but is this bad?
+						return false;
 					}
 					not(cat, at);
 				}
-				// gun.get('users').map().path('spouse').path('work').val(cb);
-				tmp = coat.link = {rel: tmp, ref: coat.root.get(tmp), res: ev.stun(tmp), as: cat}; // TODO: BUG!? Which ones
+				tmp = ev.stun(tmp);
+				//cat.put = u; // For performance sake, do this now to prevent `.val` from firing.
+				tmp = cat.link = {rel: rel, ref: cat.gun.Back(-1).get(rel), res: tmp, as: cat};
+				// TODO: BUG???? Below allows subscriptions to happen without the soul itself being subscribed. Will this cause problems? I think it should be okay. Not sure what test is necessary.
 				tmp.sub = tmp.ref._.on('in', proxy, tmp); // TODO: BUG! If somebody does `.off` how do we clean up these things from memory?
-				if(tmp.off || tmp.ran){ // In case things are synchronous.
-					return true;
+				if(tmp.ran){ return }
+				ask(cat, rel);
+				if(!tmp.ran){
+					tmp.res(); // This is necessary for things that listen for a soul or relation only.
 				}
-				ask(cat, tmp.rel);
-				if(tmp.off || tmp.ran){ // And again, because ask might load data as well.
-					return true;
-				}
-				tmp.res();
 				return true;
 			}
 			function map(data, key){ // Map over only the changes on every update.
-				if(node_ === key){ return }
-				var cat = this.cat, next = cat.next || {}, via = this.at, gun, at, tmp;
-				if(!(gun = next[key])){ return }
-				at = gun._;
-				//console.log("---->>", key, data, cat, gun);
-				if(tmp = Gun.val.rel.is(data)){
-					if(at.link && tmp === at.link.rel){
-						return;
+				if(Gun._.meta === key){ return }
+				var cat = this.cat, path = cat.path || {}, gun, at, tmp;
+				if(!(gun = path[key])){ return }
+				if(cat.put && obj_has(cat.put, key)){ data = cat.put[key] } // But use the actual data.
+				(at = gun._).change = cat.change[key];
+				at.put = data;
+				if(tmp = Gun.val.rel.is(at.put)){ // PERFORMANCE HACK!
+					if(tmp = gun.Back(-1).get(tmp)._.put){ // PERFORMANCE HACK!
+						at.put = data = tmp; // PERFORMANCE HACK!
 					}
 				}
-				if(via.gun === cat.gun){
-					at.field = key;
-					at.change = data;
-					at.put = data;
-					gun.on('in', {
-						put: data,
-						get: key,
-						gun: gun,
-						via: via
-					});
-				} else {
-				//if(cat.field){
-					gun.on('in', {
-						put: data,
-						get: key,
-						gun: via.gun.get(key, null, {path: true}), // TODO: path won't needed with 0.5
-						via: via
-					});
-				}
-			}
-			function maps(data, key){ // Map over only the changes on every update.
-				if(node_ === key){ return }
-				var cat = this.cat, next = cat.next || {}, gun, at, tmp;
-				if(!(gun = next[key])){ return }
-				if(coat.put && obj_has(coat.put, key)){ data = coat.put[key] } // But use the actual data.
-				//if((at = gun._).get){
-					at = gun._;
-					at.change = data;
-					at.put = data;
-					if(tmp = Gun.val.rel.is(at.put)){ // PERFORMANCE HACK!
-						if((tmp = cat.root.get(tmp)._).put){ // PERFORMANCE HACK!
-							at.change = tmp.change; // PERFORMANCE HACK!
-							at.put = data = tmp.put; // PERFORMANCE HACK!
-						}
-					}
-				//}
-				gun.on('in', {//'@': this.at['@'],
+				gun.on('in', {
 					put: data,
 					get: key,
 					gun: gun,
@@ -1587,133 +1506,147 @@
 				});
 			}
 			function not(cat, at){
-				var ask = cat.ask, tmp = cat.link;
-				cat.link = null;
+				var tmp, u;
+				tmp = cat.link;
+				if(u !== cat.put){ cat.link = null; } // TODO: BUG! This may mean `not` will be fired multiple times until data is found. Is this okay?
 				if(null === tmp){ return }
 				if(tmp){
 					if(tmp.sub){
 						tmp.sub.off();
 					}
-					tmp.off = true;
+					tmp.sub = false;
 				}
-				obj_map(ask, function(state, key){
-					if(key === node_){
-						if(state['*']){
-							state['*'] = 1;
-						}
-						if(state['.']){
-							state['.'] = 1;
-						}
-					}
-					if(!(state = (cat.next||empty)[key])){ return }
-					ask[key] = 1;
-					(tmp = state._).put = tmp.change = u;
-					state.on('in', {
-						get: key,
-						put: u,
-						gun: state, 
-						via: at
-					});
+				obj_map(cat.ask, function(v,key){
+					cat.ask[key] = 1;
+					if(!(v = (cat.path||empty)[key])){ return }
+					(tmp = v._).put = tmp.change = u;
+					v.on('in', {get: key, put: u, gun: v, via: at});
 				});
 			}
 			function ask(cat, soul){
-				var ask = cat.ask, lex;
-				if(!ask || !soul){ return }
-				if(ask._['*']){
-					if(0 <= ask._['*']){
-						ask._['*'] = -1;
-						cat.gun.on('out', {
-							get: {'#': soul},
-							gun: cat.gun,
-							'#': Gun.on.ask(ack, cat.gun)
+				if(!cat.ask){ return }
+				var tmp = cat.ask, lex;
+				if(obj_has(tmp, '_')){
+					if(!tmp._){ return }
+					tmp._ = 0;
+					lex = {gun: cat.gun, get: {'#': soul}};
+					lex['#'] = Gun.on.ask(ack, lex);
+					cat.gun.on('out', lex);
+					return;
+				}
+				// TODO: PERF! Make it so we do not have to iterate through this every time?
+				obj_map(tmp, function(v,key){
+					if(!v || (cat.put && cat.put[key])){ return } // TODO: This seems like an optimization? But does it have side effects? Probably not without the tmp[key] = 0;
+					if(!(v = (cat.path||empty)[key])){ return }
+					tmp[key] = 0;
+					lex = {gun: v, get: {'#': soul, '.': key}};
+					lex['#'] = Gun.on.ask(ack, lex);
+					v.on('out', lex);
+				});
+			}
+			function proxy(at, ev){ var link = this;
+				link.ran = true;
+				if(false === link.sub){ return ev.off() } // will this auto clean itself up?
+				link.as.change = link.ref._.change;
+				link.as.put = at.put;
+				input.call(link.as, at, ev); // TODO: BUG! What about via? Do we need to clone this?
+			}
+			Gun.chain.any = function(any, opt){
+				if(!any){ return this }
+				var chain = this, cat = chain._, opt = opt || {}, last = {};//function(){};
+				if(opt.change){ opt.change = 1 }
+				console.debug(5, 'any');
+				chain.on('out', {get: function(at, ev){
+						//console.log("any!", at);
+						if(!at.gun){ console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%EXPLODE%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', at) }
+						var gun = at.gun || chain, cat = gun._;
+						var data = cat.put || at.put, tmp;
+						if((tmp = at.put) && tmp[Gun.val.rel._] && (tmp = Gun.val.rel.is(tmp))){
+							if(null !== opt['.']){
+								return;
+							}
+							at = obj_to(at, {put: data = cat.change = cat.put = Gun.state.ify(Gun.node.ify({}, tmp))});
+						}
+						// TODO: BUG! Need to use at.put > cat.put for merged cache?
+						if(tmp = opt.change){ // TODO: BUG! Opt is outer scope, gun/cat/data might be iterative and thus only inner scope? Aka, we can't use it for all of them. 
+							if(1 === tmp){
+								opt.change = true;
+							} else {
+								data = cat.change;
+								at = obj_to(at, {put: data});
+							}
+						}
+						var id = cat.id+at.get;
+						/*
+						if(last[id] == data && obj_has(last, id)){ return }
+						last[id] = data; // TODO: PERF! Memory optimizaiton? Can we avoid this.
+						*/
+					
+						if(last.put === data && last.get === id){ return }
+						last.get = id;
+						last.put = data;
+						
+						cat.last = data;
+						if(opt.as){
+							any.call(opt.as, at, ev);
+						} else {
+							any.call(gun, at.err, data, at.get, cat, ev);
+						}
+					}, opt: opt
+				});
+				return chain;
+			}
+			function ack(at, ev){ var lex = this.get, chain = this.gun;
+				var s = lex['#'], f = lex['.'], root = at.gun.Back(-1), gun = root.get(s), tmp;
+				if(tmp = at.put){
+					if(!f || obj_has(tmp[s], f)){
+						ev.off();
+						at['@'] = 0;
+						return root.on('in', at);
+					}
+					/*
+					if(!tmp[s] && !obj_empty(tmp)){ // TODO: BUG! Seems like it just causes unnecessary data/event to be triggered. Nothing genuinely useful.
+						ev.off(); // TODO: BUG!? It isn't matching data by lex means, but it IS a reply?
+						at['@'] = 0;
+						return root.on('in', at);
+					}
+					*/
+					if(f && gun._.put){
+						gun = gun.get(f, null, {path:true});
+						if(!chain){
+							console.log("Please report this as an issue! ack.chain");
+							return;
+						}
+						chain.on('in', {
+							err: at.err,
+							get: f,
+							gun: chain,
+							via: {get:s,via:at}
 						});
 						return;
 					}
 				}
-				if(0 >= ask._['.']){ return }
-				ask._['.'] = -1;
-				obj_map(ask, function(state, key){
-					if(1 > state){ return }
-					if(!(state = (cat.next||empty)[key])){ return }
-					ask[key] = -1;
-					state.on('out', {
-						get: {'#': soul, '.': key},
-						gun: state,
-						'#': Gun.on.ask(ack, state)
-					});
-				});
-			}
-			function proxy(at, ev){ var link = this; link.ran = true;
-				if(link.off){ return ev.off() }
-				var gun = at.gun, cat = gun._, as = link.as;
-				as.change = cat.change;
-				as.put = at.put;
-				input.call(as, obj_to(at, {gun: as.gun, get: as.get}), ev);
-			}
-			Gun.chain.any = function(cb, opt){
-				if(!cb){ return this }
-				var opt = opt || {}, gun = opt.gun = this;
-				if(opt.change){ opt.change = 1 }
-				opt.any = cb;
-				console.debug(8, 'any', gun._.get);
-				return gun.on('in', any, opt).on('out', {get: opt});
-			}
-			function any(at, ev){ var opt = this;
-				if(!at.gun){ console.log("Error: %%%%%%% No gun context! %%%%%%%") }
-				var gun = at.gun, cat = gun._, data = at.put, tmp;
-				if((tmp = data) && tmp[Gun.val.rel._] && (tmp = Gun.val.rel.is(tmp))){
-					//console.log("ooooooooh jolllllly", data);
-					if(null !== opt['.']){
-						return;
-					}
-					at = obj_to(at, {put: data = cat.change = cat.put = Gun.state.ify(Gun.node.ify({}, tmp))});
-				}
-				if(opt.change){
-					tmp = (opt.changed = opt.changed||{})[cat.id];
-					if(tmp){
-						data = cat.change;
-						at = obj_to(at, {put: data});
-					}
-					opt.changed[cat.id] = true; // TODO: BUG! MEMORY PERF! Any more efficient way than storing whether every single id has been seen before?
-				}
-				if(opt.as){
-					opt.any.call(opt.as, at, ev);
-				} else {
-					opt.any.call(gun, at.err, data, at.get, at, ev);
-				}
-			}
-			function ack(at, ev){ var gun = this;
-				var cat = gun._;
-				if(u !== cat.change){ return ev.off() }
-				// TODO: PERF! Memory. If somebody `gun.off()` we should clean up these requests.
-				// TODO: PERF! Memory. If peers only reply with `not` (or we never get replies) these event listeners will be left hanging - even if we get push updates that the data does exist.
-				if(cat.root === cat.back){
-					//at.gun = cat.gun;
-					if(at.gun === cat.gun){ return }
-					at = {
-						get: cat.get,
-						gun: cat.gun,
-						via: at
-					}
-					
-				} else {
-					if(obj_has(at.put, cat.get)){ return ev.off() }
-					at = {
-						get: cat.get,
+				if(gun._.put){
+					gun = gun.get(f, null, {path:true});
+					gun.on('in', {
+						err: at.err,
+						get: f,
 						gun: gun,
-						via: at.via? at : {
-							get: cat.back._.get,
-							gun: cat.back,
-							via: at
-						}
-					}
+						via: {get:s,via:at}
+					});
+					return;
 				}
-				//at.get = at.get || cat.get;
-				cat.on('in', at);
+				gun.on('in', {
+					err: at.err,
+					put: at.put,
+					get: s,
+					gun: gun,
+					via: at
+				});
 			}
 			var obj = Gun.obj, obj_has = obj.has, obj_to = obj.to;
 			var empty = {}, u;
-			var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._, _sid = Gun.on.ask._, _rid = Gun.on.ack._;
+			var _soul = Gun._.soul, _field = Gun._.field, _sid = Gun.on.ask._, _rid = Gun.on.ack._;
 		}());
 
 		;(function(){
@@ -1745,15 +1678,15 @@
 				ev.off();
 				opt.soul = Gun.node.soul(at.put);
 				if(!opt.soul || opt.key === opt.soul){ return opt.data = {} }
-				opt.data = obj_put({}, keyed._, Gun.node.ify(obj_put({}, opt.soul, Gun.val.rel.ify(opt.soul)), '#'+opt.key+'#'));
-				(opt.res||iffe)(function(){
-					opt.ref.put(opt.data, opt.any, {soul: opt.key, key: opt.key});				
-				},opt);
+				opt.data = obj_put({}, keyed._, Gun.node.ify(obj_put({}, opt.soul, Gun.val.rel.ify(opt.soul)), '#'+opt.key+'#'))
+				if(opt.res){
+					opt.res(1);
+				}
+				opt.ref.put(opt.data, opt.any, {soul: opt.key, key: opt.key});
 				if(opt.res){
 					opt.res();
 				}
 			}
-			function iffe(fn,as){fn.call(as||{})}
 			function keyed(f){
 				if(!f || !('#' === f[0] && '#' === f[f.length-1])){ return }
 				var s = f.slice(1,-1);
@@ -1761,7 +1694,7 @@
 				return s;
 			}
 			keyed._ = '##';
-			Gun.on('next', function(at){
+			Gun.on('path', function(at){
 				var gun = at.gun;
 				if(gun.Back(-1) !== at.back){ return }
 				gun.on('in', pseudo, gun._);
@@ -1770,7 +1703,7 @@
 			function normalize(at){ var cat = this;
 				if(!at.put){
 					if(at.get){
-						search.call(at.gun? at.gun._ : cat, at);
+						search.call(cat, at);
 					}
 					return;
 				}
@@ -1790,34 +1723,28 @@
 			}
 			function search(at){ var cat = this;
 				var tmp;
-				if(!Gun.obj.is(tmp = at.get)){ return }
-				if(!Gun.obj.has(tmp, '#')){ return }
-				if((tmp = at.get) && (null === tmp['.'])){
+				if(!Gun.obj.is(at.get)){ return }
+				if(cat.pseudo){
+
+				}
+				if((tmp = at.opt) && (null === tmp['.'])){
 					tmp['.'] = '##';
 					return;
 				}
 				if((tmp = at.get) && Gun.obj.has(tmp, '.')){
-					if(tmp['#']){
-						cat = cat.gun.get(tmp['#'])._;
-					}
 					tmp = at['#'];
 					at['#'] = Gun.on.ask(proxy);
 				}
 				var tried = {};
 				function proxy(ack, ev){
+					ev.off();
 					var put = ack.put, lex = at.get;
-					if(!cat.pseudo || ack.via){ // TODO: BUG! MEMORY PERF! What about unsubscribing?
-						//ev.off();
-						//ack.via = ack.via || {};
-						return Gun.on.ack(tmp, ack);
-					}
+					if(!cat.pseudo){ return Gun.on.ack(tmp, ack) }
 					if(ack.put){
 						if(!lex['.']){
-							ev.off();
 							return Gun.on.ack(tmp, ack);
 						}
 						if(obj_has(ack.put[lex['#']], lex['.'])){
-							ev.off();
 							return Gun.on.ack(tmp, ack);
 						}
 					}
@@ -1835,11 +1762,9 @@
 				}
 			}
 			function pseudo(at, ev){ var cat = this;
-				// TODO: BUG! Pseudo can't handle plurals!?
 				if(cat.pseudo){
-					//ev.stun();return;
-					if(cat.pseudo === at.put){ return }
 					ev.stun();
+					if(cat.pseudo === at.put){ return }
 					cat.change = cat.changed || cat.pseudo;
 					cat.on('in', Gun.obj.to(at, {put: cat.put = cat.pseudo}));
 					return;
@@ -1849,7 +1774,7 @@
 				if(!rel){ return }
 				var soul = Gun.node.soul(at.put), resume = ev.stun(resume), root = cat.gun.Back(-1), seen = cat.seen = {};
 				cat.pseudo = cat.put = Gun.state.ify(Gun.node.ify({}, soul));
-				root.get(rel).on(each, {change: true});
+				root.get(rel).on(each, true);
 				function each(change){
 					Gun.node.is(change, map);
 				}
@@ -1859,7 +1784,6 @@
 					seen[soul] = root.get(soul).on(on, true);
 				}
 				function on(put){
-					if(!put){ return }
 					cat.pseudo = Gun.HAM.union(cat.pseudo, put) || cat.pseudo;
 					cat.change = cat.changed = put;
 					cat.put = cat.pseudo;
@@ -1890,6 +1814,8 @@
 					gun = back;
 					var i = 0, l = field.length;
 					for(i; i < l; i++){
+						console.debug(3, 'path', field[i]);
+						console.debug(2, 'path', field[i]);
 						gun = gun.get(field[i], (i+1 === l)? cb : null, opt);
 					}
 					gun.back = back; // TODO: API change!
@@ -1916,28 +1842,34 @@
 				var opt = arg;
 				opt = (true === opt)? {change: true} : opt || {}; 
 				opt.ok = tag;
-				opt.last = {};
 				gun.any(ok, {as: opt, change: opt.change}); // TODO: PERF! Event listener leak!!!????
 				return gun;
 			}
 
-			function ok(at, ev){ var opt = this;
-				if(u === at.put){ return }
-				var data = at.put, gun = at.gun, cat = gun._, tmp = opt.last, id = cat.id+at.get;
-				opt.ok.toString().match('FOO') && console.log('WHAT!!?????????', cat.get, data);
-				// DEDUPLICATE
-				if(tmp.put === data && tmp.get === id){ return }
-				tmp.put = data;
-				tmp.get = id;
-				// DEDUPLICATE
-				cat.last = data;
+			function ok(cat, ev){ var opt = this;
+				var data = cat.put, tmp; 
+				// TODO: BUG! Need to use at.put > cat.put for merged cache?
+				if(u === data){ return }
 				if(opt.as){
-					opt.ok.call(opt.as, at, ev);
+					//console.log("BANANA CREAM PIE", opt);
+					opt.ok.call(opt.as, cat, ev);
 				} else {
-					opt.ok.call(gun, data, at.get, at, ev);
+					//console.log("HICADOO DAAH", cat, opt);
+					opt.ok.call(cat.gun, data, cat.get, cat, ev);
 				}
 			}
 
+					//if(obj_empty(value, Gun._.meta) && !(opt && opt.empty)){ // TODO: PERF! Deprecate!???
+						
+					//} else {
+						//console.log("value", value);
+						//if(!(value||empty)['#']/* || !val_rel_is(value)*/){ // TODO: Performance hit!???? // TODO: BUG! WE should avoid this. So that way it is usable with gun plugin chains.
+							//cb.call(gun, value, at.get); // TODO: BUG! What about stun?
+							//return gun;
+						//}
+					//}
+
+			// TODO: BUG! What about stun?
 			Gun.chain.val = function(cb, opt){
 				var gun = this, at = gun._, value = at.put;
 				if(!at.stun && u !== value){
@@ -1947,8 +1879,9 @@
 				if(cb){
 					(opt = opt || {}).ok = cb;
 					opt.cat = at;
+					console.debug(4, 'val', at);
 					gun.any(val, {as: opt});
-					opt.async = at.stun? 1 : true;
+					opt.async = true;
 				}
 				return gun;
 			}
@@ -1959,21 +1892,21 @@
 					return;
 				}
 				clearTimeout(ev.to);
-				if(!to && (true === opt.async)){
+				if(!to && opt.async){
 					ev.to = setTimeout(function(){
 						val.call(opt, at, ev, ev.to || 1)
 					}, opt.wait || 99);
 					return;
 				}
 				ev.off();
-				opt.ok.call(at.gun || opt.gun, data, at.get);
+				opt.ok.call(at.gun || opt.gun, data, at.get); // TODO: BUG! opt.gun?
 			}
 
 			Gun.chain.off = function(){
 				var gun = this, at = gun._, tmp;
 				var back = at.back || {}, cat = back._;
 				if(!cat){ return }
-				if(tmp = cat.next){
+				if(tmp = cat.path){
 					if(tmp[at.get]){
 						obj_del(tmp, at.get);
 					} else {
@@ -2019,8 +1952,19 @@
 					chain = cat.map = gun.chain();
 					var list = (cat = chain._).list = cat.list || {};
 					chain.on('in').map = {};
+					chain.on('out', function(at){
+						console.debug(8, 'map out', at);
+				 		if(at.get instanceof Function){
+							chain.on('in', at.get, at);
+							return;
+						} else {
+							console.debug(9, 'map out', at);
+							chain.on('in', gun.get.input, at.gun._);
+						}
+					});
 					if(opt !== false){
 						gun.on(map, {change: true, as: cat});
+						console.debug(1, 'map');
 					}
 				}
 				if(cb){
@@ -2037,25 +1981,12 @@
 				var gun = this.gun, cat = this.cat, id = this.id;
 				if(cat.list[id+f]){ return }
 				// TODO: BUG! Ghosting!
-				(cat.list[id+f] = gun.path(f)).on(function(v,s,a,ev){
-					//Gun.chain.get.input.call(cat, {gun: cat.gun, get: f, put: v, MAP: true}, ev);
-					console.debug(1, 'map on each', f,v, this);
-					cat.on('in',[id+f,{gun:this,get:f,put:v, MAP: true},ev]);
+				cat.list[id+f] = gun.path(f).on(function(v,f,a,ev){
+					//cat.on('in',[{gun:this,get:f,put:v},ev]);
+					cat.on('in',[id+f,{gun:this,get:f,put:v},ev]);
 				});
 			}
 			var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._;
-		}());
-
-		;(function(){
-			Gun.chain.filter = function(){
-				var gun = this, chain = gun.chain();
-				chain._.FILTER = true;
-				gun.on(function(v,f,at){
-					if(v.age < 20){ return }
-					chain.on('in', at);
-				});
-				return chain;
-			}
 		}());
 
 		;(function(){
@@ -2090,22 +2021,22 @@
 				Gun.graph.is(at.put, function(node, soul){
 					//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
 					try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
-					}catch(e){ err = e }
+					}catch(e){ err = e || "localStorage failure" }
 				});
 				//console.log('@@@@@@@@@@local put!');
-				Gun.on.ack(at, {err: err, ok: err? 0 : 1}); // TODO: Reliability! Are we sure we want to have localStorage ack?
+				Gun.on.ack(at, {err: err, ok: 0}); // TODO: Reliability! Are we sure we want to have localStorage ack?
 			}
 			function get(at){
 				var gun = at.gun, lex = at.get, soul, data, opt;
-				setTimeout(function(){
+				//setTimeout(function(){
 				(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
 				if(!lex || !(soul = lex[Gun._.soul])){ return }
 				data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
 				if(!data){ return } // localStorage isn't trustworthy to say "not found".
 				if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(tmp){data[lex['.']] = tmp}}
-				//console.log('@@@@@@@@@@@@local get', data);
-				gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data), local:true});
-				},100);
+				//console.log('@@@@@@@@@@@@local get', data, at);
+				gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
+				//},100);
 			}
 			Gun.on('put', put);
 			Gun.on('get', get);
@@ -2113,29 +2044,43 @@
 
 		;require(function(module){
 			Gun.on('get', function(at){
-				var peers = at.gun.Back('opt.peers');
+				var gun = at.gun, opt = gun.Back('opt') || {}, peers = opt.peers;
 				if(!peers || Gun.obj.empty(peers)){
-					setTimeout(function(){
+					//setTimeout(function(){
 					Gun.log.once('peers', "Warning! You have no peers to connect to!");
-					//console.log('@@@@@@@@@@@@wsp get');
-					at.gun.Back(-1).on('in', {'@': at['#'], wsp: true});
-					},100);
+					at.gun.Back(-1).on('in', {'@': at['#']});
+					//},100);
 					return;
 				}
+				var msg = {
+					'#': Gun.text.random(9), // msg ID
+					'$': at.get // msg BODY
+				};
+				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
+					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: Gun.graph.node(data)});
+				});
+				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
+			});
+			Gun.on('put', function(at){
+				var opt = at.gun.Back('opt') || {}, peers = opt.peers;
+				if(!peers || Gun.obj.empty(peers)){
+					Gun.log.once('peers', "Warning! You have no peers to save to!");
+					at.gun.Back(-1).on('in', {'@': at['#']});
+					return;
+				}
+				if(false === opt.websocket || (at.opt && false === at.opt.websocket)){ return }
+				var msg = {
+					'#': Gun.text.random(9), // msg ID
+					'$': at.put // msg BODY
+				};
+				Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
+					at.gun.Back(-1).on('in', {'@': at['#'], err: err, ok: ok});
+				});
+				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
 		})(require, './src/WebSocket');
-		return;
-		function get(err, data, at){
-			if(!data && !Gun.obj.empty(at.opt.peers)){ return } // let the peers handle no data.
-			at.cb(err, data); // node
-		}
-		Gun.on('get', function(at){
-			var opt = at.opt, lex = at.lex;
-			Tab.store.get((opt.prefix || '') + lex.soul, get, at);
-		});
 	}());
-	return;
-
+	/*
 	Gun.on('put', function(at){
 		var opt = at.opt, graph = at.graph, gun = at.gun;
 		if(false === opt.localstorage || false === opt.localStorage){ return } // TODO: BAD! Don't provide a "storage:false" option because the option won't apply to over the network. A custom module will need to handle this.
@@ -2180,10 +2125,10 @@
 		});
 		Tab.peers(opt.peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 	});
-
+	*/
 	Gun.on('opt', function(at){ // TODO: BUG! Does not respect separate instances!!!
 		if(Tab.server){ return }
-		var gun = at.gun, server = Tab.server = {};
+		var gun = at.gun, server = Tab.server = {}, tmp;
 		server.sid = Gun.text.random();
 		Tab.request.createServer(function(req, res){
 			if(!req || !res || !req.body || !req.headers){ return }
@@ -2192,17 +2137,18 @@
 			if(server.msg(msg['#'])){ return }
 			//server.on('network', Gun.obj.copy(req)); // Unless we have WebRTC, not needed.
 			if(msg['@']){ // no need to process.
-				if(Tab.ons[msg['@'] || msg['#']]){
-					Tab.on(msg['@'] || msg['#'], [msg['!'], msg['$']]);
+				if(Tab.ons[tmp = msg['@'] || msg['#']]){
+					Tab.on(tmp, [msg['!'], msg['$']]);
 				}
 				return 
 			}
-			if(Gun.is.lex(msg['$'])){ return server.get(req, res) }
+			if(msg['$'] && msg['$']['#']){ return server.get(req, res) }
 			else { return server.put(req, res) }
 		});
 		server.get = function(req, cb){
 			var body = req.body, lex = body['$'], opt;
-			if(!(node = gun.__.graph[lex[Gun._.soul]])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
+			var graph = gun._.root._.graph;
+			if(!(node = graph[lex['#']])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
 			cb({body: {
 				'#': server.msg(),
 				'@': body['#'],
@@ -2211,18 +2157,21 @@
 		}
 		server.put = function(req, cb){
 			var body = req.body, graph = body['$'];
+			var __ = gun._.root._;
 			if(!(graph = Gun.obj.map(graph, function(node, soul, map){ // filter out what we don't have in memory.
-				if(!gun.__.graph[soul]){ return }
+				if(!__.graph[soul]){ return }
 				map(soul, node);
 			}))){ return }
-			Gun.put(gun, graph, function(err, ok){
+			gun.on('out', {gun: gun, opt: {websocket: false}, put: graph, '#': Gun.on.ask(function(ack, ev){
+				if(!ack){ return }
+				ev.off();
 				return cb({body: {
 					'#': server.msg(),
 					'@': body['#'],
-					'$': ok,
-					'!': err
+					'$': ack,
+					'!': ack.err
 				}});
-			}, {websocket: false});
+			})});
 		}
 		server.msg = function(id){
 			if(!id){
@@ -2259,6 +2208,7 @@
 			Tab.request(url, msg, null, opt);
 			return;
 			Tab.request(url, msg, function(err, reply){ var body = (reply||{}).body||{};
+				console.log("WOAH", err, reply, body);
 				Tab.on(body['@'] || msg['#'], [err || body['!'], body['$']]);
 			}, this.opt);
 		}
@@ -2266,22 +2216,6 @@
 			Gun.obj.map(this.peers, map, {msg: msg, opt: opt});
 		}
 		exports.peers = P;
-	}(Tab));
-
-	;(function(exports){ var u;
-		function s(){}
-		s.put = function(key, val, cb){ try{ store.setItem(key, Gun.text.ify(val));if(cb)cb(null) }catch(e){if(cb)cb(e)} }
-		s.get = function(key, cb, t){ //console.log('ASYNC localStorage');setTimeout(function(){
-			try{ cb(null, Gun.obj.ify(store.getItem(key) || null), t);
-			}catch(e){ cb(e,u,t)}
-		}//,1) }
-		s.get = function(key, cb, t){ console.log("ASYNC localStorage")
-			var data = Gun.obj.ify(store.getItem(key));
-			setTimeout(function(){ cb(null, data, t) },Infinity);
-		}
-		s.del = function(key){ return store.removeItem(key) }
-		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
-		exports.store = s;
 	}(Tab));
 
 	(function(exports){
@@ -2325,7 +2259,7 @@
 				}
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb, req) },100), true }
 				ws.sending = true;
-				ws.send(JSON.stringify(req), function(){});
+				ws.send(JSON.stringify(req));
 				return true;
 			}
 			if(ws === false){ return }
