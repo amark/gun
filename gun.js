@@ -2027,13 +2027,13 @@
 				Gun.on.ack(at, {err: err, ok: 0}); // TODO: Reliability! Are we sure we want to have localStorage ack?
 			}
 			function get(at){
-				var gun = at.gun, lex = at.get, soul, data, opt;
+				var gun = at.gun, lex = at.get, soul, data, opt, u;
 				//setTimeout(function(){
 				(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
 				if(!lex || !(soul = lex[Gun._.soul])){ return }
 				data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
 				if(!data){ return } // localStorage isn't trustworthy to say "not found".
-				if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(tmp){data[lex['.']] = tmp}}
+				if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
 				//console.log('@@@@@@@@@@@@local get', data, at);
 				gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
 				//},100);
