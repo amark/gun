@@ -889,6 +889,7 @@
 			_.back = this;
 			return chain;
 		}
+		Gun.chain.toJSON = function(){};
 
 		;(function(){
 
