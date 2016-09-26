@@ -2054,7 +2054,7 @@
 					return;
 				}
 				var msg = {
-					'#': Gun.text.random(9), // msg ID
+					'#': at['#'] || Gun.text.random(9), // msg ID
 					'$': at.get // msg BODY
 				};
 				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
@@ -2071,7 +2071,7 @@
 				}
 				if(false === opt.websocket || (at.opt && false === at.opt.websocket)){ return }
 				var msg = {
-					'#': Gun.text.random(9), // msg ID
+					'#': at['#'] || Gun.text.random(9), // msg ID
 					'$': at.put // msg BODY
 				};
 				Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
