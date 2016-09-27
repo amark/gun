@@ -389,7 +389,7 @@
 			}
 
 			on.on('emit', function(ev){
-				if(ev.on.map){
+				if(ev.on.map && ev.arg instanceof Array){
 					/*
 					ev.id = ev.id || Gun.text.random(6);
 					ev.on.map[ev.id] = ev.arg;
@@ -898,7 +898,6 @@
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
 				if(at.put){
-					console.debug(1, 'OUT -> IN', at);
 					cat.on('in', obj_to(at, {'#': 0, gun: cat.gun}));
 				}
 				if(!at.gun){
@@ -948,8 +947,6 @@
 					data = graph[key]; // TODO! BUG/PERF! COPY!?
 				}
 				at.put = data;
-				console.debug.i && console.log("-->", key, data);
-				key.indexOf('g/n') >= 0 && console.debug(2, '-->', key, data);
 				gun.on('in', {
 					put: data,
 					get: key,
@@ -1293,6 +1290,7 @@
 				if(!opt || !opt.path){ var back = this.Back(-1); } // TODO: CHANGING API! Remove this line!
 				var gun, back = back || this, cat = back._;
 				var next = cat.next || empty, tmp;
+				console.debug(2, 'get', lex);
 				if(typeof lex === 'string'){
 					if(!(gun = next[lex])){
 						gun = cache(lex, back);
@@ -1351,7 +1349,9 @@
 							cat.ask._ = cat.ask._ || {};
 							if(get){ cat.ask[get] = cat.ask._['.'] = 1 }
 							tmp = false;
+							console.debug(6, 'out', cat.get, get, cat.ask);
 							cat.on('in', function(tac, ev){
+								console.debug(7, 'out', tac);
 								input.call(cat, tac, ev);
 								tmp = true;
 								return;
@@ -1398,6 +1398,7 @@
 								});
 								return;
 							}
+							console.debug(5, 'any out', cat.get, cat.ask);
 							cat.back.on('out', {
 								get: obj_put({}, _field, cat.get),
 								gun: gun
@@ -1419,9 +1420,7 @@
 					Gun.on.ack(tmp, at);
 					if(at.err){ return }
 				}
-				console.debug(9, 'in', cat.get, at.put, change, cat.next, at);
-				console.debug(7, 'in', cat.get, at.put, change, cat.next);
-				console.debug(3, 'in', cat.get, change, cat.next);
+				console.debug(8, 'in', cat.get, change, cat.ask);
 				if(value.call(cat, at, ev)){
 					return;
 				}
@@ -1437,7 +1436,8 @@
 							cat.change = coat.change;
 							cat.put = coat.put;
 						}
-						cat.proxy.res(); // MUTATE AT?
+						// TODO: BUG! This mutated `at` won't effect the original at that was sent via the poly-proxy approach. Meaning what is still cached in the poly-set is not this better/recent/fuller one.
+						cat.proxy.res(obj_to(at, {get: cat.get || at.get})); // MUTATE AT?
 					}
 					//not(); // ask?
 					if(Gun.val.is(at)){
@@ -1455,9 +1455,10 @@
 					if(!cat.proxy || !cat.proxy[coat.id]){
 						(cat.proxy = cat.proxy || {})[coat.id] = coat;
 						cat.proxy.res = ev.stun(rel); // TODO: BUG! Race? Or this all goes to the same thing so it doesn't matter?
-						console.debug(8, 'values', cat, 'listen to', coat);
 						gun.on('in', input, cat); // TODO: BUG! PERF! MEMORY LEAK!
 					}
+					console.debug(9, 'values', cat.ask, coat.ask, coat);
+					ask(cat, rel);
 					return;
 				}
 				if(cat !== coat){
@@ -1499,7 +1500,6 @@
 						// TODO: BUG! at.gun does seem to be correct, BUT should it be changed AGAIN to the gun relation?
 						at.put = coat.put;
 						at.gun = coat.link.ref;
-						console.debug(8, 'values', cat.get, at);
 						// TODO: BUG!!!!! The `input` iterates off of `change` though. Right now it seemed to work, but in what cases is `change` not known for things like `.map` becuase it is purely dynamic?
 						return;
 					}
@@ -1585,8 +1585,6 @@
 				if(via.gun === cat.gun){
 					at.change = data;
 					at.put = data;
-					console.debug(5, "---->>", key, data);
-					console.debug(4, "---->>", key, data);
 					gun.on('in', {
 						put: data,
 						get: key,
@@ -1657,6 +1655,10 @@
 			}
 			function ask(cat, soul){
 				var ask = cat.ask, lex;
+				console.log("TODO: BUG! MARK COME BACK HERE!!!!! You can't have ASK shared by a single multi-observable cat. You need each ask to merge with the original? FIX THIS");
+				console.log("TODO: BUG! MARK COME BACK HERE!!!!! You can't have ASK shared by a single multi-observable cat. You need each ask to merge with the original? FIX THIS");
+				console.log("TODO: BUG! MARK COME BACK HERE!!!!! You can't have ASK shared by a single multi-observable cat. You need each ask to merge with the original? FIX THIS");
+				console.log("TODO: BUG! MARK COME BACK HERE!!!!! You can't have ASK shared by a single multi-observable cat. You need each ask to merge with the original? FIX THIS");
 				if(!ask || !soul){ return }
 				if(ask._['*']){
 					if(0 <= ask._['*']){
@@ -1694,6 +1696,7 @@
 				var opt = opt || {}, gun = opt.gun = this;
 				if(opt.change){ opt.change = 1 }
 				opt.any = cb;
+				console.debug(4, 'any', gun._.get);
 				return gun.on('in', any, opt).on('out', {get: opt});
 			}
 			function any(at, ev){ var opt = this;
@@ -1702,9 +1705,14 @@
 				if((tmp = data) && tmp[Gun.val.rel._] && (tmp = Gun.val.rel.is(tmp))){
 					//console.log("ooooooooh jolllllly", data);
 					if(null !== opt['.']){
-						return;
+						if(u === cat.put){
+							gun.any(function(err,d,k,a,e){e.off();
+								any.call(opt, obj_to(a, {get: at.get}), e);
+							});
+							return;
+						}
 					}
-					at = obj_to(at, {put: data = cat.change = cat.put = Gun.state.ify(Gun.node.ify({}, tmp))});
+					at = obj_to(at, {put: data = cat.change = cat.put = cat.put || Gun.state.ify(Gun.node.ify({}, tmp))});
 				}
 				if(opt.change){
 					tmp = (opt.changed = opt.changed||{})[cat.id];
@@ -1955,6 +1963,7 @@
 				opt = (true === opt)? {change: true} : opt || {}; 
 				opt.ok = tag;
 				opt.last = {};
+				console.debug(3, 'on');
 				gun.any(ok, {as: opt, change: opt.change}); // TODO: PERF! Event listener leak!!!????
 				return gun;
 			}
@@ -2076,7 +2085,7 @@
 				var gun = this.gun, cat = this.cat, id = this.id;
 				if(cat.list[id+f]){ return }
 				// TODO: BUG! Ghosting!
-				console.debug(6, 'EACH', f,v);
+				console.debug(1, 'EACH', f,v, gun);
 				return cat.on('in', [id+f, {gun: (cat.list[id+f] = gun.path(f)), get: f, put: v}]);
 				return cat.on('in', [id+f, (cat.list[id+f] = gun.path(f))._]);
 				(cat.list[id+f] = gun.path(f)).on(function(v,s,a,ev){

@@ -1455,19 +1455,17 @@ describe('Gun', function(){
 
 		describe('plural chains', function(){
 
-			it.only("get before put in memory", function(done){
+			it("get before put in memory", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.get('g/n/m/f/l/n/r').map().on(function(v,f){
 					check[f] = v;
-					console.log("***********", f,v);
 					if(check.alice && check.bob && check.alice.PhD){
 						expect(check.alice.age).to.be(24);
 						expect(check.bob.age).to.be(26);
 						done();
 					}
 				});
-				console.debug.i=1;console.log("-------------------");
 				gun.put({_:{'#':'g/n/m/f/l/n/r'},
 					alice: {_:{'#':'GALICE'},
 						name: "alice",
@@ -1494,7 +1492,6 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
-					console.log("~~~~~~~~~~~~~~~~~~");
 					gun.get('GALICE').put({PhD: true});
 				},300);
 			});
@@ -1536,20 +1533,21 @@ describe('Gun', function(){
 					}
 				});
 			});
-			return;
+
 			it("in memory get before map path", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/p').map().path('name').on(function(v,f){
 					check[v] = f;
-					if(check.alice && check.bob){
+					if(check.alice && check.bob && check.Alice){
 						expect(check.alice).to.be('name');
 						expect(check.bob).to.be('name');
+						expect(check.Alice).to.be('name');
 						done();
 					}
 				});
 				gun.put({_:{'#':'g/n/m/f/l/n/b/p'},
-						alice: {
+						alice: {_:{'#':'GALICE'},
 							name: "alice",
 							age: 24,
 							spouse: {
@@ -1573,12 +1571,15 @@ describe('Gun', function(){
 							}
 						}
 				});
+				setTimeout(function(){
+					gun.get('GALICE').put({name: 'Alice'});
+				},300);
 			});
 
-			it("in memory get after map path", function(done){
+			it.only("in memory get after map path", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/m/p'},
-						alice: {
+						alice: {_:{'#':'GALICE'},
 							name: "alice",
 							age: 24,
 							spouse: {
@@ -1603,14 +1604,21 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
+				console.debug.i=1;console.log("------------------");
 				gun.get('g/n/m/f/l/n/m/p').map().path('name').on(function(v,f){
 					check[v] = f;
-					if(check.alice && check.bob){
+					console.log("*******", f,v);
+					if(check.alice && check.bob && check.Alice){
 						expect(check.alice).to.be('name');
 						expect(check.bob).to.be('name');
+						expect(check.Alice).to.be('name');
 						done();
 					}
 				});
+				return;
+				setTimeout(function(){
+					gun.get('GALICE').put({name: 'Alice'});
+				},300);
 			});
 
 			it("in memory get before map path path", function(done){
