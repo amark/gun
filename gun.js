@@ -2082,7 +2082,11 @@
 					'$': at.get // msg BODY
 				};
 				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
+					if(data){
+						at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
+					} else {
+						at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
+					}
 				});
 				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
