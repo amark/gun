@@ -938,9 +938,12 @@
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field];
 				if(node && (!field || obj_has(node, field))){
 					// TODO: BUG!!! Shouldn't this ack?????
+					if(field){
+						node = Gun.obj.put({_: node._}, field, node[field]);
+					}
 					cat.on('in', {
-						put: Gun.graph.node(node), // TODO: BUG! Clone node!
-						get: soul
+						'@': at.req? at['#'] : 0, // temporary hack
+						put: Gun.graph.node(node) // TODO: BUG! Clone node!
 					});
 					return;
 				}
@@ -2058,7 +2061,7 @@
 					'$': at.get // msg BODY
 				};
 				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: Gun.graph.node(data)});
+					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
 				});
 				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
