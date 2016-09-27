@@ -2008,6 +2008,18 @@
 				return this.Back(-1).put(Gun.node.ify({}, this._.get), null, this._.get);
 			}
 		}());
+
+		;(function(){
+			Gun.chain.set = function(item, cb, opt){
+				var gun = this;
+				cb = cb || function(){};
+				return item.val(function(node){
+					var put = {}, soul = Gun.node.soul(node);
+					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
+					gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
+				});
+			}
+		}());
 	})(require, './src/api');
 
 }());
