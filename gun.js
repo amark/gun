@@ -2186,11 +2186,12 @@
 					'$': at.get // msg BODY
 				};
 				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
+					at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
 				});
 				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
 			Gun.on('put', function(at){
+				if(at['@']){ return }
 				var opt = at.gun.Back('opt') || {}, peers = opt.peers;
 				if(!peers || Gun.obj.empty(peers)){
 					Gun.log.once('peers', "Warning! You have no peers to save to!");
