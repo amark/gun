@@ -1142,6 +1142,15 @@
 					ify(as);
 					return gun;
 				}
+				if(Gun.is(data)){
+					data.any(function(e,d,k,at,ev){
+						ev.off();
+						var s = Gun.node.soul(d);
+						if(!s){Gun.log("Can only save a node, not a property.");return}
+						gun.put(Gun.val.rel.ify(s), cb, opt);
+					});
+					return gun;
+				}
 				as.ref = as.ref || (root === (tmp = gun.Back(1)))? gun : tmp;
 				as.ref.any(any, {as: as, '.': null});
 				if(!as.out){
