@@ -1117,6 +1117,15 @@
 					ify(as);
 					return gun;
 				}
+				if(Gun.is(data)){
+					data.any(function(e,d,k,at,ev){
+						ev.off();
+						var s = Gun.node.soul(d);
+						if(!s){Gun.log("Can only save a node, not a property.");return}
+						gun.put(Gun.val.rel.ify(s), cb, opt);
+					});
+					return gun;
+				}
 				as.ref = as.ref || (root === (tmp = gun.Back(1)))? gun : tmp;
 				as.ref.any(any, {as: as, '.': null});
 				if(!as.out){
@@ -2103,6 +2112,18 @@
 				return this.Back(-1).put(Gun.node.ify({}, this._.get), null, this._.get);
 			}
 		}());
+
+		;(function(){
+			Gun.chain.set = function(item, cb, opt){
+				var gun = this;
+				cb = cb || function(){};
+				return item.val(function(node){
+					var put = {}, soul = Gun.node.soul(node);
+					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
+					gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
+				});
+			}
+		}());
 	})(require, './src/api');
 
 }());
@@ -2165,7 +2186,7 @@
 					'$': at.get // msg BODY
 				};
 				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: Gun.graph.node(data)});
+					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
 				});
 				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
