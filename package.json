@@ -49,6 +49,7 @@
   "dependencies": {
     "aws-sdk": "~>2.0.0",
     "formidable": "~>1.0.15",
+    "mocha": "~>2.5.3",
     "ws": "~>1.0.1"
   },
   "devDependencies": {
@@ -59,7 +60,6 @@
     "babel-plugin-transform-object-rest-spread": "~>6.8.0",
     "babel-preset-es2015": "~>6.14.0",
     "eslint": "~>3.4.0",
-    "mocha": "~>2.5.3",
     "webpack": "~>1.13.2"
   }
 }
