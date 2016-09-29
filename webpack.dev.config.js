@@ -17,7 +17,7 @@ module.exports = {
       {
         test: /\.js/,
         exclude: /node_modules|dist|test|lib|examples/,
-        loaders: ['babel', 'eslint']
+        loaders: ['babel']
       },
     ]
   },
