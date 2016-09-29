@@ -60,7 +60,7 @@
     "babel-preset-es2015": "~>6.14.0",
     "eslint": "~>3.4.0",
     "eslint-loader": "~>1.5.0",
-    "mocha": "~>3.0.0",
+    "mocha": "~>2.5.3",
     "webpack": "~>1.13.2"
   }
 }
