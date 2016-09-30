@@ -162,7 +162,7 @@
 		var list_is = Type.list.is;
 		var obj = Type.obj, obj_is = obj.is, obj_has = obj.has, obj_map = obj.map;
 		module.exports = Type;
-	})(require, './src/type');
+	})(require, './type');
 		
 	;require(function(module){
 		// On event emitter generic javascript utility.
@@ -291,7 +291,7 @@
 		}
 		function noop(){};
 		module.exports = Scope();
-	})(require, './src/on');
+	})(require, './on');
 
 	;require(function(module){
 		var On = require('./on');
@@ -418,7 +418,7 @@
 		}
 		*/
 		module.exports = Chain;
-	})(require, './src/onify');
+	})(require, './onify');
 
 	;require(function(module){
 		// Generic javascript scheduler utility.
@@ -458,7 +458,7 @@
 			s.set(ctx.soonest);
 		}
 		module.exports = s;
-	})(require, './src/schedule');
+	})(require, './schedule');
 
 	;require(function(module){
 		/* Based on the Hypothetical Amnesia Machine thought experiment */
@@ -519,7 +519,7 @@
 		}
 		var undefined;
 		module.exports = HAM;
-	})(require, './src/HAM');
+	})(require, './HAM');
 
 	;require(function(module){
 		var Type = require('./type');
@@ -564,7 +564,7 @@
 		var text_is = Type.text.is;
 		var obj = Type.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
 		module.exports = Val;
-	})(require, './src/val');
+	})(require, './val');
 
 	;require(function(module){
 		var Type = require('./type');
@@ -622,7 +622,7 @@
 		var _soul = Val.rel._;
 		var u;
 		module.exports = Node;
-	})(require, './src/node');
+	})(require, './node');
 
 	;require(function(module){
 		var Type = require('./type');
@@ -680,7 +680,7 @@
 		var fn = Type.fn, fn_is = fn.is;
 		var N_ = Node._, u;
 		module.exports = State;
-	})(require, './src/state');
+	})(require, './state');
 
 	;require(function(module){
 		var Type = require('./type');
@@ -831,7 +831,7 @@
 		var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_has = obj.has, obj_empty = obj.empty, obj_put = obj.put, obj_map = obj.map, obj_copy = obj.copy;
 		var u;
 		module.exports = Graph;
-	})(require, './src/graph');
+	})(require, './graph');
 
 
 	;require(function(module){
@@ -994,7 +994,7 @@
 		if(typeof window !== "undefined"){ window.Gun = Gun }
 		if(typeof common !== "undefined"){ common.exports = Gun }
 		module.exports = Gun;
-	})(require, './src/gun');
+	})(require, './gun');
 
 	;require(function(module){
 
@@ -1075,7 +1075,7 @@
 			var u;
 		}());
 
-	})(require, './src/index');
+	})(require, './index');
 
 	;require(function(module){
 		var Gun = require('./index');
@@ -2020,7 +2020,7 @@
 				});
 			}
 		}());
-	})(require, './src/api');
+	})(require, './api');
 
 }());
 
@@ -2065,7 +2065,7 @@
 			}
 			Gun.on('put', put);
 			Gun.on('get', get);
-		})(require, './src/localStorage');
+		})(require, './adapters/localStorage');
 
 		;require(function(module){
 			Gun.on('get', function(at){
@@ -2108,7 +2108,7 @@
 				});
 				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
 			});
-		})(require, './src/WebSocket');
+		})(require, './adapters/WebSocket');
 	}());
 	/*
 	Gun.on('put', function(at){
