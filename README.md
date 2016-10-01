@@ -30,19 +30,6 @@ Jump right into the [gun playground](http://jsbin.com/miredog/edit?js,console) a
 
 Quick note: All active development is happening on `0.5` branch, which has the upcoming **30M+ ops/sec** performance improvements!
 
-## Table of Contents
- - [Demos](#demos)
-   - [Videos](#videos)
-   - [Projects](#gun-projects)  
- - [How to get started](#how-to-get-started)
- - [Modules](#gun-modules)
- - [How can I help make gun even more awesome?](#how-can-i-help-make-gun-even-more-awesome)
- - [License](#license)
-   - [Contributors](#contributors)
- - [Changelog](#changelog)
- - [Stay up-to-date](#stay-up-to-date)
- - **[API Reference](https://github.com/amark/gun/wiki/API-(v0.3.x))**  :arrow_upper_right:
-
 ## Demos
 
  - [Online example applications](http://gunjs.herokuapp.com/)
