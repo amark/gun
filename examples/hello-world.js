@@ -1,4 +1,4 @@
-var Gun = require('gun');
+var Gun = require('../');
 var gun = Gun({
   s3: {
     key: '', // AWS Access Key

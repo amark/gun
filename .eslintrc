@@ -1,0 +1,39 @@
+{
+  "root": true,
+
+  "rules": {
+    "no-unused-vars": [1, {"vars": "local", "args": "none"}],
+    "max-len": [1, { "code": 125 }],
+    "strict": 0,
+    "new-cap": 0,
+    "no-undef": 2,
+    "id-length": 0,
+    "func-names": 0,
+    "no-console": 1,
+    "key-spacing": 0,
+    "padded-blocks": 0,
+    "no-multi-spaces": 0,
+    "no-const-assign": 2,
+    "no-param-reassign": 0,
+    "indent": [1, 2],
+    "comma-dangle": [
+      1,
+      "never"
+    ]
+  },
+
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "modules": true
+    }
+  },
+
+  "env": {
+    "es6": true,
+    "node": true,
+    "commonjs": true,
+    "browser": true
+  }
+}

@@ -3,6 +3,7 @@
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script src="../../gun.js"></script>
+		<script src="../node_modules/localforage/dist/localforage.js"></script>
 	</head>
 	<body>
 		<style>
@@ -37,8 +38,21 @@
 		</script>
 		<script>
 			($.model = $('ul li').clone(true)).removeAttribute('class');
-			var gun = Gun(location.origin + '/gun');
-			var chat = gun.get('example/chat/data');
+
+      var store = localforage.createInstance({
+        name: "gun",
+        storeName: "example"
+      });
+
+      var options = {
+        store: store,
+        prefix: '',
+        peers: {}
+      };
+      options.peers[location.origin + '/gun'] = {};
+			var gun = Gun(options);
+//			var gun = Gun(location.origin + '/gun');
+			var chat = gun.get('chat/data');
 			chat.map().val(function(msg, field){
 				var $ul = $('ul'), $last = $.sort(field, $ul.last()), $msg;
 				($msg = $("#msg-" + field) || $ul.insertBefore($.model.clone(true), $last.next())).id = 'msg-' + field;
