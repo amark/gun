@@ -1463,11 +1463,12 @@ describe('Gun', function(){
 					if(check.alice && check.bob && check.alice.PhD){
 						expect(check.alice.age).to.be(24);
 						expect(check.bob.age).to.be(26);
+						expect(check.alice.PhD).to.be(true);
 						done();
 					}
 				});
 				gun.put({_:{'#':'g/n/m/f/l/n/r'},
-					alice: {_:{'#':'GALICE'},
+					alice: {_:{'#':'GALICE1'},
 						name: "alice",
 						age: 24,
 						spouse: {
@@ -1492,14 +1493,14 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
-					gun.get('GALICE').put({PhD: true});
+					gun.get('GALICE1').put({PhD: true});
 				},300);
 			});
 
 			it("in memory get after", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n'},
-						alice: {
+						alice: {_:{'#':'GALICE2'},
 							name: "alice",
 							age: 24,
 							spouse: {
@@ -1526,12 +1527,16 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n').map().on(function(v,f){
 					check[f] = v;
-					if(check.alice && check.bob){
+					if(check.alice && check.bob && check.alice.PhD){
 						expect(check.alice.age).to.be(24);
 						expect(check.bob.age).to.be(26);
+						expect(check.alice.PhD).to.be(true);
 						done();
 					}
 				});
+				setTimeout(function(){
+					gun.get('GALICE2').put({PhD: true});
+				},300);
 			});
 
 			it("in memory get before map path", function(done){
@@ -1547,7 +1552,7 @@ describe('Gun', function(){
 					}
 				});
 				gun.put({_:{'#':'g/n/m/f/l/n/b/p'},
-						alice: {_:{'#':'GALICE'},
+						alice: {_:{'#':'GALICE3'},
 							name: "alice",
 							age: 24,
 							spouse: {
@@ -1572,14 +1577,14 @@ describe('Gun', function(){
 						}
 				});
 				setTimeout(function(){
-					gun.get('GALICE').put({name: 'Alice'});
+					gun.get('GALICE3').put({name: 'Alice'});
 				},300);
 			});
 
-			it.only("in memory get after map path", function(done){
+			it("in memory get after map path", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/m/p'},
-						alice: {_:{'#':'GALICE'},
+						alice: {_:{'#':'GALICE4'},
 							name: "alice",
 							age: 24,
 							spouse: {
@@ -1604,10 +1609,8 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				console.debug.i=1;console.log("------------------");
 				gun.get('g/n/m/f/l/n/m/p').map().path('name').on(function(v,f){
 					check[v] = f;
-					console.log("*******", f,v);
 					if(check.alice && check.bob && check.Alice){
 						expect(check.alice).to.be('name');
 						expect(check.bob).to.be('name');
@@ -1615,9 +1618,8 @@ describe('Gun', function(){
 						done();
 					}
 				});
-				return;
 				setTimeout(function(){
-					gun.get('GALICE').put({name: 'Alice'});
+					gun.get('GALICE4').put({name: 'Alice'});
 				},300);
 			});
 
@@ -1626,9 +1628,10 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/p/p/p').map().path('spouse').path('work').on(function(v,f){
 					check[v.name] = f;
-					if(check['GUN INC'] && check['ACME INC']){
+					if(check['GUN INC'] && check['ACME INC'] && check['ACME INC.']){
 						expect(check['GUN INC']).to.be('work');
 						expect(check['ACME INC']).to.be('work');
+						expect(check['ACME INC.']).to.be('work');
 						done();
 					}
 				});
@@ -1651,12 +1654,15 @@ describe('Gun', function(){
 							spouse: {
 								name: "diana",
 								age: 27,
-								work: {
+								work: {_:{'#':'CCINEMA1'},
 									name: "ACME INC"
 								}
 							}
 						}
 				});
+				setTimeout(function(){
+					gun.get('CCINEMA1').put({name: 'ACME INC.'});
+				},300);
 			});
 
 			it("in memory get after map path path", function(done){
@@ -1680,7 +1686,7 @@ describe('Gun', function(){
 							spouse: {
 								name: "diana",
 								age: 27,
-								work: {
+								work: {_:{'#':'CCINEMA2'},
 									name: "ACME INC"
 								}
 							}
@@ -1689,20 +1695,25 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/p/p/p/a').map().path('spouse').path('work').on(function(v,f){
 					check[v.name] = f;
-					if(check['GUN INC'] && check['ACME INC']){
+					if(check['GUN INC'] && check['ACME INC'] && check['ACME INC.']){
 						expect(check['GUN INC']).to.be('work');
 						expect(check['ACME INC']).to.be('work');
+						expect(check['ACME INC.']).to.be('work');
 						done();
 					}
 				});
+				setTimeout(function(){
+					gun.get('CCINEMA2').put({name: 'ACME INC.'});
+				},300);
 			});
 
-			it("in memory get before map map", function(done){
+			it.only("in memory get before map map", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/a/m/m').map().map().on(function(v,f){
 					check[f] = v;
-					if(check.alice && check.bob && check.GUN && check.ACME){
+					console.log("*************", f,v);
+					if(check.alice && check.bob && check.GUN && check.ACME && check.ACME.corp){
 						expect(check.alice.name).to.be('alice');
 						expect(check.alice.age).to.be(24);
 						expect(Gun.val.rel.is(check.alice.spouse)).to.be.ok();
@@ -1711,9 +1722,11 @@ describe('Gun', function(){
 						expect(Gun.val.rel.is(check.bob.spouse)).to.be.ok();
 						expect(check.GUN.name).to.be('GUN');
 						expect(check.ACME.name).to.be('ACME');
+						expect(check.ACME.corp).to.be('C');
 						done();
 					}
 				});
+				console.debug.i=1;console.log("---------------------");
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m'},
 						users: {
 							alice: {
@@ -1738,13 +1751,17 @@ describe('Gun', function(){
 							GUN: {
 								name: "GUN"
 							},
-							ACME: {
+							ACME: {_:{'#':"CCINEMA3"},
 								name: "ACME"
 							}
 						}
 				});
+				setTimeout(function(){
+					console.log("~~~~~~~~~~~~~~~~~");
+					gun.get('CCINEMA3').put({corp: "C"});
+				},300);
 			});
-
+			return;
 			it("in memory get after map map", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/b/m/m'},
