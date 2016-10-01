@@ -2022,233 +2022,41 @@
 		}());
 	})(require, './api');
 
-}());
+	;require(function(module){
+		if(typeof JSON === 'undefined'){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
+		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
+		
+		var root, noop = function(){};
+		if(typeof window !== 'undefined'){ root = window }
+		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
-
-;(function(Tab){
-
-	if(typeof window === 'undefined'){ return }
-	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
-	Gun.tab = Tab;
+		function put(at){ var err, id, opt, root = at.gun._.root;
+			(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
+			Gun.graph.is(at.put, function(node, soul){
+				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
+				try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
+				}catch(e){ err = e || "localStorage failure" }
+			});
+			//console.log('@@@@@@@@@@local put!');
+			Gun.on.ack(at, {err: err, ok: 0}); // TODO: Reliability! Are we sure we want to have localStorage ack?
+		}
+		function get(at){
+			var gun = at.gun, lex = at.get, soul, data, opt, u;
+			//setTimeout(function(){
+			(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
+			if(!lex || !(soul = lex[Gun._.soul])){ return }
+			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
+			if(!data){ return } // localStorage isn't trustworthy to say "not found".
+			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
+			//console.log('@@@@@@@@@@@@local get', data, at);
+			gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
+			//},100);
+		}
+		Gun.on('put', put);
+		Gun.on('get', get);
+	})(require, './adapters/localStorage');
 	
-	Tab.on = Gun.on;//Gun.on.create();
-
-	;(function(){
-		var require = function(cb){ return function(){ cb({exports:{}}) } };
-
-		;require(function(module){
-			var root, noop = function(){};
-			if(typeof window !== 'undefined'){ root = window }
-			var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
-			function put(at){ var err, id, opt, root = at.gun._.root;
-				(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
-				Gun.graph.is(at.put, function(node, soul){
-					//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
-					try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
-					}catch(e){ err = e || "localStorage failure" }
-				});
-				//console.log('@@@@@@@@@@local put!');
-				Gun.on.ack(at, {err: err, ok: 0}); // TODO: Reliability! Are we sure we want to have localStorage ack?
-			}
-			function get(at){
-				var gun = at.gun, lex = at.get, soul, data, opt, u;
-				//setTimeout(function(){
-				(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
-				if(!lex || !(soul = lex[Gun._.soul])){ return }
-				data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
-				if(!data){ return } // localStorage isn't trustworthy to say "not found".
-				if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
-				//console.log('@@@@@@@@@@@@local get', data, at);
-				gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
-				//},100);
-			}
-			Gun.on('put', put);
-			Gun.on('get', get);
-		})(require, './adapters/localStorage');
-
-		;require(function(module){
-			Gun.on('get', function(at){
-				var gun = at.gun, opt = gun.Back('opt') || {}, peers = opt.peers;
-				if(!peers || Gun.obj.empty(peers)){
-					//setTimeout(function(){
-					Gun.log.once('peers', "Warning! You have no peers to connect to!");
-					at.gun.Back(-1).on('in', {'@': at['#']});
-					//},100);
-					return;
-				}
-				var msg = {
-					'#': at['#'] || Gun.text.random(9), // msg ID
-					'$': at.get // msg BODY
-				};
-				Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					if(data){
-						at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
-					} else {
-						at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
-					}
-				});
-				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
-			});
-			Gun.on('put', function(at){
-				if(at['@']){ return }
-				var opt = at.gun.Back('opt') || {}, peers = opt.peers;
-				if(!peers || Gun.obj.empty(peers)){
-					Gun.log.once('peers', "Warning! You have no peers to save to!");
-					at.gun.Back(-1).on('in', {'@': at['#']});
-					return;
-				}
-				if(false === opt.websocket || (at.opt && false === at.opt.websocket)){ return }
-				var msg = {
-					'#': at['#'] || Gun.text.random(9), // msg ID
-					'$': at.put // msg BODY
-				};
-				Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-					at.gun.Back(-1).on('in', {'@': at['#'], err: err, ok: ok});
-				});
-				Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
-			});
-		})(require, './adapters/WebSocket');
-	}());
-	/*
-	Gun.on('put', function(at){
-		var opt = at.opt, graph = at.graph, gun = at.gun;
-		if(false === opt.localstorage || false === opt.localStorage){ return } // TODO: BAD! Don't provide a "storage:false" option because the option won't apply to over the network. A custom module will need to handle this.
-		Gun.is.graph(graph, function(node, soul){
-			if(!(node = gun.__.graph[soul])){ return }
-			Tab.store.put((opt.prefix || '') + soul, node, function(err){ if(err){at.cb({err:err})} });
-		});
-	});
-
-	Gun.on('put', function(at){
-		var gun = at.gun, graph = at.graph, opt = at.opt;
-		opt.peers = opt.peers || gun.__.opt.peers; // TODO: CLEAN UP!
-		if(Gun.obj.empty(opt.peers)){
-			if(!Gun.log.count('no-wire-put')){ Gun.log("Warning! You have no peers to replicate to!") }
-			at.cb(null);
-			return;
-		}
-		if(false === opt.websocket){ return }
-		var msg = {
-			'#': Gun.text.random(9), // msg ID
-			'$': graph // msg BODY
-		};
-		Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-			at.cb(err, ok);
-		});
-		Tab.peers(opt.peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
-	});
-
-	Gun.on('get', function(at){
-		var gun = at.gun, opt = at.opt, lex = at.lex;
-		opt.peers = opt.peers || gun.__.opt.peers; // TODO: CLEAN UP!
-		if(Gun.obj.empty(opt.peers)){
-			if(!Gun.log.count('no-wire-get')){ Gun.log("Warning! You have no peers to get from!") }
-			return;
-		}
-		var msg = {
-			'#': Gun.text.random(9), // msg ID
-			'$': Gun.is.lex.ify(lex) // msg BODY
-		};
-		Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
-			at.cb(err, data);
-		});
-		Tab.peers(opt.peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
-	});
-	*/
-	Gun.on('opt', function(at){ // TODO: BUG! Does not respect separate instances!!!
-		if(Tab.server){ return }
-		var gun = at.gun, server = Tab.server = {}, tmp;
-		server.sid = Gun.text.random();
-		Tab.request.createServer(function(req, res){
-			if(!req || !res || !req.body || !req.headers){ return }
-			var msg = req.body;
-			// AUTH for non-replies.
-			if(server.msg(msg['#'])){ return }
-			//server.on('network', Gun.obj.copy(req)); // Unless we have WebRTC, not needed.
-			if(msg['@']){ // no need to process.
-				if(Tab.ons[tmp = msg['@'] || msg['#']]){
-					Tab.on(tmp, [msg['!'], msg['$']]);
-				}
-				return 
-			}
-			if(msg['$'] && msg['$']['#']){ return server.get(req, res) }
-			else { return server.put(req, res) }
-		});
-		server.get = function(req, cb){
-			var body = req.body, lex = body['$'], opt;
-			var graph = gun._.root._.graph;
-			if(!(node = graph[lex['#']])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
-			cb({body: {
-				'#': server.msg(),
-				'@': body['#'],
-				'$': node
-			}});
-		}
-		server.put = function(req, cb){
-			var body = req.body, graph = body['$'];
-			var __ = gun._.root._;
-			if(!(graph = Gun.obj.map(graph, function(node, soul, map){ // filter out what we don't have in memory.
-				if(!__.graph[soul]){ return }
-				map(soul, node);
-			}))){ return }
-			gun.on('out', {gun: gun, opt: {websocket: false}, put: graph, '#': Gun.on.ask(function(ack, ev){
-				if(!ack){ return }
-				ev.off();
-				return cb({body: {
-					'#': server.msg(),
-					'@': body['#'],
-					'$': ack,
-					'!': ack.err
-				}});
-			})});
-		}
-		server.msg = function(id){
-			if(!id){
-				return server.msg.debounce[id = Gun.text.random(9)] = Gun.time.is(), id;
-			}
-			clearTimeout(server.msg.clear);
-			server.msg.clear = setTimeout(function(){
-				var now = Gun.time.is();
-				Gun.obj.map(server.msg.debounce, function(t,id){
-					if((now - t) < (1000 * 60 * 5)){ return }
-					Gun.obj.del(server.msg.debounce, id);
-				});
-			},500);
-			if(server.msg.debounce[id]){ 
-				return server.msg.debounce[id] = Gun.time.is(), id;
-			}
-			server.msg.debounce[id] = Gun.time.is();
-			return;
-		};	
-		server.msg.debounce = server.msg.debounce || {};
-	});
-
-	(function(exports){
-		function P(p){
-			if(!P.is(this)){ return new P(p) }
-			this.peers = p;
-		}
-		P.is = function(p){ return (p instanceof P) }
-		P.chain = P.prototype;
-		function map(peer, url){
-			var msg = this.msg;
-			var opt = this.opt || {};
-			opt.out = true;
-			Tab.request(url, msg, null, opt);
-			return;
-			Tab.request(url, msg, function(err, reply){ var body = (reply||{}).body||{};
-				console.log("WOAH", err, reply, body);
-				Tab.on(body['@'] || msg['#'], [err || body['!'], body['$']]);
-			}, this.opt);
-		}
-		P.chain.send = function(msg, opt){
-			Gun.obj.map(this.peers, map, {msg: msg, opt: opt});
-		}
-		exports.peers = P;
-	}(Tab));
-
-	(function(exports){
+	;require(function(module){
 		function r(base, body, cb, opt){
 			var o = base.length? {base: base} : {};
 			o.base = opt.base || base;
@@ -2396,14 +2204,156 @@
 			}
 		}
 		r.jsonp.max = 2000;
-		r.each = function(obj, cb){
+		r.each = function(obj, cb, as){
 			if(!obj || !cb){ return }
 			for(var i in obj){
 				if(obj.hasOwnProperty(i)){
-					cb(obj[i], i);
+					cb.call(as, obj[i], i);
 				}
 			}
 		}
-		exports.request = r;
-	}(Tab));
-}({}));
+		module.exports = r;
+	})(require, './polyfill/request');
+
+	;require(function(module){
+		P.request = require('./request');
+		function P(p){
+			if(!P.is(this)){ return new P(p) }
+			this.peers = p;
+		}
+		P.is = function(p){ return (p instanceof P) }
+		P.chain = P.prototype;
+		function map(peer, url){
+			var msg = this.msg;
+			var opt = this.opt || {};
+			opt.out = true;
+			P.request(url, msg, null, opt);
+		}
+		P.chain.send = function(msg, opt){
+			P.request.each(this.peers, map, {msg: msg, opt: opt});
+		}
+		module.exports = P;
+	})(require, './polyfill/peer');
+
+	;require(function(module){
+		if(typeof JSON === 'undefined'){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
+		if(typeof Gun === 'undefined'){ return } // TODO: window.Websocket is Browser only. But it would be nice if it could somehow merge it with lib/WSP?
+		
+		var root, noop = function(){};
+		if(typeof window !== 'undefined'){ root = window }
+
+		var Tab = {};
+		Tab.on = Gun.on;//Gun.on.create();
+		Tab.peers = require('../polyfill/peer');
+		Gun.on('get', function(at){
+			var gun = at.gun, opt = gun.Back('opt') || {}, peers = opt.peers;
+			if(!peers || Gun.obj.empty(peers)){
+				//setTimeout(function(){
+				Gun.log.once('peers', "Warning! You have no peers to connect to!");
+				at.gun.Back(-1).on('in', {'@': at['#']});
+				//},100);
+				return;
+			}
+			var msg = {
+				'#': at['#'] || Gun.text.random(9), // msg ID
+				'$': at.get // msg BODY
+			};
+			Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
+				if(data){
+					at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
+				} else {
+					at.gun.Back(-1).on('in', {'@': at['#'], err: err, put: data});
+				}
+			});
+			Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
+		});
+		Gun.on('put', function(at){
+			if(at['@']){ return }
+			var opt = at.gun.Back('opt') || {}, peers = opt.peers;
+			if(!peers || Gun.obj.empty(peers)){
+				Gun.log.once('peers', "Warning! You have no peers to save to!");
+				at.gun.Back(-1).on('in', {'@': at['#']});
+				return;
+			}
+			if(false === opt.websocket || (at.opt && false === at.opt.websocket)){ return }
+			var msg = {
+				'#': at['#'] || Gun.text.random(9), // msg ID
+				'$': at.put // msg BODY
+			};
+			Tab.on(msg['#'], function(err, ok){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
+				at.gun.Back(-1).on('in', {'@': at['#'], err: err, ok: ok});
+			});
+			Tab.peers(peers).send(msg, {headers: {'gun-sid': Tab.server.sid}});
+		});
+		// browser/client side Server!
+		Gun.on('opt', function(at){ // TODO: BUG! Does not respect separate instances!!!
+			if(Tab.server){ return }
+			var gun = at.gun, server = Tab.server = {}, tmp;
+			server.sid = Gun.text.random();
+			Tab.peers.request.createServer(function(req, res){
+				if(!req || !res || !req.body || !req.headers){ return }
+				var msg = req.body;
+				// AUTH for non-replies.
+				if(server.msg(msg['#'])){ return }
+				//server.on('network', Gun.obj.copy(req)); // Unless we have WebRTC, not needed.
+				if(msg['@']){ // no need to process.
+					if(Tab.ons[tmp = msg['@'] || msg['#']]){
+						Tab.on(tmp, [msg['!'], msg['$']]);
+					}
+					return 
+				}
+				if(msg['$'] && msg['$']['#']){ return server.get(req, res) }
+				else { return server.put(req, res) }
+			});
+			server.get = function(req, cb){
+				var body = req.body, lex = body['$'], opt;
+				var graph = gun._.root._.graph;
+				if(!(node = graph[lex['#']])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
+				cb({body: {
+					'#': server.msg(),
+					'@': body['#'],
+					'$': node
+				}});
+			}
+			server.put = function(req, cb){
+				var body = req.body, graph = body['$'];
+				var __ = gun._.root._;
+				if(!(graph = Gun.obj.map(graph, function(node, soul, map){ // filter out what we don't have in memory.
+					if(!__.path[soul]){ return }
+					map(soul, node);
+				}))){ return }
+				gun.on('out', {gun: gun, opt: {websocket: false}, put: graph, '#': Gun.on.ask(function(ack, ev){
+					if(!ack){ return }
+					ev.off();
+					return cb({body: {
+						'#': server.msg(),
+						'@': body['#'],
+						'$': ack,
+						'!': ack.err
+					}});
+				})});
+			}
+			server.msg = function(id){
+				if(!id){
+					return server.msg.debounce[id = Gun.text.random(9)] = Gun.time.is(), id;
+				}
+				clearTimeout(server.msg.clear);
+				server.msg.clear = setTimeout(function(){
+					var now = Gun.time.is();
+					Gun.obj.map(server.msg.debounce, function(t,id){
+						if((now - t) < (1000 * 60 * 5)){ return }
+						Gun.obj.del(server.msg.debounce, id);
+					});
+				},500);
+				if(server.msg.debounce[id]){ 
+					return server.msg.debounce[id] = Gun.time.is(), id;
+				}
+				server.msg.debounce[id] = Gun.time.is();
+				return;
+			};	
+			server.msg.debounce = server.msg.debounce || {};
+		});
+
+	})(require, './adapters/wsp');
+
+}());
