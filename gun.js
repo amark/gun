@@ -2205,8 +2205,8 @@
 			(ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'))).cbs = {};
 			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
 			ws.onclose = window.onbeforeunload = function(c){
-				if(!c){ return }
-				if(ws && ws.close instanceof Function){ ws.close() }
+				if(!ws || !c){ return }
+				if(ws.close instanceof Function){ ws.close() }
 				if(!ws.sending){
 					ws = r.ws.peers[opt.base] = false;
 					return r.transport(opt, cb);
