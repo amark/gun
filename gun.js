@@ -898,7 +898,6 @@
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
 				if(at.put){
-					console.debug(3, 'OUT -> IN', at);
 					cat.on('in', obj_to(at, {'#': 0, gun: cat.gun}));
 				}
 				if(!at.gun){
@@ -1357,8 +1356,18 @@
 							if(get){ cat.ask[get] = cat.ask._['.'] = 1 }
 							tmp = false;
 							cat.on('in', function(tac, ev){
-								input.call(cat, tac, ev);
 								tmp = true;
+								if(u !== tac.put){
+									input.call(cat, tac, ev);
+									return;
+								}
+								// TODO: BUG! We want to query for it! So should still `input`. There should be no special case here.
+								// Nots require some special treatment.
+								at.gun.on('in', {
+									get: get,
+									gun: at.gun, 
+									via: tac
+								});
 								return;
 								var put = tac.put, rel = tac.put;
 								if(!(rel = (Gun.node.soul(put) || Gun.val.rel.is(put)))){
@@ -1424,8 +1433,6 @@
 					Gun.on.ack(tmp, at);
 					if(at.err){ return }
 				};
-				console.debug(2, 'in', cat.get, change, cat.on('in').s.slice());
-				console.debug(4, 'in', cat.get, change, cat.on('in').s.slice());
 				if(value.call(cat, at, ev)){
 					return;
 				}
@@ -1436,19 +1443,22 @@
 				var cat = this, gun = at.gun, put = at.put, coat = gun._, rel, tmp;
 				if(!(rel = Gun.val.rel.is(put))){
 					if(cat.proxy){
+						if(cat.proxy.it === at){ return true } // TODO: PERF! Anyway to simplify this?
 						if(cat.proxy.rel){
 							cat.change = coat.change;
 							cat.put = coat.put;
 						}
 						// TODO: BUG! This mutated `at` won't effect the original at that was sent via the poly-proxy approach. Meaning what is still cached in the poly-set is not this better/recent/fuller one.
-						//console.log('values...', at, cat);
-						cat.proxy.res(obj_to(at, {get: cat.get || at.get})); // MUTATE AT?
+						cat.on('in', obj_to(at, cat.proxy.it = {get: cat.get || at.get}));
 					}
-					//not(); // ask?
 					if(Gun.val.is(at)){
+						//not(); // ask?
+						not(cat, at);
 						return true;
 					}
 					// iterables?
+					not(cat, at);
+					ask(cat);
 					return;
 				}
 				if(coat.proxy && rel === coat.proxy.rel){
@@ -1461,7 +1471,8 @@
 					if(!cat.proxy || !cat.proxy[coat.id]){
 						(cat.proxy = cat.proxy || {})[coat.id] = coat;
 						cat.proxy.res = ev.stun(rel); // TODO: BUG! Race? Or this all goes to the same thing so it doesn't matter?
-						console.log("VALUES?", cat.get, coat.get, Gun.obj.copy(coat.ask), cat.on('in').s.slice());
+						cat.TAP = 1;
+						coat.TAP = 2;
 						gun.on('in', input, cat); // TODO: BUG! PERF! MEMORY LEAK!
 					}
 					return cat.put === coat.put? false : true;
@@ -1476,7 +1487,7 @@
 				}
 				//not()
 				tmp = coat.proxy = {rel: rel, ref: coat.root.get(rel)};
-				tmp.res = ev.stun(rel); tmp.as = coat;
+				tmp.ev = ev; tmp.res = ev.stun(rel); tmp.as = coat;
 				tmp.ref.on('in', input, coat);
 				return true;
 			}
@@ -1629,8 +1640,8 @@
 				});
 			}
 			function not(cat, at){
-				var ask = cat.ask, tmp = cat.link;
-				cat.link = null;
+				var ask = cat.ask, tmp = cat.proxy;
+				cat.proxy = null;
 				if(null === tmp){ return }
 				if(tmp){
 					if(tmp.sub){
@@ -2087,14 +2098,7 @@
 				var gun = this.gun, cat = this.cat, id = this.id;
 				if(cat.list[id+f]){ return }
 				// TODO: BUG! Ghosting!
-				f==='ACME'&&console.debug(1, 'EACH', f,v);
 				return cat.on('in', [id+f, {gun: (cat.list[id+f] = gun.path(f)), get: f, put: v}]);
-				return cat.on('in', [id+f, (cat.list[id+f] = gun.path(f))._]);
-				(cat.list[id+f] = gun.path(f)).on(function(v,s,a,ev){
-					//Gun.chain.get.input.call(cat, {gun: cat.gun, get: f, put: v, MAP: true}, ev);
-					//cat.on('in', this);
-					cat.on('in',[id+f,this._,ev]);
-				});
 			}
 			var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._;
 		}());
