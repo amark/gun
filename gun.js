@@ -1213,7 +1213,17 @@
 				as.batch();
 			}
 
-			function any(at, ev){ var as = this;
+			function any(at, ev){ 
+				function implicit(at){ // TODO: CLEAN UP!!!!!
+					if(!at || !at.get){ return } // TODO: CLEAN UP!!!!!
+					as.data = obj_put({}, tmp = at.get, as.data); // TODO: CLEAN UP!!!!!
+					at = at.via; // TODO: CLEAN UP!!!!!
+					if(!at){ return } // TODO: CLEAN UP!!!!!
+					tmp = at.get; // TODO: CLEAN UP!!!!!
+					if(!at.via || !at.via.get){ return } // TODO: CLEAN UP!!!!!
+					implicit(at);  // TODO: CLEAN UP!!!!!
+				} // TODO: CLEAN UP!!!!!
+				var as = this;
 				if(at.err){ 
 					console.log("Please report this as an issue! Put.any.err");
 					return 
@@ -1234,15 +1244,6 @@
 						as.data = obj_put({}, tmp, as.data);
 						tmp = u;
 					}
-					function implicit(at){ // TODO: CLEAN UP!!!!!
-						if(!at || !at.get){ return } // TODO: CLEAN UP!!!!!
-						as.data = obj_put({}, tmp = at.get, as.data); // TODO: CLEAN UP!!!!!
-						at = at.via; // TODO: CLEAN UP!!!!!
-						if(!at){ return } // TODO: CLEAN UP!!!!!
-						tmp = at.get; // TODO: CLEAN UP!!!!!
-						if(!at.via || !at.via.get){ return } // TODO: CLEAN UP!!!!!
-						implicit(at);  // TODO: CLEAN UP!!!!!
-					} // TODO: CLEAN UP!!!!!
 					if(as.gun.Back(-1) !== cat.back){
 						implicit(at);
 					}
