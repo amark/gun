@@ -911,6 +911,8 @@
 			}
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field];
+				console.debug(10, 'GET', soul, node, field);
+				console.debug(2, 'GET', soul, node, field);
 				if(node && (!field || obj_has(node, field))){
 					if(field){
 						node = Gun.obj.put({_: node._}, field, node[field]);
@@ -932,6 +934,8 @@
 				if(cat.graph){
 					Gun.obj.map(at.put, ham, {at: at, cat: cat}); // all unions must happen first, sadly.
 				}
+				console.debug(12, 'IN', at);
+				console.debug(4, 'IN', at);
 				Gun.obj.map(at.put, map, {at: at, cat: cat});
 			}
 			function ham(data, key){
@@ -1433,6 +1437,10 @@
 					Gun.on.ack(tmp, at);
 					if(at.err){ return }
 				};
+				console.debug(16, 'in', cat.get, change, Gun.obj.copy(cat.ask), cat.next, cat.on('in').s.slice());
+				console.debug(13, 'in', cat.get, change, Gun.obj.copy(cat.ask), cat.next, cat.on('in').s.slice());
+				console.debug(6, 'in', cat.get, change, Gun.obj.copy(cat.ask), cat.next);
+				console.debug(5, 'in', cat.get, change, Gun.obj.copy(cat.ask), cat.next);
 				if(value.call(cat, at, ev)){
 					return;
 				}
@@ -1441,26 +1449,39 @@
 			Gun.chain.get.input = input;
 			function value(at, ev){
 				var cat = this, gun = at.gun, put = at.put, coat = gun._, rel, tmp;
+				if(u === at.put){
+					not(cat, at);
+					return true;
+				}
 				if(!(rel = Gun.val.rel.is(put))){
 					if(cat.proxy){
-						if(cat.proxy.it === at){ return true } // TODO: PERF! Anyway to simplify this?
+						if(cat.proxy.it === at){
+						console.debug(15, 'value', cat.get, put, cat.proxy, cat.proxy.it === at);
+							ask(cat, Gun.node.soul(put), coat);
+							console.debug(18, 'value', cat.get, put, cat.proxy, cat.on('in').s.slice());
+							return true;
+						} // TODO: PERF! Anyway to simplify this?
 						if(cat.proxy.rel){
 							cat.change = coat.change;
 							cat.put = coat.put;
 						}
 						// TODO: BUG! This mutated `at` won't effect the original at that was sent via the poly-proxy approach. Meaning what is still cached in the poly-set is not this better/recent/fuller one.
+						console.debug(17, 'value', cat.get, put, cat.proxy, cat.on('in').s.slice());
+						console.debug(14, 'value', cat.get, put, cat.proxy, cat.proxy.it === at);
 						cat.on('in', obj_to(at, cat.proxy.it = {get: cat.get || at.get}));
+						console.debug(19, 'value', cat.get, put, cat.proxy);
 					}
-					if(Gun.val.is(at)){
-						//not(); // ask?
+					if(Gun.val.is(put)){
+						//ask(); // ask?
 						not(cat, at);
 						return true;
 					}
 					// iterables?
-					not(cat, at);
-					ask(cat);
+					if(!cat.proxy){
+						ask(cat, rel || Gun.node.soul(put));
+					}
 					return;
-				}
+				};
 				if(coat.proxy && rel === coat.proxy.rel){
 					coat.id = coat.id || Gun.text.random(6);
 					ask(cat, rel, coat);
@@ -1482,13 +1503,18 @@
 					if(!cat.proxy || !cat.proxy[coat.id]){ // TODO: BUG! REPEATS ABOVE
 						(cat.proxy = cat.proxy || {})[coat.id] = coat;
 						cat.proxy.res = ev.stun(rel);
+				console.debug(7, 'values', cat.get, put, cat.proxy, coat.proxy, cat === coat);
 						gun.on('in', input, cat);
 					}
 				}
-				//not()
+				//not(cat, at);
+				//coat.put = u; // this okay?
 				tmp = coat.proxy = {rel: rel, ref: coat.root.get(rel)};
 				tmp.ev = ev; tmp.res = ev.stun(rel); tmp.as = coat;
 				tmp.ref.on('in', input, coat);
+				console.debug(8, 'values', cat.get, put, cat.proxy, coat.proxy, cat === coat);
+				// TODO: BUG, MAKE SURE NOT TO DO ASK IF ^ IS CACHED SINCE IT WILL ON ITS OWN END.
+				ask(cat, rel, coat);
 				return true;
 			}
 			function value2(at, ev){
@@ -1524,6 +1550,7 @@
 				tmp = coat.link = {rel: rel, ref: coat.root.get(rel)};//, res: ev.stun(rel), as: cat};
 				tmp.res = ev.stun(rel); tmp.as = cat;
 				tmp.sub = tmp.ref.on('in', input, coat);
+				ask();
 				return true;
 			}
 			function value1(at, ev){
@@ -1640,6 +1667,7 @@
 				});
 			}
 			function not(cat, at){
+				//if(u !== at.put){ return }
 				var ask = cat.ask, tmp = cat.proxy;
 				cat.proxy = null;
 				if(null === tmp){ return }
@@ -1677,16 +1705,18 @@
 				if(tmp = proxy._['*'] || ask._['*']){ // TODO! BUG! Should be proxy, right?
 					if(0 <= tmp){
 						proxy._['*'] = -1;
-						coat.gun.on('out', {
+						tmp = cat.root.get(soul);
+						console.debug(9, 'ask', Gun.obj.copy(ask), Gun.obj.copy(proxy));
+						tmp.on('out', {
 							get: {'#': soul},
-							gun: coat.gun,
-							'#': Gun.on.ask(ack, coat.gun)
+							gun: tmp,
+							'#': Gun.on.ask(ack, tmp)
 						});
 						return;
 					}
 				}
-				if(0 >= proxy._['.']){ return }
-				proxy._['.'] = -1;
+				if(0 >= proxy._['.'] && 0 >= ask._['.']){ return }
+				proxy._['.'] = ask._['.'] = -1;
 				obj_map(ask, function(state, key){
 					state = proxy[key] || (proxy[key] = state);
 					if(1 > state){ return }
@@ -1711,6 +1741,7 @@
 				var opt = opt || {}, gun = opt.gun = this;
 				if(opt.change){ opt.change = 1 }
 				opt.any = cb;
+				console.debug(1, 'any', gun._.get);
 				return gun.on('in', any, opt).on('out', {get: opt});
 			}
 			function any(at, ev){ var opt = this;
@@ -1719,10 +1750,8 @@
 				if((tmp = data) && tmp[Gun.val.rel._] && (tmp = Gun.val.rel.is(tmp))){
 					//console.log("ooooooooh jolllllly", data);
 					if(null !== opt['.']){
-						if(u === cat.put){
-							gun.any(function(err,d,k,a,e){e.off();
-								any.call(opt, obj_to(a, {get: at.get}), e);
-							});
+						if(Gun.val.rel.is(cat.put)){
+							cat.root.get(tmp).any(function(err,d,k,a,e){e.off()});
 							return;
 						}
 					}
@@ -2150,6 +2179,8 @@
 			if(!data){ return } // localStorage isn't trustworthy to say "not found".
 			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
 			//console.log('@@@@@@@@@@@@local get', data, at);
+			console.debug(11, 'get local', data);
+			console.debug(3, 'get local', data);
 			gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
 			//},100);
 		}

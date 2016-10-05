@@ -2441,7 +2441,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('get get get any parallel', function(done){
+		it('get get get any parallel', function(done){
 			var s = Gun.state.map();s.soul = 'parallel';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				bob: {
@@ -2455,6 +2455,7 @@ describe('Gun', function(){
 				expect(field).to.be('age');
 				done.age = true;
 			});
+			console.debug.i=1;console.log("---------------------------");
 			gun.get('parallel').path('bob').path('name').any(function(err, data, field, at, ev){
 				console.log("*********** name", data);
 				expect(data).to.be('Bob!');
@@ -2545,7 +2546,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		return;
+
 		it('get any any later', function(done){
 			var s = Gun.state.map();s.soul = 'full/later';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -2705,7 +2706,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		
 		it('get put any', function(done){
 			var s = Gun.state.map();s.soul = 'get/put/any';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -2748,7 +2749,7 @@ describe('Gun', function(){
 			},400);
 		});
 
-		it('mutate pointer to primitive deep on', function(done){
+		it.only('mutate pointer to primitive deep on', function(done){
 			var s = Gun.state.map();s.soul = 'change/pointer';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				bob: {
@@ -2760,8 +2761,9 @@ describe('Gun', function(){
 					}
 				}
 			}, s)});
+			console.debug.i=1;console.log("---------------------------");
 			gun.get('change/pointer').path('bob').path('pet').any(function(err, data, f, at, ev){
-				//console.log("*********************", data);
+				console.log("***", data);return;
 				if(done.c){
 					expect(data).to.be(undefined);
 					return;
@@ -2770,7 +2772,7 @@ describe('Gun', function(){
 				expect(data.species).to.be('kitty');
 				done.c = 1;
 			});
-
+			return;
 			setTimeout(function(){
 				gun.get('change/pointer').put({
 					bob: null
@@ -2784,7 +2786,7 @@ describe('Gun', function(){
 
 
 			gun.get('change/pointer').any(function(err, data){
-				//console.log("*********", data);
+				console.log("****************", data);
 				if(2 <= done.e && data.bob){
 					expect(data.bob).to.be('hello!');
 					done();
@@ -2799,7 +2801,7 @@ describe('Gun', function(){
 				done.e = 1;
 			});
 		});
-
+		return;
 		it('get only soul', function(done){
 			var s = Gun.state.map();s.soul = 'only/soul';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
