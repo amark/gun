@@ -2307,7 +2307,7 @@
 			});
 			server.get = function(req, cb){
 				var body = req.body, lex = body['$'], opt;
-				var graph = gun._.root._.graph;
+				var graph = gun._.root._.graph, node;
 				if(!(node = graph[lex['#']])){ return } // Don't reply to data we don't have it in memory. TODO: Add localStorage?
 				cb({body: {
 					'#': server.msg(),
