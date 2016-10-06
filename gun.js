@@ -1382,7 +1382,7 @@
 								if(!(tmp = Gun.node.soul(tmp = tac.put) || Gun.val.rel.is(tmp))){
 									tmp = (cat.path||empty)[at.get];
 									if(!tmp){ return }
-									tmp.on('in', {get: at.get, gun:tmp});
+									tmp.on('in', {get: at.get, gun:tmp, via: tac});
 									return;
 								}
 								cat.ask[at.get] = 0;
@@ -1652,7 +1652,7 @@
 				}
 				gun.on('in', {
 					err: at.err,
-					put: at.put,
+					put: at.put? at.put[s] || at.put : at.put,
 					get: s,
 					gun: gun,
 					via: at
