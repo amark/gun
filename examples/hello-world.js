@@ -6,11 +6,11 @@ var gun = Gun({
     bucket: '' // The bucket you want to save into
   }
 });
-gun.put({ hello: 'world' }).key('my/first/data');
+gun.put({hello: 'world'}).key('my/first/data');
 
 var http = require('http');
-http.createServer(function(req, res){
-  gun.get('my/first/data', function(err, data){
+http.createServer(function(req, res) {
+  gun.get('my/first/data', function(err, data) {
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.end(JSON.stringify(data));
   });
