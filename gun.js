@@ -1161,8 +1161,9 @@
 
 
 ;(function(Tab){
-	
-	if(!this.Gun){ return }
+
+	if(typeof window === "undefined"){ return; }
+	if(!window.Gun){ return }
 	if(!window.JSON){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 
 	;(function(exports){
