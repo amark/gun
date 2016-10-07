@@ -576,6 +576,7 @@ describe('Gun', function(){
 					Gun.obj.map(a.node, function(v,f){
 						//setTimeout(function(){
 							var emit = {field: 'where', soul: f};
+							console.log(2, emit);
 							resume(emit);
 						//},10);
 					})

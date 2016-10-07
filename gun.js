@@ -199,7 +199,7 @@
 				on.arg = arg;
 				on.end = as;
 				on.as = eas;
-				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), gap, off, act, stun = function(){ stun.halt = true; return act.res.apply(act, arguments) } // TODO: BUG! Perf/clean up.
+				var i = 0, acts = on.s, l = acts.length, arr = (arg instanceof Array), gap, off, act, stun = function(){ stun.halt = arguments.length? 1 : true; return act.res.apply(act, arguments) } // TODO: BUG! Perf/clean up.
 				for(; i < l; i++){ act = acts[i];
 					if(skip){
 						if(skip === act){
@@ -219,6 +219,7 @@
 					if(noop === act.fn){
 						off = true;
 					}
+					//if(tmp = tmp.halt){
 					if(tmp = stun.halt){
 						if(1 === tmp){
 							gap = true;
@@ -901,7 +902,6 @@
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
 				if(at.put){
-					console.debug(2, 'OUT -> IN', at);
 					cat.on('in', obj_to(at, {'#': 0, gun: cat.gun}));
 				}
 				if(!at.gun){
@@ -936,7 +936,6 @@
 				if(cat.graph){
 					Gun.obj.map(at.put, ham, {at: at, cat: cat}); // all unions must happen first, sadly.
 				}
-				console.debug(3, 'IN', at);
 				Gun.obj.map(at.put, map, {at: at, cat: cat});
 			}
 			function ham(data, key){
@@ -1155,7 +1154,6 @@
 
 			function batch(){ var as = this;
 				if(!as.graph || obj_map(as.stun, no)){ return }
-				console.debug(1, 'PUT!', as.env.graph);
 				(as.res||iife)(function(){
 					as.ref.on('out', {
 						gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
@@ -1440,10 +1438,6 @@
 					Gun.on.ack(tmp, at);
 					if(at.err){ return }
 				};
-				console.debug(9, 'in', cat.get, change, cat.next, cat.on('in').s.slice());
-				console.debug(8, 'in', cat.get, change, cat.next, cat.on('in').s.slice());
-				console.debug(5, 'in', cat.get, change, cat.next, cat.on('in').s.slice());
-				console.debug(4, 'in', cat.get, change, cat.next, cat.on('in').s.slice());
 				if(value.call(cat, at, ev)){
 					return;
 				}
@@ -1468,9 +1462,7 @@
 							cat.put = coat.put;
 						}
 						// TODO: BUG! This mutated `at` won't effect the original at that was sent via the poly-proxy approach. Meaning what is still cached in the poly-set is not this better/recent/fuller one.
-						console.debug(6, 'value', cat.get, put, cat.proxy, cat.proxy.it === at);
 						cat.on('in', obj_to(at, cat.proxy.it = {get: cat.get || at.get}));
-						console.debug(7, 'value', cat.get, put, cat.proxy, cat.proxy.it === at);
 					}
 					if(Gun.val.is(put)){
 						//ask(); // ask?
@@ -1487,7 +1479,6 @@
 					coat.id = coat.id || Gun.text.random(6);
 					ask(cat, rel, coat);
 					if(cat === coat){
-						console.debug(10, 'values', cat.get, put, cat.proxy, coat.proxy);
 						ev.stun();
 						cat.put = at.put = coat.proxy.ref._.put;
 						// change?
@@ -1745,11 +1736,9 @@
 				return gun.on('in', any, opt).on('out', {get: opt});
 			}
 			function any(at, ev){ var opt = this;
-				console.log('...any...', at);
 				if(!at.gun){ console.log("Error: %%%%%%% No gun context! %%%%%%%") }
 				var gun = at.gun, cat = gun._, data = at.put, tmp;
 				if((tmp = data) && tmp[Gun.val.rel._] && (tmp = Gun.val.rel.is(tmp))){
-					console.log('any!', at, opt);
 					//console.log("ooooooooh jolllllly", data);
 					if(null !== opt['.']){
 						if(Gun.val.rel.is(cat.put)){
@@ -2015,7 +2004,6 @@
 			function ok(at, ev){ var opt = this;
 				if(u === at.put){ return }
 				var data = at.put, gun = at.gun, cat = gun._, tmp = opt.last, id = cat.id+at.get;
-				opt.ok.toString().match('FOO') && console.log('WHAT!!?????????', cat.get, data);
 				// DEDUPLICATE
 				if(tmp.put === data && tmp.get === id){ return }
 				tmp.put = data;
