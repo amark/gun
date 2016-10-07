@@ -28,18 +28,7 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
 
 Jump right into the [gun playground](http://jsbin.com/miredog/edit?js,console) and start testing whatever functions you want.
 
-## Table of Contents
- - [Demos](#demos)
-   - [Videos](#videos)
-   - [Projects](#gun-projects)  
- - [How to get started](#how-to-get-started)
- - [Modules](#gun-modules)
- - [How can I help make gun even more awesome?](#how-can-i-help-make-gun-even-more-awesome)
- - [License](#license)
-   - [Contributors](#contributors)
- - [Changelog](#changelog)
- - [Stay up-to-date](#stay-up-to-date)
- - **[API Reference](https://github.com/amark/gun/wiki/API-(v0.3.x))**  :arrow_upper_right:
+Quick note: All active development is happening on `0.5` branch, which has the upcoming **30M+ ops/sec** performance improvements!
 
 ## Demos
 
@@ -67,8 +56,10 @@ Jump right into the [gun playground](http://jsbin.com/miredog/edit?js,console) a
 ### <a name="gun-projects"></a>Projects
  - GUN users are encouraged to add their projects to this [running projects list](https://github.com/amark/gun/wiki/projects).
 
-## How to get started
- - Until we complete the [Getting Started with GUN](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)) Guide, please review the [API documentation](https://github.com/amark/gun/wiki/API-(v0.3.x)) and [examples' source code](https://github.com/amark/gun/blob/master/examples).
+## Docs & Tradeoffs
+ - [Getting Started with GUN](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)) Guide. 
+ - [API documentation](https://github.com/amark/gun/wiki/API-(v0.3.x)) and [examples' source code](https://github.com/amark/gun/blob/master/examples).
+ - GUN is an AP system which means you should not use it for banking apps, [learn more here](https://github.com/amark/gun/wiki/CAP-Theorem).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
 
 ## <a name="gun-modules"></a>Modules
