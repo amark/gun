@@ -2796,7 +2796,7 @@ describe('Gun', function(){
 				done.e = 1;
 			});
 		});
-		return;
+
 		it('get only soul', function(done){
 			var s = Gun.state.map();s.soul = 'only/soul';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -2829,7 +2829,8 @@ describe('Gun', function(){
 			}, s)});
 			gun.get('only/p/soul').path('bob').any(function(err, data){
 				//console.log("*********", err, data);
-				expect(Gun.obj.empty(data, '_')).to.be.ok();
+				expect(Gun.val.rel.is(data)).to.be.ok();
+				//expect(Gun.obj.empty(data, '_')).to.be.ok();
 				done();
 			}, {'.': null});
 		});
@@ -2847,7 +2848,7 @@ describe('Gun', function(){
 				}
 			}, s)});
 			gun.get('change/pointer/point').path('bob').any(function(err, data){
-				//console.log("*********************", data);
+				console.log("*********************", data);
 				if(done.c){
 					expect(data.age).to.be(30);
 					expect(data.name).to.be('Bob!');
@@ -2863,6 +2864,7 @@ describe('Gun', function(){
 				done.c=1;
 			});
 			setTimeout(function(){
+				//console.debug.i=1;console.log("---------------------");
 				gun.get('change/pointer/point').path('bob').put({age: 30});
 			},400);
 		});
@@ -2932,7 +2934,7 @@ describe('Gun', function(){
 				},100);
 			},400);
 		});
-
+		return;
 		it('mutate pointer to primitive after any deep', function(done){
 			var s = Gun.state.map();s.soul = 'change/pointer/to/prime/deep';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
