@@ -4,6 +4,8 @@
   "description": "Graph engine",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
     "start": "node examples/http.js 8080",
     "test": "mocha",
     "unbuild": "node lib/unbuild.js"
@@ -49,8 +51,13 @@
     "ws": "~>1.0.1"
   },
   "devDependencies": {
+    "eslint": "^3.7.1",
+    "eslint-config-google": "^0.6.0",
     "mocha": "~>1.9.0",
     "panic-server": "~>0.3.0",
     "selenium-webdriver": "~>2.53.2"
+  },
+  "eslintConfig": {
+    "extends": "google"
   }
 }

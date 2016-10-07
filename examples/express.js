@@ -6,12 +6,12 @@ var app = express();
 
 var Gun = require('gun');
 var gun = Gun({
-	file: 'data.json',
-	s3: {
-		key: '', // AWS Access Key
-		secret: '', // AWS Secret Token
-		bucket: '' // The bucket you want to save into
-	}
+  file: 'data.json',
+  s3: {
+    key: '', // AWS Access Key
+    secret: '', // AWS Secret Token
+    bucket: '' // The bucket you want to save into
+  }
 });
 
 gun.wsp(app);
