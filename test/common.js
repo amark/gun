@@ -576,7 +576,6 @@ describe('Gun', function(){
 					Gun.obj.map(a.node, function(v,f){
 						//setTimeout(function(){
 							var emit = {field: 'where', soul: f};
-							console.log(2, emit);
 							resume(emit);
 						//},10);
 					})
@@ -1460,6 +1459,7 @@ describe('Gun', function(){
 				var gun = Gun();
 				var check = {};
 				gun.get('g/n/m/f/l/n/r').map().on(function(v,f){
+					//console.log("***********", f,v);return;
 					check[f] = v;
 					if(check.alice && check.bob && check.alice.PhD){
 						expect(check.alice.age).to.be(24);
@@ -2849,7 +2849,6 @@ describe('Gun', function(){
 				}
 			}, s)});
 			gun.get('change/pointer/point').path('bob').any(function(err, data){
-				console.log("*********************", data);
 				if(done.c){
 					expect(data.age).to.be(30);
 					expect(data.name).to.be('Bob!');
@@ -2865,11 +2864,9 @@ describe('Gun', function(){
 				done.c=1;
 			});
 			setTimeout(function(){
-				//console.debug.i=1;console.log("---------------------");
 				gun.get('change/pointer/point').path('bob').put({age: 30});
 			},400);
 		});
-
 		it('mutate pointer to self deep', function(done){
 			var s = Gun.state.map();s.soul = 'change/pointer/point/deep';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -2935,7 +2932,7 @@ describe('Gun', function(){
 				},100);
 			},400);
 		});
-		return;
+
 		it('mutate pointer to primitive after any deep', function(done){
 			var s = Gun.state.map();s.soul = 'change/pointer/to/prime/deep';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -2969,8 +2966,8 @@ describe('Gun', function(){
 				},100);
 			},400);
 		});
-
-		it('mutate pointer to another pointer after any', function(done){
+		return;
+		it.only('mutate pointer to another pointer after any', function(done){
 			var s = Gun.state.map();s.soul = 'change/pointer/to/pointer';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				bob: {_: {'#': 'dafssfad'},
@@ -2983,10 +2980,11 @@ describe('Gun', function(){
 				}
 			}, s)});
 			var bob = gun.get('dafssfad').any(function(err, data){
-				//console.log("***", data);
+				console.log("***", data);
 			});
+			console.debug.i=1;console.log("--------------------");
 			gun.get('change/pointer/to/pointer').path('bob').any(function(err, data){
-				//console.log("*********", data);
+				console.log("*********", data);return;
 				if(done.soul && done.soul !== Gun.node.soul(data)){
 					expect(Gun.node.soul(data)).to.be('fsdaadsf');
 					expect(data.cat).to.be(true);
@@ -3002,7 +3000,7 @@ describe('Gun', function(){
 				expect(data.name).to.be('Bob!');
 				expect(Gun.val.rel.is(data.pet)).to.be.ok();
 			});
-
+			return;
 			setTimeout(function(){
 				gun.get('change/pointer/to/pointer').path('bob').put(Gun.node.ify({cat: true}, 'fsdaadsf'));
 				setTimeout(function(){
@@ -3010,8 +3008,8 @@ describe('Gun', function(){
 				},100);
 			},400);
 		});
-
-		it('deep freeze put', function(done){
+		return;
+		it.only('deep freeze put', function(done){
 			gun.get('deep/freeze').put({
 				bob: {
 					age: 29,
@@ -3060,7 +3058,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-
+		return;
 		it('put put put put', function(){
 			var gun = Gun();
 			var get = gun.get('put/put/put/put');
