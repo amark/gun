@@ -8,7 +8,7 @@
 	}
 ,	"dependencies": {
 		"express": "~>4.13.4",
-		"gun": "~>0.3.0"
+		"gun": "github:amark/gun#0.5"
 	}
 ,	"scripts": {
         "start": "node http.js",
