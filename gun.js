@@ -897,19 +897,18 @@
 				opt = opt || {};
 				var gun = this, at = gun._, tmp, u;
 				if(!at.root){ root(at) }
-				tmp = at.opt = at.opt || {};
+				at.opt = at.opt || {};
 				if(text_is(opt)){ opt = {peers: opt} }
 				else if(list_is(opt)){ opt = {peers: opt} }
 				if(text_is(opt.peers)){ opt.peers = [opt.peers] }
 				if(list_is(opt.peers)){ opt.peers = obj_map(opt.peers, function(n,f,m){m(n,{})}) }
 				obj_map(opt, function map(v,f){
 					if(obj_is(v)){
-						tmp = tmp[f] || (tmp[f] = {}); // TODO: Bug? Be careful of falsey values getting overwritten?
-						obj_map(v, map);
+						obj_map(v, map, this[f] || (this[f] = {})); // TODO: Bug? Be careful of falsey values getting overwritten?
 						return;
 					}
-					tmp[f] = v;
-				});
+					this[f] = v;
+				}, at.opt);
 				Gun.on('opt', at);
 				return gun;
 			}
