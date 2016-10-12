@@ -2031,8 +2031,7 @@
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
 		function put(at){ var err, id, opt, root = at.gun._.root;
-			opt = at.opt || ( at.opt = at.gun.Back('opt') || {} );
-			opt.prefix = opt.prefix || 'gun/';
+			(opt = at.opt || {}).prefix = opt.prefix || (at.gun.Back('opt')||{}).prefix || 'gun/';
 			Gun.graph.is(at.put, function(node, soul){
 				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
 				try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
@@ -2044,8 +2043,7 @@
 		function get(at){
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
 			//setTimeout(function(){
-			opt = at.opt || ( at.opt = at.gun.Back('opt') || {} );
-			opt.prefix = opt.prefix || 'gun/';
+			(opt = at.opt || {}).prefix = opt.prefix || (at.gun.Back('opt')||{}).prefix || 'gun/';
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
 			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
 			if(!data){ return } // localStorage isn't trustworthy to say "not found".
