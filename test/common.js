@@ -1453,6 +1453,26 @@ describe('Gun', function(){
 			
 		});
 
+		it.only('delete this', function(done){
+			var s = Gun.state.map();s.soul = 'u/m';
+			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				alice: {
+					age: 26,
+					name: "Alice",
+					boo: {a:1}
+				},
+				bob: {
+					age: 29,
+					name: "Bob!",
+					boo: {b:2}
+				}
+			}, s)});
+			//console.debug.i=1;console.log('------------------');
+			gun.get('u/m').map().path('name').on(function(v){
+				console.log("*************************** users...", v);
+			});
+		});
+
 		describe('plural chains', function(){
 
 			it("get before put in memory", function(done){
