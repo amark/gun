@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.3.995",
+  "version": "0.3.996",
   "description": "Graph engine",
   "main": "index.js",
   "scripts": {
