@@ -2251,7 +2251,7 @@
 		Tab.on = Gun.on;//Gun.on.create();
 		Tab.peers = require('../polyfill/peer');
 		Gun.on('get', function(at){
-			var gun = at.gun, opt = gun.Back('opt') || {}, peers = opt.peers;
+			var gun = at.gun, opt = at.opt || {}, peers = opt.peers || gun.Back('opt.peers');
 			if(!peers || Gun.obj.empty(peers)){
 				//setTimeout(function(){
 				Gun.log.once('peers', "Warning! You have no peers to connect to!");
