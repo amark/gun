@@ -370,10 +370,18 @@
 				var last = act.on.last, tmp;
 				if(last){
 					if(act.on.map){
+						var map = act.on.map, v;
+						for(var f in map){ v = map[f];
+							if(v[1]){
+								emit(v[1], act, event, v[2]);
+							}
+						}
+						/*
 						Gun.obj.map(act.on.map, function(v,f){ // TODO: BUG! Gun is not available in this module.
 							//emit(v[0], act, event, v[1]); // below enables more control
 							emit(v[1], act, event, v[2]);
 						});
+						*/
 					} else {
 						emit(last, act, event);
 					}
