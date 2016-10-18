@@ -1171,7 +1171,18 @@
 		s.put = function(key, val, cb){ try{ store.setItem(key, Gun.text.ify(val)) }catch(e){if(cb)cb(e)} }
 		s.get = function(key, cb){ /*setTimeout(function(){*/ try{ cb(null, Gun.obj.ify(store.getItem(key) || null)) }catch(e){cb(e)} /*},1)*/} 
 		s.del = function(key){ return store.removeItem(key) }
-		var store = window.localStorage || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
+		// Feature detect + local reference
+		var storage;
+		var fail;
+		var uid;
+		try {
+			uid = new Date;
+			(storage = window.localStorage).setItem(uid, uid);
+			fail = storage.getItem(uid) != uid;
+			storage.removeItem(uid);
+			fail && (storage = false);
+		} catch (exception) {}
+		var store = (storage && window.localStorage) || {setItem: function(){}, removeItem: function(){}, getItem: function(){}};
 		exports.store = s;
 	}.bind(this || module)(Tab));
 
