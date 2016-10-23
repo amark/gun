@@ -2024,8 +2024,10 @@
 
 		;(function(){
 			Gun.chain.set = function(item, cb, opt){
-				var gun = this;
+				var gun = this, soul;
 				cb = cb || function(){};
+				if (soul = Gun.node.soul(item)) return gun.set(gun.get(soul), cb, opt);
+				if (Gun.obj.is(item) && !Gun.is(item)) return gun.set(gun._.root.put(item), cb, opt);
 				return item.val(function(node){
 					var put = {}, soul = Gun.node.soul(node);
 					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
