@@ -806,7 +806,7 @@
 		}());
 
 		Gun.chain.on = function(cb, opt){ // on subscribes to any changes on the souls.
-			var gun = this, u;
+			var gun = this, u, oldoff = this.off;
 			opt = Gun.obj.is(opt)? opt : {change: opt};
 			cb = cb || function(){};
 			function map(at){
@@ -821,6 +821,7 @@
 			};
 			opt.on = gun._.at('soul').map(map);
 			if(gun === gun.back){ Gun.log('You have no context to `.on`!') }
+			gun.off = oldoff ? function() { oldoff(); opt.on.off(); } : opt.on.off // Chain offs
 			return gun;
 		}
 
@@ -856,7 +857,7 @@
 			return function(path, cb, opt){
 				opt = opt || {};
 				cb = cb || (function(){ var cb = function(){}; cb.no = true; return cb }()); cb.hash = {};
-				var gun = this, chain = gun.chain(), f, c, u;
+				var gun = this, chain = gun.chain(), ons = [], f, c, u;
 				if(!Gun.list.is(path)){ if(!Gun.text.is(path)){ if(!Gun.num.is(path)){ // if not a list, text, or number
 					return cb.call(chain, {err: Gun.log("Invalid path '" + path + "'!")}), chain; // then complain
 				} else { return this.path(path + '', cb, opt)  } } else { return this.path(path.split('.'), cb, opt) } } // else coerce upward to a list.
@@ -864,7 +865,7 @@
 					cb.call(chain, opt.put? null : {err: Gun.log('You have no context to `.path`', path, '!')}, opt.put? gun.__.graph[(path||[])[0]] : u);
 					return chain;
 				}
-				gun._.at('path:' + path[0]).event(function(at){
+				ons.push(gun._.at('path:' + path[0]).event(function(at){
 					if(opt.done){ this.off(); return } // TODO: BUG - THIS IS A FIX FOR A BUG! TEST #"context no double emit", COMMENT THIS LINE OUT AND SEE IT FAIL!
 					var ctx = {soul: at.soul, field: at.field, by: gun.__.by(at.soul)}, field = path[0];
 					var on = Gun.obj.as(cb.hash, at.hash, {off: function(){}});
@@ -885,8 +886,8 @@
 					}
 					if(1 === path.length){ cb.call(ctx.by.chain || chain, null, at.value, ctx.field) }
 					chain._.at('soul').emit(at).chain(opt.chain);
-				});
-				gun._.at('null').only(function(at){
+				}));
+				ons.push(gun._.at('null').only(function(at){
 					if(!at.field){ return }
 					if(at.not){ 
 						gun.put({}, null, {init: true});
@@ -895,8 +896,8 @@
 					(at = Gun.on.at.copy(at)).field = path[0];
 					at.not = true;
 					chain._.at('null').emit(at).chain(opt.chain);
-				});
-				gun._.at('end').event(function(at){
+				}));
+				ons.push(gun._.at('end').event(function(at){
 					this.off();
 					if(at.at && at.at.field === path[0]){ return } // TODO: BUG! THIS FIXES SO MANY PROBLEMS BUT DOES IT CATCH VARYING SOULS EDGE CASE?
 					var ctx = {by: gun.__.by(at.soul)};
@@ -905,10 +906,15 @@
 					at.not = true;
 					cb.call(ctx.by.chain || chain, null);
 					chain._.at('null').emit(at).chain(opt.chain);
-				});
+				}));
 				if(path.length > 1){
 					(c = chain.path(path.slice(1), cb, opt)).back = gun;
 				}
+				(c || chain).off = function() {
+					ons.forEach(function(on) {
+						on.off();
+					})
+				};
 				return c || chain;
 			}
 		}());
@@ -929,7 +935,7 @@
 						return;
 					}
 				}
-				cb.hash[this.soul + field] = cb.hash[this.soul + field] || this.gun.path(field, path, {chain: chain, via: 'map'}); // TODO: path should reuse itself! We shouldn't have to do it ourselves.
+				cb.hash[this.soul + field] = cb.hash[this.soul + field] || (pathon = this.gun.path(field, path, {chain: chain, via: 'map'})); // TODO: path should reuse itself! We shouldn't have to do it ourselves.
 				// TODO:
 				// 1. Ability to turn off an event. // automatically happens within path since reusing is manual?
 				// 2. Ability to pass chain context to fire on. // DONE
@@ -940,7 +946,11 @@
 				var ref = gun.__.by(at.soul).chain || gun;
 				Gun.is.node(at.change, each, {gun: ref, soul: at.soul});
 			}
-			gun.on(map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
+			on = gun.on(map, {raw: true, change: true}); // TODO: ALLOW USER TO DO map change false!
+			chain.off = function() {
+				if (pathon) pathon.off();
+				on.off();
+			}
 			if(gun === gun.back){ Gun.log('You have no context to `.map`!') }
 			return chain;
 		}
