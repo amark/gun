@@ -526,7 +526,13 @@
 		Gun.on.at.hash = function(at){ return (at.at && at.at.soul)? at.at.soul + (at.at.field || '') : at.soul + (at.field || '') }
 
 		Gun.on.at.copy = function(at){ return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function(v,f,t){t(f,v)}) }
-		
+
+		Gun.root = function(gun) {
+			if (!Gun.is(gun)) return null;
+			if (gun.back === gun) return gun;
+			return Gun.root(gun.back);
+		};
+
 	}(Gun));
 	
 	;(function(Gun){ // Gun prototype chain methods.
@@ -1000,8 +1006,16 @@
 		}
 
 		Gun.chain.set = function(item, cb, opt){
-			var gun = this, ctx = {}, chain;
+			var gun = this, ctx = {}, chain, rel;
 			cb = cb || function(){};
+			if(Gun.is.node(item) && (rel=Gun.is.rel(item._))){
+				// Resolve set with a node
+				return gun.set(gun.get(rel), cb, opt);
+			}
+			if(typeof(item)=='object'&&!Gun.is(item)&&!Gun.is.rel(item)&&!Gun.is.lex(item)&&!Gun.is.node(item)&&!Gun.is.graph(item)){
+				// Resolve set with a new soul
+				return gun.set(Gun.root(gun).put(item), cb, opt);
+			}
 			if(!Gun.is(item)){ return cb.call(gun, {err: Gun.log('Set only supports node references currently!')}), gun } // TODO: Bug? Should we return not gun on error?
 			(ctx.chain = item.chain()).back = gun;
 			ctx.chain._ = item._;
