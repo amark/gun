@@ -1858,22 +1858,28 @@
 
 		;(function(){
 			Gun.chain.on = function(tag, arg, eas, as){
-				var gun = this, at = gun._, tmp;
+				var gun = this, at = gun._, tmp, act, off;
 				if(!at.on){ at.on = Gun.on }
 				if(typeof tag === 'string'){
 					if(!arg){ return at.on(tag) }
-					at.on(tag, arg, eas || at, as);
+					act = at.on(tag, arg, eas || at, as);
+					off = function() {
+						if (act && act.off) act.off();
+						off.off();
+					};
+					off.off = gun.off.bind(gun) || noop;
+					gun.off = off;
 					return gun;
 				}
 				var opt = arg;
-				opt = (true === opt)? {change: true} : opt || {}; 
+				opt = (true === opt)? {change: true} : opt || {};
 				opt.ok = tag;
 				gun.any(ok, {as: opt, change: opt.change}); // TODO: PERF! Event listener leak!!!????
 				return gun;
 			}
 
 			function ok(cat, ev){ var opt = this;
-				var data = cat.put, tmp; 
+				var data = cat.put, tmp;
 				// TODO: BUG! Need to use at.put > cat.put for merged cache?
 				if(u === data){ return }
 				if(opt.as){
@@ -1973,29 +1979,38 @@
 
 		;(function(){
 			Gun.chain.map = function(cb, opt, t){
-				var gun = this, cat = gun._, chain = cat.map;
+				var gun = this, cat = gun._, chain = cat.map, ons = [], act, off;
 				if(!chain){
 					chain = cat.map = gun.chain();
 					var list = (cat = chain._).list = cat.list || {};
-					chain.on('in').map = {};
-					chain.on('out', function(at){
+					(ons[ons.length] = chain.on('in')).map = {};
+					ons[ons.length] = chain.on('out', function(at){
 						console.debug(8, 'map out', at);
 				 		if(at.get instanceof Function){
-							chain.on('in', at.get, at);
+							ons[ons.length] = chain.on('in', at.get, at);
 							return;
 						} else {
 							console.debug(9, 'map out', at);
-							chain.on('in', gun.get.input, at.gun._);
+							ons[ons.length] = chain.on('in', gun.get.input, at.gun._);
 						}
 					});
 					if(opt !== false){
-						gun.on(map, {change: true, as: cat});
+						ons[ons.length] = gun.on(map, {change: true, as: cat});
 						console.debug(1, 'map');
 					}
 				}
 				if(cb){
-					chain.on(cb);
+					ons[ons.length] = chain.on(cb);
 				}
+				off = function() {
+					while (ons.length) {
+						act = ons.pop();
+						if (act && act.off) act.off();
+					}
+					return off.off();
+				};
+				off.off = chain.off.bind(chain) || noop;
+				chain.off = off;
 				return chain;
 			}
 			function map(at,ev){
