@@ -3757,9 +3757,18 @@ describe('Gun', function(){
 			bob.path('friends').set(alice);
 			dave.path('friends').set(alice).back.set(carl);
 
+			// Test set with new object
+			var alan = users.set({name: 'alan', birth: Math.random()}).key('person/alan');
+			alan.val(function(alan) {
+				// Test set with node
+				dave.path('friends').set(alan);
+			});
+
+
 			var team = gun.get('team/lions').put({name: "Lions"});
 			team.path('members').set(alice);
 			team.path('members').set(bob);
+			team.path('members').set(alan);
 
 			alice.path('team').put(team);
 			bob.path('team').put(team);
@@ -3771,10 +3780,14 @@ describe('Gun', function(){
 				} else
 				if('bob' === member.name){
 					done.bob = true;
-				} else {
+				} else
+				if('alan' === member.name){
+					done.alan = true;
+				} else
+				{
 					expect(member).to.not.be.ok();
 				}
-				if(done.alice && done.bob){
+				if(done.alice && done.bob && done.alan){
 					setTimeout(function(){
 						done();
 					},10);
@@ -4189,5 +4202,52 @@ describe('Gun', function(){
 				});
 			}, 100);
 		});
+	});
+});
+describe('On', function(){
+	it('emits to former subscribers', function() {
+		var recv = null;
+		Gun.on('on-test-1').event(function(val) {
+			recv = val;
+		});
+		Gun.on('on-test-1').emit('foo');
+		expect(recv).to.be('foo');
+	});
+	it('does not emit to future subscribers', function() {
+		var recv = null;
+		Gun.on('on-test-1').emit('foo');
+		Gun.on('on-test-1').event(function(val) {
+			recv = val;
+		});
+		expect(recv).to.be(null);
+	});
+	it('on subscriptions can unsubscribe', function() {
+		var gun = Gun();
+		var recv;
+		gun.get('on-test-3').put({v: 'foo'});
+		var sub = gun.get('on-test-3').on(function(o) {
+			recv = o.v;
+		});
+		expect(recv).to.be('foo');
+		gun.get('on-test-3').put({v: 'bar'});
+		expect(recv).to.be('bar');
+		sub.off();
+		gun.get('on-test-3').put({v: 'off'});
+		expect(recv).to.be('bar');
+	});
+	it('map subscriptions can unsubscribe', function() {
+		var gun = Gun();
+		var recv;
+		gun.get('on-test-4').put({v: 'foo'});
+		var sub = gun.get('on-test-4').map(function(v, k) {
+			if (v == 'off') throw new Error('unexpected');
+			recv = v;
+		});
+		expect(recv).to.be('foo');
+		gun.get('on-test-4').put({v: 'bar'});
+		expect(recv).to.be('bar');
+		sub.off();
+		gun.get('on-test-4').put({v: 'off'});
+		expect(recv).to.be('bar');
 	});
 });
