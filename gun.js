@@ -1,12 +1,12 @@
 ;(function(){
-	
+
 	function Gun(o){
 		var gun = this;
 		if(!Gun.is(gun)){ return new Gun(o) }
 		if(Gun.is(o)){ return gun }
 		return gun.opt(o);
 	}
-	
+
 	;(function(Util){ // Generic javascript utilities.
 		;(function(Type){
 			Type.fns = {is: function(fn){ return (fn instanceof Function)? true : false }};
@@ -60,7 +60,7 @@
 			Type.list.map = function(l, c, _){ return Type.obj.map(l, c, _) }
 			Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 			Type.obj = {is: function(o) { return !o || !o.constructor? false : o.constructor === Object? true : !o.constructor.call || o.constructor.toString().match(/\[native\ code\]/)? false : true }}
-			Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o } 
+			Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o }
 			Type.obj.del = function(o, k){
 				if(!o){ return }
 				o[k] = null;
@@ -205,9 +205,9 @@
 	}(Gun));
 
 	;(function(Gun){ // Gun specific utilities.
-		
+
 		Gun.version = 0.3;
-		
+
 		Gun._ = { // some reserved key words, these are not the only ones.
 			meta: '_' // all metadata of the node is stored in the meta property on the node.
 			,soul: '#' // a soul is a UUID of a node but it always points to the "latest" data known.
@@ -218,9 +218,9 @@
 			,'=':'value'
 			,'>':'state'
 		}
-		
+
 		Gun.is = function(gun){ return (gun instanceof Gun)? true : false } // check to see if it is a GUN instance.
-		
+
 		Gun.is.val = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
 			if(v === null){ return true } // "deletes", nulling out fields.
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
@@ -231,7 +231,7 @@
 			}
 			return Gun.is.rel(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
-		
+
 		Gun.is.rel = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 			if(Gun.obj.is(v)){ // must be an object.
 				var id;
@@ -259,7 +259,7 @@
 			}); // TODO: What if the lex cursor has a document on the match, that shouldn't be allowed!
 			return r;
 		}
-		
+
 		Gun.is.node = function(n, cb, t){ var s; // checks to see if an object is a valid node.
 			if(!Gun.obj.is(n)){ return false } // must be an object.
 			if(s = Gun.is.node.soul(n)){ // must have a soul on it.
@@ -281,7 +281,7 @@
 			});
 			return n; // This will only be a valid node if the object wasn't already deep!
 		}
-		
+
 		Gun.is.node.soul = function(n, s){ return (n && n._ && n._[s || Gun._.soul]) || false } // convenience function to check to see if there is a soul on a node and return it.
 
 		Gun.is.node.soul.ify = function(n, s, o){ // put a soul on an object.
@@ -305,19 +305,19 @@
 				if(Gun.num.is(state)){ n[f] = state } // or manually set the state.
 			});
 		}
-		
+
 		Gun.is.graph = function(g, cb, fn, t){ // checks to see if an object is a valid graph.
 			var exist = false;
 			if(!Gun.obj.is(g)){ return false } // must be an object.
 			return !Gun.obj.map(g, function(n, s){ // we invert this because the way we check for this is via a negation.
-				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)){ return true } // it is true that this is an invalid graph.				 
+				if(!n || s !== Gun.is.node.soul(n) || !Gun.is.node(n, fn)){ return true } // it is true that this is an invalid graph.
 				(cb || function(){}).call(t, n, s, function(fn){ // optional callback for each node.
 					if(fn){ Gun.is.node(n, fn, t) } // where we then have an optional callback for each field/value.
 				});
 				exist = true;
 			}) && exist; // makes sure it wasn't an empty object.
 		}
-		
+
 		Gun.is.graph.ify = function(n){ var s; // wrap a node into a graph.
 			if(s = Gun.is.node.soul(n)){ // grab the soul from the node, if it is a node.
 				return Gun.obj.put({}, s, n); // then create and return a graph which has a node on the matching soul property.
@@ -359,19 +359,19 @@
 			}
 			return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
 		}
-		
+
 		Gun.union = function(gun, prime, cb, opt){ // merge two graphs into the first.
 			var opt = opt || Gun.obj.is(cb)? cb : {};
 			var ctx = {graph: gun.__.graph, count: 0};
 			ctx.cb = function(){
-				cb = Gun.fns.is(cb)? cb() && null : null; 
+				cb = Gun.fns.is(cb)? cb() && null : null;
 			}
 			if(!ctx.graph){ ctx.err = {err: Gun.log("No graph!") } }
 			if(!prime){ ctx.err = {err: Gun.log("No data to merge!") } }
 			if(ctx.soul = Gun.is.node.soul(prime)){ prime = Gun.is.graph.ify(prime) }
 			if(!Gun.is.graph(prime, null, function(val, field, node){ var meta;
 				if(!Gun.num.is(Gun.is.node.state(node, field))){
-					return ctx.err = {err: Gun.log("No state on '" + field + "'!") } 
+					return ctx.err = {err: Gun.log("No state on '" + field + "'!") }
 				}
 			}) || ctx.err){ return ctx.err = ctx.err || {err: Gun.log("Invalid graph!", prime)}, ctx }
 			function emit(at){
@@ -413,10 +413,10 @@
 			if(!ctx.count){ ctx.cb() }
 			return ctx;
 		}
-		
+
 		Gun.union.ify = function(gun, prime, cb, opt){
 			if(gun){ gun = (gun.__ && gun.__.graph)? gun.__.graph : gun }
-			if(Gun.text.is(prime)){ 
+			if(Gun.text.is(prime)){
 				if(gun && gun[prime]){
 					prime = gun[prime];
 				} else {
@@ -434,7 +434,7 @@
 				})
 			})){ return vertex }
 		}
-		
+
 		Gun.union.HAM = function(vertex, delta, lower, now, upper){
 			upper.max = -Infinity;
 			now.end = true;
@@ -487,14 +487,14 @@
 			proxy.emit = function(at){
 				if(at.soul){
 					at.hash = Gun.on.at.hash(at);
-					//Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at; 
+					//Gun.obj.as(proxy.mem, proxy.e)[at.soul] = at;
 					Gun.obj.as(proxy.mem, proxy.e)[at.hash] = at;
 				}
 				if(proxy.all.cb){ proxy.all.cb(at, proxy.e) }
 				on(proxy.e).emit(at);
 				return {chain: function(c){
-					if(!c || !c._ || !c._.at){ return } 
-					return c._.at(proxy.e).emit(at) 
+					if(!c || !c._ || !c._.at){ return }
+					return c._.at(proxy.e).emit(at)
 				}};
 			}
 			proxy.only = function(cb){
@@ -522,7 +522,7 @@
 			proxy.mem = {};
 			return proxy;
 		}
-		
+
 		Gun.on.at.hash = function(at){ return (at.at && at.at.soul)? at.at.soul + (at.at.field || '') : at.soul + (at.field || '') }
 
 		Gun.on.at.copy = function(at){ return Gun.obj.del(at, 'hash'), Gun.obj.map(at, function(v,f,t){t(f,v)}) }
@@ -534,9 +534,9 @@
 		};
 
 	}(Gun));
-	
+
 	;(function(Gun){ // Gun prototype chain methods.
-	
+
 		Gun.chain = Gun.prototype;
 
 		Gun.chain.opt = function(opt, stun){
@@ -635,7 +635,7 @@
 						Gun.union(chain, Gun.is.node.soul.ify({}, soul)); // fire off an end node if there hasn't already been one, to comply with the wire spec.
 					}}).err){ return cb.call(chain, err), chain._.at('err').emit(err) } // now actually union the serialized data, emit error if any occur.
 					if(Gun.fns.is(end.wire = chain.__.opt.wire.put)){
-						var wcb = function(err, ok, info){ 
+						var wcb = function(err, ok, info){
 							if(err){ return Gun.log(err.err || err), cb.call(chain, err), chain._.at('err').emit(err) }
 							return cb.call(chain, err, ok);
 						}
@@ -889,7 +889,7 @@
 				}));
 				ons.push(gun._.at('null').only(function(at){
 					if(!at.field){ return }
-					if(at.not){ 
+					if(at.not){
 						gun.put({}, null, {init: true});
 						if(opt.init || gun.__.opt.init){ return }
 					}
@@ -985,7 +985,7 @@
 				return gun;
 			}
 		}());
-		
+
 		Gun.chain.not = function(cb, opt){
 			var gun = this, chain = gun.chain();
 			cb = cb || function(){};
@@ -999,7 +999,7 @@
 				var kick = function(next){
 					if(++kick.c){ return Gun.log("Warning! Multiple `not` resumes!"); }
 					next._.at.all(function(on ,e){ // TODO: BUG? Switch back to .at? I think .on is actually correct so it doesn't memorize. // TODO: BUG! What about other events?
-						chain._.at(e).emit(on); 
+						chain._.at(e).emit(on);
 					});
 				};
 				kick.c = -1
@@ -1193,7 +1193,7 @@
 	;(function(exports){
 		function s(){}
 		s.put = function(key, val, cb){ try{ store.setItem(key, Gun.text.ify(val)) }catch(e){if(cb)cb(e)} }
-		s.get = function(key, cb){ /*setTimeout(function(){*/ try{ cb(null, Gun.obj.ify(store.getItem(key) || null)) }catch(e){cb(e)} /*},1)*/} 
+		s.get = function(key, cb){ /*setTimeout(function(){*/ try{ cb(null, Gun.obj.ify(store.getItem(key) || null)) }catch(e){cb(e)} /*},1)*/}
 		s.del = function(key){ return store.removeItem(key) }
 		// Feature detect + local reference
 		var storage;
@@ -1296,7 +1296,7 @@
 					Gun.obj.del(tab.msg.debounce, id);
 				});
 			},500);
-			if(id = tab.msg.debounce[id]){ 
+			if(id = tab.msg.debounce[id]){
 				return tab.msg.debounce[id] = Gun.time.is(), id;
 			}
 		};
@@ -1372,11 +1372,32 @@
 			if(r.ws(opt, cb)){ return }
 			r.jsonp(opt, cb);
 		}
+
+		var queues = r.queues = {};
+
 		r.ws = function(opt, cb){
 			var ws, WS = r.WebSocket || window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
 			if(!WS){ return }
-			if(ws = r.ws.peers[opt.base]){
-				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb) },10), true }
+
+			// Queued offline updates.
+			var queue = queues[opt.base];
+
+			// Create the queue if it doesn't exist.
+			if (!queue) {
+				queue = queues[opt.base] = {};
+			}
+
+			// Try to de-duplicate queued messages.
+			var reqID = ((opt || {}).headers || {}).id || Gun.text.random(9);
+
+			ws = r.ws.peers[opt.base];
+			if(ws && (ws.readyState <= ws.OPEN)){
+				if(ws.readyState === ws.CONNECTING){
+					queue[reqID] = [opt, cb];
+
+					return true;
+				}
+
 				var req = {};
 				if(opt.headers){ req.headers = opt.headers }
 				if(opt.body){ req.body = opt.body }
@@ -1386,13 +1407,33 @@
 					if(res.body || res.end){ delete r.ws.cbs[req.headers['ws-rid']] }
 					cb(err,res);
 				}
-				ws.send(JSON.stringify(req),function(err){})
+
+				ws.send(JSON.stringify(req),function(err){});
 				return true;
 			}
+
 			if(ws === false){ return }
+
+			// If we've made it this far, the socket isn't open.
+			queue[reqID] = [opt, cb];
+
 			try{ws = r.ws.peers[opt.base] = new WS(opt.base.replace('http','ws'));
 			}catch(e){}
-			ws.onopen = function(o){ r.back = 2; r.ws(opt, cb) };
+
+			ws.onopen = function(o){
+
+				// Send the queued messages.
+				Gun.obj.map(queue, function (deferred) {
+					r.ws.apply(null, deferred);
+				});
+
+				// Clear the queue.
+				queue = queues[opt.base] = {};
+
+				// Reset the reconnect backoff.
+				r.back = 2;
+			};
+
 			ws.onclose = function(c){
 				if(!c){ return }
 				if(ws && ws.close instanceof Function){ ws.close() }
