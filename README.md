@@ -43,6 +43,28 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
 
    If that did not work it is probably because npm installed it to a global directory. To fix that try `mkdir node_modules` in your desired directory and re-run the above commands. You also might have to add `sudo` in front of the commands.
 
+## Quick dev/test Deployments
+
+ - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), etc)
+ 
+### Docker
+   ```bash
+   git clone https://github.com/amark/gun.git
+   cd gun
+   docker build -t myrepo/gundb:v1 .
+   docker run -p 8080:8080 myrepo/gundb:v1
+   ```
+   Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+   
+### Hiroku
+   ```bash
+   git clone https://github.com/amark/gun.git
+   cd gun
+   heroku create
+   git push -f heroku HEAD:master
+   ```
+   Then visit the URL in the output of the 'heroku create' step, in your browser.
+   
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
  - [Saving relational or document based data](https://www.youtube.com/watch?v=cOO6wz1rZVY&feature=youtu.be) (06:59)
