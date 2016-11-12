@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "mocha": "~>1.9.0",
+    "express": "~>4.13.4",
     "panic-server": "~>0.3.0",
     "selenium-webdriver": "~>2.53.2"
   }
