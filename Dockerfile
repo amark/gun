@@ -1,0 +1,3 @@
+FROM node:6-onbuild
+ENV NPM_CONFIG_LOGLEVEL warn
+EXPOSE 8080
