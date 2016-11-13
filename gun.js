@@ -1366,7 +1366,7 @@
 			while(i--){ (r.createServer.s[i] || function(){})(req, cb) }
 		}
 		r.createServer.s = [];
-		r.back = 2; r.backoff = 2;
+		r.back = 2; r.backoff = 2; r.backmax = 2000;
 		r.transport = function(opt, cb){
 			//Gun.log("TRANSPORT:", opt);
 			if(r.ws(opt, cb)){ return }
@@ -1423,7 +1423,7 @@
 			ws.onopen = function(o){
 
 				// Send the queued messages.
-				Gun.obj.map(queue, function (deferred) {
+				r.each(queue, function (deferred) {
 					r.ws.apply(null, deferred);
 				});
 
@@ -1445,7 +1445,7 @@
 				ws = r.ws.peers[opt.base] = null; // this will make the next request try to reconnect
 				setTimeout(function(){
 					r.ws(opt, function(){}); // opt here is a race condition, is it not? Does this matter?
-				}, r.back *= r.backoff);
+				}, (r.back *= r.backoff) > r.backmax ? (r.back = r.backmax) : r.back);
 			};
 			if(typeof window !== "undefined"){ window.onbeforeunload = ws.onclose; }
 			ws.onmessage = function(m){
