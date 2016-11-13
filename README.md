@@ -45,7 +45,7 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
 
 ## Quick dev/test Deployments
 
- - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), etc)
+ - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc)
  
 ### Docker
    ```bash
@@ -64,6 +64,15 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
    git push -f heroku HEAD:master
    ```
    Then visit the URL in the output of the 'heroku create' step, in your browser.
+
+### Now.sh
+   ```bash
+   npm install -g now
+   git clone https://github.com/amark/gun.git
+   cd gun
+   now --npm
+   ```
+   Then visit the URL in the output of the 'now --npm' step, in your browser.
    
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
