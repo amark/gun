@@ -12,8 +12,8 @@
     "url": "git+https://github.com/amark/gun.git"
   },
   "keywords": [
-	"gun",
-	"gunDB",
+    "gun",
+    "gunDB",
     "graph",
     "document",
     "key",
@@ -48,6 +48,7 @@
     "ws": "~>1.0.1"
   },
   "devDependencies": {
-    "mocha": "~>1.9.0"
+    "chai": "^3.4.2",
+    "mocha": "^3.1.2"
   }
 }
