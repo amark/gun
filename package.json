@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/amark/gun#readme",
   "engines": {
-    "node": ">=0.6.6",
+    "node": ">=4.2",
     "iojs": ">=0.0.1"
   },
   "dependencies": {
