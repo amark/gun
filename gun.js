@@ -2188,35 +2188,17 @@
 
 		;(function(){
 			Gun.chain.map = function(cb, opt, t){
-<<<<<<< HEAD
-				var gun = this, cat = gun._, chain = cat.map;
+				var gun = this, cat = gun._, chain = cat.map, ons = [], act, off;
 				//cb = cb || function(){ return this } // TODO: API BREAKING CHANGE! 0.5 Will behave more like other people's usage of `map` where the passed callback is a transform function. By default though, if no callback is specified then it will use a transform function that returns the same thing it received.
 				if(!chain){
 					chain = cat.map = gun.chain();
 					var list = (cat = chain._).list = cat.list || {};
-					chain.on('in').map = {};
-					if(opt !== false){
-						gun.on(map, {change: true, as: cat});
-=======
-				var gun = this, cat = gun._, chain = cat.map, ons = [], act, off;
-				if(!chain){
-					chain = cat.map = gun.chain();
-					var list = (cat = chain._).list = cat.list || {};
 					(ons[ons.length] = chain.on('in')).map = {};
-					ons[ons.length] = chain.on('out', function(at){
-						console.debug(8, 'map out', at);
-				 		if(at.get instanceof Function){
-							ons[ons.length] = chain.on('in', at.get, at);
-							return;
-						} else {
-							console.debug(9, 'map out', at);
-							ons[ons.length] = chain.on('in', gun.get.input, at.gun._);
-						}
-					});
+					/*
+						Attempted merge with alancnet's `off` support, we'll see if it works.
+					*/
 					if(opt !== false){
 						ons[ons.length] = gun.on(map, {change: true, as: cat});
-						console.debug(1, 'map');
->>>>>>> a4b64feef07d625d5ec7c37e151ed842c1c09dfa
 					}
 				}
 				if(cb){
