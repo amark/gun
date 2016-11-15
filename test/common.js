@@ -6757,6 +6757,13 @@ describe('Gun', function(){
 			var carl = gun.put({name: 'carl', birth: Math.random()}).key('person/carl');
 			var dave = gun.put({name: 'dave', birth: Math.random()}).key('person/dave');
 
+			// Test set with new object
+			var alan = users.set({name: 'alan', birth: Math.random()}).key('person/alan');
+			alan.val(function(alan) {
+				// Test set with node
+				dave.path('friends').set(alan);
+			});
+
 			users.set(alice);
 			users.set(bob);
 			users.set(carl);
@@ -6769,6 +6776,7 @@ describe('Gun', function(){
 			var team = gun.get('team/lions').put({name: "Lions"});
 			team.path('members').set(alice);
 			team.path('members').set(bob);
+			team.path('members').set(alan); // Test set with set
 
 			alice.path('team').put(team);
 			bob.path('team').put(team);
@@ -6780,10 +6788,14 @@ describe('Gun', function(){
 				} else
 				if('bob' === member.name){
 					done.bob = true;
-				} else {
+				} else
+				if('alan' === member.name){
+					done.alan = true;
+				} else
+				{
 					expect(member).to.not.be.ok();
 				}
-				if(done.alice && done.bob){
+				if(done.alice && done.bob && done.alan){
 					setTimeout(function(){
 						done();
 					},10);
