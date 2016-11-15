@@ -372,12 +372,20 @@
 				}
 				if(last){
 					if(act.on.map){
+						var map = act.on.map, v;
+						for(var f in map){ v = map[f];
+							if(v[1]){
+								emit(v[1], act, event, v[2]);
+							}
+						}
+						/*
 						Gun.obj.map(act.on.map, function(v,f){ // TODO: BUG! Gun is not available in this module.
 							//emit(v[0], act, event, v[1]); // below enables more control
 							//console.log("boooooooo", f,v);
 							emit(v, act, event);
 							//emit(v[1], act, event, v[2]);
 						});
+						*/
 					} else {
 						emit(last, act, event);
 					}
@@ -880,19 +888,19 @@
 				opt = opt || {};
 				var gun = this, at = gun._, tmp, u;
 				if(!at.root){ root(at) }
-				tmp = at.opt = at.opt || {};
+				at.opt = at.opt || {};
 				if(text_is(opt)){ opt = {peers: opt} }
 				else if(list_is(opt)){ opt = {peers: opt} }
 				if(text_is(opt.peers)){ opt.peers = [opt.peers] }
 				if(list_is(opt.peers)){ opt.peers = obj_map(opt.peers, function(n,f,m){m(n,{})}) }
 				obj_map(opt, function map(v,f){
 					if(obj_is(v)){
-						tmp = tmp[f] || (tmp[f] = {}); // TODO: Bug? Be careful of falsey values getting overwritten?
-						obj_map(v, map);
+						obj_map(v, map, this[f] || (this[f] = {})); // TODO: Bug? Be careful of falsey values getting overwritten?
 						return;
 					}
-					tmp[f] = v;
-				});
+					this[f] = v;
+				}, at.opt);
+				Gun.on('opt', at);
 				return gun;
 			}
 			function root(at){
@@ -2037,7 +2045,9 @@
 			if(typeof field === 'string'){
 				tmp = field.split(opt.split || '.');
 				if(1 === tmp.length){
-					return back.get(field, cb, opt);
+					gun = back.get(field, cb, opt);
+					gun._.opt = opt;
+					return gun;
 				}
 				field = tmp;
 			}
@@ -2052,25 +2062,34 @@
 				} else {
 					gun = back.get(field[0], cb, opt);
 				}
+				gun._.opt = opt;
 				return gun;
 			}
 			if(!field && 0 != field){
 				return back;
 			}
-			return back.get(''+field, cb, opt);
+			gun = back.get(''+field, cb, opt);
+			gun._.opt = opt;
+			return gun;
 		}
 
 		;(function(){
 			Gun.chain.on = function(tag, arg, eas, as){
-				var gun = this, at = gun._, tmp;
+				var gun = this, at = gun._, tmp, act, off;
 				if(!at.on){ at.on = Gun.on }
 				if(typeof tag === 'string'){
 					if(!arg){ return at.on(tag) }
-					at.on(tag, arg, eas || at, as);
+					act = at.on(tag, arg, eas || at, as);
+					off = function() {
+						if (act && act.off) act.off();
+						off.off();
+					};
+					off.off = gun.off.bind(gun) || noop;
+					gun.off = off;
 					return gun;
 				}
 				var opt = arg;
-				opt = (true === opt)? {change: true} : opt || {}; 
+				opt = (true === opt)? {change: true} : opt || {};
 				opt.ok = tag;
 				opt.last = {};
 				gun.any(ok, {as: opt, change: opt.change}); // TODO: PERF! Event listener leak!!!????
@@ -2169,6 +2188,7 @@
 
 		;(function(){
 			Gun.chain.map = function(cb, opt, t){
+<<<<<<< HEAD
 				var gun = this, cat = gun._, chain = cat.map;
 				//cb = cb || function(){ return this } // TODO: API BREAKING CHANGE! 0.5 Will behave more like other people's usage of `map` where the passed callback is a transform function. By default though, if no callback is specified then it will use a transform function that returns the same thing it received.
 				if(!chain){
@@ -2177,11 +2197,40 @@
 					chain.on('in').map = {};
 					if(opt !== false){
 						gun.on(map, {change: true, as: cat});
+=======
+				var gun = this, cat = gun._, chain = cat.map, ons = [], act, off;
+				if(!chain){
+					chain = cat.map = gun.chain();
+					var list = (cat = chain._).list = cat.list || {};
+					(ons[ons.length] = chain.on('in')).map = {};
+					ons[ons.length] = chain.on('out', function(at){
+						console.debug(8, 'map out', at);
+				 		if(at.get instanceof Function){
+							ons[ons.length] = chain.on('in', at.get, at);
+							return;
+						} else {
+							console.debug(9, 'map out', at);
+							ons[ons.length] = chain.on('in', gun.get.input, at.gun._);
+						}
+					});
+					if(opt !== false){
+						ons[ons.length] = gun.on(map, {change: true, as: cat});
+						console.debug(1, 'map');
+>>>>>>> a4b64feef07d625d5ec7c37e151ed842c1c09dfa
 					}
 				}
 				if(cb){
-					chain.on(cb);
+					ons[ons.length] = chain.on(cb);
 				}
+				off = function() {
+					while (ons.length) {
+						act = ons.pop();
+						if (act && act.off) act.off();
+					}
+					return off.off();
+				};
+				off.off = chain.off.bind(chain) || noop;
+				chain.off = off;
 				return chain;
 			}
 			function map(at,ev){
@@ -2208,8 +2257,10 @@
 
 		;(function(){
 			Gun.chain.set = function(item, cb, opt){
-				var gun = this;
+				var gun = this, soul;
 				cb = cb || function(){};
+				if (soul = Gun.node.soul(item)) return gun.set(gun.get(soul), cb, opt);
+				if (Gun.obj.is(item) && !Gun.is(item)) return gun.set(gun._.root.put(item), cb, opt);
 				return item.val(function(node){
 					var put = {}, soul = Gun.node.soul(node);
 					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
@@ -2228,7 +2279,7 @@
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
 		function put(at){ var err, id, opt, root = at.gun._.root;
-			(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
+			(opt = at.opt || {}).prefix = opt.prefix || at.gun.Back('opt.prefix') || 'gun/';
 			Gun.graph.is(at.put, function(node, soul){
 				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
 				try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
@@ -2240,7 +2291,7 @@
 		function get(at){
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
 			//setTimeout(function(){
-			(opt = at.opt || {}).prefix = opt.prefix || 'gun/';
+			(opt = at.opt || {}).prefix = opt.prefix || at.gun.Back('opt.prefix') || 'gun/';
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
 			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
 			if(!data){ return } // localStorage isn't trustworthy to say "not found".
@@ -2443,7 +2494,7 @@
 		Tab.on = Gun.on;//Gun.on.create();
 		Tab.peers = require('../polyfill/peer');
 		Gun.on('get', function(at){
-			var gun = at.gun, opt = gun.Back('opt') || {}, peers = opt.peers;
+			var gun = at.gun, opt = at.opt || {}, peers = opt.peers || gun.Back('opt.peers');
 			if(!peers || Gun.obj.empty(peers)){
 				//setTimeout(function(){
 				Gun.log.once('peers', "Warning! You have no peers to connect to!");
