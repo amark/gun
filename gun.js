@@ -745,7 +745,7 @@
 				if(!f){
 					at.node = at.node || n || {};
 					if(obj_has(v, Node._)){
-						at.node._ = Gun.obj.copy(v._);
+						at.node._ = obj_copy(v._);
 					}
 					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
 				}
