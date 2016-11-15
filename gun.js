@@ -926,6 +926,7 @@
 			}
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field];
+				console.debug(2, 'GET', soul, node, field);
 				if(node && (!field || obj_has(node, field))){
 					if(field){
 						node = Gun.obj.put({_: node._}, field, node[field]);
@@ -947,6 +948,7 @@
 				if(cat.graph){
 					Gun.obj.map(at.put, ham, {at: at, cat: cat}); // all unions must happen first, sadly.
 				}
+				console.debug(3, 'INPUT', at);
 				Gun.obj.map(at.put, map, {at: at, cat: cat});
 			}
 			function ham(data, key){
@@ -2198,6 +2200,7 @@
 						Attempted merge with alancnet's `off` support, we'll see if it works.
 					*/
 					if(opt !== false){
+						console.debug(1, 'map!');
 						ons[ons.length] = gun.on(map, {change: true, as: cat});
 					}
 				}
@@ -2224,6 +2227,8 @@
 				var gun = this.gun, cat = this.cat, id = this.id;
 				if(cat.list[id+f]){ return }
 				// TODO: BUG! Ghosting!
+				console.debug(5, 'EACH', f,v);
+				console.debug(4, 'EACH', f,v);
 				return cat.on('in', {gun: (cat.list[id+f] = gun.path(f)), get: f, put: v, via: this.at});
 				//return cat.on('in', [id+f, {gun: (cat.list[id+f] = gun.path(f)), get: f, put: v}]);
 			}

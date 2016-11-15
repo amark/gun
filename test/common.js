@@ -1731,6 +1731,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {};
+				console.debug.i=1;
 				(window.FOO = gun.get('u/m/p/n/mutate/n/u').map().path('pet')).on(function(v,f){
 					check[v.name] = f;
 					console.log("************", f,v);return;
@@ -1744,6 +1745,7 @@ describe('Gun', function(){
 						},100);
 					}
 				});
+				return;
 				//gun.get('u/m/p/n/m/n/u/soul').path('alice').path('pet').on(function(v){console.log("?????????????????????????????????????????", v)})
 				setTimeout(function(){
 					var s = Gun.state.map();s.soul = 'alice/fuzz/soul';
