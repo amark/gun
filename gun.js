@@ -1352,6 +1352,9 @@
 				if(cb && cb instanceof Function){
 					gun.any(cb, opt);
 				}
+				console.debug(8, 'get', lex);
+				console.debug(7, 'get', lex);
+				console.debug(6, 'get', lex);
 				return gun;
 			}
 			function cache(key, back){
