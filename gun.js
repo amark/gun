@@ -845,6 +845,7 @@
 	;require(function(module){
 
 		function Gun(o){
+			if(o instanceof Gun){ return this }
 			if(!(this instanceof Gun)){ return Gun.create(o) }
 			this._ = {gun: this};
 		}
@@ -892,7 +893,7 @@
 		*/
 		(Gun.chain = Gun.prototype).chain = function(){
 			var chain = new this.constructor(), _;
-			_ = chain._ || (chain._ = {});
+			_ = chain._ || (chain._ = {gun: chain});
 			_.root = this._.root;
 			_.back = this;
 			return chain;
