@@ -1,4 +1,5 @@
 /* eslint-disable */
+/* eslint-enable no-console */
 //console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 ;(function(){
 
@@ -931,7 +932,6 @@
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
-				console.log("OUT!", Gun.obj.to(at, {gun: null}));
 				if(at['#']){
 					dedup.track(at['#']);
 				}
@@ -943,7 +943,13 @@
 				}
 				if(at.put){ Gun.on('put', at) }
 				if(at.get){ get(at, cat) }
-				Gun.on('out', at); return;
+
+				// Reads and writes both trigger output.
+				if (at.put !== undefined || at.get !== undefined) {
+					Gun.on('out', at);
+				}
+				// Gun.on('out', at);
+				return;
 				if(!cat.back){ return }
 				cat.back.on('out', at);
 			}
@@ -963,7 +969,6 @@
 				Gun.on('get', at);
 			}
 			function input(at){ var cat = this;
-				console.log("IN", at);
 				if(at['@']){
 					if(!at['#']){
 						at['#'] = Gun.text.random();
@@ -979,6 +984,7 @@
 					return;
 				}
 				*/
+				if(!at.gun){ at.gun = cat.gun }
 				if(at.put){
 					if(cat.graph){
 						Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
@@ -986,7 +992,6 @@
 					Gun.obj.map(at.put, map, {at: at, cat: this});
 					Gun.on('put', at);
 				}
-				if(!at.gun){ at.gun = cat.gun }
 				if(at.get){ Gun.on('get', at) }
 			}
 			function ham(data, key){
@@ -2182,7 +2187,6 @@
 				}
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb, req) },100), true }
 				ws.sending = true;
-				console.log("websocket out", req);
 				ws.send(JSON.stringify(req));
 				return true;
 			}
@@ -2382,7 +2386,6 @@
 			Tab.peers.request.createServer(function(req, res){
 				if(!req || !res || !req.body || !req.headers){ return }
 				var msg = req.body;
-				console.log("SERVER", req);
 				gun.on('in', req.body);
 				return;
 				// AUTH for non-replies.
