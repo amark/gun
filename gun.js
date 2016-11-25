@@ -1,3 +1,4 @@
+/* eslint-disable */
 //console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 ;(function(){
 
@@ -73,7 +74,7 @@
 		Type.list.map = function(l, c, _){ return obj_map(l, c, _) }
 		Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 		Type.obj = {is: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }}
-		Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o } 
+		Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o }
 		Type.obj.has = function(o, f){ return o && Object.prototype.hasOwnProperty.call(o, f) }
 		Type.obj.del = function(o, k){
 			if(!o){ return }
@@ -163,7 +164,7 @@
 		var obj = Type.obj, obj_is = obj.is, obj_has = obj.has, obj_map = obj.map;
 		module.exports = Type;
 	})(require, './type');
-		
+
 	;require(function(module){
 		// On event emitter generic javascript utility.
 		function Scope(){
@@ -295,7 +296,7 @@
 
 	;require(function(module){
 		var On = require('./on');
-		
+
 		function Chain(create, opt){
 			opt = opt || {};
 			opt.id = opt.id || '#';
@@ -312,7 +313,7 @@
 						return;
 					}
 					if(at.stun === stun){
-						delete at.stun;	
+						delete at.stun;
 					}
 					off = true;
 					var i = 0, q = res.queue, l = q.length, c, v;
@@ -476,11 +477,11 @@
 			}
 			if(incomingState < currentState){
 				return {historical: true}; // the incoming value is within the boundary of the machine's state, but not within the range.
-				
+
 			}
 			if(currentState < incomingState){
 				return {converge: true, incoming: true}; // the incoming value is within both the boundary and the range of the machine's state.
-				
+
 			}
 			if(incomingState === currentState){
 				if(incomingValue === currentValue){ // Note: while these are practically the same, the deltas could be technically different
@@ -620,7 +621,7 @@
 					if(o.node){ o.node[f] = tmp }
 					return;
 				}
-				if(Val.is(v)){ 
+				if(Val.is(v)){
 					o.node[f] = v;
 				}
 			}
@@ -705,8 +706,8 @@
 			}
 			function map(n, s){ // we invert this because the way we check for this is via a negation.
 				if(!n || s !== Node.soul(n) || !Node.is(n, this.fn)){ return true } // it is true that this is an invalid graph.
-				if(!fn_is(this.cb)){ return }	
-				nf.n = n; nf.as = this.as;	 
+				if(!fn_is(this.cb)){ return }
+				nf.n = n; nf.as = this.as;
 				this.cb.call(nf.as, n, s, nf);
 			}
 		}());
@@ -715,7 +716,7 @@
 				var at = {path: [], obj: obj};
 				if(!env){
 					env = {};
-				} else 
+				} else
 				if(typeof env === 'string'){
 					env = {soul: env};
 				} else
@@ -885,7 +886,7 @@
 		Gun.graph = require('./graph');
 
 		Gun.on = require('./onify')();
-		
+
 		/*
 		var opt = {chain: 'in', back: 'out', extend: 'root', id: Gun._.soul};
 		Gun.chain = require('./chain')(Gun, opt);
@@ -930,6 +931,10 @@
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
+				console.log("OUT!", Gun.obj.to(at, {gun: null}));
+				if(at['#']){
+					dedup.track(at['#']);
+				}
 				if(at.put){
 					cat.on('in', obj_to(at, {gun: cat.gun}));
 				}
@@ -938,7 +943,7 @@
 				}
 				if(at.put){ Gun.on('put', at) }
 				if(at.get){ get(at, cat) }
-				Gun.on('out', at);
+				Gun.on('out', at); return;
 				if(!cat.back){ return }
 				cat.back.on('out', at);
 			}
@@ -958,15 +963,31 @@
 				Gun.on('get', at);
 			}
 			function input(at){ var cat = this;
+				console.log("IN", at);
+				if(at['@']){
+					if(!at['#']){
+						at['#'] = Gun.text.random();
+						dedup.track(at['#']);
+						cat.on('out', at);
+					}
+				}
+				if(at['#'] && dedup.check(at['#'])){ return }
+				/*
 				if(at['@'] || at.err || u === at.put){
 					at.gun = at.gun || cat.gun;
 					Gun.on.ack(at['@'], at);
 					return;
 				}
-				if(cat.graph){
-					Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
+				*/
+				if(at.put){
+					if(cat.graph){
+						Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
+					}
+					Gun.obj.map(at.put, map, {at: at, cat: this});
+					Gun.on('put', at);
 				}
-				Gun.obj.map(at.put, map, {at: at, cat: this});
+				if(!at.gun){ at.gun = cat.gun }
+				if(at.get){ Gun.on('get', at) }
 			}
 			function ham(data, key){
 				var cat = this.cat, graph = cat.graph;
@@ -986,6 +1007,52 @@
 					gun: gun,
 					via: this.at
 				});
+			}
+			function dedup(){}
+			dedup.cache = {};
+			dedup.track = function (id) {
+				dedup.cache[id] = Gun.time.is();
+				// Engage GC.
+				if (!dedup.to) {
+					dedup.gc();
+				}
+				return id;
+			};
+			dedup.check = function(id){
+				// Have we seen this ID recently?
+				return Gun.obj.has(dedup.cache, id);
+			}
+			dedup.gc = function(){
+				var now = Gun.time.is();
+				var oldest = now;
+				var maxAge = 5 * 60 * 1000;
+				// TODO: Gun.scheduler already does this? Reuse that.
+				Gun.obj.map(dedup.cache, function (time, id) {
+					oldest = Math.min(now, time);
+
+					if ((now - time) < maxAge) {
+						return;
+					}
+
+					delete dedup.cache[id];
+				});
+
+				var done = Gun.obj.empty(dedup.cache);
+
+				// Disengage GC.
+				if (done) {
+					dedup.to = null;
+					return;
+				}
+
+				// Just how old?
+				var elapsed = now - oldest;
+
+				// How long before it's too old?
+				var nextGC = maxAge - elapsed;
+
+				// Schedule the next GC event.
+				dedup.to = setTimeout(dedup.gc, nextGC);
 			}
 		}());
 		var text = Type.text, text_is = text.is, text_random = text.random;
@@ -1020,7 +1087,7 @@
 				var is = state_is(node, field), cs = state_is(vertex, field);
 				if(u === is || u === cs){ return true } // it is true that this is an invalid HAM comparison.
 				var iv = rel_is(value) || value, cv = rel_is(vertex[field]) || vertex[field];
-				
+
 
 
 
@@ -1090,7 +1157,7 @@
 		var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map, obj_empty = obj.empty;
 		var num = Gun.num, num_is = num.is;
 		var _soul = Gun.val.rel._, _field = '.';
-		
+
 		;(function(){ var obj = {}, u;
 			Gun.chain.Back = function(n, opt){ var tmp;
 				if(-1 === n || Infinity === n){
@@ -1221,7 +1288,7 @@
 				as.batch();
 			}
 
-			function any(at, ev){ 
+			function any(at, ev){
 				function implicit(at){ // TODO: CLEAN UP!!!!!
 					if(!at || !at.get){ return } // TODO: CLEAN UP!!!!!
 					as.data = obj_put({}, tmp = at.get, as.data); // TODO: CLEAN UP!!!!!
@@ -1232,9 +1299,9 @@
 					implicit(at);  // TODO: CLEAN UP!!!!!
 				} // TODO: CLEAN UP!!!!!
 				var as = this;
-				if(at.err){ 
+				if(at.err){
 					console.log("Please report this as an issue! Put.any.err");
-					return 
+					return
 				}
 				var cat = as.ref._, data = at.put, opt = as.opt, root, tmp;
 				if(u === data){
@@ -1353,7 +1420,7 @@
 				var cat = back._, path = cat.path, gun = back.chain(), at = gun._;
 				if(!path){ path = cat.path = {} }
 				path[at.get = key] = gun;
-				at.stun = at.stun || cat.stun; // TODO: BUG! Clean up! This is kinda ugly. These need to be attached all the way down regardless of whether a gun chain has been cached or not for the first time. 
+				at.stun = at.stun || cat.stun; // TODO: BUG! Clean up! This is kinda ugly. These need to be attached all the way down regardless of whether a gun chain has been cached or not for the first time.
 				Gun.on('path', at);
 				//gun.on('in', input, at); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 				gun.on('out', output, at); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
@@ -1364,7 +1431,6 @@
 				if(!at.gun){
 					at.gun = gun;
 				}
-				console.debug(10, 'out', cat.get, at.get);
 				if(at.get && !at.get[_soul]){
 					if(typeof at.get === 'string'){ // request for soul!
 						if(cat.ask){
@@ -1411,7 +1477,6 @@
 							at.gun.on('out', tmp);
 							return;
 						}
-						console.debug(7, 'out', cat.get, at.get, cat.ask);
 						cat.back.on('out', {
 							gun: cat.gun,
 							get: cat.get
@@ -1432,14 +1497,12 @@
 								tmp['#'] = Gun.on.ask(ack, tmp);
 								cat.back.on('out', tmp);
 							} else {
-								console.debug(6, 'out', cat.get);
 								cat.back.on('out', {
 									gun: cat.gun,
 									get: cat.get
 								});
 							}
 						}
-						console.debug(9, 'out', cat.get);
 						if(cat.stun && cat.stun(at)){ return }
 						gun.on('in', at.get, at);
 						return;
@@ -1453,7 +1516,6 @@
 					console.log("Please report this as an issue! In.err"); // TODO: BUG!
 					return;
 				}
-				console.debug(10, 'input', at, cat.get);
 				if(value.call(cat, at, ev)){
 					return;
 				}
@@ -1474,7 +1536,6 @@
 					return true;
 				}
 				if(!cat.link && Gun.node.soul(put) && (rel = Gun.node.soul(at.put))){
-				console.debug(11, 'value', put);
 					ask(cat, rel);
 					return false;
 				}
@@ -1577,7 +1638,6 @@
 				if(!any){ return this }
 				var chain = this, cat = chain._, opt = opt || {}, last = {};//function(){};
 				if(opt.change){ opt.change = 1 }
-				console.debug(5, 'any');
 				chain.on('out', {get: function(at, ev){
 						//console.log("any!", at);
 						if(!at.gun){ console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%EXPLODE%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', at) }
@@ -1590,7 +1650,7 @@
 							at = obj_to(at, {put: data = cat.change = cat.put = Gun.state.ify(Gun.node.ify({}, tmp))});
 						}
 						// TODO: BUG! Need to use at.put > cat.put for merged cache?
-						if(tmp = opt.change){ // TODO: BUG! Opt is outer scope, gun/cat/data might be iterative and thus only inner scope? Aka, we can't use it for all of them. 
+						if(tmp = opt.change){ // TODO: BUG! Opt is outer scope, gun/cat/data might be iterative and thus only inner scope? Aka, we can't use it for all of them.
 							if(1 === tmp){
 								opt.change = true;
 							} else {
@@ -1603,11 +1663,11 @@
 						if(last[id] == data && obj_has(last, id)){ return }
 						last[id] = data; // TODO: PERF! Memory optimizaiton? Can we avoid this.
 						*/
-					
+
 						if(last.put === data && last.get === id){ return }
 						last.get = id;
 						last.put = data;
-						
+
 						cat.last = data;
 						if(opt.as){
 							any.call(opt.as, at, ev);
@@ -1838,8 +1898,6 @@
 					gun = back;
 					var i = 0, l = field.length;
 					for(i; i < l; i++){
-						console.debug(3, 'path', field[i]);
-						console.debug(2, 'path', field[i]);
 						gun = gun.get(field[i], (i+1 === l)? cb : null, opt);
 					}
 					gun.back = back; // TODO: API change!
@@ -1893,7 +1951,7 @@
 			}
 
 					//if(obj_empty(value, Gun._.meta) && !(opt && opt.empty)){ // TODO: PERF! Deprecate!???
-						
+
 					//} else {
 						//console.log("value", value);
 						//if(!(value||empty)['#']/* || !val_rel_is(value)*/){ // TODO: Performance hit!???? // TODO: BUG! WE should avoid this. So that way it is usable with gun plugin chains.
@@ -1912,7 +1970,6 @@
 				if(cb){
 					(opt = opt || {}).ok = cb;
 					opt.cat = at;
-					console.debug(4, 'val', at);
 					gun.any(val, {as: opt});
 					opt.async = true;
 				}
@@ -1986,18 +2043,15 @@
 					var list = (cat = chain._).list = cat.list || {};
 					(ons[ons.length] = chain.on('in')).map = {};
 					ons[ons.length] = chain.on('out', function(at){
-						console.debug(8, 'map out', at);
 				 		if(at.get instanceof Function){
 							ons[ons.length] = chain.on('in', at.get, at);
 							return;
 						} else {
-							console.debug(9, 'map out', at);
 							ons[ons.length] = chain.on('in', gun.get.input, at.gun._);
 						}
 					});
 					if(opt !== false){
 						ons[ons.length] = gun.on(map, {change: true, as: cat});
-						console.debug(1, 'map');
 					}
 				}
 				if(cb){
@@ -2056,7 +2110,7 @@
 	;require(function(module){
 		if(typeof JSON === 'undefined'){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
-		
+
 		var root, noop = function(){};
 		if(typeof window !== 'undefined'){ root = window }
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
@@ -2086,7 +2140,7 @@
 		Gun.on('put', put);
 		Gun.on('get', get);
 	})(require, './adapters/localStorage');
-	
+
 	;require(function(module){
 		function r(base, body, cb, opt){
 			var o = base.length? {base: base} : {};
@@ -2128,6 +2182,7 @@
 				}
 				if(!ws.readyState){ return setTimeout(function(){ r.ws(opt, cb, req) },100), true }
 				ws.sending = true;
+				console.log("websocket out", req);
 				ws.send(JSON.stringify(req));
 				return true;
 			}
@@ -2269,7 +2324,7 @@
 	;require(function(module){
 		if(typeof JSON === 'undefined'){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 		if(typeof Gun === 'undefined'){ return } // TODO: window.Websocket is Browser only. But it would be nice if it could somehow merge it with lib/WSP?
-		
+
 		var root, noop = function(){};
 		if(typeof window !== 'undefined'){ root = window }
 
@@ -2285,10 +2340,13 @@
 				//},100);
 				return;
 			}
+			var msg = at;
+			/*
 			var msg = {
 				'#': at['#'] || Gun.text.random(9), // msg ID
 				'$': at.get // msg BODY
 			};
+			*/
 			Tab.on(msg['#'], function(err, data){ // TODO: ONE? PERF! Clear out listeners, maybe with setTimeout?
 				if(data){
 					at.gun.Back(-1).on('out', {'@': at['#'], err: err, put: data});
@@ -2324,6 +2382,9 @@
 			Tab.peers.request.createServer(function(req, res){
 				if(!req || !res || !req.body || !req.headers){ return }
 				var msg = req.body;
+				console.log("SERVER", req);
+				gun.on('in', req.body);
+				return;
 				// AUTH for non-replies.
 				if(server.msg(msg['#'])){ return }
 				//server.on('network', Gun.obj.copy(req)); // Unless we have WebRTC, not needed.
@@ -2331,7 +2392,7 @@
 					if(Tab.ons[tmp = msg['@'] || msg['#']]){
 						Tab.on(tmp, [msg['!'], msg['$']]);
 					}
-					return 
+					return
 				}
 				if(msg['$'] && msg['$']['#']){ return server.get(req, res) }
 				else { return server.put(req, res) }
@@ -2376,12 +2437,12 @@
 						Gun.obj.del(server.msg.debounce, id);
 					});
 				},500);
-				if(server.msg.debounce[id]){ 
+				if(server.msg.debounce[id]){
 					return server.msg.debounce[id] = Gun.time.is(), id;
 				}
 				server.msg.debounce[id] = Gun.time.is();
 				return;
-			};	
+			};
 			server.msg.debounce = server.msg.debounce || {};
 		});
 
