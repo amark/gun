@@ -971,27 +971,26 @@
 			}
 			function input(at){ var cat = this;
 				if(!at.gun){ at.gun = cat.gun }
-				if(at['@']){
-					if(!at['#']){
-						at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
-						dedup.track(at['#']);
-						cat.on('out', at);
-					}
-					//if(at.err || u === at.put){
-						Gun.on.ack(at['@'], at);
-						//return;
-					//}
+				if(!at['#'] && at['@']){
+					at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
+					Gun.on.ack(at['@'], at);
+					dedup.track(at['#']);
+					cat.on('out', at);
+					return;
 				}
 				if(at['#'] && dedup.check(at['#'])){ return }
+				dedup.track(at['#']);
+				Gun.on.ack(at['@'], at);
 				if(at.put){
 					if(cat.graph){
 						Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
 					}
 					Gun.obj.map(at.put, map, {at: at, cat: this});
-					if(0 === at['@']){ return } // TODO: UNCLEAN! Temporary hack for now.
+					//if(0 === at['@']){ return } // TODO: UNCLEAN! Temporary hack for now.
 					Gun.on('put', at);
 				}
 				if(at.get){ Gun.on('get', at) }
+				Gun.on('out', at);
 			}
 			function ham(data, key){
 				var cat = this.cat, graph = cat.graph;
@@ -1387,6 +1386,7 @@
 				} else
 				if(!lex && 0 != lex){
 					(gun = back.chain())._.err = {err: Gun.log('Invalid get request!', lex)};
+					asdf;
 					if(cb){ cb.call(gun, gun._.err) }
 					return gun;
 				} else
@@ -1686,8 +1686,8 @@
 				if(tmp = at.put){
 					if(!f || obj_has(tmp[s], f)){
 						ev.off();
-						at['@'] = 0;
-						at['#'] = 0;
+						//at['@'] = 0;
+						//at['#'] = 0;
 						return root.on('in', at);
 					}
 					/*
@@ -1712,7 +1712,7 @@
 						return;
 					}
 				}
-				if(gun._.put){
+				if(gun._.put && !(null === f)){
 					gun = gun.get(f, null, {path:true});
 					gun.on('in', {
 						err: at.err,
