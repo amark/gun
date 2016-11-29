@@ -348,6 +348,7 @@
 			on.ack = function(at, reply){
 				if(!at || !reply || !ask.on){ return }
 				var id = at[opt.id] || at;
+				if(!ask.ons[id]){ return }
 				ask.on(id, reply);
 				return true;
 			}
@@ -932,26 +933,26 @@
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
+				// TODO: BUG! Outgoing `get` to read from in memory!!!
+				if(at.get && get(at, cat)){ return }
+				//if(at.put){
+					cat.on('in', obj_to(at, {gun: cat.gun})); // TODO: PERF! input now goes to output so it would be nice to reduce the circularity here for perf purposes.
+				//}
 				if(at['#']){
 					dedup.track(at['#']);
-				}
-				if(at.put){
-					cat.on('in', obj_to(at, {gun: cat.gun}));
 				}
 				if(!at.gun){
 					at = Gun.obj.to(at, {gun: gun});
 				}
-				if(at.put){ Gun.on('put', at) }
-				if(at.get){ get(at, cat) }
-
-				// Reads and writes both trigger output.
-				if (at.put !== undefined || at.get !== undefined) {
+				//if(at.put){ Gun.on('put', at) }
+				//if(at.get){ get(at, cat) }
+				// Reads and writes both trigger output. // that should be intended.
+				//if (at.put !== undefined || at.get !== undefined) {
 					Gun.on('out', at);
-				}
+				//}
 				// Gun.on('out', at);
-				return;
-				if(!cat.back){ return }
-				cat.back.on('out', at);
+				//if(!cat.back){ return }
+				//cat.back.on('out', at);
 			}
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field];
@@ -961,35 +962,33 @@
 						node = Gun.obj.put({_: node._}, field, node[field]);
 					}
 					cat.on('in', {
-						'@': at.req? at['#'] : 0, // temporary hack
+						'@': at['#'],
 						put: Gun.graph.node(node) // TODO: BUG! Clone node!
 					});
-					return;
+					return true;
 				}
-				Gun.on('get', at);
+				//Gun.on('get', at);
 			}
 			function input(at){ var cat = this;
+				if(!at.gun){ at.gun = cat.gun }
 				if(at['@']){
 					if(!at['#']){
-						at['#'] = Gun.text.random();
+						at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
 						dedup.track(at['#']);
 						cat.on('out', at);
 					}
+					//if(at.err || u === at.put){
+						Gun.on.ack(at['@'], at);
+						//return;
+					//}
 				}
 				if(at['#'] && dedup.check(at['#'])){ return }
-				/*
-				if(at['@'] || at.err || u === at.put){
-					at.gun = at.gun || cat.gun;
-					Gun.on.ack(at['@'], at);
-					return;
-				}
-				*/
-				if(!at.gun){ at.gun = cat.gun }
 				if(at.put){
 					if(cat.graph){
 						Gun.obj.map(at.put, ham, {at: at, cat: this}); // all unions must happen first, sadly.
 					}
 					Gun.obj.map(at.put, map, {at: at, cat: this});
+					if(0 === at['@']){ return } // TODO: UNCLEAN! Temporary hack for now.
 					Gun.on('put', at);
 				}
 				if(at.get){ Gun.on('get', at) }
@@ -1258,10 +1257,9 @@
 				as.ref.on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
 					'#': Gun.on.ask(function(ack, ev){
-						if(ack && 0 === ack.ok){ return }
-						ev.off(); // One response is good enough for us currently. Later we may want to adjust this.
+						ev.off(); // One response is good enough for us currently. Later we may want to provide an option to adjust this.
 						if(!as.opt.any){ return }
-						as.opt.any.call(as.opt.as || as.gun, ack.err, ack.ok);
+						as.opt.any.call(as.opt.as || as.gun, ack.err, ack.ok, ev);
 					}, as.opt)
 				});
 				if(as.res){ as.res() }
@@ -1689,6 +1687,7 @@
 					if(!f || obj_has(tmp[s], f)){
 						ev.off();
 						at['@'] = 0;
+						at['#'] = 0;
 						return root.on('in', at);
 					}
 					/*
@@ -1730,6 +1729,37 @@
 					gun: gun,
 					via: at
 				});
+			}
+
+			function ackk(at, ev){ var gun = this.gun;
+				var cat = gun._;
+				if(u !== cat.change){ return ev.off() }
+				// TODO: PERF! Memory. If somebody `gun.off()` we should clean up these requests.
+				// TODO: PERF! Memory. If peers only reply with `not` (or we never get replies) these event listeners will be left hanging - even if we get push updates that the data does exist.
+				if(cat.root === cat.back){
+					//at.gun = cat.gun;
+					if(at.gun === cat.gun){ return }
+					at = {
+						get: cat.get,
+						gun: cat.gun,
+						via: at,
+						put: at.put[cat.get]
+					}
+					
+				} else {
+					if(obj_has(at.put, cat.get)){ return ev.off() }
+					at = {
+						get: cat.get,
+						gun: gun,
+						via: at.via? at : {
+							get: cat.back._.get,
+							gun: cat.back,
+							via: at
+						}
+					}
+				}
+				//at.get = at.get || cat.get;
+				cat.on('in', at);
 			}
 			var obj = Gun.obj, obj_has = obj.has, obj_to = obj.to;
 			var empty = {}, u;
@@ -2121,14 +2151,16 @@
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
 		function put(at){ var err, id, opt, root = at.gun._.root;
-			(opt = at.opt || {}).prefix = opt.prefix || at.gun.Back('opt.prefix') || 'gun/';
+			(opt = {}).prefix = (at.opt || opt).prefix || at.gun.Back('opt.prefix') || 'gun/';
 			Gun.graph.is(at.put, function(node, soul){
 				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
 				try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
 				}catch(e){ err = e || "localStorage failure" }
 			});
 			//console.log('@@@@@@@@@@local put!');
-			Gun.on.ack(at, {err: err, ok: 0}); // TODO: Reliability! Are we sure we want to have localStorage ack?
+			if(Gun.obj.empty(gun.Back('opt.peers'))){
+				Gun.on.ack(at, {err: err, ok: 0}); // only ack if there are no peers.
+			}
 		}
 		function get(at){
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
@@ -2136,7 +2168,12 @@
 			(opt = at.opt || {}).prefix = opt.prefix || at.gun.Back('opt.prefix') || 'gun/';
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
 			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
-			if(!data){ return } // localStorage isn't trustworthy to say "not found".
+			if(!data){ // localStorage isn't trustworthy to say "not found".
+				if(Gun.obj.empty(gun.Back('opt.peers'))){
+					gun.Back(-1).on('in', {'@': at['#']});
+				}
+				return;
+			} 
 			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
 			//console.log('@@@@@@@@@@@@local get', data, at);
 			gun.Back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
@@ -2335,13 +2372,11 @@
 		var Tab = {};
 		Tab.on = Gun.on;//Gun.on.create();
 		Tab.peers = require('../polyfill/peer');
-		Gun.on('get', function(at){
+		Gun.on('out', function(at){
+			if(at.put){ return } // TODO: BUG! Doing this for now, to debug. However puts are handled below anyways, but it would be nice if we could switch over to this for both?
 			var gun = at.gun, opt = at.opt || {}, peers = opt.peers || gun.Back('opt.peers');
 			if(!peers || Gun.obj.empty(peers)){
-				//setTimeout(function(){
 				Gun.log.once('peers', "Warning! You have no peers to connect to!");
-				at.gun.Back(-1).on('in', {'@': at['#']});
-				//},100);
 				return;
 			}
 			var msg = at;
@@ -2365,11 +2400,10 @@
 			var opt = at.gun.Back('opt') || {}, peers = opt.peers;
 			if(!peers || Gun.obj.empty(peers)){
 				Gun.log.once('peers', "Warning! You have no peers to save to!");
-				at.gun.Back(-1).on('in', {'@': at['#']});
 				return;
 			}
 			if(false === opt.websocket || (at.opt && false === at.opt.websocket)){ return }
-			var msg = {
+			var msg = at || {
 				'#': at['#'] || Gun.text.random(9), // msg ID
 				'$': at.put // msg BODY
 			};
