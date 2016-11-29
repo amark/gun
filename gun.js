@@ -2157,7 +2157,7 @@
 				}catch(e){ err = e || "localStorage failure" }
 			});
 			//console.log('@@@@@@@@@@local put!');
-			if(Gun.obj.empty(gun.Back('opt.peers'))){
+			if(Gun.obj.empty(at.gun.Back('opt.peers'))){
 				Gun.on.ack(at, {err: err, ok: 0}); // only ack if there are no peers.
 			}
 		}
