@@ -1386,7 +1386,6 @@
 				} else
 				if(!lex && 0 != lex){
 					(gun = back.chain())._.err = {err: Gun.log('Invalid get request!', lex)};
-					asdf;
 					if(cb){ cb.call(gun, gun._.err) }
 					return gun;
 				} else
