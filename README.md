@@ -56,7 +56,7 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
    ```
    Then visit [http://localhost:8080](http://localhost:8080) in your browser.
    
-### Hiroku
+### Heroku
    ```bash
    git clone https://github.com/amark/gun.git
    cd gun
