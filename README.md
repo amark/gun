@@ -1,4 +1,5 @@
 # gun [![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) 
 
 GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9KB** gzipped.
 
@@ -47,16 +48,23 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
 
  - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc)
  
-### Docker
-   ```bash
+### [Docker](https://www.docker.com/)
+ - Either (fastest) from the [Docker Hub](https://hub.docker.com/r/gundb/gun/):
+
+```bash
+   docker run -p 8080:8080 gundb/gun
+```
+ - Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
+
+```bash
    git clone https://github.com/amark/gun.git
    cd gun
    docker build -t myrepo/gundb:v1 .
    docker run -p 8080:8080 myrepo/gundb:v1
-   ```
+```
    Then visit [http://localhost:8080](http://localhost:8080) in your browser.
    
-### Hiroku
+### [Hiroku](https://www.heroku.com/)
    ```bash
    git clone https://github.com/amark/gun.git
    cd gun
@@ -65,7 +73,7 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
    ```
    Then visit the URL in the output of the 'heroku create' step, in your browser.
 
-### Now.sh
+### [Now.sh](https://zeit.co/now/)
    ```bash
    npm install -g now
    git clone https://github.com/amark/gun.git
