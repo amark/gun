@@ -908,7 +908,9 @@
 			Gun.chain.opt = function(opt){
 				opt = opt || {};
 				var gun = this, at = gun._, tmp, u;
-				if(!at.root){ root(at) }
+				at.root = at.root || gun;
+				at.graph = at.graph || {};
+				at.dedup = new Dedup();
 				at.opt = at.opt || {};
 				if(text_is(opt)){ opt = {peers: opt} }
 				else if(list_is(opt)){ opt = {peers: opt} }
@@ -922,14 +924,12 @@
 					this[f] = v;
 				}, at.opt);
 				Gun.on('opt', at);
+				if(!at.once){
+					gun.on('in', input, at);
+					gun.on('out', output, at);
+				}
+				at.once = true;
 				return gun;
-			}
-			function root(at){
-				var gun = at.gun;
-				at.root = gun;
-				at.graph = {};
-				gun.on('in', input, at);
-				gun.on('out', output, at);
 			}
 			function output(at){
 				var cat = this, gun = cat.gun, tmp;
@@ -939,7 +939,7 @@
 					cat.on('in', obj_to(at, {gun: cat.gun})); // TODO: PERF! input now goes to output so it would be nice to reduce the circularity here for perf purposes.
 				//}
 				if(at['#']){
-					dedup.track(at['#']);
+					cat.dedup.track(at['#']);
 				}
 				if(!at.gun){
 					at = Gun.obj.to(at, {gun: gun});
@@ -974,12 +974,12 @@
 				if(!at['#'] && at['@']){
 					at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
 					Gun.on.ack(at['@'], at);
-					dedup.track(at['#']);
+					cat.dedup.track(at['#']);
 					cat.on('out', at);
 					return;
 				}
-				if(at['#'] && dedup.check(at['#'])){ return }
-				dedup.track(at['#']);
+				if(at['#'] && cat.dedup.check(at['#'])){ return }
+				cat.dedup.track(at['#']);
 				Gun.on.ack(at['@'], at);
 				if(at.put){
 					if(cat.graph){
@@ -1011,40 +1011,41 @@
 					via: this.at
 				});
 			}
-			function dedup(){}
-			dedup.cache = {};
-			dedup.track = function (id) {
-				dedup.cache[id] = Gun.time.is();
+			function Dedup(){
+				this.cache = {};
+			}
+			Dedup.prototype.track = function (id) {
+				this.cache[id] = Gun.time.is();
 				// Engage GC.
-				if (!dedup.to) {
-					dedup.gc();
+				if (!this.to) {
+					this.gc();
 				}
 				return id;
 			};
-			dedup.check = function(id){
+			Dedup.prototype.check = function(id){
 				// Have we seen this ID recently?
-				return Gun.obj.has(dedup.cache, id);
+				return Gun.obj.has(this.cache, id);
 			}
-			dedup.gc = function(){
+			Dedup.prototype.gc = function(){
 				var now = Gun.time.is();
 				var oldest = now;
 				var maxAge = 5 * 60 * 1000;
 				// TODO: Gun.scheduler already does this? Reuse that.
-				Gun.obj.map(dedup.cache, function (time, id) {
+				Gun.obj.map(this.cache, function (time, id) {
 					oldest = Math.min(now, time);
 
 					if ((now - time) < maxAge) {
 						return;
 					}
 
-					delete dedup.cache[id];
+					delete this.cache[id];
 				});
 
-				var done = Gun.obj.empty(dedup.cache);
+				var done = Gun.obj.empty(this.cache);
 
 				// Disengage GC.
 				if (done) {
-					dedup.to = null;
+					this.to = null;
 					return;
 				}
 
@@ -1055,7 +1056,8 @@
 				var nextGC = maxAge - elapsed;
 
 				// Schedule the next GC event.
-				dedup.to = setTimeout(dedup.gc, nextGC);
+				var dedup = this;
+				this.to = setTimeout(function(){ dedup.gc() }, nextGC);
 			}
 		}());
 		var text = Type.text, text_is = text.is, text_random = text.random;
