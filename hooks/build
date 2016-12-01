@@ -1,0 +1,7 @@
+#!/bin/bash
+FOO=${IMAGE_NAME:=`whoami`/gun:git-local}
+BAR=${SOURCE_BRANCH:=`git rev-parse --abbrev-ref HEAD`}
+docker build --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+             --build-arg VCS_REF=`git rev-parse --short HEAD` \
+             --build-arg VCS_URL=`git config --get remote.origin.url` \
+             --build-arg VERSION=$SOURCE_BRANCH -t $IMAGE_NAME .
