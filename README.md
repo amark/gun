@@ -69,6 +69,12 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
    docker build -t myrepo/gundb:v1 .
    docker run -p 8080:8080 myrepo/gundb:v1
 ```
+ - Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
+ ```bash
+   npm run docker
+   docker run -p 8080:8080 usenameHere/gun:git
+```
+ 
    Then visit [http://localhost:8080](http://localhost:8080) in your browser.
    
 ### [Heroku](https://www.heroku.com/)
