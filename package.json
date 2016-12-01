@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "prepublish": "uglifyjs2 gun.js -o gun.min.js -c -m",
+    "prepublish": "npm run unbuild && uglifyjs gun.js -o gun.min.js -c -m",
     "test": "mocha",
+    "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js"
   },
   "repository": {
@@ -54,6 +55,6 @@
     "mocha": "~>1.9.0",
     "panic-server": "~>0.3.0",
     "selenium-webdriver": "~>2.53.2",
-    "uglify-js2": "^2.1.11"
+    "uglify-js": "^2.2.0"
   }
 }
