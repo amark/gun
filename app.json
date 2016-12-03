@@ -1,0 +1,8 @@
+{
+  "name": "gun-server",
+  "website": "http://gun.js.org",
+  "repository": "https://github.com/amark/gun",
+  "logo": "https://avatars3.githubusercontent.com/u/8811914",
+  "keywords": ["node", "gun", "gunDB", "database","graph","offline-first"],
+  "description": "Javascript, Offline-First Javascript Graph Database Server Peer"
+}
