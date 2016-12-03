@@ -78,7 +78,7 @@ Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5
    Then visit [http://localhost:8080](http://localhost:8080) in your browser.
    
 ### [Heroku](https://www.heroku.com/)
- - Eihe click [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) to deploy to your existing Heroku account immediately, OR:
+ - Either click [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun/tree/0.5) to deploy to your existing Heroku account immediately, OR:
 
    ```bash
    git clone https://github.com/amark/gun.git
