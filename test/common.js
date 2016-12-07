@@ -1731,8 +1731,9 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {};
-				console.debug.i=1;
-				(window.FOO = gun.get('u/m/p/n/mutate/n/u').map().path('pet')).on(function(v,f){
+				console.debug.i=1;console.log("----------------");
+				//(window.FOO = (window.BOO = gun.get('u/m/p/n/mutate/n/u').map())).on(function(v,f){
+				(window.FOO = (window.BOO = gun.get('u/m/p/n/mutate/n/u').map()).path('pet')).on(function(v,f){
 					check[v.name] = f;
 					console.log("************", f,v);return;
 					if(check.Fluffy && check.Frisky && check.Fuzzball){
@@ -1753,11 +1754,14 @@ describe('Gun', function(){
 						name: 'Alice Zzxyz', age: 34,
 						pet: {c:3, name: "Fuzzball"}
 					}, s)});
-						console.debug.i=1;console.log("-----------------------------");
+					console.debug.i=1;
+					console.log("--------------------");
 					gun.get('u/m/p/n/mutate/n/u').put({
 						alice: {'#':'alice/fuzz/soul'},
 					});
+					return;
 					setTimeout(function(){
+						console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 						gun.get('sflufso').put({
 							name: 'Fluffs'
 						});
