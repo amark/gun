@@ -1019,25 +1019,26 @@
 				return Gun.obj.has(this.cache, id);
 			}
 			Dedup.prototype.gc = function(){
+				var de = this;
 				var now = Gun.time.is();
 				var oldest = now;
 				var maxAge = 5 * 60 * 1000;
 				// TODO: Gun.scheduler already does this? Reuse that.
-				Gun.obj.map(this.cache, function (time, id) {
+				Gun.obj.map(de.cache, function (time, id) {
 					oldest = Math.min(now, time);
 
 					if ((now - time) < maxAge) {
 						return;
 					}
 
-					delete this.cache[id];
+					delete de.cache[id];
 				});
 
-				var done = Gun.obj.empty(this.cache);
+				var done = Gun.obj.empty(de.cache);
 
 				// Disengage GC.
 				if (done) {
-					this.to = null;
+					de.to = null;
 					return;
 				}
 
@@ -1048,8 +1049,7 @@
 				var nextGC = maxAge - elapsed;
 
 				// Schedule the next GC event.
-				var dedup = this;
-				this.to = setTimeout(function(){ dedup.gc() }, nextGC);
+				de.to = setTimeout(function(){ de.gc() }, nextGC);
 			}
 		}());
 		var text = Type.text, text_is = text.is, text_random = text.random;
