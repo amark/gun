@@ -2142,7 +2142,6 @@
 	})(require, './api');
 
 	;require(function(module){
-		if(typeof JSON === 'undefined'){ throw new Error("Include JSON first: ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js") } // for old IE use
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
 		var root, noop = function(){};
@@ -2448,7 +2447,7 @@
 			var peers = gun.Back('opt.peers') || {};
 
 			// Validate.
-			if (Gun.obj.empty(peers) || !WebSocket) {
+			if (Gun.obj.empty(peers)) {
 				return;
 			}
 
