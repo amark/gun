@@ -2412,7 +2412,10 @@
 					return;
 				}
 
-				var client = Client.pool[url] = new Client(url);
+				var client = new Client(url, options.backoff);
+
+				// Add it to the pool.
+				Client.pool[url] = client;
 
 				// Listen to incoming messages.
 				client.on('message', function (msg) {
