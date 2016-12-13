@@ -2236,13 +2236,9 @@
 					client.on('message', msg);
 				});
 
+				// Reconnect on close events.
 				socket.addEventListener('close', function () {
-
-					// Attempt reconnect if requests are pending.
-					if (client.queue.length) {
-						client.scheduleReconnect();
-					}
-
+					client.scheduleReconnect();
 				});
 
 				// Send the messages in the queue.
