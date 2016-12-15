@@ -905,22 +905,28 @@
 
 			Gun.chain.opt = function(opt){
 				opt = opt || {};
-				var gun = this, at = gun._, tmp, u;
+				var peers = obj_is(opt) ? opt.peers : opt;
+				if (text_is(peers)) {
+					peers = [peers];
+				}
+				if (list_is(peers)) {
+					peers = obj_map(peers, function (url, field, m) {
+						m(url, {});
+					});
+				}
+				if (!obj_is(opt)) {
+					opt = {};
+				}
+				opt.peers = peers;
+				var gun = this, at = gun._;
 				at.root = at.root || gun;
 				at.graph = at.graph || {};
 				at.dedup = new Dedup();
 				at.opt = at.opt || {};
-				if(text_is(opt)){ opt = {peers: opt} }
-				else if(list_is(opt)){ opt = {peers: opt} }
-				if(text_is(opt.peers)){ opt.peers = [opt.peers] }
-				if(list_is(opt.peers)){ opt.peers = obj_map(opt.peers, function(n,f,m){m(n,{})}) }
-				obj_map(opt, function map(v,f){
-					if(obj_is(v)){
-						obj_map(v, map, this[f] || (this[f] = {})); // TODO: Bug? Be careful of falsey values getting overwritten?
-						return;
-					}
-					this[f] = v;
-				}, at.opt);
+
+				at.opt.peers = Gun.obj.to(at.opt.peers || {}, peers);
+				Gun.obj.to(opt, at.opt);
+
 				Gun.on('opt', at);
 				if(!at.once){
 					gun.on('in', input, at);
