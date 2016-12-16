@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "express": "~>4.13.4",
-    "mocha": "~>1.9.0",
+    "mocha": "~>3.2.0",
     "uglify-js": "~>2.2.0"
   }
 }
