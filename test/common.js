@@ -1453,7 +1453,7 @@ describe('Gun', function(){
 			
 		});
 
-		describe('plural chains', function(){
+		describe.only('plural chains', function(){
 
 			it('uncached synchronous map on', function(done){
 				var s = Gun.state.map();s.soul = 'u/m';
@@ -1470,8 +1470,10 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {};
+				console.debug.i=1;console.log("---------------");
 				gun.get('u/m').map().on(function(v,f){
 					check[f] = v;
+					console.log("***********", f, v);
 					if(check.alice && check.bob){
 						expect(check.alice.age).to.be(26);
 						expect(check.alice.name).to.be('Alice');
@@ -1483,7 +1485,7 @@ describe('Gun', function(){
 					}
 				});
 			});
-
+			return;
 			it('uncached synchronous map path on', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -1716,7 +1718,7 @@ describe('Gun', function(){
 				}, 300);
 			});
 
-			it.only('uncached synchronous map on path node mutate node uncached', function(done){
+			it('uncached synchronous map on path node mutate node uncached', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p/n/mutate/n/u';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo3'},
@@ -1731,37 +1733,26 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {};
-				console.debug.i=1;console.log("----------------");
-				//(window.FOO = (window.BOO = gun.get('u/m/p/n/mutate/n/u').map())).on(function(v,f){
-				(window.FOO = (window.BOO = gun.get('u/m/p/n/mutate/n/u').map()).path('pet')).on(function(v,f){
+				gun.get('u/m/p/n/mutate/n/u').map().path('pet').on(function(v,f){
 					check[v.name] = f;
-					console.log("************", f,v);return;
 					if(check.Fluffy && check.Frisky && check.Fuzzball){
 						setTimeout(function(){
-							//var a = Gun.obj.map(gun._.graph['u/m/p/n/m/n/u/soul'], function(v,f,t){t(v)});
-							//expect(a.length).to.be(2);
 							expect(done.last).to.be.ok();
 							expect(check['Fluffs']).to.not.be.ok();
 							done();
 						},100);
 					}
 				});
-				return;
-				//gun.get('u/m/p/n/m/n/u/soul').path('alice').path('pet').on(function(v){console.log("?????????????????????????????????????????", v)})
 				setTimeout(function(){
 					var s = Gun.state.map();s.soul = 'alice/fuzz/soul';
 					Gun.on('put', {gun: gun, put: Gun.graph.ify({
 						name: 'Alice Zzxyz', age: 34,
 						pet: {c:3, name: "Fuzzball"}
 					}, s)});
-					console.debug.i=1;
-					console.log("--------------------");
 					gun.get('u/m/p/n/mutate/n/u').put({
 						alice: {'#':'alice/fuzz/soul'},
 					});
-					return;
 					setTimeout(function(){
-						console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 						gun.get('sflufso').put({
 							name: 'Fluffs'
 						});
