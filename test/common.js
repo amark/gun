@@ -34,7 +34,7 @@ describe('Performance', function(){ return; // performance tests
 			}
 		});
 		console.log('map: native', (t1 = (perf.now() - t1)/1000) + 's');
-		
+
 		var t2 = perf.now();
 		var obj = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i'};
 		perf(function(){
@@ -118,7 +118,7 @@ describe('Performance', function(){ return; // performance tests
 			}
 		});
 		console.log('on: native', (t1 = (perf.now() - t1)/1000) + 's');
-		
+
 		var on = Gun.on.create(), c = 0;
 		var t2 = perf.now();
 		perf(function(i){
@@ -155,7 +155,7 @@ describe('Performance', function(){ return; // performance tests
 
 describe('Gun', function(){
 	var t = {};
-	
+
 	describe('Utility', function(){
 		var u;
 		/* // causes logger to no longer log.
@@ -355,7 +355,7 @@ describe('Gun', function(){
 			it('has',function(){
 				var obj = {a:1,b:2};
 				expect(Gun.obj.has(obj,'a')).to.be.ok();
-			});			
+			});
 			it('empty',function(){
 				expect(Gun.obj.empty()).to.be(true);
 				expect(Gun.obj.empty({a:false})).to.be(false);
@@ -525,7 +525,7 @@ describe('Gun', function(){
 				});
 				e.on('foo', 1);
 				e.on('bar', 2);
-			});	
+			});
 			it('resume params', function(done){
 				var e = {on: Gun.on};
 				e.on('foo', function(a, ev){
@@ -633,7 +633,7 @@ describe('Gun', function(){
 					if(f.f){
 						f.f(arg);
 						f.cb = 0;
-						return;	
+						return;
 					}
 				}, cb;
 				f.flow = function(fn){
@@ -883,16 +883,16 @@ describe('Gun', function(){
 	describe('ify', function(){
 		console.log("TODO: BUG! Upgrade IFY tests to new internal API!");
 		return;
-		
+
 		var test, gun = Gun();
-		
+
 		it('null', function(done){
 			Gun.ify(null, function(err, ctx){
-				expect(err).to.be.ok(); 
+				expect(err).to.be.ok();
 				done();
 			});
 		});
-		
+
 		it('basic', function(done){
 			var data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
 			Gun.ify(data, function(err, ctx){
@@ -909,14 +909,14 @@ describe('Gun', function(){
 			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok();
 				expect(ctx.err).to.not.be.ok();
-				
+
 				expect(ctx.root).to.eql(data);
 				expect(ctx.root === data).to.not.be.ok();
 				expect(Gun.node.soul(ctx.root) === Gun.node.soul(data));
 				done();
 			}, {pure: true});
 		});
-		
+
 		it('arrays', function(done){
 			var data = {before: {path: 'kill'}, one: {two: {lol: 'troll', three: [9, 8, 7, 6, 5]}}};
 			Gun.ify(data, function(err, ctx){
@@ -925,7 +925,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('undefined', function(done){
 			var data = {z: undefined, x: 'bye'};
 			Gun.ify(data, function(err, ctx){
@@ -933,7 +933,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('NaN', function(done){
 			var data = {a: NaN, b: 2};
 			Gun.ify(data, function(err, ctx){
@@ -941,7 +941,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('Infinity', function(done){ // SAD DAY PANDA BEAR :( :( :(... Mark wants Infinity. JSON won't allow.
 			var data = {a: 1, b: Infinity};
 			Gun.ify(data, function(err, ctx){
@@ -949,7 +949,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('function', function(done){
 			var data = {c: function(){}, d: 'hi'};
 			Gun.ify(data, function(err, ctx){
@@ -957,7 +957,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('extraneous', function(done){
 			var data = {_: {'#': 'shhh', meta: {yay: 1}}, sneak: true};
 			Gun.ify(data, function(err, ctx){
@@ -965,7 +965,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('document', function(done){
 			var data = {users: {1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}}};
 			Gun.ify(data, function(err, ctx){
@@ -982,7 +982,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		return; // TODO! Fix GUN to handle this!
 		data = {};
 		data.sneak = false;
@@ -991,7 +991,7 @@ describe('Gun', function(){
 		test = Gun.ify(data);
 		expect(test.err.meta).to.be.ok(); // TODO: Fail: this passes, somehow? Fix ify code!
 	});
-	
+
 	describe('Schedule', function(){
 		console.log("TODO: BUG! Upgrade SCHEDULE tests to new internal API!");
 		return;
@@ -1001,7 +1001,7 @@ describe('Gun', function(){
 				done(); //setTimeout(function(){ done() },1);
 			});
 		});
-		
+
 		it('many', function(done){
 			Gun.schedule(Gun.time.is() + 50, function(){
 				done.first = true;
@@ -1018,12 +1018,12 @@ describe('Gun', function(){
 			});
 		});
 	});
-	
+
 	describe('Union', function(){
 		console.log("TODO: BUG! Upgrade UNION tests to new internal API!");
 		return;
 		var gun = Gun();
-		
+
 		it('fail', function(){
 			var prime = {
 				'asdf': {
@@ -1038,7 +1038,7 @@ describe('Gun', function(){
 			var ctx = Gun.HAM.graph(gun, prime);
 			expect(ctx).to.not.be.ok();
 		});return;
-		
+
 		it('basic', function(done){
 			var prime = {
 				'asdf': {
@@ -1055,7 +1055,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('disjoint', function(done){
 			var prime = {
 				'asdf': {
@@ -1074,7 +1074,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('mutate', function(done){
 			var prime = {
 				'asdf': {
@@ -1091,7 +1091,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('disjoint past', function(done){
 			var prime = {
 				'asdf': {
@@ -1124,7 +1124,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('future', function(done){
 			var prime = {
 				'asdf': {
@@ -1161,7 +1161,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('disjoint future max', function(done){
 			var prime = {
 				'asdf': {
@@ -1184,7 +1184,7 @@ describe('Gun', function(){
 				done(); //setTimeout(function(){ done() },1);
 			});
 		});
-		
+
 		it('future max', function(done){
 			var prime = {
 				'asdf': {
@@ -1215,7 +1215,7 @@ describe('Gun', function(){
 				done(); //setTimeout(function(){ done() },1);
 			});
 		});
-		
+
 		it('two nodes', function(done){ // chat app problem where disk dropped the last data, turns out it was a union problem!
 			var state = Gun.time.is();
 			var prime = {
@@ -1241,7 +1241,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('append third node', function(done){ // chat app problem where disk dropped the last data, turns out it was a union problem!
 			var state = Gun.time.is();
 			var prime = {
@@ -1268,14 +1268,14 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('ify null', function(){
 				var node = Gun.union.ify(null, 'pseudo');
 				expect(Gun.node.soul(node)).to.be('pseudo');
 		});
-		
+
 		it('ify node', function(){
-			
+
 			var graph = {
 				'asdf': {
 					_: {'#': 'asdf', '>': {
@@ -1297,7 +1297,7 @@ describe('Gun', function(){
 			expect(node.x).to.be(1);
 			expect(node.y).to.be(2);
 		});
-		
+
 		it('ify graph', function(){
 			var graph = {
 				'asdf': {
@@ -1347,18 +1347,18 @@ describe('Gun', function(){
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
-				
+
 		it.skip('gun chain separation', function(done){ // TODO: UNDO!
 			var gun = Gun();
-			
+
 			var c1 = gun.put({hello: 'world'});
-			
+
 			var c2 = gun.put({hi: 'earth'});
-			
+
 			c1.on(function(val){
 				expect(val.hi).to.not.be.ok();
 			});
-			
+
 			c2.on(function(val){
 				expect(val.hello).to.not.be.ok();
 				if(done.c){ return }
@@ -1367,7 +1367,7 @@ describe('Gun', function(){
 		});
 
 		describe.skip('timeywimey', function(){ // TODO: UNDO!
-			
+
 			it('kitty', function(done){
 				var g1 = gun.put({hey: 'kitty'}).key('timeywimey/kitty');
 
@@ -1382,12 +1382,12 @@ describe('Gun', function(){
 					done(); done.c = 1;
 				});
 			});
-			
+
 			it('kitty puppy', function(done){
 				var g3 = gun.put({hey: 'kitty'}).key('timeywimey/kitty/puppy');
 
 				var g4 = gun.put({hi: 'puppy'}).key('timeywimey/kitty/puppy');
-				
+
 				var g5 = gun.get('timeywimey/kitty/puppy').on(function(val){
 					//delete val._;
 					//console.log("puppy?", val);
@@ -1397,7 +1397,7 @@ describe('Gun', function(){
 					done(); done.c = 1;
 				});
 			});
-			
+
 			it('hello', function(done){
 				gun.get('timeywimey/hello').on(function(val){
 					//delete val._;
@@ -1409,7 +1409,7 @@ describe('Gun', function(){
 
 				gun.put({hello: 'world'}).key('timeywimey/hello');
 			});
-			
+
 			it('hello foo', function(done){
 				gun.get('timeywimey/hello/foo').on(function(val){
 					//delete val._;
@@ -1425,12 +1425,12 @@ describe('Gun', function(){
 
 				gun.put({foo: 'bar'}).key('timeywimey/hello/foo');
 			});
-			
+
 			it('all', function(done){
 				gun.put({hey: 'kitty'}).key('timeywimey/all');
 
 				gun.put({hi: 'puppy'}).key('timeywimey/all');
-				
+
 				gun.get('timeywimey/all').on(function(val){
 					// console.log('all', done.c, val);
 					expect(val.hey).to.be('kitty');
@@ -1445,17 +1445,17 @@ describe('Gun', function(){
 						done(); done.c = 1;
 					}
 				});
-				
+
 				gun.put({hello: 'world'}).key('timeywimey/all');
-				
+
 				gun.put({foo: 'bar'}).key('timeywimey/all');
 			});
-			
+
 		});
 
 		describe('plural chains', function(){
 
-			it.only("get before put in memory", function(done){
+			it("get before put in memory", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.get('g/n/m/f/l/n/r').map().on(function(v,f){
@@ -2750,7 +2750,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('put regex', function(done){
 			gun.put({reg: /regex/i}, function(err, ok){
 				expect(err).to.be.ok();
@@ -2780,7 +2780,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('put node with soul get soul', function(done){
 			gun.put({_: {'#': 'foo'}, hello: 'world'})
 				.get({'#': 'foo'}, function(err, node){
@@ -3013,7 +3013,7 @@ describe('Gun', function(){
 				done.r = 1; if(done.w){ done(); done.c = 1 };
 			});
 		});
-		
+
 		it('get key path put', function(done){
 			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
@@ -3068,7 +3068,7 @@ describe('Gun', function(){
 				done(); done.end = true;
 			});
 		});
-		
+
 		it('put node get field', function(done){ // future feature.
 			var gun = Gun();
 			gun.put({_:{'#': 'soul/field'}, hi: 'lol', foo: 'bar'});//.key('key/field');
@@ -3261,7 +3261,7 @@ describe('Gun', function(){
 			get.put({});
 			get.val(function(data){ // TODO: API CHANGE! Empty objects should react.
 				//console.log("...1", data);
-				expect(Gun.obj.empty(data, '_')).to.be.ok(); // API CHANGED, 
+				expect(Gun.obj.empty(data, '_')).to.be.ok(); // API CHANGED,
 				//expect(Gun.val.rel.is(data.very)).to.be.ok();
 			});//, {wait: 10000});
 			setTimeout(function(){
@@ -3440,7 +3440,7 @@ describe('Gun', function(){
 				done.r = 1; if(done.w){ done(); done.c = 1 };
 			});
 		});
-	
+
 		it.skip('put gun node', function(done){
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
 			var amber = gun.put({age: 23, name: "Amber Nadal"});
@@ -3451,7 +3451,7 @@ describe('Gun', function(){
 				expect(val).to.be("Amber Nadal");
 			});
 		});
-		
+
 		it('put val', function(done){
 			gun.put({hello: "world"}).val(function(val){
 				expect(val.hello).to.be('world');
@@ -3463,7 +3463,7 @@ describe('Gun', function(){
 				done();
 			}, 100);
 		});
-		
+
 		it('put key val', function(done){
 			gun.put({hello: "world"}).key('hello/world').val(function(val, field){
 				if(done.c){ return }
@@ -3476,7 +3476,7 @@ describe('Gun', function(){
 				done();
 			}, 100);
 		});
-		
+
 		it('get val', function(done){
 			gun.get('hello/world').val(function(val, field){
 				expect(val.hello).to.be('world');
@@ -3525,7 +3525,7 @@ describe('Gun', function(){
 				done();
 			}, 100);
 		});
-		
+
 		it('get empty put', function(done){
 			var gun = Gun({init: true});
 			gun.get('nothing/here').put({far: "wide"}, function(err, ok){
@@ -3662,7 +3662,7 @@ describe('Gun', function(){
 					});
 				});
 			});
-			
+
 			gun.get('order/second', function(){
 				//console.log('callback', 2);
 				done.two = true;
@@ -3919,7 +3919,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('context null put value val error', function(done){
 			gun.put("oh yes", function(err){
 				expect(err).to.be.ok();
@@ -4006,10 +4006,10 @@ describe('Gun', function(){
 
 		it('val path put val', function(done){
 			var gun = Gun();
-			
+
 			var al = gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
 			var beth = gun.put({gender:'f', age:22, name:'beth'}).key('user/beth');
-			
+
 			al.val(function(a){
 				beth.put({friend: a}, function(err, ok){
 					expect(err).to.not.be.ok();
@@ -4018,7 +4018,7 @@ describe('Gun', function(){
 					done();
 				});
 			});
-			
+
 		});
 		// TODO: Write a test that tests for keysoul has a key meta indicator.
 		// TODO: A soulsoul does not have a key meta indicator.
@@ -4026,7 +4026,7 @@ describe('Gun', function(){
 		it('val path put val key', function(done){ // bug discovered from Jose's visualizer
 			var gun = Gun(), s = Gun.time.is(), n = function(){ return Gun.time.is() }
 			this.timeout(5000);
-			
+
 			gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
 			gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
 			//gun.get('user/beth').path('friend').put(gun.get('user/alfred')); // ideal format which we have a future test for.
@@ -4066,7 +4066,7 @@ describe('Gun', function(){
 					expect(obj.here).to.be('you');
 				}
 				if(field === 'b'){
-					expect(obj.go).to.be('dear');	
+					expect(obj.go).to.be('dear');
 				}
 				if(field === 'c'){
 					expect(obj.sir).to.be('!');
@@ -4089,7 +4089,7 @@ describe('Gun', function(){
 				done();
 			}, 'qwertyasdfzxcv');
 		});
-		
+
 		it.skip('no false positive null emit', function(done){ // TODO: THE API HAS CHANGED! REDO TEHSE!
 			var gun = Gun({wire: {get: function(key, cb){
 				var g = {};
@@ -4137,9 +4137,9 @@ describe('Gun', function(){
 			tmp.keynode[tmp.soul] = tmp.rel;
 			Gun.is.node.ify(tmp.keynode, 'me');
 			tmp.keynode[Gun._.meta]['key'] = 1;
-			
+
 			gun.get('me', function(err, data){
-				
+
 			}).val(function(val){
 				done.count = (done.count || 0) + 1;
 				setTimeout(function(){
@@ -4167,7 +4167,7 @@ describe('Gun', function(){
 				n = {_: {'#': soul }};
 				cb(null, n);
 			}}}), soul = Gun.text.random();
-			
+
 			gun.get(soul).path('a').val(function(val){
 				done.count = (done.count || 0) + 1;
 				setTimeout(function(){
@@ -4182,7 +4182,7 @@ describe('Gun', function(){
 			var gun = Gun(gopt).get('thoughts').not(function(key){
 				this.put({}).key(key);
 			});
-			
+
 			setTimeout(function(){
 				gun.not(function(){
 					done.not = true;
@@ -4429,7 +4429,7 @@ describe('Gun', function(){
 				});
 				g.put(obj);
 			});
-			
+
 			it('map chain map before', function(done){
 				var g = Gun().get('m/c/m/b');
 				var obj = {
@@ -4479,9 +4479,9 @@ describe('Gun', function(){
 					expect(Gun.obj.empty(rel, Gun._.meta)).to.be.ok();
 				});
 				done.c += 1;
-				setTimeout(function(){ 
+				setTimeout(function(){
 					expect(done.c).to.be(1);
-					done() 
+					done()
 				},10);
 			});
 		});
@@ -4493,7 +4493,7 @@ describe('Gun', function(){
 				if(done.c){return} done(); done.c = 1;
 			});
 		});
-		
+
 		// TODO: BUG! We need 2 more tests... without .set()... and multiple paths on the same node.
 		it('set multiple', function(done){ // kinda related to flip flop?
 			var gun = Gun().get('sets').set(), i = 0;
@@ -4517,7 +4517,7 @@ describe('Gun', function(){
 						Gun.obj.map(gun.__.graph, function(){ done.i++ });
 						expect(done.i).to.be(1); // make sure there isn't double.
 						Gun.log.verbose = false;
-						done() 
+						done()
 					},10);
 				}
 			});
@@ -4547,7 +4547,7 @@ describe('Gun', function(){
 			}},
 			gun1 = Gun({wire: {get: hooks.get}}).get('race')
 			, gun2 = Gun({wire: hooks}); //.get('race');
-			
+
 			setTimeout(function(){
 				gun2.put({the: 'data'}).key('race');
 				setTimeout(function(){
@@ -4561,10 +4561,10 @@ describe('Gun', function(){
 
 		it('get pseudo merge', function(done){
 			var gun = Gun();
-			
+
 			gun.put({a: 1, z: -1}).key('pseudo');
 			gun.put({b: 2, z: 0}).key('pseudo');
-			
+
 			gun.get('pseudo').val(function(val){
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
@@ -4572,15 +4572,15 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('get pseudo merge on', function(done){
 			var gun = Gun();
-			
+
 			gun.put({a: 1, z: -1}).key('pseudon');
 			gun.put({b: 2, z: 0}).key('pseudon');
-			
+
 			gun.get('pseudon').on(function(val){
-				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff? (may not happen to after 1.0.0) 
+				if(done.val){ return } // TODO: Maybe prevent repeat ons where there is no diff? (may not happen to after 1.0.0)
 				done.val = val;
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
@@ -4680,9 +4680,9 @@ describe('Gun', function(){
 					if('location' == field){
 						delete change._; ctx.l++;
 						if('Bob' == passenger.name){
-							expect(change).to.eql({'lat': '37.6159', 'lng': '-128.5'}); 
+							expect(change).to.eql({'lat': '37.6159', 'lng': '-128.5'});
 						} else {
-							expect(change).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'}); 
+							expect(change).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'});
 						}
 					}
 					if(ctx.n == 2 && ctx.d == 2 && ctx.l == 2){ done() }
@@ -4856,9 +4856,9 @@ describe('Gun', function(){
 				if('location' == field){
 					delete val._;
 					if(!ctx.l){
-						expect(val).to.eql({'lat': '37.6159', 'lng': '-128.5'}); 
+						expect(val).to.eql({'lat': '37.6159', 'lng': '-128.5'});
 					} else {
-						expect(val).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'}); 
+						expect(val).to.eql({'lat': 'f37.6159', 'lng': 'f-128.5'});
 					}
 					ctx.l++;
 				}
@@ -4980,7 +4980,7 @@ describe('Gun', function(){
 						c: {
 							d: 1,
 							e: 2,
-							f: 3	
+							f: 3
 						}
 					}
 				},
@@ -5080,7 +5080,7 @@ describe('Gun', function(){
 			},100);
 		});
 
-		it.only("get users map path path any later", function(done){
+		it("get users map path path any later", function(done){
 			var gun = Gun();
 			gun.get('g/n/m/f/l').map().path('spouse').path('work');
 			gun.put({_:{'#':'g/n/m/f/l'},
@@ -5162,7 +5162,7 @@ describe('Gun', function(){
 		return;
 		return;
 		return;
-		it.only("get map path val", function(done){ // Terje's bug
+		it("get map path val", function(done){ // Terje's bug
 			var gun = Gun();
 			var ctx = {l: -1, d: 0};
 			var passengers = gun.get('passengers/path').not(function(key){
@@ -5177,9 +5177,9 @@ describe('Gun', function(){
 				console.log("******", field, val);
 				expect(field).to.be('lng');
 				if(ctx.l){
-					expect(val).to.be('-128.5'); 
+					expect(val).to.be('-128.5');
 				} else {
-					expect(val).to.eql('f-128.5'); 
+					expect(val).to.eql('f-128.5');
 				}
 				ctx.l++;
 				if(ctx.l){ done() }
@@ -5194,7 +5194,7 @@ describe('Gun', function(){
 			},300);
 		});
 
-		it.only("FILT ER FILTER", function(done){
+		it("FILT ER FILTER", function(done){
 			var g = Gun();
 			var a = gun.put({});
 			var b = gun.put({age: 19, name: "bob"});
@@ -5222,7 +5222,7 @@ describe('Gun', function(){
 				}
 			});
 		});
-		
+
 		it("map path", function(done){
 			var gun = Gun();
 			var g = gun.get('map/path/ing');
@@ -5247,7 +5247,7 @@ describe('Gun', function(){
 			});
 			g.put({a: {x:{y:1}}, b: {x:{y:2}}, c: {x:{y:3}}});
 		});
-		
+
 		it("put path deep val -> path val", function(done){ // Terje's bug
 			var gun = Gun();
 			gun.put({you: {have: {got: {to: {be: {kidding: "me!"}}}}}}).path('you.have.got.to.be').val(function(val, field){
@@ -5258,7 +5258,7 @@ describe('Gun', function(){
 				});
 			});
 		});
-		
+
 		it("get set path put, map path val -> path val", function(done){ // Terje's bug
 			var gun = Gun();
 			var ctx = {l: -1, d: 0};
@@ -5307,7 +5307,7 @@ describe('Gun', function(){
 			  gun.put({history: put});
 			}, 1);
 		});
-		
+
 		it('path rel should not slowdown', function(done){
 			this.timeout(5000);
 			var gun = Gun(/*gopt*/).put({
@@ -5418,22 +5418,22 @@ describe('Gun', function(){
 
 		it("gun get on, later gun put key", function(done){
 			var gun = Gun();
-			
-			var keyC = gun.get('keyC').on(function(val){ 
+
+			var keyC = gun.get('keyC').on(function(val){
 				expect(val.hello).to.be('world');
 				if(done.done){ return }
 				done.done = true;
 				done();
 			});
-			
+
 			setTimeout(function(){
 				gun.put({hello: 'world'}).key('keyC');
 			}, 100);
 		});
 
-		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace // 
+		it('gun get put, sub path put, original val', function(done){ // bug from Jesse working on Trace //
 			var gun = Gun(gopt).get('players');
-			
+
 			gun.put({
 			  taken: true,
 			  history: {0: {}, 1: {}}
@@ -5445,7 +5445,7 @@ describe('Gun', function(){
 				.back
 				.path('taken')
 				.put(false)
-			
+
 			// TODO: BUG! There is a variation of this, where we just do `.val` rather than `gun.val` and `.val` by itself (chained off of the sub-paths) doesn't even get called. :(
 			gun.on(function(players){ // this val is subscribed to the original put and therefore does not get any of the sub-path listeners, therefore it gets called EARLY with the original/old data rather than waiting for the sub-path data to "finish" and then get called.
 				expect(players.history).to.be(null);
@@ -5484,7 +5484,7 @@ describe('Gun', function(){
 			put(1000);
 			put(5000);*/
 			put(1000, true);
-			
+
 			var gun2 = Gun();
 			gun2.__.opt.wire.put = null;
 			function put2(num, t) {
@@ -5517,7 +5517,7 @@ describe('Gun', function(){
 		} );
 
 		it('choke time.now by using a while loop', function(){
-			var i = 10; //100000; // causes an overflow. 
+			var i = 10; //100000; // causes an overflow.
 			while(--i){
 				Gun.time.now();
 			}
@@ -5543,7 +5543,7 @@ describe('Gun', function(){
 		});
 		it("test assignment", function(done){
 			var env = {graph: {}};
-			function speed(other){			
+			function speed(other){
 				var i = 10000;
 				while(i--){
 					var $ = {soul: Gun.text.random()};
@@ -5584,7 +5584,7 @@ describe('Gun', function(){
 		});
 		it("gun put recursive path slowdown MUTANT TEST", function(done){
 			this.timeout(30000);
-			
+
 			Gun.chain.put = function(val, cb, opt){
 				var gun = this.chain(), obj;
 				var drift = Gun.time.now(), call = {};
@@ -5592,7 +5592,7 @@ describe('Gun', function(){
 				gun._.at('soul').event(
 				//(
 				function($){
-					var chain = $.gun || gun; 
+					var chain = $.gun || gun;
 					var ctx = {}, obj = val, $ = Gun.obj.copy($);
 					var hash = $.field? $.soul + $.field : ($.from? $.from + ($.at || '') : $.soul);
 					if(call[hash]){ return }
@@ -5672,7 +5672,7 @@ describe('Gun', function(){
 				gun._.at('soul').emit({soul: Gun.roulette.call(gun), field: null, empty: true});
 				return gun;
 			}
-			
+
 			var gun = Gun(); //.get('bug').put({});
 			gun.__.opt.hooks.put = null;
 			function put(num, t) {
@@ -5693,7 +5693,7 @@ describe('Gun', function(){
 				}
 				return new Date().getTime() - now;
 			}
-			
+
 			//put(1, true);
 			//put(2);
 			//put(10);
@@ -5733,7 +5733,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			var data = gun.get('some/not/yet/set/put/thing/2');
 			var path = data.path('sub');
-			function put(d, t, f){				
+			function put(d, t, f){
 				setTimeout(function(){
 					path.put(d, function(err, ok){
 						expect(err).to.not.be.ok();
@@ -5822,7 +5822,7 @@ describe('Gun', function(){
 				expect(Gun.val.rel.is(p[2])).to.be.ok();
 				expect(Gun.val.rel.is(p[3])).to.be.ok();
 			})
-			
+
 			var players = [], me;
 			gun.map(function (player, number) {
 				players[number] = player;
@@ -5837,7 +5837,7 @@ describe('Gun', function(){
 					me = number;
 				}
 			});
-			
+
 			 Gun.list.map([0, 1, 2, 3], function (player, number) {
 				number = number - 1;
 				gun
@@ -5854,7 +5854,7 @@ describe('Gun', function(){
 					});
 			});
 		});
-		
+
 		it("gun get path empty val", function(done){ // flip flop bug
 			done.c = 0;
 			var u;
@@ -5874,7 +5874,7 @@ describe('Gun', function(){
 				me.put({x: 0, y: 0});
 			},10);
 		});
-		
+
 		it("gun get path empty on", function(done){
 			done.c = 0;
 			var u;
@@ -5885,7 +5885,7 @@ describe('Gun', function(){
 				expect(done.fail).to.not.be.ok();
 				expect(val).to.not.be(u);
 				if(done.done || !val.x || !val.y){ return } // it is okay if ON gets called many times, this protects against that.
-				// TODO: although it would be nice if we could minimize the amount of duplications. (may not happen to after 1.0.0) 
+				// TODO: although it would be nice if we could minimize the amount of duplications. (may not happen to after 1.0.0)
 				expect(val.x).to.be(1);
 				expect(val.y).to.be(1);
 				done.done = true;
@@ -5897,7 +5897,7 @@ describe('Gun', function(){
 				me.put({x: 1, y: 1});
 			},10);
 		});
-		
+
 		it("gun get path empty not", function(done){
 			var u;
 			var gun = Gun(gopt).opt({init: true})
@@ -5907,7 +5907,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it("gun get path empty init", function(done){
 			var u;
 			var gun = Gun(gopt).opt({init: true});
@@ -5927,7 +5927,7 @@ describe('Gun', function(){
 				}
 			}}).get('example/todo/data/graph');
 			gun.on(function renderToDo(val){
-				done.on = true; 
+				done.on = true;
 			});
 			setTimeout(function(){
 				gun.path(Gun.text.random()).put('hoorah');
@@ -5958,7 +5958,7 @@ describe('Gun', function(){
 			},100);
 		});
 		/* // This test didn't work for what I was wanting to test :(, will either remove it or modify it if I think of a clever solution to test what I want to test.
-		it.only("simulate json app", function(done){
+		it("simulate json app", function(done){
 			var peers = {};
 			peers.server = Gun();
 			function wipeServer(){
@@ -6388,21 +6388,21 @@ describe('Gun', function(){
 		// 0: fluffy
 		// 1: fluff
 		// 3: bacon
-		// 9: `.not` 
+		// 9: `.not`
 
 		depp.path('spouse.pet.name').val().on(log);
 		// 0: fluffy
 		// 1: fluff
 		*/
 	});
-	
+
 	describe('Streams', function(){
 		console.log("TODO: BUG! Upgrade UNION tests to new internal API!");
 		return;
 		var gun = Gun(), g = function(){
 			return Gun({wire: {get: ctx.get}});
 		}, ctx = {gen: 9, extra: 100, network: 2};
-		
+
 		it('prep hook', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			var peer = Gun(), ref;
@@ -6449,7 +6449,7 @@ describe('Gun', function(){
 				}
 				if(obj.go){
 					done.b = obj.go;
-					expect(obj.go).to.be('dear');	
+					expect(obj.go).to.be('dear');
 				}
 				if(obj.sir){
 					done.c = obj.sir;
@@ -6460,7 +6460,7 @@ describe('Gun', function(){
 				}
 			});
 		});
-		
+
 		it('map chain path', function(done){
 			var set = gun.put({
 				a: {name: "Mark",
@@ -6469,7 +6469,7 @@ describe('Gun', function(){
 					pet: {coat: "calico", name: "Cali"}
 				}, c: {name: "Bob",
 					pet: {coat: "tux", name: "Casper"}
-				} 
+				}
 			});
 			set.map().path('pet').val(function(obj, field){
 				if(obj.name === 'Hobbes'){
@@ -6492,14 +6492,14 @@ describe('Gun', function(){
 				}
 			});
 		});
-		
+
 		it('get big on', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			var test = {c: 0, last: 0};
 			g().get('big').on(function(val){
 				if(test.done){ return console.log("hey yo! you got duplication on your ons!"); }
 				delete val._;
-				if(val['f' + (test.last + 1)]){ 
+				if(val['f' + (test.last + 1)]){
 					test.c += 1;
 					test.last += 1;
 				}
@@ -6545,7 +6545,7 @@ describe('Gun', function(){
 				done();
 			});
 		});
-		
+
 		it('get big map val', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			var test = {c: 0, seen: {}};
@@ -6560,7 +6560,7 @@ describe('Gun', function(){
 				}
 			});
 		});
-		
+
 		it('val emits all data', function(done){ // bug in chat app
 			var chat = Gun().get('example/chat/data').not(function(){
 				this.put({1: {who: 'Welcome', what: "to the chat app!", when: 0}}).key('example/chat/data');
@@ -6571,7 +6571,7 @@ describe('Gun', function(){
 			chat.put({random4: {who: 'mark', what: "4", when: 4}});
 			chat.put({random5: {who: 'mark', what: "5", when: 5}});
 			var seen = {1: false, 2: false, 3: false, 4: false, 5: false}
-			setTimeout(function(){				
+			setTimeout(function(){
 				chat.map(function(m){ }).val(function(msg, field){
 					var msg = Gun.obj.copy(msg);
 					if(msg.what){
