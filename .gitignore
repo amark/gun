@@ -1,4 +1,4 @@
-node_modules/*
+node_modules
 npm-debug.log
 gun.min.js
 yarn.lock
