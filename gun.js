@@ -2021,8 +2021,8 @@
 				if(u === data){
 					return;
 				}
-				clearTimeout(ev.to);
-				if(!to && opt.async){
+				if(ev.to){ clearTimeout(ev.to) }
+				if(!to && (true === opt.async) && 0 !== opt.wait){
 					ev.to = setTimeout(function(){
 						val.call(opt, at, ev, ev.to || 1)
 					}, opt.wait || 99);
