@@ -2142,7 +2142,7 @@
 					var put = {}, soul = Gun.node.soul(node);
 					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 					gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
-				});
+				}, {wait:0});
 			}
 		}());
 	})(require, './api');
