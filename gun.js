@@ -472,7 +472,7 @@
 	;require(function(module){
 		/* Based on the Hypothetical Amnesia Machine thought experiment */
 		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){
-			if(machineState < incomingState){
+			if((machineState+1) < incomingState){ // It is important that we always +1 on the machine state, just to prevent any in-memory collisions on fast processors.
 				return {defer: true}; // the incoming value is outside the boundary of the machine's state, it must be reprocessed in another state.
 			}
 			if(incomingState < currentState){
