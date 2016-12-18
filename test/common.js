@@ -1469,23 +1469,25 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
-				console.debug.i=1;console.log("---------------");
+				var check = {}, count = {};
 				gun.get('u/m').map().on(function(v,f){
 					check[f] = v;
-					console.log("***********", f, v);
+					count[f] = (count[f] || 0) + 1;
+					//console.log("***********", f, v, count);
 					if(check.alice && check.bob){
 						expect(check.alice.age).to.be(26);
 						expect(check.alice.name).to.be('Alice');
 						expect(Gun.val.rel.is(check.alice.pet)).to.be.ok();
+						expect(count.alice).to.be(1);
 						expect(check.bob.age).to.be(29);
 						expect(check.bob.name).to.be('Bob!');
 						expect(Gun.val.rel.is(check.bob.pet)).to.be.ok();
+						expect(count.bob).to.be(1);
 						done();
 					}
 				});
 			});
-			return;
+
 			it('uncached synchronous map path on', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -1500,12 +1502,15 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/p').map().path('name').on(function(v,f){
 					check[v] = f;
+					count[v] = (count[v] || 0) + 1;
 					if(check.alice && check.bob){
 						expect(check.alice).to.be('name');
 						expect(check.bob).to.be('name');
+						expect(count.alice).to.be(1);
+						expect(count.bob).to.be(1);
 						done();
 					}
 				});
@@ -1525,12 +1530,15 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/p/n').map().path('pet').on(function(v,f){
 					check[v.name] = v;
+					count[v.name] = (count[v.name] || 0) + 1;
 					if(check.Fluffy && check.Frisky){
 						expect(check.Fluffy.a).to.be(1);
 						expect(check.Frisky.b).to.be(2);
+						expect(count.Fluffy).to.be(1);
+						expect(count.Frisky).to.be(1);
 						done();
 					}
 				});
@@ -1551,23 +1559,27 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/p/n/p').map().path('pet').path('name').on(function(v,f){
 					check[v] = f;
+					count[v] = (count[v] || 0) + 1;
 					if(check.Fluffy && check.Frisky){
 						expect(check.Fluffy).to.be('name');
 						expect(check.Frisky).to.be('name');
 						Gun.obj.map(gun._.graph, function(n,s){
 							if('u/m/p/n/p' === s){ return }
 							var a = Gun.obj.map(n, function(v,f,t){t(v)});
-							expect(a.length).to.be(2);
+							expect(a.length).to.be(2); // make sure that ONLY the selected properties were loaded, not the whole node.
 						});
+						expect(count.Fluffy).to.be(1);
+						expect(count.Frisky).to.be(1);
 						done();
 					}
 				});
 			});
-
+			
 			it('uncached synchronous map on mutate', function(done){
+				console.log("(((((((((((((((((((((((((((((((((((((((((((((");
 				var s = Gun.state.map();s.soul = 'u/m/mutate';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
@@ -1581,18 +1593,49 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
-				gun.get('u/m/mutate').map().path('name').any(function(e,v,f){
+				var check = {}, count = {};
+				console.debug.i = 100;
+				gun.get('u/m/mutate').map().path('name').any(function(e,v,f,at){
 					check[v] = f;
+					count[v] = (count[v] || 0) + 1;
+					console.log("***********", f,v, this);
 					if(check.Alice && check.Bob && check['undefined']){
+						expect(count.Alice).to.be(1);
+						expect(count.Bob).to.be(1);
+						expect(count['undefined']).to.be(1);
 						done();
 					}
 				});
 				setTimeout(function(){
+					console.debug.i=1;console.log("-----------------");
 					gun.get('u/m/mutate').path('alice').put(7);
 				}, 300);
 			});
+			//return;
+			it.only("===============", function(){
+				console.log("=================");
+				console.log("=================");
+				console.log("=================");
+				console.log("=================");
+				localStorage.clear();
 
+				var gun = Gun();
+
+				var list = gun.get('list');
+				list.set({a:1});
+				list.set({b:2});
+				list.set({c:3});
+				list.set({e:4});
+				list.set({f:5});
+				list.set({g:6});
+
+				console.log("on!");
+				list.map(function(data){
+				  console.log("data", data);
+				});
+
+			});
+			return;
 			it('uncached synchronous map on mutate node', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate/n';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -1607,13 +1650,17 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/mutate/n').map().path('name').on(function(v,f){
 					check[v] = f;
+					count[v] = (count[v] || 0) + 1;
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						setTimeout(function(){
 							expect(done.last).to.be.ok();
 							expect(check['Alice Aabca']).to.not.be.ok();
+							expect(count.Alice).to.be(1);
+							expect(count.Bob).to.be(1);
+							expect(count['Alice Zzxyz']).to.be(1);
 							done();
 						},100);
 					}
@@ -1649,6 +1696,7 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('u/m/mutate/n/u').map().on(function(v,f){
 					check[v.name] = f;
+					console.log("*****************", f,v);
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						setTimeout(function(){
 							expect(done.last).to.be.ok();
@@ -1662,9 +1710,17 @@ describe('Gun', function(){
 					Gun.on('put', {gun: gun, put: Gun.graph.ify({
 						name: 'Alice Zzxyz'
 					}, s)});
+					console.debug.i=1;console.log("---------------");
 					gun.get('u/m/mutate/n/u').put({
 						alice: {'#':'u/m/m/n/u/soul'},
 					});
+					/*
+						{
+							users: {_:#users
+								alice: {#newalice}
+							}
+						}
+					*/
 					setTimeout(function(){
 						gun.get('umaliceo1').put({
 							name: 'Alice Aabca'
@@ -1673,7 +1729,7 @@ describe('Gun', function(){
 					}, 10);
 				}, 300);
 			});
-
+			return;
 			it('uncached synchronous map on path mutate node uncached', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p/mutate/n/u';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
