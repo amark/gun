@@ -2351,7 +2351,7 @@
 				null;
 		}
 
-		Client.isSupported = Client.WebSocket !== null;
+		Client.isSupported = !!Client.WebSocket;
 		
 		if(!Client.isSupported){ return } // TODO: For now, don't do anything in browsers/servers that don't work. Later, use JSONP fallback and merge with server code?
 
