@@ -1,0 +1,11 @@
+{
+  "name": "gun-tests-e2e",
+  "version": "0.0.0",
+  "description": "End to end tests for gun",
+  "private": true,
+  "main": "distributed.js",
+  "devDependencies": {
+    "panic-server": "~>0.3.0",
+    "selenium-webdriver": "~>2.53.2"
+  }
+}
