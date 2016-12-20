@@ -2352,6 +2352,8 @@
 		}
 
 		Client.isSupported = Client.WebSocket !== null;
+		
+		if(!Client.isSupported){ return } // TODO: For now, don't do anything in browsers/servers that don't work. Later, use JSONP fallback and merge with server code?
 
 		// Ensure the protocol is correct.
 		Client.formatURL = function (url) {
