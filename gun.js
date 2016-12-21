@@ -2198,9 +2198,9 @@
 			);
 		}
 
-		function Client (url, options) {
+		function Client (url, options, wscOptions ) {
 			if (!(this instanceof Client)) {
-				return new Client(url, options);
+				return new Client(url, options, wscOptions);
 			}
 
 			this.url = Client.formatURL(url);
@@ -2211,6 +2211,7 @@
 			this.on = Gun.on;
 
 			this.options = options || {};
+			this.options.wsc = wscOptions;
 			this.resetBackoff();
 		}
 
@@ -2234,7 +2235,7 @@
 
 			connect: function () {
 				var client = this;
-				var socket = new Client.WebSocket(this.url);
+				var socket = new Client.WebSocket(this.url, this.options.wsc.protocols, this.options.wsc );
 				this.socket = socket;
 
 				// Forward messages into the emitter.
@@ -2416,7 +2417,7 @@
 					return;
 				}
 
-				var client = new Client(url, options.backoff);
+				var client = new Client(url, options.backoff, gun.Back('opt.wsc') || {protocols:null});
 
 				// Add it to the pool.
 				Client.pool[url] = client;
