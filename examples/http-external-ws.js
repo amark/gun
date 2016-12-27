@@ -42,13 +42,13 @@ function acceptConnection( connection ) {
     gunPeers.push( connection );
     gun.on('out', (msg)=>{
         msg = JSON.stringify({headers:{},body:msg});
-        gunPeers.forEach( (peer)=>{ peer.send( msg ) })
+        gunPeers.forEach( function(peer){ peer.send( msg ) })
     })
-    connection.on( 'error',(error)=>{console.log( "WebSocket Error:", error } );
-    connection.on( 'message',(msg)=>{gun.on('in',JSON.parse( msg.utf8Data).body)})
-    connection.on( 'close', (reason,desc)=>{
+    connection.on( 'error',function(error){console.log( "WebSocket Error:", error } );
+    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg.utf8Data).body)})
+    connection.on( 'close', function(reason,desc){
         // gunpeers gone.
-        var i = peers.find( p=>p===connection );
+        var i = peers.findIndex( function(p){return p===connection} );
         if( i >= 0 )
             gunPeers.splice( i, 1 );
 
