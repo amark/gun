@@ -35,15 +35,15 @@ wss.on('connection',acceptConnection )
 
 var gunPeers = [];  // used as a list of connected clients.
 
+gun.on('out', function(msg){
+	msg = JSON.stringify({headers:{},body:msg});
+	gunPeers.forEach( function(peer){ peer.send( msg ) })
+})
 function acceptConnection( connection ) {
     // connection.upgradeReq.headers['sec-websocket-protocol'] === (if present) protocol requested by client
     // connection.upgradeReq.url  === url request
     console.log( "connect?", req.upgradeReq.headers, req.upgradeReq.url )
     gunPeers.push( connection );
-    gun.on('out', (msg)=>{
-        msg = JSON.stringify({headers:{},body:msg});
-        gunPeers.forEach( function(peer){ peer.send( msg ) })
-    })
     connection.on( 'error',function(error){console.log( "WebSocket Error:", error } );
     connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg.utf8Data).body)})
     connection.on( 'close', function(reason,desc){
