@@ -35,7 +35,7 @@ wss.on('connection',acceptConnection )
 
 var gunPeers = [];  // used as a list of connected clients.
 
-gun.on('out', function(msg){
+Gun.on('out', function(msg){
 	msg = JSON.stringify({headers:{},body:msg});
 	gunPeers.forEach( function(peer){ peer.send( msg ) })
 })
