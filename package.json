@@ -47,13 +47,13 @@
     "iojs": ">=0.0.1"
   },
   "dependencies": {
-    "aws-sdk": "~>2.0.0",
-    "formidable": "~>1.0.15",
-    "ws": "~>1.0.1"
+    "aws-sdk": ">2.7.20",
+    "formidable": ">1.0.17",
+    "ws": ">1.1.1"
   },
   "devDependencies": {
-    "express": "~>4.13.4",
-    "mocha": "~>1.9.0",
-    "uglify-js": "~>2.2.0"
+    "express": ">4.14.0",
+    "mocha": ">3.2.0",
+    "uglify-js": ">2.7.5"
   }
 }
