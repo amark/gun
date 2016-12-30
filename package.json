@@ -43,11 +43,11 @@
     "iojs": ">=0.0.1"
   },
   "dependencies": {
-    "aws-sdk": "~>2.0.0",
-    "formidable": "~>1.0.15",
-    "ws": "~>1.0.1"
+    "aws-sdk": "~>2.7.20",
+    "formidable": "~>1.0.17",
+    "ws": "~>1.1.1"
   },
   "devDependencies": {
-    "mocha": "~>1.9.0"
+    "mocha": "~>3.2.0"
   }
 }
