@@ -1137,7 +1137,7 @@
 		}
 		function input(at, ev){
 			at = at._ || at;
-			var cat = this, gun = at.gun, coat = gun._, change = at.put, tmp;
+			var cat = this, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, tmp;
 			console.debug(107, 'in', cat, cat.get, change, cat.next, cat.maps, cat.soul);
 			console.debug(106, 'in', cat, cat.get, change, cat.next, cat.maps, cat.soul);
 			console.debug(105, 'in', cat, cat.get, change, cat.next, cat.maps, cat.soul);
@@ -1149,7 +1149,10 @@
 			console.debug(4, 'in', cat.get, change, cat.next, cat.maps);
 			console.debug(22, 'in', cat, cat.get, change, cat.next, cat.maps, cat.soul);
 			console.debug(21, 'in', cat, cat.get, change, cat.next, cat.maps, cat.soul);
-			if(cat.maps){
+			if(tmp = back.map){
+				tmp.on('in', obj_to(at, {get: cat.get, gun: cat.gun}));
+			}
+			/*if(cat.maps){
 				var proxy = obj_to(at, {get: cat.get, gun: cat.gun}); // TODO: BUG! Broken via!
 				console.debug(14, 'in', cat, cat.get, change, proxy.put);
 				obj_map(cat.maps, function(cat){
@@ -1157,7 +1160,7 @@
 				});
 				console.debug(18, 'in', cat, cat.get, change, proxy.put);
 				console.debug(24, "REMEMBER", cat.get, change, cat.next, cat.maps);
-			}
+			}*/
 			console.debug(11, 'in', cat.get, change, cat.next, cat.maps, cat.soul);
 			if(value.call(cat, at, ev)){
 				return;
@@ -1236,7 +1239,13 @@
 			if(node_ === key){ return }
 			var cat = this.cat, next = cat.next || {}, via = this.at, gun, chain, at, tmp;
 			console.debug(26, 'map -->>', key, data, next);
-			if(!(gun = next[key])){ return }
+			if(!(gun = next[key])){
+				if(cat.map){
+					gun = cat.gun.get(key, null, {path: true});
+				} else {
+					return;
+				}
+			}
 			at = gun._;
 			if(at.field){
 				at.put = data;
@@ -1654,9 +1663,11 @@
 				}
 			}
 			Gun.HAM.union = function(vertex, node, opt){
-				if(!node || !vertex || !node._ || !vertex._){ return }
+				if(!node || !node._){ return }
+				vertex = vertex || Gun.node.soul.ify({_:{'>':{}}}, Gun.node.soul(node));
+				if(!vertex || !vertex._){ return }
 				opt = num_is(opt)? {machine: opt} : {machine: Gun.state()};
-				opt.union = Gun.obj.copy(vertex); // TODO: PERF! This will slow things down!
+				opt.union = vertex || Gun.obj.copy(vertex); // TODO: PERF! This will slow things down!
 				// TODO: PERF! Biggest slowdown (after localStorage) is the above line. Fix! Fix!
 				opt.vertex = vertex;
 				opt.node = node;
@@ -1697,7 +1708,7 @@
 				if(!at.put){ return } // TODO: BUG! Handle this case! `not` founds, errors, etc.
 				obj_map(at.put, function(node, soul){ var graph = this.graph;
 					put[soul] = Gun.HAM.delta(graph[soul], node, {graph: graph}); // TODO: PERF! SEE IF WE CAN OPTIMIZE THIS BY MERGING UNION INTO DELTA!
-					graph[soul] = Gun.HAM.union(graph[soul] || node, node) || graph[soul];
+					graph[soul] = Gun.HAM.union(graph[soul], node) || graph[soul];
 				}, root);
 				obj_map(put, function(node, soul){
 					var root = this, next = root.next || (root.next = {}), gun = next[soul] || (next[soul] = root.gun.get(soul));
@@ -2092,8 +2103,8 @@
 			//cb = cb || function(){ return this } // TODO: API BREAKING CHANGE! 0.5 Will behave more like other people's usage of `map` where the passed callback is a transform function. By default though, if no callback is specified then it will use a transform function that returns the same thing it received.
 			if(chain){ return chain }
 			chain = cat.map = gun.chain();
-			chain._.set = {};
-			gun.on('in', map, chain._);
+			//chain._.set = {};
+			//gun.on('in', map, chain._);
 			if(cb){
 				console.log("map!");
 				chain.on(cb);
@@ -2139,6 +2150,7 @@
 	})(require, './set');
 
 	;require(function(module){
+		return;
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
 		var root, noop = function(){};
