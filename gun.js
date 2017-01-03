@@ -1130,6 +1130,10 @@
 					return;
 				}
 				if(HAM.defer){ // TODO: BUG! Not implemented.
+					union[field] = value; // WRONG! BUG! Need to implement correct algorithm.
+					state_ify(union, field, is); // WRONG! BUG! Need to implement correct algorithm.
+					// filler algorithm for now.
+					return;
 					/*upper.wait = true;
 					opt.upper.call(state, vertex, field, incoming, ctx.incoming.state); // signals that there are still future modifications.
 					Gun.schedule(ctx.incoming.state, function(){
