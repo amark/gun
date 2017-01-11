@@ -2448,7 +2448,7 @@
 
 		function request (peers, ctx) {
 			if (Client.isSupported) {
-				Client.broadcast(peers, { body: ctx });
+				Client.broadcast(peers, ctx);
 			}
 		}
 
@@ -2457,13 +2457,14 @@
 			var gun = ctx.gun;
 
 			var peers = gun.Back('opt.peers') || {};
+			var headers = gun.Back('opt.headers') || {};
 
 			// Validate.
 			if (Gun.obj.empty(peers)) {
 				return;
 			}
 
-			request(peers, ctx);
+			request(peers, {body: ctx, headers: headers});
 		});
 
 		request.jsonp = function (opt, cb) {
