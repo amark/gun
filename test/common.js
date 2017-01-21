@@ -155,6 +155,7 @@ describe('Performance', function(){ return; // performance tests
 });
 
 describe('Gun', function(){
+  var expect = require('chai').expect;
 	var t = {};
 	
 	describe('Utility', function(){

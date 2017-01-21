@@ -1,10 +1,10 @@
-describe('All', function(){ 
+describe('All', function(){
 	return;
-	var expect = global.expect = require("./expect");
+	var expect = require("chai").expect;
 
 	var Gun = Gun || require('../gun');
 	(typeof window === 'undefined') && require('../lib/file');
-	
+
 	var gun = Gun({file: 'data.json'});
 
 	var keys = {
@@ -36,7 +36,7 @@ describe('All', function(){
 			'user/marknadal/messages/lol': { '#': 'hjkl' },
 			'user/marknadal/messages/nano': { '#': 'vbnm' },
 			'user/marknadal/messages/sweet': { '#': 'xcvb' },
-			'user/marknadal/posts': { '#': 'qvtxz' } 
+			'user/marknadal/posts': { '#': 'qvtxz' }
 		});
 	});
 
