@@ -591,14 +591,14 @@
 			Node.is = function(n, cb, o){ var s; // checks to see if an object is a valid node.
 				if(!obj_is(n)){ return false } // must be an object.
 				if(s = Node.soul(n)){ // must have a soul on it.
-					return !obj_map(n, map, {o:o,n:n,cb:cb});
+					return !obj_map(n, map, {o:o,cb:cb,s:s,n:n});
 				}
 				return false; // nope! This was not a valid node.
 			}
 			function map(v, f){ // we invert this because the way we check for this is via a negation.
 				if(f === Node._){ return } // skip over the metadata.
 				if(!Val.is(v)){ return true } // it is true that this is an invalid node.
-				if(this.cb){ this.cb.call(this.o, v, f, this.n) } // optionally callback each field/value.
+				if(this.cb){ this.cb.call(this.o, v, f, this.s, this.n) } // optionally callback each field/value.
 			}
 		}());
 		;(function(){
