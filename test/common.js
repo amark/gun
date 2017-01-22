@@ -1710,14 +1710,18 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/mutate/n/u').map().on(function(v,f){
 					check[v.name] = f;
+					count[v.name] = (count[v.name] || 0) + 1;
 					//console.log("*****************", f,v);
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						setTimeout(function(){
 							expect(done.last).to.be.ok();
 							expect(check['Alice Aabca']).to.not.be.ok();
+							expect(count['Alice']).to.be(1);
+							expect(count['Bob']).to.be(1);
+							expect(count['Alice Zzxyz']).to.be(1);
 							done();
 						},100);
 					}
@@ -1761,15 +1765,20 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/p/mutate/n/u').map().path('name').on(function(v,f){
 					check[v] = f;
+					count[v] = (count[v] || 0) + 1;
+					//console.log("*************", f,v);
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						setTimeout(function(){
 							var a = Gun.obj.map(gun._.graph['u/m/p/m/n/u/soul'], function(v,f,t){t(v)});
 							expect(a.length).to.be(2);
 							expect(done.last).to.be.ok();
 							expect(check['Alice Aabca']).to.not.be.ok();
+							expect(count.Alice).to.be(1);
+							expect(count.Bob).to.be(1);
+							expect(count['Alice Zzxyz']).to.be(1);
 							done();
 						},100);
 					}
@@ -1805,13 +1814,18 @@ describe('Gun', function(){
 						pet: {b:2, name: "Frisky"}
 					}
 				}, s)});
-				var check = {};
+				var check = {}, count = {};
 				gun.get('u/m/p/n/mutate/n/u').map().path('pet').on(function(v,f){
 					check[v.name] = f;
+					count[v.name] = (count[v.name] || 0) + 1;
+					//console.log("*****************", f,v);
 					if(check.Fluffy && check.Frisky && check.Fuzzball){
 						setTimeout(function(){
 							expect(done.last).to.be.ok();
 							expect(check['Fluffs']).to.not.be.ok();
+							expect(count.Fluffy).to.be(1);
+							expect(count.Frisky).to.be(1);
+							expect(count.Fuzzball).to.be(1);
 							done();
 						},100);
 					}
@@ -1837,13 +1851,17 @@ describe('Gun', function(){
 			it("get before put in memory", function(done){
 				var gun = Gun();
 				var check = {};
+				var count = {};
 				gun.get('g/n/m/f/l/n/r').map().on(function(v,f){
 					console.log("***********", f,v);
 					check[f] = v;
+					count[f] = (count[f] || 0) + 1;
 					if(check.alice && check.bob && check.alice.PhD){
 						expect(check.alice.age).to.be(24);
 						expect(check.bob.age).to.be(26);
 						expect(check.alice.PhD).to.be(true);
+						expect(count.alice).to.be(2);
+						expect(count.bob).to.be(1);
 						done();
 					}
 				});
@@ -1873,7 +1891,6 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
-					console.debug.i=1;console.log("----------");
 					gun.get('GALICE1').put({PhD: true});
 				},300);
 			});
@@ -1913,6 +1930,7 @@ describe('Gun', function(){
 				gun.get('users').path('alice').on(cb);
 			})
 			*/
+			return;
 			it("in memory get after", function(done){
 				console.debug.i=1;console.log("-----------------------------");
 				var gun = Gun();
@@ -1942,7 +1960,7 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				gun.get('g/n/m/f/l/n').path('bob.spouse.work').on(function(v,f){ console.log("!!!!!!!!!", f, v);});return;
+				//gun.get('g/n/m/f/l/n').path('bob.spouse.work').on(function(v,f){ console.log("!!!!!!!!!", f, v);});return;
 				gun.get('g/n/m/f/l/n').map().on(function(v,f){
 					check[f] = v;
 					console.log("*******************", f, v);

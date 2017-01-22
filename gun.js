@@ -939,15 +939,18 @@
 			}
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
-				if(!node){ return }
 				var next = cat.next || (cat.next = {}), as = (next[soul] || (next[soul] = cat.gun.get(soul)))._;
+				if(!node){
+					as.ask = 1;
+					return;
+				}
 				if(field){
 					if(!obj_has(node, field)){ return }
 					tmp = Gun.obj.put(Gun.node.soul.ify({}, soul), field, node[field]);
 					node = Gun.state.ify(tmp, field, Gun.state.is(node, field));
 				} else {
 					if(!as.ask){ return }
-					as.ask = 1;	
+					as.ask = 1;
 				}
 				as.on('in', {
 					'@': at['#'],
@@ -1158,8 +1161,6 @@
 			/*if(cat.field && (tmp = back.map)){
 				tmp.on('in', obj_to(at, {get: cat.get, gun: cat.gun}));
 			} else*/
-			console.debug(3, 'in', cat.get, at.put, cat.maps, cat.next);
-			console.debug(2, 'in', cat.get, at.put, cat.maps, cat.next);
 			if(cat.maps){
 				var proxy = obj_to(at, {get: cat.get, gun: cat.gun}); // TODO: BUG! Broken via!
 				obj_map(cat.maps, function(cat){
@@ -1177,8 +1178,9 @@
 			if(cat.soul){
 				return;
 			}
+			// TODO: At some point be compatible with non-gun specific data.
 			if(u === put){
-				if(cat === coat){
+				if(cat.field){
 					not(cat, at);
 				} else {
 					Gun.obj.del(coat.maps, cat.id);
@@ -1196,44 +1198,51 @@
 					}
 				}*/
 				if(Gun.val.is(put)){
-					if(cat === coat){
+					if(cat.field){
 						not(cat, at);
 					} else {
 						(coat.maps || (coat.maps = {}))[cat.id] = cat;
 						(cat.mapped || (cat.mapped = {}))[coat.id] = coat;
-						if(u === coat.put){ ev.stun() } // Let coat's event retrigger the map
+						if(u === coat.put){ ev.stun() } // If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
 					}
 					return true;
 				}
-				if(coat.soul && cat.field){
-					cat.put = coat.put;
-				}
-				if(coat.field && u === coat.put || Gun.val.rel.is(coat.put)){ // just in case a `map` beats the field.
-					coat.put = at.put;
+				if(cat.field){
+					if(coat.soul){
+						cat.put = coat.put;
+					}
+				} else 
+				if(coat.field){
+					if(tmp = Gun.node.soul(put)){
+						coat.put = (cat.root.get(tmp)._).put;
+					} else {
+						// TODO: At some point be compatible with non-gun specific data.
+					}
 				}
 				return;
 			};
 			if(coat !== cat){
 				(coat.maps || (coat.maps = {}))[cat.id] = cat;
 				(cat.mapped || (cat.mapped = {}))[coat.id] = coat;
-				if(coat.proxy){
-					//return true;
-				}
 			}
 			if(coat.proxy){
 				if(rel === coat.proxy.rel){
 					ev.stun();
 					//ask(cat, rel); // In the use cases so far, it is important that this is commented out and therefore not used! Test 'uncached synchronous map on mutate', so if at any point you are working through the tests and need to uncomment it that suggests there is a point where an already present chain with the same relation hasn't/wasn't able to load the asked for children. Because currently with it commented out (if it weren't) it produces false positive undefineds to children - which if we need to have this uncommented, we might be able to find a logical case where we can detect that those are unnecessary (perhaps by checking the at.put value).
-					tmp = coat.proxy.ref._;
-					at.put = coat.put = tmp.put;
+					tmp = coat.proxy.ref;
+					if(obj_has(tmp, 'put')){
+						coat.put = tmp.put;
+					}
 					return true;
 				}
 				not(coat, at);
 			}
-			coat.proxy = {rel: rel, ref: coat.root.get(rel)};
-			coat.proxy.sub = (tmp = coat.proxy.ref._).on('in', input, coat); // TODO: BUG!!! If you have disabled the event system itself handling promise/observable then you might have to do some manual work here. FIXED? With below `put` check. Note: Most everything else in this values function seems to be rock solid.
+			coat.proxy = {rel: rel, ref: (tmp = coat.root.get(rel)._)};
+			coat.proxy.sub = tmp.on('in', input, coat); // TODO: BUG!!! If you have disabled the event system itself handling promise/observable then you might have to do some manual work here. FIXED? With below `put` check. Note: Most everything else in this values function seems to be rock solid.
 			if(obj_has(tmp, 'put')){
 				coat.put = tmp.put; // TODO: BUG? We might want to retrigger ourselves to hit maps? I am pretty sure that if this has observable behavior we need to re-trigger. Note: Most everything else in this values function seems to be rock solid.
+				// consider `gun.get('users').map().path('foo').on(cb)` followed by `gun.put(GRAPH)`?
+				// fairly confident this needs to re-trigger.
 			}
 			tmp = coat.put;
 			ask(cat, rel);
@@ -1281,31 +1290,31 @@
 					at.put = u;
 				}
 				at.on('in', {
+					via: at, // TODO: BUG? mismatching scope?
 					get: key,
-					put: u,
 					gun: gun,
-					via: at // TODO: BUG? mismatching scope?
-				})
+					put: u
+				});
 			});
 		}
 		function ask(cat, soul){
 			var tmp;
 			if(cat.ask){
 				if(0 >= cat.ask){ return }
-				tmp = cat.root.get(soul);
-				tmp._.on('out', {
+				tmp = cat.root.get(soul)._;
+				tmp.on('out', {
 					get: {'#': soul},
-					gun: tmp,
-					'#': Gun.on.ask(Gun.HAM.synth, tmp)
+					'#': Gun.on.ask(Gun.HAM.synth, tmp.gun),
+					gun: tmp.gun
 				});
 				return;
 			}
 			if(0 === cat.ask){ return }
 			obj_map(cat.next, function(gun, key){
-				gun._.on('out', {
+				(gun._).on('out', {
 					get: {'#': soul, '.': key},
-					gun: gun,
-					'#': Gun.on.ask(Gun.HAM.synth, gun)
+					'#': Gun.on.ask(Gun.HAM.synth, gun),
+					gun: gun
 				});
 			});
 		}
@@ -1690,9 +1699,10 @@
 			Gun.HAM.synth = function(at, ev){ var gun = this;
 				var cat = gun._, root = cat.root._, put = {}, tmp;
 				if(!at.put){
+					if(obj_has(cat, 'put')){ return }
 					cat.on('in', {
 						get: cat.get,
-						put: cat.put = u,
+						put: cat.put,
 						gun: gun,
 						via: at
 					})
@@ -1712,7 +1722,6 @@
 						Gun.HAM.synth.call(cat.gun, at, ev)
 						return;
 					}
-					console.debug(1, '->', soul, node);
 					gun._.on('in', {
 						put: node,
 						get: soul,
@@ -1980,11 +1989,11 @@
 			if(opt.change){
 				data = at.put;
 			}
-			// DEDUPLICATE
-			if(tmp.put === data && tmp.get === id){ return }
+			// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
+			if(tmp.put === data && tmp.get === id && !Gun.node.soul(data)){ return }
 			tmp.put = data;
 			tmp.get = id;
-			// DEDUPLICATE
+			// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
 			cat.last = data;
 			if(opt.as){
 				opt.ok.call(opt.as, at, ev);
@@ -2182,7 +2191,7 @@
 			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
 			//console.log('@@@@@@@@@@@@local get', data, at);
 			gun.back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
-			//},100);
+			//},11);
 		}
 		Gun.on('put', put);
 		Gun.on('get', get);
