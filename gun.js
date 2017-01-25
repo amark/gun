@@ -2421,7 +2421,7 @@
 					return;
 				}
 
-				var client = new Client(url, options.backoff, gun.Back('opt.wsc') || {protocols:null});
+				var client = new Client(url, options.backoff, gun.Back('opt.wsc') || {protocols:['gun']});
 
 				// Add it to the pool.
 				Client.pool[url] = client;
