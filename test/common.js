@@ -2,7 +2,7 @@
 	root = env.window? env.window : root;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
-	root.Gun = root.Gun || require('../gun');
+	root.Gun = root.Gun || require('../index');
 }(this));
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
@@ -1895,7 +1895,8 @@ describe('Gun', function(){
 							expect(check.alice.PhD).to.be(true);
 							//expect(count.alice).to.be(2);
 							//expect(count.bob).to.be(1);
-							done();
+							if(done.c){return}
+							done();done.c=1;
 						},50);
 					}
 				});
@@ -1988,6 +1989,7 @@ describe('Gun', function(){
 							expect(check.alice).to.be('name');
 							expect(check.bob).to.be('name');
 							expect(check.Alice).to.be('name');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2079,6 +2081,7 @@ describe('Gun', function(){
 							expect(check['GUN INC']).to.be('work');
 							expect(check['ACME INC']).to.be('work');
 							expect(check['ACME INC.']).to.be('work');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2175,6 +2178,7 @@ describe('Gun', function(){
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2282,6 +2286,7 @@ describe('Gun', function(){
 							expect(check.GUN).to.be('name');
 							expect(check.ACME).to.be('name');
 							expect(check.ACMEINC).to.be('name');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2384,6 +2389,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('state');
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2512,6 +2518,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('code');
 							expect(check.TX).to.be('code');
 							expect(check.MA).to.be('code');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -2681,6 +2688,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('state');
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
