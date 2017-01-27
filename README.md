@@ -52,61 +52,67 @@ gun.get('mark').on(function(data, key){
 ```
 ## Support
 
-Help support development: https://www.patreon.com/gunDB !
+ - Help support development: https://www.patreon.com/gunDB !
+ - Ask questions: http://stackoverflow.com/questions/tagged/gun ?
+ - Chat with us: https://gitter.im/amark/gun .
 
-Ask questions: http://stackoverflow.com/questions/tagged/gun ?
+## Deploy
 
-Chat with us: https://gitter.im/amark/gun .
-
-## Quick dev/test Deployments
-
- - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc)
- 
-### [Docker](https://www.docker.com/) 
-
-[![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
-
- - Either (fastest) from the [Docker Hub](https://hub.docker.com/r/gundb/gun/)(Built at [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own commit badge on microbadger.com")):
-
-```bash
-   docker run -p 8080:8080 gundb/gun
-```
- - Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
-
-```bash
-   git clone https://github.com/amark/gun.git
-   cd gun
-   docker build -t myrepo/gundb:v1 .
-   docker run -p 8080:8080 myrepo/gundb:v1
-```
- - Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
- 
- ```bash
-   npm run docker
-   docker run -p 8080:8080 usenameHere/gun:git
-```
-   Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+To quickly spin up a Gun test server for your development team, utilize either [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. !
    
 ### [Heroku](https://www.heroku.com/)
- - Either click [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun/tree/0.5) to deploy to your existing Heroku account immediately, OR:
 
-   ```bash
-   git clone https://github.com/amark/gun.git
-   cd gun
-   heroku create
-   git push -f heroku HEAD:master
-   ```
-   Then visit the URL in the output of the 'heroku create' step, in your browser.
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun/tree/0.5)
+
+Or:
+
+```bash
+git clone https://github.com/amark/gun.git
+cd gun
+heroku create
+git push -f heroku HEAD:master
+```
+
+Then visit the URL in the output of the 'heroku create' step, in a browser.
 
 ### [Now.sh](https://zeit.co/now/)
-   ```bash
-   npm install -g now
-   git clone https://github.com/amark/gun.git
-   cd gun
-   now --npm
-   ```
-   Then visit the URL in the output of the 'now --npm' step, in your browser.
+
+```bash
+npm install -g now
+git clone https://github.com/amark/gun.git
+cd gun
+now --npm
+```
+Then visit the URL in the output of the 'now --npm' step, in your browser.
+
+### [Docker](https://www.docker.com/) 
+
+[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
+
+Pull from the [Docker Hub](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun). Or:
+
+```bash
+docker run -p 8080:8080 gundb/gun
+```
+
+Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
+
+```bash
+git clone https://github.com/amark/gun.git
+cd gun
+docker build -t myrepo/gundb:v1 .
+docker run -p 8080:8080 myrepo/gundb:v1
+```
+
+Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
+ 
+ ```bash
+npm run docker
+docker run -p 8080:8080 usenameHere/gun:git
+```
+
+Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+
    
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
