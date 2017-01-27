@@ -26,28 +26,37 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 ## Quickstart
 
-Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer). Or run the NodeJS [demo example apps](#demos) (**5min** ~ average developer).
+ - Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer).
+ - Or run the NodeJS examples `npm install gun && cd node_modules/gun && npm start` (**5min** ~ average developer).
 
-Jump right into the [gun playground](http://jsbin.com/miredog/edit?js,console) and start testing whatever functions you want.
+> **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
+> If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
-Quick note: All active development is happening on `0.5` branch, which has the upcoming **30M+ ops/sec** performance improvements!
+- Or write a quick app: ([try now in jsbin](http://jsbin.com/saxewigote/edit?js,console))
+```html
+<script src="http://rawgit.com/amark/gun/master/gun.js"></script>
+<script>
+// var Gun = require('gun'); // in NodeJS
+// var Gun = require('gun/gun'); // in React
+var gun = Gun();
 
-## Demos
+gun.get('mark').put({
+  name: "Mark",
+  email: "mark@gunDB.io",
+});
 
- - [Online example applications](http://gunjs.herokuapp.com/)
- - The above examples are included in this repo. You can run them locally by running the following commands in your terminal or on your command line:
+gun.get('mark').on(function(data, key){
+  console.log("update:", data);
+});
+</script>
+```
+## Support
 
-   > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
+Help support development: https://www.patreon.com/gunDB !
 
-   ```bash
-   npm install gun
-   cd node_modules/gun
-   node examples/http.js 8080
-   ```
+Ask questions: http://stackoverflow.com/questions/tagged/gun ?
 
-   Then visit [http://localhost:8080](http://localhost:8080) in your browser. 
-
-   If that did not work it is probably because npm installed it to a global directory. To fix that try `mkdir node_modules` in your desired directory and re-run the above commands. You also might have to add `sudo` in front of the commands.
+Chat with us: https://gitter.im/amark/gun .
 
 ## Quick dev/test Deployments
 
