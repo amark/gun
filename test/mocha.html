@@ -1,7 +1,16 @@
 <html>
 	<head>
-		<title>GUN Tests</title>
+		<title>Gun Tests</title>
 		<link rel="stylesheet" href="./mocha.css"/>
+		<style>
+		</style>
+	  </head>
+	</head>
+	<body>
+		Gun Tests
+		<div id="debug"></div>
+		<div id="mocha"></div>
+		
 		<script src="./json2.js"></script>
 		<script src="./mocha.js"></script>
 		<script>mocha.setup({ui:'bdd',globals:[]});</script>
@@ -9,14 +18,6 @@
 		<script></script>
 		<script src="../gun.js"></script>
 		<script src="./common.js"></script>
-		<style>
-		</style>
-	  </head>
-	</head>
-	<body onload="mocha.run()">
-		<h1>GUN Tests</h1>
-		Warning! You cannot run these tests in the background, this tab must be in active focus.
-		<div id="debug"></div>
-		<div id="mocha"></div>
+		<script>mocha.run()</script>
 	</body>
 </html>

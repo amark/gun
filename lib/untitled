@@ -1,0 +1,45 @@
+;(function(exports){ // On event emitter generic javascript utility.
+	function On(){ var on = this;
+		if(!On.is(on)){ return new On() }
+		return function(e, fn, i){ return on.e = e, fn? on.event(fn, i) : on };
+	};
+	On.is = function(on){ return (on instanceof On) }
+	On.chain = On.prototype;
+	On.chain.create = function(){ return On.call(null) }
+	var on = function(e){
+		on.event.e = e;
+		on.event.s[e] = on.event.s[e] || [];
+		return on;
+	};
+	On.chain.emit = function(a,b,c,d){
+		var on = this, e = on.e, s = on.s[e];
+		exports.list.map(s, function(at, i){ at.on(a,b,c,d) });
+		if(s && !s.length){ delete on.s[e] }
+	}
+	function At(fn, i){ var at = this;
+		if(!At.is(at)){ return new At() }
+		at.on = fn;
+		at.i = i; // TODO: MARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COME BACK HERE!
+	};
+	At.is = function(at){ return (at instanceof At) }
+	On.chain = On.prototype;
+	On.chain.event = function(fn, i){
+	//on.event = function(fn, i){
+		var on = this, e = on.e, s = on.s[e] = on.s[e] || [], at = At(fn, i);
+		var e = {fn: fn, i: i || 0, off: function(){ return !(e.fn = false) }}; // TODO: PERFORMANCE! Prototype-ify this and reduce any on complexity.
+		return s.push(e), i? s.sort(sort) : i, e;
+	}
+		//on.event.s = {};
+		//return on;
+
+	var sort = exports.list.sort('i');
+	exports.on = On; //On();
+}(Gun || {}));
+
+
+/*
+on('foo', function(){
+
+})
+
+on('foo').emit('yay');*/
