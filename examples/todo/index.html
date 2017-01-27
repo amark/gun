@@ -21,7 +21,7 @@
 			todo.on(function(list){ // subscribe and listen to all updates on the todo.
 				var html = ''; // old school HTML strings! You should probably use a real template system.
 				for(field in list) { // iterate over the list to generate the HTML.
-					if(!list[field] || field == Gun._.meta) continue; // ignore nulled out values and metadata.
+					if(!list[field] || field == '_') continue; // ignore nulled out values and metadata.
 					html += '<li>'
 						+ clean(list[field])
 						+ '<button style="float:right;" onclick=todone("'+field+'")>X</button>'

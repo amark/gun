@@ -771,7 +771,7 @@
 		Dup.prototype.gc = function(){
 			var de = this, now = Type.time.is(), oldest = now, maxAge = 5 * 60 * 1000;
 			// TODO: Gun.scheduler already does this? Reuse that.
-			Gun.obj.map(de.cache, function(time, id){
+			Type.obj.map(de.cache, function(time, id){
 				oldest = Math.min(now, time);
 				if ((now - time) < maxAge){ return }
 				Type.obj.del(de.cache, id);
@@ -824,10 +824,10 @@
 		;(function(){
 			Gun.create = function(at){
 				at.on = at.on || Gun.on;
-				var gun = at.gun.opt(at.opt);
-				at.root = at.root || gun;
+				at.root = at.root || at.gun;
 				at.graph = at.graph || {};
 				at.dup = at.dup || new Gun.dup;
+				var gun = at.gun.opt(at.opt);
 				if(!at.once){
 					at.on('in', input, at);
 					at.on('out', output, at);
@@ -924,8 +924,8 @@
 					tmp = obj_map(tmp, function(url, i, map){
 						map(url, {});
 					});
+					at.opt.peers = obj_to(tmp, at.opt.peers || {});
 				}
-				at.opt.peers = obj_to(tmp, at.opt.peers || {});
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 				Gun.on('opt', at);
 				return gun;
@@ -1105,7 +1105,7 @@
 			}
 			if(u === change){
 				ev.to.next(at);
-				echo(cat, at);
+				echo(cat, at, ev);
 				if(cat.field || cat.soul){
 					not(cat, at);
 				} else {
@@ -1129,7 +1129,7 @@
 						//if(u === coat.put){ return } // Not necessary but improves performance. If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
 					}
 					ev.to.next(at);
-					echo(cat, at);
+					echo(cat, at, ev);
 					return;
 				}
 				if(cat.field){
@@ -1145,16 +1145,17 @@
 					}
 				}
 				ev.to.next(at);
-				echo(cat, at);
+				echo(cat, at, ev);
 				obj_map(change, map, {at: at, cat: cat});
 				return;
 			}
 			if(relate(cat, at, ev)){ return } // if return not necessary but improves performance.
-			echo(cat, at);
+			echo(cat, at, ev);
 		}
 		Gun.chain.chain.input = input;
-		function echo(cat, at){
+		function echo(cat, at, ev){
 			if(!cat.echo){ return }
+			at.event = ev;
 			obj_map(cat.echo, function(cat){ // TODO: PERF! Cache
 				cat.on('in', at);
 			});
@@ -1331,7 +1332,7 @@
 			if(u === cat.put && u !== at.put){ // TODO: Use state instead?
 				return ev.to.next(at); // For a field that has a value, but nothing on its context, then that means we have received the update out of order and we will receive it from the context, so we can deduplicate this one.
 			}*/
-			as.use(at, ev);
+			as.use(at, at.event || ev);
 			ev.to.next(at);
 		}
 		var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
@@ -1426,10 +1427,10 @@
 			}, {as: as, at: at});
 		}
 
-		function soul(at, ev){ var as = this.as, as = as.as, cat = as.at;
-			ev.stun(); // TODO: BUG!?
+		function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
+			//ev.stun(); // TODO: BUG!?
 			ev.off();
-			cat.soul(Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.Back('opt.uuid') || Gun.text.random)()); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			cat.soul(Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)()); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			as.stun[cat.path] = false;
 			as.batch();
 		}
@@ -1488,30 +1489,10 @@
 			ev.off();
 			if(!as.not && !(as.soul = Gun.node.soul(data))){
 				if(as.path && obj_is(as.data)){ // Apparently necessary
-					as.soul = (opt.uuid || as.gun.Back('opt.uuid') || Gun.text.random)();
+					as.soul = (opt.uuid || as.gun.back('opt.uuid') || Gun.text.random)();
 				} else {
-					/*
-						TODO: CLEAN UP! Is any of this necessary?
-					*/
-					if(!at.get){
-						console.log("Please report this as an issue! Put.any.no.soul");
-						return;
-					}
-					(as.next = as.next || Gun.on.next(as.ref))(function(next){
-						// TODO: BUG! Maybe don't go back up 1 because .put already does that if ref isn't already specified?
-						(root = as.ref.Back(1)).put(data = obj_put({}, at.get, as.data), opt.any, opt, {
-							opt: opt,
-							ref: root
-						});
-						//Gun.obj.to(opt, {
-						//	ref: null,
-						//	gun: null,
-						//	next: null,
-						//	data: data
-						//}));
-						//next(); // TODO: BUG! Needed? Not needed?
-					});
-					return;
+					//as.data = obj_put({}, as.gun._.get, as.data);
+					as.soul = at.soul;
 				}
 			}
 			if(as.ref !== as.gun && !as.not){
@@ -1708,7 +1689,7 @@
 				opt = opt || {};
 				opt.key = index;
 				opt.any = cb || function(){};
-				opt.ref = gun.Back(-1).get(opt.key);
+				opt.ref = gun.back(-1).get(opt.key);
 				opt.gun = opt.gun || gun;
 				gun.on(key, {as: opt});
 				if(!opt.data){
@@ -1738,7 +1719,7 @@
 			keyed._ = '##';
 			Gun.on('next', function(at){
 				var gun = at.gun;
-				if(gun.Back(-1) !== at.back){ return }
+				if(gun.back(-1) !== at.back){ return }
 				gun.on('in', pseudo, gun._);
 				gun.on('out', normalize, gun._);
 			});
@@ -1750,7 +1731,7 @@
 					return;
 				}
 				if(at.opt && at.opt.key){ return }
-				var put = at.put, graph = cat.gun.Back(-1)._.graph;
+				var put = at.put, graph = cat.gun.back(-1)._.graph;
 				Gun.graph.is(put, function(node, soul){
 					if(!Gun.node.is(graph['#'+soul+'#'], function each(rel,id){
 						if(id !== Gun.val.rel.is(rel)){ return }
@@ -1822,7 +1803,7 @@
 				if(!at.put){ return }
 				var rel = Gun.val.rel.is(at.put[keyed._]);
 				if(!rel){ return }
-				var soul = Gun.node.soul(at.put), resume = ev.stun(resume), root = cat.gun.Back(-1), seen = cat.seen = {};
+				var soul = Gun.node.soul(at.put), resume = ev.stun(resume), root = cat.gun.back(-1), seen = cat.seen = {};
 				cat.pseudo = cat.put = Gun.state.ify(Gun.node.ify({}, soul));
 				root.get(rel).on(each, {change: true});
 				function each(change){
@@ -1950,7 +1931,7 @@
 		}
 
 		function val(at, ev, to){
-			var opt = this.as, cat = opt.cat, data = cat.put || at.put;
+			var opt = this.as, gun = at.gun, cat = gun._, data = cat.put || at.put;
 			if(u === data){
 				return;
 			}
@@ -1979,7 +1960,7 @@
 					});
 				}
 			}
-			if((tmp = gun.Back(-1)) === back){
+			if((tmp = gun.back(-1)) === back){
 				obj_del(tmp.graph, at.get);
 			}
 			if(at.ons && (tmp = at.ons['@$'])){
@@ -2070,7 +2051,7 @@
 		var Gun = require('./core');
 		Gun.chain.init = function(){ // TODO: DEPRECATE?
 			(this._.opt = this._.opt || {}).init = true;
-			return this.Back(-1).put(Gun.node.ify({}, this._.get), null, this._.get);
+			return this.back(-1).put(Gun.node.ify({}, this._.get), null, this._.get);
 		}
 	})(require, './init');
 
@@ -2097,6 +2078,7 @@
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
 		function put(at){ var err, id, opt, root = at.gun._.root;
+			this.to.next(at);
 			(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
 			Gun.graph.is(at.put, function(node, soul){
 				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
@@ -2110,6 +2092,7 @@
 			}
 		}
 		function get(at){
+			this.to.next(at);
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
 			//setTimeout(function(){
 			(opt = at.opt || {}).prefix = opt.prefix || at.gun.back('opt.prefix') || 'gun/';
@@ -2348,6 +2331,7 @@
 		// Define client instances as gun needs them.
 		// Sockets will not be opened until absolutely necessary.
 		Gun.on('opt', function (ctx) {
+			this.to.next(ctx);
 
 			var gun = ctx.gun;
 			var peers = gun.back('opt.peers') || {};
@@ -2360,7 +2344,7 @@
 					return;
 				}
 
-				var client = new Client(url, options.backoff, gun.Back('opt.wsc') || {protocols:null});
+				var client = new Client(url, options.backoff, gun.back('opt.wsc') || {protocols:null});
 
 				// Add it to the pool.
 				Client.pool[url] = client;
@@ -2393,6 +2377,7 @@
 
 		// Broadcast the messages.
 		Gun.on('out', function (ctx) {
+			this.to.next(ctx);
 			var gun = ctx.gun;
 			var peers = gun.back('opt.peers') || {};
 			// Validate.
