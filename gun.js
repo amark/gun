@@ -923,7 +923,8 @@
 					tmp = obj_map(tmp, function(url, i, map){
 						map(url, {});
 					});
-					at.opt.peers = obj_to(tmp, at.opt.peers || {});
+					if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
+					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 				Gun.on('opt', at);
