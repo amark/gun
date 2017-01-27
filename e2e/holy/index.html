@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Holy grail demo</title>
+</head>
+<body>
+	<script src='panic.js'></script>
+	<script src='http://localhost:8080/gun.js'></script>
+
+	<script>
+		(function () {
+			var req = new XMLHttpRequest();
+			req.overrideMimeType('application/json');
+			req.open('GET', 'ports.json');
+			req.addEventListener('load', function () {
+				var ports = JSON.parse(req.responseText);
+				var server = 'http://localhost:' + ports.gun + '/gun';
+				window.gun = new Gun(server);
+				panic.server('http://localhost:' + ports.panic);
+			});
+			req.send();
+		}());
+	</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+body {
+	width: 90%;
+	max-width: 800px;
+	margin: 4em auto;
+	font: 12pt Helvetia, Arial, sans-serif;
+}
+
+section {
+	margin: 0 0 4em;
+}
+
+table {
+	border-spacing: 0;
+	width: 100%;
+}
+
+th, td {
+	vertical-align: top;
+	padding: 0 0 1em 0;
+}
+
+th {
+	text-align: left;
+}
+
+th.th-result {
+	width: 200px;
+}
+
+th.th-remove {
+	width: 0;
+}
+
+td.inputs {
+	padding-right: 1em;
+}
+
+.remove {
+	position: absolute;
+	margin-left: -6em;
+	width: 5em;
+}
+
+input, textarea {
+	margin: 0 0 1em 0;
+	width: 100%;
+	display: block;
+	resize: vertical;
+}
+
+.result.running {
+	color: #ccc;
+}
+
+#abort {
+	display: none;
+}
+.running #abort {
+	display: initial;
+}
+
+.running #run {
+	display: none;
+}

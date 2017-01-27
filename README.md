@@ -9,6 +9,8 @@
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
+[![NPM downloads](https://img.shields.io/npm/dm/gun.svg?style=flat)](https://npmjs.org/package/gun) [![Build Status](https://travis-ci.org/amark/gun.svg?branch=master)](https://travis-ci.org/amark/gun) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/amark/gun?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
 
 GUN is a realtime, distributed, offline-first, graph database engine. Lightweight and powerful, at just **~9KB** gzipped.
 
@@ -47,6 +49,52 @@ Quick note: All active development is happening on `0.5` branch, which has the u
 
    If that did not work it is probably because npm installed it to a global directory. To fix that try `mkdir node_modules` in your desired directory and re-run the above commands. You also might have to add `sudo` in front of the commands.
 
+## Quick dev/test Deployments
+
+ - To quickly spin up a Gun test server for your development team, uilize eiher [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof ([Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc)
+ 
+### [Docker](https://www.docker.com/) 
+ - Either (fastest) from the [Docker Hub](https://hub.docker.com/r/gundb/gun/)(Built at [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own commit badge on microbadger.com")):
+
+```bash
+   docker run -p 8080:8080 gundb/gun
+```
+ - Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
+
+```bash
+   git clone https://github.com/amark/gun.git
+   cd gun
+   docker build -t myrepo/gundb:v1 .
+   docker run -p 8080:8080 myrepo/gundb:v1
+```
+ - Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
+ 
+ ```bash
+   npm run docker
+   docker run -p 8080:8080 usenameHere/gun:git
+```
+   Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+   
+### [Heroku](https://www.heroku.com/)
+ - Either click [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun/tree/0.5) to deploy to your existing Heroku account immediately, OR:
+
+   ```bash
+   git clone https://github.com/amark/gun.git
+   cd gun
+   heroku create
+   git push -f heroku HEAD:master
+   ```
+   Then visit the URL in the output of the 'heroku create' step, in your browser.
+
+### [Now.sh](https://zeit.co/now/)
+   ```bash
+   npm install -g now
+   git clone https://github.com/amark/gun.git
+   cd gun
+   now --npm
+   ```
+   Then visit the URL in the output of the 'now --npm' step, in your browser.
+   
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
  - [Saving relational or document based data](https://www.youtube.com/watch?v=cOO6wz1rZVY&feature=youtu.be) (06:59)
@@ -80,8 +128,7 @@ Designed with ♥ by Mark Nadal, the gun team, and many amazing contributors.  L
 
 Thanks to the following people who have contributed to GUN, via code, issues, or conversation (this list has quickly become tremendously behind! We'll probably turn this into a dedicated wiki page so you can add yourself):
 
-[agborkowski](https://github.com/agborkowski); [alexlafroscia](https://github.com/alexlafroscia); [anubiann00b](https://github.com/anubiann00b); [bromagosa](https://github.com/bromagosa); [coolaj86](https://github.com/coolaj86); [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan); **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; [gedw99](https://github.com/gedw99); [HelloCodeMing](https://github.com/HelloCodeMing); **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; [ndarilek](https://github.com/ndarilek); [onetom](https://github.com/onetom); [phpnode](https://github.com/phpnode); [PsychoLlama](https://github.com/PsychoLlama); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; [riston](https://github.com/riston); [rootsical](https://github.com/rootsical); [rrrene](https://github.com/rrrene); [sbeleidy](https://github.com/sbeleidy); **:star:[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))** [ssr1ram](https://github.com/ssr1ram); **[Stefdv](https://github.com/stefdv) ([Polymer/web components](http://stefdv.github.io/gun-collection/components/gun-collection/))**; [Xe](https://github.com/Xe); [zot](https://github.com/zot);
-[ayurmedia](https://github.com/ayurmedia);
+[agborkowski](https://github.com/agborkowski); [alexlafroscia](https://github.com/alexlafroscia); [anubiann00b](https://github.com/anubiann00b); [bromagosa](https://github.com/bromagosa); [coolaj86](https://github.com/coolaj86); [d-oliveros](https://github.com/d-oliveros), [danscan](https://github.com/danscan); **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; [gedw99](https://github.com/gedw99); [HelloCodeMing](https://github.com/HelloCodeMing); **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; [ndarilek](https://github.com/ndarilek); [onetom](https://github.com/onetom); [phpnode](https://github.com/phpnode); [PsychoLlama](https://github.com/PsychoLlama); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; [riston](https://github.com/riston); [rootsical](https://github.com/rootsical); [rrrene](https://github.com/rrrene); [sbeleidy](https://github.com/sbeleidy); **:star:[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; [ssr1ram](https://github.com/ssr1ram); **[Stefdv](https://github.com/stefdv) ([Polymer/web components](http://stefdv.github.io/gun-collection/components/gun-collection/))**; [Xe](https://github.com/Xe); [zot](https://github.com/zot); [ayurmedia](https://github.com/ayurmedia);
 
 This list of contributors was manually compiled and alphabetically sorted. If we missed you, please submit an issue so we can get you added!
 
@@ -89,7 +136,6 @@ This list of contributors was manually compiled and alphabetically sorted. If we
 
 Also see the current [Release List](https://github.com/amark/gun/releases) and [Tag List](https://github.com/amark/gun/tags) for quick access to relevant versions.
 
-==========================
 <a name="stay-up-to-date"></a>
 
 <a href="https://gitter.im/amark/gun"><img alt="Gitter channel" src="https://badges.gitter.im/Join%20Chat.svg" /></a>

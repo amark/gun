@@ -1,19 +1,23 @@
 {
   "name": "gun",
-  "version": "0.3.9991",
+  "version": "0.5.0",
   "description": "Graph engine",
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "test": "mocha"
+    "prepublish": "npm run unbuild && uglifyjs gun.js -o gun.min.js -c -m",
+    "test": "mocha",
+    "e2e": "mocha e2e/distributed.js",
+    "docker": "hooks/build",
+    "unbuild": "node lib/unbuild.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amark/gun.git"
   },
   "keywords": [
-	"gun",
-	"gunDB",
+    "gun",
+    "gunDB",
     "graph",
     "document",
     "key",
@@ -48,6 +52,8 @@
     "ws": "~>1.0.1"
   },
   "devDependencies": {
-    "mocha": "~>1.9.0"
+    "express": "~>4.13.4",
+    "mocha": "~>1.9.0",
+    "uglify-js": "~>2.2.0"
   }
 }

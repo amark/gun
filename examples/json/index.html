@@ -34,10 +34,12 @@
 			document.onkeyup = function(e){
 				if(!e || !e.target){ return } // ignore if no element!
 				if(!e.target.attributes.contenteditable){ return } // ignore if element content isn't editable!
+				console.log("save to", e.target.previousElementSibling.innerHTML, ":", e.target.innerHTML);
 				ref.path(clean(e.target.previousElementSibling.innerHTML)) // grab the label, which is in the previous element.
 				   .put( clean(e.target.innerHTML) ); // insert the value of the text in the current element.
 			}
-			ref.on(function(data){
+			ref.on(function(json){
+				var data = Gun.obj.copy(json); // make a snapshot!
 				delete data._; // skip meta data!
 				for(var field in data){
 					var val = String(data[field]), id = field.replace(/[^A-z]/ig, ''), elem; // make data safe.
