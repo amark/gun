@@ -2954,6 +2954,31 @@ describe('Gun', function(){
 			});
 		});
 
+		it('recursive put', function(done){
+			//localStorage.clear();
+			var gun = Gun();
+
+			var parent = gun.get('parent');
+			var child = gun.get('child');
+			
+			child.put({
+				way: 'down'
+			});
+			
+			parent.path('sub').put(child);
+			
+			parent.path('sub').on(function(data){
+				//console.log("sub", data);
+			});
+			child.on(function(data){
+				//console.log("child", data);
+			})
+			parent.val(function(data){
+				//console.log("parent", data);
+				done(); // TODO: Add more meaningful checks!
+			});
+		});
+
 		it('get get get any parallel', function(done){
 			var s = Gun.state.map();s.soul = 'parallel';
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
