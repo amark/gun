@@ -1347,7 +1347,9 @@
 			// ~who#where.where=what>when@was
 			// TODO: BUG! Put probably cannot handle plural chains!
 			var gun = this, root = (gun._).root, tmp;
-			as = as || {data: data, as: as, gun: gun};
+			as = as || {};
+			as.data = data;
+			as.gun = as.gun || gun;
 			if(typeof cb === 'string'){
 				as.soul = cb;
 			} else {
