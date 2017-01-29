@@ -2978,6 +2978,7 @@ describe('Gun', function(){
 			parent.on(function(data){
 				done.parent = data;
 				//console.log("parent", data);
+				if(done.c){ return } done.c = 1;
 				done(); // TODO: Add more meaningful checks!
 			});
 		});
@@ -2992,6 +2993,39 @@ describe('Gun', function(){
 				done();
 			});
 
+		});
+
+		it('get path path set root get put', function(done){
+			var gun = Gun().get('app');
+			gun.path('alias').path('mark').set(
+				gun.back(-1).get('pub').put({
+					alias: 'mark',
+					auth: 'encrypt', // oops
+					born: 1,
+					pub: 'pub',
+					salt: 'random'
+				})
+			);
+			setTimeout(function(){
+				gun.get(function(at){
+					done.app = at.put.alias;
+				});
+				gun.back(-1).get('pub').get(function(at){
+					done.pub = at.put.auth;
+				});
+				gun.path('alias').get(function(at){
+					done.alias = at.put.mark;
+				}).path('mark').get(function(at){
+					setTimeout(function(){
+						done.mark = at.put.pub;
+						expect(Gun.val.rel.is(done.mark)).to.be('pub');
+						expect(done.app).to.be.ok();
+						expect(done.pub).to.be.ok();
+						expect(done.alias).to.be.ok();
+						done();
+					},100);
+				})
+			},100);
 		});
 
 		it('get get get any parallel', function(done){

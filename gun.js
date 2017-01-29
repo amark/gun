@@ -976,8 +976,10 @@
 				return;
 			}
 			if(n instanceof Function){
-				var yes, tmp = {_:{back: gun}};
-				while((tmp = tmp._) && (tmp = tmp.back) && !(yes = n(tmp, opt))){}
+				var yes, tmp = {back: gun};
+				while((tmp = tmp.back)
+				&& (tmp = tmp._)
+				&& !(yes = n(tmp, opt))){}
 				return yes;
 			}
 		}
@@ -1008,12 +1010,12 @@
 						get = get[_field];
 						var next = get? gun.get(get, null, {path: true})._ : cat;
 						// TODO: BUG! Handle plural chains by iterating over them.
-						if(obj_has(next, 'put')){ // potentially incorrect? Maybe?
+						if(u !== next.put){ // potentially incorrect? Maybe?
 							//next.tag['in'].last.next(next);
 							next.on('in', next);
 							return;
 						}
-						if(obj_has(cat, 'put')){
+						if(u !== cat.put){
 							var val = cat.put, rel;
 							if(rel = Gun.node.soul(val)){
 								val = Gun.val.rel.ify(rel);
@@ -1067,7 +1069,7 @@
 							});
 							if(tmp){ return }
 						}
-						if(obj_has(cat, 'put')){
+						if(u !== cat.put){
 							//cat.gun !== at.gun && console.log("Potential Bug? Is the map not getting called?");// TODO: BUG! If the map is uncached, so the `out` propagates up to the parent, which has a map on it, this will emit to the last subscriber (which may not be an `input`), which if it isn't... won't propagate back down!
 							cat.on('in', cat);
 							//cat.on('in').last.emit(cat);
@@ -1229,11 +1231,12 @@
 				}
 				tmp.off = true;
 			}
+			if(cat.ask){ cat.ask = 0 }
 			obj_map(cat.next, function(gun, key){
 				var at = gun._;
-				if(obj_has(at,'put')){ 
+				//if(obj_has(at,'put')){ 
 					at.put = u;
-				}
+				//}
 				at.on('in', {
 					via: at, // TODO: BUG? mismatching scope?
 					get: key,
@@ -1438,21 +1441,12 @@
 		}
 
 		function any(at, ev){
-			function implicit(at){ // TODO: CLEAN UP!!!!!
-				if(!at || !at.get){ return } // TODO: CLEAN UP!!!!!
-				as.data = obj_put({}, tmp = at.get, as.data); // TODO: CLEAN UP!!!!!
-				at = at.via; // TODO: CLEAN UP!!!!!
-				if(!at){ return } // TODO: CLEAN UP!!!!!
-				tmp = at.get; // TODO: CLEAN UP!!!!!
-				if(!at.via || !at.via.get){ return } // TODO: CLEAN UP!!!!!
-				implicit(at);  // TODO: CLEAN UP!!!!!
-			} // TODO: CLEAN UP!!!!!
 			var as = this.as;
 			if(at.err){
 				console.log("Please report this as an issue! Put.any.err");
 				return
 			}
-			var cat = as.ref._, data = at.put, opt = as.opt||{}, root, tmp;
+			var cat = at.gun._, data = at.put, opt = as.opt||{}, root, tmp;
 			if(u === data){
 				/*if(opt.init || as.gun.back('opt.init')){
 					return;
@@ -1463,27 +1457,27 @@
 					}
 					any.call({as:as}, {
 						put: as.data,
+						gun: cat.gun,
 						get: as.not = as.soul = cat.get
 					}, ev);
 					return;
 				}
-				/*
-					TODO: THIS WHOLE SECTION NEEDS TO BE CLEANED UP!
-					Implicit behavior should be much cleaner. Right now it is hacky.
-				*/
-				// TODO: BUG!!!!!!! Apparently Gun.node.ify doesn't produce a valid HAM node?
 				if(as.ref !== as.gun){ // TODO: CLEAN UP!!!!!
-					tmp = as.gun._.get; // TODO: CLEAN UP!!!!!
+					tmp = (as.gun._).get; // TODO: CLEAN UP!!!!!
 					if(!tmp){ return } // TODO: CLEAN UP!!!!!
 					as.data = obj_put({}, tmp, as.data);
 					tmp = u;
 				}
-				if(cat.root !== cat.back){
-					implicit(at);
+				if(!cat.soul){
+					tmp = cat.gun.back(function(at){
+						if(at.soul){ return at.soul }
+						as.data = obj_put({}, at.get, as.data);
+					});
 				}
 				tmp = tmp || at.get;
 				any.call({as:as}, {
 					put: as.data,
+					gun: cat.root.get(tmp),
 					get: as.not = as.soul = tmp
 				}, ev);
 				return;
@@ -1617,8 +1611,8 @@
 			Gun.HAM.synth = function(at, ev, as){ var gun = this.as || as;
 				var cat = gun._, root = cat.root._, put = {}, tmp;
 				if(!at.put){
-					if(obj_has(cat, 'put')){ return }
-					//if(cat.put !== u){ return }
+					//if(obj_has(cat, 'put')){ return }
+					if(cat.put !== u){ return }
 					cat.on('in', {
 						get: cat.get,
 						put: cat.put = u,
@@ -2043,7 +2037,6 @@
 		function each(v,f){
 			if(n_ === f){ return }
 			var gun = this.gun, cat = this.cat;
-			//console.debug(7, "-- EACH -->", f, v);
 			var id = this.id;if(cat.set[id+f]){ return } cat.set[id+f] = 1;
 			cat.on('in', {gun: gun.get(f, null, {path: true}), get: f, put: v, via: this.at});
 		}
@@ -2063,10 +2056,10 @@
 		Gun.chain.set = function(item, cb, opt){
 			var gun = this, soul;
 			cb = cb || function(){};
-			if (soul = Gun.node.soul(item)) return gun.set(gun.get(soul), cb, opt);
-			if (Gun.obj.is(item) && !Gun.is(item)) return gun.set(gun._.root.put(item), cb, opt);
-			return item.val(function(node){
-				var put = {}, soul = Gun.node.soul(node);
+			if(soul = Gun.node.soul(item)){ return gun.set(gun.get(soul), cb, opt) }
+			if(Gun.obj.is(item) && !Gun.is(item)){ return gun.set(gun._.root.put(item), cb, opt) }
+			return item.get(function(at){
+				var put = {}, node = at.put, soul = Gun.node.soul(node);
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 				gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
 			},{wait:0});
