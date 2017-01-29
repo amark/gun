@@ -1323,10 +1323,11 @@
 					(gun._).put = cat.put;
 				}
 			}
-			/*
 			if(cat.put && (tmp = at.put) && tmp[rel._] && rel.is(tmp)){ // an uglier but faster way for checking if it is not a relation, but slower if it is.
-				return ev.to.next(at); // For a field that has a relation we want to proxy, if we have already received an update via the proxy then we can deduplicate the update from the field.
+				at = obj_to(at, {put: cat.put});
+				//return ev.to.next(at); // For a field that has a relation we want to proxy, if we have already received an update via the proxy then we can deduplicate the update from the field.
 			}
+			/*
 			/*
 			//console.debug.i && console.log("????", cat.put, u === cat.put, at.put);
 			if(u === cat.put && u !== at.put){ // TODO: Use state instead?
@@ -1620,7 +1621,7 @@
 					//if(cat.put !== u){ return }
 					cat.on('in', {
 						get: cat.get,
-						put: cat.put,
+						put: cat.put = u,
 						gun: gun,
 						via: at
 					})
@@ -1983,15 +1984,12 @@
 	;require(function(module){
 		var Gun = require('./core');
 		Gun.chain.not = function(cb, opt, t){
-			var gun = this, at = Gun.obj.to(gun._, {not: {not: cb}});
-			gun.get(ought, {as: at});
-			return gun;
+			return this.get(ought, {not: cb});
 		}
-		function ought(cat, ev){ ev.off(); var at = this; // TODO: BUG! Is this correct?
-			if(cat.err || cat.put){ return }
-			if(!at.not || !at.not.not){ return }
-			//ev.stun(); // TODO: BUG? I think this is correct. NOW INCORRECT because as things mutate we might want to retrigger!
-			at.not.not.call(at.gun, at.get, function(){ console.log("Please report this bug on https://gitter.im/amark/gun and in the issues."); need.to.implement; });
+		function ought(at, ev){ ev.off();
+			if(at.err || at.put){ return }
+			if(!this.not){ return }
+			this.not.call(at.gun, at.get, function(){ console.log("Please report this bug on https://gitter.im/amark/gun and in the issues."); need.to.implement; });
 		}
 	})(require, './not');
 
