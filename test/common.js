@@ -2969,14 +2969,29 @@ describe('Gun', function(){
 			
 			parent.path('sub').on(function(data){
 				//console.log("sub", data);
+				done.sub = data;
 			});
 			child.on(function(data){
+				done.child = data;
 				//console.log("child", data);
-			})
-			parent.val(function(data){
+			});
+			parent.on(function(data){
+				done.parent = data;
 				//console.log("parent", data);
 				done(); // TODO: Add more meaningful checks!
 			});
+		});
+
+		it('empty val followed', function(done){
+			var gun = Gun();
+
+			gun.get('val/follow').val(function(){
+				//console.log("val");
+			}).get(function(){
+				//console.log("got");
+				done();
+			});
+
 		});
 
 		it('get get get any parallel', function(done){
