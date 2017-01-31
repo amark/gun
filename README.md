@@ -79,9 +79,7 @@ Then visit the URL in the output of the 'heroku create' step, in a browser.
 
 ```bash
 npm install -g now
-git clone https://github.com/amark/gun.git
-cd gun
-now --npm
+now --npm amark/gun
 ```
 Then visit the URL in the output of the 'now --npm' step, in your browser.
 
