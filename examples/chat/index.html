@@ -40,6 +40,7 @@
 			var gun = Gun(location.origin + '/gun');
 			var chat = gun.get('example/chat/data');
 			chat.map().val(function(msg, field){
+				console.log("msg", field, msg);
 				var $ul = $('ul'), $last = $.sort(field, $ul.last()), $msg;
 				($msg = $("#msg-" + field) || $ul.insertBefore($.model.clone(true), $last.next())).id = 'msg-' + field;
 				$('.who', $msg)[$.text] = msg.who;
