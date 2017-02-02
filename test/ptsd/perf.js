@@ -1980,6 +1980,7 @@
 			window.geti = window.geti || 0;
 			localStorage.clear();
 			var gun = g.get('heylo');
+			gun.val(ok);
 			//var ok = function(a,b){ console.log('wat', a,b) }
 			/*
 			gun.get('users').put({1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}});
