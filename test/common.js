@@ -1620,6 +1620,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
+				//console.debug.i=1;console.log('-------------------');
 				gun.get('u/m/p/n/p').map().path('pet').path('name').on(function(v,f){
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
@@ -1677,7 +1678,7 @@ describe('Gun', function(){
 				}, 300);
 			});
 
-			it('uncached synchronous map on mutate node', function(done){
+			it.only('uncached synchronous map on mutate node', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate/n';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo'},
@@ -1696,7 +1697,7 @@ describe('Gun', function(){
 					var e = at.err, v = at.put, f = at.get;
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
-					//console.log("************", f,v);
+					console.log("************", f,v);
 					if(check.Alice && check.Bob && check['undefined'] && check['Alice Zzxyz']){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
@@ -1711,6 +1712,7 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
+					//console.debug.i=1;console.log("-----------------------");
 					gun.get('u/m/mutate/n').path('alice').put({
 						_:{'#':'u/m/m/n/soul'},
 						name: 'Alice Zzxyz'
@@ -2253,6 +2255,7 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/m/m').map().map().on(function(v,f){
 					check[f] = v;
+					//console.log("***************", f,v);
 					if(check.alice && check.bob && check.GUN && check.ACME && check.ACME.corp){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
@@ -2846,7 +2849,7 @@ describe('Gun', function(){
 					gun.get('HIPPOM4').put({code: 'QR'});
 				},300);
 			});
-			return;
+
 			it.only("in memory get after map map path path path map", function(done){
 				var gun = Gun();
 				var check = {};
@@ -2917,7 +2920,7 @@ describe('Gun', function(){
 				});
 				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/p/n').map().map().path('address').path('state').path('county').map().on(function(v,f){
 					check[f] = v;
-					console.log("****************", f,v);
+					//console.log("****************", f,v);
 					if(check.MA1 && check.MA2 && check.TX1 && check.TX2 && check.CA1 && check.CA2 && check.NY1 && check.NY2 && check.NY3){
 						clearTimeout(done.to);
 							done.to = setTimeout(function(){
@@ -3001,25 +3004,36 @@ describe('Gun', function(){
 
 		});
 
-		it.only('map val path put', function(done){
+		it('map val path put', function(done){
+			
 			var gun = Gun().get('chat/asdf');
 
+			var check = {}, count = {};
 			gun.map().val(function(v,f){
-				console.log("***********", f,v);
+				//console.log("***********", f,v);
+				check[f] = v;
+				count[f] = (count[f] || 0) + 1;
+				if(check['1_1'] && check['2_2']){
+					clearTimeout(done.to);
+					done.to = setTimeout(function(){
+						expect(check['1_1'].what).to.be('hi');
+						expect(check['2_2'].what).to.be('you.');
+						expect(count['1_1']).to.be(1);
+						expect(count['2_2']).to.be(1);
+						done();
+					},50);
+				}
 			});
 
 			setTimeout(function(){
-				console.debug.i=1;console.log("--------------------------");
 				gun.path('1_1').put({what: "hi"});
-				return;
 				setTimeout(function(){
 					gun.path('2_2').put({what: "you."});
 				},40);
 			},40);
 		});
 
-		it.only('get list set map val', function(done){
-			
+		it('get list set map val', function(done){
 
 			var gun = Gun();
 
@@ -3030,9 +3044,33 @@ describe('Gun', function(){
 			list.set(gun.get('carl').put({name: "Carl", group: "cool", married: false}));
 			list.set(gun.get('dave').put({name: "Dave", group: "awesome", married: true}));
 
-			console.debug.i=1;console.log("----------------");
+			var check = {}, count = {};
 			list.map().val(function(data, id){
-				console.log("results", id, data);
+				//console.log("***************", id, data);
+				check[id] = data;
+				count[id] = (count[id] || 0) + 1;
+				if(check.alice && check.bob && check.carl && check.dave){
+					clearTimeout(done.to);
+					done.to = setTimeout(function(){
+						expect(count.alice).to.be(1);
+						expect(check.alice.name).to.be('Alice');
+						expect(check.alice.group).to.be('awesome');
+						expect(check.alice.married).to.be(true);
+						expect(count.bob).to.be(1);
+						expect(check.bob.name).to.be('Bob');
+						expect(check.bob.group).to.be('cool');
+						expect(check.bob.married).to.be(true);
+						expect(count.carl).to.be(1);
+						expect(check.carl.name).to.be('Carl');
+						expect(check.carl.group).to.be('cool');
+						expect(check.carl.married).to.be(false);
+						expect(count.dave).to.be(1);
+						expect(check.dave.name).to.be('Dave');
+						expect(check.dave.group).to.be('awesome');
+						expect(check.dave.married).to.be(true);
+						done();
+					},50);
+				}
 			});
 			/*
 				Have we asked for this yet? No.
@@ -3047,12 +3085,27 @@ describe('Gun', function(){
 				a back // all
 				inputs // all
 				and outputs // all
-				next // any
 				acks // any
 				echo // any
+				next // any
 				cache or map of many ones // only a one can have a cache, only a map can have many, and they must be ones. However any chain might have neither. By default a chain is a many, unless it is designated as a one.
 
 				gun.get('alice').also('bob').path('name').on(cb);
+				gun.get('users').map().path('friends').map().on(cb);
+
+				friends is a map, it has an echo
+				{name: "alice", friends: []}
+					{name: "xavier"}
+					{name: "yara"}
+					{name: "zack"}
+				{name: "bob", friends: []}
+					{name: "xavier"}
+					{name: "yara"}
+					{name: "zack"}
+				{name: "carl", friends: []}
+					{name: "xavier"}
+					{name: "yara"}
+					{name: "zack"}
 			*/
 		});
 
@@ -3134,14 +3187,14 @@ describe('Gun', function(){
 			}, s)});
 			gun.get('parallel').path('bob').path('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data, at.gun._.ack);
+				//console.log("***** age", data, at.gun._.ack);return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
 			});
 			gun.get('parallel').path('bob').path('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("*********** name", data, at.gun._.ack);
+				//console.log("*********** name", data, at.gun._.ack);return;
 				expect(data).to.be('Bob!');
 				expect(field).to.be('name');
 				done.name = true;
