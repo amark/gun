@@ -1,0 +1,104 @@
+
+var Gun = require('./core');
+Gun.chain.on = function(tag, arg, eas, as){
+	var gun = this, at = gun._, tmp, act, off;
+	if(typeof tag === 'string'){
+		if(!arg){ return at.on(tag) }
+		act = at.on(tag, arg, eas || at, as);
+		if(eas && eas.gun){
+			(eas.subs || (eas.subs = [])).push(act);
+		}
+		off = function() {
+			if (act && act.off) act.off();
+			off.off();
+		};
+		off.off = gun.off.bind(gun) || noop;
+		gun.off = off;
+		return gun;
+	}
+	var opt = arg;
+	opt = (true === opt)? {change: true} : opt || {};
+	opt.ok = tag;
+	opt.last = {};
+	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!????
+	return gun;
+}
+
+function ok(at, ev){ var opt = this;
+	var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get;
+	if(u === data){ return }
+	if(opt.change){
+		data = at.put;
+	}
+	// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
+	if(tmp.put === data && tmp.get === id && !Gun.node.soul(data)){ return }
+	tmp.put = data;
+	tmp.get = id;
+	// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
+	cat.last = data;
+	if(opt.as){
+		opt.ok.call(opt.as, at, ev);
+	} else {
+		opt.ok.call(gun, data, at.get, at, ev);
+	}
+}
+
+Gun.chain.val = function(cb, opt){
+	var gun = this, at = gun._, data = at.put;
+	if(0 < at.ack && u !== data){
+		cb.call(gun, data, at.get);
+		return gun;
+	}
+	if(cb){
+		(opt = opt || {}).ok = cb;
+		opt.cat = at;
+		gun.get(val, {as: opt});
+		opt.async = at.stun? 1 : true;
+	}
+	return gun;
+}
+
+function val(at, ev, to){
+	var opt = this.as, gun = at.gun, cat = gun._, data = cat.put || at.put;
+	if(u === data){
+		return;
+	}
+	if(ev.wait){ clearTimeout(ev.wait) }
+	if(!to && (!(0 < cat.ack) || ((true === opt.async) && 0 !== opt.wait))){
+		ev.wait = setTimeout(function(){
+			val.call({as:opt}, at, ev, ev.wait || 1)
+		}, opt.wait || 99);
+		return;
+	}
+	if(ev.off()){ return } // if it is already off, don't call again!
+	opt.ok.call(at.gun || opt.gun, data, at.get);
+}
+
+Gun.chain.off = function(){
+	var gun = this, at = gun._, tmp;
+	var back = at.back || {}, cat = back._;
+	if(!cat){ return }
+	if(tmp = cat.next){
+		if(tmp[at.get]){
+			obj_del(tmp, at.get);
+		} else {
+			obj_map(tmp, function(path, key){
+				if(gun !== path){ return }
+				obj_del(tmp, key);
+			});
+		}
+	}
+	if((tmp = gun.back(-1)) === back){
+		obj_del(tmp.graph, at.get);
+	}
+	if(at.ons && (tmp = at.ons['@$'])){
+		obj_map(tmp.s, function(ev){
+			ev.off();
+		});
+	}
+	return gun;
+}
+var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
+var val_rel_is = Gun.val.rel.is;
+var empty = {}, u;
+	

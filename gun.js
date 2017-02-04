@@ -1033,6 +1033,11 @@
 								});
 								return;
 							}
+						} else
+						if(cat.map){
+							obj_map(cat.map, function(proxy){
+								proxy.at.on('in', proxy.at);
+							});
 						}
 						if(cat.soul){
 							if(!at.gun._){ return }

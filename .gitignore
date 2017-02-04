@@ -1,13 +1,9 @@
 node_modules
 npm-debug.log
-gun.min.js
 yarn.lock
 *data.json
 *.db
 .idea/
 *.bak
 *.new
-src/webpacked.js
 *.DS_store
-# Unbuilt files.
-src/

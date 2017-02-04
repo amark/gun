@@ -3320,6 +3320,34 @@ describe('Gun', function(){
 				});
 			},400);
 		});
+
+		it('multiple times', function(done){
+			var gun = Gun();
+
+			var app = gun.get('mult/times');
+
+			app.path('alias').path('mark').set(gun.get('asdf').put({
+				pub: 'asdf',
+				alias: 'mark',
+				born: 1
+			}));
+
+			app.path('alias').map().map().path('pub').on(function(data){
+				done.one = data;
+				//console.log("pub 1!", data);
+			});
+
+			setTimeout(function(){
+				app.path('alias').map().map().path('alias').on(function(data){
+					done.two = data;
+					//console.log("alias 2!", data);
+					expect(done.one).to.be("asdf");
+					expect(done.two).to.be("mark");
+					if(done.c){ return } done.c = 1;
+					done();
+				});
+			},100);
+		});
 		return;
 		it.only('get any any none', function(done){
 			gun.get('full/none').get(function(at, ev){
