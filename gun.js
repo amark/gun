@@ -2028,7 +2028,7 @@
 		function get(at){
 			this.to.next(at);
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
-			//setTimeout(function(){
+			setTimeout(function(){
 			(opt = at.opt || {}).prefix = opt.prefix || at.gun.back('opt.prefix') || 'gun/';
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
 			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
@@ -2041,7 +2041,7 @@
 			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
 			//console.log('@@@@@@@@@@@@local get', data, at);
 			gun.back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
-			//},11);
+			},11);
 		}
 		Gun.on('put', put);
 		Gun.on('get', get);

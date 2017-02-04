@@ -1678,7 +1678,7 @@ describe('Gun', function(){
 				}, 300);
 			});
 
-			it.only('uncached synchronous map on mutate node', function(done){
+			it('uncached synchronous map on mutate node', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate/n';
 				Gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo'},
@@ -1697,7 +1697,7 @@ describe('Gun', function(){
 					var e = at.err, v = at.put, f = at.get;
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
-					console.log("************", f,v);
+					//console.log("************", f,v);
 					if(check.Alice && check.Bob && check['undefined'] && check['Alice Zzxyz']){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
@@ -1708,7 +1708,7 @@ describe('Gun', function(){
 							//expect(count['undefined']).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
 							done();
-						},100);
+						},200);
 					}
 				});
 				setTimeout(function(){
@@ -1754,7 +1754,7 @@ describe('Gun', function(){
 							//expect(count['Bob']).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
 							done();
-						},100);
+						},200);
 					}
 				});
 				setTimeout(function(){
@@ -1812,7 +1812,7 @@ describe('Gun', function(){
 							//expect(count.Bob).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
 							done();
-						},100);
+						},200);
 					}
 				});
 				setTimeout(function(){
@@ -1860,7 +1860,7 @@ describe('Gun', function(){
 							//expect(count.Frisky).to.be(1);
 							//expect(count.Fuzzball).to.be(1);
 							done();
-						},100);
+						},200);
 					}
 				});
 				setTimeout(function(){
@@ -2850,7 +2850,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it.only("in memory get after map map path path path map", function(done){
+			it("in memory get after map map path path path map", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p/p/p/n'},
