@@ -1,15 +1,15 @@
 {
   "name": "gun",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Graph engine",
   "main": "index.js",
   "scripts": {
     "start": "node examples/http.js 8080",
-    "prepublish": "npm run unbuild && uglifyjs gun.js -o gun.min.js -c -m",
+    "prepublish": "npm run unbuild",
     "test": "mocha",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
-    "unbuild": "node lib/unbuild.js"
+    "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
   },
   "repository": {
     "type": "git",
