@@ -3348,7 +3348,41 @@ describe('Gun', function(){
 				});
 			},100);
 		});
-		return;
+
+		it('multiple times partial', function(done){
+			var gun = Gun();
+
+			var s = Gun.state.map();s.soul = 'mult/times/part';
+			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				alias: {
+					mark: {
+						pub: {_:{'#':'pub'},
+							pub: 'asdf',
+							alias: 'mark',
+							born: 1
+						}
+					}
+				}
+			}, s)});
+
+			var app = gun.get(s.soul);
+
+			app.path('alias').path('mark').map().val(function(alias){
+				done.alias = alias;
+			});
+
+			setTimeout(function(){
+				app.path('alias').map().map().path('born').on(function(data){
+					expect(data).to.be(1);
+					expect(done.alias.pub).to.be("asdf");
+					expect(done.alias.alias).to.be("mark");
+					expect(done.alias.born).to.be(1);
+					if(done.c){ return } done.c = 1;
+					done();
+				});
+			},300);
+		});return;
+
 		it.only('get any any none', function(done){
 			gun.get('full/none').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
