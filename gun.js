@@ -1060,15 +1060,12 @@
 					} else {
 						if(obj_has(cat, 'put')){
 						//if(u !== cat.put){
-							//cat.gun !== at.gun && console.log("Potential Bug? Is the map not getting called?");// TODO: BUG! If the map is uncached, so the `out` propagates up to the parent, which has a map on it, this will emit to the last subscriber (which may not be an `input`), which if it isn't... won't propagate back down!
 							cat.on('in', cat);
 							//cat.on('in').last.emit(cat);
 						} else// TODO: BUG! Handle plural chains by iterating over them.
-						if(cat.map){ // TODO: map will exist but different than if something in it.
+						if(cat.map){
 							obj_map(cat.map, function(proxy){
-								//console.log("CRASH3");
 								proxy.at.on('in', proxy.at);
-								//cat.on('in').last.emit(coat);
 							});
 						}
 						if(cat.ack){
@@ -1192,6 +1189,9 @@
 				return;
 			}
 			at = (gun._);
+			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
+			//	data = tmp.put;
+			//}
 			if(at.field){
 				if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 					at.put = data;
@@ -1280,7 +1280,7 @@
 			if(num_is(key)){
 				return this.get(''+key, cb, as);
 			} else {
-				(as = back.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+				(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 				if(cb){ cb.call(as, as._.err) }
 				return as;
 			}
@@ -1326,6 +1326,7 @@
 			ev.to.next(at);
 		}
 		var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
+		var num_is = Gun.num.is;
 		var rel = Gun.val.rel, node_ = Gun.node._;
 		var empty = {}, u;
 	})(require, './get');
@@ -1902,18 +1903,23 @@
 		}
 
 		function val(at, ev, to){
-			var opt = this.as, gun = at.gun, cat = gun._, data = cat.put || at.put;
+			var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put;
 			if(u === data){
 				return;
 			}
 			if(ev.wait){ clearTimeout(ev.wait) }
-			if(!to && (!(0 < cat.ack) || ((true === opt.async) && 0 !== opt.wait))){
+			if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
 				ev.wait = setTimeout(function(){
 					val.call({as:opt}, at, ev, ev.wait || 1)
 				}, opt.wait || 99);
 				return;
 			}
-			if(ev.off()){ return } // if it is already off, don't call again!
+			if(cat.field || cat.soul){
+				if(ev.off()){ return } // if it is already off, don't call again!
+			} else {
+				if((opt.seen = opt.seen || {})[coat.id]){ return }
+				opt.seen[coat.id] = true;
+			}
 			opt.ok.call(at.gun || opt.gun, data, at.get);
 		}
 
@@ -1972,6 +1978,7 @@
 			return chain;
 		}
 		function map(at){
+			if(!at.put || Gun.val.is(at.put)){ return }
 			obj_map(at.put, each, {cat: this.as, gun: at.gun});
 			this.to.next(at);
 		}
