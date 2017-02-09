@@ -55,6 +55,13 @@ gun.get('mark').on(function(data, key){
  - Help support development: https://www.patreon.com/gunDB !
  - Ask questions: http://stackoverflow.com/questions/tagged/gun ?
  - Chat with us: https://gitter.im/amark/gun .
+ 
+## Documentation
+ - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
+ - [API reference](https://github.com/amark/gun/wiki/API).
+ - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)). 
+ - [What tradeoffs does GUN make](https://github.com/amark/gun/wiki/CAP-Theorem)? It is an AP system, so banking apps aren't a good fit.
+ - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
 
 ## Deploy
 
@@ -120,12 +127,6 @@ Then visit [http://localhost:8080](http://localhost:8080) in your browser.
 
 ### <a name="gun-projects"></a>Projects
  - GUN users are encouraged to add their projects to this [running projects list](https://github.com/amark/gun/wiki/projects).
-
-## Docs & Tradeoffs
- - [Getting Started with GUN](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)) Guide. 
- - [API documentation](https://github.com/amark/gun/wiki/API-(v0.3.x)) and [examples' source code](https://github.com/amark/gun/blob/master/examples).
- - GUN is an AP system which means you should not use it for banking apps, [learn more here](https://github.com/amark/gun/wiki/CAP-Theorem).
- - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
 
 ## <a name="gun-modules"></a>Modules
 GUN is designed to be as minimal as possible, with any additional functionality being provided via modules.  Please refer to the [modules](https://github.com/amark/gun/wiki/modules) page for a list of existing extensions. Please refer to the [gun-extensions](https://github.com/gundb/gun-extensions/issues) repo to see what extensions have been requested or to request an extension.
