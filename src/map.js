@@ -12,6 +12,7 @@ Gun.chain.map = function(cb, opt, t){
 	return chain;
 }
 function map(at){
+	if(!at.put || Gun.val.is(at.put)){ return }
 	obj_map(at.put, each, {cat: this.as, gun: at.gun});
 	this.to.next(at);
 }

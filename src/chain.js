@@ -78,15 +78,12 @@ function output(at){
 			} else {
 				if(obj_has(cat, 'put')){
 				//if(u !== cat.put){
-					//cat.gun !== at.gun && console.log("Potential Bug? Is the map not getting called?");// TODO: BUG! If the map is uncached, so the `out` propagates up to the parent, which has a map on it, this will emit to the last subscriber (which may not be an `input`), which if it isn't... won't propagate back down!
 					cat.on('in', cat);
 					//cat.on('in').last.emit(cat);
 				} else// TODO: BUG! Handle plural chains by iterating over them.
-				if(cat.map){ // TODO: map will exist but different than if something in it.
+				if(cat.map){
 					obj_map(cat.map, function(proxy){
-						//console.log("CRASH3");
 						proxy.at.on('in', proxy.at);
-						//cat.on('in').last.emit(coat);
 					});
 				}
 				if(cat.ack){
@@ -210,6 +207,9 @@ function map(data, key){ // Map over only the changes on every update.
 		return;
 	}
 	at = (gun._);
+	//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
+	//	data = tmp.put;
+	//}
 	if(at.field){
 		if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 			at.put = data;
