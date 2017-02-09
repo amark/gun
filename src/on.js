@@ -59,18 +59,23 @@ Gun.chain.val = function(cb, opt){
 }
 
 function val(at, ev, to){
-	var opt = this.as, gun = at.gun, cat = gun._, data = cat.put || at.put;
+	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put;
 	if(u === data){
 		return;
 	}
 	if(ev.wait){ clearTimeout(ev.wait) }
-	if(!to && (!(0 < cat.ack) || ((true === opt.async) && 0 !== opt.wait))){
+	if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
 		ev.wait = setTimeout(function(){
 			val.call({as:opt}, at, ev, ev.wait || 1)
 		}, opt.wait || 99);
 		return;
 	}
-	if(ev.off()){ return } // if it is already off, don't call again!
+	if(cat.field || cat.soul){
+		if(ev.off()){ return } // if it is already off, don't call again!
+	} else {
+		if((opt.seen = opt.seen || {})[coat.id]){ return }
+		opt.seen[coat.id] = true;
+	}
 	opt.ok.call(at.gun || opt.gun, data, at.get);
 }
 

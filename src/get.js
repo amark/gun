@@ -24,7 +24,7 @@ Gun.chain.get = function(key, cb, as){
 	if(num_is(key)){
 		return this.get(''+key, cb, as);
 	} else {
-		(as = back.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+		(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 		if(cb){ cb.call(as, as._.err) }
 		return as;
 	}
@@ -70,6 +70,7 @@ function use(at){
 	ev.to.next(at);
 }
 var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
+var num_is = Gun.num.is;
 var rel = Gun.val.rel, node_ = Gun.node._;
 var empty = {}, u;
 	
