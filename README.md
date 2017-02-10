@@ -61,6 +61,7 @@ gun.get('mark').on(function(data, key){
  - [API reference](https://github.com/amark/gun/wiki/API).
  - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)). 
  - [What tradeoffs does GUN make](https://github.com/amark/gun/wiki/CAP-Theorem)? It is an AP system, so banking apps aren't a good fit.
+ - [How the Conflict Resolution algorithm works](http://gun.js.org/distributed/matters.html).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
 
 ## Deploy
