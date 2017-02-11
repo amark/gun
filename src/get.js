@@ -45,27 +45,16 @@ function cache(key, back){
 	return gun;
 }
 function use(at){
-	var ev = this, as = ev.as, gun = at.gun, cat = gun._, data = cat.put || at.put, tmp;
-	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){ // an uglier but faster way for checking if it is not a relation, but slower if it is.
-		if(null !== as.out.get['.']){
-			cat = (gun = cat.root.get(tmp))._;
-			if(!obj_has(cat, 'put')){
-				ev.to.next(at);
-				gun.get(function(at,ev){ev.off()});
-				return;
-			}
+	var ev = this, as = ev.as, gun = at.gun, cat = gun._, data = at.put, tmp;
+	if(u === data){
+		data = cat.put;
+	}
+	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
+		tmp = (cat.root.get(tmp)._);
+		if(u !== tmp.put){
+			at = obj_to(at, {put: tmp.put});
 		}
 	}
-	if(cat.put && (tmp = at.put) && tmp[rel._] && rel.is(tmp)){ // an uglier but faster way for checking if it is not a relation, but slower if it is.
-		at = obj_to(at, {put: cat.put});
-		//return ev.to.next(at); // For a field that has a relation we want to proxy, if we have already received an update via the proxy then we can deduplicate the update from the field.
-	}
-	/*
-	/*
-	//console.debug.i && console.log("????", cat.put, u === cat.put, at.put);
-	if(u === cat.put && u !== at.put){ // TODO: Use state instead?
-		return ev.to.next(at); // For a field that has a value, but nothing on its context, then that means we have received the update out of order and we will receive it from the context, so we can deduplicate this one.
-	}*/
 	as.use(at, at.event || ev);
 	ev.to.next(at);
 }

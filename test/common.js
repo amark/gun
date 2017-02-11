@@ -3381,7 +3381,26 @@ describe('Gun', function(){
 					done();
 				});
 			},300);
-		});return;
+		});
+
+		return;
+		it.only('Make sure circular contexts are not copied', function(done){
+			/* let's define an appropriate deep default database... */
+			var dfltSansUsers = { 1: { name : "org1", sites : { 1: {name : "site1"} } } };
+
+			var alice =  {name: "alice" }
+
+			var Gun = require( "gun" );
+			var gun = Gun();
+
+			var root = gun.get( "root" );
+			root.put( dfltSansUsers );
+
+			var alice = gun.get( "alice" ).put( { name: "alice" } );
+			console.log( "Failed after this" );
+			root.path( "1.sites.1.users" ).put( { 1: alice } );
+			console.log( "Failed before this" );
+		});
 
 		it.only('get any any none', function(done){
 			gun.get('full/none').get(function(at, ev){
