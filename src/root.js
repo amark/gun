@@ -125,11 +125,12 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		if(text_is(tmp)){ tmp = [tmp] }
 		if(list_is(tmp)){
 			tmp = obj_map(tmp, function(url, i, map){
-				map(url, {});
+				map(url, {url: url});
 			});
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
+		at.opt.peers = at.opt.peers || {};
 		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 		Gun.on('opt', at);
 		return gun;

@@ -657,7 +657,6 @@
 				}
 				if(!(is = valid(v,f,n, at,env))){ return }
 				if(!f){
-					//console.log("oh boy", v,f,n);
 					at.node = at.node || n || {};
 					if(obj_has(v, Node._)){
 						at.node._ = obj_copy(v._);
@@ -915,11 +914,12 @@
 				if(text_is(tmp)){ tmp = [tmp] }
 				if(list_is(tmp)){
 					tmp = obj_map(tmp, function(url, i, map){
-						map(url, {});
+						map(url, {url: url});
 					});
 					if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
+				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 				Gun.on('opt', at);
 				return gun;
@@ -1111,8 +1111,9 @@
 			}
 			if(u === change){
 				ev.to.next(at);
+				if(cat.soul){ return }
 				echo(cat, at, ev);
-				if(cat.field || cat.soul){
+				if(cat.field){
 					not(cat, at);
 				}
 				obj_del(coat.echo, cat.id);
@@ -1301,27 +1302,16 @@
 			return gun;
 		}
 		function use(at){
-			var ev = this, as = ev.as, gun = at.gun, cat = gun._, data = cat.put || at.put, tmp;
-			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){ // an uglier but faster way for checking if it is not a relation, but slower if it is.
-				if(null !== as.out.get['.']){
-					cat = (gun = cat.root.get(tmp))._;
-					if(!obj_has(cat, 'put')){
-						ev.to.next(at);
-						gun.get(function(at,ev){ev.off()});
-						return;
-					}
+			var ev = this, as = ev.as, gun = at.gun, cat = gun._, data = at.put, tmp;
+			if(u === data){
+				data = cat.put;
+			}
+			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
+				tmp = (cat.root.get(tmp)._);
+				if(u !== tmp.put){
+					at = obj_to(at, {put: tmp.put});
 				}
 			}
-			if(cat.put && (tmp = at.put) && tmp[rel._] && rel.is(tmp)){ // an uglier but faster way for checking if it is not a relation, but slower if it is.
-				at = obj_to(at, {put: cat.put});
-				//return ev.to.next(at); // For a field that has a relation we want to proxy, if we have already received an update via the proxy then we can deduplicate the update from the field.
-			}
-			/*
-			/*
-			//console.debug.i && console.log("????", cat.put, u === cat.put, at.put);
-			if(u === cat.put && u !== at.put){ // TODO: Use state instead?
-				return ev.to.next(at); // For a field that has a value, but nothing on its context, then that means we have received the update out of order and we will receive it from the context, so we can deduplicate this one.
-			}*/
 			as.use(at, at.event || ev);
 			ev.to.next(at);
 		}
@@ -1869,9 +1859,18 @@
 		}
 
 		function ok(at, ev){ var opt = this;
-			var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get;
-			if(u === data){ return }
-			if(opt.change){
+			var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get, tmp;
+			if(u === data){
+				return;
+			}
+			if(data[rel._] && (tmp = rel.is(data))){
+				tmp = (cat.root.get(tmp)._);
+				if(u === tmp.put){
+					return;
+				}
+				data = tmp.put;
+			}
+			if(opt.change){ // TODO: BUG? Move above the undef checks?
 				data = at.put;
 			}
 			// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
@@ -1903,9 +1902,16 @@
 		}
 
 		function val(at, ev, to){
-			var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put;
+			var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
 			if(u === data){
 				return;
+			}
+			if(data[rel._] && (tmp = rel.is(data))){
+				tmp = (cat.root.get(tmp)._);
+				if(u === tmp.put){
+					return;
+				}
+				data = tmp.put;
 			}
 			if(ev.wait){ clearTimeout(ev.wait) }
 			if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
@@ -1948,17 +1954,17 @@
 			return gun;
 		}
 		var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
-		var val_rel_is = Gun.val.rel.is;
+		var rel = Gun.val.rel;
 		var empty = {}, u;
 	})(require, './on');
 
 	;require(function(module){
-		var Gun = require('./core');
+		var Gun = require('./core'), u;
 		Gun.chain.not = function(cb, opt, t){
 			return this.get(ought, {not: cb});
 		}
 		function ought(at, ev){ ev.off();
-			if(at.err || at.put){ return }
+			if(at.err || (u !== at.put)){ return }
 			if(!this.not){ return }
 			this.not.call(at.gun, at.get, function(){ console.log("Please report this bug on https://gitter.im/amark/gun and in the issues."); need.to.implement; });
 		}

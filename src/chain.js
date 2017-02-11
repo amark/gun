@@ -129,8 +129,9 @@ function input(at){
 	}
 	if(u === change){
 		ev.to.next(at);
+		if(cat.soul){ return }
 		echo(cat, at, ev);
-		if(cat.field || cat.soul){
+		if(cat.field){
 			not(cat, at);
 		}
 		obj_del(coat.echo, cat.id);

@@ -25,9 +25,18 @@ Gun.chain.on = function(tag, arg, eas, as){
 }
 
 function ok(at, ev){ var opt = this;
-	var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get;
-	if(u === data){ return }
-	if(opt.change){
+	var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get, tmp;
+	if(u === data){
+		return;
+	}
+	if(data[rel._] && (tmp = rel.is(data))){
+		tmp = (cat.root.get(tmp)._);
+		if(u === tmp.put){
+			return;
+		}
+		data = tmp.put;
+	}
+	if(opt.change){ // TODO: BUG? Move above the undef checks?
 		data = at.put;
 	}
 	// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
@@ -59,9 +68,16 @@ Gun.chain.val = function(cb, opt){
 }
 
 function val(at, ev, to){
-	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put;
+	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
 	if(u === data){
 		return;
+	}
+	if(data[rel._] && (tmp = rel.is(data))){
+		tmp = (cat.root.get(tmp)._);
+		if(u === tmp.put){
+			return;
+		}
+		data = tmp.put;
 	}
 	if(ev.wait){ clearTimeout(ev.wait) }
 	if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
@@ -104,6 +120,6 @@ Gun.chain.off = function(){
 	return gun;
 }
 var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
-var val_rel_is = Gun.val.rel.is;
+var rel = Gun.val.rel;
 var empty = {}, u;
 	

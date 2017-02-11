@@ -57,7 +57,6 @@ var Graph = {};
 		}
 		if(!(is = valid(v,f,n, at,env))){ return }
 		if(!f){
-			//console.log("oh boy", v,f,n);
 			at.node = at.node || n || {};
 			if(obj_has(v, Node._)){
 				at.node._ = obj_copy(v._);
