@@ -180,7 +180,8 @@ function relate(cat, at, coat, rel){
 	var tmp = (cat.root.get(rel)._);
 	if(cat.field){
 		coat = tmp;
-	} else {
+	} else 
+	if(coat.field){
 		relate(coat, at, coat, rel);
 	}
 	if(coat === cat){ return }
