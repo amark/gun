@@ -2237,7 +2237,7 @@
 
 		// Ensure the protocol is correct.
 		Client.formatURL = function (url) {
-			return url.replace('http', 'ws');
+			return url.replace(/^http/, 'ws');
 		};
 
 		// Send a message to a group of peers.
