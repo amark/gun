@@ -69,7 +69,7 @@ var _soul = Gun.val.rel._, _field = '.';
 			if(!Gun.node.is(graph['#'+soul+'#'], function each(rel,id){
 				if(id !== Gun.val.rel.is(rel)){ return }
 				if(rel = graph['#'+id+'#']){
-					Gun.node.is(rel, each);
+					Gun.node.is(rel, each); // correct params?
 					return;
 				}
 				Gun.node.soul.ify(rel = put[id] = Gun.obj.copy(node), id);

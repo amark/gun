@@ -4,17 +4,28 @@ var Node = require('./node');
 function State(){
 	var t = time();
 	if(last < t){
-		n = 0;
-		return last = t;
+		return N = 0, last = t;
 	}
 	return last = t + ((N += 1) / D);
 }
 var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the future, on machines that are D times faster than 2016AD machines, you will want to increase D by another several orders of magnitude so the processing speed never out paces the decimal resolution (increasing an integer effects the state accuracy).
 State._ = '>';
-State.ify = function(n, f, s){ // put a field's state on a node.
-	if(!n || !n[N_]){ return } // reject if it is not node-like.
+State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
+	if(!n || !n[N_]){ // reject if it is not node-like.
+		if(!soul){ // unless they passed a soul
+			return; 
+		}
+		n = Node.soul.ify(n, soul); // then make it so!
+	} 
 	var tmp = obj_as(n[N_], State._); // grab the states data.
-	if(u !== f && num_is(s)){ tmp[f] = s } // add the valid state.
+	if(u !== f && f !== N_){
+		if(num_is(s)){
+			tmp[f] = s; // add the valid state.
+		}
+		if(u !== v){ // Note: Not its job to check for valid values!
+			n[f] = v;
+		}
+	}
 	return n;
 }
 State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.

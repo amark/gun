@@ -79,8 +79,7 @@ function output(at){
 				if(obj_has(cat, 'put')){
 				//if(u !== cat.put){
 					cat.on('in', cat);
-					//cat.on('in').last.emit(cat);
-				} else// TODO: BUG! Handle plural chains by iterating over them.
+				} else
 				if(cat.map){
 					obj_map(cat.map, function(proxy){
 						proxy.at.on('in', proxy.at);

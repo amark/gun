@@ -63,6 +63,13 @@ Gun.chain.val = function(cb, opt){
 		opt.cat = at;
 		gun.get(val, {as: opt});
 		opt.async = at.stun? 1 : true;
+	} else {
+		Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+		var chain = gun.chain();
+		chain._.val = gun.val(function(){
+			chain._.on('in', gun._);
+		});
+		return chain;
 	}
 	return gun;
 }

@@ -61,7 +61,7 @@ Type.obj.del = function(o, k){
 	delete o[k];
 	return o;
 }
-Type.obj.as = function(o, f, v){ return o[f] = o[f] || (arguments.length >= 3? v : {}) }
+Type.obj.as = function(o, f, v, u){ return o[f] = o[f] || (u === v? {} : v) }
 Type.obj.ify = function(o){
 	if(obj_is(o)){ return o }
 	try{o = JSON.parse(o);

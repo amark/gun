@@ -3383,6 +3383,58 @@ describe('Gun', function(){
 			},300);
 		});
 
+		it('map with map function', function(done){
+			var gun = Gun(), s = 'map/mapfunc', u;
+			var app = gun.get(s);
+			var list = app.get('list');
+
+			var check = {};
+			list.map(user => user.age === 27? user.name + "thezombie" : u).on(function(data){
+				//console.log('data:', data);
+				check[data] = true;
+				if(check.alicethezombie && check.bobthezombie){
+					if(done.c){return}done.c=1;
+					done();
+				}
+			});
+
+			list.set({name: 'alice', age: 27});
+			list.set({name: 'bob', age: 27});
+			list.set({name: 'carl', age: 29});
+			list.set({name: 'dave', age: 25});
+		});
+
+		it('val and then map', function(done){
+			var gun = Gun(), s = 'val/then/map', u;
+			var list = gun.get(s);
+
+			list.set(gun.get('alice').put({name: 'alice', age: 27}));
+			list.set(gun.get('bob').put({name: 'bob', age: 27}));
+			list.set(gun.get('carl').put({name: 'carl', age: 29}));
+			list.set(gun.get('dave').put({name: 'dave', age: 25}));
+
+			var check = {};
+			list.val().map().on(function(data, key){
+				check[key] = data;
+				clearTimeout(done.to);
+				done.to = setTimeout(function(){
+					if(check.alice && check.bob && check.carl && check.dave && done.last){
+						expect(check.alice.age).to.be(27);
+						expect(check.bob.age).to.be(28);
+						expect(check.carl.age).to.be(29);
+						expect(check.dave.age).to.be(25);
+						expect(check.eve).to.not.be.ok();
+						if(done.c){return}done.c=1;
+						done();
+					}
+				},600);
+			});
+			setTimeout(function(){
+				list.set(gun.get('eve').put({name: 'eve', age: 30}));
+				gun.get('bob').path('age').put(28);
+				done.last = true;
+			},300);
+		});
 		return;
 		it.only('Make sure circular contexts are not copied', function(done){
 			/* let's define an appropriate deep default database... */
@@ -5331,7 +5383,7 @@ describe('Gun', function(){
 			Gun.is.node.ify(tmp.node, tmp.soul);
 
 			tmp.graph['me'] = tmp.keynode = {};
-			Gun.obj.as(tmp.rel = {}, Gun._.soul, tmp.soul);
+			Gun.obj.put(tmp.rel = {}, Gun._.soul, tmp.soul);
 			tmp.keynode[tmp.soul] = tmp.rel;
 			Gun.is.node.ify(tmp.keynode, 'me');
 			tmp.keynode[Gun._.meta]['key'] = 1;
