@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 0.5.9
+
+GUN 0.3 -> 0.4 -> 0.5 Migration Guide:
+`gun.back` -> `gun.back()`;
+`gun.get(key, cb)` -> cb(err, data) -> cb(at) at.err, at.put;
+`gun.map(cb)` -> `gun.map().on(cb)`;
+`gun.init` -> deprecated;
+`gun.put(data, cb)` -> cb(err, ok) -> cb(ack) ack.err, ack.ok;
+`gun.get(key)` global/absolute -> `gun.back(-1).get(key)`;
+`gun.key(key)` -> temporarily broken;
+
 ## 0.3.7
 
  - Catch localStorage errors.

@@ -82,7 +82,7 @@
 			delete o[k];
 			return o;
 		}
-		Type.obj.as = function(o, f, v){ return o[f] = o[f] || (arguments.length >= 3? v : {}) }
+		Type.obj.as = function(o, f, v, u){ return o[f] = o[f] || (u === v? {} : v) }
 		Type.obj.ify = function(o){
 			if(obj_is(o)){ return o }
 			try{o = JSON.parse(o);
@@ -182,6 +182,7 @@
 						if(this === this.the.last){
 							this.the.last = this.back;
 						}
+						this.to.back = this.back;
 						this.next = onto._.next;
 						this.back.to = this.to;
 					}),
@@ -191,8 +192,7 @@
 					on: this,
 					as: as,
 				};
-				(be.back = tag.last ||
-				(tag.to = be) && tag).to = be;
+				(be.back = tag.last || tag).to = be;
 				return tag.last = be;
 			}
 			(tag = tag.to).next(arg);
@@ -441,13 +441,12 @@
 		var Type = require('./type');
 		var Val = {};
 		Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
-			var u;
 			if(v === u){ return false }
 			if(v === null){ return true } // "deletes", nulling out fields.
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
-			if(bi_is(v) // by "binary" we mean boolean.
-			|| num_is(v)
-			|| text_is(v)){ // by "text" we mean strings.
+			if(text_is(v) // by "text" we mean strings.
+			|| bi_is(v) // by "binary" we mean boolean.
+			|| num_is(v)){ // by "number" we mean integers or decimals. 
 				return true; // simple values are valid.
 			}
 			return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
@@ -455,7 +454,7 @@
 		Val.rel = {_: '#'};
 		;(function(){
 			Val.rel.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
-				if(v && !v._ && obj_is(v)){ // must be an object.
+				if(v && v[rel_] && !v._ && obj_is(v)){ // must be an object.
 					var o = {};
 					obj_map(v, map, o);
 					if(o.id){ // a valid id was found.
@@ -466,15 +465,15 @@
 			}
 			function map(s, f){ var o = this; // map over the object...
 				if(o.id){ return o.id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-				if(f == _rel && text_is(s)){ // the field should be '#' and have a text value.
+				if(f == rel_ && text_is(s)){ // the field should be '#' and have a text value.
 					o.id = s; // we found the soul!
 				} else {
 					return o.id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
 				}
 			}
 		}());
-		Val.rel.ify = function(t){ return obj_put({}, _rel, t) } // convert a soul into a relation and return it.
-		var _rel = Val.rel._;
+		Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+		var rel_ = Val.rel._, u;
 		var bi_is = Type.bi.is;
 		var num_is = Type.num.is;
 		var text_is = Type.text.is;
@@ -486,26 +485,26 @@
 		var Type = require('./type');
 		var Val = require('./val');
 		var Node = {_: '_'};
-		Node.soul = function(n, o){ return (n && n._ && n._[o || _soul]) } // convenience function to check to see if there is a soul on a node and return it.
+		Node.soul = function(n, o){ return (n && n._ && n._[o || soul_]) } // convenience function to check to see if there is a soul on a node and return it.
 		Node.soul.ify = function(n, o){ // put a soul on an object.
 			o = (typeof o === 'string')? {soul: o} : o || {};
 			n = n || {}; // make sure it exists.
 			n._ = n._ || {}; // make sure meta exists.
-			n._[_soul] = o.soul || n._[_soul] || text_random(); // put the soul on it.
+			n._[soul_] = o.soul || n._[soul_] || text_random(); // put the soul on it.
 			return n;
 		}
 		;(function(){
-			Node.is = function(n, cb, o){ var s; // checks to see if an object is a valid node.
+			Node.is = function(n, cb, as){ var s; // checks to see if an object is a valid node.
 				if(!obj_is(n)){ return false } // must be an object.
 				if(s = Node.soul(n)){ // must have a soul on it.
-					return !obj_map(n, map, {o:o,cb:cb,s:s,n:n});
+					return !obj_map(n, map, {as:as,cb:cb,s:s,n:n});
 				}
 				return false; // nope! This was not a valid node.
 			}
 			function map(v, f){ // we invert this because the way we check for this is via a negation.
 				if(f === Node._){ return } // skip over the metadata.
 				if(!Val.is(v)){ return true } // it is true that this is an invalid node.
-				if(this.cb){ this.cb.call(this.o, v, f, this.s, this.n) } // optionally callback each field/value.
+				if(this.cb){ this.cb.call(this.as, v, f, this.n, this.s) } // optionally callback each field/value.
 			}
 		}());
 		;(function(){
@@ -515,11 +514,11 @@
 				else if(o instanceof Function){ o = {map: o} }
 				if(o.map){ o.node = o.map.call(as, obj, u, o.node || {}) }
 				if(o.node = Node.soul.ify(o.node || {}, o)){
-					obj_map(obj, map, {opt:o,as:as});
+					obj_map(obj, map, {o:o,as:as});
 				}
 				return o.node; // This will only be a valid node if the object wasn't already deep!
 			}
-			function map(v, f){ var o = this.opt, tmp, u; // iterate over each field/value.
+			function map(v, f){ var o = this.o, tmp, u; // iterate over each field/value.
 				if(o.map){
 					tmp = o.map.call(this.as, v, ''+f, o.node);
 					if(u === tmp){
@@ -535,7 +534,7 @@
 		}());
 		var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_map = obj.map;
 		var text = Type.text, text_random = text.random;
-		var _soul = Val.rel._;
+		var soul_ = Val.rel._;
 		var u;
 		module.exports = Node;
 	})(require, './node');
@@ -546,17 +545,28 @@
 		function State(){
 			var t = time();
 			if(last < t){
-				n = 0;
-				return last = t;
+				return N = 0, last = t;
 			}
 			return last = t + ((N += 1) / D);
 		}
 		var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the future, on machines that are D times faster than 2016AD machines, you will want to increase D by another several orders of magnitude so the processing speed never out paces the decimal resolution (increasing an integer effects the state accuracy).
 		State._ = '>';
-		State.ify = function(n, f, s){ // put a field's state on a node.
-			if(!n || !n[N_]){ return } // reject if it is not node-like.
+		State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
+			if(!n || !n[N_]){ // reject if it is not node-like.
+				if(!soul){ // unless they passed a soul
+					return; 
+				}
+				n = Node.soul.ify(n, soul); // then make it so!
+			} 
 			var tmp = obj_as(n[N_], State._); // grab the states data.
-			if(u !== f && num_is(s)){ tmp[f] = s } // add the valid state.
+			if(u !== f && f !== N_){
+				if(num_is(s)){
+					tmp[f] = s; // add the valid state.
+				}
+				if(u !== v){ // Note: Not its job to check for valid values!
+					n[f] = v;
+				}
+			}
 			return n;
 		}
 		State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.
@@ -606,16 +616,16 @@
 		;(function(){
 			Graph.is = function(g, cb, fn, as){ // checks to see if an object is a valid graph.
 				if(!g || !obj_is(g) || obj_empty(g)){ return false } // must be an object.
-				return !obj_map(g, map, {fn:fn,cb:cb,as:as}); // makes sure it wasn't an empty object.
-			}
-			function nf(fn){ // optional callback for each node.
-				if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
+				return !obj_map(g, map, {cb:cb,fn:fn,as:as}); // makes sure it wasn't an empty object.
 			}
 			function map(n, s){ // we invert this because the way we check for this is via a negation.
 				if(!n || s !== Node.soul(n) || !Node.is(n, this.fn)){ return true } // it is true that this is an invalid graph.
-				if(!fn_is(this.cb)){ return }
-				nf.n = n; nf.as = this.as;
+				if(!this.cb){ return }
+				nf.n = n; nf.as = this.as; // sequential race conditions aren't races.
 				this.cb.call(nf.as, n, s, nf);
+			}
+			function nf(fn){ // optional callback for each node.
+				if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
 			}
 		}());
 		;(function(){
@@ -749,7 +759,6 @@
 		var u;
 		module.exports = Graph;
 	})(require, './graph');
-
 
 	;require(function(module){
 		var Type = require('./type');
@@ -937,7 +946,7 @@
 		Gun.log = function(){ return (!Gun.log.off && console.log.apply(console, arguments)), [].slice.call(arguments).join(' ') }
 		Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) }
 
-		Gun.log.once("migrate", "GUN 0.3 -> 0.4 -> 0.5 Migration Guide:\n`gun.back` -> `gun.back()`;\n`gun.get(key, cb)` -> cb(err, data) -> cb(at) at.err, at.put;\n`gun.map(cb)` -> `gun.map().on(cb)`;\n`gun.init` -> deprecated;\n`gun.put(data, cb)` -> cb(err, ok) -> cb(ack) ack.err, ack.ok;\n`gun.get(key)` global/absolute -> `gun.back(-1).get(key)`;\n`gun.key(key)` -> temporarily broken;\nand don't chain off of `gun.val()`;\nCheers, jump on https://gitter.im/amark/gun for help and StackOverflow 'gun' tag for questions!")
+		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		if(typeof window !== "undefined"){ window.Gun = Gun }
 		if(typeof common !== "undefined"){ common.exports = Gun }
 		module.exports = Gun;
@@ -1061,8 +1070,7 @@
 						if(obj_has(cat, 'put')){
 						//if(u !== cat.put){
 							cat.on('in', cat);
-							//cat.on('in').last.emit(cat);
-						} else// TODO: BUG! Handle plural chains by iterating over them.
+						} else
 						if(cat.map){
 							obj_map(cat.map, function(proxy){
 								proxy.at.on('in', proxy.at);
@@ -1699,7 +1707,7 @@
 					if(!Gun.node.is(graph['#'+soul+'#'], function each(rel,id){
 						if(id !== Gun.val.rel.is(rel)){ return }
 						if(rel = graph['#'+id+'#']){
-							Gun.node.is(rel, each);
+							Gun.node.is(rel, each); // correct params?
 							return;
 						}
 						Gun.node.soul.ify(rel = put[id] = Gun.obj.copy(node), id);
@@ -1898,6 +1906,13 @@
 				opt.cat = at;
 				gun.get(val, {as: opt});
 				opt.async = at.stun? 1 : true;
+			} else {
+				Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+				var chain = gun.chain();
+				chain._.val = gun.val(function(){
+					chain._.on('in', gun._);
+				});
+				return chain;
 			}
 			return gun;
 		}
@@ -1974,18 +1989,30 @@
 	;require(function(module){
 		var Gun = require('./core');
 		Gun.chain.map = function(cb, opt, t){
-			var gun = this, cat = gun._, chain = cat.fields;
-			//cb = cb || function(){ return this } // TODO: API BREAKING CHANGE! 0.5 Will behave more like other people's usage of `map` where the passed callback is a transform function. By default though, if no callback is specified then it will use a transform function that returns the same thing it received.
-			if(chain){ return chain }
-			chain = cat.fields = gun.chain();
-			gun.on('in', map, chain._);
-			if(cb){
-				chain.on(cb);
+			var gun = this, cat = gun._, chain;
+			if(!cb){
+				if(chain = cat.fields){ return chain }
+				chain = cat.fields = gun.chain();
+				chain._.val = gun.back('val');
+				gun.on('in', map, chain._);
+				return chain;
 			}
+			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+			chain = gun.chain();
+			gun.map().on(function(data, key, at, ev){
+				var next = (cb||noop).call(this, data, key, at, ev);
+				if(u === next){ return }
+				if(Gun.is(next)){
+					chain._.on('in', next._);
+					return;
+				}
+				chain._.on('in', {get: key, put: next, gun: chain});
+			});
 			return chain;
 		}
 		function map(at){
 			if(!at.put || Gun.val.is(at.put)){ return }
+			if(this.as.val){ this.off() }
 			obj_map(at.put, each, {cat: this.as, gun: at.gun});
 			this.to.next(at);
 		}
@@ -1994,7 +2021,7 @@
 			var cat = this.cat, gun = this.gun.get(f), at = (gun._);
 			(at.echo || (at.echo = {}))[cat.id] = cat;
 		}
-		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._;
+		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	})(require, './map');
 
 	;require(function(module){
@@ -2026,44 +2053,49 @@
 	;require(function(module){
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-		var root, noop = function(){};
+		var root, noop = function(){}, u;
 		if(typeof window !== 'undefined'){ root = window }
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
-		function put(at){ var err, id, opt, root = at.gun._.root;
+		Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
 			this.to.next(at);
 			(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
-			Gun.graph.is(at.put, function(node, soul){
-				//try{store.setItem(opt.prefix + soul, Gun.text.ify(node));
-				// TODO: BUG! PERF! Biggest slowdown is because of localStorage stringifying larger and larger nodes!
-				try{store.setItem(opt.prefix + soul, Gun.text.ify(root._.graph[soul]||node));
+			Gun.graph.is(at.put, function(node, soul, map){
+				var keys = Gun.obj.ify(store.getItem(opt.prefix + soul+'_')||{});
+				map(function(val, key){
+					keys[key] = 1;
+					var state = Gun.state.is(node, key);
+					// #soul.field=val>state
+					try{store.setItem(opt.prefix + soul+key, JSON.stringify([val,state]));
+					}catch(e){ err = e || "localStorage failure" }
+				});
+				try{store.setItem(opt.prefix + soul+'_', JSON.stringify(keys));
 				}catch(e){ err = e || "localStorage failure" }
 			});
-			//console.log('@@@@@@@@@@local put!');
 			if(Gun.obj.empty(at.gun.back('opt.peers'))){
 				Gun.on.ack(at, {err: err, ok: 0}); // only ack if there are no peers.
 			}
-		}
-		function get(at){
+		});
+		Gun.on('get', function(at){
 			this.to.next(at);
 			var gun = at.gun, lex = at.get, soul, data, opt, u;
 			//setTimeout(function(){
 			(opt = at.opt || {}).prefix = opt.prefix || at.gun.back('opt.prefix') || 'gun/';
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
-			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null);
-			if(!data){ // localStorage isn't trustworthy to say "not found".
-				if(Gun.obj.empty(gun.back('opt.peers'))){
-					gun.back(-1).on('in', {'@': at['#']});
+			var field = lex['.'];
+			if(field){
+				if(data = Gun.obj.ify(store.getItem(opt.prefix + soul+field)||null)||u){
+					data = Gun.state.ify(u, field, data[1], data[0], soul);
 				}
-				return;
+			} else {
+				Gun.obj.map(Gun.obj.ify(store.getItem(opt.prefix + soul+'_')), function(v,field){
+					v = Gun.obj.ify(store.getItem(opt.prefix + soul+field)||{});
+					data = Gun.state.ify(data, field, v[1], v[0], soul);
+				});
 			}
-			if(Gun.obj.has(lex, '.')){var tmp = data[lex['.']];data = {_: data._};if(u !== tmp){data[lex['.']] = tmp}}
-			//console.log('@@@@@@@@@@@@local get', data, at);
 			gun.back(-1).on('in', {'@': at['#'], put: Gun.graph.node(data)});
 			//},11);
-		}
-		Gun.on('put', put);
-		Gun.on('get', get);
+		});
 	})(require, './adapters/localStorage');
 
 	;require(function(module){

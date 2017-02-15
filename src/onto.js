@@ -14,6 +14,7 @@ module.exports = function onto(tag, arg, as){
 				if(this === this.the.last){
 					this.the.last = this.back;
 				}
+				this.to.back = this.back;
 				this.next = onto._.next;
 				this.back.to = this.to;
 			}),
@@ -23,8 +24,7 @@ module.exports = function onto(tag, arg, as){
 			on: this,
 			as: as,
 		};
-		(be.back = tag.last ||
-		(tag.to = be) && tag).to = be;
+		(be.back = tag.last || tag).to = be;
 		return tag.last = be;
 	}
 	(tag = tag.to).next(arg);

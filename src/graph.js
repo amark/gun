@@ -6,16 +6,16 @@ var Graph = {};
 ;(function(){
 	Graph.is = function(g, cb, fn, as){ // checks to see if an object is a valid graph.
 		if(!g || !obj_is(g) || obj_empty(g)){ return false } // must be an object.
-		return !obj_map(g, map, {fn:fn,cb:cb,as:as}); // makes sure it wasn't an empty object.
-	}
-	function nf(fn){ // optional callback for each node.
-		if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
+		return !obj_map(g, map, {cb:cb,fn:fn,as:as}); // makes sure it wasn't an empty object.
 	}
 	function map(n, s){ // we invert this because the way we check for this is via a negation.
 		if(!n || s !== Node.soul(n) || !Node.is(n, this.fn)){ return true } // it is true that this is an invalid graph.
-		if(!fn_is(this.cb)){ return }
-		nf.n = n; nf.as = this.as;
+		if(!this.cb){ return }
+		nf.n = n; nf.as = this.as; // sequential race conditions aren't races.
 		this.cb.call(nf.as, n, s, nf);
+	}
+	function nf(fn){ // optional callback for each node.
+		if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
 	}
 }());
 ;(function(){
