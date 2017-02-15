@@ -3389,7 +3389,7 @@ describe('Gun', function(){
 			var list = app.get('list');
 
 			var check = {};
-			list.map(user => user.age === 27? user.name + "thezombie" : u).on(function(data){
+			list.map(function(user){ return user.age === 27? user.name + "thezombie" : u }).on(function(data){
 				//console.log('data:', data);
 				check[data] = true;
 				if(check.alicethezombie && check.bobthezombie){
