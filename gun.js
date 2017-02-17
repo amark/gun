@@ -806,7 +806,7 @@
 
 		Gun.is = function(gun){ return (gun instanceof Gun) }
 
-		Gun.version = 0.5;
+		Gun.version = 0.6;
 
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
@@ -1900,7 +1900,7 @@
 
 		Gun.chain.val = function(cb, opt){
 			var gun = this, at = gun._, data = at.put;
-			if(0 < at.ack && u !== data){
+			if(0 < at.ack && u !== data && cb){
 				cb.call(gun, data, at.get);
 				return gun;
 			}

@@ -8,7 +8,7 @@ function Gun(o){
 
 Gun.is = function(gun){ return (gun instanceof Gun) }
 
-Gun.version = 0.5;
+Gun.version = 0.6;
 
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
@@ -148,7 +148,10 @@ console.debug = function(i, s){ return (console.debug.i && i === console.debug.i
 Gun.log = function(){ return (!Gun.log.off && console.log.apply(console, arguments)), [].slice.call(arguments).join(' ') }
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) }
 
-Gun.log.once("migrate", "GUN 0.3 -> 0.4 -> 0.5 Migration Guide:\n`gun.back` -> `gun.back()`;\n`gun.get(key, cb)` -> cb(err, data) -> cb(at) at.err, at.put;\n`gun.map(cb)` -> `gun.map().on(cb)`;\n`gun.init` -> deprecated;\n`gun.put(data, cb)` -> cb(err, ok) -> cb(ack) ack.err, ack.ok;\n`gun.get(key)` global/absolute -> `gun.back(-1).get(key)`;\n`gun.key(key)` -> temporarily broken;\nand don't chain off of `gun.val()`;\nCheers, jump on https://gitter.im/amark/gun for help and StackOverflow 'gun' tag for questions!")
+/* Please do not remove these messages unless you are paying for a monthly sponsorship, thanks! */
+Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
+/* Please do not remove these messages unless you are paying for a monthly sponsorship, thanks! */
+
 if(typeof window !== "undefined"){ window.Gun = Gun }
 if(typeof common !== "undefined"){ common.exports = Gun }
 module.exports = Gun;
