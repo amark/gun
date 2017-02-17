@@ -54,7 +54,7 @@ function ok(at, ev){ var opt = this;
 
 Gun.chain.val = function(cb, opt){
 	var gun = this, at = gun._, data = at.put;
-	if(0 < at.ack && u !== data){
+	if(0 < at.ack && u !== data && cb){
 		cb.call(gun, data, at.get);
 		return gun;
 	}

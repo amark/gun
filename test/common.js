@@ -1,5 +1,6 @@
+var root;
 (function(env){
-	root = env.window? env.window : root;
+	root = env.window? env.window : global;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
 	root.Gun = root.Gun || require('../index');
@@ -1598,6 +1599,7 @@ describe('Gun', function(){
 							//expect(count.Fluffy).to.be(1);
 							//expect(count.Frisky).to.be(1);
 							//expect(count['undefined']).to.not.be.ok();
+							if(done.c){return}done.c=1;
 							done();
 						},10);
 					}
@@ -3442,7 +3444,6 @@ describe('Gun', function(){
 
 			var alice =  {name: "alice" }
 
-			var Gun = require( "gun" );
 			var gun = Gun();
 
 			var root = gun.get( "root" );
