@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Graph engine",
   "main": "index.js",
   "browser": "gun.min.js",
@@ -55,6 +55,9 @@
   "devDependencies": {
     "express": "~>4.13.4",
     "mocha": "~>1.9.0",
-    "uglify-js": "~>2.2.0"
+    "uglify-js": "~>2.2.0",
+    "panic-manager": "^1.2.0",
+    "panic-server": "^1.1.0",
+    "ip": "^1.1.4"
   }
 }

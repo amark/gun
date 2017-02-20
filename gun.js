@@ -1,4 +1,3 @@
-//console.log("!!!!!!!!!!!!!!!! WARNING THIS IS GUN 0.5 !!!!!!!!!!!!!!!!!!!!!!");
 ;(function(){
 
 	/* UNBUILD */

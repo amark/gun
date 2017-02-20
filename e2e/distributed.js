@@ -3,7 +3,7 @@ require('./holy/grail');
 describe('PANIC!', function(){
 	this.timeout(1000 * 100);
 
-	var Gun = require('..');
+	var Gun = require('../');
 	var gun = Gun();
 
 	var panic = require('panic-server');
