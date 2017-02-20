@@ -3438,6 +3438,52 @@ describe('Gun', function(){
 			},300);
 		});
 		return;
+		it.only('Custom extensions are chainable', function(done){
+			Gun.chain.filter = function(filter){
+			  var chain = this.chain();
+			  var context = this;
+			  var _tags;
+			  context.val(function(obj, key){
+			    if(!obj.tags){
+			      console.warn('Not tagged to anything!');
+			      context._.valid = false;
+			      chain._.on('in', {get: key, gun: this});
+			      return false;
+			    } else { 
+			     _tags = Gun.obj.ify(obj.tags);
+			      if(Array.isArray(filter)){
+			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
+			        if(context._.valid){
+			          chain._.on('in', {get: key, put: obj, gun: this});
+			          return context;
+			        } else {
+			          console.log("that was wrong");
+			          chain._.on('in', {get: key, put: undefined, gun: this});
+			        }
+			        return false;
+			      } else {
+			        console.warn('filter should be an Array');
+			        return false;
+			      }
+			    }
+			  });
+			  return chain;
+			}
+
+			var gun = Gun();
+
+			var fake1 = gun.get('fake1').put({name:'faker1',tags:JSON.stringify({a:1,b:0,c:1})});
+			var fake2 = gun.get('fake2').put({name:'faker2',tags:JSON.stringify({a:1,b:1,c:1})});
+			var list = gun.get('list');
+			list.set(fake1);
+			list.set(fake2);
+
+			gun.get('fake1')//.map()
+			      .filter(['a','b'])  // Gun.chain.filter = function(tags){ .... }
+			      .get(function(no){console.log("NO!", no)})
+			      .val(function(yes){console.log("YES!", yes)})
+		});
+
 		it.only('Make sure circular contexts are not copied', function(done){
 			/* let's define an appropriate deep default database... */
 			var dfltSansUsers = { 1: { name : "org1", sites : { 1: {name : "site1"} } } };
