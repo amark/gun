@@ -29,7 +29,7 @@ function ok(at, ev){ var opt = this;
 	if(u === data){
 		return;
 	}
-	if(data[rel._] && (tmp = rel.is(data))){
+	if(data && data[rel._] && (tmp = rel.is(data))){
 		tmp = (cat.root.get(tmp)._);
 		if(u === tmp.put){
 			return;
@@ -79,7 +79,7 @@ function val(at, ev, to){
 	if(u === data){
 		return;
 	}
-	if(data[rel._] && (tmp = rel.is(data))){
+	if(data && data[rel._] && (tmp = rel.is(data))){
 		tmp = (cat.root.get(tmp)._);
 		if(u === tmp.put){
 			return;
