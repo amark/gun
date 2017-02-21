@@ -3437,6 +3437,25 @@ describe('Gun', function(){
 				done.last = true;
 			},300);
 		});
+
+		it('check null on map', function(done){
+			var list = gun.get('myList');
+			list.map(function(value, id){
+				if("hello world" === value){
+					done.one = true;
+				}
+				if(null === value){
+					done.two = true;
+				}
+				if(done.one && done.two){
+					if(done.c){ return } done.c = 1;
+					done();
+				}
+			});
+			list.path('message').put('hello world'); // outputs "message: hello world"
+			list.path('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
+		});
+		
 		return;
 		it.only('Custom extensions are chainable', function(done){
 			Gun.chain.filter = function(filter){

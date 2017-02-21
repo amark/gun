@@ -1874,7 +1874,7 @@
 			if(u === data){
 				return;
 			}
-			if(data[rel._] && (tmp = rel.is(data))){
+			if(data && data[rel._] && (tmp = rel.is(data))){
 				tmp = (cat.root.get(tmp)._);
 				if(u === tmp.put){
 					return;
@@ -1924,7 +1924,7 @@
 			if(u === data){
 				return;
 			}
-			if(data[rel._] && (tmp = rel.is(data))){
+			if(data && data[rel._] && (tmp = rel.is(data))){
 				tmp = (cat.root.get(tmp)._);
 				if(u === tmp.put){
 					return;
