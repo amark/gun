@@ -57,12 +57,13 @@ gun.get('mark').on(function(data, key){
  - Chat with us: https://gitter.im/amark/gun .
  
 ## Documentation
- - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
  - [API reference](https://github.com/amark/gun/wiki/API).
+ - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
  - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)). 
  - [What tradeoffs does GUN make](https://github.com/amark/gun/wiki/CAP-Theorem)? It is an AP system, so banking apps aren't a good fit.
  - [How the Conflict Resolution algorithm works](http://gun.js.org/distributed/matters.html).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
+ - Loose [roadmap](https://github.com/amark/gun/wiki/roadmap).
 
 ## Deploy
 
