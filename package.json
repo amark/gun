@@ -3,7 +3,7 @@
   "version": "0.6.3",
   "description": "Graph engine",
   "main": "index.js",
-  "browser": "gun.min.js",
+  "browser": "gun.js",
   "scripts": {
     "start": "node examples/http.js 8080",
     "prepublish": "npm run unbuild",
