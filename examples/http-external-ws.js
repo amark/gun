@@ -24,12 +24,12 @@ var server = require('http').createServer(function(req, res){
 // gun.wsp(server);
 
 var ws = require( 'ws' ); // default websocket provider gun used...
-var WebSocketServer = ws.server;
+var WebSocketServer = ws.Server;
 
 var wss = new WebSocketServer( {
         server: server, // 'ws' npm
         autoAcceptConnections : false // want to handle the request (websocket npm?)
-    }
+    });
 
 wss.on('connection',acceptConnection )
 
@@ -42,13 +42,14 @@ Gun.on('out', function(msg){
 function acceptConnection( connection ) {
     // connection.upgradeReq.headers['sec-websocket-protocol'] === (if present) protocol requested by client
     // connection.upgradeReq.url  === url request
-    console.log( "connect?", req.upgradeReq.headers, req.upgradeReq.url )
+    console.log( "connect?", connection.upgradeReq.headers, connection.upgradeReq.url )
     gunPeers.push( connection );
-    connection.on( 'error',function(error){console.log( "WebSocket Error:", error } );
-    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg.utf8Data).body)})
+    connection.on( 'error',function(error){console.log( "WebSocket Error:", error) } );
+    
+    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg).body)})
     connection.on( 'close', function(reason,desc){
         // gunpeers gone.
-        var i = peers.findIndex( function(p){return p===connection} );
+        var i = gunPeers.findIndex( function(p){return p===connection} );
         if( i >= 0 )
             gunPeers.splice( i, 1 );
 
