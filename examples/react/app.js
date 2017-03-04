@@ -9,9 +9,11 @@ const App = _ =>
     <h1>React Examples</h1>
     <h2>Todo</h2>
     <Todos />
+    <br />
     <hr />
     <h2>Chat</h2>
     <Chat />
+    <br />
     <hr />
     <h2>Json</h2>
     <Json />
