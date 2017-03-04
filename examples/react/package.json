@@ -1,10 +1,10 @@
 {
-  "name": "algos",
+  "name": "gun-react-examples",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
   "scripts": {
-    "start": "nodemon --config .nodemon.json start"
+    "start": "node start",
+    "dev": "nodemon --config .nodemon.json start"
   },
   "keywords": [],
   "author": "",
