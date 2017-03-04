@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+<title>gun - react examples</title>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.23.1/babel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react-dom.js"></script>
+<script src="../gun.js"></script>
+
+<script type="text/babel" data-presets="react,latest,stage-0">
+const { Component } = React
+const { render } = ReactDOM
+const gun = Gun().get('todos')
+const formatTodos = todos => Object.keys(todos)
+  .map(key => ({ key, val: todos[key] }))
+  .filter(t => Boolean(t.val) && t.key !== '_')
+
+class Todos extends Component {
+  constructor() {
+    super()
+    this.state = {newTodo: '', todos: []}
+  }
+  componentWillMount() {
+    gun.on(todos => this.setState({
+      todos: formatTodos(todos)
+    }))
+  }
+  add = _ => {
+    gun.path(Gun.text.random()).put(this.state.newTodo)
+    this.setState({newTodo: ''})
+  }
+  del = key => gun.path(key).put(null)
+  handleChange = e => this.setState({ newTodo: e.target.value})
+  render() {
+    return <div>
+      <input value={this.state.newTodo} onChange={this.handleChange} />
+      <button onClick={this.add}>Add</button>
+      <br />
+      <ul>
+        {this.state.todos.map(todo => <li key={todo.key} onClick={_=>this.del(todo.key)}>{todo.val}</li>)}
+      </ul>
+    </div>
+  }
+}
+render(<Todos />, document.getElementById('app'))
+
+</script>
+</body>
