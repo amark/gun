@@ -2,6 +2,15 @@
 <html>
 <head>
 <title>gun - react examples</title>
+<style>
+html, body { font-size: 14pt; padding: 10px 2.5%;}
+.hide { display: none; }
+form .who { width: 10%; }
+form .what { width: 80%; }
+ul { list-style: none; padding: 0; }
+ul .when {color: #555; font-size: 12pt; float: right; display: none; }
+li:hover .when {display: inline;}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -13,7 +22,7 @@
 <script type="text/babel" data-presets="react,latest,stage-0">
 const { Component } = React
 const { render } = ReactDOM
-const gun = Gun().get('todos')
+const todos = Gun().get('todos')
 const formatTodos = todos => Object.keys(todos)
   .map(key => ({ key, val: todos[key] }))
   .filter(t => Boolean(t.val) && t.key !== '_')
@@ -24,12 +33,12 @@ class Todos extends Component {
     this.state = {newTodo: '', todos: []}
   }
   componentWillMount() {
-    gun.on(todos => this.setState({
+    todos.on(todos => this.setState({
       todos: formatTodos(todos)
     }))
   }
   add = _ => {
-    gun.path(Gun.text.random()).put(this.state.newTodo)
+    todos.path(Gun.text.random()).put(this.state.newTodo)
     this.setState({newTodo: ''})
   }
   del = key => gun.path(key).put(null)
@@ -45,7 +54,122 @@ class Todos extends Component {
     </div>
   }
 }
-render(<Todos />, document.getElementById('app'))
+
+const json = Gun().get('json')
+const formatJson = json =>
+  Object.keys(json)
+    .map(key => ({ key, val: json[key]}))
+    .filter(el => el.key !== '_')
+
+class Json extends Component {
+  constructor() {
+    super()
+    this.state = { newField: '', json: [] }
+  }
+
+  componentWillMount() {
+    json.on(json => this.setState({ json: formatJson(json) }))
+  }
+
+  edit = key => e => {
+    e.preventDefault()
+    json.path(key).put(e.target.value)
+  }
+  
+  add = e => {
+    e.preventDefault()
+    json.path(this.state.newField).put('value')
+    this.setState({newField: ''})
+  }
+
+  render() {
+    return <div>
+      <ul>
+        {this.state.json.map(({ key, val }) =>
+          <li key={key}><b>{key}:</b> <input value={val} onChange={this.edit(key)} /></li>
+        )}
+      </ul>
+      <form onSubmit={this.add}>
+      <input value={this.state.newField} onChange={e => this.setState({ newField: e.target.value})} />
+      <button onClick={this.add}>Add Field</button>
+      </form>
+    </div>
+  }
+}
+
+
+const chat = Gun().get('chat')
+const formatMsgs = msgs => Object.keys(msgs)
+  .map(key => ({ key, ...msgs[key] }))
+  .filter(m => Boolean(m.when) && m.key !== '_')
+  .sort((a, b) => a.when - b.when)
+  .map(m => ((m.whenFmt = new Date(m.when).toLocaleString().toLowerCase()), m))
+
+class Chat extends Component {
+  constructor() {
+    super()
+    this.state = {
+      newMsg: '',
+      name: (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'',
+      msgs: {},
+    }
+  }
+  componentWillMount() {
+    const tmpState = {}
+    chat.map().val((msg, key) => {
+      tmpState[key] = msg
+      this.setState({msgs: Object.assign({}, this.state.msgs, tmpState)})
+    })
+
+  }
+  send = e => {
+    e.preventDefault()
+    const who = this.state.name || 'user' + Gun.text.random(6)
+    this.setState({name: who})
+    document.cookie = ('alias=' + who) 
+    const when = Gun.time.is()
+    const key = `${when}_${Gun.text.random(4)}`
+    chat.path(key).put({
+      who,
+      when,
+      what: this.state.newMsg,
+    })
+    this.setState({newMsg: ''})
+  }
+  render() {
+    const msgs = formatMsgs(this.state.msgs)
+    return <div>
+      <ul>
+        {msgs.map(msg =>
+          <li key={msg.key}><b>{msg.who}:</b> {msg.what}<span className="when">{msg.whenFmt}</span></li>
+        )}
+      </ul>
+      <form onSubmit={this.send}>
+      <input value={this.state.name} className="who" onChange={e => this.setState({ name: e.target.value})} />
+      <input value={this.state.newMsg} className="what" onChange={e => this.setState({ newMsg: e.target.value})} />
+      <button onClick={this.send}>Send</button>
+      </form>
+    </div>
+  }
+}
+
+const App = _ =>
+  <div>
+    <h1>React Examples</h1>
+    <h2>Todo</h2>
+    <Todos />
+    <br />
+    <hr />
+    <h2>Chat</h2>
+    <Chat />
+    <br />
+    <hr />
+    <h2>Json</h2>
+    <Json />
+  </div>
+
+render(<App />,  document.getElementById('app'))
+
 
 </script>
 </body>
