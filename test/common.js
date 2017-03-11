@@ -3472,7 +3472,7 @@ describe('Gun', function(){
 					//console.log("d sends to b....", Gun.obj.copy(msg));
 					b.on("in", msg);
 				}
-			})
+			});
 
 			var b = Gun({file: "bdata"});
 			var d = null;
