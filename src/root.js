@@ -37,27 +37,43 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		at.root = at.root || at.gun;
 		at.graph = at.graph || {};
 		at.dup = at.dup || new Gun.dup;
+		at.ask = Gun.on.ask;
+		at.ack = Gun.on.ack;
 		var gun = at.gun.opt(at.opt);
 		if(!at.once){
-			at.on('in', input, at);
-			at.on('out', output, at);
+			at.on('in', root, at);
+			at.on('out', root, at);
 		}
 		at.once = 1;
 		return gun;
 	}
-	function output(at){
-		//console.log("add to.next(at)!"); // TODO: BUG!!!!
-		var cat = this.as, gun = cat.gun, tmp;
-		// TODO: BUG! Outgoing `get` to read from in memory!!!
-		if(at.get && get(at, cat)){ return }
-		cat.on('in', obj_to(at, {gun: cat.gun})); // TODO: PERF! input now goes to output so it would be nice to reduce the circularity here for perf purposes.
-		if(at['#']){
+	function root(at){
+		//console.log("add to.next(at)"); // TODO: BUG!!!
+		var ev = this, cat = ev.as, coat;
+		if(!at.gun){ at.gun = cat.gun }
+		if(!at['#'] && at['@']){
+			at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
+			// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be. 
+			if(cat.ack(at['@'], at)){ return } // TODO: Consider not returning here, maybe, where this would let the "handshake" on sync occur for Holy Grail?
 			cat.dup.track(at['#']);
+			Gun.on('out', obj_to(at, {gun: cat.gun}));
+			return;
 		}
-		if(!at.gun){
-			at = obj_to(at, {gun: gun});
+		if(at['#'] && cat.dup.check(at['#'])){ return }
+		cat.dup.track(at['#']);
+		if(cat.ack(at['@'], at)){ return }
+		//cat.ack(at['@'], at);
+		coat = obj_to(at, {gun: cat.gun});
+		if(at.get){
+			if(!get(at, cat)){
+				Gun.on('get', coat);
+			}
 		}
-		Gun.on('out', at); // TODO: BUG! PERF? WARNING!!! A in-memory `put` triggers an out with an existing ID which reflows into IN which at the end also goes Gun OUT, and then this scope/function resumes and it triggers OUT again!
+		if(at.put){
+			Gun.HAM.synth(at, ev, cat.gun); // TODO: Clean up, just make it part of on('put')!
+			Gun.on('put', coat);
+		}
+		Gun.on('out', coat);
 	}
 	function get(at, cat){
 		var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
@@ -68,50 +84,36 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			tmp = Gun.obj.put(Gun.node.soul.ify({}, soul), field, node[field]);
 			node = Gun.state.ify(tmp, field, Gun.state.is(node, field));
 		}
-		as.on('in', {
-			put: node, // TODO: BUG! Clone node!
-			get: as.soul,
+		//if(at.gun === cat.gun){
+			node = Gun.graph.node(node); // TODO: BUG! Clone node?
+		//} else {
+		//	cat = (at.gun._);
+		//}
+		tmp = as.ack;
+		cat.on('in', {
+			'@': at['#'],
+			how: 'mem',
+			put: node,
 			gun: as.gun
 		});
-		if(0 < as.ack){
+		if(0 < tmp){
 			return true;
 		}
-	}
-	function input(at){
-		//console.log("add to.next(at)"); // TODO: BUG!!!
-		var ev = this, cat = ev.as;
-		if(!at.gun){ at.gun = cat.gun }
-		if(!at['#'] && at['@']){
-			at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
-			if(Gun.on.ack(at['@'], at)){ return } // TODO: Consider not returning here, maybe, where this would let the "handshake" on sync occur for Holy Grail?
-			cat.dup.track(at['#']);
-			cat.on('out', at);
-			return;
-		}
-		if(at['#'] && cat.dup.check(at['#'])){ return }
-		cat.dup.track(at['#']);
-		if(Gun.on.ack(at['@'], at)){ return }
-		if(at.put){
-			Gun.HAM.synth(at, ev, cat.gun); // TODO: Clean up, just make it part of on('put')!
-			Gun.on('put', at);
-		}
-		if(at.get){ Gun.on('get', at) }
-		Gun.on('out', at);
 	}
 }());
 
 ;(function(){
-	var ask = Gun.on.ask = function(cb, as){
+	Gun.on.ask = function(cb, as){
+		if(!this.on){ return }
 		var id = Gun.text.random();
-		if(cb){ ask.on(id, cb, as) }
+		if(cb){ this.on(id, cb, as) }
 		return id;
 	}
-	ask.on = Gun.on;
 	Gun.on.ack = function(at, reply){
-		if(!at || !reply || !ask.on){ return }
+		if(!at || !reply || !this.on){ return }
 		var id = at['#'] || at;
-		if(!ask.tag || !ask.tag[id]){ return }
-		ask.on(id, reply);
+		if(!this.tag || !this.tag[id]){ return }
+		this.on(id, reply);
 		return true;
 	}
 }());

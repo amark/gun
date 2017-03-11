@@ -35,7 +35,7 @@ module.exports = Gun;
 		if(!val_is(cv) && u !== cv){ return true }  // Undefined is okay since a value might not exist on both nodes. // it is true that this is an invalid HAM comparison.
 		var HAM = Gun.HAM(machine, is, cs, iv, cv);
 		if(HAM.err){
-			console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", HAM.err); // this error should never happen.
+			console.log(".!HYPOTHETICAL AMNESIA MACHINE ERR!.", field, HAM.err); // this error should never happen.
 			return;
 		}
 		if(HAM.state || HAM.historical || HAM.current){ // TODO: BUG! Not implemented.
@@ -103,13 +103,11 @@ module.exports = Gun;
 	}
 	Gun.HAM.synth = function(at, ev, as){ var gun = this.as || as;
 		var cat = gun._, root = cat.root._, put = {}, tmp;
-		//if(cat.ack){
-		//	cat.ack = 1;
-		//}
 		if(!at.put){
 			//if(obj_has(cat, 'put')){ return }
 			if(cat.put !== u){ return }
 			cat.on('in', {
+			//root.ack(at['@'], {
 				get: cat.get,
 				put: cat.put = u,
 				gun: gun,
@@ -122,6 +120,9 @@ module.exports = Gun;
 			put[soul] = Gun.HAM.delta(graph[soul], node, {graph: graph}); // TODO: PERF! SEE IF WE CAN OPTIMIZE THIS BY MERGING UNION INTO DELTA!
 			graph[soul] = Gun.HAM.union(graph[soul], node) || graph[soul];
 		}, root);
+		if(at.gun !== root.gun){
+			put = at.put;
+		}
 		// TODO: PERF! Have options to determine if this data should even be in memory on this peer!
 		obj_map(put, function(node, soul){
 			var root = this, next = root.next || (root.next = {}), gun = next[soul] || (next[soul] = root.gun.get(soul)), coat = (gun._);
