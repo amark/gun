@@ -7,11 +7,11 @@ var root;
 		root.Gun = root.Gun;
 	} else {
 		root.Gun = require('../gun');
-		Gun.serve = require('./serve');
+		Gun.serve = require('../lib/serve');
 		//require('./s3');
 		//require('./uws');
 		//require('./wsp/server');
-		require('./file');
+		require('../lib/file');
 	}
 }(this));
 //Gun.log.squelch = true;
