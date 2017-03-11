@@ -1,0 +1,7 @@
+html, body { font-size: 14pt; padding: 10px 2.5%;}
+.hide { display: none; }
+form .who { width: 10%; }
+form .what { width: 80%; }
+ul { list-style: none; padding: 0; }
+ul .when {color: #555; font-size: 12pt; float: right; display: none; }
+li:hover .when {display: inline;}

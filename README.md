@@ -57,12 +57,13 @@ gun.get('mark').on(function(data, key){
  - Chat with us: https://gitter.im/amark/gun .
  
 ## Documentation
- - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
  - [API reference](https://github.com/amark/gun/wiki/API).
+ - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
  - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)). 
  - [What tradeoffs does GUN make](https://github.com/amark/gun/wiki/CAP-Theorem)? It is an AP system, so banking apps aren't a good fit.
  - [How the Conflict Resolution algorithm works](http://gun.js.org/distributed/matters.html).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
+ - Loose [roadmap](https://github.com/amark/gun/wiki/roadmap).
 
 ## Deploy
 
@@ -123,7 +124,7 @@ Then visit [http://localhost:8080](http://localhost:8080) in your browser.
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
  - [Saving relational or document based data](https://www.youtube.com/watch?v=cOO6wz1rZVY&feature=youtu.be) (06:59)
- - [Everything you want to know about GUN](https://youtu.be/qJNDplwJ8aQ) (57:50) 2x speed recommended.
+ - [Everything you want to know about GUN](https://youtu.be/qJNDplwJ8aQ) (57:50) 1.25x speed recommended.
  - [GUN's YouTube channel](https://www.youtube.com/channel/UCQAtpf-zi9Pp4__2nToOM8g/playlists) also has videos.
 
 ### <a name="gun-projects"></a>Projects
