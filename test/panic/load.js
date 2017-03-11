@@ -2,8 +2,8 @@ var config = {
 	IP: require('ip').address(),
 	port: 8080,
 	servers: 1,
-	browsers: 2,
-	each: 500,
+	browsers: 4,
+	each: 1500,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -87,9 +87,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				});
 				// Launch the server and start gun!
 				var Gun = require('gun');
-				var gun = Gun({file: env.i+'data.json'});
 				// Attach the server to gun.
-				//gun.wsp(server);
+				var gun = Gun({file: env.i+'data', web: server});
 				server.listen(env.config.port + env.i, function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.
@@ -154,6 +153,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 		browsers.each(function(client, id){
 			// for every browser, run the following code:
 			tests.push(client.run(function(test){
+				//var audio = new Audio('https://www.nasa.gov/mp3/640170main_Roger%20Roll.mp3');audio.addEventListener('ended', function() {this.currentTime = 0;this.play();}, false);audio.play(); // testing if audio prevents Chrome throttle?
 				localStorage.clear(); // Clean up anything from before.
 				var env = test.props;
 				// Get access to the "outer scope" which has the browser IDs
@@ -164,9 +164,10 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				while(i--){
 					// For the total number of servers listed in the configuration
 					// Add their URL into an array.
-					peers.push('http://'+ env.config.IP + ':' + (env.config.port + (i + 1)));
+					peers.push('http://'+ env.config.IP + ':' + (env.config.port + (i + 1)) + '/gun');
 				}
 				// Pass all the servers we want to connect to into gun.
+				//var gun = Gun();
 				var gun = Gun(peers);
 				// Now we want to create a list
 				// of all the messages that WILL be sent
@@ -195,18 +196,19 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					//var el = $('#'+key).length ? $('#'+key) : $('<div>');
 					// log the data out to, so we can visually see our test.
 					//$(log).append(el.attr('id', key).text(key +": "+ data));
+					$(log).text(key +": "+ data); // DOM updates thrash performance, try this.
+					// Scroll down with the logging.
+					//$('body').stop(true).animate({scrollTop: $(log).height()});
 					// Now, make sure the received data
 					// matches exactly the data we EXPECT
 					if(("Hello world, "+key+"!") === data){
 						// if it does, we can "check off" record
+						// Bump the total number of verified items and update the UI.
+						if(check[key]){ num += 1 }
 						// from our verify todo list.
 						check[key] = 0;
-						// Bump the total number of verified items and update the UI.
-						num += 1;
 						report.text(num +" / "+ total +" Verified");
 					}
-					// Scroll down with the logging.
-					//$('body').stop(true).animate({scrollTop: $(log).height()});
 					// This next part is important:
 					if(Gun.obj.map(check, function(still){
 						// IF THERE ARE ANY RECORDS STILL LEFT TO BE VERIFIED
@@ -220,14 +222,14 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					test.done();
 				});
 				// But we have to actually tell the browser to save data!
-				var i = 0, to = setTimeout(function go(){
+				var i = 0, to = setInterval(function go(){
 					// Cool, make a recursive function
 					// that keeps going until we've saved each message.
 					if(env.config.each <= i){
 						clearTimeout(to);
 						return;
 					}
-					to = setTimeout(go, env.config.wait * Math.random()); // add a little jitter.
+					//to = setTimeout(go, env.config.wait * Math.random()); // add a little jitter.
 					i += 1;
 					var p = env.id + i;
 					// And actually save the data with gun,

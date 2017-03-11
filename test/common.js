@@ -1755,6 +1755,7 @@ describe('Gun', function(){
 							//expect(count['Alice']).to.be(1);
 							//expect(count['Bob']).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
+							if(done.c){ return } done.c = 1;
 							done();
 						},200);
 					}
@@ -3132,6 +3133,7 @@ describe('Gun', function(){
 				gun.path('alias').get(function(at){
 					done.alias = done.alias || at.put.mark;
 				}).path('mark').get(function(at){
+					//console.log("************", at.put);
 					setTimeout(function(){
 						done.mark = done.mark || at.put.pub;
 						expect(Gun.val.rel.is(done.mark)).to.be('pub');
@@ -3159,7 +3161,6 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var gun2 = Gun();
 				gun2.get('stef').path('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
-					//console.log("******", data);
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
 					expect(data.zip).to.be('999999');
@@ -3168,7 +3169,6 @@ describe('Gun', function(){
 					done();
 				});
 				gun2.get('stef').val(function(data){ //Object {_: Object, address: Object} "stef"
-					//console.log("*****************", data);
 					done.s = true;
 					expect(data.name).to.be('Stef');
 					expect(data.address).to.be.ok();
@@ -3328,8 +3328,8 @@ describe('Gun', function(){
 
 			var app = gun.get('mult/times');
 
-			app.path('alias').path('mark').set(gun.get('asdf').put({
-				pub: 'asdf',
+			app.path('alias').path('mark').set(gun.get('ASDF').put({
+				pub: 'ASDF',
 				alias: 'mark',
 				born: 1
 			}));
@@ -3343,7 +3343,7 @@ describe('Gun', function(){
 				app.path('alias').map().map().path('alias').on(function(data){
 					done.two = data;
 					//console.log("alias 2!", data);
-					expect(done.one).to.be("asdf");
+					expect(done.one).to.be("ASDF");
 					expect(done.two).to.be("mark");
 					if(done.c){ return } done.c = 1;
 					done();
@@ -3358,7 +3358,7 @@ describe('Gun', function(){
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				alias: {
 					mark: {
-						pub: {_:{'#':'pub'},
+						pub: {_:{'#':'PUB'},
 							pub: 'asdf',
 							alias: 'mark',
 							born: 1
@@ -3386,6 +3386,7 @@ describe('Gun', function(){
 		});
 
 		it('map with map function', function(done){
+					console.debug.i=0;
 			var gun = Gun(), s = 'map/mapfunc', u;
 			var app = gun.get(s);
 			var list = app.get('list');
@@ -3399,8 +3400,7 @@ describe('Gun', function(){
 					done();
 				}
 			});
-
-			list.set({name: 'alice', age: 27});
+			list.set({name: 'alice', age: 27}); // on put, table-scan flag doesn't get set, but is needed for initial!??
 			list.set({name: 'bob', age: 27});
 			list.set({name: 'carl', age: 29});
 			list.set({name: 'dave', age: 25});
@@ -3455,7 +3455,42 @@ describe('Gun', function(){
 			list.path('message').put('hello world'); // outputs "message: hello world"
 			list.path('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
 		});
-		
+
+		it('Check multi instance message passing', function(done){
+			try{ require('fs').unlinkSync('bdata') }catch(e){}
+			try{ require('fs').unlinkSync('ddata') }catch(e){}
+			Gun.on('out', function(msg){
+				//console.log("oye", msg);
+				this.to.next(msg);
+				var onGun = msg.gun.back(-1);
+				if(onGun === b) {
+					if(d){
+						//console.log("b can send to d....", Gun.obj.copy(msg));
+						d.on("in", msg);
+					}
+				} else if(onGun === d){
+					//console.log("d sends to b....", Gun.obj.copy(msg));
+					b.on("in", msg);
+				}
+			})
+
+			var b = Gun({file: "bdata"});
+			var d = null;
+
+			var bb = b.get("key");
+			bb.put({msg: "hello"});
+				
+			d = Gun({file: "ddata"});
+			var db = d.get("key");
+			db.map().on(function(val,field){
+				//console.log("d key got val:", field, val) 
+				expect(val).to.be('hello');
+				if(done.c){ return } done.c = 1;
+				setTimeout(function(){
+					done();
+				},1700);
+			});
+		});
 		return;
 		it.only('Custom extensions are chainable', function(done){
 			Gun.chain.filter = function(filter){
@@ -3501,6 +3536,20 @@ describe('Gun', function(){
 			      .filter(['a','b'])  // Gun.chain.filter = function(tags){ .... }
 			      .get(function(no){console.log("NO!", no)})
 			      .val(function(yes){console.log("YES!", yes)})
+		});
+
+		it.only('Check that events are called with multiple instances', function(done){
+			var gunA = Gun( { file : "A.json" } );
+			var gunB = Gun( { file : "B.json" });
+			var gunC = Gun( { file : "C.json" });
+
+			gunA.get( "some path A" ).map( (v,f)=>{ console.log( "event on A: ", f, v ) } );
+			gunB.get( "some path B" ).map( (v,f)=>{ console.log( "event on B: ", f, v ) } );
+			gunC.get( "some path C" ).map( (v,f)=>{ console.log( "event on C: ", f, v ) } );
+
+			gunA.get( "some path A" ).put( { simple:"message" } );
+			gunB.get( "some path B" ).put( { simple:"message" } );
+			gunC.get( "some path C" ).put( { simple:"message" } );
 		});
 
 		it.only('Make sure circular contexts are not copied', function(done){
