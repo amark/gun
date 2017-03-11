@@ -1117,10 +1117,10 @@
 		});
 		setTimeout(function(){
 
-			var c = new Chain(), u;
-			c.get('app').map().map(x => x.bat? {baz: x.bat} : u).get('baz').val(function(data, key, env){
-				console.log("envelope", env);
-			});
+			//var c = new Chain(), u;
+			//c.get('app').map().map(x => x.bat? {baz: x.bat} : u).get('baz').val(function(data, key, env){
+			//	console.log("envelope", env);
+			//});
 
 		},1000);
 

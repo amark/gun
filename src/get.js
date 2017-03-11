@@ -13,9 +13,9 @@ Gun.chain.get = function(key, cb, as){
 		var gun = this, at = gun._;
 		as = cb || {};
 		as.use = key;
-		as.out = as.out || {};
+		as.out = as.out || {cap: 1};
 		as.out.get = as.out.get || {};
-		(at.root._).now = true;
+		'_' != at.get && ((at.root._).now = true); // ugly hack for now.
 		at.on('in', use, as);
 		at.on('out', as.out);
 		(at.root._).now = false;

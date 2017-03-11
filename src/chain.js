@@ -38,7 +38,7 @@ function output(at){
 						if(!at.gun._){ return }
 						(at.gun._).on('out', {
 							get: {'#': rel, '.': get},
-							'#': Gun.on.ask(Gun.HAM.synth, at.gun),
+							'#': root._.ask(Gun.HAM.synth, at.gun),
 							gun: at.gun
 						});
 						return;
@@ -61,7 +61,7 @@ function output(at){
 					if(!at.gun._){ return }
 					(at.gun._).on('out', {
 						get: {'#': cat.soul, '.': get},
-						'#': Gun.on.ask(Gun.HAM.synth, at.gun),
+						'#': root._.ask(Gun.HAM.synth, at.gun),
 						gun: at.gun
 					});
 					return;
@@ -86,7 +86,7 @@ function output(at){
 					});
 				}
 				if(cat.ack){
-					if(!obj_has(cat, 'put')){
+					if(!obj_has(cat, 'put')){ // u !== cat.put instead?
 						return;
 					}
 				}
@@ -94,7 +94,8 @@ function output(at){
 				if(cat.soul){
 					cat.on('out', {
 						get: {'#': cat.soul},
-						'#': Gun.on.ask(Gun.HAM.synth, cat.gun),
+						'#': root._.ask(Gun.HAM.synth, cat.gun),
+						gun: cat.gun
 					});
 					return;
 				}
@@ -114,7 +115,7 @@ function output(at){
 function input(at){
 	at = at._ || at;
 	var ev = this, cat = this.as, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, rel, tmp;
-	if(0 > cat.ack && at.via && !Gun.val.rel.is(change)){ // for better behavior?
+	if(0 > cat.ack && !Gun.val.rel.is(change)){ // for better behavior?
 		cat.ack = 1;
 	}
 	if(cat.get && at.get !== cat.get){
@@ -138,6 +139,7 @@ function input(at){
 		return;
 	}
 	if(cat.soul){
+		if(cat.root._.now){ at = obj_to(at, {put: change = coat.put}) } // TODO: Ugly hack for uncached synchronous maps.
 		ev.to.next(at);
 		echo(cat, at, ev);
 		obj_map(change, map, {at: at, cat: cat});
@@ -255,7 +257,7 @@ function ask(cat, soul){
 		tmp.ack = tmp.ack || -1;
 		tmp.on('out', {
 			get: {'#': soul},
-			'#': Gun.on.ask(Gun.HAM.synth, tmp.gun),
+			'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
 			gun: tmp.gun
 		});
 		return;
@@ -263,7 +265,7 @@ function ask(cat, soul){
 	obj_map(cat.next, function(gun, key){
 		(gun._).on('out', {
 			get: {'#': soul, '.': key},
-			'#': Gun.on.ask(Gun.HAM.synth, tmp.gun),
+			'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
 			gun: gun
 		});
 	});

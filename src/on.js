@@ -54,15 +54,15 @@ function ok(at, ev){ var opt = this;
 
 Gun.chain.val = function(cb, opt){
 	var gun = this, at = gun._, data = at.put;
-	if(0 < at.ack && u !== data && cb){
-		cb.call(gun, data, at.get);
+	if(0 < at.ack && u !== data){
+		(cb || noop).call(gun, data, at.get);
 		return gun;
 	}
 	if(cb){
 		(opt = opt || {}).ok = cb;
 		opt.cat = at;
 		gun.get(val, {as: opt});
-		opt.async = at.stun? 1 : true;
+		opt.async = true; //opt.async = at.stun? 1 : true;
 	} else {
 		Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 		var chain = gun.chain();
@@ -87,7 +87,8 @@ function val(at, ev, to){
 		data = tmp.put;
 	}
 	if(ev.wait){ clearTimeout(ev.wait) }
-	if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
+	//if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
+	if(!opt.async){
 		ev.wait = setTimeout(function(){
 			val.call({as:opt}, at, ev, ev.wait || 1)
 		}, opt.wait || 99);
@@ -128,5 +129,5 @@ Gun.chain.off = function(){
 }
 var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 var rel = Gun.val.rel;
-var empty = {}, u;
+var empty = {}, noop = function(){}, u;
 	

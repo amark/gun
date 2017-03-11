@@ -4,7 +4,7 @@ Gun.chain.put = function(data, cb, as){
 	// #soul.field=value>state
 	// ~who#where.where=what>when@was
 	// TODO: BUG! Put probably cannot handle plural chains!
-	var gun = this, root = (gun._).root, tmp;
+	var gun = this, at = (gun._), root = at.root, tmp;
 	as = as || {};
 	as.data = data;
 	as.gun = as.gun || gun;
@@ -13,9 +13,12 @@ Gun.chain.put = function(data, cb, as){
 	} else {
 		as.ack = cb;
 	}
+	if(at.soul){
+		as.soul = at.soul;
+	}
 	if(as.soul || root === gun){
 		if(!obj_is(as.data)){
-			(opt.any||noop).call(opt.as || gun, as.out = {err: Gun.log("No field to put", (typeof as.data), '"' + as.data + '" on!')});
+			(as.ack||noop).call(as, as.out = {err: Gun.log("Data saved to the root level of the graph must be a node (an object), not a", (typeof as.data), 'of "' + as.data + '"!')});
 			if(as.res){ as.res() }
 			return gun;
 		}
@@ -27,12 +30,17 @@ Gun.chain.put = function(data, cb, as){
 	if(Gun.is(data)){
 		data.get(function(at,ev){ev.off();
 			var s = Gun.node.soul(at.put);
-			if(!s){Gun.log("Can only save a node, not a property.");return}
+			if(!s){Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');return}
 			gun.put(Gun.val.rel.ify(s), cb, as);
 		});
 		return gun;
 	}
-	as.ref = as.ref || (root === (tmp = (gun._).back))? gun : tmp;
+	as.ref = as.ref || (root === (tmp = at.back))? gun : tmp;
+	if(as.ref._.soul && Gun.val.is(as.data) && at.get){
+		as.data = obj_put({}, at.get, as.data);
+		as.ref.put(as.data, as.soul, as);
+		return gun;
+	}
 	as.ref.get('_').get(any, {as: as});
 	if(!as.out){
 		// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
@@ -48,7 +56,7 @@ function ify(as){
 	env.soul = as.soul;
 	as.graph = Gun.graph.ify(as.data, env, as);
 	if(env.err){
-		(as.ack||noop).call(opt.as || as.gun, as.out = {err: Gun.log(env.err)});
+		(as.ack||noop).call(as, as.out = {err: Gun.log(env.err)});
 		if(as.res){ as.res() }
 		return;
 	}
@@ -59,8 +67,9 @@ function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
 	(as.res||iife)(function(){
 		(as.ref._).on('out', {
+			cap: 3,
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
-			'#': Gun.on.ask(function(ack){ this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+			'#': as.gun.back(-1)._.ask(function(ack){ this.off(); // One response is good enough for us currently. Later we may want to adjust this.
 				if(!as.ack){ return }
 				as.ack(ack, this);
 			}, as.opt)
@@ -75,7 +84,7 @@ function map(v,f,n, at){ var as = this;
 		var path = at.path, ref = as.ref, opt = as.opt;
 		var i = 0, l = path.length;
 		for(i; i < l; i++){
-			ref = ref.get(path[i]); // TODO: API change! We won't need 'path: true' anymore.
+			ref = ref.get(path[i]);
 		}
 		if(as.not || Gun.node.soul(at.obj)){
 			at.soul(Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)());
@@ -106,7 +115,7 @@ function any(at, ev){
 	var cat = (at.gun._.back._), data = cat.put, opt = as.opt||{}, root, tmp;
 	ev.off();
 	if(as.ref !== as.gun){
-		tmp = (as.gun._).get;
+		tmp = (as.gun._).get || cat.get;
 		if(!tmp){ // TODO: Handle
 			console.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
 			return;
@@ -129,10 +138,10 @@ function any(at, ev){
 	}
 	if(!as.not && !(as.soul = Gun.node.soul(data))){
 		if(as.path && obj_is(as.data)){ // Apparently necessary
-			as.soul = (opt.uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+			as.soul = (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 		} else {
 			//as.data = obj_put({}, as.gun._.get, as.data);
-			as.soul = at.soul;
+			as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 		}
 	}
 	as.ref.put(as.data, as.soul, as);

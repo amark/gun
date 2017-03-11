@@ -31,7 +31,7 @@ function HAM(machineState, incomingState, currentState, incomingValue, currentVa
 			return {converge: true, incoming: true};
 		}
 	}
-	return {err: "you have not properly handled recursion through your data or filtered it as JSON"};
+	return {err: "Invalid CRDT Data: "+ incomingValue +" to "+ currentValue +" at "+ incomingState +" to "+ currentState +"!"};
 }
 if(typeof JSON === 'undefined'){
 	throw new Error(

@@ -24,7 +24,7 @@ Gun.chain.map = function(cb, opt, t){
 }
 function map(at){
 	if(!at.put || Gun.val.is(at.put)){ return }
-	if(this.as.val){ this.off() }
+	if(this.as.val){ this.off() } // TODO: Ugly hack!
 	obj_map(at.put, each, {cat: this.as, gun: at.gun});
 	this.to.next(at);
 }
