@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Graph engine",
   "main": "index.js",
   "browser": "gun.min.js",
@@ -50,7 +50,7 @@
   "dependencies": {
     "aws-sdk": "~>2.15.0",
     "formidable": "~>1.0.15",
-    "ws": "~>1.0.1"
+    "uws": "~>0.13.0"
   },
   "devDependencies": {
     "express": "~>4.13.4",

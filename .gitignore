@@ -2,6 +2,7 @@ node_modules
 npm-debug.log
 yarn.lock
 *data.json
+*data*
 *.db
 .idea/
 *.bak
