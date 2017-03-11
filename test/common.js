@@ -3,7 +3,16 @@ var root;
 	root = env.window? env.window : global;
 	env.window && root.localStorage && root.localStorage.clear();
 	//root.Gun = root.Gun || require('../gun');
-	root.Gun = root.Gun || require('../index');
+	if(root.Gun){
+		root.Gun = root.Gun;
+	} else {
+		root.Gun = require('../gun');
+		Gun.serve = require('./serve');
+		//require('./s3');
+		//require('./uws');
+		//require('./wsp/server');
+		require('./file');
+	}
 }(this));
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
