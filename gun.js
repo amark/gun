@@ -1443,7 +1443,6 @@
 	;require(function(module){
 		var Gun = require('./root');
 		Gun.chain.get = function(key, cb, as){
-			//if(!as || !as.path){ var back = this._.root; } // TODO: CHANGING API! Remove this line!
 			if(typeof key === 'string'){
 				var gun, back = this, cat = back._;
 				var next = cat.next || empty, tmp;
