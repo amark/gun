@@ -163,7 +163,7 @@
               //$('#debug').value = JSON.stringify(gps.last);
             }
             gps.where = gps.where || Where(gps.opt);
-            $('#follow').text(location.origin + location.pathname + '#' + gps.track);
+            $('#follow').text(("gps.gunDB.io/" || (location.origin + location.pathname)) + '#' + gps.track);
             $('#share').toggleClass("hide");
             $('#share').on('click', function(){
               $('#link').toggleClass("hide");
