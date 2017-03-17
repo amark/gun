@@ -162,10 +162,10 @@
               }
               gps.when = Gun.time.is();
               gps.ref.put(gps.last = pos);
-              //$('#debug').value = JSON.stringify(app.last);
+              //$('#debug').value = JSON.stringify(gps.last);
             }
             gps.where = gps.where || Where(gps.opt);
-            $('#follow').text(location.origin + location.pathname + '#' + app.track);
+            $('#follow').text(location.origin + location.pathname + '#' + gps.track);
             $('#share').toggleClass("show");
             $('#share').on('click', function(){
               $('#link').toggleClass("show");
