@@ -29,6 +29,7 @@
         height: 100%;
         font-family: Arial;
         font-size: 16pt;
+        z-index: -1;
       }
       .stick {
         position: absolute;
@@ -45,9 +46,6 @@
       }
       .button:hover {
         opacity: 1;
-      }
-      .show {
-        display: block;
       }
       .hide {
         display: none;
@@ -166,9 +164,9 @@
             }
             gps.where = gps.where || Where(gps.opt);
             $('#follow').text(location.origin + location.pathname + '#' + gps.track);
-            $('#share').toggleClass("show");
+            $('#share').toggleClass("hide");
             $('#share').on('click', function(){
-              $('#link').toggleClass("show");
+              $('#link').toggleClass("hide");
             });
             $('#close').on('click', function(){
               $('#link').toggleClass("hide");
