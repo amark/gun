@@ -4,11 +4,10 @@ import webpack from 'webpack'
 import WebpackDevMiddleware from 'webpack-dev-middleware'
 import config from './webpack.config'
 
-
 const app = express()
 const gun = Gun()
 
-gun.wsp(app)
+Gun({web: app})
 
 const compiler = webpack(config)
 
