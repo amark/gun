@@ -1,7 +1,7 @@
 import React, { Component }  from 'react'
-import Gun from '../../gun'
+import Gun from 'gun'
 
-const gun = Gun().get('chat')
+const gun = Gun(location.origin + '/gun').get('chat')
 const formatMsgs = msgs => Object.keys(msgs)
   .map(key => ({ key, ...msgs[key] }))
   .filter(m => Boolean(m.when) && m.key !== '_')

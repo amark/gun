@@ -1,7 +1,7 @@
 import React, { Component }  from 'react'
-import Gun from '../../gun'
+import Gun from 'gun'
 
-const gun = Gun().get('json')
+const gun = Gun(location.origin + '/gun').get('json')
 const formatJson = json =>
   Object.keys(json)
     .map(key => ({ key, val: json[key]}))
