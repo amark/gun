@@ -1,8 +1,8 @@
 import './style.css'
 import React, { Component }  from 'react'
-import Gun from '../../gun'
+import Gun from 'gun'
 
-const gun = Gun().get('todos')
+const gun = Gun(location.origin + '/gun').get('todos')
 const formatTodos = todos => Object.keys(todos)
   .map(key => ({ key, val: todos[key] }))
   .filter(t => Boolean(t.val) && t.key !== '_')
