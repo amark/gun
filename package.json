@@ -54,10 +54,12 @@
   },
   "devDependencies": {
     "express": "~>4.13.4",
+    "hapi": "^16.1.0",
+    "inert": "^4.1.0",
+    "ip": "^1.1.4",
     "mocha": "~>1.9.0",
-    "uglify-js": "~>2.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
-    "ip": "^1.1.4"
+    "uglify-js": "~>2.2.0"
   }
 }
