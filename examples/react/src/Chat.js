@@ -1,7 +1,6 @@
 import React, { Component }  from 'react'
 import Gun from 'gun'
 
-const gun = Gun(location.origin + '/gun').get('chat')
 const formatMsgs = msgs => Object.keys(msgs)
   .map(key => ({ key, ...msgs[key] }))
   .filter(m => Boolean(m.when) && m.key !== '_')
@@ -9,8 +8,9 @@ const formatMsgs = msgs => Object.keys(msgs)
   .map(m => ((m.whenFmt = new Date(m.when).toLocaleString().toLowerCase()), m))
 
 export default class Chat extends Component {
-  constructor() {
+  constructor({gun}) {
     super()
+    this.gun = gun.get('chat');
     this.state = {
       newMsg: '',
       name: (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'',
@@ -19,7 +19,7 @@ export default class Chat extends Component {
   }
   componentWillMount() {
     const tmpState = {}
-    gun.map().val((msg, key) => {
+    this.gun.map().val((msg, key) => {
       tmpState[key] = msg
       this.setState({msgs: Object.assign({}, this.state.msgs, tmpState)})
     })
@@ -32,7 +32,7 @@ export default class Chat extends Component {
     document.cookie = ('alias=' + who) 
     const when = Gun.time.is()
     const key = `${when}_${Gun.text.random(4)}`
-    gun.path(key).put({
+    this.gun.path(key).put({
       who,
       when,
       what: this.state.newMsg,

@@ -1,30 +1,29 @@
 import React, { Component }  from 'react'
-import Gun from 'gun'
 
-const gun = Gun(location.origin + '/gun').get('json')
 const formatJson = json =>
   Object.keys(json)
     .map(key => ({ key, val: json[key]}))
     .filter(el => el.key !== '_')
 
 export default class Json extends Component {
-  constructor() {
+  constructor({gun}) {
     super()
+    this.gun = gun.get('json');
     this.state = { newField: '', json: [] }
   }
 
   componentWillMount() {
-    gun.on(json => this.setState({ json: formatJson(json) }))
+    this.gun.on(json => this.setState({ json: formatJson(json) }))
   }
 
   edit = key => e => {
     e.preventDefault()
-    gun.path(key).put(e.target.value)
+    this.gun.path(key).put(e.target.value)
   }
   
   add = e => {
     e.preventDefault()
-    gun.path(this.state.newField).put('value')
+    this.gun.path(this.state.newField).put('value')
     this.setState({newField: ''})
   }
 

@@ -2,27 +2,27 @@ import './style.css'
 import React, { Component }  from 'react'
 import Gun from 'gun'
 
-const gun = Gun(location.origin + '/gun').get('todos')
 const formatTodos = todos => Object.keys(todos)
   .map(key => ({ key, val: todos[key] }))
   .filter(t => Boolean(t.val) && t.key !== '_')
 
 export default class Todos extends Component {
-  constructor() {
+  constructor({gun}) {
     super()
+    this.gun = gun.get('todos');
     this.state = {newTodo: '', todos: []}
   }
   componentWillMount() {
-    gun.on(todos => this.setState({
+    this.gun.on(todos => this.setState({
       todos: formatTodos(todos)
     }))
   }
   add = e => {
     e.preventDefault()
-    gun.path(Gun.text.random()).put(this.state.newTodo)
+    this.gun.path(Gun.text.random()).put(this.state.newTodo)
     this.setState({newTodo: ''})
   }
-  del = key => gun.path(key).put(null)
+  del = key => this.gun.path(key).put(null)
   handleChange = e => this.setState({ newTodo: e.target.value})
   render() {
     return <div>
