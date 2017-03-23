@@ -36,7 +36,7 @@ wss.on('connection',acceptConnection )
 var gunPeers = [];  // used as a list of connected clients.
 
 Gun.on('out', function(msg){
-	msg = JSON.stringify({headers:{},body:msg});
+	msg = JSON.stringify(msg);
 	gunPeers.forEach( function(peer){ peer.send( msg ) })
 })
 function acceptConnection( connection ) {
@@ -46,7 +46,7 @@ function acceptConnection( connection ) {
     gunPeers.push( connection );
     connection.on( 'error',function(error){console.log( "WebSocket Error:", error) } );
     
-    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg).body)})
+    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg))})
     connection.on( 'close', function(reason,desc){
         // gunpeers gone.
         var i = gunPeers.findIndex( function(p){return p===connection} );
