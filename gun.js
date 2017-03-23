@@ -2323,7 +2323,7 @@
 
 		Gun.on('out', function(at){
 			this.to.next(at);
-			var cat = at.gun._.root._, wsp = cat.wsp || (cat.wsp = {});
+			var cat = at.gun._.root._, wsp = cat.wsp || (cat.wsp = {wsc: at.gun.back('opt.wsc') || {protocols:null} });
 			if(at.wsp && 1 === wsp.count){ return } // if the message came FROM the only peer we are connected to, don't echo it back.
 			message = JSON.stringify(at);
 			//if(++count){ console.log("msg OUT:", count, Gun.obj.ify(message)) }
@@ -2375,7 +2375,7 @@
 		function open(peer, as){
 			if(!peer || !peer.url){ return }
 			var url = peer.url.replace('http', 'ws');
-			var wire = peer.wire = new WebSocket(url);
+			var wire = peer.wire = new WebSocket(url, peer.wsc.protocols, peer.wsc );
 			wire.onclose = function(){
 				reconnect(peer, as);
 			};
