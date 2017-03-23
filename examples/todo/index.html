@@ -11,7 +11,7 @@
 			function clean(text){ return String(text).replace(/\</ig, '&lt;') }
 		</script>
 		<script> // by Forrest Tait! Edited by Mark Nadal.
-			var gun = Gun(location.origin);
+			var gun = Gun(location.origin + '/gun');
 			var todo = gun.get('example/todo/data');
 			$("#add").onsubmit = function(){
 				todo.path(Gun.text.random()).put(clean($("#todo").value)); // add the HTML input's value to a random ID in the todo.

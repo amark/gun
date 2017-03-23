@@ -26,7 +26,7 @@
 			function clean(text){ return String(text).replace(/\</ig, '&lt;') }
 		</script>
 		<script>
-			var gun = Gun(location.origin);
+			var gun = Gun(location.origin + '/gun');
 			var ref = gun.get('example/json/data');
 			$('#form').onsubmit = function(e){
 				return ref.path( clean($('#field').value) ).put("value"), false; // add a new field, and cancel the form submit.
