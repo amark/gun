@@ -37,7 +37,7 @@
 		</script>
 		<script>
 			($.model = $('ul li').clone(true)).removeAttribute('class');
-			var gun = Gun(location.origin + '/gun');
+			var gun = Gun(location.origin);
 			var chat = gun.get('example/chat/data');
 			chat.map().val(function(msg, field){
 				console.log("msg", field, msg);
