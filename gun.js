@@ -929,6 +929,7 @@
 					if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
+				at.opt.wsc = at.opt.wsc || {protocols:null} 
 				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 				Gun.on('opt', at);
@@ -2323,7 +2324,7 @@
 
 		Gun.on('out', function(at){
 			this.to.next(at);
-			var cat = at.gun._.root._, wsp = cat.wsp || (cat.wsp = {wsc: at.gun.back('opt.wsc') || {protocols:null} });
+			var cat = at.gun._.root._, wsp = cat.wsp || (cat.wsp = {});
 			if(at.wsp && 1 === wsp.count){ return } // if the message came FROM the only peer we are connected to, don't echo it back.
 			message = JSON.stringify(at);
 			//if(++count){ console.log("msg OUT:", count, Gun.obj.ify(message)) }
