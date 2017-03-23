@@ -2376,7 +2376,7 @@
 		function open(peer, as){
 			if(!peer || !peer.url){ return }
 			var url = peer.url.replace('http', 'ws');
-			var wire = peer.wire = new WebSocket(url, as.wsp.wsc.protocols, as.wsp.wsc );
+			var wire = peer.wire = new WebSocket(url, as.opt.wsc.protocols, as.opt.wsc );
 			wire.onclose = function(){
 				reconnect(peer, as);
 			};
