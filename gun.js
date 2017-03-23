@@ -2338,8 +2338,10 @@
 				if(!cat.udrain){ return }
 				var tmp = cat.udrain;
 				cat.udrain = null;
-				message = JSON.stringify(tmp);
-				Gun.obj.map(cat.opt.peers, send, cat);
+				if( tmp.length ) {
+					message = JSON.stringify(tmp);
+					Gun.obj.map(cat.opt.peers, send, cat);
+				}
 			},1);
 			wsp.count = 0;
 			Gun.obj.map(cat.opt.peers, send, cat);
