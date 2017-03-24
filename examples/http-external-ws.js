@@ -1,20 +1,24 @@
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 8080;
 
 var Gun = require('../');
+
+// have to do this before instancing gun(?)
+Gun.on('out', function(msg){
+	this.to.next( msg );
+	msg = JSON.stringify(msg);
+	gunPeers.forEach( function(peer){ peer.send( msg ) })
+})
+
 var gun = Gun({ 
-	file: 'data.json',
-	s3: {
-		key: '', // AWS Access Key
-		secret: '', // AWS Secret Token
-		bucket: '' // The bucket you want to save into
-	}
+	file: 'data.json'
 });
 
 var server = require('http').createServer(function(req, res){
-	if(gun.wsp.server(req, res)){ 
-		return; // filters gun requests!
-	}
-	require('fs').createReadStream(require('path').join(__dirname, req.url)).on('error',function(){ // static files!
+        var insert = "";
+	if( req.url.endsWith( "gun.js" ) )
+        	insert = "../";
+
+	require('fs').createReadStream(require('path').join(__dirname, insert, req.url)).on('error',function(){ // static files!
 		res.writeHead(200, {'Content-Type': 'text/html'});
 		res.end(require('fs').readFileSync(require('path').join(__dirname, 'index.html'))); // or default to index
 	}).pipe(res); // stream
@@ -35,10 +39,6 @@ wss.on('connection',acceptConnection )
 
 var gunPeers = [];  // used as a list of connected clients.
 
-Gun.on('out', function(msg){
-	msg = JSON.stringify(msg);
-	gunPeers.forEach( function(peer){ peer.send( msg ) })
-})
 function acceptConnection( connection ) {
     // connection.upgradeReq.headers['sec-websocket-protocol'] === (if present) protocol requested by client
     // connection.upgradeReq.url  === url request
