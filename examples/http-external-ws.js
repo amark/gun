@@ -14,9 +14,9 @@ var gun = Gun({
 });
 
 var server = require('http').createServer(function(req, res){
-        var insert = "";
+	var insert = "";
 	if( req.url.endsWith( "gun.js" ) )
-        	insert = "../";
+		insert = "../";
 
 	require('fs').createReadStream(require('path').join(__dirname, insert, req.url)).on('error',function(){ // static files!
 		res.writeHead(200, {'Content-Type': 'text/html'});
