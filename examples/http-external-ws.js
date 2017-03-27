@@ -46,7 +46,12 @@ function acceptConnection( connection ) {
     gunPeers.push( connection );
     connection.on( 'error',function(error){console.log( "WebSocket Error:", error) } );
     
-    connection.on( 'message',function(msg){gun.on('in',JSON.parse( msg))})
+    connection.on('message', function (msg) {
+        msg = JSON.parse(msg)
+        if ("forEach" in msg) msg.forEach(m => gun.on('in', JSON.parse(m)));
+        else gun.on('in', msg)
+    })
+
     connection.on( 'close', function(reason,desc){
         // gunpeers gone.
         var i = gunPeers.findIndex( function(p){return p===connection} );
