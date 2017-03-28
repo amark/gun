@@ -9,13 +9,14 @@ function State(){
 		t = time();
 	}
 	if(last < t){
-		return N = 0, last = t;
+		return N = 0, last = t + State.drift;
 	}
-	return last = t + ((N += 1) / D);
+	return last = t + ((N += 1) / D) + State.drift;
 }
 var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the future, on machines that are D times faster than 2016AD machines, you will want to increase D by another several orders of magnitude so the processing speed never out paces the decimal resolution (increasing an integer effects the state accuracy).
 var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
 State._ = '>';
+State.drift = 0;
 State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
 	if(!n || !n[N_]){ // reject if it is not node-like.
 		if(!soul){ // unless they passed a soul

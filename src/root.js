@@ -132,6 +132,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
+		at.opt.wsc = at.opt.wsc || {protocols:null} 
 		at.opt.peers = at.opt.peers || {};
 		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 		Gun.on('opt', at);

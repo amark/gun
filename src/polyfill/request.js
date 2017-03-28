@@ -32,8 +32,10 @@ Gun.on('out', function(at){
 		if(!cat.udrain){ return }
 		var tmp = cat.udrain;
 		cat.udrain = null;
-		message = JSON.stringify(tmp);
-		Gun.obj.map(cat.opt.peers, send, cat);
+		if( tmp.length ) {
+			message = JSON.stringify(tmp);
+			Gun.obj.map(cat.opt.peers, send, cat);
+		}
 	},1);
 	wsp.count = 0;
 	Gun.obj.map(cat.opt.peers, send, cat);
@@ -70,7 +72,7 @@ function receive(msg, peer, cat){
 function open(peer, as){
 	if(!peer || !peer.url){ return }
 	var url = peer.url.replace('http', 'ws');
-	var wire = peer.wire = new WebSocket(url);
+	var wire = peer.wire = new WebSocket(url, as.opt.wsc.protocols, as.opt.wsc );
 	wire.onclose = function(){
 		reconnect(peer, as);
 	};
