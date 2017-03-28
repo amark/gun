@@ -58,7 +58,7 @@ var Graph = {};
 		if(!(is = valid(v,f,n, at,env))){ return }
 		if(!f){
 			at.node = at.node || n || {};
-			if(obj_has(v, Node._)){
+			if(obj_has(v, Node._) && !Gun.is(v)){
 				at.node._ = obj_copy(v._);
 			}
 			at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
