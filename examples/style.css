@@ -1,0 +1,279 @@
+@import url(https://fonts.googleapis.com/css?family=Oxygen);
+
+html, body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Oxygen', 'Trebuchet MS', arial;
+	position: relative;
+}
+
+div, ul, li, form, p, span, input, textarea {
+	margin: 0;
+	padding: 0;
+	position: relative;
+	overflow: hidden;
+	-webkit-transition: all 0.3s;
+	transition: all 0.3s;
+	box-sizing: border-box;
+}
+
+ul, li {
+	list-style: none;
+}
+
+body {
+	font-size: 18pt;
+}
+
+.model { display: none }
+.mid { margin-left: auto; margin-right: auto; }
+.row { width: 100%; }
+.col { max-width: 33em; }
+input, textarea {
+	border: none;
+	width: 100%;
+}
+
+.none {
+	display: none;
+}
+
+.page {
+	width: 100%;
+	min-height: 100vh;
+}
+
+.red {
+	background: #ea3224;
+}
+.green {
+	background: #33cc33;
+}
+.blue {
+	background: #4D79D8;
+}
+.yellow {
+	background: #f2b919;
+}
+.black {
+	background: black;
+}
+.white {
+	background: white;
+}
+
+.redt {
+	color: #ea3224;
+}
+.greent {
+	color: #33cc33;
+}
+.bluet {
+	color: #4D79D8;
+}
+.yellowt {
+	color: #f2b919;
+}
+.blackt {
+	color: black;
+}
+.whitet {
+	color: white;
+}
+
+.pad {
+	margin: 5% auto;
+	min-width: 250px;
+	width: 95%;
+	max-width: 50em;
+}
+
+.right {
+	float: right;
+}
+.left {
+	float: left;
+}
+
+.act {
+	display: block;
+	font-weight: normal;
+	text-decoration: none;
+	-webkit-transition: all 0.3s;
+	transition: all 0.3s;
+	cursor: pointer;
+}
+
+.rubric {
+	font-size: 150%;
+}
+.center {
+	text-align: center;
+}
+
+.jot {
+	border-bottom: 1px dashed #95B2CA;
+}
+.sap {
+	border-radius: 0.1em;
+}
+
+.hue {
+  background: #4D79D8;
+  -webkit-animation: hue 900s infinite;
+  animation: hue 900s infinite;
+}
+
+@keyframes hue {
+  0%   {background: #4D79D8;}
+  25%  {background: #33cc33;}
+  50%  {background: #f2b919;}
+  75%  {background: #ea3224;}
+  100% {background: #4D79D8;}
+} @-webkit-keyframes hue {
+  0%   {background: #4D79D8;}
+  25%  {background: #33cc33;}
+  50%  {background: #f2b919;}
+  75%  {background: #ea3224;}
+  100% {background: #4D79D8;}
+}
+
+.huet {
+	color: #4D79D8;
+  -webkit-animation: huet 900s infinite;
+  animation: huet 900s infinite;
+}
+
+@keyframes huet {
+  0%   {color: #4D79D8;}
+  25%  {color: #33cc33;}
+  50%  {color: #f2b919;}
+  75%  {color: #ea3224;}
+  100% {color: #4D79D8;}
+} @-webkit-keyframes huet {
+  0%   {color: #4D79D8;}
+  25%  {color: #33cc33;}
+  50%  {color: #f2b919;}
+  75%  {color: #ea3224;}
+  100% {color: #4D79D8;}
+}
+
+.hue2 {
+  background: #ea3224;
+  -webkit-animation: hue2 900s infinite;
+  animation: hue2 900s infinite;
+}
+
+@keyframes hue2 {
+  0%	 {background: #ea3224;}
+  25%  {background: #4D79D8;}
+  50%  {background: #33cc33;}
+  75%  {background: #f2b919;}
+  100% {background: #ea3224;}
+} @-webkit-keyframes hue2 {
+  0%	 {background: #ea3224;}
+  25%  {background: #4D79D8;}
+  50%  {background: #33cc33;}
+  75%  {background: #f2b919;}
+  100% {background: #ea3224;}
+}
+
+.huet2 {
+  color: #ea3224;
+  -webkit-animation: huet2 900s infinite;
+  animation: huet2 900s infinite;
+}
+
+@keyframes huet2 {
+  0%	 {color: #ea3224;}
+  25%  {color: #4D79D8;}
+  50%  {color: #33cc33;}
+  75%  {color: #f2b919;}
+  100% {color: #ea3224;}
+} @-webkit-keyframes huet2 {
+  0%	 {color: #ea3224;}
+  25%  {color: #4D79D8;}
+  50%  {color: #33cc33;}
+  75%  {color: #f2b919;}
+  100% {color: #ea3224;}
+}
+
+.hue3 {
+  background: #33cc33;
+  -webkit-animation: hue3 900s infinite;
+  animation: hue3 900s infinite;
+}
+
+@keyframes hue3 {
+  0%	 {background: #33cc33;}
+  25%  {background: #f2b919;}
+  50%  {background: #ea3224;}
+  75%  {background: #4D79D8;}
+  100% {background: #33cc33;}
+} @-webkit-keyframes hue3 {
+  0%	 {background: #33cc33;}
+  25%  {background: #f2b919;}
+  50%  {background: #ea3224;}
+  75%  {background: #4D79D8;}
+  100% {background: #33cc33;}
+}
+
+.huet3 {
+  color: #33cc33;
+  -webkit-animation: huet3 900s infinite;
+  animation: huet3 900s infinite;
+}
+
+@keyframes huet3 {
+  0%	 {color: #33cc33;}
+  25%  {color: #f2b919;}
+  50%  {color: #ea3224;}
+  75%  {color: #4D79D8;}
+  100% {color: #33cc33;}
+} @-webkit-keyframes huet3 {
+  0%	 {color: #33cc33;}
+  25%  {color: #f2b919;}
+  50%  {color: #ea3224;}
+  75%  {color: #4D79D8;}
+  100% {color: #33cc33;}
+}
+
+.hue4 {
+  background: #f2b919;
+  -webkit-animation: hue4 900s infinite;
+  animation: hue4 900s infinite;
+}
+
+@keyframes hue4 {
+  0%   {background: #f2b919;}
+  25%  {background: #ea3224;}
+  50%  {background: #4D79D8;}
+  75%	 {background: #33cc33;}
+  100% {background: #f2b919;}
+} @-webkit-keyframes hue4 {
+  0%   {background: #f2b919;}
+  25%  {background: #ea3224;}
+  50%  {background: #4D79D8;}
+  75%	 {background: #33cc33;}
+  100% {background: #f2b919;}
+}
+
+.huet4 {
+  color: #f2b919;
+  -webkit-animation: huet4 900s infinite;
+  animation: huet4 900s infinite;
+}
+
+@keyframes huet4 {
+  0%   {color: #f2b919;}
+  25%  {color: #ea3224;}
+  50%  {color: #4D79D8;}
+  75%	 {color: #33cc33;}
+  100% {color: #f2b919;}
+} @-webkit-keyframes huet4 {
+  0%   {color: #f2b919;}
+  25%  {color: #ea3224;}
+  50%  {color: #4D79D8;}
+  75%	 {color: #33cc33;}
+  100% {color: #f2b919;}
+}
