@@ -70,7 +70,7 @@
 			<script src="/gun.js"></script>
 			<script>
 				var gun = Gun(location.origin+'/gun');
-				var chat = gun.get('ex/test3/converse');
+				var chat = gun.get('converse');
 				chat.map().val(function(msg, field){
 					var ul = $('ul'), last = sort(field, ul.children('li').last()), li;
 					li = $($("#msg-" + field)[0] || $('.model li').clone(true).attr('id', 'msg-'+field).insertAfter(last));
