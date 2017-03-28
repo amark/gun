@@ -1,0 +1,254 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<div id="area">
+		<div id="me" class="ship">
+			<div class="laser"></div>
+		</div>
+	</div>
+	<script src="../jquery.js"></script>
+	<script src="/gun.js"></script>
+	<script src="/gun/lib/nts.js"></script>
+	<script>
+		// Thanks to https://github.com/dmcinnes/HTML5-Asteroids
+		//var gun = Gun();
+		var gun = Gun(location.origin+'/gun'); 
+		var game = {gun: gun.get('example/game/space'), area: {}, ships: {}};
+		game.keys = {38: 'up', 37: 'left', 39: 'right', 40: 'down', 32: 'space'};
+		$(document).on('keydown', function(e){
+			//e.preventDefault();
+			var key = e.keyCode, me;
+			game.keys[key = game.keys[key]] = true;
+			if(!(me = game.me)){ return }
+			me.last = game.now;
+			if('space' === key){ game.shoot(game.me) }
+		});
+		$(document).on('keyup', function(e){
+			//e.preventDefault();
+			game.sync();
+			game.keys[game.keys[e.keyCode]] = false;
+		});
+		game.shoot = function(ship, when){
+			if(!ship || ship.l){ return }
+			if(!when && ship.gun && ship.data){
+				ship.data.l = game.now;
+				game.sync(true);
+				return;
+			}
+			if(when + 250 < game.now){ return }
+			ship.l = true;
+			ship.$.children('.laser').show();
+			setTimeout(function(){
+				ship.$.children('.laser').hide();
+				setTimeout(function(){
+					ship.l = false;
+				}, 250);
+			}, 250 - (game.now - when));
+		}
+		game.ship = function(d, el){
+			if(!d){ // spawn our ship
+				var id = Gun.text.random(1, 'abcdefghijklmno');
+				game.me = game.ships[id] = {data: d = {id: id, t: game.now}};
+				game.me.gun = game.gun.get('players').get(d.id).put(d);
+				return;
+			}
+			if(!d.id){ return }
+		  if(!game.ships[d.id]){
+				game.ships[d.id] = {};
+		  }
+		  var s = game.ships[d.id];
+			s.t = d.t || (d.t = 0);
+		  s.x = d.x || (d.x = game.area.x * Math.random());
+			s.y = d.y || (d.y = game.area.y * Math.random());
+			s.r = d.r || (d.r = 0);
+			s.vx = d.vx || (d.vx = 0);
+			s.vy = d.vy || (d.vy = 0);
+			s.vr = d.vr || (d.vr = 0);
+			s.ax = s.ax || 0;
+			s.ay = s.ay || 0;
+			s.ar = s.ar || 0;
+		  s.data = d;
+			s.$ = s.$ || (s.gun? ($('#me'))
+			: $('#me').clone(true).attr('id', d.id).appendTo('#area'));
+			if(!s.l){
+				game.shoot(s, d.l);
+			}
+			s.frame = s.frame || function(t, now){
+				if(s.gun){
+					s.fly(t, now);
+				}
+				if(s.calc(t, now)){ return }
+				s.draw();
+			}
+			var keys = game.keys;
+			var area = game.area;
+			s.fly = s.fly || function(t, now){
+				if(keys.left){
+		      s.r += -6;
+		    } else
+		    if(keys.right) {
+		      s.r += 6;
+		    }
+		    if(keys.up){
+		      var rad = ((s.r - 90) * Math.PI)/180;
+		      s.ax = 0.0001 * Math.cos(rad);
+		      s.ay = 0.0001 * Math.sin(rad);
+		    } else {
+		      s.ax = 0;
+		      s.ay = 0;
+		    }
+
+		    Gun.obj.map(game.ships, function(ship){
+		    	if(ship.gun){ return }
+		    	if(!ship.l){ return }
+		    	if(ship.x-50 <= s.x && s.x <= ship.x+50
+		    	&& ship.y-50 <= s.y && s.y <= ship.y+50){
+		    		s.data.t = -1;
+		    		game.sync(true);
+		    		s.boom = true;
+		    	}
+		    });
+
+		    s.vx += s.ax * t;
+		    s.x += s.vx * t;
+		    s.vy += s.ay * t;
+		    s.y += s.vy * t;
+		    var data = s.data;
+		    if(!data){ return }
+		    data.r = s.r;
+		    data.vx = s.vx;
+		    data.x = s.x;
+		    data.vy = s.vy;
+		    data.y = s.y;
+		    if(data.t < 0){ return }
+		    data.t = now;
+		    s.t = data.t;
+			}
+			s.calc = s.calc || function(t, now){
+		    var d = s.data;
+		    var dt = (now - d.t) || 0;
+		    if(dt > 30 * 1000){
+		    	Gun.obj.del(game.ships, d.id);
+		    	s.$.remove();
+		    	return true;
+		    }
+		    if(!d){ return }
+		    var speed = Math.sqrt(d.vx * d.vx + d.vy * d.vy);
+		    if(speed > 0.15){
+		    	s.vy = d.vy = d.vy / speed * 0.15;
+		    	s.vx = d.vx = d.vx / speed * 0.15;
+		    }
+		    s.x = d.x + d.vx * dt;
+		    s.y = d.y + d.vy * dt;
+		    
+		    s.x = s.x % area.x;
+		    if(s.x < 0){
+		      s.x += area.x;
+		    }
+		    s.y = s.y % area.y;
+		    if(s.y < 0){
+		      s.y += area.y;
+		    }
+			}
+			s.draw = s.draw || function(){
+		    s.css = 'rotate('+s.r+'deg)';
+		    s.$.css({left: s.x, top: s.y, transform: s.css});
+		  }
+			return s;
+		}
+		localStorage.clear();
+		game.sync = function(shoot){
+			var me = game.me;
+			if(!me || me.boom){ return }
+			var keys = game.keys;
+			if(shoot || keys.up || keys.right || keys.left || keys.down){
+				var data = Gun.obj.to(me.data);
+				data.x = data.x / game.area.x;
+				data.y = data.y / game.area.y;
+				me.gun.put(data);
+			}
+		}
+		game.frame = window.requestAnimationFrame || setTimeout;
+		game.resize = function(){
+			game.area.x = $('#area').innerWidth();
+			game.area.y = $('#area').innerHeight();
+		}
+		$(window).on('resize', game.resize);
+		game.start = function(){
+			game.now = Gun.state();
+			game.resize();
+			game.gun.get('players').map().on(function(data, id){
+				data = Gun.obj.copy(data);
+				data.x = data.x * game.area.x;
+				data.y = data.y * game.area.y;
+				data.id = data.id || id;
+				game.ship(data);
+			});
+			game.ship();
+			var frame = game.frame, ships = game.ships;
+			var last = game.now, now, diff, delta;
+			setInterval(game.sync, 99);
+			frame(function next(t){
+				frame(next, 1000/60);
+		    now = game.now = Gun.state();
+		    diff = now - last;
+		    last = now;
+		    Gun.obj.map(ships, function(ship){
+		    	if(!ship.frame){ return }
+					ship.frame(diff, now);
+		    });
+			}, 1000/60);
+		}
+		$(function(){
+			game.start();
+		});
+	</script>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			background: #111;
+		}
+		html, body, div {
+			position: relative;
+		}
+		#area {
+		  width: 95%;
+		  width: 1024px;
+		  height: 768px;
+		  margin: 0 auto;
+		  background: black;
+		  overflow: hidden;
+		}
+		.ship {
+			position: absolute;
+			width: 0px;
+			height: 0px;
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+			border-bottom: 15px solid red;
+			transform-origin: 50% 50%;
+			color: white;
+		}
+		#me {
+			border-bottom: 15px solid limegreen;
+		}
+		.boom {
+			border: 1vmax dotted yellow;
+			border-bottom: 1vmax dotted yellow;
+			height: 5vmax;
+			width: 1vmax;
+		}
+		.laser {
+			display: none;
+			position: relative;
+			background: transparent;
+			border: 2px dotted yellow;
+			height: 100px;
+			width: 100px;
+			top: -50px;
+			left: -50px;
+		}
+	</style>
+</html>

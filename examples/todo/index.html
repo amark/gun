@@ -1,37 +1,78 @@
+<!DOCTYPE html>
 <html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+		<link rel="stylesheet" type="text/css" href="/style.css">
+  </head>
 	<body>
-		<h2>ToDo List</h2>
-
-		<form id="add"><input id="todo"/><button>Add</button></form>
-		<ul id="todos"></ul>
-
-		<script src="../../gun.js"></script>
-		<script> // minimal jQuery polyfill
-			var $ = document.querySelector.bind(document);
-			function clean(text){ return String(text).replace(/\</ig, '&lt;') }
-		</script>
-		<script> // by Forrest Tait! Edited by Mark Nadal.
-			var gun = Gun(location.origin + '/gun');
-			var todo = gun.get('example/todo/data');
-			$("#add").onsubmit = function(){
-				todo.path(Gun.text.random()).put(clean($("#todo").value)); // add the HTML input's value to a random ID in the todo.
-				$("#todo").value = ""; // clear out the input's value so we can add more.
-				return false; // prevent the browser from reloading.
-			};
-			todo.on(function(list){ // subscribe and listen to all updates on the todo.
-				var html = ''; // old school HTML strings! You should probably use a real template system.
-				for(field in list) { // iterate over the list to generate the HTML.
-					if(!list[field] || field == '_') continue; // ignore nulled out values and metadata.
-					html += '<li>'
-						+ clean(list[field])
-						+ '<button style="float:right;" onclick=todone("'+field+'")>X</button>'
-					+ '</li>';
+		<div id="think" class="hue page">
+			<link href='https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic' rel='stylesheet' type='text/css'>
+			<style>
+				#think {
+					font-size: 24pt;
+					font-size: 6vmin;
+					font-family: 'Alegreya Sans', sans-serif;
+					color: white;
 				}
-				$("#todos").innerHTML = html; // set the HTML to our new list.
-			});
-			window.todone = function(field){
-				todo.path(field).put(null); // null out the todo item on this field ID.
-			}
-		</script>
-	</body>
-</html>
+				#think li {
+					width: 90%;
+					margin-top: 0.3em;
+					border-bottom: 1px dashed white;
+				}
+				#think .add {
+					width: 1em;
+					height: 1em;
+					line-height: 1em;
+					padding: 0.5em;
+					font-family: Tahoma, arial;
+					text-align: center;
+					border-radius: 50%;
+				}
+				#think ul, #think li {
+					list-style-type: circle;
+					margin-left: 0.5em;
+				}
+			</style>
+			<div class="pad whitet" style="width: 75%;">
+				<div style="margin-top: 2%;">
+					<div class="rubric left center">Add a Thought...</div>
+					<a href="#" class="right huet white act add">+</a>
+				</div>
+				<ul>
+				</ul>
+			</div>
+			
+			<script src="/jquery.js"></script>
+			<script src="/gun.js"></script>
+			<script>
+				var gun = Gun(location.origin+'/gun');
+				var think = gun.get('think');
+				var typing, throttle;
+				$('.add').on('click', function(){
+					$('<li>').attr('contenteditable', true).prependTo('ul');
+				});
+				$(document).on('keyup', "[contenteditable=true]", function(){
+					var li = $(this), id = li.attr('id');
+					if(!id){
+						li.attr('id', id = Gun.text.random());
+					}
+					typing = id;
+					clearTimeout(throttle);
+					throttle = setTimeout(function(){
+						think.get(id).put(li.text());
+						typing = false;
+					},10);
+				});
+				think.map().on(function(thought, id){
+					var li = $('#'+id)[0] || $('<li>').attr('id', id).attr('contenteditable', true).prependTo('ul');
+					if(thought){
+						if(id === typing){ return }
+						$(li).text(thought);
+					} else {
+						$(li).hide();
+					}
+				});
+			</script>
+		</div>
+	</div>
+</body>

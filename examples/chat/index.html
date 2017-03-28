@@ -1,66 +1,104 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<script src="../../gun.js"></script>
-	</head>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+		<link rel="stylesheet" type="text/css" href="/style.css">
+  </head>
 	<body>
-		<style>
-			html, body { font-size: 14pt; }
-			.hide { display: none; }
-			form .who { width: 10%; }
-			form .what { width: 80%; }
-			ul { list-style: none; padding: 0; }
-			ul .when {color: #555; font-size: 12pt; float: right; display: none; }
-			li:hover .when {display: inline;}
-		</style>
-		<ul><li class="hide">
-			<b class="who"></b>:
-			<span class="what"></span>
-			<u class="hide sort">0</u>
-			<i class="when">0</i>
-		</li></ul>
-		<form>
-			<input class="who" placeholder="alias">
-			<input class="what" placeholder="message">
-			<button>send</button>
-		</form>
-		<script>
-			var $ = function(s, e){ return (e || document).querySelector(s) } // make native look like jQuery.
-			;(function(){var H=HTMLElement,C=H.prototype; // jQuery chaining replacement!
-				for(var i in C){(function(j,i){if(j&&j!=i){
-					try{C[j]=C[j]||C[i]}catch(e){C[j]=function(){return this[i]}}
-				}}(i.replace(/[A-Z](.*)/g,''),i));
-			}}());
-			$.sort = function(g, e){ return (g > ($('.sort', e)[$.text] || -Infinity))? e : $.sort(g, e.previousSibling) }
-			$.text = document.body.textContent? 'textContent' : 'innerText'; // because browsers are stupid.
-		</script>
-		<script>
-			($.model = $('ul li').clone(true)).removeAttribute('class');
-			var gun = Gun(location.origin + '/gun');
-			var chat = gun.get('example/chat/data');
-			chat.map().val(function(msg, field){
-				console.log("msg", field, msg);
-				var $ul = $('ul'), $last = $.sort(field, $ul.last()), $msg;
-				($msg = $("#msg-" + field) || $ul.insertBefore($.model.clone(true), $last.next())).id = 'msg-' + field;
-				$('.who', $msg)[$.text] = msg.who;
-				$('.what', $msg)[$.text] = msg.what;
-				$('.when', $msg)[$.text] = new Date(msg.when).toLocaleString().toLowerCase();
-				$('.sort', $msg)[$.text] = field;
-				if(document.body.scrollHeight - (window.scrollY + window.innerHeight) <= $last.scrollHeight + 50){
-					window.scrollTo(0, document.body.scrollHeight);
+		<div id="converse" class="hue2 page">
+			<link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+			<style>
+				#converse {
+					font-size: 16pt;
 				}
-			});
-			$('.who', $('form')).value = (document.cookie.match(/alias\=(.*?)(\&|$|\;)/i)||[])[1]||'';
-			$('.what', $('form')).focus();
-			$('form').onsubmit = function(e){
-				var msg = {when: Gun.time.is()};
-				document.cookie = ('alias=' + (msg.who = $('.who', this).value || 'user' + Gun.text.random(6)));
-				msg.what = $('.what', this).value || '';
-				if(msg.what){ chat.path(msg.when + '_' + Gun.text.random(4)).put(msg) }
-				$('.what', this).value = '';
-				return (e && e.preventDefault()), false;
-			};
-		</script>
+				#converse .box {
+					margin-bottom: 0.2em;
+					padding: 1em;
+					border-radius: 0.1em;
+				}
+				#converse b:after {
+					content: " ";
+				}
+				#converse li .when {
+					position: absolute;
+					top: 0;
+					right: -2em;
+					padding: 0.5em 1em;
+					background: rgba(100%,100%,100%,0.9);
+					opacity: 0;
+				}
+				#converse li:hover .when {
+					opacity: 1;
+					right: 0em;
+				}
+				.poiret {
+					font-family: 'Poiret One', sans-serif;
+				}
+				.large {	
+					font-size: 200%;
+				}
+				#converse .what, #converse .who {
+					cursor: text;
+					outline: none;
+					display: inline;
+					min-width: 1em;
+					padding-left: 1px;
+				}
+				[contentEditable=true]:empty:not(:focus):before{
+    			content:attr(data-text)
+				}
+			</style>
+			<div class="pad">
+				<div class="poiret large rubric whitet" style="margin-bottom: 0.5em;">Have a Conversation...</div>
+				<div>
+					<ul>
+						<li class="none"></li>
+					</ul>
+					<form class="white huet2 box">
+						<div>
+							<div class="send hue2 right whitet box act" style="margin: 0 0 0.4em 0.4em; padding: 0.2em 0.5em;">send</div>
+							<b class="jot left who" contenteditable="true" data-text="Name" style="margin-top: 0.5em; margin-right: 0.5em;"></b>
+							<p class="jot left what" contenteditable="true" data-text="Write a message..." style="margin-top: 0.5em;"></p>
+						</div>
+					</form>
+					<div class="model">
+						<li class="white huet2 box"><div class="when"></div><b class="who"></b><p class="what"></p><span class="sort none">0</span></li>
+					</div>
+				</div>
+			</div>
+			<script src="/jquery.js"></script>
+			<script src="/gun.js"></script>
+			<script>
+				var gun = Gun(location.origin+'/gun');
+				var chat = gun.get('ex/test3/converse');
+				chat.map().val(function(msg, field){
+					var ul = $('ul'), last = sort(field, ul.children('li').last()), li;
+					li = $($("#msg-" + field)[0] || $('.model li').clone(true).attr('id', 'msg-'+field).insertAfter(last));
+					li.find('.who').text(msg.who);
+					li.find('.what').text(msg.what);
+					li.find('.sort').text(field);
+					var time = new Date(msg.when);
+					li.find('.when').text(time.toDateString() +', '+ time.toLocaleTimeString());
+					$('body').stop(true, true).animate({scrollTop: ul.height()});
+				});
+				$("form .send").on('click', submit);
+				$("form .what").on('keydown', function(e){
+        	if(e.which == 13){ submit(e) }
+        });
+				function submit(e){
+					e.preventDefault();
+					var msg = {when: Gun.time.is()};
+					msg.who = $('form .who').text();
+					if(!msg.who){ $('form .who').text(msg.who = 'user'+Gun.text.random(3)) }
+					msg.what = $('form .what').text();
+					if(!msg.what){ return }
+					chat.get(msg.when+'r'+Gun.text.random(3)).put(msg);
+					$('form .what').text('');
+				}
+				function sort(g, e){
+					return (parseFloat(g) >= parseFloat($(e).find('.sort').text() || -Infinity))? e : sort(g, e.prev());
+				}
+			</script>
+		</div>
 	</body>
 </html>

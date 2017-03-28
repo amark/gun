@@ -1,0 +1,19 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body style="text-align: center;">
+		<h1 id="when" style="font-size: 7vw; margin-top: 43vh;"></h1>
+	</body>
+	<script src="/gun.js"></script>
+	<script src="/gun/lib/nts.js"></script>
+	<script>
+		window.gun = Gun(location.origin+'/gun');
+		requestAnimationFrame(function now(){
+			requestAnimationFrame(now);
+			var time = new Date(Gun.state());
+			var print = time.toLocaleString() +' '+ (time.getMilliseconds()/1000).toFixed(3).slice(1);
+			when.innerHTML = print;
+		});
+	</script>
+</html>
