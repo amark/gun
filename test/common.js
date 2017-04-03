@@ -3500,6 +3500,32 @@ describe('Gun', function(){
 				},1700);
 			});
 		});
+
+		it('val should now get called if no data is found', function(done){
+			var gun = Gun();
+
+			gun.get('nv/foo').get('bar').get('baz').val(function(val, key){
+				//console.log('*******', key, val);
+				expect(val).to.be(undefined);
+				done.fbb = true;
+			});
+
+			gun.get('nv/totesnothing').val(function(val, key){
+				//console.log('***********', key, val);
+				expect(val).to.be(undefined);
+				done.t = true;
+			});
+
+			gun.get('nv/bz').get('lul').val(function(val, key){
+				//console.log('*****************', key, val);
+				expect(val).to.be(undefined);
+				done.bzl = true;
+				if(done.fbb && done.t && done.bzl){
+					if(done.c){ return } done.c = 1;
+					done();
+				}
+			});
+		});
 		return;
 		it.only('Custom extensions are chainable', function(done){
 			Gun.chain.filter = function(filter){
