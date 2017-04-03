@@ -77,7 +77,7 @@ Gun.chain.val = function(cb, opt){
 function val(at, ev, to){
 	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
 	if(u === data){
-		return;
+		//return;
 	}
 	if(data && data[rel._] && (tmp = rel.is(data))){
 		tmp = (cat.root.get(tmp)._);

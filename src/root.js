@@ -8,7 +8,7 @@ function Gun(o){
 
 Gun.is = function(gun){ return (gun instanceof Gun) }
 
-Gun.version = 0.6;
+Gun.version = 0.7;
 
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
@@ -78,6 +78,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	function get(at, cat){
 		var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
 		var next = cat.next || (cat.next = {}), as = /*(at.gun||empty)._ ||*/ (next[soul] || (next[soul] = cat.gun.get(soul)))._;
+		//console.log("GET", soul, field);
 		if(!node){ return }
 		if(field){
 			if(!obj_has(node, field)){ return }

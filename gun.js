@@ -674,7 +674,7 @@
 				if(!(is = valid(v,f,n, at,env))){ return }
 				if(!f){
 					at.node = at.node || n || {};
-					if(obj_has(v, Node._) && !Gun.is(v)){
+					if(obj_has(v, Node._)){
 						at.node._ = obj_copy(v._);
 					}
 					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
@@ -812,7 +812,7 @@
 
 		Gun.is = function(gun){ return (gun instanceof Gun) }
 
-		Gun.version = 0.6;
+		Gun.version = 0.7;
 
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
@@ -882,6 +882,7 @@
 			function get(at, cat){
 				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
 				var next = cat.next || (cat.next = {}), as = /*(at.gun||empty)._ ||*/ (next[soul] || (next[soul] = cat.gun.get(soul)))._;
+				//console.log("GET", soul, field);
 				if(!node){ return }
 				if(field){
 					if(!obj_has(node, field)){ return }
@@ -963,176 +964,6 @@
 		if(typeof common !== "undefined"){ common.exports = Gun }
 		module.exports = Gun;
 	})(require, './root');
-
-	;require(function(module){
-		return;
-		var Gun = require('./root');
-		var onto = require('./onto');
-		function Chain(back){
-			var at = this._ = {back: back, on: onto, $: this, next: {}};
-			at.root = back? back.root : at;
-			at.on('in', input, at);
-			at.on('out', output, at);
-		}
-		var chain = Chain.prototype;
-		chain.back = function(arg){ var tmp;
-			if(tmp = this._.back){
-				return tmp.$;
-			}
-		}
-		chain.next = function(arg){
-			var at = this._, cat;
-			if(cat = at.next[arg]){
-				return cat.$;
-			}
-			cat = (new Chain(at)._);
-			at.next[arg] = cat;
-			cat.key = arg;
-			return cat.$;
-		}
-		chain.get = function(arg){
-			if(typeof arg == 'string'){
-				var at = this._, cat;
-				if(cat = at.next[arg]){
-					return cat.$;
-				}
-				cat = (this.next(arg)._);
-				if(at.get || at === at.root){
-					cat.get = arg;
-				}
-				return cat.$;
-			} else {
-				var at = this._;
-				var out = {'#': Gun.text.random(), get: {}, cap: 1};
-				var to = at.root.on(out['#'], get, {next: arg})
-				at.on('in', get, to);
-				at.on('out', out);
-			}
-			return this;
-		}
-		function get(env){
-			var as = this.as;
-			if(as.next){
-				as.next(env, this);
-			}
-		}
-		chain.map = function(cb){
-			var at = this._;
-			var chain = new Chain(at);
-			var cat = chain._;
-			var u;
-			at.on('in', function(env){ var tmp;
-				if(!env){ return }
-				var cat = this.as;
-				var to = this.to;
-				if(tmp = env.put){
-					to.next(env);
-					Gun.obj.map(tmp, function(data, key){
-						if('_' == key){ return }
-						if(cb){
-							data = cb(data, key);
-							if(u === data){ return }
-						}
-						cat.on('in', Gun.obj.to(env, {put: data}));
-					});
-				}
-			}, cat);
-			return chain;
-		}
-		function input(env){ var tmp;
-			if(!env){ return }
-			var cat = this.as;
-			var to = this.to;
-			if(tmp = env.put){
-				if(tmp && tmp['#'] && (tmp = Gun.val.rel.is(tmp))){
-					//input.call(this, Gun.obj.to(env, {put: cat.root.put[tmp]}));
-					return;
-				}
-				cat.put = tmp;
-				to.next(env);
-				var next = cat.next;
-				Gun.obj.map(tmp, function(data, key){
-					if(!(key = next[key])){ return }
-					key.on('in', Gun.obj.to(env, {put: data}))
-				});
-			}
-		}
-		function output(env){ var tmp;
-			var u;
-			if(!env){ return }
-			var cat = this.as;
-			var to = this;
-			if(!cat.back){
-				env.test = true;
-				env.gun = cat.root.$;
-				Gun.on('out', env);
-				return;
-			}
-			if(tmp = env.get){
-				if(cat.get){
-					env = Gun.obj.to(env, {get: {'#': cat.get, '.': tmp}});
-				} else
-				if(cat.key){
-					env = Gun.obj.to(env, {get: Gun.obj.put({}, cat.key, tmp)});
-				} else {
-					env = Gun.obj.to(env, {get: {'*': tmp}})
-				}
-			}
-			cat.back.on('out', env);
-		}
-		chain.val = function(cb, opt){
-			var at = this._;
-			if(cb){
-				if(opt){
-				} else {
-					if(at.val){
-						cb(at.put, at.get, at);
-					}
-				}
-				this.get(function(env, ev){
-					cb(env.put, env.get, env);
-				});
-			}
-		}
-
-
-
-
-		var graph = {
-				app: {_:{'#':'app'},
-					foo: {_:{'#':'foo'},
-						bar: {'#': 'asdf'},
-						rab: {'#': 'fdsa'}
-					}/*,
-					oof: {_:{'#':'oof'},
-						bar: {bat: "really"},
-						rab: {bat: "nice!"}
-					}*/
-				},
-				asdf: {_:{'#': 'asdf'}, baz: "hello world!"},
-				fdsa: {_:{'#': 'fdsa'}, baz: "world hello!"}
-			}
-		Gun.on('out', function(env){
-			if(!env.test){ return }
-			setTimeout(function(){
-				console.log("reply", env.get);
-				env.gun._.on('in', {'@': env['#'],
-					put: Gun.graph.node(graph[env.get['#']])
-				});
-				return;
-				env.gun._.on('in', {put: graph, '@': env['#']});
-			},100);
-		});
-		setTimeout(function(){
-
-			//var c = new Chain(), u;
-			//c.get('app').map().map(x => x.bat? {baz: x.bat} : u).get('baz').val(function(data, key, env){
-			//	console.log("envelope", env);
-			//});
-
-		},1000);
-
-	})(require, './experiment');
 
 	;require(function(module){
 		var Gun = require('./root');
@@ -2113,7 +1944,7 @@
 		function val(at, ev, to){
 			var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
 			if(u === data){
-				return;
+				//return;
 			}
 			if(data && data[rel._] && (tmp = rel.is(data))){
 				tmp = (cat.root.get(tmp)._);

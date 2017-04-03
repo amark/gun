@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 0.7.x
+
+Small breaking change to `.val(cb)`:
+
+Previously `.val(cb)` would ONLY be called when data exists, like `.on(cb)`.
+
+However, due to popular demand, people wanted `.val(cb)` to also get called for `.not(cb)` rather than (before) it would "wait" until data arrived.
+
+NOTE: For dynamic paths, `.val(cb)` will still wait, like:
+
+`gun.get('users').map().val(cb)` because the behavior of the `map()` is simply to not fire anything down the chain unless items are found.
+
+## 0.6.x
+
+Introduced experimental features, chaining `.val()` (no callback) and `.map(cb)` behaving as a map/reduce function.
+
+It also upgraded the socket adapters and did end-to-end load testing and correctness testing.
+
 ## 0.5.9
 
 GUN 0.3 -> 0.4 -> 0.5 Migration Guide:
