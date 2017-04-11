@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <title>Gun plugin for Vue</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://rawgit.com/amark/gun/master/gun.js"></script>
+    <script src="https://unpkg.com/vue"></script>
+  </head>
+	<body>
+    <div id="app">
+      This is example of simple Vue plugin. It works exatcly same as the Vue instance data property, but the name is gunData.<br>
+      The cool part is that every property in the gunData is realtime synced via gunDB to every other page viewer!<br>
+      <table>
+        <tr>
+          <td>
+            Vue instance data:
+            <pre>{{ $data }}</pre>
+          </td>
+          <td valign="top" style="text-align:right;">
+            test<br>
+            arr[1]<br>
+            obj.a<br>
+            deepObj.level1.prop<br>
+            deepObj.level1.arr[1]<br>
+          </td>
+          <td valign="top">
+            <input v-model="test"><br>
+            <input v-model="arr[1]"><br>
+            <input v-model="obj.a"><br>
+            <input v-model="deepObj.level1.prop"><br>
+            <input v-model="deepObj.level1.arr[1]"><br>
+            <input v-if="obj.newProp_1" v-model="obj.newProp_1"><br>
+            <br>
+            <button @click="addProp()">Add new prop to obj</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <script>
+      Vue.config.productionTip = false;
+      localStorage.clear();
+      var GunData = {
+        install: function(Vue, options) {
+          Vue.$gunData = {
+            gun: Gun(options),
+            arrToGunObj: function(a) {
+              var o = { _isArr: true }, l = a.length;
+              for ( var i=0; i<l; i++ ) if ( a[i] !== undefined ) o[i] = a[i];
+              return o;
+            },
+            addGunWatcher: function (keyPath,val,vm) {
+              // console.log('addGunWatcher',keyPath);
+              this.gun.get(vm.$options.$gunRootKey).path(keyPath)
+              .not(function(){ this.put(typeof val == 'object' && val.constructor === Array ? this.arrToGunObj(val) : val) })
+              .on(function(gunVal,gunKey){
+                if ( typeof gunVal == 'object' ) return; /* only do stuff on non objects */
+                var vmPath = vm;
+                for ( var i=0, a=keyPath.split('.'), l=a.length; i<l-1; i++ ) vmPath = vmPath[a[i]];
+                if ( typeof vmPath[gunKey] == 'undefined' ) console.log('EIPÄ OO',gunkey);
+                if ( vmPath[gunKey] !== gunVal ) vm.$set(vmPath,vmPath.constructor === Array?gunKey*1:gunKey,gunVal);
+              },{ change:true });
+            },
+            timeout: { },
+            vueWatcher: { },
+            addVueWatcher: function (keyPath,vm) {
+              // console.log('VUE WATCHER',keyPath,vm.$options.$gunRootKey);
+              this.vueWatcher[keyPath] = vm.$watch(keyPath, function(newVal) {
+                clearTimeout(Vue.$gunData.timeout[vm.$options.$gunRootKey+keyPath]);
+                Vue.$gunData.timeout[vm.$options.$gunRootKey+keyPath] = setTimeout(function(){ Vue.$gunData.gun.get(vm.$options.$gunRootKey).path(keyPath).put(newVal) },500);
+              });
+            },
+            addWatchers: function (obj,keyPath,vm) {
+              if ( keyPath ) keyPath += '.';
+              var o = {}, a = obj, ok = Object.keys(a), l = ok.length, k = '', v = '';
+              for ( var i=0; i<l, k=ok[i], v=a[k]; i++ ) {
+                if ( typeof v == 'object' ) {
+                  this.addWatchers(v,keyPath+k,vm);
+                } else {
+                  // console.log('add watcher',k,v,keyPath+k);
+                  if ( !this.vueWatcher[keyPath+k] ) {
+                    Vue.$gunData.addVueWatcher(keyPath+k,vm);
+                    Vue.$gunData.addGunWatcher(keyPath+k,v,vm);
+                  }
+                }
+              }
+            }
+          }
+          Vue.mixin({
+            data: function() {
+              var o = {}, a = this.$options.gunData;
+              this.$options.$gunRootKey = (a._rootKey || window.location.hostname).replace(/\./g,'-');
+              delete a._rootKey;
+              for ( var k='',v='',i=0,ok=Object.keys(a),l=ok.length; i<l,k=ok[i],v=a[k]; i++ ) o[k] = v;
+              return o;
+            },
+            created: function() {
+              Vue.$gunData.addWatchers(this.$options.gunData,'',this)
+            }
+          });
+        }
+      }
+      
+      /********************** SIMPLE NODE GUN SERVER EXAMPLE FOR BACKEND **********************/
+      // var http = require('http'), Gun = require('gun');
+      // Gun({ web: http.createServer().listen(8080) });
+      
+      
+      /********************** MODIFY WITH OUR OWN SERVER ADDRESS **********************/
+      // Vue.use(GunData, 'http://REPLACE.WITH.YOUR.GUN.SERVER:SERVERPORT/gun');
+
+      new Vue({
+        el: '#app',
+        methods: {
+          addProp () { Vue.set(this.obj,'newProp_'+Object.keys(this.obj).length,'qwerty') }
+        },
+        gunData : {
+          // _rootKey: 'put-your-gunDB-root-key-here', // DEFAULTS TO HOSTNAME
+          test  : 'abc',
+          arr   : [1,2],
+          obj   : { a:1 },
+          deepObj: {
+            level1: {
+              arr  : [1,2],
+              prop : 2
+            }
+          }
+        }
+        });
+    </script>
+  </body>
+</html
