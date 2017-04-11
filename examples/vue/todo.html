@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Todo App: Gun + Vue</title>
+    
+    <script src="https://unpkg.com/vue" type="text/javascript" charset="utf-8"></script>
+    <script src="http://rawgit.com/amark/gun/master/gun.js" type="text/javascript" charset="utf-8"></script>
+    <link href='https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic' rel='stylesheet' type='text/css'>
+    <style>
+
+        body,
+        html {
+            width: 100%;
+            font-family: 'Alegreya Sans', sans-serif;
+        }
+
+        body {
+            font-size: 20px;
+            background-color: rgba(0,0,0,.3);
+        }
+
+        h1,
+        h3,
+        h5 {
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        #app {
+            margin: 0 auto;
+            background-color: #fff;
+            max-width: 500px;
+            padding: 2em;
+        }
+
+        .add-todo {
+            font-size: 1em;
+            border: 1px solid black;
+            padding: .5em .25em;
+        }
+
+        .completed-header,
+        .completed,
+        .completed-time {
+            color: rgba(0,0,0,.3);
+        }
+
+        .completed {
+            text-decoration: line-through;
+        }
+
+        .completed-time {
+            font-size: .8em;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="app">
+
+    <div class="todo-wrapper">
+        <h1>Todos App</h1>
+
+        <input class="add-todo" type="text" placeholder="Add new todo" v-model="newTodo" @keyup.enter="addTodo">
+
+        <h3>Active</h3>
+
+        <div v-for="active in activeTodos">
+            <label><input type="checkbox" @click="completeTodo(active.key)"> {{ active.todo.description }}</label>
+        </div>
+
+        <h5 v-show="completedTodos.length > 0" class="completed-header">Completed</h5>
+ 
+        <div v-for="completed in completedTodos" @click="reopenTodo(completed.key)">
+            <span class="completed">{{ completed.todo.description }}</span>
+            <span class="completed-time">(completed at {{ (new Date(completed.todo.completed)).toUTCString() }})</span>
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+<script>
+
+// Clear out local storage so we can start fresh each time.
+localStorage.clear();
+
+
+// No peers for the sake of example,
+// but this could easily be a collaborative 
+// todolist by adding a few peers
+var gun = new Gun();
+var todos = gun.get('todos');
+
+new Vue({
+    data: {
+        todos: [],
+        newTodo: ""
+    },
+    computed: {
+        activeTodos: function() {
+            return this.todos.filter(function(todo) {
+                return todo.todo.completed === '';
+            });
+        },
+        completedTodos: function() {
+            return this.todos.filter(function(todo) {
+                return todo.todo.completed !== '';
+            });
+        }
+    },
+    methods: {
+        todoUpdated: function(todo, nodeKey) {
+            if (/\D/.test(nodeKey)) {
+                return;
+            }
+
+            var existingTodoIndex = this.todos.findIndex(function(todo) {
+                return todo.key === nodeKey
+            });
+            var todoToStore = {
+                todo: todo,
+                key: nodeKey
+            };
+            if (existingTodoIndex === -1) {
+                this.todos.push(todoToStore);
+            } else {
+                this.todos.splice(existingTodoIndex, 1, todoToStore);
+            }
+        },
+        addTodo: function() {
+            var newTodo = todos.get(Date.now().toString());
+            newTodo.put({
+                description: this.newTodo,
+                completed: ''
+            });
+            todos.set(newTodo);
+            this.newTodo = "";
+        },
+        completeTodo: function(key) {
+            todos.get(key).put({
+                completed: Date.now()
+            });
+        },
+        reopenTodo: function(key) {
+            todos.get(key).put({
+                completed: ''
+            });
+        }
+    },
+    mounted: function() {
+
+        // Subscribe to updates on the todos set
+        todos.map().on(this.todoUpdated.bind(this));
+    }
+}).$mount('#app');
+
+</script>
+
+</html>
