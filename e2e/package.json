@@ -5,7 +5,7 @@
   "private": true,
   "main": "distributed.js",
   "devDependencies": {
-    "panic-server": "~>0.3.0",
-    "selenium-webdriver": "~>2.53.2"
+    "panic-server": ">1.1.0",
+    "selenium-webdriver": ">3.3.0"
   }
 }
