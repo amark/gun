@@ -47,19 +47,19 @@
     "node": ">=0.6.6"
   },
   "dependencies": {
-    "aws-sdk": "~>2.15.0",
-    "formidable": "~>1.0.15",
+    "aws-sdk": ">=2.41.0",
+    "formidable": ">=1.1.1",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
     "uws": "~>0.14.1",
-    "express": "~>4.13.4",
-    "hapi": "^16.1.0",
-    "inert": "^4.1.0",
-    "ip": "^1.1.4",
-    "mocha": "~>1.9.0",
+    "express": ">=4.15.2",
+    "hapi": "^16.1.1",
+    "inert": "^4.2.0",
+    "ip": "^1.1.5",
+    "mocha": ">=3.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
-    "uglify-js": "~>2.2.0"
+    "uglify-js": ">=2.8.22"
   }
 }
