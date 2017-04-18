@@ -1,3 +1,11 @@
-<h1>
-  {{title}}
-</h1>
+<div>
+
+  <form (ngSubmit)="add()">
+    <input type="text" [(ngModel)]="newTodo" name="newTodo" placeholder="New TODO">
+    <button type="submit" *ngIf="newTodo" [disabled]="newTodo?.trim().length === 0">Add</button>
+  </form>
+  <br />
+  <ul>
+    <li *ngFor="let todo of todos$ | async">{{todo.val}}</li>
+  </ul>
+</div>
