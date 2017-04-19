@@ -6,6 +6,6 @@
   </form>
   <br />
   <ul>
-    <li *ngFor="let todo of todos$ | async">{{todo.val}}</li>
+    <li *ngFor="let todo of todos$ | async | pairs" (click)="delete(todo[0])">{{todo[1]}}</li>
   </ul>
 </div>

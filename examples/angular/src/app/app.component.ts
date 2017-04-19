@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { $rx } from 'gun-edge/edge/observable/rx';
 import Gun from 'gun/gun';
 import { Observable } from 'rxjs/Observable';
+import { GunDb } from 'app/gun.service';
+import { omit } from 'underscore';
 
-import { GunDb } from 'app/app.module';
+import { Subject } from 'rxjs/Subject';
 
 @Component({
   selector: 'app-root',
@@ -15,19 +17,20 @@ export class AppComponent implements OnInit {
 
   todos = this.db.gun.get('todos');
   todos$: Observable<string[]> = $rx(this.todos)
-    .startWith([])
-    .map(o => Object.keys(o).filter(k => typeof o[k] === 'string').map(k => ({ key: k, val: (o[k] as string) })));
+    .map(o => omit(o, '_'));
 
   constructor(private db: GunDb) { }
 
-  ngOnInit() {
-    $rx(this.todos).subscribe(x => console.log(x));
-  }
+  ngOnInit() { }
 
   add() {
     if (this.newTodo) {
       this.todos.path(Gun.text.random()).put(this.newTodo);
       this.newTodo = '';
     }
+  }
+
+  delete(key: string) {
+    this.todos.path(key).put(null);
   }
 }
