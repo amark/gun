@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { $rx } from 'gun-edge/edge/observable/rx';
 import Gun from 'gun/gun';
 import { Observable } from 'rxjs/Observable';
-import { GunDb } from 'app/gun.service';
 import { omit } from 'underscore';
 
-import { Subject } from 'rxjs/Subject';
+import { GunDb } from 'app/gun.service';
+import { rx$ } from 'app/gun.helper';
 
 @Component({
   selector: 'app-root',
@@ -16,7 +15,7 @@ export class AppComponent implements OnInit {
   newTodo = '';
 
   todos = this.db.gun.get('todos');
-  todos$: Observable<string[]> = $rx(this.todos)
+  todos$: Observable<string[]> = rx$(this.todos)
     .map(o => omit(o, '_'));
 
   constructor(private db: GunDb) { }
