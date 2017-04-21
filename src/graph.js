@@ -8,8 +8,8 @@ var Graph = {};
 		if(!g || !obj_is(g) || obj_empty(g)){ return false } // must be an object.
 		return !obj_map(g, map, {cb:cb,fn:fn,as:as}); // makes sure it wasn't an empty object.
 	}
-	function map(n, s){ // we invert this because the way we check for this is via a negation.
-		if(!n || s !== Node.soul(n) || !Node.is(n, this.fn)){ return true } // it is true that this is an invalid graph.
+	function map(n, s){ // we invert this because the way'? we check for this is via a negation.
+		if(!n || s !== Node.soul(n) || !Node.is(n, this.fn, this.as)){ return true } // it is true that this is an invalid graph.
 		if(!this.cb){ return }
 		nf.n = n; nf.as = this.as; // sequential race conditions aren't races.
 		this.cb.call(nf.as, n, s, nf);

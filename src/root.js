@@ -51,39 +51,84 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		//console.log("add to.next(at)"); // TODO: BUG!!!
 		var ev = this, cat = ev.as, coat;
 		if(!at.gun){ at.gun = cat.gun }
-		if(!at['#'] && at['@']){
-			at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
-			// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be. 
+		if(!at['#']){ at['#'] = Gun.text.random() } // TODO: Use what is used other places instead.
+		if(cat.dup.check(at['#'])){ return }
+		if(at['@']){
+			// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be.
 			if(cat.ack(at['@'], at)){ return } // TODO: Consider not returning here, maybe, where this would let the "handshake" on sync occur for Holy Grail?
 			cat.dup.track(at['#']);
 			Gun.on('out', obj_to(at, {gun: cat.gun}));
 			return;
 		}
-		if(at['#'] && cat.dup.check(at['#'])){ return }
 		cat.dup.track(at['#']);
-		if(cat.ack(at['@'], at)){ return }
+		//if(cat.ack(at['@'], at)){ return }
 		//cat.ack(at['@'], at);
 		coat = obj_to(at, {gun: cat.gun});
 		if(at.get){
-			if(!get(at, cat)){
-				Gun.on('get', coat);
-			}
+			//Gun.on.GET(coat);
+			Gun.on('get', coat);
 		}
 		if(at.put){
-			Gun.HAM.synth(at, ev, cat.gun); // TODO: Clean up, just make it part of on('put')!
+			//Gun.on.PUT(coat);
 			Gun.on('put', coat);
 		}
 		Gun.on('out', coat);
 	}
-	function get(at, cat){
-		var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
-		var next = cat.next || (cat.next = {}), as = /*(at.gun||empty)._ ||*/ (next[soul] || (next[soul] = cat.gun.get(soul)))._;
-		//console.log("GET", soul, field);
-		if(!node){ return }
+}());
+
+;(function(){
+	Gun.on('put', function(at){
+	//Gun.on.PUT = function(at){
+		if(!at['#']){ return this.to.next(at) } // for tests.
+		var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, at: {}, machine: Gun.state()};
+		if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
+		if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
+		obj_map(ctx.put, merge, ctx);
+		obj_map(ctx.at, map, ctx);
+		if(!ctx.diff){ return }
+		ev.to.next(obj_to(at, {put: ctx.diff}));
+	});
+	function verify(val, key, node, soul){ var ctx = this;
+		var state = Gun.state.is(node, key), tmp;
+		if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
+		var vertex = ctx.graph[soul] || empty, was = Gun.state.is(vertex, key, true), known = vertex[key];
+		var HAM = Gun.HAM(ctx.machine, state, was, val, known);
+		if(!HAM.incoming){ return }
+		ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
+		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]); // TODO: Bug? If val is a relation, it is an object and therefore passed by reference. Will this be a problem?
+	}
+	function merge(node, soul){
+		var ref = ((this.gun._).next || empty)[soul];
+		if(!ref){ return }
+		var at = this.at[soul] = {
+			put: this.node = node,
+			get: this.soul = soul,
+			gun: this.ref = ref
+		};
+		obj_map(node, each, this);
+		Gun.on('node', at);
+	}
+	function each(val, key){
+		var graph = this.graph, soul = this.soul, cat = (this.ref._), tmp;
+		graph[soul] = Gun.state.to(this.node, key, graph[soul]);
+		(cat.put || (cat.put = {}))[key] = val;
+	}
+	function map(at, soul){
+		if(!at.gun){ return }
+		(at.gun._).on('in', at);
+	}
+}());
+var tmpev = {to:{next:function(){}}}; // temporary while we have to switch event hooks.
+;(function(){
+	Gun.on('get', function(at){
+		var ev = this, soul = at.get[_soul], cat = at.gun._, node = cat.graph[soul], field = at.get[_field], tmp;
+		var next = cat.next || (cat.next = {}), as = ((next[soul] || empty)._);
+		if(!node || !as){ return ev.to.next(at) }
 		if(field){
-			if(!obj_has(node, field)){ return }
-			tmp = Gun.obj.put(Gun.node.soul.ify({}, soul), field, node[field]);
-			node = Gun.state.ify(tmp, field, Gun.state.is(node, field));
+			if(!obj_has(node, field)){ return ev.to.next(at) }
+			node = Gun.state.to(node, field);
+		} else {
+			node = Gun.obj.copy(node);
 		}
 		//if(at.gun === cat.gun){
 			node = Gun.graph.node(node); // TODO: BUG! Clone node?
@@ -98,9 +143,10 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			gun: as.gun
 		});
 		if(0 < tmp){
-			return true;
+			return;
 		}
-	}
+		ev.to.next(at);
+	});
 }());
 
 ;(function(){
@@ -143,9 +189,9 @@ Gun._ = { // some reserved key words, these are not the only ones.
 
 var text_is = Gun.text.is;
 var list_is = Gun.list.is;
-var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map;
-var _soul = Gun._.soul, _field = Gun._.field;
-//var u;
+var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
+var _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
+var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
 

@@ -101,7 +101,21 @@ module.exports = Gun;
 			state_ify(delta, field, is);
 		}
 	}
-	Gun.HAM.synth = function(at, ev, as){ var gun = this.as || as;
+	Gun.HAM.synth = function(at, ev){
+		var as = this.as, cat = as.gun._;
+		if(!at.put || (as['.'] && !obj_has(at.put[as['#']], cat.get))){
+			if(cat.put !== u){ return }
+			cat.on('in', {
+				get: cat.get,
+				put: cat.put = u,
+				gun: cat.gun,
+			})
+			return;
+		}
+		at.gun = cat.root;
+		Gun.on('put', at);
+	}
+	Gun.HAM.synth_ = function(at, ev, as){ var gun = this.as || as;
 		var cat = gun._, root = cat.root._, put = {}, tmp;
 		if(!at.put){
 			//if(obj_has(cat, 'put')){ return }

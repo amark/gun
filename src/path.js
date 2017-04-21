@@ -3,6 +3,7 @@ var Gun = require('./core');
 Gun.chain.path = function(field, cb, opt){
 	var back = this, gun = back, tmp;
 	opt = opt || {}; opt.path = true;
+	Gun.log.once("pathing", "Warning: `.path` to be removed from core (but available as an extension), use `.get` chains instead. If you are opposed to this, please voice your opinion in https://gitter.im/amark/gun and ask others.");
 	if(gun === gun._.root){if(cb){cb({err: Gun.log("Can't do that on root instance.")})}return gun}
 	if(typeof field === 'string'){
 		tmp = field.split(opt.split || '.');

@@ -406,7 +406,9 @@
 
 			}
 			if(incomingState === currentState){
-				if(Lexical(incomingValue) === Lexical(currentValue)){ // Note: while these are practically the same, the deltas could be technically different
+				incomingValue = Lexical(incomingValue) || "";
+				currentValue = Lexical(currentValue) || "";
+				if(incomingValue === currentValue){ // Note: while these are practically the same, the deltas could be technically different
 					return {state: true};
 				}
 				/*
@@ -417,10 +419,10 @@
 					because convergence (data integrity) is generally more important.
 					Any difference in this algorithm must be given a new and different name.
 				*/
-				if(Lexical(incomingValue) < Lexical(currentValue)){ // Lexical only works on simple value types!
+				if(incomingValue < currentValue){ // Lexical only works on simple value types!
 					return {converge: true, current: true};
 				}
-				if(Lexical(currentValue) < Lexical(incomingValue)){ // Lexical only works on simple value types!
+				if(currentValue < incomingValue){ // Lexical only works on simple value types!
 					return {converge: true, incoming: true};
 				}
 			}
@@ -492,6 +494,7 @@
 			n._[soul_] = o.soul || n._[soul_] || text_random(); // put the soul on it.
 			return n;
 		}
+		Node.soul._ = Val.rel._;
 		;(function(){
 			Node.is = function(n, cb, as){ var s; // checks to see if an object is a valid node.
 				if(!obj_is(n)){ return false } // must be an object.
@@ -533,7 +536,7 @@
 		}());
 		var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_map = obj.map;
 		var text = Type.text, text_random = text.random;
-		var soul_ = Val.rel._;
+		var soul_ = Node.soul._;
 		var u;
 		module.exports = Node;
 	})(require, './node');
@@ -557,6 +560,11 @@
 		var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
 		State._ = '>';
 		State.drift = 0;
+		State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.
+			var tmp = (f && n && n[N_] && n[N_][State._]) || o;
+			if(!tmp){ return }
+			return num_is(tmp = tmp[f])? tmp : -Infinity;
+		}
 		State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
@@ -575,10 +583,12 @@
 			}
 			return n;
 		}
-		State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.
-			var tmp = (f && n && n[N_] && n[N_][State._]) || o;
-			if(!tmp){ return }
-			return num_is(tmp[f])? tmp[f] : -Infinity;
+		State.to = function(from, f, to){
+			var val = from[f];
+			if(obj_is(val)){
+				val = obj_copy(val);
+			}
+			return State.ify(to, f, State.is(from, f), val, Node.soul(from));
 		}
 		;(function(){
 			State.map = function(cb, s, as){ var u; // for use with Node.ify
@@ -607,7 +617,7 @@
 				State.ify(this.o, f, this.s) ;
 			}
 		}());
-		var obj = Type.obj, obj_as = obj.as, obj_has = obj.has, obj_is = obj.is, obj_map = obj.map;
+		var obj = Type.obj, obj_as = obj.as, obj_has = obj.has, obj_is = obj.is, obj_map = obj.map, obj_copy = obj.copy;
 		var num = Type.num, num_is = num.is;
 		var fn = Type.fn, fn_is = fn.is;
 		var N_ = Node._, u;
@@ -624,8 +634,8 @@
 				if(!g || !obj_is(g) || obj_empty(g)){ return false } // must be an object.
 				return !obj_map(g, map, {cb:cb,fn:fn,as:as}); // makes sure it wasn't an empty object.
 			}
-			function map(n, s){ // we invert this because the way we check for this is via a negation.
-				if(!n || s !== Node.soul(n) || !Node.is(n, this.fn)){ return true } // it is true that this is an invalid graph.
+			function map(n, s){ // we invert this because the way'? we check for this is via a negation.
+				if(!n || s !== Node.soul(n) || !Node.is(n, this.fn, this.as)){ return true } // it is true that this is an invalid graph.
 				if(!this.cb){ return }
 				nf.n = n; nf.as = this.as; // sequential race conditions aren't races.
 				this.cb.call(nf.as, n, s, nf);
@@ -855,39 +865,84 @@
 				//console.log("add to.next(at)"); // TODO: BUG!!!
 				var ev = this, cat = ev.as, coat;
 				if(!at.gun){ at.gun = cat.gun }
-				if(!at['#'] && at['@']){
-					at['#'] = Gun.text.random(); // TODO: Use what is used other places instead.
-					// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be. 
+				if(!at['#']){ at['#'] = Gun.text.random() } // TODO: Use what is used other places instead.
+				if(cat.dup.check(at['#'])){ return }
+				if(at['@']){
+					// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be.
 					if(cat.ack(at['@'], at)){ return } // TODO: Consider not returning here, maybe, where this would let the "handshake" on sync occur for Holy Grail?
 					cat.dup.track(at['#']);
 					Gun.on('out', obj_to(at, {gun: cat.gun}));
 					return;
 				}
-				if(at['#'] && cat.dup.check(at['#'])){ return }
 				cat.dup.track(at['#']);
-				if(cat.ack(at['@'], at)){ return }
+				//if(cat.ack(at['@'], at)){ return }
 				//cat.ack(at['@'], at);
 				coat = obj_to(at, {gun: cat.gun});
 				if(at.get){
-					if(!get(at, cat)){
-						Gun.on('get', coat);
-					}
+					//Gun.on.GET(coat);
+					Gun.on('get', coat);
 				}
 				if(at.put){
-					Gun.HAM.synth(at, ev, cat.gun); // TODO: Clean up, just make it part of on('put')!
+					//Gun.on.PUT(coat);
 					Gun.on('put', coat);
 				}
 				Gun.on('out', coat);
 			}
-			function get(at, cat){
-				var soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
-				var next = cat.next || (cat.next = {}), as = /*(at.gun||empty)._ ||*/ (next[soul] || (next[soul] = cat.gun.get(soul)))._;
-				//console.log("GET", soul, field);
-				if(!node){ return }
+		}());
+
+		;(function(){
+			Gun.on('put', function(at){
+			//Gun.on.PUT = function(at){
+				if(!at['#']){ return this.to.next(at) } // for tests.
+				var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, at: {}, machine: Gun.state()};
+				if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
+				if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
+				obj_map(ctx.put, merge, ctx);
+				obj_map(ctx.at, map, ctx);
+				if(!ctx.diff){ return }
+				ev.to.next(obj_to(at, {put: ctx.diff}));
+			});
+			function verify(val, key, node, soul){ var ctx = this;
+				var state = Gun.state.is(node, key), tmp;
+				if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
+				var vertex = ctx.graph[soul] || empty, was = Gun.state.is(vertex, key, true), known = vertex[key];
+				var HAM = Gun.HAM(ctx.machine, state, was, val, known);
+				if(!HAM.incoming){ return }
+				ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
+				(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]); // TODO: Bug? If val is a relation, it is an object and therefore passed by reference. Will this be a problem?
+			}
+			function merge(node, soul){
+				var ref = ((this.gun._).next || empty)[soul];
+				if(!ref){ return }
+				var at = this.at[soul] = {
+					put: this.node = node,
+					get: this.soul = soul,
+					gun: this.ref = ref
+				};
+				obj_map(node, each, this);
+				Gun.on('node', at);
+			}
+			function each(val, key){
+				var graph = this.graph, soul = this.soul, cat = (this.ref._), tmp;
+				graph[soul] = Gun.state.to(this.node, key, graph[soul]);
+				(cat.put || (cat.put = {}))[key] = val;
+			}
+			function map(at, soul){
+				if(!at.gun){ return }
+				(at.gun._).on('in', at);
+			}
+		}());
+		var tmpev = {to:{next:function(){}}}; // temporary while we have to switch event hooks.
+		;(function(){
+			Gun.on('get', function(at){
+				var ev = this, soul = at.get[_soul], cat = at.gun._, node = cat.graph[soul], field = at.get[_field], tmp;
+				var next = cat.next || (cat.next = {}), as = ((next[soul] || empty)._);
+				if(!node || !as){ return ev.to.next(at) }
 				if(field){
-					if(!obj_has(node, field)){ return }
-					tmp = Gun.obj.put(Gun.node.soul.ify({}, soul), field, node[field]);
-					node = Gun.state.ify(tmp, field, Gun.state.is(node, field));
+					if(!obj_has(node, field)){ return ev.to.next(at) }
+					node = Gun.state.to(node, field);
+				} else {
+					node = Gun.obj.copy(node);
 				}
 				//if(at.gun === cat.gun){
 					node = Gun.graph.node(node); // TODO: BUG! Clone node?
@@ -902,9 +957,10 @@
 					gun: as.gun
 				});
 				if(0 < tmp){
-					return true;
+					return;
 				}
-			}
+				ev.to.next(at);
+			});
 		}());
 		
 		;(function(){
@@ -947,9 +1003,9 @@
 
 		var text_is = Gun.text.is;
 		var list_is = Gun.list.is;
-		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map;
-		var _soul = Gun._.soul, _field = Gun._.field;
-		//var u;
+		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
+		var _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
+		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
 
@@ -1021,13 +1077,24 @@
 				at.gun = gun;
 			}
 			if(get = at.get){
-				if(!get[_soul]){
+				if(tmp = get[_soul]){
+					tmp = (root.get(tmp)._);
+					if(obj_has(get, _field)){
+						if(obj_has(put = tmp.put, get = get[_field])){
+							tmp.on('in', {get: tmp.get, put: Gun.state.to(put, get), gun: tmp.gun}); // TODO: Ugly, clean up? Simplify all these if conditions (without ruining the whole chaining API)?
+						}
+					} else
+					if(obj_has(tmp, 'put')){
+					//if(u !== tmp.put){
+						tmp.on('in', tmp);
+					}
+				} else {
 					if(obj_has(get, _field)){
 						get = get[_field];
 						var next = get? (gun.get(get)._) : cat;
 						// TODO: BUG! Handle plural chains by iterating over them.
-						if(obj_has(next, 'put')){ // potentially incorrect? Maybe?
-						//if(u !== next.put){ // potentially incorrect? Maybe?
+						//if(obj_has(next, 'put')){ // potentially incorrect? Maybe?
+						if(u !== next.put){ // potentially incorrect? Maybe?
 							//next.tag['in'].last.next(next);
 							next.on('in', next);
 							return;
@@ -1041,8 +1108,8 @@
 							if(rel = Gun.val.rel.is(val)){
 								if(!at.gun._){ return }
 								(at.gun._).on('out', {
-									get: {'#': rel, '.': get},
-									'#': root._.ask(Gun.HAM.synth, at.gun),
+									get: tmp = {'#': rel, '.': get, gun: at.gun},
+									'#': root._.ask(Gun.HAM.synth, tmp),
 									gun: at.gun
 								});
 								return;
@@ -1060,12 +1127,12 @@
 							obj_map(cat.map, function(proxy){
 								proxy.at.on('in', proxy.at);
 							});
-						}
+						};
 						if(cat.soul){
 							if(!at.gun._){ return }
 							(at.gun._).on('out', {
-								get: {'#': cat.soul, '.': get},
-								'#': root._.ask(Gun.HAM.synth, at.gun),
+								get: tmp = {'#': cat.soul, '.': get, gun: at.gun},
+								'#': root._.ask(Gun.HAM.synth, tmp),
 								gun: at.gun
 							});
 							return;
@@ -1091,14 +1158,15 @@
 						}
 						if(cat.ack){
 							if(!obj_has(cat, 'put')){ // u !== cat.put instead?
+							//if(u !== cat.put){
 								return;
 							}
 						}
 						cat.ack = -1;
 						if(cat.soul){
 							cat.on('out', {
-								get: {'#': cat.soul},
-								'#': root._.ask(Gun.HAM.synth, cat.gun),
+								get: tmp = {'#': cat.soul, gun: cat.gun},
+								'#': root._.ask(Gun.HAM.synth, tmp),
 								gun: cat.gun
 							});
 							return;
@@ -1119,7 +1187,7 @@
 		function input(at){
 			at = at._ || at;
 			var ev = this, cat = this.as, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, rel, tmp;
-			if(0 > cat.ack && !Gun.val.rel.is(change)){ // for better behavior?
+			if(0 > cat.ack && !at.ack && !Gun.val.rel.is(change)){ // for better behavior?
 				cat.ack = 1;
 			}
 			if(cat.get && at.get !== cat.get){
@@ -1195,9 +1263,8 @@
 				not(cat, at);
 			}
 			tmp = (cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
-			if(rel !== tmp.rel){
-				ask(cat, tmp.rel = rel);
-			}
+			if(rel === tmp.rel){ return }
+			ask(cat, tmp.rel = rel);
 		}
 		function echo(cat, at, ev){
 			if(!cat.echo){ return } // || node_ === at.get ????
@@ -1260,17 +1327,15 @@
 			if(cat.ack){
 				tmp.ack = tmp.ack || -1;
 				tmp.on('out', {
-					get: {'#': soul},
-					'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
-					gun: tmp.gun
+					get: tmp = {'#': soul, gun: tmp.gun},
+					'#': cat.root._.ask(Gun.HAM.synth, tmp)
 				});
 				return;
 			}
 			obj_map(cat.next, function(gun, key){
 				(gun._).on('out', {
-					get: {'#': soul, '.': key},
-					'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
-					gun: gun
+					get: gun = {'#': soul, '.': key, gun: gun},
+					'#': cat.root._.ask(Gun.HAM.synth, gun)
 				});
 			});
 		}
@@ -1433,7 +1498,9 @@
 					ref = ref.get(path[i]);
 				}
 				if(as.not || Gun.node.soul(at.obj)){
-					at.soul(Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)());
+					var id = Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+					ref.back(-1).get(id);
+					at.soul(id);
 					return;
 				}
 				(as.stun = as.stun || {})[path] = true;
@@ -1446,7 +1513,9 @@
 			if(!at.gun || !at.gun._.back){ return } // TODO: Handle
 			ev.off();
 			at = (at.gun._.back._);
-			cat.soul(Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)()); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			var id = Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			at.gun.back(-1).get(id);
+			cat.soul(id);
 			as.stun[cat.path] = false;
 			as.batch();
 		}
@@ -1599,7 +1668,21 @@
 					state_ify(delta, field, is);
 				}
 			}
-			Gun.HAM.synth = function(at, ev, as){ var gun = this.as || as;
+			Gun.HAM.synth = function(at, ev){
+				var as = this.as, cat = as.gun._;
+				if(!at.put || (as['.'] && !obj_has(at.put[as['#']], cat.get))){
+					if(cat.put !== u){ return }
+					cat.on('in', {
+						get: cat.get,
+						put: cat.put = u,
+						gun: cat.gun,
+					})
+					return;
+				}
+				at.gun = cat.root;
+				Gun.on('put', at);
+			}
+			Gun.HAM.synth_ = function(at, ev, as){ var gun = this.as || as;
 				var cat = gun._, root = cat.root._, put = {}, tmp;
 				if(!at.put){
 					//if(obj_has(cat, 'put')){ return }
@@ -1662,176 +1745,10 @@
 
 	;require(function(module){
 		var Gun = require('./core');
-		var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map, obj_empty = obj.empty;
-		var num = Gun.num, num_is = num.is;
-		var _soul = Gun.val.rel._, _field = '.';
-
-
-		;(function(){
-			Gun.chain.key = function(index, cb, opt){
-				if(!index){
-					if(cb){
-						cb.call(this, {err: Gun.log('No key!')});
-					}
-					return this;
-				}
-				var gun = this;
-				if(typeof opt === 'string'){
-					console.log("Please report this as an issue! key.opt.string");
-					return gun;
-				}
-				if(gun === gun._.root){if(cb){cb({err: Gun.log("Can't do that on root instance.")})};return gun}
-				opt = opt || {};
-				opt.key = index;
-				opt.any = cb || function(){};
-				opt.ref = gun.back(-1).get(opt.key);
-				opt.gun = opt.gun || gun;
-				gun.on(key, {as: opt});
-				if(!opt.data){
-					opt.res = Gun.on.stun(opt.ref);
-				}
-				return gun;
-			}
-			function key(at, ev){ var opt = this;
-				ev.off();
-				opt.soul = Gun.node.soul(at.put);
-				if(!opt.soul || opt.key === opt.soul){ return opt.data = {} }
-				opt.data = obj_put({}, keyed._, Gun.node.ify(obj_put({}, opt.soul, Gun.val.rel.ify(opt.soul)), '#'+opt.key+'#'));
-				(opt.res||iffe)(function(){
-					opt.ref.put(opt.data, opt.any, {soul: opt.key, key: opt.key});				
-				},opt);
-				if(opt.res){
-					opt.res();
-				}
-			}
-			function iffe(fn,as){fn.call(as||{})}
-			function keyed(f){
-				if(!f || !('#' === f[0] && '#' === f[f.length-1])){ return }
-				var s = f.slice(1,-1);
-				if(!s){ return }
-				return s;
-			}
-			keyed._ = '##';
-			Gun.on('next', function(at){
-				var gun = at.gun;
-				if(gun.back(-1) !== at.back){ return }
-				gun.on('in', pseudo, gun._);
-				gun.on('out', normalize, gun._);
-			});
-			function normalize(at){ var cat = this;
-				if(!at.put){
-					if(at.get){
-						search.call(at.gun? at.gun._ : cat, at);
-					}
-					return;
-				}
-				if(at.opt && at.opt.key){ return }
-				var put = at.put, graph = cat.gun.back(-1)._.graph;
-				Gun.graph.is(put, function(node, soul){
-					if(!Gun.node.is(graph['#'+soul+'#'], function each(rel,id){
-						if(id !== Gun.val.rel.is(rel)){ return }
-						if(rel = graph['#'+id+'#']){
-							Gun.node.is(rel, each); // correct params?
-							return;
-						}
-						Gun.node.soul.ify(rel = put[id] = Gun.obj.copy(node), id);
-					})){ return }
-					Gun.obj.del(put, soul);
-				});
-			}
-			function search(at){ var cat = this;
-				var tmp;
-				if(!Gun.obj.is(tmp = at.get)){ return }
-				if(!Gun.obj.has(tmp, '#')){ return }
-				if((tmp = at.get) && (null === tmp['.'])){
-					tmp['.'] = '##';
-					return;
-				}
-				if((tmp = at.get) && Gun.obj.has(tmp, '.')){
-					if(tmp['#']){
-						cat = cat.root.gun.get(tmp['#'])._;
-					}
-					tmp = at['#'];
-					at['#'] = Gun.on.ask(proxy);
-				}
-				var tried = {};
-				function proxy(ack, ev){
-					var put = ack.put, lex = at.get;
-					if(!cat.pseudo || ack.via){ // TODO: BUG! MEMORY PERF! What about unsubscribing?
-						//ev.off();
-						//ack.via = ack.via || {};
-						return Gun.on.ack(tmp, ack);
-					}
-					if(ack.put){
-						if(!lex['.']){
-							ev.off();
-							return Gun.on.ack(tmp, ack);
-						}
-						if(obj_has(ack.put[lex['#']], lex['.'])){
-							ev.off();
-							return Gun.on.ack(tmp, ack);
-						}
-					}
-					Gun.obj.map(cat.seen, function(ref,id){ // TODO: BUG! In-memory versus future?
-						if(tried[id]){
-							return Gun.on.ack(tmp, ack);
-						}
-						tried[id] = true;
-						ref.on('out', {
-							gun: ref,
-							get: id = {'#': id, '.': at.get['.']},
-							'#': Gun.on.ask(proxy)
-						});
-					});
-				}
-			}
-			function pseudo(at, ev){ var cat = this;
-				// TODO: BUG! Pseudo can't handle plurals!?
-				if(cat.pseudo){
-					//ev.stun();return;
-					if(cat.pseudo === at.put){ return }
-					ev.stun();
-					cat.change = cat.changed || cat.pseudo;
-					cat.on('in', Gun.obj.to(at, {put: cat.put = cat.pseudo}));
-					return;
-				}
-				if(!at.put){ return }
-				var rel = Gun.val.rel.is(at.put[keyed._]);
-				if(!rel){ return }
-				var soul = Gun.node.soul(at.put), resume = ev.stun(resume), root = cat.gun.back(-1), seen = cat.seen = {};
-				cat.pseudo = cat.put = Gun.state.ify(Gun.node.ify({}, soul));
-				root.get(rel).on(each, {change: true});
-				function each(change){
-					Gun.node.is(change, map);
-				}
-				function map(rel, soul){
-					if(soul !== Gun.val.rel.is(rel)){ return }
-					if(seen[soul]){ return }
-					seen[soul] = root.get(soul).on(on, true);
-				}
-				function on(put){
-					if(!put){ return }
-					cat.pseudo = Gun.HAM.union(cat.pseudo, put) || cat.pseudo;
-					cat.change = cat.changed = put;
-					cat.put = cat.pseudo;
-					resume({
-						gun: cat.gun,
-						put: cat.pseudo,
-						get: soul
-						//via: this.at
-					});
-				}
-			}
-			var obj = Gun.obj, obj_has = obj.has;
-		}());
-
-	})(require, './key');
-
-	;require(function(module){
-		var Gun = require('./core');
 		Gun.chain.path = function(field, cb, opt){
 			var back = this, gun = back, tmp;
 			opt = opt || {}; opt.path = true;
+			Gun.log.once("pathing", "Warning: `.path` to be removed from core (but available as an extension), use `.get` chains instead. If you are opposed to this, please voice your opinion in https://gitter.im/amark/gun and ask others.");
 			if(gun === gun._.root){if(cb){cb({err: Gun.log("Can't do that on root instance.")})}return gun}
 			if(typeof field === 'string'){
 				tmp = field.split(opt.split || '.');
@@ -2002,6 +1919,7 @@
 	;require(function(module){
 		var Gun = require('./core'), u;
 		Gun.chain.not = function(cb, opt, t){
+			Gun.log.once("nottobe", "Warning: `.not` to be removed from core (but available as an extension), use `.val` instead, which now supports (v0.7.x+) 'not found data' as `undefined` data in callbacks. If you are opposed to this, please voice your opinion in https://gitter.im/amark/gun and ask others.");
 			return this.get(ought, {not: cb});
 		}
 		function ought(at, ev){ ev.off();
@@ -2084,9 +2002,8 @@
 			this.to.next(at);
 			(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
 			var graph = root._.graph;
-			
 			Gun.obj.map(at.put, function(node, soul){
-				async[soul] = graph[soul] || node;
+				async[soul] = async[soul] || graph[soul] || node;
 			});
 			count += 1;
 			check[at['#']] = root;
@@ -2101,7 +2018,7 @@
 				Gun.obj.map(all, function(node, soul){
 					// Since localStorage only has 5MB, it is better that we keep only
 					// the data that the user is currently interested in.
-					node = graph[soul] || all[soul];
+					node = graph[soul] || all[soul] || node;
 					try{store.setItem(opt.prefix + soul, JSON.stringify(node));
 					}catch(e){ err = e || "localStorage failure" }
 				});
@@ -2129,10 +2046,9 @@
 			if(!lex || !(soul = lex[Gun._.soul])){ return }
 			//if(0 >= at.cap){ return }
 			var field = lex['.'];
-
 			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null) || async[soul] || u;
 			if(data && field){
-				data = Gun.state.ify(u, field, Gun.state.is(data, field), data[field], soul);
+				data = Gun.state.to(data, field);
 			}
 			if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
 				return; // Hmm, what if we have peers but we are disconnected?
