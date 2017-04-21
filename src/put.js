@@ -87,7 +87,9 @@ function map(v,f,n, at){ var as = this;
 			ref = ref.get(path[i]);
 		}
 		if(as.not || Gun.node.soul(at.obj)){
-			at.soul(Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)());
+			var id = Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+			ref.back(-1).get(id);
+			at.soul(id);
 			return;
 		}
 		(as.stun = as.stun || {})[path] = true;
@@ -100,7 +102,9 @@ function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
 	if(!at.gun || !at.gun._.back){ return } // TODO: Handle
 	ev.off();
 	at = (at.gun._.back._);
-	cat.soul(Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)()); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	var id = Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	at.gun.back(-1).get(id);
+	cat.soul(id);
 	as.stun[cat.path] = false;
 	as.batch();
 }

@@ -10,6 +10,7 @@ Node.soul.ify = function(n, o){ // put a soul on an object.
 	n._[soul_] = o.soul || n._[soul_] || text_random(); // put the soul on it.
 	return n;
 }
+Node.soul._ = Val.rel._;
 ;(function(){
 	Node.is = function(n, cb, as){ var s; // checks to see if an object is a valid node.
 		if(!obj_is(n)){ return false } // must be an object.
@@ -51,7 +52,7 @@ Node.soul.ify = function(n, o){ // put a soul on an object.
 }());
 var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_map = obj.map;
 var text = Type.text, text_random = text.random;
-var soul_ = Val.rel._;
+var soul_ = Node.soul._;
 var u;
 module.exports = Node;
 	

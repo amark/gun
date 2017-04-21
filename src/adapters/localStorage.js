@@ -11,9 +11,8 @@ Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
 	this.to.next(at);
 	(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
 	var graph = root._.graph;
-	
 	Gun.obj.map(at.put, function(node, soul){
-		async[soul] = graph[soul] || node;
+		async[soul] = async[soul] || graph[soul] || node;
 	});
 	count += 1;
 	check[at['#']] = root;
@@ -28,7 +27,7 @@ Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
 		Gun.obj.map(all, function(node, soul){
 			// Since localStorage only has 5MB, it is better that we keep only
 			// the data that the user is currently interested in.
-			node = graph[soul] || all[soul];
+			node = graph[soul] || all[soul] || node;
 			try{store.setItem(opt.prefix + soul, JSON.stringify(node));
 			}catch(e){ err = e || "localStorage failure" }
 		});
@@ -56,10 +55,9 @@ Gun.on('get', function(at){
 	if(!lex || !(soul = lex[Gun._.soul])){ return }
 	//if(0 >= at.cap){ return }
 	var field = lex['.'];
-
 	data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null) || async[soul] || u;
 	if(data && field){
-		data = Gun.state.ify(u, field, Gun.state.is(data, field), data[field], soul);
+		data = Gun.state.to(data, field);
 	}
 	if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
 		return; // Hmm, what if we have peers but we are disconnected?

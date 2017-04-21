@@ -2,6 +2,7 @@ var root;
 (function(env){
 	root = env.window? env.window : global;
 	env.window && root.localStorage && root.localStorage.clear();
+	try{ require('fs').unlinkSync('data.json') }catch(e){}
 	//root.Gun = root.Gun || require('../gun');
 	if(root.Gun){
 		root.Gun = root.Gun;
@@ -3008,7 +3009,7 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('val/follow').val(function(data){
-				//console.log("val");
+				//console.log("val", data);
 			}).get(function(at){
 				if(done.c){ return } done.c = 1;
 				done();
@@ -3022,7 +3023,6 @@ describe('Gun', function(){
 
 			var check = {}, count = {};
 			gun.map().val(function(v,f){
-				//console.log("***********", f,v);
 				check[f] = v;
 				count[f] = (count[f] || 0) + 1;
 				if(check['1_1'] && check['2_2']){
@@ -3134,15 +3134,18 @@ describe('Gun', function(){
 			);
 			setTimeout(function(){
 				gun.get(function(at){
+					//console.log('*', at.put);
 					done.app = done.app || at.put.alias;
 				});
 				gun.back(-1).get('pub').get(function(at){
+					//console.log("**", at.put);
 					done.pub = done.pub || at.put.auth;
 				});
 				gun.path('alias').get(function(at){
+					//console.log("***", at.put);
 					done.alias = done.alias || at.put.mark;
 				}).path('mark').get(function(at){
-					//console.log("************", at.put);
+					//console.log("************", at.put);return;
 					setTimeout(function(){
 						done.mark = done.mark || at.put.pub;
 						expect(Gun.val.rel.is(done.mark)).to.be('pub');
@@ -3469,7 +3472,6 @@ describe('Gun', function(){
 			try{ require('fs').unlinkSync('bdata') }catch(e){}
 			try{ require('fs').unlinkSync('ddata') }catch(e){}
 			Gun.on('out', function(msg){
-				//console.log("oye", msg);
 				this.to.next(msg);
 				var onGun = msg.gun.back(-1);
 				if(onGun === b) {
@@ -3492,7 +3494,6 @@ describe('Gun', function(){
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
-				//console.log("d key got val:", field, val) 
 				expect(val).to.be('hello');
 				if(done.c){ return } done.c = 1;
 				setTimeout(function(){
@@ -3524,6 +3525,22 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				}
+			});
+		});
+
+		it('Callbacks should have database safe data copies', function(done){
+			var gun = Gun();
+
+			gun.get('ds/safe').put({a: 1});
+			
+			gun.get('ds/safe').on(function(data){
+				data.b = 2;
+			});
+			
+			gun.get('ds/safe').val(function(data){
+				expect(gun._.root._.graph['ds/safe'].b).to.not.be.ok();
+				if(done.c){ return } done.c = 1;
+				done();
 			});
 		});
 		return;

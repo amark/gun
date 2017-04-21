@@ -17,13 +17,24 @@ function output(at){
 		at.gun = gun;
 	}
 	if(get = at.get){
-		if(!get[_soul]){
+		if(tmp = get[_soul]){
+			tmp = (root.get(tmp)._);
+			if(obj_has(get, _field)){
+				if(obj_has(put = tmp.put, get = get[_field])){
+					tmp.on('in', {get: tmp.get, put: Gun.state.to(put, get), gun: tmp.gun}); // TODO: Ugly, clean up? Simplify all these if conditions (without ruining the whole chaining API)?
+				}
+			} else
+			if(obj_has(tmp, 'put')){
+			//if(u !== tmp.put){
+				tmp.on('in', tmp);
+			}
+		} else {
 			if(obj_has(get, _field)){
 				get = get[_field];
 				var next = get? (gun.get(get)._) : cat;
 				// TODO: BUG! Handle plural chains by iterating over them.
-				if(obj_has(next, 'put')){ // potentially incorrect? Maybe?
-				//if(u !== next.put){ // potentially incorrect? Maybe?
+				//if(obj_has(next, 'put')){ // potentially incorrect? Maybe?
+				if(u !== next.put){ // potentially incorrect? Maybe?
 					//next.tag['in'].last.next(next);
 					next.on('in', next);
 					return;
@@ -37,8 +48,8 @@ function output(at){
 					if(rel = Gun.val.rel.is(val)){
 						if(!at.gun._){ return }
 						(at.gun._).on('out', {
-							get: {'#': rel, '.': get},
-							'#': root._.ask(Gun.HAM.synth, at.gun),
+							get: tmp = {'#': rel, '.': get, gun: at.gun},
+							'#': root._.ask(Gun.HAM.synth, tmp),
 							gun: at.gun
 						});
 						return;
@@ -56,12 +67,12 @@ function output(at){
 					obj_map(cat.map, function(proxy){
 						proxy.at.on('in', proxy.at);
 					});
-				}
+				};
 				if(cat.soul){
 					if(!at.gun._){ return }
 					(at.gun._).on('out', {
-						get: {'#': cat.soul, '.': get},
-						'#': root._.ask(Gun.HAM.synth, at.gun),
+						get: tmp = {'#': cat.soul, '.': get, gun: at.gun},
+						'#': root._.ask(Gun.HAM.synth, tmp),
 						gun: at.gun
 					});
 					return;
@@ -87,14 +98,15 @@ function output(at){
 				}
 				if(cat.ack){
 					if(!obj_has(cat, 'put')){ // u !== cat.put instead?
+					//if(u !== cat.put){
 						return;
 					}
 				}
 				cat.ack = -1;
 				if(cat.soul){
 					cat.on('out', {
-						get: {'#': cat.soul},
-						'#': root._.ask(Gun.HAM.synth, cat.gun),
+						get: tmp = {'#': cat.soul, gun: cat.gun},
+						'#': root._.ask(Gun.HAM.synth, tmp),
 						gun: cat.gun
 					});
 					return;
@@ -115,7 +127,7 @@ function output(at){
 function input(at){
 	at = at._ || at;
 	var ev = this, cat = this.as, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, rel, tmp;
-	if(0 > cat.ack && !Gun.val.rel.is(change)){ // for better behavior?
+	if(0 > cat.ack && !at.ack && !Gun.val.rel.is(change)){ // for better behavior?
 		cat.ack = 1;
 	}
 	if(cat.get && at.get !== cat.get){
@@ -191,9 +203,8 @@ function relate(cat, at, coat, rel){
 		not(cat, at);
 	}
 	tmp = (cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
-	if(rel !== tmp.rel){
-		ask(cat, tmp.rel = rel);
-	}
+	if(rel === tmp.rel){ return }
+	ask(cat, tmp.rel = rel);
 }
 function echo(cat, at, ev){
 	if(!cat.echo){ return } // || node_ === at.get ????
@@ -256,17 +267,15 @@ function ask(cat, soul){
 	if(cat.ack){
 		tmp.ack = tmp.ack || -1;
 		tmp.on('out', {
-			get: {'#': soul},
-			'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
-			gun: tmp.gun
+			get: tmp = {'#': soul, gun: tmp.gun},
+			'#': cat.root._.ask(Gun.HAM.synth, tmp)
 		});
 		return;
 	}
 	obj_map(cat.next, function(gun, key){
 		(gun._).on('out', {
-			get: {'#': soul, '.': key},
-			'#': cat.root._.ask(Gun.HAM.synth, tmp.gun),
-			gun: gun
+			get: gun = {'#': soul, '.': key, gun: gun},
+			'#': cat.root._.ask(Gun.HAM.synth, gun)
 		});
 	});
 }

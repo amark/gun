@@ -13,7 +13,9 @@ function HAM(machineState, incomingState, currentState, incomingValue, currentVa
 
 	}
 	if(incomingState === currentState){
-		if(Lexical(incomingValue) === Lexical(currentValue)){ // Note: while these are practically the same, the deltas could be technically different
+		incomingValue = Lexical(incomingValue) || "";
+		currentValue = Lexical(currentValue) || "";
+		if(incomingValue === currentValue){ // Note: while these are practically the same, the deltas could be technically different
 			return {state: true};
 		}
 		/*
@@ -24,10 +26,10 @@ function HAM(machineState, incomingState, currentState, incomingValue, currentVa
 			because convergence (data integrity) is generally more important.
 			Any difference in this algorithm must be given a new and different name.
 		*/
-		if(Lexical(incomingValue) < Lexical(currentValue)){ // Lexical only works on simple value types!
+		if(incomingValue < currentValue){ // Lexical only works on simple value types!
 			return {converge: true, current: true};
 		}
-		if(Lexical(currentValue) < Lexical(incomingValue)){ // Lexical only works on simple value types!
+		if(currentValue < incomingValue){ // Lexical only works on simple value types!
 			return {converge: true, incoming: true};
 		}
 	}
