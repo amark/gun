@@ -2,7 +2,7 @@
 // Generic javascript scheduler utility.
 var Type = require('./type');
 function s(state, cb, time){ // maybe use lru-cache?
-	s.time = time || Gun.time.is;
+	s.time = time;
 	s.waiting.push({when: state, event: cb || function(){}});
 	if(s.soonest < state){ return }
 	s.set(state);
