@@ -21,6 +21,7 @@ Gun.node = require('./node');
 Gun.state = require('./state');
 Gun.graph = require('./graph');
 Gun.dup = require('./dup');
+Gun.schedule = require('./schedule');
 Gun.on = require('./onify')();
 
 Gun._ = { // some reserved key words, these are not the only ones.
@@ -80,11 +81,16 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	Gun.on('put', function(at){
 	//Gun.on.PUT = function(at){
 		if(!at['#']){ return this.to.next(at) } // for tests.
-		var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, at: {}, machine: Gun.state()};
+		var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
 		if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
-		obj_map(ctx.at, map, ctx);
+		obj_map(ctx.map, map, ctx);
+		if(u !== ctx.defer){
+			Gun.schedule(ctx.defer, function(){
+				Gun.on('put', at);
+			}, Gun.state);
+		}
 		if(!ctx.diff){ return }
 		ev.to.next(obj_to(at, {put: ctx.diff}));
 	});
@@ -93,14 +99,18 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
 		var vertex = ctx.graph[soul] || empty, was = Gun.state.is(vertex, key, true), known = vertex[key];
 		var HAM = Gun.HAM(ctx.machine, state, was, val, known);
-		if(!HAM.incoming){ return }
+		if(!HAM.incoming){
+			if(HAM.defer){ // pick the lowest
+				ctx.defer = (state < (ctx.defer || Infinity))? state : ctx.defer;
+			}
+		}
 		ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
-		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]); // TODO: Bug? If val is a relation, it is an object and therefore passed by reference. Will this be a problem?
+		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
 	}
 	function merge(node, soul){
 		var ref = ((this.gun._).next || empty)[soul];
 		if(!ref){ return }
-		var at = this.at[soul] = {
+		var at = this.map[soul] = {
 			put: this.node = node,
 			get: this.soul = soul,
 			gun: this.ref = ref
@@ -118,7 +128,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		(at.gun._).on('in', at);
 	}
 }());
-var tmpev = {to:{next:function(){}}}; // temporary while we have to switch event hooks.
+
 ;(function(){
 	Gun.on('get', function(at){
 		var ev = this, soul = at.get[_soul], cat = at.gun._, node = cat.graph[soul], field = at.get[_field], tmp;
@@ -198,9 +208,9 @@ console.debug = function(i, s){ return (console.debug.i && i === console.debug.i
 Gun.log = function(){ return (!Gun.log.off && console.log.apply(console, arguments)), [].slice.call(arguments).join(' ') }
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) }
 
-/* Please do not remove these messages unless you are paying for a monthly sponsorship, thanks! */
+;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
-/* Please do not remove these messages unless you are paying for a monthly sponsorship, thanks! */
+;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 
 if(typeof window !== "undefined"){ window.Gun = Gun }
 if(typeof common !== "undefined"){ common.exports = Gun }

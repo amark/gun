@@ -96,6 +96,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 		});
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
+				Gun.state.drift = Math.random() * 10000;	
 				localStorage.clear();
 				var env = test.props;
 				test.async();
