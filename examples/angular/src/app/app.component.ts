@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import Gun from 'gun/gun';
 import { Observable } from 'rxjs/Observable';
-import { omit } from 'underscore';
+import { Subscription } from 'rxjs/Subscription';
+import Gun from 'gun/gun';
 
 import { GunDb } from 'app/gun.service';
 import { on$ } from 'app/gun.helper';
@@ -15,8 +15,9 @@ export class AppComponent implements OnInit {
   newTodo = '';
 
   todos = this.db.gun.get('todos');
-  todos$: Observable<string[]> = on$(this.todos)
-    .map(o => omit(o, '_'));
+  todos$: Observable<string[]> = on$(this.todos);
+
+  todosSub: Subscription;
 
   constructor(private db: GunDb) { }
 
@@ -31,5 +32,13 @@ export class AppComponent implements OnInit {
 
   delete(key: string) {
     this.todos.get(key).put(null);
+  }
+
+  sub() {
+    this.todosSub = this.todos$.subscribe(v => console.log(v));
+  }
+
+  unsub() {
+    this.todosSub.unsubscribe();
   }
 }

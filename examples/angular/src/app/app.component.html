@@ -8,4 +8,6 @@
   <ul>
     <li *ngFor="let todo of todos$ | async | pairs" (click)="delete(todo[0])">{{todo[1]}}</li>
   </ul>
+  <button (click)="sub()" *ngIf="!todosSub">Log in console</button>
+  <button (click)="unsub()" *ngIf="!!todosSub">Stop logging</button>
 </div>
