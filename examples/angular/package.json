@@ -12,29 +12,30 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/common": "^4.0.3",
-    "@angular/compiler": "^4.0.3",
-    "@angular/core": "^4.0.3",
-    "@angular/forms": "^4.0.3",
-    "@angular/http": "^4.0.3",
-    "@angular/platform-browser": "^4.0.3",
-    "@angular/platform-browser-dynamic": "^4.0.3",
-    "@angular/router": "^4.0.3",
+    "@angular/common": "^4.1.0",
+    "@angular/compiler": "^4.1.0",
+    "@angular/core": "^4.1.0",
+    "@angular/forms": "^4.1.0",
+    "@angular/http": "^4.1.0",
+    "@angular/platform-browser": "^4.1.0",
+    "@angular/platform-browser-dynamic": "^4.1.0",
+    "@angular/router": "^4.1.0",
     "core-js": "^2.4.1",
-    "express-http-proxy": "^0.11.0",
-    "gun": "^0.7.3",
+    "express-http-proxy": "^1.0.1",
+    "gun": "^0.7.4",
     "ngx-pipes": "^1.5.10",
     "rxjs": "^5.3.0",
     "underscore": "^1.8.3",
-    "zone.js": "^0.8.8"
+    "zone.js": "^0.8.9"
   },
   "devDependencies": {
     "@angular/cli": "1.0.0",
-    "@angular/compiler-cli": "^4.0.3",
+    "@angular/compiler-cli": "^4.1.0",
     "@types/jasmine": "2.5.38",
     "@types/node": "~6.0.60",
+    "@types/underscore": "^1.8.0",
     "codelyzer": "^2.1.1",
-    "jasmine-core": "~2.5.2",
+    "jasmine-core": "^2.6.1",
     "jasmine-spec-reporter": "^4.0.0",
     "karma": "^1.6.0",
     "karma-chrome-launcher": "~2.0.0",
@@ -45,6 +46,6 @@
     "protractor": "~5.1.0",
     "ts-node": "^3.0.2",
     "tslint": "~4.5.0",
-    "typescript": "~2.2.0"
+    "typescript": "^2.3.2"
   }
 }
