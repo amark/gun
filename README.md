@@ -52,6 +52,7 @@ gun.get('mark').on(function(data, key){
 });
 </script>
 ```
+- See this [module for GraphQL support](https://github.com/brysgo/graphql-gun).
 ## Support
 
  - Help support development: https://www.patreon.com/gunDB !
