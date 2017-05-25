@@ -2,7 +2,7 @@
 
 	var env;
 	if(typeof global !== "undefined"){ env = global }
-	if(typeof require !== "undefined"){ var Gun = require('../gun') }
+	if(typeof require !== "undefined"){ var Gun = require('./gun') }
 	if(typeof window !== "undefined"){ var Gun = (env = window).Gun }
 
 	Gun.on('opt', function(at){
