@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "Graph engine",
   "main": "index.js",
   "browser": "gun.min.js",
