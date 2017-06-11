@@ -22,6 +22,8 @@ var gun = Gun({
 		bucket: '' // The bucket you want to save into
 	}
 });
+// Sync everything
+gun.on('out', {get: {'#': {'*': ''}}});
 
 server.listen(port);
 
