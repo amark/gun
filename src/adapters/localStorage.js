@@ -15,7 +15,7 @@ Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
 		async[soul] = async[soul] || graph[soul] || node;
 	});
 	count += 1;
-	check[at['#']] = root;
+	if(!at['@']){ check[at['#']] = root; } // only ack non-acks.
 	function save(){
 		clearTimeout(wait);
 		var ack = check;
