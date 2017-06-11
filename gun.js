@@ -864,28 +864,21 @@
 			}
 			function root(at){
 				//console.log("add to.next(at)"); // TODO: BUG!!!
-				var ev = this, cat = ev.as, coat;
+				var ev = this, cat = ev.as, coat, tmp;
 				if(!at.gun){ at.gun = cat.gun }
-				if(!at['#']){ at['#'] = Gun.text.random() } // TODO: Use what is used other places instead.
-				if(cat.dup.check(at['#'])){ return }
-				if(at['@']){
-					// TODO: BUG! For multi-instances, the "ack" system is globally shared, but it shouldn't be.
-					if(cat.ack(at['@'], at)){ return } // TODO: Consider not returning here, maybe, where this would let the "handshake" on sync occur for Holy Grail?
-					cat.dup.track(at['#']);
-					Gun.on('out', obj_to(at, {gun: cat.gun}));
-					return;
-				}
-				cat.dup.track(at['#']);
-				//if(cat.ack(at['@'], at)){ return }
-				//cat.ack(at['@'], at);
+				if(!(tmp = at['#'])){ tmp = at['#'] = Gun.text.random() } // TODO: Use what is used other places instead.
+				if(cat.dup.check(tmp)){ return }
+				cat.dup.track(tmp);
 				coat = obj_to(at, {gun: cat.gun});
-				if(at.get){
-					//Gun.on.GET(coat);
-					Gun.on('get', coat);
-				}
-				if(at.put){
-					//Gun.on.PUT(coat);
-					Gun.on('put', coat);
+				if(!cat.ack(at['@'], at)){
+					if(at.get){
+						//Gun.on.GET(coat);
+						Gun.on('get', coat);
+					}
+					if(at.put){
+						//Gun.on.PUT(coat);
+						Gun.on('put', coat);
+					}
 				}
 				Gun.on('out', coat);
 			}
@@ -894,7 +887,7 @@
 		;(function(){
 			Gun.on('put', function(at){
 			//Gun.on.PUT = function(at){
-				if(!at['#']){ return this.to.next(at) } // for tests.
+				if(!at['#']){ return this.to.next(at) } // for tests. // TODO: REMOVE THIS!
 				var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
 				if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 				if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
@@ -917,6 +910,7 @@
 					if(HAM.defer){ // pick the lowest
 						ctx.defer = (state < (ctx.defer || Infinity))? state : ctx.defer;
 					}
+					return;
 				}
 				ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
 				(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
@@ -2016,7 +2010,7 @@
 				async[soul] = async[soul] || graph[soul] || node;
 			});
 			count += 1;
-			check[at['#']] = root;
+			if(!at['@']){ check[at['#']] = root; } // only ack non-acks.
 			function save(){
 				clearTimeout(wait);
 				var ack = check;
