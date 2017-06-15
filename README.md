@@ -4,8 +4,12 @@
 			width='40%'
 			alt="gun" />
 	</a>
+	<a href="http://gun.js.org">
+		<img src='http://gun.js.org/see/demo.gif'
+			style="width: 40%; float: right;"
+			alt="gun" />
+	</a>
 </h1>
-
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
