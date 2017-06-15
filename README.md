@@ -5,7 +5,7 @@
 			style='float:right;'
 			alt="gun" />
 	</a>
-	<img width='18%'>
+	<img width='15%'>
 	<a href="http://gun.js.org">
 		<img src='http://gun.js.org/see/demo.gif'
 			width='40%'
