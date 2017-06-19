@@ -25,7 +25,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[1
 
 ## Why?
 
- - **Realtime** - You might use socketio for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates. 
+ - **Realtime** - You might use socketio for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
  - **Distributed** - GUN is peer-to-peer by design, meaning you have no centralized database server to maintain or that could crash. This lets you sleep through the night without worrying about database DevOps - we call it "NoDB". From there, you can build decentralized, federated, or centralized apps.
  - **Offline-first** - GUN works even if your internet or cell reception doesn't. Users can still plug away and save data as normal, and then when the network comes back online GUN will automatically synchronize all the changes and handle any conflicts for you.
  - **Graph** - Most databases force you to bend over backwards to match their storage constraints. But graphs are different, they let you have any data structure you want. Whether that be traditional tables with relations, document oriented trees, or tons of circular references. You choose.
@@ -63,11 +63,11 @@ gun.get('mark').on(function(data, key){
  - Help support development: https://www.patreon.com/gunDB !
  - Ask questions: http://stackoverflow.com/questions/tagged/gun ?
  - Chat with us: https://gitter.im/amark/gun .
- 
+
 ## Documentation
  - [API reference](https://github.com/amark/gun/wiki/API).
  - [**A must read crash course on using GUN**](https://github.com/amark/gun/wiki/graphs).
- - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)). 
+ - [Introductory Guide](https://github.com/amark/gun/wiki/getting-started-(v0.3.x)).
  - [What tradeoffs does GUN make](https://github.com/amark/gun/wiki/CAP-Theorem)? It is an AP system, so banking apps aren't a good fit.
  - [How the Conflict Resolution algorithm works](http://gun.js.org/distributed/matters.html).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
@@ -76,10 +76,10 @@ gun.get('mark').on(function(data, key){
 ## Deploy
 
 To quickly spin up a Gun test server for your development team, utilize either [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. !
-   
+
 ### [Heroku](https://www.heroku.com/)
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun/tree/0.5)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun)
 
 Or:
 
@@ -100,7 +100,7 @@ now --npm amark/gun
 ```
 Then visit the URL in the output of the 'now --npm' step, in your browser.
 
-### [Docker](https://www.docker.com/) 
+### [Docker](https://www.docker.com/)
 
 [![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
 
@@ -120,7 +120,7 @@ docker run -p 8080:8080 myrepo/gundb:v1
 ```
 
 Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
- 
+
  ```bash
 npm run docker
 docker run -p 8080:8080 usenameHere/gun:git
@@ -128,7 +128,7 @@ docker run -p 8080:8080 usenameHere/gun:git
 
 Then visit [http://localhost:8080](http://localhost:8080) in your browser.
 
-   
+
 ### Videos
  - [Fault tolerance](https://www.youtube.com/watch?v=-i-11T5ZI9o&feature=youtu.be) (01:01)
  - [Saving relational or document based data](https://www.youtube.com/watch?v=cOO6wz1rZVY&feature=youtu.be) (06:59)
