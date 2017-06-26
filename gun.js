@@ -201,6 +201,7 @@
 
 	;require(function(module){
 		// TODO: Needs to be redone.
+		// TODO: Need to delete this entire module!
 		var On = require('./onto');
 
 		function Chain(create, opt){
@@ -872,35 +873,33 @@
 				coat = obj_to(at, {gun: cat.gun});
 				if(!cat.ack(at['@'], at)){
 					if(at.get){
-						//Gun.on.GET(coat);
-						Gun.on('get', coat);
+						Gun.on.get(coat);
+						//cat.on('get', get(coat));
 					}
 					if(at.put){
-						//Gun.on.PUT(coat);
-						Gun.on('put', coat);
+						Gun.on.put(coat);
+						//cat.on('put', put(coat));
 					}
 				}
-				Gun.on('out', coat);
+				cat.on('out', coat);
 			}
 		}());
 
 		;(function(){
-			Gun.on('put', function(at){
-			//Gun.on.PUT = function(at){
-				if(!at['#']){ return this.to.next(at) } // for tests. // TODO: REMOVE THIS!
-				var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
+			Gun.on.put = function(at){
+				var cat = at.gun._, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
 				if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
-				if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
+				if(ctx.err){ return cat.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
 				obj_map(ctx.map, map, ctx);
 				if(u !== ctx.defer){
 					Gun.schedule(ctx.defer, function(){
-						Gun.on('put', at);
+						Gun.on.put(at);
 					}, Gun.state);
 				}
 				if(!ctx.diff){ return }
-				ev.to.next(obj_to(at, {put: ctx.diff}));
-			});
+				cat.on('put', obj_to(at, {put: ctx.diff}));
+			};
 			function verify(val, key, node, soul){ var ctx = this;
 				var state = Gun.state.is(node, key), tmp;
 				if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
@@ -935,15 +934,14 @@
 				if(!at.gun){ return }
 				(at.gun._).on('in', at);
 			}
-		}());
 
-		;(function(){
-			Gun.on('get', function(at){
-				var ev = this, soul = at.get[_soul], cat = at.gun._, node = cat.graph[soul], field = at.get[_field], tmp;
+			Gun.on.get = function(at){
+				var cat = at.gun._, soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
 				var next = cat.next || (cat.next = {}), as = ((next[soul] || empty)._);
-				if(!node || !as){ return ev.to.next(at) }
+				if(!node || !as){ return cat.on('get', at) }
 				if(field){
-					if(!obj_has(node, field)){ return ev.to.next(at) }
+					console.debug(1, 'GET', soul, field, node);
+					if(!obj_has(node, field)){ return cat.on('get', at) }
 					node = Gun.state.to(node, field);
 				} else {
 					node = Gun.obj.copy(node);
@@ -963,8 +961,8 @@
 				if(0 < tmp){
 					return;
 				}
-				ev.to.next(at);
-			});
+				cat.on('get', at);
+			}
 		}());
 		
 		;(function(){
@@ -1063,6 +1061,9 @@
 	})(require, './back');
 
 	;require(function(module){
+		// WARNING: GUN is very simple, but the JavaScript chaining API around GUN
+		// is complicated and was extremely hard to build. If you port GUN to another
+		// language, consider implementing an easier API to build.
 		var Gun = require('./root');
 		Gun.chain.chain = function(){
 			var at = this._, chain = new this.constructor(this), cat = chain._;
@@ -1070,7 +1071,6 @@
 			cat.id = ++root._.once;
 			cat.back = this;
 			cat.on = Gun.on;
-			Gun.on('chain', cat);
 			cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 			cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
 			return chain;
@@ -1684,7 +1684,8 @@
 					return;
 				}
 				at.gun = cat.root;
-				Gun.on('put', at);
+				//Gun.on('put', at);
+				Gun.on.put(at);
 			}
 			Gun.HAM.synth_ = function(at, ev, as){ var gun = this.as || as;
 				var cat = gun._, root = cat.root._, put = {}, tmp;
@@ -2000,65 +2001,78 @@
 		if(typeof window !== 'undefined'){ root = window }
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
-		var check = {}, dirty = {}, async = {}, count = 0, max = 10000, wait;
-		
-		Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
+		Gun.on('opt', function(at){
+			var opt = at.opt, peers = opt.peers;
+			var prefix = opt.file || opt.prefix || 'gun/';
+			var wait = opt.wait || 1, batch = opt.batch || 10000;
 			this.to.next(at);
-			(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
-			var graph = root._.graph;
-			Gun.obj.map(at.put, function(node, soul){
-				async[soul] = async[soul] || graph[soul] || node;
+			if(at.once){ return }
+			if(false === at.opt.file){ return }
+			var graph = at.graph, acks = {}, async = {}, count = 0, to;
+			
+			at.on('put', function(at){
+				this.to.next(at);
+				Gun.obj.map(at.put, map);
+				if(!at['@']){ acks[at['#']] = 1; } // only ack non-acks.
+				count += 1;
+				console.log('lS PUT', Gun.obj.copy(async));
+				if(count >= batch){
+					return flush();
+				}
+				if(to){ return }
+				clearTimeout(to);
+				to = setTimeout(flush, wait);
 			});
-			count += 1;
-			if(!at['@']){ check[at['#']] = root; } // only ack non-acks.
-			function save(){
-				clearTimeout(wait);
-				var ack = check;
-				var all = async;
-				count = 0;
-				wait = false;
-				check = {};
-				async = {};
-				Gun.obj.map(all, function(node, soul){
-					// Since localStorage only has 5MB, it is better that we keep only
-					// the data that the user is currently interested in.
-					node = graph[soul] || all[soul] || node;
-					try{store.setItem(opt.prefix + soul, JSON.stringify(node));
-					}catch(e){ err = e || "localStorage failure" }
-				});
-				if(!Gun.obj.empty(at.gun.back('opt.peers'))){ return } // only ack if there are no peers.
-				Gun.obj.map(ack, function(root, id){
-					root.on('in', {
-						'@': id,
-						err: err,
-						ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
+
+			function map(node, soul){
+				async[soul] = async[soul] || graph[soul] || node;
+			}
+
+			function flush(){
+					var err;
+					count = 0;
+					clearTimeout(to);
+					to = false;
+					var ack = acks;
+					acks = {};
+					var all = async;
+					async = {};
+					Gun.obj.map(all, function(node, soul){
+						// Since localStorage only has 5MB, it is better that we keep only
+						// the data that the user is currently interested in.
+						node = graph[soul] || all[soul] || node;
+						console.log("WRITE:", Gun.obj.copy(node));
+						try{store.setItem(prefix + soul, JSON.stringify(node));
+						}catch(e){ err = e || "localStorage failure" }
 					});
-				});
-			}
-			if(count >= max){ // goal is to do 10K inserts/second.
-				return save();
-			}
-			if(wait){ return }
-			clearTimeout(wait);
-			wait = setTimeout(save, 1000);
-		});
-		Gun.on('get', function(at){
-			this.to.next(at);
-			var gun = at.gun, lex = at.get, soul, data, opt, u;
-			//setTimeout(function(){
-			(opt = at.opt || {}).prefix = opt.prefix || at.gun.back('opt.prefix') || 'gun/';
-			if(!lex || !(soul = lex[Gun._.soul])){ return }
-			//if(0 >= at.cap){ return }
-			var field = lex['.'];
-			data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null) || async[soul] || u;
-			if(data && field){
-				data = Gun.state.to(data, field);
-			}
-			if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
-				return; // Hmm, what if we have peers but we are disconnected?
-			}
-			gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
-			//},11);
+					if(!err && !Gun.obj.empty(peers)){ return } // only ack if there are no peers.
+					Gun.obj.map(ack, function(yes, id){
+						at.on('in', {
+							'@': id,
+							err: err,
+							ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
+						});
+					});
+				}
+
+			at.on('get', function(at){
+				this.to.next(at);
+				var gun = at.gun, lex = at.get, soul, data, opt, u;
+				//setTimeout(function(){
+				if(!lex || !(soul = lex[Gun._.soul])){ return }
+				//if(0 >= at.cap){ return }
+				var field = lex['.'];
+				data = async[soul] || Gun.obj.ify(store.getItem(prefix + soul) || null) || async[soul] || u;
+				console.debug(2, 'lS GET', data, async[soul]);
+				if(data && field){
+					data = Gun.state.to(data, field);
+				}
+				if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
+					return; // Hmm, what if we have peers but we are disconnected?
+				}
+				gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
+				//},11);
+			});
 		});
 	})(require, './adapters/localStorage');
 

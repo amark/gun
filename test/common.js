@@ -2963,7 +2963,7 @@ describe('Gun', function(){
 			var user = {bob: bob};
 			bob.pet = cat;
 			cat.slave = bob;
-			Gun.on('put', {gun: gun, put: Gun.graph.ify(user, s)});
+			gun.on('put', {gun: gun, put: Gun.graph.ify(user, s)});
 			gun.get(s.soul).path('bob').path('pet').path('slave').val(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
@@ -3193,7 +3193,7 @@ describe('Gun', function(){
 
 		it('get get get any parallel', function(done){
 			var s = Gun.state.map();s.soul = 'parallel';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				bob: {
 					age: 29,
 					name: "Bob!"
@@ -3218,25 +3218,26 @@ describe('Gun', function(){
 			});
 		});
 
-		it('get get get any later', function(done){
+		it.only('get get get any later', function(done){
 			var s = Gun.state.map();s.soul = 'parallel/later';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
-				bob: {
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				bob: {_:{'#':'ddfsa'},
 					age: 29,
 					name: "Bob!"
 				}
 			}, s)});
 			gun.get('parallel/later').path('bob').path('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data);
+				console.log("***** age", data);
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
 			});
 			setTimeout(function(){
+				console.debug.i=1;console.log("-------------------");
 				gun.get('parallel/later').path('bob').path('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
-					//console.log("*********** name", data);
+					console.log("*********** name", data);
 					expect(data).to.be('Bob!');
 					expect(field).to.be('name');
 					done.name = true;
@@ -3291,7 +3292,7 @@ describe('Gun', function(){
 
 		it('get any any', function(done){
 			var s = Gun.state.map();s.soul = 'full';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				hello: 'world',
 				goodbye: 'mars'
 			}, s)});
@@ -3313,7 +3314,7 @@ describe('Gun', function(){
 
 		it('get any any later', function(done){
 			var s = Gun.state.map();s.soul = 'full/later';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				hello: 'world',
 				goodbye: 'mars'
 			}, s)});
@@ -3367,7 +3368,7 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			var s = Gun.state.map();s.soul = 'mult/times/part';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				alias: {
 					mark: {
 						pub: {_:{'#':'PUB'},
