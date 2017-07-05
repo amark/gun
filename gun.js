@@ -74,7 +74,7 @@
 		Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 		Type.obj = {is: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }}
 		Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o }
-		Type.obj.has = function(o, f){ return o && Object.prototype.hasOwnProperty.call(o, f) }
+		Type.obj.has = function(o, f){ return o && Object.hasOwnProperty(o, f) }
 		Type.obj.del = function(o, k){
 			if(!o){ return }
 			o[k] = null;
@@ -126,7 +126,7 @@
 				var u, i = 0, x, r, ll, lle, f = fn_is(c);
 				t.r = null;
 				if(keys && obj_is(l)){
-					ll = Object.keys(l); lle = true;
+					ll = keys(l); lle = true;
 				}
 				if(list_is(l) || ll){
 					x = (ll || l).length;
@@ -995,6 +995,9 @@
 					if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
+				at.opt.uuid = at.opt.uuid || function(){ 
+					return state().toString(36).replace('.','') + text_rand(12);
+				}
 				at.opt.wsc = at.opt.wsc || {protocols:[]} 
 				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
@@ -1003,10 +1006,10 @@
 			}
 		}());
 
-		var text_is = Gun.text.is;
 		var list_is = Gun.list.is;
+		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
+		var state = Gun.state, _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -1066,7 +1069,7 @@
 		// language, consider implementing an easier API to build.
 		var Gun = require('./root');
 		Gun.chain.chain = function(){
-			var at = this._, chain = new this.constructor(this), cat = chain._;
+			var at = this._, chain = new this.constructor(this), cat = chain._, root;
 			cat.root = root = at.root;
 			cat.id = ++root._.once;
 			cat.back = this;
@@ -2003,12 +2006,11 @@
 
 		Gun.on('opt', function(at){
 			var opt = at.opt, peers = opt.peers;
-			var prefix = opt.file || opt.prefix || 'gun/';
-			var wait = opt.wait || 1, batch = opt.batch || 10000;
+			opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
 			this.to.next(at);
 			if(at.once){ return }
 			if(false === at.opt.file){ return }
-			var graph = at.graph, acks = {}, async = {}, count = 0, to;
+			var graph = at.graph, acks = {}, batch = {}, count = 0, to;
 			
 			at.on('put', function(at){
 				this.to.next(at);
@@ -2016,12 +2018,11 @@
 				if(!at['@']){ acks[at['#']] = 1; } // only ack non-acks.
 				count += 1;
 				console.log('lS PUT', Gun.obj.copy(async));
-				if(count >= batch){
+				if(count >= opt.batch){
 					return flush();
 				}
 				if(to){ return }
-				clearTimeout(to);
-				to = setTimeout(flush, wait);
+				to = setTimeout(flush, opt.wait);
 			});
 
 			function map(node, soul){
@@ -2029,31 +2030,31 @@
 			}
 
 			function flush(){
-					var err;
-					count = 0;
-					clearTimeout(to);
-					to = false;
-					var ack = acks;
-					acks = {};
-					var all = async;
-					async = {};
-					Gun.obj.map(all, function(node, soul){
-						// Since localStorage only has 5MB, it is better that we keep only
-						// the data that the user is currently interested in.
-						node = graph[soul] || all[soul] || node;
-						console.log("WRITE:", Gun.obj.copy(node));
-						try{store.setItem(prefix + soul, JSON.stringify(node));
-						}catch(e){ err = e || "localStorage failure" }
+				var err;
+				count = 0;
+				clearTimeout(to);
+				to = false;
+				var ack = acks;
+				acks = {};
+				var all = async;
+				async = {};
+				Gun.obj.map(all, function(node, soul){
+					// Since localStorage only has 5MB, it is better that we keep only
+					// the data that the user is currently interested in.
+					node = graph[soul] || all[soul] || node;
+					console.log("WRITE:", Gun.obj.copy(node));
+					try{store.setItem(opt.file + soul, JSON.stringify(node));
+					}catch(e){ err = e || "localStorage failure" }
+				});
+				if(!err && !Gun.obj.empty(peers)){ return } // only ack if there are no peers.
+				Gun.obj.map(ack, function(yes, id){
+					at.on('in', {
+						'@': id,
+						err: err,
+						ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
 					});
-					if(!err && !Gun.obj.empty(peers)){ return } // only ack if there are no peers.
-					Gun.obj.map(ack, function(yes, id){
-						at.on('in', {
-							'@': id,
-							err: err,
-							ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
-						});
-					});
-				}
+				});
+			}
 
 			at.on('get', function(at){
 				this.to.next(at);
@@ -2062,7 +2063,7 @@
 				if(!lex || !(soul = lex[Gun._.soul])){ return }
 				//if(0 >= at.cap){ return }
 				var field = lex['.'];
-				data = async[soul] || Gun.obj.ify(store.getItem(prefix + soul) || null) || async[soul] || u;
+				data = async[soul] || Gun.obj.ify(store.getItem(opt.file + soul) || null) || async[soul] || u;
 				console.debug(2, 'lS GET', data, async[soul]);
 				if(data && field){
 					data = Gun.state.to(data, field);
