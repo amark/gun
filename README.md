@@ -57,7 +57,7 @@ gun.get('mark').on(function(data, key){
 });
 </script>
 ```
-- See this [module for GraphQL support](https://github.com/brysgo/graphql-gun).
+
 ## Support
 
  - Help support development: https://www.patreon.com/gunDB !
@@ -72,6 +72,11 @@ gun.get('mark').on(function(data, key){
  - [How the Conflict Resolution algorithm works](http://gun.js.org/distributed/matters.html).
  - Check out and add example code [snippets](https://github.com/amark/gun/wiki/snippets-(v0.3.x)) —including micro-modules— to address specific situations.
  - Loose [roadmap](https://github.com/amark/gun/wiki/roadmap).
+ - A [React tutorial](https://github.com/amark/gun/wiki/React-Tutorial).
+ - See this [module for GraphQL support](https://github.com/brysgo/graphql-gun).
+ - [A React example](https://github.com/amark/gun/tree/master/examples/react).
+ - [An Angular example](https://github.com/amark/gun/tree/master/examples/angular).
+ - [Some VueJS examples](https://github.com/amark/gun/tree/master/examples/vue).
 
 ## Deploy
 
