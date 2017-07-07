@@ -27,10 +27,10 @@
 		var gun = Gun();
 		var user = gun.user();
 
-		Gun.on('auth', function(at){
+		gun.on('auth', function(at){
 			// do something once logged in.
 		});
-		Gun.on('secure', function(at){
+		gun.on('secure', function(at){
 			// enforce some rules about shared app level data
 			var no;
 			if(no){ return }
@@ -116,7 +116,7 @@
 							// callbacks success with the user data credentials.
 							cb(user._);
 							// emit an auth event, useful for page redirects and stuff.
-							Gun.on('auth', user._);
+							root.on('auth', user._);
 							return;
 						}
 						// Or else we failed to log in...
@@ -135,6 +135,7 @@
 			at.sea = {own: {}};
 			at.gun.on('in', security, at); // now listen to all input data, acting as a firewall.
 			at.gun.on('out', signature, at); // and output listeners, to encrypt outgoing data.
+			at.gun.on('node', every, at);
 		}
 		this.to.next(at); // make sure to call the "next" middleware adapter.
 	});
@@ -152,7 +153,7 @@
 	// Here is a problem: Multiple public keys can "claim" any node's ID, so this is dangerous!
 	// This means we should ONLY trust our "friends" (our key ring) public keys, not any ones.
 	// I have not yet added that to SEA yet in this alpha release. That is coming soon, but beware in the meanwhile!
-	Gun.on('node', function(at){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
+	function every(at){
 		var own = (at.gun.back(-1)._).sea.own, soul = at.get, pub = own[soul] || soul.slice(4), vertex = (at.gun._).put;
 		Gun.node.is(at.put, function(val, key, node){ // for each property on the node.
 			vertex[key] = node[key] = val = SEA.read(val, pub); // verify signature and get plain value.
@@ -161,7 +162,7 @@
 				own[key] = pub; // associate the public key with a node
 			}
 		});
-	})
+	};
 
 	// signature handles data output, it is a proxy to the security function.
 	function signature(at){
@@ -248,12 +249,12 @@
 			});
 			if(no){ // if we got a rejection then...
 				if(!at || !Gun.tag.secure){ return }
-				Gun.on('secure', function(at){ // (below) emit a special event for the developer to handle security.
+				cat.on('secure', function(at){ // (below) emit a special event for the developer to handle security.
 					this.off();
 					if(!at){ return }
 					to.next(at); // and if they went ahead and explicitly called "next" (to us) with data, then approve.
 				});
-				Gun.on('secure', at);
+				cat.on('secure', at);
 				return; // else wise, reject.
 			}
 			//console.log("SEA put", at.put);

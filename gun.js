@@ -712,7 +712,7 @@
 				(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
 			}
 			function merge(node, soul){
-				var ref = ((this.gun._).next || empty)[soul];
+				var cat = this.gun._, ref = (cat.next || empty)[soul];
 				if(!ref){ return }
 				var at = this.map[soul] = {
 					put: this.node = node,
@@ -720,7 +720,7 @@
 					gun: this.ref = ref
 				};
 				obj_map(node, each, this);
-				Gun.on('node', at);
+				cat.on('node', at);
 			}
 			function each(val, key){
 				var graph = this.graph, soul = this.soul, cat = (this.ref._), tmp;
@@ -790,7 +790,6 @@
 				at.opt.uuid = at.opt.uuid || function(){ 
 					return state().toString(36).replace('.','') + text_rand(12);
 				}
-				at.opt.wsc = at.opt.wsc || {protocols:[]} 
 				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 				Gun.on('opt', at);
@@ -1271,7 +1270,7 @@
 			as.ref.get('_').get(any, {as: as});
 			if(!as.out){
 				// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
-				as.res = as.res || Gun.on.stun(as.ref);
+				as.res = as.res || noop; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
 				as.gun._.stun = as.ref._.stun;
 			}
 			return gun;
@@ -1574,7 +1573,7 @@
 				return gun.get(gun._.root._.opt.uuid()).put(item);
 			}
 			item.get('_').get(function(at, ev){
-				if(!at.gun || !at.gun._.back);
+				if(!at.gun || !at.gun._.back){ return }
 				ev.off();
 				at = (at.gun._.back._);
 				var put = {}, node = at.put, soul = Gun.node.soul(node);
@@ -1592,68 +1591,35 @@
 		if(typeof window !== 'undefined'){ root = window }
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
-		Gun.on('opt', function(at){
-			var opt = at.opt, peers = opt.peers;
+		Gun.on('opt', function(ctx){
+			this.to.next(ctx);
+			var opt = ctx.opt;
+			if(ctx.once){ return }
+			if(false === opt.localStorage){ return }
 			opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
-			this.to.next(at);
-			if(at.once){ return }
-			if(false === at.opt.file){ return }
-			var graph = at.graph, acks = {}, batch = {}, count = 0, to;
+			var graph = ctx.graph, acks = {}, count = 0, to;
+			var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
 			
-			at.on('put', function(at){
+			ctx.on('put', function(at){
 				this.to.next(at);
-
-				return;// TODO: BUG!
-				Gun.obj.map(at.put, map);
-				if(!at['@']){ acks[at['#']] = 1; } // only ack non-acks.
+				Gun.graph.is(at.put, null, map);
+				if(!at['@']){ acks[at['#']] = true; } // only ack non-acks.
 				count += 1;
-				console.log('lS PUT', Gun.obj.copy(async));
-				if(count >= opt.batch){
+				if(count >= (opt.batch || 1000)){
 					return flush();
 				}
 				if(to){ return }
-				to = setTimeout(flush, opt.wait);
+				to = setTimeout(flush, opt.wait || 1);
 			});
 
-			function map(node, soul){
-				async[soul] = async[soul] || graph[soul] || node;
-			}
-
-			function flush(){
-				var err;
-				count = 0;
-				clearTimeout(to);
-				to = false;
-				var ack = acks;
-				acks = {};
-				var all = async;
-				async = {};
-				Gun.obj.map(all, function(node, soul){
-					// Since localStorage only has 5MB, it is better that we keep only
-					// the data that the user is currently interested in.
-					node = graph[soul] || all[soul] || node;
-					console.log("WRITE:", Gun.obj.copy(node));
-					try{store.setItem(opt.file + soul, JSON.stringify(node));
-					}catch(e){ err = e || "localStorage failure" }
-				});
-				if(!err && !Gun.obj.empty(peers)){ return } // only ack if there are no peers.
-				Gun.obj.map(ack, function(yes, id){
-					at.on('in', {
-						'@': id,
-						err: err,
-						ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
-					});
-				});
-			}
-
-			at.on('get', function(at){
+			ctx.on('get', function(at){
 				this.to.next(at);
 				var gun = at.gun, lex = at.get, soul, data, opt, u;
 				//setTimeout(function(){
 				if(!lex || !(soul = lex[Gun._.soul])){ return }
 				//if(0 >= at.cap){ return }
 				var field = lex['.'];
-				data = async[soul] || Gun.obj.ify(store.getItem(opt.file + soul) || null) || async[soul] || u;
+				data = disk[soul] || u;
 				if(data && field){
 					data = Gun.state.to(data, field);
 				}
@@ -1663,114 +1629,128 @@
 				gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
 				//},11);
 			});
+
+			var map = function(val, key, node, soul){
+				disk[soul] = Gun.state.to(node, key, disk[soul]);
+			}
+
+			var flush = function(){
+				var err;
+				count = 0;
+				clearTimeout(to);
+				to = false;
+				var ack = acks;
+				acks = {};
+				try{store.setItem(opt.file, JSON.stringify(disk));
+				}catch(e){ err = e || "localStorage failure" }
+				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
+				Gun.obj.map(ack, function(yes, id){
+					ctx.on('in', {
+						'@': id,
+						err: err,
+						ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
+					});
+				});
+			}
 		});
 	})(require, './adapters/localStorage');
 
 	;require(function(module){
 		var Gun = require('./index');
-
-		if (typeof JSON === 'undefined') {
-			throw new Error(
-				'Gun depends on JSON. Please load it first:\n' +
-				'ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js'
-			);
-		}
-
 		var WebSocket;
 		if(typeof window !== 'undefined'){
 			WebSocket = window.WebSocket || window.webkitWebSocket || window.mozWebSocket;
 		} else {
 			return;
 		}
-		var message, count = 0, noop = function(){}, wait;
+		Gun.on('opt', function(ctx){
+			this.to.next(ctx);
+			var opt = ctx.opt;
+			if(ctx.once){ return }
+			if(false === opt.WebSocket){ return }
+			var ws = opt.ws || (opt.ws = {}); ws.who = 0;
+			Gun.obj.map(opt.peers, function(){ ++ws.who });
+			if(ctx.once){ return }
+			var batch;
 
-		Gun.on('out', function(at){
-			this.to.next(at);
-			var cat = at.gun._.root._, wsp = cat.wsp || (cat.wsp = {});
-			if(at.wsp && 1 === wsp.count){ return } // if the message came FROM the only peer we are connected to, don't echo it back.
-			message = JSON.stringify(at);
-			//if(++count){ console.log("msg OUT:", count, Gun.obj.ify(message)) }
-			if(cat.udrain){
-				cat.udrain.push(message);
-				return;
-			}
-			cat.udrain = [];
-			clearTimeout(wait);
-			wait = setTimeout(function(){
-				if(!cat.udrain){ return }
-				var tmp = cat.udrain;
-				cat.udrain = null;
-				if( tmp.length ) {
-					message = JSON.stringify(tmp);
-					Gun.obj.map(cat.opt.peers, send, cat);
+			ctx.on('out', function(at){
+				this.to.next(at);
+				if(at.ws && 1 == ws.who){ return } // performance hack for reducing echoes.
+				batch = JSON.stringify(at);
+				if(ws.drain){
+					ws.drain.push(batch);
+					return;
 				}
-			},1);
-			wsp.count = 0;
-			Gun.obj.map(cat.opt.peers, send, cat);
+				ws.drain = [];
+				setTimeout(function(){
+					if(!ws.drain){ return }
+					var tmp = ws.drain;
+					ws.drain = null;
+					if(!tmp.length){ return }
+					batch = JSON.stringify(tmp);
+					Gun.obj.map(opt.peers, send, ctx);
+				}, opt.wait || 1);
+				Gun.obj.map(opt.peers, send, ctx);
+			});
+			function send(peer){
+				var ctx = this, msg = batch;
+				var wire = peer.wire || open(peer, ctx);
+				if(!wire){ return }
+				if(wire.readyState === wire.OPEN){
+					wire.send(msg);
+					return;
+				}
+				(peer.queue = peer.queue || []).push(msg);
+			}
+			function receive(msg, peer, ctx){
+				if(!ctx || !msg){ return }
+				try{msg = JSON.parse(msg.data || msg);
+				}catch(e){}
+				if(msg instanceof Array){
+					var i = 0, m;
+					while(m = msg[i++]){
+						receive(m, peer, ctx);
+					}
+					return;
+				}
+				if(1 == ws.who){ msg.ws = noop } // If there is only 1 client, just use noop since it doesn't matter.
+				ctx.on('in', msg);
+			}
+			function open(peer, as){
+				if(!peer || !peer.url){ return }
+				var url = peer.url.replace('http', 'ws');
+				var wire = peer.wire = new WebSocket(url);
+				wire.onclose = function(){
+					reconnect(peer, as);
+				};
+				wire.onerror = function(error){
+					reconnect(peer, as); // placement?
+					if(!error){ return }
+					if(error.code === 'ECONNREFUSED'){
+						//reconnect(peer, as);
+					}
+				};
+				wire.onopen = function(){
+					var queue = peer.queue;
+					peer.queue = [];
+					Gun.obj.map(queue, function(msg){
+						batch = msg;
+						send.call(as, peer);
+					});
+				}
+				wire.onmessage = function(msg){
+					receive(msg, peer, as); // diff: peer not wire!
+				};
+				return wire;
+			}
+			function reconnect(peer, as){
+				clearTimeout(peer.defer);
+				peer.defer = setTimeout(function(){
+					open(peer, as);
+				}, 2 * 1000);
+			}
 		});
-
-		function send(peer){
-			var msg = message, cat = this;
-			var wire = peer.wire || open(peer, cat);
-			if(cat.wsp){ cat.wsp.count++ }
-			if(!wire){ return }
-			if(wire.readyState === wire.OPEN){
-				wire.send(msg);
-				return;
-			}
-			(peer.queue = peer.queue || []).push(msg);
-		}
-
-		function receive(msg, peer, cat){
-			if(!cat || !msg){ return }
-			try{msg = JSON.parse(msg.data || msg);
-			}catch(e){}
-			if(msg instanceof Array){
-				var i = 0, m;
-				while(m = msg[i++]){
-					receive(m, peer, cat);
-				}
-				return;
-			}
-			//if(++count){ console.log("msg in:", count, msg.body || msg) }
-			if(cat.wsp && 1 === cat.wsp.count){ (msg.body || msg).wsp = noop } // If there is only 1 client, just use noop since it doesn't matter.
-			cat.gun.on('in', msg.body || msg);
-		}
-
-		function open(peer, as){
-			if(!peer || !peer.url){ return }
-			var url = peer.url.replace('http', 'ws');
-			var wire = peer.wire = new WebSocket(url, as.opt.wsc.protocols, as.opt.wsc );
-			wire.onclose = function(){
-				reconnect(peer, as);
-			};
-			wire.onerror = function(error){
-				reconnect(peer, as);
-				if(!error){ return }
-				if(error.code === 'ECONNREFUSED'){
-					//reconnect(peer, as);
-				}
-			};
-			wire.onopen = function(){
-				var queue = peer.queue;
-				peer.queue = [];
-				Gun.obj.map(queue, function(msg){
-					message = msg;
-					send.call(as, peer);
-				});
-			}
-			wire.onmessage = function(msg){
-				receive(msg, peer, as);
-			};
-			return wire;
-		}
-
-		function reconnect(peer, as){
-			clearTimeout(peer.defer);
-			peer.defer = setTimeout(function(){
-				open(peer, as);
-			}, 2 * 1000);
-		}
-	})(require, './polyfill/request');
+		var noop = function(){};
+	})(require, './adapters/websocket');
 
 }());
