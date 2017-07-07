@@ -1,5 +1,5 @@
 
-var Gun = require('./core');
+var Gun = require('./index');
 Gun.chain.on = function(tag, arg, eas, as){
 	var gun = this, at = gun._, tmp, act, off;
 	if(typeof tag === 'string'){

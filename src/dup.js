@@ -1,35 +1,26 @@
 
 var Type = require('./type');
-function Dup(){
-	this.cache = {};
-}
-Dup.prototype.track = function(id){
-	this.cache[id] = Type.time.is();
-	if (!this.to) {
-		this.gc(); // Engage GC.
+function Dup(opt){
+	var dup = {s:{}};
+	opt = opt || {max: 1000, age: 1000 * 60 * 2};
+	dup.check = function(id){
+		return dup.s[id]? dup.track(id) : false;
 	}
-	return id;
-};
-Dup.prototype.check = function(id){
-	// Have we seen this ID recently?
-	return Type.obj.has(this.cache, id)? this.track(id) : false; // Important, bump the ID's liveliness if it has already been seen before - this is critical to stopping broadcast storms.
-}
-Dup.prototype.gc = function(){
-	var de = this, now = Type.time.is(), oldest = now, maxAge = 5 * 60 * 1000;
-	// TODO: Gun.scheduler already does this? Reuse that.
-	Type.obj.map(de.cache, function(time, id){
-		oldest = Math.min(now, time);
-		if ((now - time) < maxAge){ return }
-		Type.obj.del(de.cache, id);
-	});
-	var done = Type.obj.empty(de.cache);
-	if(done){
-		de.to = null; // Disengage GC.
-		return;
+	dup.track = function(id){
+		dup.s[id] = time_is();
+		if(!dup.to){
+			dup.to = setTimeout(function(){
+				Type.obj.map(dup.s, function(time, id){
+					if(opt.age > (time_is() - time)){ return }
+					Type.obj.del(dup.s, id);
+				});
+				dup.to = null;
+			}, opt.age);
+		}
+		return id;
 	}
-	var elapsed = now - oldest; // Just how old?
-	var nextGC = maxAge - elapsed; // How long before it's too old?
-	de.to = setTimeout(function(){ de.gc() }, nextGC); // Schedule the next GC event.
+	return dup;
 }
+var time_is = Type.time.is;
 module.exports = Dup;
 	

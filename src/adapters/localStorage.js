@@ -5,64 +5,66 @@ var root, noop = function(){}, u;
 if(typeof window !== 'undefined'){ root = window }
 var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
-var check = {}, dirty = {}, async = {}, count = 0, max = 10000, wait;
-
-Gun.on('put', function(at){ var err, id, opt, root = at.gun._.root;
-	this.to.next(at);
-	(opt = {}).prefix = (at.opt || opt).prefix || at.gun.back('opt.prefix') || 'gun/';
-	var graph = root._.graph;
-	Gun.obj.map(at.put, function(node, soul){
-		async[soul] = async[soul] || graph[soul] || node;
+Gun.on('opt', function(ctx){
+	this.to.next(ctx);
+	var opt = ctx.opt;
+	if(ctx.once){ return }
+	if(false === opt.localStorage){ return }
+	opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
+	var graph = ctx.graph, acks = {}, count = 0, to;
+	var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
+	
+	ctx.on('put', function(at){
+		this.to.next(at);
+		Gun.graph.is(at.put, null, map);
+		if(!at['@']){ acks[at['#']] = true; } // only ack non-acks.
+		count += 1;
+		if(count >= (opt.batch || 1000)){
+			return flush();
+		}
+		if(to){ return }
+		to = setTimeout(flush, opt.wait || 1);
 	});
-	count += 1;
-	if(!at['@']){ check[at['#']] = root; } // only ack non-acks.
-	function save(){
-		clearTimeout(wait);
-		var ack = check;
-		var all = async;
+
+	ctx.on('get', function(at){
+		this.to.next(at);
+		var gun = at.gun, lex = at.get, soul, data, opt, u;
+		//setTimeout(function(){
+		if(!lex || !(soul = lex[Gun._.soul])){ return }
+		//if(0 >= at.cap){ return }
+		var field = lex['.'];
+		data = disk[soul] || u;
+		if(data && field){
+			data = Gun.state.to(data, field);
+		}
+		if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
+			return; // Hmm, what if we have peers but we are disconnected?
+		}
+		gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
+		//},11);
+	});
+
+	var map = function(val, key, node, soul){
+		disk[soul] = Gun.state.to(node, key, disk[soul]);
+	}
+
+	var flush = function(){
+		var err;
 		count = 0;
-		wait = false;
-		check = {};
-		async = {};
-		Gun.obj.map(all, function(node, soul){
-			// Since localStorage only has 5MB, it is better that we keep only
-			// the data that the user is currently interested in.
-			node = graph[soul] || all[soul] || node;
-			try{store.setItem(opt.prefix + soul, JSON.stringify(node));
-			}catch(e){ err = e || "localStorage failure" }
-		});
-		if(!Gun.obj.empty(at.gun.back('opt.peers'))){ return } // only ack if there are no peers.
-		Gun.obj.map(ack, function(root, id){
-			root.on('in', {
+		clearTimeout(to);
+		to = false;
+		var ack = acks;
+		acks = {};
+		try{store.setItem(opt.file, JSON.stringify(disk));
+		}catch(e){ err = e || "localStorage failure" }
+		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
+		Gun.obj.map(ack, function(yes, id){
+			ctx.on('in', {
 				'@': id,
 				err: err,
 				ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.
 			});
 		});
 	}
-	if(count >= max){ // goal is to do 10K inserts/second.
-		return save();
-	}
-	if(wait){ return }
-	clearTimeout(wait);
-	wait = setTimeout(save, 1000);
-});
-Gun.on('get', function(at){
-	this.to.next(at);
-	var gun = at.gun, lex = at.get, soul, data, opt, u;
-	//setTimeout(function(){
-	(opt = at.opt || {}).prefix = opt.prefix || at.gun.back('opt.prefix') || 'gun/';
-	if(!lex || !(soul = lex[Gun._.soul])){ return }
-	//if(0 >= at.cap){ return }
-	var field = lex['.'];
-	data = Gun.obj.ify(store.getItem(opt.prefix + soul) || null) || async[soul] || u;
-	if(data && field){
-		data = Gun.state.to(data, field);
-	}
-	if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
-		return; // Hmm, what if we have peers but we are disconnected?
-	}
-	gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
-	//},11);
 });
 	

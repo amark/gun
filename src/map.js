@@ -1,5 +1,5 @@
 
-var Gun = require('./core');
+var Gun = require('./index');
 Gun.chain.map = function(cb, opt, t){
 	var gun = this, cat = gun._, chain;
 	if(!cb){
