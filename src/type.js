@@ -106,7 +106,7 @@ Type.obj.copy = function(o){ // because http://web.archive.org/web/2014032822402
 		var u, i = 0, x, r, ll, lle, f = fn_is(c);
 		t.r = null;
 		if(keys && obj_is(l)){
-			ll = Object.keys(l); lle = true;
+			ll = keys(l); lle = true;
 		}
 		if(list_is(l) || ll){
 			x = (ll || l).length;

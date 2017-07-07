@@ -8,7 +8,7 @@ function Gun(o){
 
 Gun.is = function(gun){ return (gun instanceof Gun) }
 
-Gun.version = 0.7;
+Gun.version = 0.8;
 
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
@@ -21,8 +21,7 @@ Gun.node = require('./node');
 Gun.state = require('./state');
 Gun.graph = require('./graph');
 Gun.dup = require('./dup');
-Gun.schedule = require('./schedule');
-Gun.on = require('./onify')();
+Gun.on = require('./onto');
 
 Gun._ = { // some reserved key words, these are not the only ones.
 	node: Gun.node._ // all metadata of a node is stored in the meta property on the node.
@@ -37,7 +36,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		at.on = at.on || Gun.on;
 		at.root = at.root || at.gun;
 		at.graph = at.graph || {};
-		at.dup = at.dup || new Gun.dup;
+		at.dup = at.dup || Gun.dup();
 		at.ask = Gun.on.ask;
 		at.ack = Gun.on.ack;
 		var gun = at.gun.opt(at.opt);
@@ -52,41 +51,39 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		//console.log("add to.next(at)"); // TODO: BUG!!!
 		var ev = this, cat = ev.as, coat, tmp;
 		if(!at.gun){ at.gun = cat.gun }
-		if(!(tmp = at['#'])){ tmp = at['#'] = Gun.text.random() } // TODO: Use what is used other places instead.
+		if(!(tmp = at['#'])){ tmp = at['#'] = text_rand(9) }
 		if(cat.dup.check(tmp)){ return }
 		cat.dup.track(tmp);
 		coat = obj_to(at, {gun: cat.gun});
 		if(!cat.ack(at['@'], at)){
 			if(at.get){
-				//Gun.on.GET(coat);
-				Gun.on('get', coat);
+				Gun.on.get(coat);
+				//cat.on('get', get(coat));
 			}
 			if(at.put){
-				//Gun.on.PUT(coat);
-				Gun.on('put', coat);
+				Gun.on.put(coat);
+				//cat.on('put', put(coat));
 			}
 		}
-		Gun.on('out', coat);
+		cat.on('out', coat);
 	}
 }());
 
 ;(function(){
-	Gun.on('put', function(at){
-	//Gun.on.PUT = function(at){
-		if(!at['#']){ return this.to.next(at) } // for tests. // TODO: REMOVE THIS!
-		var ev = this, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
+	Gun.on.put = function(at){
+		var cat = at.gun._, ctx = {gun: at.gun, graph: at.gun._.graph, put: {}, map: {}, machine: Gun.state()};
 		if(!Gun.graph.is(at.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
-		if(ctx.err){ return ctx.gun.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
+		if(ctx.err){ return cat.on('in', {'@': at['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
 		obj_map(ctx.map, map, ctx);
 		if(u !== ctx.defer){
-			Gun.schedule(ctx.defer, function(){
-				Gun.on('put', at);
-			}, Gun.state);
+			setTimeout(function(){
+				Gun.on.put(at);
+			}, ctx.defer - cat.machine);
 		}
 		if(!ctx.diff){ return }
-		ev.to.next(obj_to(at, {put: ctx.diff}));
-	});
+		cat.on('put', obj_to(at, {put: ctx.diff}));
+	};
 	function verify(val, key, node, soul){ var ctx = this;
 		var state = Gun.state.is(node, key), tmp;
 		if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
@@ -102,7 +99,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
 	}
 	function merge(node, soul){
-		var ref = ((this.gun._).next || empty)[soul];
+		var cat = this.gun._, ref = (cat.next || empty)[soul];
 		if(!ref){ return }
 		var at = this.map[soul] = {
 			put: this.node = node,
@@ -110,7 +107,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			gun: this.ref = ref
 		};
 		obj_map(node, each, this);
-		Gun.on('node', at);
+		cat.on('node', at);
 	}
 	function each(val, key){
 		var graph = this.graph, soul = this.soul, cat = (this.ref._), tmp;
@@ -121,24 +118,18 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		if(!at.gun){ return }
 		(at.gun._).on('in', at);
 	}
-}());
 
-;(function(){
-	Gun.on('get', function(at){
-		var ev = this, soul = at.get[_soul], cat = at.gun._, node = cat.graph[soul], field = at.get[_field], tmp;
+	Gun.on.get = function(at){
+		var cat = at.gun._, soul = at.get[_soul], node = cat.graph[soul], field = at.get[_field], tmp;
 		var next = cat.next || (cat.next = {}), as = ((next[soul] || empty)._);
-		if(!node || !as){ return ev.to.next(at) }
+		if(!node || !as){ return cat.on('get', at) }
 		if(field){
-			if(!obj_has(node, field)){ return ev.to.next(at) }
+			if(!obj_has(node, field)){ return cat.on('get', at) }
 			node = Gun.state.to(node, field);
 		} else {
 			node = Gun.obj.copy(node);
 		}
-		//if(at.gun === cat.gun){
-			node = Gun.graph.node(node); // TODO: BUG! Clone node?
-		//} else {
-		//	cat = (at.gun._);
-		//}
+		node = Gun.graph.node(node);
 		tmp = as.ack;
 		cat.on('in', {
 			'@': at['#'],
@@ -149,14 +140,14 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		if(0 < tmp){
 			return;
 		}
-		ev.to.next(at);
-	});
+		cat.on('get', at);
+	}
 }());
 
 ;(function(){
 	Gun.on.ask = function(cb, as){
 		if(!this.on){ return }
-		var id = Gun.text.random();
+		var id = text_rand(9);
 		if(cb){ this.on(id, cb, as) }
 		return id;
 	}
@@ -183,7 +174,9 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
-		at.opt.wsc = at.opt.wsc || {protocols:[]} 
+		at.opt.uuid = at.opt.uuid || function(){ 
+			return state().toString(36).replace('.','') + text_rand(12);
+		}
 		at.opt.peers = at.opt.peers || {};
 		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 		Gun.on('opt', at);
@@ -191,10 +184,10 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	}
 }());
 
-var text_is = Gun.text.is;
 var list_is = Gun.list.is;
+var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
+var state = Gun.state, _soul = Gun._.soul, _field = Gun._.field, rel_is = Gun.val.rel.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -209,4 +202,6 @@ Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel f
 if(typeof window !== "undefined"){ window.Gun = Gun }
 if(typeof common !== "undefined"){ common.exports = Gun }
 module.exports = Gun;
+
+Gun.log.once("0.8", "0.8 WARNING! Breaking changes, test that your app works before upgrading! The adapter interface has been upgraded (non-default storage and transport layers probably won't work). Also, `.path()` and `.not()` are outside core and now in 'lib/'.");
 	

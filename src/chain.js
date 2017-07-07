@@ -1,12 +1,14 @@
 
+// WARNING: GUN is very simple, but the JavaScript chaining API around GUN
+// is complicated and was extremely hard to build. If you port GUN to another
+// language, consider implementing an easier API to build.
 var Gun = require('./root');
 Gun.chain.chain = function(){
-	var at = this._, chain = new this.constructor(this), cat = chain._;
+	var at = this._, chain = new this.constructor(this), cat = chain._, root;
 	cat.root = root = at.root;
 	cat.id = ++root._.once;
 	cat.back = this;
 	cat.on = Gun.on;
-	Gun.on('chain', cat);
 	cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 	cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
 	return chain;
@@ -49,7 +51,7 @@ function output(at){
 						if(!at.gun._){ return }
 						(at.gun._).on('out', {
 							get: tmp = {'#': rel, '.': get, gun: at.gun},
-							'#': root._.ask(Gun.HAM.synth, tmp),
+							'#': root._.ask(ack, tmp),
 							gun: at.gun
 						});
 						return;
@@ -72,7 +74,7 @@ function output(at){
 					if(!at.gun._){ return }
 					(at.gun._).on('out', {
 						get: tmp = {'#': cat.soul, '.': get, gun: at.gun},
-						'#': root._.ask(Gun.HAM.synth, tmp),
+						'#': root._.ask(ack, tmp),
 						gun: at.gun
 					});
 					return;
@@ -106,7 +108,7 @@ function output(at){
 				if(cat.soul){
 					cat.on('out', {
 						get: tmp = {'#': cat.soul, gun: cat.gun},
-						'#': root._.ask(Gun.HAM.synth, tmp),
+						'#': root._.ask(ack, tmp),
 						gun: cat.gun
 					});
 					return;
@@ -268,16 +270,31 @@ function ask(cat, soul){
 		tmp.ack = tmp.ack || -1;
 		tmp.on('out', {
 			get: tmp = {'#': soul, gun: tmp.gun},
-			'#': cat.root._.ask(Gun.HAM.synth, tmp)
+			'#': cat.root._.ask(ack, tmp)
 		});
 		return;
 	}
 	obj_map(cat.next, function(gun, key){
 		(gun._).on('out', {
 			get: gun = {'#': soul, '.': key, gun: gun},
-			'#': cat.root._.ask(Gun.HAM.synth, gun)
+			'#': cat.root._.ask(ack, gun)
 		});
 	});
+}
+function ack(at, ev){
+	var as = this.as, cat = as.gun._;
+	if(!at.put || (as['.'] && !obj_has(at.put[as['#']], cat.get))){
+		if(cat.put !== u){ return }
+		cat.on('in', {
+			get: cat.get,
+			put: cat.put = u,
+			gun: cat.gun,
+		})
+		return;
+	}
+	at.gun = cat.root;
+	//Gun.on('put', at);
+	Gun.on.put(at);
 }
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
