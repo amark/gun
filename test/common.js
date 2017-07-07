@@ -1516,7 +1516,7 @@ describe('Gun', function(){
 					 - Proxying event across maps.
 				*/
 				var s = Gun.state.map();s.soul = 'u/m';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
 						age: 26,
 						name: "Alice",
@@ -1550,9 +1550,9 @@ describe('Gun', function(){
 				});
 			});
 
-			it('uncached synchronous map path on', function(done){
+			it('uncached synchronous map get on', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
 						age: 26,
 						name: "alice",
@@ -1565,7 +1565,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/p').map().path('name').on(function(v,f){
+				gun.get('u/m/p').map().get('name').on(function(v,f){
 					//console.log("*****************", f, v);
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
@@ -1582,9 +1582,9 @@ describe('Gun', function(){
 				});
 			});
 
-			it('uncached synchronous map path on node', function(done){
+			it('uncached synchronous map get on node', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p/n';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
 						age: 26,
 						name: "alice",
@@ -1597,7 +1597,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/p/n').map().path('pet').on(function(v,f){
+				gun.get('u/m/p/n').map().get('pet').on(function(v,f){
 					//console.log("********************", f,v);
 					check[v.name] = v;
 					count[v.name] = (count[v.name] || 0) + 1;
@@ -1616,10 +1616,10 @@ describe('Gun', function(){
 				});
 			});
 
-			it('uncached synchronous map path on node path', function(done){
+			it('uncached synchronous map get on node get', function(done){
 				var gun = Gun();
 				var s = Gun.state.map();s.soul = 'u/m/p/n/p';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
 						age: 26,
 						name: "alice",
@@ -1633,7 +1633,7 @@ describe('Gun', function(){
 				}, s)});
 				var check = {}, count = {};
 				//console.debug.i=1;console.log('-------------------');
-				gun.get('u/m/p/n/p').map().path('pet').path('name').on(function(v,f){
+				gun.get('u/m/p/n/p').map().get('pet').get('name').on(function(v,f){
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
 					//console.log("*****************", f, v);
@@ -1657,7 +1657,7 @@ describe('Gun', function(){
 
 			it('uncached synchronous map on mutate', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {
 						age: 26,
 						name: "Alice",
@@ -1670,7 +1670,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/mutate').map().path('name').get(function(at,ev){
+				gun.get('u/m/mutate').map().get('name').get(function(at,ev){
 					var e = at.err, v = at.put, f = at.get;
 					//console.log("****************", f,v);
 					check[v] = f;
@@ -1686,13 +1686,13 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
-					gun.get('u/m/mutate').path('alice').put(7);
+					gun.get('u/m/mutate').get('alice').put(7);
 				}, 300);
 			});
 
 			it('uncached synchronous map on mutate node', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate/n';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo'},
 						age: 26,
 						name: "Alice",
@@ -1705,7 +1705,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/mutate/n').map().path('name').get(function(at,ev){
+				gun.get('u/m/mutate/n').map().get('name').get(function(at,ev){
 					var e = at.err, v = at.put, f = at.get;
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
@@ -1725,7 +1725,7 @@ describe('Gun', function(){
 				});
 				setTimeout(function(){
 					//console.debug.i=1;console.log("-----------------------");
-					gun.get('u/m/mutate/n').path('alice').put({
+					gun.get('u/m/mutate/n').get('alice').put({
 						_:{'#':'u/m/m/n/soul'},
 						name: 'Alice Zzxyz'
 					});
@@ -1740,7 +1740,7 @@ describe('Gun', function(){
 
 			it('uncached synchronous map on mutate node uncached', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/mutate/n/u';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo1'},
 						age: 26,
 						name: "Alice",
@@ -1772,7 +1772,7 @@ describe('Gun', function(){
 				});
 				setTimeout(function(){
 					var s = Gun.state.map();s.soul = 'u/m/m/n/u/soul';
-					Gun.on('put', {gun: gun, put: Gun.graph.ify({
+					gun.on('put', {gun: gun, put: Gun.graph.ify({
 						name: 'Alice Zzxyz'
 					}, s)});
 					//console.debug.i=1;console.log("---------------");
@@ -1795,9 +1795,9 @@ describe('Gun', function(){
 				}, 300);
 			});
 
-			it('uncached synchronous map on path mutate node uncached', function(done){
+			it('uncached synchronous map on get mutate node uncached', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p/mutate/n/u';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo2'},
 						age: 26,
 						name: "Alice",
@@ -1810,7 +1810,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/p/mutate/n/u').map().path('name').on(function(v,f){
+				gun.get('u/m/p/mutate/n/u').map().get('name').on(function(v,f){
 					check[v] = f;
 					count[v] = (count[v] || 0) + 1;
 					//console.log("*************", f,v);
@@ -1830,7 +1830,7 @@ describe('Gun', function(){
 				});
 				setTimeout(function(){
 					var s = Gun.state.map();s.soul = 'u/m/p/m/n/u/soul';
-					Gun.on('put', {gun: gun, put: Gun.graph.ify({
+					gun.on('put', {gun: gun, put: Gun.graph.ify({
 						name: 'Alice Zzxyz', age: 34
 					}, s)});
 					gun.get('u/m/p/mutate/n/u').put({
@@ -1845,9 +1845,9 @@ describe('Gun', function(){
 				}, 300);
 			});
 
-			it('uncached synchronous map on path node mutate node uncached', function(done){
+			it('uncached synchronous map on get node mutate node uncached', function(done){
 				var s = Gun.state.map();s.soul = 'u/m/p/n/mutate/n/u';
-				Gun.on('put', {gun: gun, put: Gun.graph.ify({
+				gun.on('put', {gun: gun, put: Gun.graph.ify({
 					alice: {_:{'#':'umaliceo3'},
 						age: 26,
 						name: "Alice",
@@ -1860,7 +1860,7 @@ describe('Gun', function(){
 					}
 				}, s)});
 				var check = {}, count = {};
-				gun.get('u/m/p/n/mutate/n/u').map().path('pet').on(function(v,f){
+				gun.get('u/m/p/n/mutate/n/u').map().get('pet').on(function(v,f){
 					check[v.name] = f;
 					count[v.name] = (count[v.name] || 0) + 1;
 					//console.log("*****************", f,v);
@@ -1878,7 +1878,7 @@ describe('Gun', function(){
 				});
 				setTimeout(function(){
 					var s = Gun.state.map();s.soul = 'alice/fuzz/soul';
-					Gun.on('put', {gun: gun, put: Gun.graph.ify({
+					gun.on('put', {gun: gun, put: Gun.graph.ify({
 						name: 'Alice Zzxyz', age: 34,
 						pet: {c:3, name: "Fuzzball"}
 					}, s)});
@@ -1973,7 +1973,7 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				//gun.get('g/n/m/f/l/n').path('bob.spouse.work').on(function(v,f){ console.log("!!!!!!!!!", f, v);});return;
+				//gun.get('g/n/m/f/l/n').get('bob.spouse.work').on(function(v,f){ console.log("!!!!!!!!!", f, v);});return;
 				gun.get('g/n/m/f/l/n').map().on(function(v,f){
 					check[f] = v;
 					//console.log("*******************", f, v);
@@ -1992,10 +1992,10 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map path", function(done){
+			it("in memory get before map get", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/p').map().path('name').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/p').map().get('name').on(function(v,f){
 					check[v] = f;
 					//console.log("****************", f,v);
 					if(check.alice && check.bob && check.Alice){
@@ -2039,7 +2039,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get after map path", function(done){
+			it("in memory get after map get", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/m/p'},
 						alice: {_:{'#':'GALICE4'},
@@ -2067,7 +2067,7 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				gun.get('g/n/m/f/l/n/m/p').map().path('name').on(function(v,f){
+				gun.get('g/n/m/f/l/n/m/p').map().get('name').on(function(v,f){
 					check[v] = f;
 					//console.log("*****************", f,v);
 					if(check.alice && check.bob && check.Alice){
@@ -2085,10 +2085,10 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map path path", function(done){
+			it("in memory get before map get get", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/p/p/p').map().path('spouse').path('work').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/p/p/p').map().get('spouse').get('work').on(function(v,f){
 					check[v.name] = f;
 					if(check['GUN INC'] && check['ACME INC'] && check['ACME INC.']){
 						clearTimeout(done.to);
@@ -2131,7 +2131,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get after map path path", function(done){
+			it("in memory get after map get get", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/b/p/p/p/a'},
 						alice: {
@@ -2159,7 +2159,7 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/p/p/p/a').map().path('spouse').path('work').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/p/p/p/a').map().get('spouse').get('work').on(function(v,f){
 					check[v.name] = f;
 					if(check['GUN INC'] && check['ACME INC'] && check['ACME INC.']){
 						clearTimeout(done.to);
@@ -2290,10 +2290,10 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map map path", function(done){
+			it("in memory get before map map get", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/m/m/p').map().map().path('name').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/m/m/p').map().map().get('name').on(function(v,f){
 					check[v] = f;
 					//console.log("***********", f,v);
 					if(check.alice && check.bob && check.GUN && check.ACME && check.ACMEINC){
@@ -2343,7 +2343,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get after map map path", function(done){
+			it("in memory get after map map get", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p'},
@@ -2375,7 +2375,7 @@ describe('Gun', function(){
 							}
 						}
 				});
-				gun.get('g/n/m/f/l/n/b/a/m/m/p').map().map().path('name').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/a/m/m/p').map().map().get('name').on(function(v,f){
 					check[v] = f;
 					//console.log("************", f,v);
 					if(check.alice && check.bob && check.GUN && check.ACME && check.ACMEINC){
@@ -2395,10 +2395,10 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map map path path", function(done){
+			it("in memory get before map map get get", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/m/m/p/p').map().map().path('address').path('state').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/m/m/p/p').map().map().get('address').get('state').on(function(v,f){
 					check[v] = f;
 					if(check.QR && check.NY && check.CA && check.TX && check.MA){
 						clearTimeout(done.to);
@@ -2459,7 +2459,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get after map map path path", function(done){
+			it("in memory get after map map get get", function(done){
 				var gun = Gun();
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p/p'},
 						users: {
@@ -2503,7 +2503,7 @@ describe('Gun', function(){
 						}
 				});
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/a/m/m/p/p').map().map().path('address').path('state').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/a/m/m/p/p').map().map().get('address').get('state').on(function(v,f){
 					check[v] = f;
 					if(check.QR && check.NY && check.CA && check.TX && check.MA){
 						clearTimeout(done.to);
@@ -2522,11 +2522,11 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map map path path path", function(done){
+			it("in memory get before map map get get get", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/m/m/p/p/p').map().map().path('address').path('state')
-					.path('code')
+				gun.get('g/n/m/f/l/n/b/m/m/p/p/p').map().map().get('address').get('state')
+					.get('code')
 					.on(function(v,f){
 					check[v] = f;
 					if(check.QR && check.NY && check.CA && check.TX && check.MA){
@@ -2608,7 +2608,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before after map map path path path", function(done){
+			it("in memory get before after map map get get get", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p/p/p'},
@@ -2672,8 +2672,8 @@ describe('Gun', function(){
 							}
 						}
 				});
-				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/p').map().map().path('address').path('state')
-					.path('code')
+				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/p').map().map().get('address').get('state')
+					.get('code')
 					.on(function(v,f){
 					check[v] = f;
 					//console.log("***********", f,v);
@@ -2694,10 +2694,10 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before map map path path node", function(done){
+			it("in memory get before map map get get node", function(done){
 				var gun = Gun();
 				var check = {};
-				gun.get('g/n/m/f/l/n/b/m/m/p/p/n').map().map().path('address').path('state').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/m/m/p/p/n').map().map().get('address').get('state').on(function(v,f){
 					check[v.code] = f;
 					//console.log("************", f, v);
 					if(check.QR && check.NY && check.CA && check.TX && check.MA){
@@ -2779,7 +2779,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get before after map map path path node", function(done){
+			it("in memory get before after map map get get node", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p/p/n'},
@@ -2843,7 +2843,7 @@ describe('Gun', function(){
 							}
 						}
 				});
-				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/n').map().map().path('address').path('state').on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/n').map().map().get('address').get('state').on(function(v,f){
 					check[v.code] = f;
 					//console.log("**********", f, v);
 					if(check.QR && check.NY && check.CA && check.TX && check.MA){
@@ -2863,7 +2863,7 @@ describe('Gun', function(){
 				},300);
 			});
 
-			it("in memory get after map map path path path map", function(done){
+			it("in memory get after map map get get get map", function(done){
 				var gun = Gun();
 				var check = {};
 				gun.put({_:{'#':'g/n/m/f/l/n/b/a/m/m/p/p/p/n'},
@@ -2931,7 +2931,7 @@ describe('Gun', function(){
 							}
 						}
 				});
-				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/p/n').map().map().path('address').path('state').path('county').map().on(function(v,f){
+				gun.get('g/n/m/f/l/n/b/a/m/m/p/p/p/n').map().map().get('address').get('state').get('county').map().on(function(v,f){
 					check[f] = v;
 					//console.log("****************", f,v);
 					if(check.MA1 && check.MA2 && check.TX1 && check.TX2 && check.CA1 && check.CA2 && check.NY1 && check.NY2 && check.NY3){
@@ -2963,8 +2963,8 @@ describe('Gun', function(){
 			var user = {bob: bob};
 			bob.pet = cat;
 			cat.slave = bob;
-			Gun.on('put', {gun: gun, put: Gun.graph.ify(user, s)});
-			gun.get(s.soul).path('bob').path('pet').path('slave').val(function(data){
+			gun.on('put', {gun: gun, put: Gun.graph.ify(user, s)});
+			gun.get(s.soul).get('bob').get('pet').get('slave').val(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
 					//console.log("*****************", data);
@@ -2987,9 +2987,9 @@ describe('Gun', function(){
 				way: 'down'
 			});
 			
-			parent.path('sub').put(child);
+			parent.get('sub').put(child);
 			
-			parent.path('sub').on(function(data){
+			parent.get('sub').on(function(data){
 				//console.log("sub", data);
 				done.sub = data;
 			});
@@ -3017,7 +3017,7 @@ describe('Gun', function(){
 
 		});
 
-		it('map val path put', function(done){
+		it('map val get put', function(done){
 			
 			var gun = Gun().get('chat/asdf');
 
@@ -3038,9 +3038,9 @@ describe('Gun', function(){
 			});
 
 			setTimeout(function(){
-				gun.path('1_1').put({what: "hi"});
+				gun.get('1_1').put({what: "hi"});
 				setTimeout(function(){
-					gun.path('2_2').put({what: "you."});
+					gun.get('2_2').put({what: "you."});
 				},40);
 			},40);
 		});
@@ -3121,9 +3121,9 @@ describe('Gun', function(){
 			*/
 		});
 
-		it('get path path set root get put', function(done){
+		it('get get get set root get put', function(done){
 			var gun = Gun().get('app');
-			gun.path('alias').path('mark').set(
+			gun.get('alias').get('mark').set(
 				gun.back(-1).get('pub').put({
 					alias: 'mark',
 					auth: 'encrypt', // oops
@@ -3141,10 +3141,10 @@ describe('Gun', function(){
 					//console.log("**", at.put);
 					done.pub = done.pub || at.put.auth;
 				});
-				gun.path('alias').get(function(at){
+				gun.get('alias').get(function(at){
 					//console.log("***", at.put);
 					done.alias = done.alias || at.put.mark;
-				}).path('mark').get(function(at){
+				}).get('mark').get(function(at){
 					//console.log("************", at.put);return;
 					setTimeout(function(){
 						done.mark = done.mark || at.put.pub;
@@ -3159,7 +3159,7 @@ describe('Gun', function(){
 			},100);
 		});
 
-		it('get put get path put reload get path then get', function(done){
+		it('get put get get put reload get get then get', function(done){
 			var gun = Gun();
 
 			gun.get('stef').put({name:'Stef'});
@@ -3167,12 +3167,12 @@ describe('Gun', function(){
 			  country: 'Netherlands',
 			  zip:'999999'
 			};
-			gun.get('stef').path('address').put(address);
+			gun.get('stef').get('address').put(address);
 
 			// reload
 			setTimeout(function(){
 				var gun2 = Gun();
-				gun2.get('stef').path('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
+				gun2.get('stef').get('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
 					expect(data.zip).to.be('999999');
@@ -3193,20 +3193,20 @@ describe('Gun', function(){
 
 		it('get get get any parallel', function(done){
 			var s = Gun.state.map();s.soul = 'parallel';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				bob: {
 					age: 29,
 					name: "Bob!"
 				}
 			}, s)});
-			gun.get('parallel').path('bob').path('age').get(function(at, ev){
+			gun.get('parallel').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("***** age", data, at.gun._.ack);return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
 			});
-			gun.get('parallel').path('bob').path('name').get(function(at, ev){
+			gun.get('parallel').get('bob').get('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("*********** name", data, at.gun._.ack);return;
 				expect(data).to.be('Bob!');
@@ -3220,13 +3220,13 @@ describe('Gun', function(){
 
 		it('get get get any later', function(done){
 			var s = Gun.state.map();s.soul = 'parallel/later';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
-				bob: {
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				bob: {_:{'#':'ddfsa'},
 					age: 29,
 					name: "Bob!"
 				}
 			}, s)});
-			gun.get('parallel/later').path('bob').path('age').get(function(at, ev){
+			gun.get('parallel/later').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("***** age", data);
 				expect(data).to.be(29);
@@ -3234,7 +3234,7 @@ describe('Gun', function(){
 				done.age = true;
 			});
 			setTimeout(function(){
-				gun.get('parallel/later').path('bob').path('name').get(function(at, ev){
+				gun.get('parallel/later').get('bob').get('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
 					//console.log("*********** name", data);
 					expect(data).to.be('Bob!');
@@ -3248,14 +3248,14 @@ describe('Gun', function(){
 		});
 
 		it('get get get any not', function(done){
-			gun.get('parallel/not').path('bob').path('age').get(function(at, ev){
+			gun.get('parallel/not').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("***** age", data);
 				expect(data).to.be(undefined);
 				expect(field).to.be('age');
 				done.age = true;
 			});
-			gun.get('parallel/not').path('bob').path('name').get(function(at, ev){
+			gun.get('parallel/not').get('bob').get('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("*********** name", data);
 				expect(data).to.be(undefined);
@@ -3268,7 +3268,7 @@ describe('Gun', function(){
 		});
 
 		it('get get get any not later', function(done){
-			gun.get('parallel/not/later').path('bob').path('age').get(function(at, ev){
+			gun.get('parallel/not/later').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("***** age", data);
 				expect(data).to.be(undefined);
@@ -3276,7 +3276,7 @@ describe('Gun', function(){
 				done.age = true;
 			});
 			setTimeout(function(){
-				gun.get('parallel/not/later').path('bob').path('name').get(function(at, ev){
+				gun.get('parallel/not/later').get('bob').get('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
 					//console.log("*********** name", field, data);
 					expect(data).to.be(undefined);
@@ -3291,7 +3291,7 @@ describe('Gun', function(){
 
 		it('get any any', function(done){
 			var s = Gun.state.map();s.soul = 'full';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				hello: 'world',
 				goodbye: 'mars'
 			}, s)});
@@ -3313,7 +3313,7 @@ describe('Gun', function(){
 
 		it('get any any later', function(done){
 			var s = Gun.state.map();s.soul = 'full/later';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				hello: 'world',
 				goodbye: 'mars'
 			}, s)});
@@ -3340,19 +3340,19 @@ describe('Gun', function(){
 
 			var app = gun.get('mult/times');
 
-			app.path('alias').path('mark').set(gun.get('ASDF').put({
+			app.get('alias').get('mark').set(gun.get('ASDF').put({
 				pub: 'ASDF',
 				alias: 'mark',
 				born: 1
 			}));
 
-			app.path('alias').map().map().path('pub').on(function(data){
+			app.get('alias').map().map().get('pub').on(function(data){
 				done.one = data;
 				//console.log("pub 1!", data);
 			});
 
 			setTimeout(function(){
-				app.path('alias').map().map().path('alias').on(function(data){
+				app.get('alias').map().map().get('alias').on(function(data){
 					done.two = data;
 					//console.log("alias 2!", data);
 					expect(done.one).to.be("ASDF");
@@ -3367,7 +3367,7 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			var s = Gun.state.map();s.soul = 'mult/times/part';
-			Gun.on('put', {gun: gun, put: Gun.graph.ify({
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
 				alias: {
 					mark: {
 						pub: {_:{'#':'PUB'},
@@ -3381,12 +3381,12 @@ describe('Gun', function(){
 
 			var app = gun.get(s.soul);
 
-			app.path('alias').path('mark').map().val(function(alias){
+			app.get('alias').get('mark').map().val(function(alias){
 				done.alias = alias;
 			});
 
 			setTimeout(function(){
-				app.path('alias').map().map().path('born').on(function(data){
+				app.get('alias').map().map().get('born').on(function(data){
 					expect(data).to.be(1);
 					expect(done.alias.pub).to.be("asdf");
 					expect(done.alias.alias).to.be("mark");
@@ -3445,7 +3445,7 @@ describe('Gun', function(){
 			});
 			setTimeout(function(){
 				list.set(gun.get('eve').put({name: 'eve', age: 30}));
-				gun.get('bob').path('age').put(28);
+				gun.get('bob').get('age').put(28);
 				done.last = true;
 			},300);
 		});
@@ -3464,25 +3464,27 @@ describe('Gun', function(){
 					done();
 				}
 			});
-			list.path('message').put('hello world'); // outputs "message: hello world"
-			list.path('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
+			list.get('message').put('hello world'); // outputs "message: hello world"
+			list.get('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
 		});
 
 		it('Check multi instance message passing', function(done){
 			try{ require('fs').unlinkSync('bdata') }catch(e){}
 			try{ require('fs').unlinkSync('ddata') }catch(e){}
-			Gun.on('out', function(msg){
-				this.to.next(msg);
-				var onGun = msg.gun.back(-1);
-				if(onGun === b) {
-					if(d){
-						//console.log("b can send to d....", Gun.obj.copy(msg));
-						d.on("in", msg);
+			Gun.on('opt', function(ctx){
+				ctx.on('out', function(msg){
+					this.to.next(msg);
+					var onGun = msg.gun.back(-1);
+					if(onGun === b) {
+						if(d){
+							//console.log("b can send to d....", Gun.obj.copy(msg));
+							d.on("in", msg);
+						}
+					} else if(onGun === d){
+						//console.log("d sends to b....", Gun.obj.copy(msg));
+						b.on("in", msg);
 					}
-				} else if(onGun === d){
-					//console.log("d sends to b....", Gun.obj.copy(msg));
-					b.on("in", msg);
-				}
+				});
 			});
 
 			var b = Gun({file: "bdata"});
