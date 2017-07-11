@@ -247,6 +247,20 @@
 	})(require, './HAM');
 
 	;require(function(module){
+		function use(plugin){
+			var _self = this;
+			this.on('opt', function(ctx) {
+				this.to.next(ctx);
+				if (!plugin || !(plugin.install instanceof 'function')) {
+					throw "Plugins must implement a `install` method";
+				}
+				plugin.install(_self, ctx);
+			});
+		}
+		module.exports = use;
+	})(require, './use');
+
+	;require(function(module){
 		var Type = require('./type');
 		var Val = {};
 		Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
@@ -635,6 +649,7 @@
 		Gun.graph = require('./graph');
 		Gun.dup = require('./dup');
 		Gun.on = require('./onto');
+		Gun.use = require('./use');
 		
 		Gun._ = { // some reserved key words, these are not the only ones.
 			node: Gun.node._ // all metadata of a node is stored in the meta property on the node.

@@ -22,6 +22,7 @@ Gun.state = require('./state');
 Gun.graph = require('./graph');
 Gun.dup = require('./dup');
 Gun.on = require('./onto');
+Gun.use = require('./use');
 
 Gun._ = { // some reserved key words, these are not the only ones.
 	node: Gun.node._ // all metadata of a node is stored in the meta property on the node.
