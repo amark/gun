@@ -3546,6 +3546,25 @@ describe('Gun', function(){
 			});
 		});
 		return;
+		it.only('Memory management', function(done){
+			this.timeout(9999999);
+			var gun = Gun(), c = 100000, big = "big";
+			while(--c){big += "big"}
+			c = 0;
+			setInterval(function(){
+				var key = Gun.text.random(5);
+				gun.get(key).put({data: big});
+				setTimeout(function(){
+					gun.get(key).off();
+				},10);
+				if(typeof process === 'undefined'){ return }
+				var mem = process.memoryUsage();
+				console.log(((mem.heapUsed / mem.heapTotal) * 100).toFixed(0) + '% memory');
+				console.log(Object.keys(gun._.graph).length, 'item in memory graph:', Object.keys(gun._.graph));
+			},25);
+		});
+
+		return;
 		it.only('Custom extensions are chainable', function(done){
 			Gun.chain.filter = function(filter){
 			  var chain = this.chain();
