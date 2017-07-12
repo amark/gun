@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.8.x
+
+Adapter interfaces have changed from `Gun.on('event', cb)` to `gun.on('event', cb)`, this will force adapters to be instance specific.
+
+`.path()` and `.not()` have been officially removed from the core bundle, you can bundle them yourself at `lib/path.js` and `lib/not.js` if you still need them.
+
 ## 0.7.x
 
 Small breaking change to `.val(cb)`:

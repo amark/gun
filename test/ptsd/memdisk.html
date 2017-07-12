@@ -1,0 +1,28 @@
+<script src="../../gun.js"></script>
+<script>
+var gun = Gun({localStorage: false, WebSocket: false});
+var c = 100000, big = "big";
+while(--c){big += "big"}
+c = 0;
+window.STOP = false;
+var to = setInterval(function(){
+	if(window.STOP){ clearTimeout(to); return; }
+	var i = 10;
+	while(--i){
+		it(i);
+	}
+	console.log(Object.keys(gun._.graph).length);//, 'item in memory graph:', Object.keys(gun._.graph));
+	//return;
+	var mem = console.memory;
+	console.log(((mem.usedJSHeapSize / mem.totalJSHeapSize) * 100).toFixed(0) + '% memory');
+},2);
+
+function it(i){
+	c++;
+	var key = Gun.text.random(5);
+	gun.get(key).put({data: big});
+	setTimeout(function(){
+		gun.get(key).off();
+	},1);
+}
+</script>

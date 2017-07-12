@@ -26,7 +26,7 @@ var diff;
 	function bench(){
 		if(c >= (TOTAL)){ return clearInterval(it); }
 		for(var i = 0; i < l; i++){
-			radix(gtr(), ++c, alldone);
+			radix(++c, gtr(), alldone);
 			if(c % 50000 === 0){
 				var now = t();
 				console.log(c);//, (now - last)/1000);

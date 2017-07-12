@@ -184,6 +184,9 @@
 						this.to.back = this.back;
 						this.next = onto._.next;
 						this.back.to = this.to;
+						if(this.the.last === this.the){
+							delete this.on.tag[this.the.tag];
+						}
 					}),
 					to: onto._,
 					next: arg,
@@ -588,7 +591,7 @@
 		var Type = require('./type');
 		function Dup(opt){
 			var dup = {s:{}};
-			opt = opt || {max: 1000, age: 1000 * 60 * 2};
+			opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
 			dup.check = function(id){
 				return dup.s[id]? dup.track(id) : false;
 			}
@@ -761,14 +764,21 @@
 			Gun.on.ask = function(cb, as){
 				if(!this.on){ return }
 				var id = text_rand(9);
-				if(cb){ this.on(id, cb, as) }
+				if(cb){ 
+					var to = this.on(id, cb, as);
+					to.err = setTimeout(function(){
+						to.next({err: "Error: No ACK received yet."});
+						to.off();
+					}, 1000 * 9); // TODO: Make configurable!!!
+				}
 				return id;
 			}
 			Gun.on.ack = function(at, reply){
 				if(!at || !reply || !this.on){ return }
-				var id = at['#'] || at;
-				if(!this.tag || !this.tag[id]){ return }
+				var id = at['#'] || at, tmp = (this.tag||empty)[id];
+				if(!tmp){ return }
 				this.on(id, reply);
+				clearTimeout(tmp.err);
 				return true;
 			}
 		}());
@@ -1292,13 +1302,13 @@
 		function batch(){ var as = this;
 			if(!as.graph || obj_map(as.stun, no)){ return }
 			(as.res||iife)(function(){
+				var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
+					this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+					if(!as.ack){ return }
+					as.ack(ack, this);
+				}, as.opt);
 				(as.ref._).on('out', {
-					cap: 3,
-					gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
-					'#': as.gun.back(-1)._.ask(function(ack){ this.off(); // One response is good enough for us currently. Later we may want to adjust this.
-						if(!as.ack){ return }
-						as.ack(ack, this);
-					}, as.opt)
+					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
 			}, as);
 			if(as.res){ as.res() }
@@ -1519,6 +1529,22 @@
 			}
 			return gun;
 		}
+		Gun.chain.off = function(){
+			var gun = this, at = gun._, tmp;
+			var back = at.back || {}, cat = back._;
+			if(!cat){ return }
+			if(tmp = cat.next){
+				if(tmp[at.get]){
+					obj_del(tmp, at.get);
+				} else {
+
+				}
+			}
+			if(tmp = at.soul){
+				obj_del(cat.root._.graph, tmp);
+			}
+			return gun;
+		}
 		var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 		var rel = Gun.val.rel;
 		var empty = {}, noop = function(){}, u;
@@ -1590,6 +1616,11 @@
 		var root, noop = function(){}, u;
 		if(typeof window !== 'undefined'){ root = window }
 		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
+
+		/*
+			NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
+			If you update anything here, consider updating the other adapters as well.
+		*/
 
 		Gun.on('opt', function(ctx){
 			this.to.next(ctx);
