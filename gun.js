@@ -1280,7 +1280,7 @@
 			as.ref.get('_').get(any, {as: as});
 			if(!as.out){
 				// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
-				as.res = as.res || noop; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
+				as.res = as.res || stun; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
 				as.gun._.stun = as.ref._.stun;
 			}
 			return gun;
@@ -1297,6 +1297,22 @@
 				return;
 			}
 			as.batch();
+		}
+
+		function stun(cb){
+			if(cb){ cb() }
+			return;
+			var as = this;
+			if(!as.ref){ return }
+			if(cb){
+				as.after = as.ref._.tag;
+				as.now = as.ref._.tag = {};
+				cb();
+				return;
+			}
+			if(as.after){
+				as.ref._.tag = as.after;
+			}
 		}
 
 		function batch(){ var as = this;
