@@ -765,7 +765,7 @@
 				if(!this.on){ return }
 				var id = text_rand(9);
 				if(cb){ 
-					var to = this.on(id, cb, as), delay = (this.gun._.opt.lack || 9000);
+					var to = this.on(id, cb, as), lack = (this.gun._.opt.lack || 9000);
 					to.err = setTimeout(function(){
 						to.next({err: "Error: No ACK received yet."});
 						to.off();
