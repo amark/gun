@@ -44,7 +44,7 @@ Gun.chain.put = function(data, cb, as){
 	as.ref.get('_').get(any, {as: as});
 	if(!as.out){
 		// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
-		as.res = as.res || noop; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
+		as.res = as.res || stun; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
 		as.gun._.stun = as.ref._.stun;
 	}
 	return gun;
@@ -63,16 +63,32 @@ function ify(as){
 	as.batch();
 }
 
+function stun(cb){
+	if(cb){ cb() }
+	return;
+	var as = this;
+	if(!as.ref){ return }
+	if(cb){
+		as.after = as.ref._.tag;
+		as.now = as.ref._.tag = {};
+		cb();
+		return;
+	}
+	if(as.after){
+		as.ref._.tag = as.after;
+	}
+}
+
 function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
 	(as.res||iife)(function(){
+		var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
+			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+			if(!as.ack){ return }
+			as.ack(ack, this);
+		}, as.opt);
 		(as.ref._).on('out', {
-			cap: 3,
-			gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
-			'#': as.gun.back(-1)._.ask(function(ack){ this.off(); // One response is good enough for us currently. Later we may want to adjust this.
-				if(!as.ack){ return }
-				as.ack(ack, this);
-			}, as.opt)
+			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
 	}, as);
 	if(as.res){ as.res() }

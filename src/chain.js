@@ -18,6 +18,7 @@ function output(at){
 	if(!at.gun){
 		at.gun = gun;
 	}
+	this.to.next(at);
 	if(get = at.get){
 		if(tmp = get[_soul]){
 			tmp = (root.get(tmp)._);
@@ -98,7 +99,7 @@ function output(at){
 						proxy.at.on('in', proxy.at);
 					});
 				}
-				if(cat.ack){
+				if(cat.ack >= 0){
 					if(!obj_has(cat, 'put')){ // u !== cat.put instead?
 					//if(u !== cat.put){
 						return;
