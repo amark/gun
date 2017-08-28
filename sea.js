@@ -10,7 +10,7 @@
   var nodeCrypto = require('crypto');
   var ecCrypto = require('eccrypto');
 
-  var Gun = Gun || require('gun');
+  var Gun = Gun || require('./gun');
 
   // Following enable Web Cryptography API use in NodeJS
   var crypto = (typeof window !== 'undefined' && window.crypto)
@@ -21,8 +21,9 @@
   var TextDecoder = (typeof window !== 'undefined' && window.TextDecoder)
   || require('text-encoding').TextDecoder;
 
-  var Buffer = (typeof window !== 'undefined' && require('./buffer/').Buffer)
-  || require('Buffer');
+  if(typeof Buffer === 'undefined'){
+    var Buffer = require('buffer').Buffer;
+  }
 
   var pbkdf2 = {
     hash: 'SHA-256',  // Was 'SHA-1'

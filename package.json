@@ -48,11 +48,14 @@
   },
   "dependencies": {
     "aws-sdk": ">=2.41.0",
+    "buffer": "^5.0.7",
+    "eccrypto": "^1.0.3",
     "formidable": ">=1.1.1",
+    "subtle": "^0.1.8",
+    "text-encoding": "^0.6.4",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
-    "uws": "~>0.14.1",
     "express": ">=4.15.2",
     "hapi": "^16.1.1",
     "inert": "^4.2.0",
@@ -60,6 +63,7 @@
     "mocha": ">=3.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
-    "uglify-js": ">=2.8.22"
+    "uglify-js": ">=2.8.22",
+    "uws": "~>0.14.1"
   }
 }
