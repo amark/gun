@@ -140,7 +140,7 @@
           root.get(key).get(function(at, ev){
             key = key.slice(4);
             ev.off();
-            if(!at.put){ return reject({err: 'Public key does not exist!'}) }
+            if(!at.put){return}
             // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
             SEA.read(at.put.salt, key).then(function(salt){
               return SEA.proof(pass, salt);
@@ -198,10 +198,14 @@
                 return;
               }
               // Or else we failed to log in...
+            }).catch(function(e){
               Gun.log('Failed to sign in!');
               reject({err: 'Attempt failed'});
             });
           });
+          // if (!found) {
+          //   reject({err: 'Public key does not exist!'})
+          // }
         });
       });
     };
