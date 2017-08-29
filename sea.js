@@ -44,6 +44,7 @@
     var user = root._.user || (root._.user = root.chain()); // create a user context.
     user.create = User.create; // attach a factory method to it.
     user.auth = User.auth; // and a login method.
+    user.remember = User.remember; // and a credentials persisting method.
     return user; // return the user!
   }
 
@@ -74,130 +75,147 @@
   // Well first we have to actually create a user. That is what this function does.
   User.create = function(alias, pass, cb){
     var root = this.back(-1);
-    cb = cb || function(){};
-    // Because more than 1 user might have the same username, we treat the alias as a list of those users.
-    root.get('alias/'+alias).get(function(at, ev){
-      ev.off();
-      if(at.put){
-        // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-        return cb({err: Gun.log("User already created!")});
-      }
-      var user = {alias: alias, salt: Gun.text.random(64)};
-      // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
-      SEA.proof(pass, user.salt).then(function(proof){
-        // this will take some short amount of time to produce a proof, which slows brute force attacks.
-        SEA.pair().then(function(pair){
-          // now we have generated a brand new ECDSA key pair for the user account.
-          user.pub = pair.pub;
-          // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-          SEA.write(alias, pair.priv).then(function(sAlias){
-            user.alias = sAlias;
-            return SEA.write(user.salt, pair.priv);
-          }).then(function(sSalt){
-            user.salt = sSalt;
-            // to keep the private key safe, we AES encrypt it with the proof of work!
-            return SEA.en(pair.priv, proof);
-          }).then(function(encVal){
-            return SEA.write(encVal, pair.priv);
-          }).then(function(sAuth){
-            user.auth = sAuth;
-            var tmp = 'pub/'+pair.pub;
-            //console.log("create", user, pair.pub);
-            // awesome, now we can actually save the user with their public key as their ID.
-            root.get(tmp).put(user);
-            // next up, we want to associate the alias with the public key. So we add it to the alias list.
-            var ref = root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
-            // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-            cb({ok: 0, pub: pair.pub});
+    var doCreate = function(resolve, reject){
+      // Because more than 1 user might have the same username, we treat the alias as a list of those users.
+      root.get('alias/'+alias).get(function(at, ev){
+        ev.off();
+        if(at.put){
+          // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
+          var err = 'User already created!';
+          Gun.log(err);
+          return reject({err: err});
+        }
+        var user = {alias: alias, salt: Gun.text.random(64)};
+        // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
+        SEA.proof(pass, user.salt).then(function(proof){
+          // this will take some short amount of time to produce a proof, which slows brute force attacks.
+          SEA.pair().then(function(pair){
+            // now we have generated a brand new ECDSA key pair for the user account.
+            user.pub = pair.pub;
+            // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
+            SEA.write(alias, pair.priv).then(function(sAlias){
+              user.alias = sAlias;
+              return SEA.write(user.salt, pair.priv);
+            }).then(function(sSalt){
+              user.salt = sSalt;
+              // to keep the private key safe, we AES encrypt it with the proof of work!
+              return SEA.en(pair.priv, proof);
+            }).then(function(encVal){
+              return SEA.write(encVal, pair.priv);
+            }).then(function(sAuth){
+              user.auth = sAuth;
+              var tmp = 'pub/'+pair.pub;
+              //console.log("create", user, pair.pub);
+              // awesome, now we can actually save the user with their public key as their ID.
+              root.get(tmp).put(user);
+              // next up, we want to associate the alias with the public key. So we add it to the alias list.
+              var ref = root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
+              // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
+              resolve({ok: 0, pub: pair.pub});
+            });
           });
         });
       });
-    });
+    };
+    if (cb){doCreate(cb, cb)} else {return new Promise(doCreate)}
   };
   // now that we have created a user, we want to authenticate them!
   User.auth = function(props, cb){
     var alias = props.alias, pass = props.pass, newpass = props.newpass;
     var root = this.back(-1);
-    cb = cb || function(){};
-    // load all public keys associated with the username alias we want to log in with.
-    root.get('alias/'+alias).get(function(at, ev){
-      ev.off();
-      if(!at.put){
-        // if no user, don't do anything.
-        return cb({err: Gun.log("No user!")});
-      }
-      // then attempt to log into each one until we find ours!
-      // (if two users have the same username AND the same password... that would be bad)
-      Gun.obj.map(at.put, function(val, key){
-        // grab the account associated with this public key.
-        root.get(key).get(function(at, ev){
-          key = key.slice(4);
-          ev.off();
-          if(!at.put){ return cb({err: "Public key does not exist!"}) }
-          // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-          SEA.read(at.put.salt, key).then(function(salt){
-            return SEA.proof(pass, salt);
-          }).then(function(proof){
-            // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-            return SEA.read(at.put.auth, key).then(function(auth){
-              return SEA.de(auth, proof);
-            });
-          }).then(function(priv){
-            // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
-            if(priv){ // if we were successful, then that means...
-              // we're logged in!
-              function doLogin(){
-                var user = root._.user;
-                // add our credentials in-memory only to our root gun instance
-                user._ = at.gun._;
-                // so that way we can use the credentials to encrypt/decrypt data
-                user._.is = user.is = {};
-                // that is input/output through gun (see below)
-                user._.sea = priv;
-                user._.pub = key;
-                //console.log("authorized", user._);
-                // callbacks success with the user data credentials.
-                cb(user._);
-                // emit an auth event, useful for page redirects and stuff.
-                Gun.on('auth', user._);
-              }
-              if(newpass) {
-                // password update so encrypt private key using new pwd + salt
-                var newsalt = Gun.text.random(64);
-                SEA.proof(newpass, newsalt).then(function(proof){
-                  SEA.en(priv, proof).then(function(encVal){
-                    return SEA.write(encVal, priv).then(function(sAuth){
-                      return { pub: key, auth: sAuth };
+    var doAuth = function(resolve, reject){
+      // load all public keys associated with the username alias we want to log in with.
+      root.get('alias/'+alias).get(function(at, ev){
+        ev.off();
+        if(!at.put){
+          // if no user, don't do anything.
+          var err = 'No user!';
+          Gun.log(err);
+          return reject({err: err});
+        }
+        // then attempt to log into each one until we find ours!
+        // (if two users have the same username AND the same password... that would be bad)
+        Gun.obj.map(at.put, function(val, key){
+          // grab the account associated with this public key.
+          root.get(key).get(function(at, ev){
+            key = key.slice(4);
+            ev.off();
+            if(!at.put){ return reject({err: 'Public key does not exist!'}) }
+            // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
+            SEA.read(at.put.salt, key).then(function(salt){
+              return SEA.proof(pass, salt);
+            }).then(function(proof){
+              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+              return SEA.read(at.put.auth, key).then(function(auth){
+                return SEA.de(auth, proof);
+              });
+            }).then(function(priv){
+              // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
+              if(priv){ // if we were successful, then that means...
+                // we're logged in!
+                function doLogin(){
+                  var user = root._.user;
+                  // add our credentials in-memory only to our root gun instance
+                  user._ = at.gun._;
+                  // so that way we can use the credentials to encrypt/decrypt data
+                  user._.is = user.is = {};
+                  // that is input/output through gun (see below)
+                  user._.sea = priv;
+                  user._.pub = key;
+                  //console.log("authorized", user._);
+                  // callbacks success with the user data credentials.
+                  resolve(user._);
+                  // emit an auth event, useful for page redirects and stuff.
+                  Gun.on('auth', user._);
+                }
+                if(newpass) {
+                  // password update so encrypt private key using new pwd + salt
+                  var newsalt = Gun.text.random(64);
+                  SEA.proof(newpass, newsalt).then(function(proof){
+                    SEA.en(priv, proof).then(function(encVal){
+                      return SEA.write(encVal, priv).then(function(sAuth){
+                        return { pub: key, auth: sAuth };
+                      });
+                    }).then(function(user){
+                      return SEA.write(alias, priv).then(function(sAlias){
+                        user.alias = sAlias; return user;
+                      });
+                    }).then(function(user){
+                      return SEA.write(newsalt, priv).then(function(sSalt){
+                        user.salt = sSalt; return user;
+                      });
+                    }).then(function(user){
+                      var tmp = 'pub/'+key;
+                      // awesome, now we can update the user using public key ID.
+                      root.get(tmp).put(user);
+                      // then we're done
+                      doLogin();
                     });
-                  }).then(function(user){
-                    return SEA.write(alias, priv).then(function(sAlias){
-                      user.alias = sAlias; return user;
-                    });
-                  }).then(function(user){
-                    return SEA.write(newsalt, priv).then(function(sSalt){
-                      user.salt = sSalt; return user;
-                    });
-                  }).then(function(user){
-                    var tmp = 'pub/'+key;
-                    // awesome, now we can update the user using public key ID.
-                    root.get(tmp).put(user);
-                    // then we're done
-                    doLogin();
                   });
-                });
-              } else {
-                doLogin();
+                } else {
+                  doLogin();
+                }
+                return;
               }
-              return;
-            }
-            // Or else we failed to log in...
-            console.log("Failed to sign in!");
-            cb({err: "Attempt failed"});
+              // Or else we failed to log in...
+              Gun.log('Failed to sign in!');
+              reject({err: 'Attempt failed'});
+            });
           });
         });
       });
-    });
+    };
+    if (cb){doAuth(cb, cb)} else {return new Promise(doAuth)}
   };
+  // now that we have created a user, we want to authenticate them!
+  User.remember = function(props, cb){
+    var doRemember = function(resolve, reject){
+      Gun.log('User.remember is TODO: still');
+      reject({ err: 'Not implemented.' });
+    }
+    if (cb){doRemember(cb, cb)} else {return new Promise(doRemember)}
+  };
+
   // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
   // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)

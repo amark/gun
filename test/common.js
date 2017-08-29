@@ -8035,20 +8035,87 @@ describe('Gun', function(){
 
 	Gun().user && describe('User', function(){
 		console.log('TODO: User! THIS IS AN EARLY ALPHA!!!');
-		var user = Gun().user;
+		var alias = 'dude';
+		var pass = 'my secret password';
+		var user = Gun().user();
 
 		['callback', 'Promise'].forEach(function(type){
 			describe(type, function(){
-				it.skip('create', function(done){
-					done();
+				describe('create', function(){
+					it('new', function(done){
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.have.keys(['ok','pub']);
+							done();
+						};
+						// Gun.user.create - creates new user
+						if(type === 'callback'){
+							user.create(alias+type, pass, check);
+						} else {
+							user.create(alias+type, pass).then(check).catch(done);
+						}
+					});
+					it('conflict', function(done){
+						var gunLog = Gun.log;	// Temporarily removing logging
+						Gun.log = function(){};
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.have.key('err');
+							expect(ack.err).not.to.be(undefined);
+							expect(ack.err).not.to.be('');
+							done();
+						};
+						// Gun.user.create - fails to create existing user
+						if(type === 'callback'){
+							user.create(alias+type, pass, check);
+						} else {
+							user.create(alias+type, pass).then(function(ack){
+								done('Failed to decline creating existing user!');
+							}).catch(check);
+						}
+						Gun.log = gunLog;
+					});
 				});
 
-				it.skip('auth', function(done){
-					done();
+				describe('auth', function(){
+					it('login', function(done){
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.not.have.key('err');
+							done();
+						};
+						var props = {alias: alias+'-'+type, pass: pass};
+						user.create(props.alias, props.pass).catch(function(){})
+						.then(function(){
+							// Gun.user.create - creates new user
+							if(type === 'callback'){
+								user.auth(props, check);
+							} else {
+								user.auth(props).then(check).catch(done);
+							}
+						});
+					});
+
+					it.skip('failed login', function(done){
+						done();
+					});
+
+					it.skip('new password', function(done){
+						done();
+					});
+
+					it.skip('failed new password', function(done){
+						done();
+					});
 				});
 
-				it.skip('remember', function(done){
-					done();
+				describe('remember', function(){
+					it.skip('TBD', function(done){
+						done();
+					});
 				});
 			});
 		});
