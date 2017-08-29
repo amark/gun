@@ -10,7 +10,7 @@
   var nodeCrypto = require('crypto');
   var ecCrypto = require('eccrypto');
 
-  var Gun = Gun || require('./gun');
+  var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
   // Following enable Web Cryptography API use in NodeJS
   var crypto = (typeof window !== 'undefined' && window.crypto)
@@ -516,5 +516,5 @@
   // Adding friends (trusted public keys), sending private messages, etc.
   // Cheers! Tell me what you think.
 
-  module.exports = Gun;
+  module.exports = SEA;
 }());
