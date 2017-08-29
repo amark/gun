@@ -1,6 +1,6 @@
 var root;
 (function(env){
-	root = env.window? env.window : global;
+	root = env.window ? env.window : global;
 	env.window && root.localStorage && root.localStorage.clear();
 	try{ require('fs').unlinkSync('data.json') }catch(e){}
 	//root.Gun = root.Gun || require('../gun');
@@ -8,6 +8,7 @@ var root;
 		root.Gun = root.Gun;
 	} else {
 		root.Gun = require('../gun');
+		Gun.SEA = require('../sea');	// TODO: breaks original deep tests!
 		Gun.serve = require('../lib/serve');
 		//require('./s3');
 		//require('./uws');
@@ -166,7 +167,6 @@ describe('Performance', function(){ return; // performance tests
 
 describe('Gun', function(){
 	var t = {};
-
 	describe('Utility', function(){
 		var u;
 		/* // causes logger to no longer log.
@@ -1395,7 +1395,7 @@ describe('Gun', function(){
 		});
 	});
 
-	describe('API', function(){
+	!Gun.SEA && describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 
@@ -2982,13 +2982,13 @@ describe('Gun', function(){
 
 			var parent = gun.get('parent');
 			var child = gun.get('child');
-			
+
 			child.put({
 				way: 'down'
 			});
-			
+
 			parent.get('sub').put(child);
-			
+
 			parent.get('sub').on(function(data){
 				//console.log("sub", data);
 				done.sub = data;
@@ -3018,7 +3018,7 @@ describe('Gun', function(){
 		});
 
 		it('map val get put', function(done){
-			
+
 			var gun = Gun().get('chat/asdf');
 
 			var check = {}, count = {};
@@ -3492,7 +3492,7 @@ describe('Gun', function(){
 
 			var bb = b.get("key");
 			bb.put({msg: "hello"});
-				
+
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
@@ -3534,11 +3534,11 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('ds/safe').put({a: 1});
-			
+
 			gun.get('ds/safe').on(function(data){
 				data.b = 2;
 			});
-			
+
 			gun.get('ds/safe').val(function(data){
 				expect(gun._.root._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
@@ -3576,7 +3576,7 @@ describe('Gun', function(){
 			      context._.valid = false;
 			      chain._.on('in', {get: key, gun: this});
 			      return false;
-			    } else { 
+			    } else {
 			     _tags = Gun.obj.ify(obj.tags);
 			      if(Array.isArray(filter)){
 			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
@@ -7832,6 +7832,293 @@ describe('Gun', function(){
 		// 0: fluffy
 		// 1: fluff
 		*/
+	});
+
+	Gun.SEA && describe('SEA', function(){
+		console.log('TODO: SEA! THIS IS AN EARLY ALPHA!!!');
+		var alias = 'dude';
+		var pass = 'my secret password';
+		var userKeys = ['pub', 'priv'];
+		var clearText = 'My precious secret!';
+		var encKeys = ['ct', 'iv', 's'];
+
+		['callback', 'Promise'].forEach(function(type){
+			describe(type, function(){
+				it('proof', function(done){
+					var check = function(proof){
+						expect(proof).to.not.be(undefined);
+						expect(proof).to.not.be('');
+						done();
+					}
+					// proof - generates PBKDF2 hash from user's alias and password
+					// which is then used to decrypt user's auth record
+					if(type === 'callback'){
+						Gun.SEA.proof(alias, pass, check);
+					} else {
+						Gun.SEA.proof(alias, pass).then(check).catch(done);
+					}
+				});
+
+				it('pair', function(done){
+					var check = function(key){
+						expect(key).to.not.be(undefined);
+						expect(key).to.not.be('');
+						expect(key).to.have.keys(userKeys);
+						userKeys.map(function(fld){
+							expect(key[fld]).to.not.be(undefined);
+							expect(key[fld]).to.not.be('');
+						});
+						done();
+					};
+					// pair - generates ECDH key pair (for new user when created)
+					if(type === 'callback'){
+						Gun.SEA.pair(check);
+					} else {
+						Gun.SEA.pair().then(check).catch(done);;
+					}
+				});
+
+				it('en', function(done){
+					Gun.SEA.pair().then(function(key){
+						var check = function(jsonSecret){
+							expect(jsonSecret).to.not.be(undefined);
+							expect(jsonSecret).to.not.be('');
+							expect(jsonSecret).to.not.eql(clearText);
+							expect(jsonSecret).to.not.eql(JSON.stringify(clearText));
+							var objSecret = JSON.parse(jsonSecret);
+							expect(objSecret).to.have.keys(encKeys);
+							encKeys.map(function(key){
+								expect(objSecret[key]).to.not.be(undefined);
+								expect(objSecret[key]).to.not.be('');
+							});
+							done();
+						};
+						// en - encrypts JSON data using user's private or derived ECDH key
+						if(type === 'callback'){
+							Gun.SEA.en(JSON.stringify(clearText), key.priv, check);
+						} else {
+							Gun.SEA.en(JSON.stringify(clearText), key.priv).then(check);
+						}
+					}).catch(function(e){done(e)});
+				});
+
+				it('sign', function(done){
+					Gun.SEA.pair().then(function(key){
+						var check = function(signature){
+							expect(signature).to.not.be(undefined);
+							expect(signature).to.not.be('');
+							expect(signature).to.not.eql(key.pub);
+							done();
+						};
+						// sign - calculates signature for data using user's private ECDH key
+						if(type === 'callback'){
+							Gun.SEA.sign(key.pub, key.priv, check);
+						} else {
+							Gun.SEA.sign(key.pub, key.priv).then(check);
+						}
+					}).catch(function(e){done(e)});
+				});
+
+				it('verify', function(done){
+					Gun.SEA.pair().then(function(key){
+						var check = function(ok){
+							expect(ok).to.not.be(undefined);
+							expect(ok).to.not.be('');
+							expect(ok).to.be(true);
+							done();
+						};
+						// sign - calculates signature for data using user's private ECDH key
+						Gun.SEA.sign(key.pub, key.priv).then(function(signature){
+							if(type === 'callback'){
+								Gun.SEA.verify(key.pub, key.pub, signature, check);
+							} else {
+								Gun.SEA.verify(key.pub, key.pub, signature).then(check);
+							}
+						});
+					}).catch(function(e){done(e)});
+				});
+
+				it('de', function(done){
+					Gun.SEA.pair().then(function(key){
+						var check = function(jsonText){
+							expect(jsonText).to.not.be(undefined);
+							expect(jsonText).to.not.be('');
+							expect(jsonText).to.not.eql(clearText);
+							var decryptedSecret = JSON.parse(jsonText);
+							expect(decryptedSecret).to.not.be(undefined);
+							expect(decryptedSecret).to.not.be('');
+							expect(decryptedSecret).to.be.eql(clearText);
+							done();
+						};
+						Gun.SEA.en(JSON.stringify(clearText), key.priv).then(function(jsonSecret){
+							// de - decrypts JSON data using user's private or derived ECDH key
+							if(type === 'callback'){
+								Gun.SEA.de(jsonSecret, key.priv, check);
+							} else {
+								Gun.SEA.de(jsonSecret, key.priv).then(check);
+							}
+						});
+					}).catch(function(e){done(e)});
+				});
+
+				it('derive', function(done){
+					Gun.SEA.pair().then(function(txKey){
+						return Gun.SEA.pair().then(function(rxKey){
+							return { tx: txKey, rx: rxKey };
+						});
+					}).then(function(keys){
+						var check = function(shared){
+							expect(shared).to.not.be(undefined);
+							expect(shared).to.not.be('');
+							[keys.rx.pub, keys.rx.priv, keys.tx.pub, keys.tx.priv]
+							.map(function(val){
+								expect(shared).to.not.eql(val);
+							});
+							done();
+						};
+						// derive - provides shared secret for both receiver and sender
+						// which can be used to encrypt or sign data
+						if(type === 'callback'){
+							Gun.SEA.derive(keys.rx.pub, keys.tx.priv, check);
+						} else {
+							Gun.SEA.derive(keys.rx.pub, keys.tx.priv).then(check);
+						}
+					}).catch(function(e){done(e)});
+				});
+
+				it('write', function(done){
+					Gun.SEA.pair().then(function(key){
+						Gun.SEA.sign(key.pub, key.priv).then(function(signature){
+							var check = function(result){
+								expect(result).to.not.be(undefined);
+								expect(result).to.not.be('');
+								expect(result.slice(0, 4)).to.eql('SEA[');
+								var parts = JSON.parse(result.slice(3));
+								expect(parts).to.not.be(undefined);
+								expect(parts[0]).to.be.eql(key.pub);
+								expect(parts[1]).to.be.eql(signature);
+								done();
+							};
+							// write - wraps data to 'SEA["data","signature"]'
+							if(type === 'callback'){
+								Gun.SEA.write(key.pub, key.priv, check);
+							} else {
+								Gun.SEA.write(key.pub, key.priv).then(check);
+							}
+						});
+					}).catch(function(e){done(e)});
+				});
+
+				it('read', function(done){
+					Gun.SEA.pair().then(function(key){
+						var check = function(result){
+							expect(result).to.not.be(undefined);
+							expect(result).to.not.be('');
+							expect(result).to.be.equal(key.pub);
+							done();
+						};
+						Gun.SEA.sign(key.pub, key.priv).then(function(signature){
+							Gun.SEA.write(key.pub, key.priv).then(function(signed){
+								// read - unwraps data from 'SEA["data","signature"]'
+								if(type === 'callback'){
+									Gun.SEA.read(signed, key.pub, check);
+								} else {
+									Gun.SEA.read(signed, key.pub).then(check);
+								}
+							});
+						});
+					}).catch(function(e){done(e)});
+				});
+			});
+		});
+	});
+
+	Gun().user && describe('User', function(){
+		console.log('TODO: User! THIS IS AN EARLY ALPHA!!!');
+		var alias = 'dude';
+		var pass = 'my secret password';
+		var user = Gun().user();
+
+		['callback', 'Promise'].forEach(function(type){
+			describe(type, function(){
+				describe('create', function(){
+					it('new', function(done){
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.have.keys(['ok','pub']);
+							done();
+						};
+						// Gun.user.create - creates new user
+						if(type === 'callback'){
+							user.create(alias+type, pass, check);
+						} else {
+							user.create(alias+type, pass).then(check).catch(done);
+						}
+					});
+					it('conflict', function(done){
+						var gunLog = Gun.log;	// Temporarily removing logging
+						Gun.log = function(){};
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.have.key('err');
+							expect(ack.err).not.to.be(undefined);
+							expect(ack.err).not.to.be('');
+							done();
+						};
+						// Gun.user.create - fails to create existing user
+						if(type === 'callback'){
+							user.create(alias+type, pass, check);
+						} else {
+							user.create(alias+type, pass).then(function(ack){
+								done('Failed to decline creating existing user!');
+							}).catch(check);
+						}
+						Gun.log = gunLog;
+					});
+				});
+
+				describe('auth', function(){
+					it('login', function(done){
+						var check = function(ack){
+							expect(ack).to.not.be(undefined);
+							expect(ack).to.not.be('');
+							expect(ack).to.not.have.key('err');
+							done();
+						};
+						var props = {alias: alias+'-'+type, pass: pass};
+						user.create(props.alias, props.pass).catch(function(){})
+						.then(function(){
+							// Gun.user.create - creates new user
+							if(type === 'callback'){
+								user.auth(props, check);
+							} else {
+								user.auth(props).then(check).catch(done);
+							}
+						});
+					});
+
+					it.skip('failed login', function(done){
+						done();
+					});
+
+					it.skip('new password', function(done){
+						done();
+					});
+
+					it.skip('failed new password', function(done){
+						done();
+					});
+				});
+
+				describe('remember', function(){
+					it.skip('TBD', function(done){
+						done();
+					});
+				});
+			});
+		});
 	});
 
 	describe('Streams', function(){

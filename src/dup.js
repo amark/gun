@@ -2,7 +2,7 @@
 var Type = require('./type');
 function Dup(opt){
 	var dup = {s:{}};
-	opt = opt || {max: 1000, age: 1000 * 60 * 2};
+	opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
 	dup.check = function(id){
 		return dup.s[id]? dup.track(id) : false;
 	}
