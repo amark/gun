@@ -8046,9 +8046,11 @@ describe('Gun', function(){
         describe('create', function(){
           it('new', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.keys(['ok','pub']);
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.keys(['ok','pub']);
+              }catch(e){done(e); return};
               done();
             };
             // Gun.user.create - creates new user
@@ -8061,11 +8063,13 @@ describe('Gun', function(){
           it('conflict', function(done){
             Gun.log.off = true;  // Supress all console logging
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.key('err');
-              expect(ack.err).not.to.be(undefined);
-              expect(ack.err).not.to.be('');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.key('err');
+                expect(ack.err).not.to.be(undefined);
+                expect(ack.err).not.to.be('');
+              }catch(e){done(e); return};
               done();
             };
             // Gun.user.create - fails to create existing user
@@ -8082,9 +8086,11 @@ describe('Gun', function(){
         describe('auth', function(){
           it('login', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.not.have.key('err');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+              }catch(e){done(e); return};
               done();
             };
             // Gun.user.auth - authenticates existing user
@@ -8097,11 +8103,13 @@ describe('Gun', function(){
 
           it('wrong password', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.key('err');
-              expect(ack.err).to.not.be(undefined);
-              expect(ack.err).to.not.be('');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.key('err');
+                expect(ack.err).to.not.be(undefined);
+                expect(ack.err).to.not.be('');
+              }catch(e){done(e); return};
               done();
             };
             if(type === 'callback'){
@@ -8115,11 +8123,13 @@ describe('Gun', function(){
 
           it('unknown alias', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.key('err');
-              expect(ack.err).to.not.be(undefined);
-              expect(ack.err).to.not.be('');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.key('err');
+                expect(ack.err).to.not.be(undefined);
+                expect(ack.err).to.not.be('');
+              }catch(e){done(e); return};
               done();
             };
             if(type === 'callback'){
@@ -8133,9 +8143,11 @@ describe('Gun', function(){
 
           it('new password', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.not.have.key('err');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+              }catch(e){done(e); return};
               done();
             };
             // Gun.user.auth - with newpass props sets new password
@@ -8149,11 +8161,13 @@ describe('Gun', function(){
 
           it('failed new password', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.key('err');
-              expect(ack.err).to.not.be(undefined);
-              expect(ack.err).to.not.be('');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.key('err');
+                expect(ack.err).to.not.be(undefined);
+                expect(ack.err).to.not.be('');
+              }catch(e){done(e); return};
               done();
             };
             var props = {alias: alias+type, pass: pass+'not', newpass: pass+' new'};
@@ -8173,18 +8187,22 @@ describe('Gun', function(){
         describe('leave', function(){
           it('valid session', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.not.have.key('err');
-              expect(ack).to.have.key('ok');
-              expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+                expect(ack).to.have.key('ok');
+                expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+              }catch(e){done(e); return};
               done();
             };
             user.auth(alias+type, pass+' new').then(function(usr){
-              expect(usr).to.not.be(undefined);
-              expect(usr).to.not.be('');
-              expect(usr).to.not.have.key('err');
-              expect(usr).to.have.key('put');
+              try{
+                expect(usr).to.not.be(undefined);
+                expect(usr).to.not.be('');
+                expect(usr).to.not.have.key('err');
+                expect(usr).to.have.key('put');
+              }catch(e){done(e); return};
               // Gun.user.leave - performs logout for authenticated user
               if(type === 'callback'){
                 user.leave(check);
@@ -8196,10 +8214,12 @@ describe('Gun', function(){
 
           it('no session', function(done){
             var check = function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.not.have.key('err');
-              expect(ack).to.have.key('ok');
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+                expect(ack).to.have.key('ok');
+              }catch(e){done(e); return};
               done();
             };
             user.leave().then(function(ack){
@@ -8213,9 +8233,44 @@ describe('Gun', function(){
           });
         });
 
-        describe('delete - TODO: how?', function(){
-          it.skip('existing authenticated user');
-          it.skip('unauthenticated user');
+        describe('delete', function(){
+          it('existing authenticated user', function(done){
+            var check = function(ack){
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+                expect(ack).to.have.key('ok');
+                expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+              }catch(e){done(e); return};
+              done();
+            };
+            var aalias = alias+type+'del';
+            user.create(aalias, pass).catch(check).then(function(ack){
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.have.keys(['ok','pub']);
+              }catch(e){done(e); return};
+              user.auth(aalias, pass).then(function(usr){
+                try{
+                  expect(usr).to.not.be(undefined);
+                  expect(usr).to.not.be('');
+                  expect(usr).to.not.have.key('err');
+                  expect(usr).to.have.key('put');
+                }catch(e){done(e); return};
+                // Gun.user.delete - deöetes existing user account
+                if(type === 'callback'){
+                  user.delete(alias+type, pass+' new', check);
+                } else {
+                  user.delete(alias+type, pass+' new').then(check).catch(done);
+                }
+              }).catch(done);
+            });
+          });
+
+          it.skip('unauthenticated existing user');
+          it.skip('unauthenticated other user');
         });
 
         describe('recall', function(){
