@@ -44,7 +44,8 @@
     var user = root._.user || (root._.user = root.chain()); // create a user context.
     user.create = User.create; // attach a factory method to it.
     user.auth = User.auth; // and a login method.
-    user.remember = User.remember; // and a credentials persisting method.
+    user.leave = User.leave; // and a logout method.
+    // TODO: definitely needed this: user.delete = User.delete;
     return user; // return the user!
   }
 
@@ -120,9 +121,10 @@
     if (cb){doCreate(cb, cb)} else {return new Promise(doCreate)}
   };
   // now that we have created a user, we want to authenticate them!
-  User.auth = function(props, cb){
-    var alias = props.alias, pass = props.pass, newpass = props.newpass;
+  User.auth = function(alias, pass, cb, opt){
+    var opts = opt || (typeof cb !== 'function' && cb) || {};
     var root = this.back(-1);
+    cb = typeof cb === 'function' && cb;
     var doAuth = function(resolve, reject){
       // load all public keys associated with the username alias we want to log in with.
       root.get('alias/'+alias).get(function(at, ev){
@@ -168,10 +170,10 @@
                   // emit an auth event, useful for page redirects and stuff.
                   Gun.on('auth', user._);
                 }
-                if(newpass) {
+                if(opts.newpass) {
                   // password update so encrypt private key using new pwd + salt
                   var newsalt = Gun.text.random(64);
-                  SEA.proof(newpass, newsalt).then(function(proof){
+                  SEA.proof(opts.newpass, newsalt).then(function(proof){
                     SEA.en(priv, proof).then(function(encVal){
                       return SEA.write(encVal, priv).then(function(sAuth){
                         return { pub: key, auth: sAuth };
@@ -211,13 +213,14 @@
     };
     if (cb){doAuth(cb, cb)} else {return new Promise(doAuth)}
   };
-  // now that we have created a user, we want to authenticate them!
-  User.remember = function(props, cb){
-    var doRemember = function(resolve, reject){
-      Gun.log('User.remember is TODO: still');
-      reject({ err: 'Not implemented.' });
+  // now that we authenticated a user, we want to support logout too!
+  User.leave = function(cb){
+    var root = this.back(-1);
+    var doLogout = function(resolve, reject){
+      root._.user = root.chain();
+      resolve({ok: 0});
     }
-    if (cb){doRemember(cb, cb)} else {return new Promise(doRemember)}
+    if (cb){doLogout(cb, cb)} else {return new Promise(doLogout)}
   };
 
   // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.

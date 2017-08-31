@@ -7843,7 +7843,7 @@ describe('Gun', function(){
     var encKeys = ['ct', 'iv', 's'];
 
     ['callback', 'Promise'].forEach(function(type){
-      describe(type, function(){
+      describe(type+':', function(){
         it('proof', function(done){
           var check = function(proof){
             expect(proof).to.not.be(undefined);
@@ -8037,11 +8037,12 @@ describe('Gun', function(){
     console.log('TODO: User! THIS IS AN EARLY ALPHA!!!');
     var alias = 'dude';
     var pass = 'my secret password';
-    var user = Gun().user();
+    var gun = Gun();
+    var user = gun.user();
     Gun.log.off = true;  // Supress all console logging
 
     ['callback', 'Promise'].forEach(function(type){
-      describe(type, function(){
+      describe(type+':', function(){
         describe('create', function(){
           it('new', function(done){
             var check = function(ack){
@@ -8086,12 +8087,11 @@ describe('Gun', function(){
               expect(ack).to.not.have.key('err');
               done();
             };
-            var props = {alias: alias+type, pass: pass};
             // Gun.user.auth - authenticates existing user
             if(type === 'callback'){
-              user.auth(props, check);
+              user.auth(alias+type, pass, check);
             } else {
-              user.auth(props).then(check).catch(done);
+              user.auth(alias+type, pass).then(check).catch(done);
             }
           });
 
@@ -8104,11 +8104,10 @@ describe('Gun', function(){
               expect(ack.err).to.not.be('');
               done();
             };
-            var props = {alias: alias+type, pass: pass+'not'};
             if(type === 'callback'){
-              user.auth(props, check);
+              user.auth(alias+type, pass+'not', check);
             } else {
-              user.auth(props).then(function(ack){
+              user.auth(alias+type, pass+'not').then(function(ack){
                 done('Unexpected login success!');
               }).catch(check);
             }
@@ -8123,11 +8122,10 @@ describe('Gun', function(){
               expect(ack.err).to.not.be('');
               done();
             };
-            var props = {alias: alias+type+'not', pass: pass};
             if(type === 'callback'){
-              user.auth(props, check);
+              user.auth(alias+type+'not', pass, check);
             } else {
-              user.auth(props).then(function(ack){
+              user.auth(alias+type+'not', pass).then(function(ack){
                 done('Unexpected login success!');
               }).catch(check);
             }
@@ -8140,12 +8138,12 @@ describe('Gun', function(){
               expect(ack).to.not.have.key('err');
               done();
             };
-            var props = {alias: alias+type, pass: pass, newpass: pass+' new'};
             // Gun.user.auth - with newpass props sets new password
             if(type === 'callback'){
-              user.auth(props, check);
+              user.auth(alias+type, pass, check, {newpass: pass+' new'});
             } else {
-              user.auth(props).then(check).catch(done);
+              user.auth(alias+type, pass, {newpass: pass+' new'}).then(check)
+              .catch(done);
             }
           });
 
@@ -8160,19 +8158,79 @@ describe('Gun', function(){
             };
             var props = {alias: alias+type, pass: pass+'not', newpass: pass+' new'};
             if(type === 'callback'){
-              user.auth(props, check);
+              user.auth(alias+type, pass+'not', check, {newpass: pass+' new'});
             } else {
-              user.auth(props).then(function(ack){
+              user.auth(alias+type, pass+'not', {newpass: pass+' new'})
+              .then(function(ack){
                 done('Unexpected password change success!');
               }).catch(check);
             }
           });
+
+          it.skip('no recall no session storing');
         });
 
-        describe('remember', function(){
-          it.skip('TBD', function(done){
-            done();
+        describe('leave', function(){
+          it('valid session', function(done){
+            var check = function(ack){
+              expect(ack).to.not.be(undefined);
+              expect(ack).to.not.be('');
+              expect(ack).to.not.have.key('err');
+              expect(ack).to.have.key('ok');
+              expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+              done();
+            };
+            user.auth(alias+type, pass+' new').then(function(usr){
+              expect(usr).to.not.be(undefined);
+              expect(usr).to.not.be('');
+              expect(usr).to.not.have.key('err');
+              expect(usr).to.have.key('put');
+              // Gun.user.leave - performs logout for authenticated user
+              if(type === 'callback'){
+                user.leave(check);
+              } else {
+                user.leave().then(check).catch(done);
+              }
+            }).catch(done);
           });
+
+          it('no session', function(done){
+            var check = function(ack){
+              expect(ack).to.not.be(undefined);
+              expect(ack).to.not.be('');
+              expect(ack).to.not.have.key('err');
+              expect(ack).to.have.key('ok');
+              done();
+            };
+            user.leave().then(function(ack){
+              expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+              if(type === 'callback'){
+                user.leave(check);
+              } else {
+                user.leave().then(check).catch(done);
+              }
+            });
+          });
+        });
+
+        describe('delete - TODO: how?', function(){
+          it.skip('existing authenticated user');
+          it.skip('unauthenticated user');
+        });
+
+        describe('recall', function(){
+          it.skip('with zero validity auth skips storing');
+          it.skip('with validity auth stores session');
+          it.skip('valid session');
+          it.skip('expired session');
+          it.skip('changed password');
+          it.skip('no session');
+        });
+
+        describe('alive', function(){
+          it.skip('valid session');
+          it.skip('expired session');
+          it.skip('recall hook session manipulation');
         });
       });
     });
