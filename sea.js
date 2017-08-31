@@ -75,38 +75,52 @@
   function authenticate(alias,pass,root){
     return new Promise(function(resolve, reject){
       // load all public keys associated with the username alias we want to log in with.
-      root.get('alias/'+alias).get(function(at, ev){
-        ev.off();
-        if(!at.put){
+      root.get('alias/'+alias).get(function(rat, rev){
+        rev.off();
+        if(!rat.put){
           // if no user, don't do anything.
           var err = 'No user!';
           Gun.log(err);
           return reject({err: err});
         }
-        // then attempt to log into each one until we find ours!
-        // (if two users have the same username AND the same password... that would be bad)
-        Gun.obj.map(at.put, function(val, key){
+        // then figuring out all possible candidates having matching username
+        var aliases = [];
+        Gun.obj.map(rat.put, function(at, key){
           // grab the account associated with this public key.
           root.get(key).get(function(at, ev){
+            if(!key.slice || 'pub/' !== key.slice(0,4)){return}
             key = key.slice(4);
             ev.off();
-            if(!at.put){return} // reject({err: 'Public key does not exist!'})
-            // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-            SEA.read(at.put.salt, key).then(function(salt){
-              return SEA.proof(pass, salt);
-            }).then(function(proof){
-              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-              return SEA.read(at.put.auth, key).then(function(auth){
-                return SEA.de(auth, proof);
-              }).catch(function(){reject({err: 'Failed to decrypt private key!'})});
+            if(!at.put){return}
+            aliases.push({key: key, at: at});
+          });
+        });
+        if (!aliases.length){return reject({err: 'Public key does not exist!'})}
+        // then attempt to log into each one until we find ours!
+        // (if two users have the same username AND the same password... that would be bad)
+        aliases.forEach(function(one, index){
+          var at = one.at, key = one.key;
+          var remaining = (aliases.length - index) > 1;
+          if(!at.put){
+            return (!remaining) && reject({err: 'Public key does not exist!'})
+          }
+          // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
+          SEA.read(at.put.salt, key).then(function(salt){
+            return SEA.proof(pass, salt);
+          }).then(function(proof){
+            // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+            return SEA.read(at.put.auth, key).then(function(auth){
+              return SEA.de(auth, proof);
+            }).catch(function(e){
             }).then(function(priv){
               // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
               // if we were successful, then that meanswe're logged in!
-              return (priv && resolve({pub: key, priv: priv, at: at}))
+              return remaining ? undefined // Not done yet
+              : priv ? resolve({pub: key, priv: priv, at: at})
               // Or else we failed to log in...
-              || reject({err: 'Failed to decrypt private key!'});
-            }).catch(function(){reject({err: 'Failed to create proof!'})});
-          });
+              : reject({err: 'Failed to decrypt private key!'});
+            });
+          }).catch(function(){reject({err: 'Failed to create proof!'})});
         });
       });
     });
@@ -189,19 +203,14 @@
           var newsalt = Gun.text.random(64);
           SEA.proof(opts.newpass, newsalt).then(function(proof){
             SEA.en(key.priv, proof).then(function(encVal){
-              return SEA.write(encVal, key.priv).then(function(sAuth){
-                return { pub: key.pub, auth: sAuth };
-              });
+              return {
+                alias: alias,
+                pub: key.pub,
+                auth: encVal,
+                salt: newsalt
+              };
             }).then(function(user){
-              return SEA.write(alias, key.priv).then(function(sAlias){
-                user.alias = sAlias; return user;
-              });
-            }).then(function(user){
-              return SEA.write(newsalt, key.priv).then(function(sSalt){
-                user.salt = sSalt; return user;
-              });
-            }).then(function(user){
-              var tmp = 'pub/'+key.pub;
+              var tmp = 'pub/'+user.pub;
               // awesome, now we can update the user using public key ID.
               root.get(tmp).put(user);
               // then we're done
@@ -211,10 +220,9 @@
         } else {
           doLogin();
         }
-        return;
       }).catch(function(e){
         Gun.log('Failed to sign in!');
-        reject({err: 'Auth attempt failed'});
+        reject({err: 'Auth attempt failed! Reason: '+(e && e.err) || e || ''});
       });
     };
     if (cb){doIt(cb, cb)} else {return new Promise(doIt)}
@@ -395,13 +403,11 @@
   // Does enc/dec key like OpenSSL - works with CryptoJS encryption/decryption
   function makeKey(p,s){
     var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
-    var h128 = new Buffer(nodeCrypto.createHash('md5').update(ps).digest('hex'), 'hex');
+    var h128 = nodeCrypto.createHash('md5').update(ps).digest();
     // TODO: 'md5' is insecure, do we need OpenSSL compatibility anymore ?
     return Buffer.concat([
       h128,
-      new Buffer(nodeCrypto.createHash('md5').update(
-        Buffer.concat([h128, ps]).toString('base64'), 'base64'
-      ).digest('hex'), 'hex')
+      nodeCrypto.createHash('md5').update(Buffer.concat([h128, ps])).digest()
     ]);
   }
 
@@ -525,8 +531,13 @@
     };
     if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
   };
-  SEA.write = function(m,p,cb){
+  SEA.write = function(mm,p,cb){
     var doIt = function(resolve, reject) {
+      var m = mm;
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){m = mm}
+      m = m.slice(3);
+      try{m = JSON.parse(m);
+      }catch(e){m = mm}
       SEA.sign(m, p).then(function(signature){
         resolve('SEA'+JSON.stringify([m,signature]));
       }).catch(function(e){Gun.log(e); reject(e)});
@@ -536,14 +547,12 @@
   SEA.read = function(m,p,cb){
     var doIt = function(resolve, reject) {
       if(!m){ return resolve(); }
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){ return resolve(m); }
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){return resolve(m)}
       m = m.slice(3);
       try{m = JSON.parse(m);
       }catch(e){ return reject(e); }
       m = m || '';
-      SEA.verify(m[0], p, m[1]).then(function(ok){
-        resolve(ok && m[0]);
-      });
+      SEA.verify(m[0], p, m[1]).then(function(ok){resolve(ok && m[0])});
     };
     if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
   };
