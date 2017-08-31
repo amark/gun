@@ -19,8 +19,8 @@ var root;
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
   var leaked = []
-  for (var key in gleak.globe){ if (!(key in gleak.globals)){ leaked.push(key)} }
-  if (leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
+  for (var key in gleak.globe){ if(!(key in gleak.globals)){ leaked.push(key)} }
+  if(leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
 }};
 (function(env){
   for (var key in (gleak.globe = env)){ gleak.globals[key] = true }
@@ -6900,7 +6900,7 @@ describe('Gun', function(){
         var now = new Date().getTime();
         var cb;
         for (var i = 1; i <= num; i++) {
-          if (i === num) {
+          if(i === num) {
             cb = function (err, ok) {
               console.log(num + 'ops: ' + (new Date().getTime() - now)/1000 + 's');
             }
@@ -6929,7 +6929,7 @@ describe('Gun', function(){
         var now = new Date().getTime();
         var cb;
         for (var i = 1; i <= num; i++) {
-          if (i === num) {
+          if(i === num) {
             cb = function () {
               console.log(num + ' API ops: ' + (new Date().getTime() - now)/1000 + 's');
               t && done();
@@ -7117,7 +7117,7 @@ describe('Gun', function(){
         var now = new Date().getTime();
         var cb;
         for (var i = 1; i <= num; i++) {
-          if (i === num) {
+          if(i === num) {
             cb = function (err, ok) {
               console.log(num + 'MUTANT ops: ' + (new Date().getTime() - now)/1000 + 's');
               t && done();
@@ -7265,7 +7265,7 @@ describe('Gun', function(){
       gun.map(function (player, number) {
         players[number] = player;
         players[number].history = [];
-        if (!player.taken && !me) {
+        if(!player.taken && !me) {
           this.put({
             taken: true,
             history: {
@@ -7645,7 +7645,7 @@ describe('Gun', function(){
       Gun.log.debug = 1; console.log("------------------");
       gun.path('1.2.data').on(function (data) {
         console.log("??????", data);
-        if (data) {
+        if(data) {
           // gun will never receive the "true" update
           done();
         }
@@ -8196,19 +8196,25 @@ describe('Gun', function(){
               }catch(e){done(e); return};
               done();
             };
-            user.auth(alias+type, pass+' new').then(function(usr){
-              try{
-                expect(usr).to.not.be(undefined);
-                expect(usr).to.not.be('');
-                expect(usr).to.not.have.key('err');
-                expect(usr).to.have.key('put');
-              }catch(e){done(e); return};
-              // Gun.user.leave - performs logout for authenticated user
-              if(type === 'callback'){
-                user.leave(check);
-              } else {
-                user.leave().then(check).catch(done);
-              }
+            var usr = alias+type+'leave';
+            user.create(usr, pass).then(function(ack){
+              expect(ack).to.not.be(undefined);
+              expect(ack).to.not.be('');
+              expect(ack).to.have.keys(['ok','pub']);
+              user.auth(usr, pass).then(function(usr){
+                try{
+                  expect(usr).to.not.be(undefined);
+                  expect(usr).to.not.be('');
+                  expect(usr).to.not.have.key('err');
+                  expect(usr).to.have.key('put');
+                }catch(e){done(e); return};
+                // Gun.user.leave - performs logout for authenticated user
+                if(type === 'callback'){
+                  user.leave(check);
+                } else {
+                  user.leave().then(check).catch(done);
+                }
+              }).catch(done);
             }).catch(done);
           });
 
@@ -8222,20 +8228,28 @@ describe('Gun', function(){
               }catch(e){done(e); return};
               done();
             };
-            user.leave().then(function(ack){
-              expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-              if(type === 'callback'){
-                user.leave(check);
-              } else {
-                user.leave().then(check).catch(done);
-              }
-            });
+            expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+            if(type === 'callback'){
+              user.leave(check);
+            } else {
+              user.leave().then(check).catch(done);
+            }
           });
         });
 
         describe('delete', function(){
-          it('existing authenticated user', function(done){
-            var check = function(ack){
+          var usr = alias+type+'del';
+
+          var createUser = function(a, p){
+            return user.create(a, p).then(function(ack){
+              expect(ack).to.not.be(undefined);
+              expect(ack).to.not.be('');
+              expect(ack).to.have.keys(['ok','pub']);
+              return ack;
+            });
+          };
+          var check = function(done){
+            return function(ack){
               try{
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
@@ -8245,32 +8259,56 @@ describe('Gun', function(){
               }catch(e){done(e); return};
               done();
             };
-            var aalias = alias+type+'del';
-            user.create(aalias, pass).catch(check).then(function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.keys(['ok','pub']);
-              }catch(e){done(e); return};
-              user.auth(aalias, pass).then(function(usr){
+          };
+
+          it('existing authenticated user', function(done){
+            createUser(usr, pass).then(function(){
+              user.auth(usr, pass).then(function(ack){
                 try{
-                  expect(usr).to.not.be(undefined);
-                  expect(usr).to.not.be('');
-                  expect(usr).to.not.have.key('err');
-                  expect(usr).to.have.key('put');
+                  expect(ack).to.not.be(undefined);
+                  expect(ack).to.not.be('');
+                  expect(ack).to.not.have.key('err');
+                  expect(ack).to.have.key('put');
                 }catch(e){done(e); return};
-                // Gun.user.delete - deöetes existing user account
+                // Gun.user.delete - deletes existing user account
                 if(type === 'callback'){
-                  user.delete(alias+type, pass+' new', check);
+                  user.delete(usr, pass, check(done));
                 } else {
-                  user.delete(alias+type, pass+' new').then(check).catch(done);
+                  user.delete(usr, pass).then(check(done)).catch(done);
                 }
               }).catch(done);
+            }).catch(done);
+          });
+
+          it('unauthenticated existing user', function(done){
+            createUser(usr, pass).catch(function(){})
+            .then(function(){
+              if(type === 'callback'){
+                user.delete(usr, pass, check(done));
+              } else {
+                user.delete(usr, pass).then(check(done)).catch(done);
+              }
             });
           });
 
-          it.skip('unauthenticated existing user');
-          it.skip('unauthenticated other user');
+          it('non-existing user', function(done){
+            var notFound = function(ack){
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('put');
+                expect(ack).to.have.key('err');
+              }catch(e){done(e); return};
+              done();
+            };
+            if(type === 'callback'){
+              user.delete('someone', 'password guess', notFound);
+            } else {
+              user.delete('someone', 'password guess').then(function(){
+                done('Unexpectedly deleted guessed user!');
+              }).catch(notFound);
+            }
+          });
         });
 
         describe('recall', function(){
