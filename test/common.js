@@ -1,7 +1,16 @@
 var root;
 (function(env){
   root = env.window ? env.window : global;
-  env.window && root.localStorage && root.localStorage.clear();
+
+  if(!root.sessionStorage){
+    root.sessionStorage = new require('node-localstorage').LocalStorage('session');
+  }
+  root.sessionStorage.clear();
+  if(!root.localStorage){
+    root.localStorage = new require('node-localstorage').LocalStorage('local');
+  }
+  root.localStorage.clear();
+
   try{ require('fs').unlinkSync('data.json') }catch(e){}
   //root.Gun = root.Gun || require('../gun');
   if(root.Gun){
@@ -8084,6 +8093,14 @@ describe('Gun', function(){
         });
 
         describe('auth', function(){
+          var checkStorage = function(done){
+            return function(){
+console.log('auth remember:', root.sessionStorage.getItem('remember'))
+console.log('auth protected:', root.localStorage.getItem('remember'))
+              done();
+            };
+          };
+
           it('login', function(done){
             var check = function(ack){
               try{
@@ -8181,7 +8198,18 @@ describe('Gun', function(){
             }
           });
 
-          it.skip('no recall no session storing');
+          it('without PIN auth session stored to sessionStorage', function(done){
+            user.auth(alias+type, pass+' new').then(checkStorage(done)).catch(done);
+          });
+
+          it('with PIN auth session stored to sessionStorage', function(done){
+            if(type === 'callback'){
+              user.auth(alias+type, pass+' new', checkStorage(done), {pin: 'PIN'});
+            } else {
+              user.auth(alias+type, pass+' new', {pin: 'PIN'})
+              .then(checkStorage(done)).catch(done);
+            }
+          });
         });
 
         describe('leave', function(){
@@ -8312,17 +8340,201 @@ describe('Gun', function(){
         });
 
         describe('recall', function(){
-          it.skip('with zero validity auth skips storing');
-          it.skip('with validity auth stores session');
-          it.skip('valid session');
+          var doCheck = function(done, hasPin){
+            return function(){
+              expect(root.sessionStorage.getItem('user')).to.not.be(undefined);
+              expect(root.sessionStorage.getItem('user')).to.not.be('');
+              expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
+              expect(root.sessionStorage.getItem('remember')).to.not.be('');
+              if(hasPin){
+                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.localStorage.getItem('remember')).to.not.be('');
+              }
+              done();
+            };
+          };
+          it('with PIN auth session stored to localStorage', function(done){
+            var doAction = function(){
+              user.auth(alias+type, pass+' new', { pin: 'PIN' })
+              .then(doCheck(done, true)).catch(done);
+            };
+            if(type === 'callback'){
+              user.recall(doAction, { session: false });
+            } else {
+              user.recall({ session: false }).then(doAction).catch(done)
+            }
+          });
+
+          it('without PIN auth session stored to sessionStorage', function(done){
+            var doAction = function(){
+              user.auth(alias+type, pass+' new').then(doCheck(done));
+            };
+            if(type === 'callback'){
+              user.recall(doAction, { session: false });
+            } else {
+              user.recall({ session: false }).then(doAction).catch(done)
+            }
+          });
+
+          it('no validity no session storing', function(done){
+            var doAction = function(){
+              user.auth(alias+type, pass+' new').then(doCheck(done)).catch(done);
+            };
+            if(type === 'callback'){
+              user.recall(0, doAction);
+            } else {
+              user.recall(0).then(doAction).catch(done);
+            }
+          });
+
+          it('validity but no PIN stored to sessionStorage', function(done){
+            var doAction = function(){
+              user.auth(alias+type, pass+' new').then(doCheck(done)).catch(done);
+            };
+            if(type === 'callback'){
+              user.recall(12 * 60 * 60, doAction, {session: false});
+            } else {
+              user.recall(12 * 60 * 60, {session: false}).then(doAction)
+              .catch(done);
+            }
+          });
+
+          it('valid sessionStorage session', function(done){
+            var check = function(ack){
+              // TODO: check
+              done();
+            };
+            user.auth(alias+type, pass+' new').then(function(usr){
+              var sUser;
+              var sRemember;
+              try{
+                expect(usr).to.not.be(undefined);
+                expect(usr).to.not.be('');
+                expect(usr).to.not.have.key('err');
+                expect(usr).to.have.key('put');
+                expect(root.sessionStorage.getItem('user')).to.be(alias+type);
+                expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.sessionStorage.getItem('remember')).to.not.be('');
+
+                sUser = root.sessionStorage.getItem('user');
+                sRemember = root.sessionStorage.getItem('remember');
+              }catch(e){done(e); return};
+              user.leave().then(function(ack){
+                try{
+                  expect(ack).to.have.key('ok');
+                  expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+                  expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
+                  expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
+                }catch(e){done(e); return};
+
+                root.sessionStorage.setItem('user', sUser);
+                root.sessionStorage.setItem('remember', sRemember);
+
+                user.recall(12 * 60 * 60, {session: false}).then(doCheck(done))
+                .catch(done);
+              }).catch(done);
+            }).catch(done);
+          });
+
+          it('valid localStorage session', function(done){
+            var check = function(ack){
+              // TODO: check
+              done();
+            };
+            user.auth(alias+type, pass+' new', { pin: 'PIN' }).then(function(usr){
+              var sUser;
+              var sRemember;
+              var lRemember;
+              try{
+                expect(usr).to.not.be(undefined);
+                expect(usr).to.not.be('');
+                expect(usr).to.not.have.key('err');
+                expect(usr).to.have.key('put');
+                expect(root.sessionStorage.getItem('user')).to.be(alias+type);
+                expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.sessionStorage.getItem('remember')).to.not.be('');
+                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.localStorage.getItem('remember')).to.not.be('');
+
+                sUser = root.sessionStorage.getItem('user');
+                sRemember = root.sessionStorage.getItem('remember');
+                lRemember = root.localStorage.getItem('remember');
+              }catch(e){done(e); return};
+              user.leave().then(function(ack){
+                try{
+                  expect(ack).to.have.key('ok');
+                  expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
+                  expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
+                  expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
+                  expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
+                }catch(e){done(e); return};
+
+                root.sessionStorage.setItem('user', sUser);
+                root.sessionStorage.setItem('remember', sRemember);
+                root.localStorage.setItem('remember', lRemember);
+
+                user.recall(12 * 60 * 60, {session: false}).then(doCheck(done))
+                .catch(done);
+              }).catch(done);
+            }).catch(done);
+          });
+
+          it.skip('invalid sessionStorage session');
           it.skip('expired session');
           it.skip('changed password');
           it.skip('no session');
         });
 
         describe('alive', function(){
-          it.skip('valid session');
-          it.skip('expired session');
+          it('valid session', function(done){
+            var check = function(ack){
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.key('err');
+                expect(ack).to.have.keys(['sea', 'pub']);
+              }catch(e){done(e); return};
+              done();
+            };
+            var usr = alias+type+'alive';
+            user.create(usr, pass).then(function(ack){
+              expect(ack).to.not.be(undefined);
+              expect(ack).to.not.be('');
+              expect(ack).to.have.keys(['ok','pub']);
+              user.auth(usr, pass, { pin: 'PIN' }).then(function(usr){
+                try{
+                  expect(usr).to.not.be(undefined);
+                  expect(usr).to.not.be('');
+                  expect(usr).to.not.have.key('err');
+                  expect(usr).to.have.key('put');
+                }catch(e){done(e); return};
+                // Gun.user.alive - keeps/checks User authentiation state
+                if(type === 'callback'){
+                  user.alive(check);
+                } else {
+                  user.alive().then(check).catch(done);
+                }
+              }).catch(done);
+            }).catch(done);
+          });
+
+          it('expired session', function(done){
+            var check = function(ack){
+              try{
+                expect(ack).to.not.be(undefined);
+                expect(ack).to.not.be('');
+                expect(ack).to.not.have.keys(['sea', 'pub']);
+                expect(ack).to.have.key('err');
+              }catch(e){done(e); return};
+              done();
+            };
+            user.leave().catch(function(){}).then(function(){
+              user.alive().then(function(){
+                done('Unexpected alive session!');
+              }).catch(check);
+            }).catch(done);
+          });
+
           it.skip('recall hook session manipulation');
         });
       });

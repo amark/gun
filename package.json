@@ -51,6 +51,7 @@
     "buffer": "^5.0.7",
     "eccrypto": "^1.0.3",
     "formidable": ">=1.1.1",
+    "node-localstorage": "^1.3.0",
     "subtle": "^0.1.8",
     "text-encoding": "^0.6.4",
     "ws": "~>2.2.3"
