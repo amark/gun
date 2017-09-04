@@ -51,7 +51,7 @@
     validity: 60 * 60 * 12,  // 12 hours
     session: true,
     // or return new Promise(function(resolve, reject){(resolve(props))})
-    hook: function(props) {return props}  // { iat, exp, alias, proof }
+    hook: function(props) {return props}  // { iat, exp, alias, remember }
   };
 
   // let's extend the gun chain with a `user` function.
@@ -115,7 +115,7 @@
           var at = one.at, pub = one.pub;
           var remaining = (aliases.length - index) > 1;
           if(!at.put){
-            return (!remaining) && reject({err: 'Public key does not exist!'})
+            return (!remaining) && reject({err: 'Public key does not exist!'});
           }
           // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
           SEA.read(at.put.salt, pub).then(function(salt){
@@ -124,16 +124,21 @@
           }).catch(function(e){reject({err: 'Failed to create proof!'})})
           .then(function(proof){
             // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-            return SEA.read(at.put.auth, pub).then(function(auth){
+            SEA.read(at.put.auth, pub).then(function(auth){
               return SEA.de(auth, proof)
               .catch(function(e){reject({err: 'Failed to decrypt secret!'})});
             }).then(function(priv){
               // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
               // if we were successful, then that meanswe're logged in!
-              return remaining ? undefined // Not done yet
-              : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
-              // Or else we failed to log in...
-              : reject({err: 'Failed to decrypt private key!'});
+              if(priv){
+                resolve({pub: pub, priv: priv, at: at, proof: proof})
+              } else if(!remaining){
+                reject({err: 'Public key does not exist!'});
+              }
+              // return remaining ? undefined // Not done yet
+              // : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
+              // // Or else we failed to log in...
+              // : reject({err: 'Failed to decrypt private key!'});
             }).catch(function(e){reject({err: 'Failed read secret!'})});
           });
         });
@@ -154,13 +159,48 @@
     user._.pub = key.pub;
     //console.log("authorized", user._);
     // persist authentication
-    return authpersist(user._, key.proof, opts)
-    .then(function(){
+    return authpersist(user._, key.proof, opts).then(function(){
       // emit an auth event, useful for page redirects and stuff.
       Gun.on('auth', user._);
       // returns success with the user data credentials.
       return user._;
     });
+  }
+
+  function updatestorage(proof,priv,pin){
+    return function(props){
+      return new Promise(function(resolve, reject){
+        if(!Gun.obj.has(props, 'alias')){return resolve()}
+        if (proof && Gun.obj.has(props, 'iat')) {
+          props.proof = proof;
+          delete props.remember;  // Not stored if present
+
+          var remember = (pin && {alias: props.alias, pin: pin }) || props;
+          var protected = !authsettings.session && pin && props;
+
+          return SEA.write(JSON.stringify(remember), priv).then(function(signed){
+            sessionStorage.setItem('user', props.alias);
+            sessionStorage.setItem('remember', signed);
+            if (!protected) {
+              localStorage.removeItem('remember');
+            }
+            return !protected || SEA.en(protected, pin).then(function(encrypted){
+              return encrypted && SEA.write(encrypted, priv)
+              .then(function(encsig){
+                localStorage.setItem('remember', encsig);
+              }).catch(reject);
+            }).catch(reject);
+          }).then(function(){
+            resolve(props);
+          }).catch(function(e){reject({err: 'Session persisting failed!'})});
+        } else  {
+          localStorage.removeItem('remember');
+          sessionStorage.removeItem('user');
+          sessionStorage.removeItem('remember');
+        }
+        resolve(props);
+      });
+    }
   }
 
   // This internal func persists User authentication if so configured
@@ -172,51 +212,25 @@
     // IF authsettings.validity === 0 THEN no remember-me, ever
     // IF authsettings.session === true THEN no window.localStorage in use; nor PIN
     // ELSE if no PIN then window.sessionStorage
-    return new Promise(function(resolve, reject){
-      var pin = Gun.obj.has(opts, 'pin') && opts.pin;
-      var doIt = function(props){
-        if (props.alias) {
-          if (props.proof && props.iat) {
-            pin = pin && new Buffer(pin, 'utf8').toString('base64');
-            var remember = (pin && {alias: props.alias, pin: pin }) || props;
-            var protected = !authsettings.session && pin && props;
+    var pin = Gun.obj.has(opts, 'pin') && opts.pin
+    && new Buffer(opts.pin, 'utf8').toString('base64');
+    var args = { alias: user.alias };
 
-            return SEA.write(JSON.stringify(remember), user.sea).then(function(signed){
-              sessionStorage.setItem('user', props.alias);
-              sessionStorage.setItem('remember', signed);
-              if (!protected) {
-                localStorage.removeItem('remember');
-              }
-              return !protected || SEA.en(protected, pin).then(function(encrypted){
-                return encrypted && SEA.write(encrypted, user.sea)
-                .then(function(encsig){
-                  localStorage.setItem('remember', encsig);
-                });
-              });
-            }).then(function(){
-              resolve({ok: 0});
-            }).catch(function(){reject({err: 'Session persisting failed!'});});
-          } else  {
-            localStorage.removeItem('remember');
-            sessionStorage.removeItem('user');
-            sessionStorage.removeItem('remember');
-          }
-        }
-        resolve({ok: 0});
-      };
-      var args = { alias: user.alias };
-
-      if(proof && authsettings.validity){
-        args.proof = proof;
-        args.iat = Math.ceil(Date.now() / 1000);  // seconds
-        args.exp = authsettings.validity * 60;    // seconds
-        var props = authsettings.hook(args);
-        if(props instanceof Promise){props.then(doIt);
-        } else {doIt(props)}
-      } else {
-        doIt(args);
+    if(proof && authsettings.validity){
+      args.iat = Math.ceil(Date.now() / 1000);  // seconds
+      args.exp = authsettings.validity * 60;    // seconds
+      if (Gun.obj.has(opts, 'pin')){
+        args.remember = true;                   // for hook - not stored
       }
-    });
+      var props = authsettings.hook(args);
+      if(props instanceof Promise){
+        return props.then(updatestorage(proof, user.sea, pin));
+      } else {
+        return updatestorage(proof, user.sea, pin)(props);
+      }
+    } else {
+      return updatestorage()(args);
+    }
   }
 
   // This internal func recalls persisted User authentication if so configured
@@ -225,6 +239,7 @@
       var remember = sessionStorage.getItem('remember');
       var alias = sessionStorage.getItem('user');
       var err = 'Not authenticated';
+      var pin;
 
       // Already authenticated?
       if(Gun.obj.has(root._.user._, 'pub')){
@@ -243,29 +258,55 @@
                 return (!remaining) && reject({err: 'Public key does not exist!'})
               }
               // got pub, time to unwrap Storage data...
-              return SEA.read(remember, pub).then(function(props){
+              return SEA.read(remember, pub, true).then(function(props){
                 props = !props.slice ? props : JSON.parse(props);
+                var checkProps = function(decr){
+                  return new Promise(function(resolve){
+                    if(Gun.obj.has(decr, 'proof')
+                    && Gun.obj.has(decr, 'alias') && decr.alias === alias){
+                      var proof = decr.proof;
+                      var iat = decr.iat; // No way hook to update this
+                      delete decr.proof;  // We're not gonna give proof to hook!
+                      var doIt = function(args){
+                        if(Math.floor(Date.now() / 1000) < (iat + args.exp)){
+                          args.iat = iat;
+                          args.proof = proof;
+                          return args;
+                        } else {Gun.log('Authentication expired!')}
+                      };
+                      var hooked = authsettings.hook(decr);
+                      return resolve(((hooked instanceof Promise)
+                      && hooked.then(doIt))
+                      || doIt(decr));
+                    }
+                    resolve();
+                  });
+                };
                 // Got PIN ?
                 if(Gun.obj.has(props, 'pin')){
+                  pin = props.pin;
                   // Yes! We can get localStorage secret if signature is ok
                   return SEA.read(localStorage.getItem('remember'), pub)
                   .then(function(encrypted){
                     // And decrypt it
-                    return SEA.de(encrypted, props.pin);
+                    return SEA.de(encrypted, pin);
                   }).then(function(decr){
                     decr = !decr.slice ? decr : JSON.parse(decr);
                     // And return proof if for matching alias
-                    return Gun.obj.has(decr, 'proof')
-                    && Gun.obj.has(decr, 'alias') && decr.alias === alias
-                    && decr.proof;
+                    return checkProps(decr);
                   });
                 }
                 // No PIN, let's try short-term proof if for matching alias
-                return Gun.obj.has(props, 'proof')
-                && Gun.obj.has(props, 'alias') && props.alias === alias
-                && props.proof;
-              }).then(function(proof){
-                if (!proof){return reject({err: 'No secret found!'})}
+                return checkProps(props);
+              }).then(function(args){
+                var proof = args && args.proof;
+                if (!proof){
+                  return updatestorage()(args).then(function(){
+                    reject({err: 'No secret found!'});
+                  }).catch(function(){
+                    reject({err: 'No secret found!'});
+                  });
+                }
                 // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
                 return SEA.read(at.put.auth, pub).then(function(auth){
                   return SEA.de(auth, proof)
@@ -273,21 +314,24 @@
                 }).then(function(priv){
                   // now we have AES decrypted the private key,
                   // if we were successful, then that means we're logged in!
-                  return remaining ? undefined // Not done yet
-                  : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
-                  // Or else we failed to log in...
-                  : reject({err: 'Failed to decrypt private key!'});
+                  return updatestorage(proof, priv, pin)(args).then(function(){
+                    return remaining ? undefined // Not done yet
+                    : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
+                    // Or else we failed to log in...
+                    : reject({err: 'Failed to decrypt private key!'});
+                  }).catch(function(e){reject({err: 'Failed to store credentials!'})});
                 }).catch(function(e){reject({err: 'Failed read secret!'})});
               }).catch(function(e){
                 reject({err: 'Failed to access stored credentials!'})})
             });
           });
         }).then(function(user){
-          return finalizelogin(alias, user, root).then(resolve)
-          .catch(function(e){
+          finalizelogin(alias, user, root).then(resolve).catch(function(e){
             Gun.log('Failed to finalize login with new password!');
             reject({err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''});
           });
+        }).catch(function(e){
+          reject({err: 'No authentication session found!'});
         });
       }
       reject({err: 'No authentication session found!'});
@@ -390,8 +434,7 @@
               root.get(tmp).put(null);
               root.get(tmp).put(user);
               // then we're done
-              finalizelogin(alias, key, root, pin).then(resolve)
-              .catch(function(e){
+              finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
                 Gun.log('Failed to finalize login with new password!');
                 reject({err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''});
               });
@@ -404,8 +447,7 @@
             reject({err: 'Password set attempt failed! Reason: '+(e && e.err) || e || ''});
           });
         } else {
-          finalizelogin(alias, key, root, pin).then(resolve)
-          .catch(function(e){
+          finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
             Gun.log('Failed to finalize login!');
             reject({err: 'Finalizing login failed! Reason: '+(e && e.err) || e || ''});
           });
@@ -445,6 +487,7 @@
   // If authentication is to be remembered over reloads or browser closing,
   // set validity time in seconds.
   User.recall = function(validity,cb,opts){
+    var root = this.back(-1);
     if(!opts){
       if(typeof cb !== 'function' && !Gun.val.is(cb)){
         opts = cb;
@@ -477,9 +520,14 @@
       if(Gun.obj.has(opts, 'hook')){
         authsettings.hook = opt.hook;
       }
-      // TODO: per authsettings, dig possibly existing auth data and
-      // call SEA.auth
-      resolve({ok: 0, pub: 'TBD'})
+      authrecall(root).then(function(props){
+        // All is good. Should we do something more with actual recalled data?
+        resolve(root._.user._)
+      }).catch(function(e){
+        var err = 'No session!';
+        Gun.log(err);
+        resolve({ err: err });
+      });
     };
     if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
   };
@@ -676,10 +724,10 @@
         return new Buffer(result, 'binary').toString('base64');
       }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
-      nodeCrypto.pbkdf2(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash,function(err,hash){
-        if(err){return reject(e)}
+      try{
+        var hash = nodeCrypto.pbkdf2Sync(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash);
         resolve(hash && hash.toString('base64'));
-      });
+      }catch(e){reject(e)};
     };
     if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
   };
@@ -793,16 +841,16 @@
   };
   SEA.read = function(m,p,cb){
     var doIt = function(resolve, reject) {
-      if(!m){ return resolve(); }
+      if(!m){return resolve()}
       if(!m.slice || 'SEA[' !== m.slice(0,4)){return resolve(m)}
       m = m.slice(3);
-      try{m = !m.slice ? m : JSON.parse(m);}catch(e){return reject(e);}
+      try{m = !m.slice ? m : JSON.parse(m);}catch(e){return reject(e)}
       m = m || '';
       SEA.verify(m[0], p, m[1]).then(function(ok){
         resolve(ok && m[0])
-      });
+      }).catch(function(e){reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb && typeof cb === 'function'){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
   };
 
   Gun.SEA = SEA;

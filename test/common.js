@@ -8093,10 +8093,16 @@ describe('Gun', function(){
         });
 
         describe('auth', function(){
-          var checkStorage = function(done){
+          var checkStorage = function(done, hasPin){
             return function(){
-console.log('auth remember:', root.sessionStorage.getItem('remember'))
-console.log('auth protected:', root.localStorage.getItem('remember'))
+              expect(root.sessionStorage.getItem('user')).to.not.be(undefined);
+              expect(root.sessionStorage.getItem('user')).to.not.be('');
+              expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
+              expect(root.sessionStorage.getItem('remember')).to.not.be('');
+              if(hasPin){
+                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.localStorage.getItem('remember')).to.not.be('');
+              }
               done();
             };
           };
@@ -8204,10 +8210,10 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
 
           it('with PIN auth session stored to sessionStorage', function(done){
             if(type === 'callback'){
-              user.auth(alias+type, pass+' new', checkStorage(done), {pin: 'PIN'});
+              user.auth(alias+type, pass+' new', checkStorage(done, true), {pin: 'PIN'});
             } else {
               user.auth(alias+type, pass+' new', {pin: 'PIN'})
-              .then(checkStorage(done)).catch(done);
+              .then(checkStorage(done, true)).catch(done);
             }
           });
         });
@@ -8350,9 +8356,25 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
                 expect(root.localStorage.getItem('remember')).to.not.be(undefined);
                 expect(root.localStorage.getItem('remember')).to.not.be('');
               }
-              done();
+              return done();
             };
           };
+          // This re-constructs 'remember-me' data modified by manipulate func
+          var manipulateStorage = function(manipulate, hasPin){
+            var usr = gun.back(-1)._.user;
+            var remember = hasPin ? localStorage.getItem('remember')
+            : sessionStorage.getItem('remember');
+            return Gun.SEA.read(remember, usr._.pub).then(function(props){
+              props = manipulate(JSON.parse(props));
+              return Gun.SEA.write(JSON.stringify(props), usr._.sea)
+              .then(function(remember){
+                // remember = JSON.stringify(remember);
+                return hasPin ? sessionStorage.setItem('remember', remember)
+                : sessionStorage.setItem('remember', remember);
+              });
+            });
+          };
+
           it('with PIN auth session stored to localStorage', function(done){
             var doAction = function(){
               user.auth(alias+type, pass+' new', { pin: 'PIN' })
@@ -8369,11 +8391,13 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
             var doAction = function(){
               user.auth(alias+type, pass+' new').then(doCheck(done));
             };
-            if(type === 'callback'){
-              user.recall(doAction, { session: false });
-            } else {
-              user.recall({ session: false }).then(doAction).catch(done)
-            }
+            user.leave().then(function(){
+              if(type === 'callback'){
+                user.recall(doAction, { session: false });
+              } else {
+                user.recall({ session: false }).then(doAction).catch(done)
+              }
+            }).catch(done);
           });
 
           it('no validity no session storing', function(done){
@@ -8400,10 +8424,6 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
           });
 
           it('valid sessionStorage session', function(done){
-            var check = function(ack){
-              // TODO: check
-              done();
-            };
             user.auth(alias+type, pass+' new').then(function(usr){
               var sUser;
               var sRemember;
@@ -8436,11 +8456,7 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
             }).catch(done);
           });
 
-          it('valid localStorage session', function(done){
-            var check = function(ack){
-              // TODO: check
-              done();
-            };
+          it('valid localStorage session bootstrap', function(done){
             user.auth(alias+type, pass+' new', { pin: 'PIN' }).then(function(usr){
               var sUser;
               var sRemember;
@@ -8460,6 +8476,7 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
                 sRemember = root.sessionStorage.getItem('remember');
                 lRemember = root.localStorage.getItem('remember');
               }catch(e){done(e); return};
+
               user.leave().then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
@@ -8480,7 +8497,32 @@ console.log('auth protected:', root.localStorage.getItem('remember'))
           });
 
           it.skip('invalid sessionStorage session');
-          it.skip('expired session');
+          it.skip('valid localStorage data but not in sessionStorage');
+
+          it('expired session', function(done){
+            user.recall(60, {session: true}).then(function(){
+              return user.auth(alias+type, pass+' new');
+            }).then(doCheck(function(){
+              // Storage data OK, let's back up time of auth 65 minutes
+              return manipulateStorage(function(props){
+                props.iat -= 65 * 60;
+                return props;
+              }, false);
+            })).then(function(){
+              // Simulate browser reload
+              gun.back(-1)._.user = gun.back(-1).chain();
+              // TODO: re-make sessionStorage.remember to 65 seconds past
+              user.recall(60, {session: true}).then(function(props){
+                expect(props).to.not.be(undefined);
+                expect(props).to.not.be('');
+                expect(props).to.have.key('err');
+                expect(props.err).to.not.be(undefined);
+                expect(props.err).to.not.be('');
+                done();
+              }).catch(done);
+            }).catch(done);
+          });
+
           it.skip('changed password');
           it.skip('no session');
         });
