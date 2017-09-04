@@ -50,8 +50,8 @@
   var authsettings = {
     validity: 60 * 60 * 12,  // 12 hours
     session: true,
+    hook: function(props) { return props }  // { iat, exp, alias, remember }
     // or return new Promise(function(resolve, reject){(resolve(props))})
-    hook: function(props) {return props}  // { iat, exp, alias, remember }
   };
 
   // let's extend the gun chain with a `user` function.
@@ -91,10 +91,10 @@
         Gun.obj.map(rat.put, function(at, pub){
           // grab the account associated with this public key.
           root.get(pub).get(function(at, ev){
-            if(!pub.slice || 'pub/' !== pub.slice(0,4)){return}
+            if(!pub.slice || 'pub/' !== pub.slice(0,4)){ return }
             pub = pub.slice(4);
             ev.off();
-            if(!at.put){return}
+            if(!at.put){ return }
             aliases.push({pub: pub, at: at});
           });
         });
@@ -115,18 +115,18 @@
           var at = one.at, pub = one.pub;
           var remaining = (aliases.length - index) > 1;
           if(!at.put){
-            return (!remaining) && reject({err: 'Public key does not exist!'});
+            return !remaining && reject({err: 'Public key does not exist!'});
           }
           // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
           SEA.read(at.put.salt, pub).then(function(salt){
             return SEA.proof(pass, salt)
-            .catch(function(e){reject({err: 'Failed to create proof!'})});
-          }).catch(function(e){reject({err: 'Failed to create proof!'})})
+            .catch(function(e){ reject({err: 'Failed to create proof!'}) });
+          }).catch(function(e){ reject({err: 'Failed to create proof!'}) })
           .then(function(proof){
             // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
             SEA.read(at.put.auth, pub).then(function(auth){
               return SEA.de(auth, proof)
-              .catch(function(e){reject({err: 'Failed to decrypt secret!'})});
+              .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
             }).then(function(priv){
               // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
               // if we were successful, then that meanswe're logged in!
@@ -139,10 +139,10 @@
               // : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
               // // Or else we failed to log in...
               // : reject({err: 'Failed to decrypt private key!'});
-            }).catch(function(e){reject({err: 'Failed read secret!'})});
+            }).catch(function(e){ reject({err: 'Failed read secret!'})} );
           });
         });
-      }).catch(function(e){reject({err: e})});
+      }).catch(function(e){ reject({err: e}) });
     });
   };
 
@@ -170,7 +170,7 @@
   function updatestorage(proof,priv,pin){
     return function(props){
       return new Promise(function(resolve, reject){
-        if(!Gun.obj.has(props, 'alias')){return resolve()}
+        if(!Gun.obj.has(props, 'alias')){ return resolve() }
         if (proof && Gun.obj.has(props, 'iat')) {
           props.proof = proof;
           delete props.remember;  // Not stored if present
@@ -192,7 +192,7 @@
             }).catch(reject);
           }).then(function(){
             resolve(props);
-          }).catch(function(e){reject({err: 'Session persisting failed!'})});
+          }).catch(function(e){ reject({err: 'Session persisting failed!'}) });
         } else  {
           localStorage.removeItem('remember');
           sessionStorage.removeItem('user');
@@ -255,7 +255,7 @@
               var at = one.at, pub = one.pub;
               var remaining = (aliases.length - index) > 1;
               if(!at.put){
-                return (!remaining) && reject({err: 'Public key does not exist!'})
+                return !remaining && reject({err: 'Public key does not exist!'})
               }
               // got pub, time to unwrap Storage data...
               return SEA.read(remember, pub, true).then(function(props){
@@ -272,7 +272,7 @@
                           args.iat = iat;
                           args.proof = proof;
                           return args;
-                        } else {Gun.log('Authentication expired!')}
+                        } else { Gun.log('Authentication expired!') }
                       };
                       var hooked = authsettings.hook(decr);
                       return resolve(((hooked instanceof Promise)
@@ -310,7 +310,7 @@
                 // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
                 return SEA.read(at.put.auth, pub).then(function(auth){
                   return SEA.de(auth, proof)
-                  .catch(function(e){reject({err: 'Failed to decrypt secret!'})});
+                  .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
                 }).then(function(priv){
                   // now we have AES decrypted the private key,
                   // if we were successful, then that means we're logged in!
@@ -319,10 +319,9 @@
                     : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
                     // Or else we failed to log in...
                     : reject({err: 'Failed to decrypt private key!'});
-                  }).catch(function(e){reject({err: 'Failed to store credentials!'})});
-                }).catch(function(e){reject({err: 'Failed read secret!'})});
-              }).catch(function(e){
-                reject({err: 'Failed to access stored credentials!'})})
+                  }).catch(function(e){ reject({err: 'Failed to store credentials!'}) });
+                }).catch(function(e){ reject({err: 'Failed read secret!'}) });
+              }).catch(function(e){ reject({err: 'Failed to access stored credentials!'}) })
             });
           });
         }).then(function(user){
@@ -355,7 +354,7 @@
       m = m.slice ? m : JSON.stringify(m);
       var ret = nodeCrypto.createHash(nHash).update(m, 'utf8').digest();
       return ret;
-    }catch(e){return m}
+    }catch(e){ return m }
   }
 
   // How does it work?
@@ -373,25 +372,25 @@
           Gun.log(err);
           return reject({err: err});
         }
-        var user = {alias: alias, salt: Gun.text.random(64)};
+        var salt = Gun.text.random(64);
         // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
-        SEA.proof(pass, user.salt).then(function(proof){
+        SEA.proof(pass, salt).then(function(proof){
           // this will take some short amount of time to produce a proof, which slows brute force attacks.
           SEA.pair().then(function(pair){
             // now we have generated a brand new ECDSA key pair for the user account.
-            user.pub = pair.pub;
+            var user = { pub: pair.pub, priv: pair.priv };
             // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-            SEA.write(alias, pair.priv).then(function(sAlias){
-              user.alias = sAlias;
-              return SEA.write(user.salt, pair.priv);
-            }).then(function(sSalt){
-              user.salt = sSalt;
+            SEA.write(alias, pair.priv).then(function(signedalias){
+              user.alias = signedalias;
+              return SEA.write(salt, pair.priv);
+            }).then(function(signedsalt){
+              user.salt = signedsalt;
               // to keep the private key safe, we AES encrypt it with the proof of work!
               return SEA.en(pair.priv, proof);
-            }).then(function(encVal){
-              return SEA.write(encVal, pair.priv);
-            }).then(function(sAuth){
-              user.auth = sAuth;
+            }).then(function(encryptedpriv){
+              return SEA.write(encryptedpriv, pair.priv);
+            }).then(function(encsigauth){
+              user.auth = encsigauth;
               var tmp = 'pub/'+pair.pub;
               //console.log("create", user, pair.pub);
               // awesome, now we can actually save the user with their public key as their ID.
@@ -400,12 +399,12 @@
               var ref = root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
               resolve({ok: 0, pub: pair.pub});
-            });
-          });
+            }).catch(function(e){ Gun.log('SEA.en or SEA.write calls failed!'); reject(e) });
+          }).catch(function(e){ Gun.log('SEA.pair call failed!'); reject(e) });
         });
       });
     };
-    if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
+    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
   // now that we have created a user, we want to authenticate them!
   User.auth = function(alias,pass,cb,opt){
@@ -420,30 +419,34 @@
         if(Gun.obj.has(opts, 'newpass')){
           // password update so encrypt private key using new pwd + salt
           var newsalt = Gun.text.random(64);
-          SEA.proof(opts.newpass, newsalt).then(function(proof){
-            SEA.en(key.priv, proof).then(function(encVal){
-              return {
-                alias: alias,
-                pub: key.pub,
-                auth: encVal,
-                salt: newsalt
-              };
-            }).then(function(user){
-              var tmp = 'pub/'+user.pub;
-              // awesome, now we can update the user using public key ID.
-              root.get(tmp).put(null);
-              root.get(tmp).put(user);
-              // then we're done
-              finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
-                Gun.log('Failed to finalize login with new password!');
-                reject({err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''});
+          SEA.proof(opts.newpass, newsalt).then(function(newproof){
+            return SEA.en(key.priv, newproof).then(function(encryptedpriv){
+              return SEA.write(encryptedpriv, key.priv);
+            });
+          }).then(function(encsigauth){
+            return SEA.write(newsalt, key.priv).then(function(signedsalt){
+              return SEA.write(alias, key.priv).then(function(signedalias){
+                return {
+                  alias: signedalias,
+                  salt: signedsalt,
+                  auth: encsigauth,
+                  pub: key.pub
+                };
               });
-            }).catch(function(e){
-              Gun.log('Failed encrypt private key using new password!');
-              reject({err: 'Password set attempt failed! Reason: '+(e && e.err) || e || ''});
+            });
+          }).then(function(user){
+            var tmp = 'pub/'+user.pub;
+            // awesome, now we can update the user using public key ID.
+            // root.get(tmp).put(null);
+            root.get(tmp).put(user);
+
+            // then we're done
+            finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
+              Gun.log('Failed to finalize login with new password!');
+              reject({err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''});
             });
           }).catch(function(e){
-            Gun.log('Failed to set new password!');
+            Gun.log('Failed encrypt private key using new password!');
             reject({err: 'Password set attempt failed! Reason: '+(e && e.err) || e || ''});
           });
         } else {
@@ -457,11 +460,11 @@
         reject({err: 'Auth attempt failed! Reason: '+(e && e.err) || e || ''});
       });
     };
-    if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
+    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
   User.leave = function(cb){
     var root = this.back(-1);
-    if(cb){authleave(root)(cb, cb)} else {return new Promise(authleave(root))}
+    if(cb){authleave(root)(cb, cb)} else { return new Promise(authleave(root)) }
   };
   // If authenticated user wants to delete his/her account, let's support it!
   User.delete = function(alias,pass,cb){
@@ -482,7 +485,7 @@
         reject({err: 'Delete attempt failed! Reason:'+(e && e.err) || e || ''});
       });
     };
-    if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
+    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
   // If authentication is to be remembered over reloads or browser closing,
   // set validity time in seconds.
@@ -529,7 +532,7 @@
         resolve({ err: err });
       });
     };
-    if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
+    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
   User.alive = function(cb){
     var root = this.back(-1);
@@ -543,7 +546,7 @@
         reject({ err: err });
       });
     };
-    if(cb){doIt(cb, cb)} else {return new Promise(doIt)}
+    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
 
   // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
@@ -582,7 +585,7 @@
         }
       });
     });
-  })
+  });
 
   // signature handles data output, it is a proxy to the security function.
   function signature(at){
@@ -722,14 +725,14 @@
         }, key, pbkdf2.ks*8);
       }).then(function(result){
         return new Buffer(result, 'binary').toString('base64');
-      }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
+      }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
         var hash = nodeCrypto.pbkdf2Sync(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash);
         resolve(hash && hash.toString('base64'));
-      }catch(e){reject(e)};
+      }catch(e){ reject(e) };
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.pair = function(cb){
     var doIt = function(resolve, reject){
@@ -739,16 +742,16 @@
         priv: new Buffer(priv, 'binary').toString('hex')
       });
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.derive = function(m,p,cb){
     var doIt = function(resolve, reject){
       ecCrypto.derive(new Buffer(p, 'hex'), new Buffer(m, 'hex'))
       .then(function(secret){
         resolve(new Buffer(secret, 'binary').toString('hex'));
-      }).catch(function(e){Gun.log(e); reject(e)});
+      }).catch(function(e){ Gun.log(e); reject(e) });
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.sign = function(m,p,cb){
     var doIt = function(resolve, reject){
@@ -756,15 +759,15 @@
         resolve(new Buffer(sig, 'binary').toString('hex'));
       }).catch(function(e){Gun.log(e); reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.verify = function(m, p, s, cb){
     var doIt = function(resolve, reject){
       ecCrypto.verify(new Buffer(p, 'hex'), nodehash(m), new Buffer(s, 'hex'))
       .then(function(){resolve(true)})
-      .catch(function(e){Gun.log(e);reject(e)})
+      .catch(function(e){ Gun.log(e);reject(e) })
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.en = function(m,p,cb){
     var doIt = function(resolve, reject){
@@ -781,25 +784,25 @@
           }, aesKey, new TextEncoder().encode(m)).then(function(ct){
             r.ct = new Buffer(ct, 'binary').toString('base64');
             return JSON.stringify(r);
-          }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
-        }).catch(function(e){Gun.log(e); reject(e)});
+          }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
+        }).catch(function(e){ Gun.log(e); reject(e)} );
       } else {  // NodeJS doesn't support crypto.subtle.importKey properly
         try{
           var cipher = nodeCrypto.createCipheriv(aes.enc, key, iv);
           r.ct = cipher.update(m, 'utf8', 'base64');
           r.ct += cipher.final('base64');
-        }catch(e){Gun.log(e); return reject(e)}
+        }catch(e){ Gun.log(e); return reject(e) }
         resolve(JSON.stringify(r));
       }
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.de = function(m,p,cb){
     var doIt = function(resolve, reject){
       var d = !m.slice ? m : JSON.parse(m);
       var key = makeKey(p, new Buffer(d.s, 'hex'));
       var iv = new Buffer(d.iv, 'hex');
-      if (typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
+      if(typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
         crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
         .then(function(aesKey){
           crypto.subtle.decrypt({
@@ -813,44 +816,44 @@
         try{
           var decipher = nodeCrypto.createDecipheriv(aes.enc, key, iv);
           r = decipher.update(d.ct, 'base64', 'utf8') + decipher.final('utf8');
-        }catch(e){Gun.log(e); return reject(e)}
+        }catch(e){ Gun.log(e); return reject(e) }
         resolve(r);
       }
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.write = function(mm,p,cb){
     var doIt = function(resolve, reject) {
       // TODO: something's bugging double 'SEA[]' treatment to mm...
-      var m;
-      if(!mm.slice){
-        m = JSON.stringify(m);
-      } else if('SEA[' !== mm.slice(0,4)){
-        m = mm;
-      } else {  // Needs to remove previous signature envelope
-        try{m = JSON.parse(mm.slice(3))[0];
-        }catch(e){m = mm}
-        while(m.slice){m = !m.slice ? m : JSON.parse(m)}
-        m = JSON.stringify(m);
+      var m = mm;
+      if(mm.slice){
+        // Needs to remove previous signature envelope
+        while('SEA[' === m.slice(0,4)){
+          try{m = JSON.parse(m.slice(3))[0];
+          }catch(e){ m = mm; break }
+        }
       }
+      m = m.slice ? m : JSON.stringify(m);
       SEA.sign(m, p).then(function(signature){
         resolve('SEA'+JSON.stringify([m,signature]));
       }).catch(function(e){Gun.log(e); reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
   SEA.read = function(m,p,cb){
     var doIt = function(resolve, reject) {
-      if(!m){return resolve()}
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){return resolve(m)}
+      if(!m){ return resolve() }
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){ return resolve(m) }
       m = m.slice(3);
-      try{m = !m.slice ? m : JSON.parse(m);}catch(e){return reject(e)}
+      try{m = !m.slice ? m : JSON.parse(m);
+      }catch(e){ return reject(e) }
       m = m || '';
       SEA.verify(m[0], p, m[1]).then(function(ok){
         resolve(ok && m[0])
       }).catch(function(e){reject(e)});
     };
-    if(cb && typeof cb === 'function'){doIt(cb, function(){cb()})} else {return new Promise(doIt)}
+    if(cb && typeof cb === 'function'){doIt(cb, function(){cb()})
+    } else { return new Promise(doIt) }
   };
 
   Gun.SEA = SEA;

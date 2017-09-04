@@ -2,6 +2,11 @@ var root;
 (function(env){
   root = env.window ? env.window : global;
 
+  // process.on('unhandledRejection', error => {
+  //   // This gives real data about where rejection truly happened...
+  //   console.log('unhandledRejection', error);
+  // });
+
   if(!root.sessionStorage){
     root.sessionStorage = new require('node-localstorage').LocalStorage('session');
   }
@@ -8050,6 +8055,9 @@ describe('Gun', function(){
     var user = gun.user();
     Gun.log.off = true;  // Supress all console logging
 
+    // Simulate browser reload
+    gun.back(-1)._.user = gun.back(-1).chain();
+
     ['callback', 'Promise'].forEach(function(type){
       describe(type+':', function(){
         describe('create', function(){
@@ -8059,7 +8067,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.have.keys(['ok','pub']);
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             // Gun.user.create - creates new user
@@ -8078,7 +8086,7 @@ describe('Gun', function(){
                 expect(ack).to.have.key('err');
                 expect(ack.err).not.to.be(undefined);
                 expect(ack.err).not.to.be('');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             // Gun.user.create - fails to create existing user
@@ -8113,7 +8121,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             // Gun.user.auth - authenticates existing user
@@ -8132,7 +8140,7 @@ describe('Gun', function(){
                 expect(ack).to.have.key('err');
                 expect(ack.err).to.not.be(undefined);
                 expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             if(type === 'callback'){
@@ -8152,7 +8160,7 @@ describe('Gun', function(){
                 expect(ack).to.have.key('err');
                 expect(ack.err).to.not.be(undefined);
                 expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             if(type === 'callback'){
@@ -8170,7 +8178,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             // Gun.user.auth - with newpass props sets new password
@@ -8190,7 +8198,7 @@ describe('Gun', function(){
                 expect(ack).to.have.key('err');
                 expect(ack.err).to.not.be(undefined);
                 expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             var props = {alias: alias+type, pass: pass+'not', newpass: pass+' new'};
@@ -8227,7 +8235,7 @@ describe('Gun', function(){
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
                 expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             var usr = alias+type+'leave';
@@ -8241,7 +8249,7 @@ describe('Gun', function(){
                   expect(usr).to.not.be('');
                   expect(usr).to.not.have.key('err');
                   expect(usr).to.have.key('put');
-                }catch(e){done(e); return};
+                }catch(e){ done(e); return };
                 // Gun.user.leave - performs logout for authenticated user
                 if(type === 'callback'){
                   user.leave(check);
@@ -8259,7 +8267,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
@@ -8290,7 +8298,7 @@ describe('Gun', function(){
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
                 expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
           };
@@ -8303,7 +8311,7 @@ describe('Gun', function(){
                   expect(ack).to.not.be('');
                   expect(ack).to.not.have.key('err');
                   expect(ack).to.have.key('put');
-                }catch(e){done(e); return};
+                }catch(e){ done(e); return };
                 // Gun.user.delete - deletes existing user account
                 if(type === 'callback'){
                   user.delete(usr, pass, check(done));
@@ -8332,7 +8340,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('put');
                 expect(ack).to.have.key('err');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             if(type === 'callback'){
@@ -8438,14 +8446,14 @@ describe('Gun', function(){
 
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               user.leave().then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
                   expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
-                }catch(e){done(e); return};
+                }catch(e){ done(e); return };
 
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
@@ -8475,7 +8483,7 @@ describe('Gun', function(){
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
                 lRemember = root.localStorage.getItem('remember');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
 
               user.leave().then(function(ack){
                 try{
@@ -8484,7 +8492,7 @@ describe('Gun', function(){
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
                   expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
-                }catch(e){done(e); return};
+                }catch(e){ done(e); return };
 
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
@@ -8523,7 +8531,63 @@ describe('Gun', function(){
             }).catch(done);
           });
 
-          it.skip('changed password');
+          it('changed password', function(done){
+            user.recall(60, {session: false}).then(function(){
+              return user.auth(alias+type, pass+' new', { pin: 'PIN' });
+            }).then(function(usr){
+              var sUser;
+              var sRemember;
+              var lRemember;
+              try{
+                expect(usr).to.not.be(undefined);
+                expect(usr).to.not.be('');
+                expect(usr).to.not.have.key('err');
+                expect(usr).to.have.key('put');
+                expect(root.sessionStorage.getItem('user')).to.be(alias+type);
+                expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.sessionStorage.getItem('remember')).to.not.be('');
+                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.localStorage.getItem('remember')).to.not.be('');
+
+                sUser = root.sessionStorage.getItem('user');
+                sRemember = root.sessionStorage.getItem('remember');
+                lRemember = root.localStorage.getItem('remember');
+              }catch(e){ done(e); return };
+              // Time to do new login with new password set
+              user.leave().then(function(ack){
+                try{
+                  expect(ack).to.have.key('ok');
+                }catch(e){ done(e); return };
+
+                return user.auth(alias+type, pass+' new', {newpass: pass, pin: 'PIN' }).then(function(usr){
+                  expect(usr).to.not.have.key('err');
+                });
+              }).then(function(){
+                return user.leave().then(function(ack){
+                  try{
+                    expect(ack).to.have.key('ok');
+                  }catch(e){ done(e); return };
+                  gun.back(-1)._.user = gun.back(-1).chain();
+                });
+              }).then(function(){
+                // Simulate browser reload
+                // Call back previous remember data
+                root.sessionStorage.setItem('user', sUser);
+                root.sessionStorage.setItem('remember', sRemember);
+                root.localStorage.setItem('remember', lRemember);
+
+                user.recall(60, {session: false}).then(function(props){
+                  expect(props).to.not.be(undefined);
+                  expect(props).to.not.be('');
+                  expect(props).to.have.key('err');
+                  expect(props.err).to.not.be(undefined);
+                  expect(props.err).to.not.be('');
+                  done();
+                }).catch(done);
+              }).catch(done);
+            }).catch(done);
+          });
+
           it.skip('no session');
         });
 
@@ -8535,7 +8599,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.keys(['sea', 'pub']);
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             var usr = alias+type+'alive';
@@ -8549,7 +8613,7 @@ describe('Gun', function(){
                   expect(usr).to.not.be('');
                   expect(usr).to.not.have.key('err');
                   expect(usr).to.have.key('put');
-                }catch(e){done(e); return};
+                }catch(e){ done(e); return };
                 // Gun.user.alive - keeps/checks User authentiation state
                 if(type === 'callback'){
                   user.alive(check);
@@ -8567,7 +8631,7 @@ describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.keys(['sea', 'pub']);
                 expect(ack).to.have.key('err');
-              }catch(e){done(e); return};
+              }catch(e){ done(e); return };
               done();
             };
             user.leave().catch(function(){}).then(function(){
