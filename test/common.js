@@ -1,14 +1,31 @@
 var root;
+
 (function(env){
   root = env.window ? env.window : global;
-  env.window && root.localStorage && root.localStorage.clear();
+
+  // process.on('unhandledRejection', error => {
+  //   // This gives real data about where rejection truly happened...
+  //   console.log('unhandledRejection', error);
+  // });
+
+  if(!root.sessionStorage){
+    root.sessionStorage = new require('node-localstorage').LocalStorage('session');
+  }
+  root.sessionStorage.clear();
+  if(!root.localStorage){
+    root.localStorage = new require('node-localstorage').LocalStorage('local');
+  }
+  root.localStorage.clear();
+
   try{ require('fs').unlinkSync('data.json') }catch(e){}
   //root.Gun = root.Gun || require('../gun');
   if(root.Gun){
     root.Gun = root.Gun;
   } else {
     root.Gun = require('../gun');
-    Gun.SEA = require('../sea');  // TODO: breaks original deep tests!
+    if (process.env.SEA) {
+      Gun.SEA = require('../sea');  // TODO: breaks original deep tests!
+    }
     Gun.serve = require('../lib/serve');
     //require('./s3');
     //require('./uws');
@@ -16,12 +33,14 @@ var root;
     require('../lib/file');
   }
 }(this));
+
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
   var leaked = []
   for (var key in gleak.globe){ if(!(key in gleak.globals)){ leaked.push(key)} }
   if(leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
 }};
+
 (function(env){
   for (var key in (gleak.globe = env)){ gleak.globals[key] = true }
 }(this));
@@ -167,7 +186,7 @@ describe('Performance', function(){ return; // performance tests
 
 describe('Gun', function(){
   var t = {};
-  describe('Utility', function(){
+  !Gun.SEA && describe('Utility', function(){
     var u;
     /* // causes logger to no longer log.
     it('verbose console.log debugging', function(done) {
@@ -7832,502 +7851,6 @@ describe('Gun', function(){
     // 0: fluffy
     // 1: fluff
     */
-  });
-
-  Gun.SEA && describe('SEA', function(){
-    console.log('TODO: SEA! THIS IS AN EARLY ALPHA!!!');
-    var alias = 'dude';
-    var pass = 'my secret password';
-    var userKeys = ['pub', 'priv'];
-    var clearText = 'My precious secret!';
-    var encKeys = ['ct', 'iv', 's'];
-
-    ['callback', 'Promise'].forEach(function(type){
-      describe(type+':', function(){
-        it('proof', function(done){
-          var check = function(proof){
-            expect(proof).to.not.be(undefined);
-            expect(proof).to.not.be('');
-            done();
-          }
-          // proof - generates PBKDF2 hash from user's alias and password
-          // which is then used to decrypt user's auth record
-          if(type === 'callback'){
-            Gun.SEA.proof(alias, pass, check);
-          } else {
-            Gun.SEA.proof(alias, pass).then(check).catch(done);
-          }
-        });
-
-        it('pair', function(done){
-          var check = function(key){
-            expect(key).to.not.be(undefined);
-            expect(key).to.not.be('');
-            expect(key).to.have.keys(userKeys);
-            userKeys.map(function(fld){
-              expect(key[fld]).to.not.be(undefined);
-              expect(key[fld]).to.not.be('');
-            });
-            done();
-          };
-          // pair - generates ECDH key pair (for new user when created)
-          if(type === 'callback'){
-            Gun.SEA.pair(check);
-          } else {
-            Gun.SEA.pair().then(check).catch(done);;
-          }
-        });
-
-        it('en', function(done){
-          Gun.SEA.pair().then(function(key){
-            var check = function(jsonSecret){
-              expect(jsonSecret).to.not.be(undefined);
-              expect(jsonSecret).to.not.be('');
-              expect(jsonSecret).to.not.eql(clearText);
-              expect(jsonSecret).to.not.eql(JSON.stringify(clearText));
-              var objSecret = JSON.parse(jsonSecret);
-              expect(objSecret).to.have.keys(encKeys);
-              encKeys.map(function(key){
-                expect(objSecret[key]).to.not.be(undefined);
-                expect(objSecret[key]).to.not.be('');
-              });
-              done();
-            };
-            // en - encrypts JSON data using user's private or derived ECDH key
-            if(type === 'callback'){
-              Gun.SEA.en(JSON.stringify(clearText), key.priv, check);
-            } else {
-              Gun.SEA.en(JSON.stringify(clearText), key.priv).then(check);
-            }
-          }).catch(function(e){done(e)});
-        });
-
-        it('sign', function(done){
-          Gun.SEA.pair().then(function(key){
-            var check = function(signature){
-              expect(signature).to.not.be(undefined);
-              expect(signature).to.not.be('');
-              expect(signature).to.not.eql(key.pub);
-              done();
-            };
-            // sign - calculates signature for data using user's private ECDH key
-            if(type === 'callback'){
-              Gun.SEA.sign(key.pub, key.priv, check);
-            } else {
-              Gun.SEA.sign(key.pub, key.priv).then(check);
-            }
-          }).catch(function(e){done(e)});
-        });
-
-        it('verify', function(done){
-          Gun.SEA.pair().then(function(key){
-            var check = function(ok){
-              expect(ok).to.not.be(undefined);
-              expect(ok).to.not.be('');
-              expect(ok).to.be(true);
-              done();
-            };
-            // sign - calculates signature for data using user's private ECDH key
-            Gun.SEA.sign(key.pub, key.priv).then(function(signature){
-              if(type === 'callback'){
-                Gun.SEA.verify(key.pub, key.pub, signature, check);
-              } else {
-                Gun.SEA.verify(key.pub, key.pub, signature).then(check);
-              }
-            });
-          }).catch(function(e){done(e)});
-        });
-
-        it('de', function(done){
-          Gun.SEA.pair().then(function(key){
-            var check = function(jsonText){
-              expect(jsonText).to.not.be(undefined);
-              expect(jsonText).to.not.be('');
-              expect(jsonText).to.not.eql(clearText);
-              var decryptedSecret = JSON.parse(jsonText);
-              expect(decryptedSecret).to.not.be(undefined);
-              expect(decryptedSecret).to.not.be('');
-              expect(decryptedSecret).to.be.eql(clearText);
-              done();
-            };
-            Gun.SEA.en(JSON.stringify(clearText), key.priv).then(function(jsonSecret){
-              // de - decrypts JSON data using user's private or derived ECDH key
-              if(type === 'callback'){
-                Gun.SEA.de(jsonSecret, key.priv, check);
-              } else {
-                Gun.SEA.de(jsonSecret, key.priv).then(check);
-              }
-            });
-          }).catch(function(e){done(e)});
-        });
-
-        it('derive', function(done){
-          Gun.SEA.pair().then(function(txKey){
-            return Gun.SEA.pair().then(function(rxKey){
-              return { tx: txKey, rx: rxKey };
-            });
-          }).then(function(keys){
-            var check = function(shared){
-              expect(shared).to.not.be(undefined);
-              expect(shared).to.not.be('');
-              [keys.rx.pub, keys.rx.priv, keys.tx.pub, keys.tx.priv]
-              .map(function(val){
-                expect(shared).to.not.eql(val);
-              });
-              done();
-            };
-            // derive - provides shared secret for both receiver and sender
-            // which can be used to encrypt or sign data
-            if(type === 'callback'){
-              Gun.SEA.derive(keys.rx.pub, keys.tx.priv, check);
-            } else {
-              Gun.SEA.derive(keys.rx.pub, keys.tx.priv).then(check);
-            }
-          }).catch(function(e){done(e)});
-        });
-
-        it('write', function(done){
-          Gun.SEA.pair().then(function(key){
-            Gun.SEA.sign(key.pub, key.priv).then(function(signature){
-              var check = function(result){
-                expect(result).to.not.be(undefined);
-                expect(result).to.not.be('');
-                expect(result.slice(0, 4)).to.eql('SEA[');
-                var parts = JSON.parse(result.slice(3));
-                expect(parts).to.not.be(undefined);
-                expect(parts[0]).to.be.eql(key.pub);
-                expect(parts[1]).to.be.eql(signature);
-                done();
-              };
-              // write - wraps data to 'SEA["data","signature"]'
-              if(type === 'callback'){
-                Gun.SEA.write(key.pub, key.priv, check);
-              } else {
-                Gun.SEA.write(key.pub, key.priv).then(check);
-              }
-            });
-          }).catch(function(e){done(e)});
-        });
-
-        it('read', function(done){
-          Gun.SEA.pair().then(function(key){
-            var check = function(result){
-              expect(result).to.not.be(undefined);
-              expect(result).to.not.be('');
-              expect(result).to.be.equal(key.pub);
-              done();
-            };
-            Gun.SEA.sign(key.pub, key.priv).then(function(signature){
-              Gun.SEA.write(key.pub, key.priv).then(function(signed){
-                // read - unwraps data from 'SEA["data","signature"]'
-                if(type === 'callback'){
-                  Gun.SEA.read(signed, key.pub, check);
-                } else {
-                  Gun.SEA.read(signed, key.pub).then(check);
-                }
-              });
-            });
-          }).catch(function(e){done(e)});
-        });
-      });
-    });
-  });
-
-  Gun().user && describe('User', function(){
-    console.log('TODO: User! THIS IS AN EARLY ALPHA!!!');
-    var alias = 'dude';
-    var pass = 'my secret password';
-    var gun = Gun();
-    var user = gun.user();
-    Gun.log.off = true;  // Supress all console logging
-
-    ['callback', 'Promise'].forEach(function(type){
-      describe(type+':', function(){
-        describe('create', function(){
-          it('new', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.keys(['ok','pub']);
-              }catch(e){done(e); return};
-              done();
-            };
-            // Gun.user.create - creates new user
-            if(type === 'callback'){
-              user.create(alias+type, pass, check);
-            } else {
-              user.create(alias+type, pass).then(check).catch(done);
-            }
-          });
-          it('conflict', function(done){
-            Gun.log.off = true;  // Supress all console logging
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.key('err');
-                expect(ack.err).not.to.be(undefined);
-                expect(ack.err).not.to.be('');
-              }catch(e){done(e); return};
-              done();
-            };
-            // Gun.user.create - fails to create existing user
-            if(type === 'callback'){
-              user.create(alias+type, pass, check);
-            } else {
-              user.create(alias+type, pass).then(function(ack){
-                done('Failed to decline creating existing user!');
-              }).catch(check);
-            }
-          });
-        });
-
-        describe('auth', function(){
-          it('login', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('err');
-              }catch(e){done(e); return};
-              done();
-            };
-            // Gun.user.auth - authenticates existing user
-            if(type === 'callback'){
-              user.auth(alias+type, pass, check);
-            } else {
-              user.auth(alias+type, pass).then(check).catch(done);
-            }
-          });
-
-          it('wrong password', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.key('err');
-                expect(ack.err).to.not.be(undefined);
-                expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
-              done();
-            };
-            if(type === 'callback'){
-              user.auth(alias+type, pass+'not', check);
-            } else {
-              user.auth(alias+type, pass+'not').then(function(ack){
-                done('Unexpected login success!');
-              }).catch(check);
-            }
-          });
-
-          it('unknown alias', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.key('err');
-                expect(ack.err).to.not.be(undefined);
-                expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
-              done();
-            };
-            if(type === 'callback'){
-              user.auth(alias+type+'not', pass, check);
-            } else {
-              user.auth(alias+type+'not', pass).then(function(ack){
-                done('Unexpected login success!');
-              }).catch(check);
-            }
-          });
-
-          it('new password', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('err');
-              }catch(e){done(e); return};
-              done();
-            };
-            // Gun.user.auth - with newpass props sets new password
-            if(type === 'callback'){
-              user.auth(alias+type, pass, check, {newpass: pass+' new'});
-            } else {
-              user.auth(alias+type, pass, {newpass: pass+' new'}).then(check)
-              .catch(done);
-            }
-          });
-
-          it('failed new password', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.have.key('err');
-                expect(ack.err).to.not.be(undefined);
-                expect(ack.err).to.not.be('');
-              }catch(e){done(e); return};
-              done();
-            };
-            var props = {alias: alias+type, pass: pass+'not', newpass: pass+' new'};
-            if(type === 'callback'){
-              user.auth(alias+type, pass+'not', check, {newpass: pass+' new'});
-            } else {
-              user.auth(alias+type, pass+'not', {newpass: pass+' new'})
-              .then(function(ack){
-                done('Unexpected password change success!');
-              }).catch(check);
-            }
-          });
-
-          it.skip('no recall no session storing');
-        });
-
-        describe('leave', function(){
-          it('valid session', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('err');
-                expect(ack).to.have.key('ok');
-                expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-              }catch(e){done(e); return};
-              done();
-            };
-            var usr = alias+type+'leave';
-            user.create(usr, pass).then(function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.keys(['ok','pub']);
-              user.auth(usr, pass).then(function(usr){
-                try{
-                  expect(usr).to.not.be(undefined);
-                  expect(usr).to.not.be('');
-                  expect(usr).to.not.have.key('err');
-                  expect(usr).to.have.key('put');
-                }catch(e){done(e); return};
-                // Gun.user.leave - performs logout for authenticated user
-                if(type === 'callback'){
-                  user.leave(check);
-                } else {
-                  user.leave().then(check).catch(done);
-                }
-              }).catch(done);
-            }).catch(done);
-          });
-
-          it('no session', function(done){
-            var check = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('err');
-                expect(ack).to.have.key('ok');
-              }catch(e){done(e); return};
-              done();
-            };
-            expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-            if(type === 'callback'){
-              user.leave(check);
-            } else {
-              user.leave().then(check).catch(done);
-            }
-          });
-        });
-
-        describe('delete', function(){
-          var usr = alias+type+'del';
-
-          var createUser = function(a, p){
-            return user.create(a, p).then(function(ack){
-              expect(ack).to.not.be(undefined);
-              expect(ack).to.not.be('');
-              expect(ack).to.have.keys(['ok','pub']);
-              return ack;
-            });
-          };
-          var check = function(done){
-            return function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('err');
-                expect(ack).to.have.key('ok');
-                expect(gun.back(-1)._.user).to.not.have.keys(['sea', 'pub']);
-              }catch(e){done(e); return};
-              done();
-            };
-          };
-
-          it('existing authenticated user', function(done){
-            createUser(usr, pass).then(function(){
-              user.auth(usr, pass).then(function(ack){
-                try{
-                  expect(ack).to.not.be(undefined);
-                  expect(ack).to.not.be('');
-                  expect(ack).to.not.have.key('err');
-                  expect(ack).to.have.key('put');
-                }catch(e){done(e); return};
-                // Gun.user.delete - deletes existing user account
-                if(type === 'callback'){
-                  user.delete(usr, pass, check(done));
-                } else {
-                  user.delete(usr, pass).then(check(done)).catch(done);
-                }
-              }).catch(done);
-            }).catch(done);
-          });
-
-          it('unauthenticated existing user', function(done){
-            createUser(usr, pass).catch(function(){})
-            .then(function(){
-              if(type === 'callback'){
-                user.delete(usr, pass, check(done));
-              } else {
-                user.delete(usr, pass).then(check(done)).catch(done);
-              }
-            });
-          });
-
-          it('non-existing user', function(done){
-            var notFound = function(ack){
-              try{
-                expect(ack).to.not.be(undefined);
-                expect(ack).to.not.be('');
-                expect(ack).to.not.have.key('put');
-                expect(ack).to.have.key('err');
-              }catch(e){done(e); return};
-              done();
-            };
-            if(type === 'callback'){
-              user.delete('someone', 'password guess', notFound);
-            } else {
-              user.delete('someone', 'password guess').then(function(){
-                done('Unexpectedly deleted guessed user!');
-              }).catch(notFound);
-            }
-          });
-        });
-
-        describe('recall', function(){
-          it.skip('with zero validity auth skips storing');
-          it.skip('with validity auth stores session');
-          it.skip('valid session');
-          it.skip('expired session');
-          it.skip('changed password');
-          it.skip('no session');
-        });
-
-        describe('alive', function(){
-          it.skip('valid session');
-          it.skip('expired session');
-          it.skip('recall hook session manipulation');
-        });
-      });
-    });
-    Gun.log.off = false;
   });
 
   describe('Streams', function(){
