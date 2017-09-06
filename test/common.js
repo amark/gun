@@ -186,7 +186,7 @@ describe('Performance', function(){ return; // performance tests
 
 describe('Gun', function(){
   var t = {};
-  describe('Utility', function(){
+  !Gun.SEA && describe('Utility', function(){
     var u;
     /* // causes logger to no longer log.
     it('verbose console.log debugging', function(done) {
