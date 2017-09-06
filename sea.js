@@ -14,7 +14,7 @@
 
   var crypto, TextEncoder, TextDecoder, localStorage, sessionStorage;
 
-  if (typeof window !== 'undefined') {
+  if(typeof window !== 'undefined'){
     crypto = window.crypto;
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
@@ -46,12 +46,17 @@
     enc: 'aes-256-cbc'
   };
 
+  var _initial_authsettings = {
+    validity: 12 * 60 * 60, // internally in seconds : 12 hours
+    session: true,
+    hook: function(props){ return props } // { iat, exp, alias, remember }
+    // or return new Promise(function(resolve, reject){(resolve(props))})
+  }
   // These are used to persist user's authentication "session"
   var authsettings = {
-    validity: 60 * 60 * 12,  // 12 hours
-    session: true,
-    hook: function(props) { return props }  // { iat, exp, alias, remember }
-    // or return new Promise(function(resolve, reject){(resolve(props))})
+    validity: _initial_authsettings.validity,
+    session: _initial_authsettings.session,
+    hook: _initial_authsettings.hook
   };
 
   // let's extend the gun chain with a `user` function.
@@ -84,7 +89,7 @@
           // if no user, don't do anything.
           var err = 'No user!';
           Gun.log(err);
-          return reject({err: err});
+          return reject(err);
         }
         // then figuring out all possible candidates having matching username
         var aliases = [];
@@ -99,7 +104,7 @@
           });
         });
         return aliases.length && resolve(aliases)
-        || reject({err: 'Public key does not exist!'})
+        || reject('Public key does not exist!')
       });
     });
   }
@@ -171,7 +176,7 @@
     return function(props){
       return new Promise(function(resolve, reject){
         if(!Gun.obj.has(props, 'alias')){ return resolve() }
-        if (proof && Gun.obj.has(props, 'iat')) {
+        if(proof && Gun.obj.has(props, 'iat')){
           props.proof = proof;
           delete props.remember;  // Not stored if present
 
@@ -181,18 +186,16 @@
           return SEA.write(JSON.stringify(remember), priv).then(function(signed){
             sessionStorage.setItem('user', props.alias);
             sessionStorage.setItem('remember', signed);
-            if (!protected) {
+            if(!protected){
               localStorage.removeItem('remember');
             }
             return !protected || SEA.en(protected, pin).then(function(encrypted){
-              return encrypted && SEA.write(encrypted, priv)
-              .then(function(encsig){
+              return encrypted && SEA.write(encrypted, priv).then(function(encsig){
                 localStorage.setItem('remember', encsig);
               }).catch(reject);
             }).catch(reject);
-          }).then(function(){
-            resolve(props);
-          }).catch(function(e){ reject({err: 'Session persisting failed!'}) });
+          }).then(function(){ resolve(props); })
+          .catch(function(e){ reject({err: 'Session persisting failed!'}) });
         } else  {
           localStorage.removeItem('remember');
           sessionStorage.removeItem('user');
@@ -214,39 +217,66 @@
     // ELSE if no PIN then window.sessionStorage
     var pin = Gun.obj.has(opts, 'pin') && opts.pin
     && new Buffer(opts.pin, 'utf8').toString('base64');
-    var args = { alias: user.alias };
 
-    if(proof && authsettings.validity){
+    if(proof && user && user.alias && authsettings.validity){
+      var args = { alias: user.alias };
       args.iat = Math.ceil(Date.now() / 1000);  // seconds
-      args.exp = authsettings.validity * 60;    // seconds
-      if (Gun.obj.has(opts, 'pin')){
+      args.exp = authsettings.validity;         // seconds
+      if(Gun.obj.has(opts, 'pin')){
         args.remember = true;                   // for hook - not stored
       }
       var props = authsettings.hook(args);
       if(props instanceof Promise){
         return props.then(updatestorage(proof, user.sea, pin));
-      } else {
-        return updatestorage(proof, user.sea, pin)(props);
       }
-    } else {
-      return updatestorage()(args);
+      return updatestorage(proof, user.sea, pin)(props);
     }
+    return updatestorage()({alias: 'delete'});
   }
 
   // This internal func recalls persisted User authentication if so configured
-  function authrecall(root){
+  function authrecall(root,authprops){
     return new Promise(function(resolve, reject){
-      var remember = sessionStorage.getItem('remember');
-      var alias = sessionStorage.getItem('user');
-      var err = 'Not authenticated';
-      var pin;
+      var remember = authprops || sessionStorage.getItem('remember');
+      var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
+      || sessionStorage.getItem('user');
+      var pin = Gun.obj.has(authprops, 'pin')
+      && new Buffer(authprops.pin, 'utf8').toString('base64');
+
+      var checkRememberData = function(decr){
+        if(Gun.obj.has(decr, 'proof')
+        && Gun.obj.has(decr, 'alias') && decr.alias === alias){
+          var proof = decr.proof;
+          var iat = decr.iat; // No way hook to update this
+          delete decr.proof;  // We're not gonna give proof to hook!
+          var checkNotExpired = function(args){
+            if(Math.floor(Date.now() / 1000) < (iat + args.exp)){
+              args.iat = iat;
+              args.proof = proof;
+              return args;
+            } else {
+              Gun.log('Authentication expired!') }
+          };
+          var hooked = authsettings.hook(decr);
+          return ((hooked instanceof Promise)
+          && hooked.then(checkNotExpired)) || checkNotExpired(hooked);
+        }
+      };
+      var readAndDecrypt = function(data, pub, key){
+        return SEA.read(data, pub).then(function(encrypted){
+          return SEA.de(encrypted, key);
+        }).then(function(decrypted){
+          try{ return decrypted.slice ? JSON.parse(decrypted) : decrypted }catch(e){}
+          return decrypted;
+        });
+      };
 
       // Already authenticated?
-      if(Gun.obj.has(root._.user._, 'pub')){
-        return resolve(root._.user._.pub);
+      if(Gun.obj.has(root._.user._, 'pub') && Gun.obj.has(root._.user._, 'sea')){
+        return resolve(root._.user._);
       }
       // No, got alias?
-      if (alias && remember){
+      if(alias && remember){
         return querygunaliases(alias, root).then(function(aliases){
           return new Promise(function(resolve, reject){
             // then attempt to log into each one until we find ours!
@@ -257,60 +287,31 @@
               if(!at.put){
                 return !remaining && reject({err: 'Public key does not exist!'})
               }
-              // got pub, time to unwrap Storage data...
-              return SEA.read(remember, pub, true).then(function(props){
-                props = !props.slice ? props : JSON.parse(props);
-                var checkProps = function(decr){
-                  return new Promise(function(resolve){
-                    if(Gun.obj.has(decr, 'proof')
-                    && Gun.obj.has(decr, 'alias') && decr.alias === alias){
-                      var proof = decr.proof;
-                      var iat = decr.iat; // No way hook to update this
-                      delete decr.proof;  // We're not gonna give proof to hook!
-                      var doIt = function(args){
-                        if(Math.floor(Date.now() / 1000) < (iat + args.exp)){
-                          args.iat = iat;
-                          args.proof = proof;
-                          return args;
-                        } else { Gun.log('Authentication expired!') }
-                      };
-                      var hooked = authsettings.hook(decr);
-                      return resolve(((hooked instanceof Promise)
-                      && hooked.then(doIt))
-                      || doIt(decr));
-                    }
-                    resolve();
-                  });
-                };
-                // Got PIN ?
-                if(Gun.obj.has(props, 'pin')){
-                  pin = props.pin;
-                  // Yes! We can get localStorage secret if signature is ok
-                  return SEA.read(localStorage.getItem('remember'), pub)
-                  .then(function(encrypted){
-                    // And decrypt it
-                    return SEA.de(encrypted, pin);
-                  }).then(function(decr){
-                    decr = !decr.slice ? decr : JSON.parse(decr);
-                    // And return proof if for matching alias
-                    return checkProps(decr);
-                  });
+              // got pub, time to try auth with alias & PIN...
+              return ((pin && Promise.resolve({pin: pin, alias: alias}))
+              // or just unwrap Storage data...
+              || SEA.read(remember, pub, true)).then(function(props){
+                try{ props = props.slice ? JSON.parse(props) : props }catch(e){}
+                if(Gun.obj.has(props, 'pin') && Gun.obj.has(props, 'alias')
+                && props.alias === alias){
+                  pin = props.pin; // Got PIN so get localStorage secret if signature is ok
+                  return readAndDecrypt(localStorage.getItem('remember'), pub, pin)
+                  .then(checkRememberData); // And return proof if for matching alias
                 }
                 // No PIN, let's try short-term proof if for matching alias
-                return checkProps(props);
+                return checkRememberData(props);
               }).then(function(args){
                 var proof = args && args.proof;
-                if (!proof){
-                  return updatestorage()(args).then(function(){
-                    reject({err: 'No secret found!'});
+                if(!proof){
+                  return (!args && reject({err: 'No valid authentication session found!'}))
+                  || updatestorage()(args).then(function(){
+                    reject({err: 'Expired session!'});
                   }).catch(function(){
-                    reject({err: 'No secret found!'});
+                    reject({err: 'Expired session!'});
                   });
                 }
-                // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-                return SEA.read(at.put.auth, pub).then(function(auth){
-                  return SEA.de(auth, proof)
-                  .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
+                return readAndDecrypt(at.put.auth, pub, proof).catch(function(e){
+                  return !remaining && reject({err: 'Failed to decrypt private key!'});
                 }).then(function(priv){
                   // now we have AES decrypted the private key,
                   // if we were successful, then that means we're logged in!
@@ -333,7 +334,9 @@
           reject({err: 'No authentication session found!'});
         });
       }
-      reject({err: 'No authentication session found!'});
+      reject({
+        err: (localStorage.getItem('remember') && 'Missing PIN and alias!')
+        || 'No authentication session found!'});
     });
   }
 
@@ -341,10 +344,18 @@
   function authleave(root, alias){
     return function(resolve, reject){
       // remove persisted authentication
-      authpersist((alias && { alias: alias }) || root._.user._).then(function(){
-        root._.user = root.chain();
+      user = root._.user;
+      alias = alias || (user._ && user._.alias);
+      var doIt = function(){
+        // TODO: is this correct way to 'logout' user from Gun.User ?
+        [ 'alias', 'sea', 'pub' ].forEach(function(key){
+          delete user._[key];
+        });
+        user._.is = user.is = {};
+        // Let's use default
         resolve({ok: 0});
-      });
+      };
+      authpersist(alias && { alias: alias }).then(doIt).catch(doIt);
     };
   }
 
@@ -352,8 +363,7 @@
   function nodehash(m){
     try{
       m = m.slice ? m : JSON.stringify(m);
-      var ret = nodeCrypto.createHash(nHash).update(m, 'utf8').digest();
-      return ret;
+      return nodeCrypto.createHash(nHash).update(m, 'utf8').digest();
     }catch(e){ return m }
   }
 
@@ -413,6 +423,16 @@
     cb = typeof cb === 'function' && cb;
 
     var doIt = function(resolve, reject){
+      // TODO: !pass && opt.pin => try to recall
+      // return reject({err: 'Auth attempt failed! Reason: No session data for alias & PIN'});
+      if(!pass && Gun.obj.has(opts, 'pin')){
+        return authrecall(root, {alias: alias, pin: opts.pin}).then(function(props){
+          resolve(props);
+        }).catch(function(e){
+          reject({err: 'Auth attempt failed! Reason: No session data for alias & PIN'});
+        });
+      }
+
       authenticate(alias, pass, root).then(function(key){
         // we're logged in!
         var pin = Gun.obj.has(opts, 'pin') && { pin: opts.pin };
@@ -439,7 +459,6 @@
             // awesome, now we can update the user using public key ID.
             // root.get(tmp).put(null);
             root.get(tmp).put(user);
-
             // then we're done
             finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
               Gun.log('Failed to finalize login with new password!');
@@ -447,17 +466,17 @@
             });
           }).catch(function(e){
             Gun.log('Failed encrypt private key using new password!');
-            reject({err: 'Password set attempt failed! Reason: '+(e && e.err) || e || ''});
+            reject({err: 'Password set attempt failed! Reason: ' + (e && e.err) || e || ''});
           });
         } else {
           finalizelogin(alias, key, root, pin).then(resolve).catch(function(e){
             Gun.log('Failed to finalize login!');
-            reject({err: 'Finalizing login failed! Reason: '+(e && e.err) || e || ''});
+            reject({err: 'Finalizing login failed! Reason: ' + (e && e.err) || e || ''});
           });
         }
       }).catch(function(e){
         Gun.log('Failed to sign in!');
-        reject({err: 'Auth attempt failed! Reason: '+(e && e.err) || e || ''});
+        reject({err: 'Auth attempt failed! Reason: ' + (e && e.err) || e || ''});
       });
     };
     if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
@@ -473,37 +492,46 @@
       authenticate(alias, pass, root).then(function(key){
         new Promise(authleave(root, alias)).catch(function(){})
         .then(function(){
+          // Delete user data
           root.get('pub/'+key.pub).put(null);
-          root._.user = root.chain();
+          // Wipe user data from memory
+          user = root._.user;
+          // TODO: is this correct way to 'logout' user from Gun.User ?
+          [ 'alias', 'sea', 'pub' ].forEach(function(key){
+            delete user._[key];
+          });
+          user._.is = user.is = {};
           resolve({ok: 0});
         }).catch(function(e){
           Gun.log('User.delete failed! Error:', e);
-          reject({err: 'Delete attempt failed! Reason:'+(e && e.err) || e || ''});
+          reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''});
         });
       }).catch(function(e){
         Gun.log('User.delete authentication failed! Error:', e);
-        reject({err: 'Delete attempt failed! Reason:'+(e && e.err) || e || ''});
+        reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''});
       });
     };
     if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
   // If authentication is to be remembered over reloads or browser closing,
-  // set validity time in seconds.
-  User.recall = function(validity,cb,opts){
+  // set validity time in minutes.
+  User.recall = function(v,cb,o){
     var root = this.back(-1);
-    if(!opts){
-      if(typeof cb !== 'function' && !Gun.val.is(cb)){
-        opts = cb;
-        cb = undefined;
-      }
+    var validity, callback, opts;
+    if(!o && typeof cb !== 'function' && !Gun.val.is(cb)){
+      opts = cb;
+    } else {
+      callback = cb;
     }
-    if(!cb){
-      if(typeof validity === 'function'){
-        cb = validity;
-        validity = undefined;
-      } else if(!Gun.val.is(validity)){
-        opts = validity;
-        validity = undefined;
+    if(!callback){
+      if(typeof v === 'function'){
+        callback = v;
+        validity = _initial_authsettings.validity;
+      } else if(!Gun.val.is(v)){
+        opts = v;
+        validity = _initial_authsettings.validity;
+      } else {
+        validity = v * 60;  // minutes to seconds
       }
     }
     var doIt = function(resolve, reject){
@@ -514,25 +542,21 @@
       // called when app bootstraps, with wanted options
       // IF validity === 0 THEN no remember-me, ever
       // IF opt.session === true THEN no window.localStorage in use; nor PIN
-      if(Gun.val.is(validity)){
-        authsettings.validity = validity;
-      }
+      authsettings.validity = typeof validity !== 'undefined' ? validity
+      :  _initial_authsettings.validity;
       if(Gun.obj.has(opts, 'session')){
         authsettings.session = opts.session;
       }
-      if(Gun.obj.has(opts, 'hook')){
-        authsettings.hook = opt.hook;
-      }
-      authrecall(root).then(function(props){
-        // All is good. Should we do something more with actual recalled data?
-        resolve(root._.user._)
-      }).catch(function(e){
+      authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
+      ? opts.hook : _initial_authsettings.hook;
+      // All is good. Should we do something more with actual recalled data?
+      authrecall(root).then(resolve).catch(function(e){
         var err = 'No session!';
         Gun.log(err);
-        resolve({ err: err });
+        resolve({ err: (e && e.err) || err });
       });
     };
-    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
+    if(callback){doIt(callback, callback)} else { return new Promise(doIt) }
   };
   User.alive = function(cb){
     var root = this.back(-1);
@@ -643,7 +667,7 @@
               if(val === tmp){ return } // the account MUST have a `pub` property that equals the ID of the public key.
               return no = true; // if not, reject the update.
             }
-            if(at.user){ // if we are logged in
+            if(at.user && at.user._){ // if we are logged in
               if(tmp === at.user._.pub){ // as this user
                 SEA.write(val, at.user._.sea).then(function(data){
                   val = node[key] = data; // then sign our updates as we output them.
@@ -789,8 +813,7 @@
       } else {  // NodeJS doesn't support crypto.subtle.importKey properly
         try{
           var cipher = nodeCrypto.createCipheriv(aes.enc, key, iv);
-          r.ct = cipher.update(m, 'utf8', 'base64');
-          r.ct += cipher.final('base64');
+          r.ct = cipher.update(m, 'utf8', 'base64') + cipher.final('base64');
         }catch(e){ Gun.log(e); return reject(e) }
         resolve(JSON.stringify(r));
       }
@@ -799,23 +822,24 @@
   };
   SEA.de = function(m,p,cb){
     var doIt = function(resolve, reject){
-      var d = !m.slice ? m : JSON.parse(m);
-      var key = makeKey(p, new Buffer(d.s, 'hex'));
-      var iv = new Buffer(d.iv, 'hex');
+      try{ m = m.slice ? JSON.parse(m) : m }catch(e){}
+      var key = makeKey(p, new Buffer(m.s, 'hex'));
+      var iv = new Buffer(m.iv, 'hex');
       if(typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
         crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
         .then(function(aesKey){
           crypto.subtle.decrypt({
             name: 'AES-CBC', iv: iv
-          }, aesKey, new Buffer(d.ct, 'base64')).then(function(ct){
+          }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
             var ctUtf8 = new TextDecoder('utf8').decode(ct);
-            return !ctUtf8.slice ? ctUtf8 : JSON.parse(ctUtf8);
+            try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
+            }catch(e){ return ctUtf8 }
           }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
         }).catch(function(e){Gun.log(e); reject(e)});
       } else {  // NodeJS doesn't support crypto.subtle.importKey properly
         try{
           var decipher = nodeCrypto.createDecipheriv(aes.enc, key, iv);
-          r = decipher.update(d.ct, 'base64', 'utf8') + decipher.final('utf8');
+          r = decipher.update(m.ct, 'base64', 'utf8') + decipher.final('utf8');
         }catch(e){ Gun.log(e); return reject(e) }
         resolve(r);
       }
@@ -829,7 +853,7 @@
       if(mm.slice){
         // Needs to remove previous signature envelope
         while('SEA[' === m.slice(0,4)){
-          try{m = JSON.parse(m.slice(3))[0];
+          try{ m = JSON.parse(m.slice(3))[0];
           }catch(e){ m = mm; break }
         }
       }
@@ -845,7 +869,7 @@
       if(!m){ return resolve() }
       if(!m.slice || 'SEA[' !== m.slice(0,4)){ return resolve(m) }
       m = m.slice(3);
-      try{m = !m.slice ? m : JSON.parse(m);
+      try{ m = m.slice ? JSON.parse(m) : m;
       }catch(e){ return reject(e) }
       m = m || '';
       SEA.verify(m[0], p, m[1]).then(function(ok){
