@@ -710,7 +710,6 @@
         });
       }
       on.to('end', function(ctx){ // TODO: Can't you just switch this to each.end = cb?
-        console.log("SOME EVIDENCE", ctx);
         if(each.err || !each.end){ return }
         if(each.err = ctx.err || ctx.no){
           console.log("NO!", each.err);
