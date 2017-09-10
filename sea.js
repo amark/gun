@@ -388,17 +388,18 @@
           // this will take some short amount of time to produce a proof, which slows brute force attacks.
           SEA.pair().then(function(pair){
             // now we have generated a brand new ECDSA key pair for the user account.
-            var user = { pub: pair.pub, priv: pair.priv };
+            var user = { pub: pair.pub };
+            var tmp = pair.priv;
             // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-            SEA.write(alias, pair.priv).then(function(signedalias){
+            SEA.write(alias, tmp).then(function(signedalias){
               user.alias = signedalias;
-              return SEA.write(salt, pair.priv);
+              return SEA.write(salt, tmp);
             }).then(function(signedsalt){
               user.salt = signedsalt;
               // to keep the private key safe, we AES encrypt it with the proof of work!
-              return SEA.en(pair.priv, proof);
+              return SEA.en(tmp, proof);
             }).then(function(encryptedpriv){
-              return SEA.write(encryptedpriv, pair.priv);
+              return SEA.write(encryptedpriv, tmp);
             }).then(function(encsigauth){
               user.auth = encsigauth;
               var tmp = 'pub/'+pair.pub;
@@ -481,6 +482,15 @@
     };
     if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
   };
+  Gun.chain.trust = function(user){
+    // TODO: BUG!!! SEA `node` read listener needs to be async, which means core needs to be async too.
+    //gun.get('alice').get('age').trust(bob);
+    if(Gun.is(user)){
+      user.get('pub').get(function(ctx, ev){
+        console.log(ctx, ev);
+      })
+    }
+  }
   User.leave = function(cb){
     var root = this.back(-1);
     if(cb){authleave(root)(cb, cb)} else { return new Promise(authleave(root)) }
@@ -675,6 +685,7 @@
         return on.to('end', {err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
       }
       each.pub = function(val, key, node, soul, pub){
+        //console.log("WE ARE HERE", key, val, soul, node, pub);
         if('pub' === key){
           if(val === pub){ return check['pub'+soul+key] = 0 } // the account MUST have a `pub` property that equals the ID of the public key.
           return on.to('end', {err: "Account must match!"});
@@ -900,5 +911,5 @@
   // Adding friends (trusted public keys), sending private messages, etc.
   // Cheers! Tell me what you think.
 
-  module.exports = SEA;
+  try{module.exports = SEA}catch(e){};
 }());
