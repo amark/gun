@@ -48,15 +48,15 @@
   },
   "dependencies": {
     "aws-sdk": ">=2.41.0",
-    "buffer": "^5.0.7",
-    "eccrypto": "^1.0.3",
     "formidable": ">=1.1.1",
-    "subtle": "^0.1.8",
-    "text-encoding": "^0.6.4",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
     "express": ">=4.15.2",
+    "subtle": "^0.1.8",
+    "text-encoding": "^0.6.4",
+    "buffer": "^5.0.7",
+    "eccrypto": "^1.0.3",
     "hapi": "^16.1.1",
     "inert": "^4.2.0",
     "ip": "^1.1.5",
