@@ -621,103 +621,111 @@
   // okay! The security function handles all the heavy lifting.
   // It needs to deal read and write of input and output of system data, account/public key data, and regular data.
   // This is broken down into some pretty clear edge cases, let's go over them:
-  function security(at){
-    var cat = this.as, sea = cat.sea, to = this.to;
-    if(at.get){
+  function security(msg){
+    var at = this.as, sea = at.sea, to = this.to;
+    if(msg.get){
       // if there is a request to read data from us, then...
-      var soul = at.get['#'];
+      var soul = msg.get['#'];
       if(soul){ // for now, only allow direct IDs to be read.
         if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
-          return to.next(at); // yes.
+          return to.next(msg); // yes.
         } else
         if('alias/' === soul.slice(0,6)){ // Allow reading the list of public keys associated with an alias?
-          return to.next(at); // yes.
+          return to.next(msg); // yes.
         } else { // Allow reading everything?
-          return to.next(at); // yes // TODO: No! Make this a callback/event that people can filter on.
+          return to.next(msg); // yes // TODO: No! Make this a callback/event that people can filter on.
         }
       }
     }
-    if(at.put){
-      // if there is a request to write data to us, then...
-      var no, tmp, u;
-      Gun.obj.map(at.put, function(node, soul){ // for each over every node in the graph
-        if(no){ return no = true }
-        if(Gun.obj.empty(node, '_')){ return } // ignore empty updates, don't reject them.
-        if('alias' === soul){ // special case for shared system data, the list of aliases.
-          Gun.obj.map(node, function(val, key){ // for each over the node to look at each property/value.
-            if('_' === key){ return } // ignore meta data
-            if(!val){ return no = true } // data MUST exist
-            if('alias/'+key !== Gun.val.rel.is(val)){ // in fact, it must be EXACTLY equal to itself
-              return no = true; // if it isn't, reject.
-            }
-          });
-        } else
+    if(msg.put){
+      // potentially parallel async operations!!!
+      var check = {}, on = Gun.on(), each = {};
+      each.node = function(node, soul){
+        if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them.
+        Gun.obj.map(node, each.way, {soul: soul, node: node});
+      }
+      each.way = function(val, key){
+        var soul = this.soul, node = this.node, tmp;
+        if('_' === key){ return } // ignore meta data
+        if('alias' === soul){  // special case for shared system data, the list of aliases.
+          each.alias(val, key, node, soul);
+        }
         if('alias/' === soul.slice(0,6)){ // special case for shared system data, the list of public keys for an alias.
-          Gun.obj.map(node, function(val, key){ // for each over the node to look at each property/value.
-            if('_' === key){ return } // ignore meta data
-            if(!val){ return no = true } // data MUST exist
-            if(key === Gun.val.rel.is(val)){ return } // and the ID must be EXACTLY equal to its property
-            return no = true; // that way nobody can tamper with the list of public keys.
-          });
-        } else
-        if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
-          tmp = soul.slice(4); // ignore the 'pub/' prefix on the public key.
-          Gun.obj.map(node, function(val, key){ // for each over the account data, looking at each property/value.
-            if('_' === key){ return } // ignore meta data.
-            if('pub' === key){
-              if(val === tmp){ return } // the account MUST have a `pub` property that equals the ID of the public key.
-              return no = true; // if not, reject the update.
-            }
-            if(at.user && at.user._){ // if we are logged in
-              if(tmp === at.user._.pub){ // as this user
-                SEA.write(val, at.user._.sea).then(function(data){
-                  val = node[key] = data; // then sign our updates as we output them.
-                });
-              } // (if we are lying about our signature, other peer's will reject our update)
-            }
-            SEA.read(val, tmp).then(function(data){
-              if(u === (val = data)){ // make sure the signature matches the account it claims to be on.
-                return no = true; // reject any updates that are signed with a mismatched account.
-              }
-            });
-          });
-        } else
-        if(at.user && (tmp = at.user._.sea)){ // not special case, if we are logged in, then
-          Gun.obj.map(node, function(val, key){ // any data we output needs to
-            if('_' === key){ return }
-            SEA.write(val, tmp).then(function(data){
-              node[key] = data; // be signed by our logged in account.
-            });
-          });
-        } else // TODO: BUG! These two if-statements are not exclusive to each other!!!
-        if(tmp = sea.own[soul]){ // not special case, if we receive an update on an ID associated with a public key, then
-          Gun.obj.map(node, function(val, key){ // for each over the property/values
-            if('_' === key){ return }
-            SEA.read(val, tmp).then(function(data){
-              if(u === (val = data)){ // and verify they were signed by the associated public key!
-                return no = true; // reject the update if it fails to match.
-              }
-            });
-          });
-        } else { // reject any/all other updates by default.
-          return no = true;
+          each.pubs(val, key, node, soul);
         }
-      });
-      if(no){ // if we got a rejection then...
-        if(!at || !Gun.tag.secure){ return }
-        cat.on('secure', function(at){ // (below) emit a special event for the developer to handle security.
-          this.off();
-          if(!at){ return }
-          to.next(at); // and if they went ahead and explicitly called "next" (to us) with data, then approve.
-        });
-        cat.on('secure', at);
-        return; // else wise, reject.
+        if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
+          each.pub(val, key, node, soul, soul.slice(4));
+        }    
+        if(at.user && (tmp = at.user._.sea)){ // not special case, if we are logged in, then
+          each.user(val, key, node, soul, tmp);
+        }
+        if(tmp = sea.own[soul]){ // not special case, if we receive an update on an ID associated with a public key, then
+          each.own(val, key, node, soul, tmp);
+        }
       }
-      //console.log("SEA put", at.put);
-      // if we did not get a rejection, then pass forward to the "next" adapter middleware.
-      return to.next(at);
+      each.alias = function(val, key, node, soul){
+        if(!val){ return on.to('end', {err: "Data must exist!"}) } // data MUST exist
+        if('alias/'+key !== Gun.val.rel.is(val)){ // in fact, it must be EXACTLY equal to itself
+          return on.to('end', {err: "Mismatching alias."}); // if it isn't, reject.
+        }
+      }
+      each.pubs = function(val, key, node, soul){
+        if(!val){ return on.to('end', {err: "Alias must exist!"}) } // data MUST exist
+        if(key === Gun.val.rel.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
+        return on.to('end', {err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
+      }
+      each.pub = function(val, key, node, soul, pub){
+        if('pub' === key){
+          if(val === pub){ return check['pub'+soul+key] = 0 } // the account MUST have a `pub` property that equals the ID of the public key.
+          return on.to('end', {err: "Account must match!"});
+        }
+        /*
+        if(at.user && at.user._){ // if we are logged in
+          if(pub === at.user._.pub){ // as this user
+            SEA.write(val, at.user._.sea).then(function(data){
+              val = node[key] = data; // then sign our updates as we output them.
+            });
+          } // (if we are lying about our signature, other peer's will reject our update)
+        }
+        SEA.read(val, pub).then(function(data){
+          if(u === (val = data)){ // make sure the signature matches the account it claims to be on.
+            return no = true; // reject any updates that are signed with a mismatched account.
+          }
+        });
+        */
+      }
+      each.user = function(val, key, node, soul, tmp){
+        check['user'+soul+key] = 1;
+        SEA.write(val, tmp, function(data){ // TODO: BUG! Convert to use imported.
+          node[key] = data; // be signed by our logged in account.
+          check['user'+soul+key] = 0;
+          on.to('end', {ok: 1});
+        });
+      }
+      each.own = function(val, key, node, soul, tmp){
+        check['own'+soul+key] = 1;
+        SEA.read(val, tmp, function(data){
+          check['own'+soul+key] = 0;
+          on.to('end', {no: tmp = (u === (val = data)), err: tmp && "Signature mismatch!"});
+        });
+      }
+      on.to('end', function(ctx){ // TODO: Can't you just switch this to each.end = cb?
+        console.log("SOME EVIDENCE", ctx);
+        if(each.err || !each.end){ return }
+        if(each.err = ctx.err || ctx.no){
+          console.log("NO!", each.err);
+          return;
+        }
+        if(Gun.obj.map(check, function(no){
+          if(no){ return true }
+        })){ return }
+        to.next(msg);
+      });
+      Gun.obj.map(msg.put, each.node);
+      on.to('end', {end: each.end = true});
+      return; // need to manually call next after async.
     }
-    to.next(at); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
+    to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
   };
 
   // Does enc/dec key like OpenSSL - works with CryptoJS encryption/decryption
