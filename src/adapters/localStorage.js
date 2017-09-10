@@ -5,6 +5,11 @@ var root, noop = function(){}, u;
 if(typeof window !== 'undefined'){ root = window }
 var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
 
+/*
+	NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
+	If you update anything here, consider updating the other adapters as well.
+*/
+
 Gun.on('opt', function(ctx){
 	this.to.next(ctx);
 	var opt = ctx.opt;
@@ -56,7 +61,7 @@ Gun.on('opt', function(ctx){
 		var ack = acks;
 		acks = {};
 		try{store.setItem(opt.file, JSON.stringify(disk));
-		}catch(e){ err = e || "localStorage failure" }
+		}catch(e){ Gun.log(err = e || "localStorage failure") }
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 		Gun.obj.map(ack, function(yes, id){
 			ctx.on('in', {
