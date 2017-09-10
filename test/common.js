@@ -1,13 +1,26 @@
 var root;
 (function(env){
 	root = env.window? env.window : global;
-	env.window && root.localStorage && root.localStorage.clear();
+	if(!root.sessionStorage){
+		root.sessionStorage = new require('node-localstorage').LocalStorage('session');
+	}
+	root.sessionStorage.clear();
+	if(!root.localStorage){
+		root.localStorage = new require('node-localstorage').LocalStorage('local');
+	}
+	root.localStorage.clear();
 	try{ require('fs').unlinkSync('data.json') }catch(e){}
 	//root.Gun = root.Gun || require('../gun');
 	if(root.Gun){
 		root.Gun = root.Gun;
+		if (process.env.SEA && !root.Gun.SEA) { 
+			root.Gun.SEA = require('../sea');
+		}
 	} else {
 		root.Gun = require('../gun');
+		if (process.env.SEA) {
+			Gun.SEA = require('../sea');
+		}
 		Gun.serve = require('../lib/serve');
 		//require('./s3');
 		//require('./uws');
@@ -167,7 +180,7 @@ describe('Performance', function(){ return; // performance tests
 describe('Gun', function(){
 	var t = {};
 
-	describe('Utility', function(){
+	!Gun.SEA && describe('Utility', function(){
 		var u;
 		/* // causes logger to no longer log.
 		it('verbose console.log debugging', function(done) {
@@ -1395,7 +1408,7 @@ describe('Gun', function(){
 		});
 	});
 
-	describe('API', function(){
+	!Gun.SEA && describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 
