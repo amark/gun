@@ -665,7 +665,7 @@
         }
         if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
           each.pub(val, key, node, soul, soul.slice(4));
-        }    
+        }
         if(at.user && (tmp = at.user._.sea)){ // not special case, if we are logged in, then
           each.user(val, key, node, soul, tmp);
         }
@@ -716,7 +716,10 @@
       each.own = function(val, key, node, soul, tmp){
         check['own'+soul+key] = 1;
         SEA.read(val, tmp, function(data){
+          var u;
           check['own'+soul+key] = 0;
+          // TODO: hopefully fixed this right, typeof u === 'undefined' thus
+          // if there is signature, and data is undefined, then:
           on.to('end', {no: tmp = (u === (val = data)), err: tmp && "Signature mismatch!"});
         });
       }
@@ -807,7 +810,7 @@
   SEA.verify = function(m, p, s, cb){
     var doIt = function(resolve, reject){
       ecCrypto.verify(new Buffer(p, 'hex'), nodehash(m), new Buffer(s, 'hex'))
-      .then(function(){resolve(true)})
+      .then(function(){ resolve(true)})
       .catch(function(e){ Gun.log(e);reject(e) })
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }

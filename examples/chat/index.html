@@ -34,7 +34,7 @@
 				.poiret {
 					font-family: 'Poiret One', sans-serif;
 				}
-				.large {	
+				.large {
 					font-size: 200%;
 				}
 				#converse .what, #converse .who {
@@ -68,8 +68,19 @@
 			</div>
 			<script src="/jquery.js"></script>
 			<script src="/gun.js"></script>
+		<!--
+			<script src="/gun/lib/cryptography.js"></script>
+			<script src="/gun/sea.js"></script>
+		-->
 			<script>
 				var gun = Gun(location.origin+'/gun');
+				var user = gun.user && gun.user();
+				if (user) {
+					// 1st: call create. 2nd call auth. After that, call recall
+					// user.create('dude', 'my secret').then(function(ack) { console.log('created ack:', ack) })
+					// user.auth('dude', 'my secret').then(function(user) { console.log('authenticated user:', user) })
+					// user.recall().then(function(ack) { console.log('recall ack:', ack) });
+				}
 				var chat = gun.get('converse');
 				chat.map().val(function(msg, field){
 					var ul = $('ul'), last = sort(field, ul.children('li').last()), li;
