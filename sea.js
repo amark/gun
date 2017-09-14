@@ -774,11 +774,13 @@
           hash: pbkdf2.hash,
         }, key, pbkdf2.ks*8);
       }).then(function(result){
+        pass = getRandomBytes(pass.length);
         return new Buffer(result, 'binary').toString('base64');
       }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
         var hash = nodeCrypto.pbkdf2Sync(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash);
+        pass = getRandomBytes(pass.length);
         resolve(hash && hash.toString('base64'));
       }catch(e){ reject(e) };
     };
@@ -829,9 +831,11 @@
       if(typeof window !== 'undefined'){ // Browser doesn't run createCipheriv
         crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
         .then(function(aesKey){
+          key = getRandomBytes(key.length);
           crypto.subtle.encrypt({
             name: 'AES-CBC', iv: iv
           }, aesKey, new TextEncoder().encode(m)).then(function(ct){
+            aesKey = getRandomBytes(32);
             r.ct = new Buffer(ct, 'binary').toString('base64');
             return JSON.stringify(r);
           }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
@@ -840,6 +844,7 @@
         try{
           var cipher = nodeCrypto.createCipheriv(aes.enc, key, iv);
           r.ct = cipher.update(m, 'utf8', 'base64') + cipher.final('base64');
+          key = getRandomBytes(key.length);
         }catch(e){ Gun.log(e); return reject(e) }
         resolve(JSON.stringify(r));
       }
@@ -854,9 +859,11 @@
       if(typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
         crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
         .then(function(aesKey){
+          key = getRandomBytes(key.length);
           crypto.subtle.decrypt({
             name: 'AES-CBC', iv: iv
           }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
+            aesKey = getRandomBytes(32);
             var ctUtf8 = new TextDecoder('utf8').decode(ct);
             try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
             }catch(e){ return ctUtf8 }
@@ -866,6 +873,7 @@
         try{
           var decipher = nodeCrypto.createDecipheriv(aes.enc, key, iv);
           r = decipher.update(m.ct, 'base64', 'utf8') + decipher.final('utf8');
+          key = getRandomBytes(key.length);
         }catch(e){ Gun.log(e); return reject(e) }
         resolve(r);
       }
