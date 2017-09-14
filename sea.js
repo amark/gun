@@ -132,7 +132,7 @@
           .then(function(proof){
             // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
             SEA.read(at.put.auth, pub).then(function(auth){
-              return SEA.de(auth, proof)
+              return SEA.dec(auth, proof)
               .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
             }).then(function(priv){
               // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
@@ -191,7 +191,7 @@
             if(!protected){
               localStorage.removeItem('remember');
             }
-            return !protected || SEA.en(protected, pin).then(function(encrypted){
+            return !protected || SEA.enc(protected, pin).then(function(encrypted){
               return encrypted && SEA.write(encrypted, priv).then(function(encsig){
                 localStorage.setItem('remember', encsig);
               }).catch(reject);
@@ -266,7 +266,7 @@
       };
       var readAndDecrypt = function(data, pub, key){
         return SEA.read(data, pub).then(function(encrypted){
-          return SEA.de(encrypted, key);
+          return SEA.dec(encrypted, key);
         }).then(function(decrypted){
           try{ return decrypted.slice ? JSON.parse(decrypted) : decrypted }catch(e){}
           return decrypted;
@@ -404,7 +404,7 @@
             }).then(function(signedsalt){
               user.salt = signedsalt;
               // to keep the private key safe, we AES encrypt it with the proof of work!
-              return SEA.en(tmp, proof);
+              return SEA.enc(tmp, proof);
             }).then(function(encryptedpriv){
               return SEA.write(encryptedpriv, tmp);
             }).then(function(encsigauth){
@@ -448,7 +448,7 @@
           // password update so encrypt private key using new pwd + salt
           var newsalt = Gun.text.random(64);
           SEA.proof(opts.newpass, newsalt).then(function(newproof){
-            return SEA.en(key.priv, newproof).then(function(encryptedpriv){
+            return SEA.enc(key.priv, newproof).then(function(encryptedpriv){
               return SEA.write(encryptedpriv, key.priv);
             });
           }).then(function(encsigauth){
@@ -819,7 +819,7 @@
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
-  SEA.en = function(m,p,cb){
+  SEA.enc = function(m,p,cb){
     var doIt = function(resolve, reject){
       var s = getRandomBytes(8);
       var iv = getRandomBytes(16);
@@ -846,7 +846,7 @@
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
-  SEA.de = function(m,p,cb){
+  SEA.dec = function(m,p,cb){
     var doIt = function(resolve, reject){
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}
       var key = makeKey(p, new Buffer(m.s, 'hex'));
