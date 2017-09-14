@@ -12,25 +12,27 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  var crypto, TextEncoder, TextDecoder, localStorage, sessionStorage;
+  if(typeof Buffer === 'undefined'){
+    var Buffer = require('buffer').Buffer;
+  }
+
+  var crypto, TextEncoder, TextDecoder, localStorage, sessionStorage, getRandomBytes;
 
   if(typeof window !== 'undefined'){
-    crypto = window.crypto;
+    crypto = window.crypto || window.msCrypto;
+    getRandomBytes = function(len){ return crypto.getRandomValues(new Buffer(len)) };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     localStorage = window.localStorage;
     sessionStorage = window.sessionStorage;
   } else {
     crypto = { subtle: require('subtle') }; // Web Cryptography API for NodeJS
+    getRandomBytes = function(len){ return nodeCrypto.randomBytes(len) };
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
     localStorage = new require('node-localstorage').LocalStorage('local');
     sessionStorage = new require('node-localstorage').LocalStorage('session');
-  }
-
-  if(typeof Buffer === 'undefined'){
-    var Buffer = require('buffer').Buffer;
   }
 
   // Encryption parameters - TODO: maybe to be changed via init?
@@ -359,11 +361,16 @@
     };
   }
 
+  // Takes data (defaults as Buffer) and returns 'md5' hash
+  function hashData(data,intype,outtype){
+    return nodeCrypto.createHash(outtype || 'md5').update(data, intype).digest();
+  }
+
   // This internal func returns hashed data for signing
   function nodehash(m){
     try{
       m = m.slice ? m : JSON.stringify(m);
-      return nodeCrypto.createHash(nHash).update(m, 'utf8').digest();
+      return hashData(m, 'utf8', nHash);
     }catch(e){ return m }
   }
 
@@ -744,12 +751,9 @@
   // Does enc/dec key like OpenSSL - works with CryptoJS encryption/decryption
   function makeKey(p,s){
     var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
-    var h128 = nodeCrypto.createHash('md5').update(ps).digest();
     // TODO: 'md5' is insecure, do we need OpenSSL compatibility anymore ?
-    return Buffer.concat([
-      h128,
-      nodeCrypto.createHash('md5').update(Buffer.concat([h128, ps])).digest()
-    ]);
+    var h128 = hashData(ps);
+    return Buffer.concat([h128, hashData(Buffer.concat([h128, ps]))]);
   }
 
   var nHash = pbkdf2.hash.replace('-', '').toLowerCase();
@@ -782,7 +786,7 @@
   };
   SEA.pair = function(cb){
     var doIt = function(resolve, reject){
-      var priv = nodeCrypto.randomBytes(32);
+      var priv = getRandomBytes(32);
       resolve({
         pub: new Buffer(ecCrypto.getPublic(priv), 'binary').toString('hex'),
         priv: new Buffer(priv, 'binary').toString('hex')
@@ -817,8 +821,8 @@
   };
   SEA.en = function(m,p,cb){
     var doIt = function(resolve, reject){
-      var s = nodeCrypto.randomBytes(8);
-      var iv = nodeCrypto.randomBytes(16);
+      var s = getRandomBytes(8);
+      var iv = getRandomBytes(16);
       var r = {iv: iv.toString('hex'), s: s.toString('hex')};
       var key = makeKey(p, s);
       m = (m.slice && m) || JSON.stringify(m);
