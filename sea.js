@@ -51,9 +51,6 @@
     iter: 50000,
     ks: 64
   };
-  var aes = {
-    enc: 'aes-256-cbc'
-  };
 
   var _initial_authsettings = {
     validity: 12 * 60 * 60, // internally in seconds : 12 hours
@@ -137,7 +134,6 @@
             .catch(function(e){ reject({err: 'Failed to create proof!'}) });
           }).catch(function(e){ reject({err: 'Failed to create proof!'}) })
           .then(function(proof){
-console.log('authenticate proof:', proof)
             // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
             SEA.read(at.put.auth, pub).then(function(auth){
               return SEA.dec(auth, {pub: pub, key: proof})
@@ -194,7 +190,6 @@ console.log('authenticate proof:', proof)
       var store = tx.objectStore('SEA');
       fn_(store);
       tx.oncomplete = function(){   // Close the db when the transaction is done
-console.log('... tx.oncomplete open.result:', open.result)
         db.close();
         if(typeof resolve_ === 'function'){ resolve_() }
       };
@@ -502,10 +497,8 @@ console.log('... tx.oncomplete open.result:', open.result)
           // password update so encrypt private key using new pwd + salt
           var newsalt = Gun.text.random(64);
           SEA.proof(opts.newpass, newsalt).then(function(newproof){
-console.log('... newproof:', newproof)
             return SEA.enc(key.priv, {pub: key.pub, key: newproof, set: true})
             .then(function(encryptedpriv){
-console.log('... private encrypted using newproof')
               return SEA.write(encryptedpriv, key.priv);
             });
           }).then(function(encsigauth){
