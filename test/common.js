@@ -1,3 +1,8 @@
+/* global Gun,describe,expect,it */
+/*eslint max-len: ["error", 95, { "ignoreComments": true }]*/
+/*eslint semi: ["error", "always", { "omitLastInOneLineBlock": true}]*/
+/*eslint object-curly-spacing: ["error", "never"]*/
+/*eslint node/no-deprecated-api: [error, {ignoreModuleItems: ["new buffer.Buffer()"]}] */
 var root;
 (function(env){
 	root = env.window? env.window : global;
@@ -9,7 +14,7 @@ var root;
 		root.localStorage = new require('node-localstorage').LocalStorage('local');
 	}
 	root.localStorage.clear();
-	try{ require('fs').unlinkSync('data.json') }catch(e){}
+	try{ require('fs').unlinkSync('data.json') }catch(e){}	//eslint-disable-line no-empty
 	//root.Gun = root.Gun || require('../gun');
 	if(root.Gun){
 		root.Gun = root.Gun;
@@ -17,20 +22,12 @@ var root;
 			root.Gun.SEA = require('../sea');
 		}
 	} else {
-		root.Gun = require('../gun');
-		if (process.env.SEA) {
-			Gun.SEA = require('../sea');
-		}
-		Gun.serve = require('../lib/serve');
-		//require('./s3');
-		//require('./uws');
-		//require('./wsp/server');
-		require('../lib/file');
+		root.Gun = require('./index');
 	}
 }(this));
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
-  var leaked = []
+  var leaked = [];
   for (var key in gleak.globe){ if (!(key in gleak.globals)){ leaked.push(key)} }
   if (leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
 }};
