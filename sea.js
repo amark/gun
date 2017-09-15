@@ -7,7 +7,7 @@
 
   /* THIS IS AN EARLY ALPHA!!! */
 
-  var nodeCrypto = require('crypto');
+  var crypto = require('crypto');
   var ecCrypto = require('eccrypto');
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
@@ -16,25 +16,29 @@
     var Buffer = require('buffer').Buffer;
   }
 
-  var crypto, TextEncoder, TextDecoder, localStorage, sessionStorage, getRandomBytes;
+  var subtle, TextEncoder, TextDecoder, getRandomBytes;
+  var localStorage, sessionStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
-    crypto = window.crypto || window.msCrypto;
-    getRandomBytes = function(len){ return crypto.getRandomValues(new Buffer(len)) };
+    var wc = window.crypto || window.msCrypto;  // STD or M$
+    subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
+    getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     localStorage = window.localStorage;
     sessionStorage = window.sessionStorage;
+    indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
   } else {
-    crypto = { subtle: require('subtle') }; // Web Cryptography API for NodeJS
-    getRandomBytes = function(len){ return nodeCrypto.randomBytes(len) };
+    subtle = require('subtle'); // Web Cryptography API for NodeJS
+    getRandomBytes = function(len){ return crypto.randomBytes(len) };
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
     localStorage = new require('node-localstorage').LocalStorage('local');
     sessionStorage = new require('node-localstorage').LocalStorage('session');
+    indexedDB = undefined;  // TODO: simulate IndexedDB in NodeJS but how?
   }
-
+console.log('indexedDB:', indexedDB)
   // Encryption parameters - TODO: maybe to be changed via init?
   var pbkdf2 = {
     hash: 'SHA-256',  // Was 'SHA-1'
@@ -363,7 +367,7 @@
 
   // Takes data (defaults as Buffer) and returns 'md5' hash
   function hashData(data,intype,outtype){
-    return nodeCrypto.createHash(outtype || 'md5').update(data, intype).digest();
+    return crypto.createHash(outtype || 'md5').update(data, intype).digest();
   }
 
   // This internal func returns hashed data for signing
@@ -764,10 +768,10 @@
   // now wrap the various AES, ECDSA, PBKDF2 functions we called above.
   SEA.proof = function(pass,salt,cb){
     var doIt = (typeof window !== 'undefined' && function(resolve, reject){
-      crypto.subtle.importKey(  // For browser crypto.subtle works fine
+      subtle.importKey(  // For browser subtle works fine
         'raw', new TextEncoder().encode(pass), {name: 'PBKDF2'}, false, ['deriveBits']
       ).then(function(key){
-        return crypto.subtle.deriveBits({
+        return subtle.deriveBits({
           name: 'PBKDF2',
           iterations: pbkdf2.iter,
           salt: new TextEncoder().encode(salt),
@@ -779,7 +783,7 @@
       }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
-        var hash = nodeCrypto.pbkdf2Sync(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash);
+        var hash = crypto.pbkdf2Sync(pass,new Buffer(salt, 'utf8'),pbkdf2.iter,pbkdf2.ks,nHash);
         pass = getRandomBytes(pass.length);
         resolve(hash && hash.toString('base64'));
       }catch(e){ reject(e) };
@@ -829,10 +833,10 @@
       var key = makeKey(p, s);
       m = (m.slice && m) || JSON.stringify(m);
       if(typeof window !== 'undefined'){ // Browser doesn't run createCipheriv
-        crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
+        subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
         .then(function(aesKey){
           key = getRandomBytes(key.length);
-          crypto.subtle.encrypt({
+          subtle.encrypt({
             name: 'AES-CBC', iv: iv
           }, aesKey, new TextEncoder().encode(m)).then(function(ct){
             aesKey = getRandomBytes(32);
@@ -840,9 +844,9 @@
             return JSON.stringify(r);
           }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
         }).catch(function(e){ Gun.log(e); reject(e)} );
-      } else {  // NodeJS doesn't support crypto.subtle.importKey properly
+      } else {  // NodeJS doesn't support subtle.importKey properly
         try{
-          var cipher = nodeCrypto.createCipheriv(aes.enc, key, iv);
+          var cipher = crypto.createCipheriv(aes.enc, key, iv);
           r.ct = cipher.update(m, 'utf8', 'base64') + cipher.final('base64');
           key = getRandomBytes(key.length);
         }catch(e){ Gun.log(e); return reject(e) }
@@ -857,10 +861,10 @@
       var key = makeKey(p, new Buffer(m.s, 'hex'));
       var iv = new Buffer(m.iv, 'hex');
       if(typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
-        crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
+        subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
         .then(function(aesKey){
           key = getRandomBytes(key.length);
-          crypto.subtle.decrypt({
+          subtle.decrypt({
             name: 'AES-CBC', iv: iv
           }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
             aesKey = getRandomBytes(32);
@@ -869,9 +873,9 @@
             }catch(e){ return ctUtf8 }
           }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
         }).catch(function(e){Gun.log(e); reject(e)});
-      } else {  // NodeJS doesn't support crypto.subtle.importKey properly
+      } else {  // NodeJS doesn't support subtle.importKey properly
         try{
-          var decipher = nodeCrypto.createDecipheriv(aes.enc, key, iv);
+          var decipher = crypto.createDecipheriv(aes.enc, key, iv);
           r = decipher.update(m.ct, 'base64', 'utf8') + decipher.final('utf8');
           key = getRandomBytes(key.length);
         }catch(e){ Gun.log(e); return reject(e) }
