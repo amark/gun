@@ -35,7 +35,7 @@
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB;
   } else {
-    subtle = require('subtle'); // Web Cryptography API for NodeJS
+    subtle = require('@trust/webcrypto').subtle;
     getRandomBytes = function(len){ return crypto.randomBytes(len) };
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
@@ -840,26 +840,17 @@
       var r = {iv: iv.toString('hex'), s: s.toString('hex')};
       var key = makeKey(p, s);
       m = (m.slice && m) || JSON.stringify(m);
-      if(typeof window !== 'undefined'){ // Browser doesn't run createCipheriv
-        subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
-        .then(function(aesKey){
-          key = getRandomBytes(key.length);
-          subtle.encrypt({
-            name: 'AES-CBC', iv: iv
-          }, aesKey, new TextEncoder().encode(m)).then(function(ct){
-            aesKey = getRandomBytes(32);
-            r.ct = new Buffer(ct, 'binary').toString('base64');
-            return JSON.stringify(r);
-          }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
-        }).catch(function(e){ Gun.log(e); reject(e)} );
-      } else {  // NodeJS doesn't support subtle.importKey properly
-        try{
-          var cipher = crypto.createCipheriv(aes.enc, key, iv);
-          r.ct = cipher.update(m, 'utf8', 'base64') + cipher.final('base64');
-          key = getRandomBytes(key.length);
-        }catch(e){ Gun.log(e); return reject(e) }
-        resolve(JSON.stringify(r));
-      }
+      subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
+      .then(function(aesKey){
+        key = getRandomBytes(key.length);
+        subtle.encrypt({
+          name: 'AES-CBC', iv: iv
+        }, aesKey, new TextEncoder().encode(m)).then(function(ct){
+          aesKey = getRandomBytes(32);
+          r.ct = new Buffer(ct, 'binary').toString('base64');
+          return JSON.stringify(r);
+        }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
+      }).catch(function(e){ Gun.log(e); reject(e)} );
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
@@ -868,28 +859,18 @@
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
       var key = makeKey(p, new Buffer(m.s, 'hex'));
       var iv = new Buffer(m.iv, 'hex');
-      if(typeof window !== 'undefined'){ // Browser doesn't run createDecipheriv
-        subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
-        .then(function(aesKey){
-          key = getRandomBytes(key.length);
-          subtle.decrypt({
-            name: 'AES-CBC', iv: iv
-          }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
-            aesKey = getRandomBytes(32);
-            var ctUtf8 = new TextDecoder('utf8').decode(ct);
-            try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
-            }catch(e){ return ctUtf8 }
-          }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
-        }).catch(function(e){Gun.log(e); reject(e)});
-      } else {  // NodeJS doesn't support subtle.importKey properly
-        var r;
-        try{
-          var decipher = crypto.createDecipheriv(aes.enc, key, iv);
-          r = decipher.update(m.ct, 'base64', 'utf8') + decipher.final('utf8');
-          key = getRandomBytes(key.length);
-        }catch(e){ Gun.log(e); return reject(e) }
-        resolve(r);
-      }
+      subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
+      .then(function(aesKey){
+        key = getRandomBytes(key.length);
+        subtle.decrypt({
+          name: 'AES-CBC', iv: iv
+        }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
+          aesKey = getRandomBytes(32);
+          var ctUtf8 = new TextDecoder('utf8').decode(ct);
+          try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
+          }catch(e){ return ctUtf8 }
+        }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
+      }).catch(function(e){Gun.log(e); reject(e)});
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };

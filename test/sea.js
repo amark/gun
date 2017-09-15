@@ -1,3 +1,8 @@
+/* global Gun,describe,expect,it,beforeEach */
+/*eslint max-len: ["error", 95, { "ignoreComments": true }]*/
+/*eslint semi: ["error", "always", { "omitLastInOneLineBlock": true}]*/
+/*eslint object-curly-spacing: ["error", "never"]*/
+/*eslint node/no-deprecated-api: [error, {ignoreModuleItems: ["new buffer.Buffer()"]}] */
 var root;
 
 (function(env){
@@ -19,7 +24,7 @@ Gun.SEA && describe('SEA', function(){
           expect(proof).to.not.be(undefined);
           expect(proof).to.not.be('');
           done();
-        }
+        };
         // proof - generates PBKDF2 hash from user's alias and password
         // which is then used to decrypt user's auth record
         if(type === 'callback'){
@@ -44,17 +49,16 @@ Gun.SEA && describe('SEA', function(){
         if(type === 'callback'){
           Gun.SEA.pair(check);
         } else {
-          Gun.SEA.pair().then(check).catch(done);;
+          Gun.SEA.pair().then(check).catch(done);
         }
       });
 
-      it('en', function(done){
+      it('enc', function(done){
         Gun.SEA.pair().then(function(key){
           var check = function(jsonSecret){
             expect(jsonSecret).to.not.be(undefined);
             expect(jsonSecret).to.not.be('');
             expect(jsonSecret).to.not.eql(clearText);
-            expect(jsonSecret).to.not.eql(JSON.stringify(clearText));
             var objSecret = JSON.parse(jsonSecret);
             expect(objSecret).to.have.keys(encKeys);
             encKeys.map(function(key){
@@ -65,9 +69,9 @@ Gun.SEA && describe('SEA', function(){
           };
           // en - encrypts JSON data using user's private or derived ECDH key
           if(type === 'callback'){
-            Gun.SEA.en(JSON.stringify(clearText), key.priv, check);
+            Gun.SEA.enc(clearText, key.priv, check);
           } else {
-            Gun.SEA.en(JSON.stringify(clearText), key.priv).then(check);
+            Gun.SEA.enc(clearText, key.priv).then(check);
           }
         }).catch(function(e){done(e)});
       });
@@ -108,24 +112,20 @@ Gun.SEA && describe('SEA', function(){
         }).catch(function(e){done(e)});
       });
 
-      it('de', function(done){
+      it('dec', function(done){
         Gun.SEA.pair().then(function(key){
-          var check = function(jsonText){
-            expect(jsonText).to.not.be(undefined);
-            expect(jsonText).to.not.be('');
-            expect(jsonText).to.not.eql(clearText);
-            var decryptedSecret = JSON.parse(jsonText);
-            expect(decryptedSecret).to.not.be(undefined);
-            expect(decryptedSecret).to.not.be('');
-            expect(decryptedSecret).to.be.eql(clearText);
+          var check = function(decText){
+            expect(decText).to.not.be(undefined);
+            expect(decText).to.not.be('');
+            expect(decText).to.be.eql(clearText);
             done();
           };
-          Gun.SEA.en(JSON.stringify(clearText), key.priv).then(function(jsonSecret){
+          Gun.SEA.enc(clearText, key.priv).then(function(jsonSecret){
             // de - decrypts JSON data using user's private or derived ECDH key
             if(type === 'callback'){
-              Gun.SEA.de(jsonSecret, key.priv, check);
+              Gun.SEA.dec(jsonSecret, key.priv, check);
             } else {
-              Gun.SEA.de(jsonSecret, key.priv).then(check);
+              Gun.SEA.dec(jsonSecret, key.priv).then(check);
             }
           });
         }).catch(function(e){done(e)});
@@ -134,7 +134,7 @@ Gun.SEA && describe('SEA', function(){
       it('derive', function(done){
         Gun.SEA.pair().then(function(txKey){
           return Gun.SEA.pair().then(function(rxKey){
-            return { tx: txKey, rx: rxKey };
+            return {tx: txKey, rx: rxKey};
           });
         }).then(function(keys){
           var check = function(shared){
@@ -223,7 +223,7 @@ Gun().user && describe('Gun', function(){
 
       if(wipeStorageData){
         // ... and persisted session
-        localStorage.removeItem('remember')
+        localStorage.removeItem('remember');
         sessionStorage.removeItem('remember');
         sessionStorage.removeItem('alias');
       }
@@ -245,7 +245,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.have.keys([ 'ok', 'pub' ]);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             // Gun.user.create - creates new user
@@ -266,7 +266,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack.err).not.to.be(undefined);
                 expect(ack.err).not.to.be('');
                 expect(ack.err.toLowerCase().indexOf('already created')).not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             // Gun.user.create - fails to create existing user
@@ -301,7 +301,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             // Gun.user.auth - authenticates existing user
@@ -322,7 +322,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack.err).to.not.be('');
                 expect(ack.err.toLowerCase().indexOf('failed to decrypt secret'))
                 .not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             if(type === 'callback'){
@@ -343,7 +343,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack.err).to.not.be(undefined);
                 expect(ack.err).to.not.be('');
                 expect(ack.err.toLowerCase().indexOf('no user')).not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             if(type === 'callback'){
@@ -361,7 +361,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             // Gun.user.auth - with newpass props sets new password
@@ -383,10 +383,9 @@ Gun().user && describe('Gun', function(){
                 expect(ack.err).to.not.be('');
                 expect(ack.err.toLowerCase().indexOf('failed to decrypt secret'))
                 .not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
-            var props = {alias: alias+type, pass: pass+'not', newpass: pass+' new'};
             if(type === 'callback'){
               user.auth(alias+type, pass+'not', check, {newpass: pass+' new'});
             } else {
@@ -420,7 +419,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
                 expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             var usr = alias+type+'leave';
@@ -434,7 +433,7 @@ Gun().user && describe('Gun', function(){
                   expect(usr).to.not.be('');
                   expect(usr).to.not.have.key('err');
                   expect(usr).to.have.key('put');
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 // Gun.user.leave - performs logout for authenticated user
                 if(type === 'callback'){
                   user.leave(check);
@@ -452,7 +451,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
@@ -483,7 +482,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
                 expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
           };
@@ -496,7 +495,7 @@ Gun().user && describe('Gun', function(){
                   expect(ack).to.not.be('');
                   expect(ack).to.not.have.key('err');
                   expect(ack).to.have.key('put');
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 // Gun.user.delete - deletes existing user account
                 if(type === 'callback'){
                   user.delete(usr, pass, check(done));
@@ -526,7 +525,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.have.key('put');
                 expect(ack).to.have.key('err');
                 expect(ack.err.toLowerCase().indexOf('no user')).not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             if(type === 'callback'){
@@ -578,7 +577,7 @@ Gun().user && describe('Gun', function(){
             var remember = hasPin ? localStorage.getItem('remember')
             : sessionStorage.getItem('remember');
             return Gun.SEA.read(remember, usr._.pub).then(function(props){
-              try{ props && (props = JSON.parse(props)) }catch(e){}
+              try{ props && (props = JSON.parse(props)) }catch(e){} //eslint-disable-line no-empty
               return props;
             }).then(manipulate).then(function(props){
               expect(props).to.not.be(undefined);
@@ -593,13 +592,13 @@ Gun().user && describe('Gun', function(){
 
           it('with PIN auth session stored to localStorage', function(done){
             var doAction = function(){
-              user.auth(alias+type, pass+' new', { pin: 'PIN' })
+              user.auth(alias+type, pass+' new', {pin: 'PIN'})
               .then(doCheck(done, true)).catch(done);
             };
             if(type === 'callback'){
-              user.recall(doAction, { session: false });
+              user.recall(doAction, {session: false});
             } else {
-              user.recall({ session: false }).then(doAction).catch(done)
+              user.recall({session: false}).then(doAction).catch(done);
             }
           });
 
@@ -609,9 +608,9 @@ Gun().user && describe('Gun', function(){
             };
             user.leave().then(function(){
               if(type === 'callback'){
-                user.recall(doAction, { session: false });
+                user.recall(doAction, {session: false});
               } else {
-                user.recall({ session: false }).then(doAction).catch(done)
+                user.recall({session: false}).then(doAction).catch(done);
               }
             }).catch(done);
           });
@@ -654,14 +653,14 @@ Gun().user && describe('Gun', function(){
 
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               user.leave().then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
                   expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
 
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
@@ -673,7 +672,7 @@ Gun().user && describe('Gun', function(){
           });
 
           it('valid localStorage session bootstrap', function(done){
-            user.auth(alias+type, pass+' new', { pin: 'PIN' }).then(function(usr){
+            user.auth(alias+type, pass+' new', {pin: 'PIN'}).then(function(usr){
               var sUser;
               var sRemember;
               var lRemember;
@@ -691,7 +690,7 @@ Gun().user && describe('Gun', function(){
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
                 lRemember = root.localStorage.getItem('remember');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
 
               user.leave().then(function(ack){
                 try{
@@ -700,7 +699,7 @@ Gun().user && describe('Gun', function(){
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
                   expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
 
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
@@ -714,7 +713,7 @@ Gun().user && describe('Gun', function(){
 
           it('valid localStorage session bootstraps using PIN', function(done){
             user.recall(12 * 60, {session: false}).then(function(){
-              return user.auth(alias+type, pass+' new', { pin: 'PIN' });
+              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
             }).then(doCheck(function(){
               // Let's save remember props
               var sUser = root.sessionStorage.getItem('user');
@@ -728,7 +727,7 @@ Gun().user && describe('Gun', function(){
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
                   expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 // Then restore localStorage remember data, skip sessionStorage
                 root.localStorage.setItem('remember', lRemember);
               });
@@ -742,9 +741,9 @@ Gun().user && describe('Gun', function(){
                   // Which fails to missing PIN
                   expect(props.err.toLowerCase()
                   .indexOf('missing pin')).not.to.be(-1);
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 // Ok, time to try auth with alias & PIN
-                return user.auth(alias+type, undefined, { pin: 'PIN' });
+                return user.auth(alias+type, undefined, {pin: 'PIN'});
               });
             }).then(doCheck(function(usr){
               try{
@@ -752,7 +751,7 @@ Gun().user && describe('Gun', function(){
                 expect(usr).to.not.be('');
                 expect(usr).to.not.have.key('err');
                 expect(usr).to.have.key('put');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               // We've recalled authenticated session using alias & PIN!
               done();
             }, true, true)).catch(done);
@@ -761,7 +760,7 @@ Gun().user && describe('Gun', function(){
           it('valid localStorage session fails to bootstrap using wrong PIN',
           function(done){
             user.recall(12 * 60, {session: false}).then(function(){
-              return user.auth(alias+type, pass+' new', { pin: 'PIN' });
+              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
             }).then(doCheck(function(){
               var sUser = root.sessionStorage.getItem('user');
               var sRemember = root.sessionStorage.getItem('remember');
@@ -773,12 +772,12 @@ Gun().user && describe('Gun', function(){
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
                   expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 root.localStorage.setItem('remember', lRemember);
               });
             }, true)).then(function(){
                 // Ok, time to try auth with alias & PIN
-                return user.auth(alias+type, undefined, { pin: 'PiN' });
+                return user.auth(alias+type, undefined, {pin: 'PiN'});
             }).then(function(){
               done('Unexpected login success!');
             }).catch(function(ack){
@@ -788,7 +787,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.have.key('err');
                 expect(ack.err.toLowerCase()
                 .indexOf('no session data for alias & pin')).not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               // We've recalled authenticated session using alias & PIN!
               done();
             });
@@ -800,7 +799,7 @@ Gun().user && describe('Gun', function(){
             }).then(doCheck(function(){
               // Storage data OK, let's back up time of auth to exp + 65 seconds
               return manipulateStorage(function(props){
-                var ret = Object.assign({}, props, { iat: props.iat - 65 - props.exp });
+                var ret = Object.assign({}, props, {iat: props.iat - 65 - props.exp});
                 return ret;
               }, false);
             })).then(function(){
@@ -822,7 +821,7 @@ Gun().user && describe('Gun', function(){
 
           it('changed password', function(done){
             user.recall(60, {session: false}).then(function(){
-              return user.auth(alias+type, pass+' new', { pin: 'PIN' });
+              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
             }).then(function(usr){
               var sUser;
               var sRemember;
@@ -841,21 +840,20 @@ Gun().user && describe('Gun', function(){
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
                 lRemember = root.localStorage.getItem('remember');
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               // Time to do new login with new password set
               user.leave().then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
 
-                return user.auth(alias+type, pass+' new', {newpass: pass, pin: 'PIN' }).then(function(usr){
-                  expect(usr).to.not.have.key('err');
-                });
+                return user.auth(alias+type, pass+' new', {newpass: pass, pin: 'PIN'})
+                .then(function(usr){ expect(usr).to.not.have.key('err') });
               }).then(function(){
                 return user.leave().then(function(ack){
                   try{
                     expect(ack).to.have.key('ok');
-                  }catch(e){ done(e); return };
+                  }catch(e){ done(e); return }
                   throwOutUser();
                 });
               }).then(function(){
@@ -883,12 +881,12 @@ Gun().user && describe('Gun', function(){
             var exp;
             var hookFunc = function(props){
               exp = props.exp * 2;
-              var ret = Object.assign({}, props, { exp: exp });
+              var ret = Object.assign({}, props, {exp: exp});
               return (type === 'callback' && ret) || new Promise(function(resolve){
                 resolve(ret);
               });
             };
-            user.recall(60, { session: true, hook: hookFunc }).then(function(){
+            user.recall(60, {session: true, hook: hookFunc}).then(function(){
               return user.auth(alias+type, pass);
             }).then(function(){
               // Storage data OK, let's back up time of auth 65 minutes
@@ -910,7 +908,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.keys([ 'sea', 'pub' ]);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             var aliveUser = alias+type+'alive';
@@ -918,13 +916,13 @@ Gun().user && describe('Gun', function(){
               expect(ack).to.not.be(undefined);
               expect(ack).to.not.be('');
               expect(ack).to.have.keys([ 'ok', 'pub' ]);
-              user.auth(aliveUser, pass, { pin: 'PIN' }).then(function(usr){
+              user.auth(aliveUser, pass, {pin: 'PIN'}).then(function(usr){
                 try{
                   expect(usr).to.not.be(undefined);
                   expect(usr).to.not.be('');
                   expect(usr).to.not.have.key('err');
                   expect(usr).to.have.key('put');
-                }catch(e){ done(e); return };
+                }catch(e){ done(e); return }
                 // Gun.user.alive - keeps/checks User authentiation state
                 if(type === 'callback'){
                   user.alive(check);
@@ -943,7 +941,7 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.have.keys([ 'sea', 'pub' ]);
                 expect(ack).to.have.key('err');
                 expect(ack.err.toLowerCase().indexOf('no session')).not.to.be(-1);
-              }catch(e){ done(e); return };
+              }catch(e){ done(e); return }
               done();
             };
             user.leave().catch(function(){}).then(function(){
