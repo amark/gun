@@ -137,9 +137,10 @@
             .catch(function(e){ reject({err: 'Failed to create proof!'}) });
           }).catch(function(e){ reject({err: 'Failed to create proof!'}) })
           .then(function(proof){
+console.log('authenticate proof:', proof)
             // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
             SEA.read(at.put.auth, pub).then(function(auth){
-              return SEA.dec(auth, proof)
+              return SEA.dec(auth, {pub: pub, key: proof})
               .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
             }).then(function(priv){
               // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
@@ -179,6 +180,25 @@
       // returns success with the user data credentials.
       return user._;
     });
+  }
+
+  function callOnStore(fn_, resolve_){
+    var open = indexedDB.open("GunDB", 1);  // Open (or create) the database; 1 === 'version'
+    open.onupgradeneeded = function(){  // Create the schema; props === current version
+      var db = open.result;
+      db.createObjectStore('SEA', {keyPath: 'id'});
+    };
+    open.onsuccess = function(){  // Start a new transaction
+      var db = open.result;
+      var tx = db.transaction('SEA', 'readwrite');
+      var store = tx.objectStore('SEA');
+      fn_(store);
+      tx.oncomplete = function(){   // Close the db when the transaction is done
+console.log('... tx.oncomplete open.result:', open.result)
+        db.close();
+        if(typeof resolve_ === 'function'){ resolve_() }
+      };
+    };
   }
 
   function updatestorage(proof,priv,pin){
@@ -367,7 +387,34 @@
       authpersist(alias && {alias: alias}).then(doIt).catch(doIt);
     };
   }
-
+  // This recalls Web Cryptography API CryptoKeys from IndexedDB or creates & stores
+  function recallCryptoKey(p,s,o){  // {pub, key}|proof, salt, optional:['sign']
+    o = o || ['encrypt', 'decrypt'];  // Default operations
+    var importKey = function(key){ return subtle.importKey(
+      'raw',
+      makeKey((Gun.obj.has(key, 'key') && key.key) || key, s || getRandomBytes(8)),
+      'AES-CBC',
+      false,
+      o
+    ); };
+    return new Promise(function(resolve){
+      if(authsettings.validity && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
+        var importAndStoreKey = function(){ // Creates new CryptoKey & stores it
+          importKey(p).then(function(key){ callOnStore(function(store){
+            store.put({id: p.pub, key: key, auth: 'just testing'});
+          }, function(){ resolve(key) }); });
+        };
+        if(Gun.obj.has(p, 'set')){ return importAndStoreKey() } // proof update so overwrite
+        var aesKey;
+        callOnStore(function(store) {
+          var getData = store.get(p.pub);
+          getData.onsuccess = function(){ aesKey = getData.result && getData.result.key };
+        }, function(){ return aesKey ? resolve(aesKey) : importAndStoreKey() });
+      } else { // No secure store usage
+        importKey(p).then(function(aesKey){ resolve(aesKey) });
+      }
+    });
+  }
   // Takes data (defaults as Buffer) and returns 'md5' hash
   function hashData(data,intype,outtype){
     return crypto.createHash(outtype || 'md5').update(data, intype).digest();
@@ -411,7 +458,7 @@
             }).then(function(signedsalt){
               user.salt = signedsalt;
               // to keep the private key safe, we AES encrypt it with the proof of work!
-              return SEA.enc(tmp, proof);
+              return SEA.enc(tmp, {pub: pair.pub, key: proof});
             }).then(function(encryptedpriv){
               return SEA.write(encryptedpriv, tmp);
             }).then(function(encsigauth){
@@ -455,7 +502,10 @@
           // password update so encrypt private key using new pwd + salt
           var newsalt = Gun.text.random(64);
           SEA.proof(opts.newpass, newsalt).then(function(newproof){
-            return SEA.enc(key.priv, newproof).then(function(encryptedpriv){
+console.log('... newproof:', newproof)
+            return SEA.enc(key.priv, {pub: key.pub, key: newproof, set: true})
+            .then(function(encryptedpriv){
+console.log('... private encrypted using newproof')
               return SEA.write(encryptedpriv, key.priv);
             });
           }).then(function(encsigauth){
@@ -796,7 +846,7 @@
         resolve(hash && hash.toString('base64'));
       }catch(e){ reject(e) }
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.pair = function(cb){
     var doIt = function(resolve, reject){
@@ -806,7 +856,7 @@
         priv: new Buffer(priv, 'binary').toString('hex')
       });
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.derive = function(m,p,cb){
     var doIt = function(resolve, reject){
@@ -815,7 +865,7 @@
         resolve(new Buffer(secret, 'binary').toString('hex'));
       }).catch(function(e){ Gun.log(e); reject(e) });
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.sign = function(m,p,cb){
     var doIt = function(resolve, reject){
@@ -823,7 +873,7 @@
         resolve(new Buffer(sig, 'binary').toString('hex'));
       }).catch(function(e){Gun.log(e); reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.verify = function(m, p, s, cb){
     var doIt = function(resolve, reject){
@@ -831,18 +881,15 @@
       .then(function(){ resolve(true)})
       .catch(function(e){ Gun.log(e); reject(e) });
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.enc = function(m,p,cb){
     var doIt = function(resolve, reject){
       var s = getRandomBytes(8);
       var iv = getRandomBytes(16);
       var r = {iv: iv.toString('hex'), s: s.toString('hex')};
-      var key = makeKey(p, s);
       m = (m.slice && m) || JSON.stringify(m);
-      subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt'])
-      .then(function(aesKey){
-        key = getRandomBytes(key.length);
+      recallCryptoKey(p, s).then(function(aesKey){
         subtle.encrypt({
           name: 'AES-CBC', iv: iv
         }, aesKey, new TextEncoder().encode(m)).then(function(ct){
@@ -852,16 +899,14 @@
         }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
       }).catch(function(e){ Gun.log(e); reject(e)} );
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.dec = function(m,p,cb){
     var doIt = function(resolve, reject){
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
-      var key = makeKey(p, new Buffer(m.s, 'hex'));
       var iv = new Buffer(m.iv, 'hex');
-      subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt'])
-      .then(function(aesKey){
-        key = getRandomBytes(key.length);
+      var s = new Buffer(m.s, 'hex');
+      recallCryptoKey(p, s).then(function(aesKey){
         subtle.decrypt({
           name: 'AES-CBC', iv: iv
         }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
@@ -872,7 +917,7 @@
         }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
       }).catch(function(e){Gun.log(e); reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.write = function(mm,p,cb){
     var doIt = function(resolve, reject) {
@@ -890,7 +935,7 @@
         resolve('SEA'+JSON.stringify([m,signature]));
       }).catch(function(e){Gun.log(e); reject(e)});
     };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.read = function(m,p,cb){
     var doIt = function(resolve, reject) {
