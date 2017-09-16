@@ -75,11 +75,18 @@
 			<script>
 				var gun = Gun(location.origin+'/gun');
 				var user = gun.user && gun.user();
-				if (user) {
+				if(user){
 					// 1st: call create. 2nd call auth. After that, call recall
-					// user.create('dude', 'my secret').then(function(ack) { console.log('created ack:', ack) })
-					// user.auth('dude', 'my secret').then(function(user) { console.log('authenticated user:', user) })
-					// user.recall().then(function(ack) { console.log('recall ack:', ack) });
+					// user.create('dude', 'my secret').then(function(ack) { console.log('created ack:', ack) });
+					// user.recall({session: false}).then(function(ack){
+					// 	if (!ack || !ack.sea){
+					// 		console.log('user.recall not bootstrapping...');
+					// 		user.auth('dude', 'my secret', {pin: 'PIN'}).then(function(user) { console.log('authenticated user:', user) });
+					// 		// user.auth('dude', 'my secret', {pin: 'PIN', newpass: 'my secret'}).then(function(user) { console.log('authenticated user:', user) });
+					// 	} else {
+					// 		console.log('user.recall authenticated user:', ack.alias);
+					// 	}
+					// });
 				}
 				var chat = gun.get('converse');
 				chat.map().val(function(msg, field){

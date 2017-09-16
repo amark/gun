@@ -7,7 +7,42 @@ var root;
 
 (function(env){
   root = env.window ? env.window : global;
+  root.indexedDB = require("fake-indexeddb");
 }(this));
+
+if(typeof Buffer === 'undefined'){
+  var Buffer = require('buffer').Buffer;
+}
+
+function callOnStore(fn_, resolve_){
+  var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
+  open.onupgradeneeded = function(){  // Create the schema; props === current version
+    var db = open.result;
+    db.createObjectStore('SEA', {keyPath: 'id'});
+  };
+  open.onsuccess = function(){  // Start a new transaction
+    var db = open.result;
+    var tx = db.transaction('SEA', 'readwrite');
+    var store = tx.objectStore('SEA');
+    fn_(store);
+    tx.oncomplete = function(){   // Close the db when the transaction is done
+      db.close();
+      if(typeof resolve_ === 'function'){ resolve_() }
+    };
+  };
+}
+
+function checkIndexedDB(key, prop, resolve_){
+  var result;
+  callOnStore(function(store) {
+    var getData = store.get(key);
+    getData.onsuccess = function(){
+      result = getData.result && getData.result[prop];
+    };
+  }, function(){
+    resolve_(result);
+  });
+}
 
 Gun.SEA && describe('SEA', function(){
   console.log('TODO: SEA! THIS IS AN EARLY ALPHA!!!');
@@ -223,9 +258,13 @@ Gun().user && describe('Gun', function(){
 
       if(wipeStorageData){
         // ... and persisted session
-        localStorage.removeItem('remember');
+        // localStorage.removeItem('remember');
         sessionStorage.removeItem('remember');
         sessionStorage.removeItem('alias');
+        callOnStore(function(store) {
+          var act = store.clear();  // Wipes whole IndexedDB
+          act.onsuccess = function(){};
+        });
       }
     };
 
@@ -283,15 +322,20 @@ Gun().user && describe('Gun', function(){
         describe('auth', function(){
           var checkStorage = function(done, hasPin){
             return function(){
-              expect(root.sessionStorage.getItem('user')).to.not.be(undefined);
-              expect(root.sessionStorage.getItem('user')).to.not.be('');
+              var alias = root.sessionStorage.getItem('user');
+              expect(alias).to.not.be(undefined);
+              expect(alias).to.not.be('');
               expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
               expect(root.sessionStorage.getItem('remember')).to.not.be('');
-              if(hasPin){
-                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
-                expect(root.localStorage.getItem('remember')).to.not.be('');
+
+              if(!hasPin){
+                return done();
               }
-              done();
+              checkIndexedDB(alias, 'auth', function(auth){
+                expect(auth).to.not.be(undefined);
+                expect(auth).to.not.be('');
+                done();
+              });
             };
           };
 
@@ -402,10 +446,10 @@ Gun().user && describe('Gun', function(){
 
           it('with PIN auth session stored to sessionStorage', function(done){
             if(type === 'callback'){
-              user.auth(alias+type, pass+' new', checkStorage(done, true), {pin: 'PIN'});
+              user.auth(alias+type, pass+' new', checkStorage(done/*, true*/), {pin: 'PIN'});
             } else {
               user.auth(alias+type, pass+' new', {pin: 'PIN'})
-              .then(checkStorage(done, true)).catch(done);
+              .then(checkStorage(done/*, true*/)).catch(done);
             }
           });
         });
@@ -548,35 +592,45 @@ Gun().user && describe('Gun', function(){
               expect(user).to.not.be('');
               expect(sRemember).to.not.be(undefined);
               expect(sRemember).to.not.be('');
-              if(hasPin){
-                var lRemember = root.localStorage.getItem('remember');
-                expect(lRemember).to.not.be(undefined);
-                expect(lRemember).to.not.be('');
-              }
-              // NOTE: done can be Promise returning function
+
               var ret;
-              if (wantAck) {
-                [ 'err', 'pub', 'sea', 'alias', 'put' ].forEach(function(key){
+              if(wantAck && ack){
+                ['err', 'pub', 'sea', 'alias', 'put'].forEach(function(key){
                   if(typeof ack[key] !== 'undefined'){
                     (ret = ret || {})[key] = ack[key];
                   }
                 });
               }
-              return done(ret);
+              // NOTE: done can be Promise returning function
+              return !hasPin || !wantAck || !ack ? done(ret)
+              : new Promise(function(resolve){
+                checkIndexedDB(ack.alias, 'auth', function(auth){
+                  expect(auth).to.not.be(undefined);
+                  expect(auth).to.not.be('');
+                  resolve(done(wantAck && Object.assign(ret || {}, {auth: auth})));
+                });
+              });
             };
           };
           // This re-constructs 'remember-me' data modified by manipulate func
-          var manipulateStorage = function(manipulate, hasPin){
+          var manipulateStorage = function(manipulate, pin){
             expect(typeof manipulate).to.be('function');
             // We'll use Gun internal User data
             var usr = gun.back(-1)._.user;
             expect(usr).to.not.be(undefined);
             expect(usr).to.have.key('_');
-            expect(usr._).to.have.keys([ 'pub', 'sea' ]);
+            expect(usr._).to.have.keys(['pub', 'sea']);
             // ... to validate 'remember' data
-            var remember = hasPin ? localStorage.getItem('remember')
-            : sessionStorage.getItem('remember');
-            return Gun.SEA.read(remember, usr._.pub).then(function(props){
+            pin = pin && new Buffer(pin, 'utf8').toString('base64');
+            return !pin ? Promise.resolve(sessionStorage.getItem('remember'))
+            : new Promise(function(resolve){
+              checkIndexedDB(usr._.alias, 'auth', resolve);
+            }).then(function(remember){
+              return Gun.SEA.read(remember, usr._.pub).then(function(props){
+                return !pin ? props
+                : Gun.SEA.dec(props, pin);
+              });
+            }).then(function(props){
               try{ props && (props = JSON.parse(props)) }catch(e){} //eslint-disable-line no-empty
               return props;
             }).then(manipulate).then(function(props){
@@ -584,8 +638,14 @@ Gun().user && describe('Gun', function(){
               expect(props).to.not.be('');
               return Gun.SEA.write(JSON.stringify(props), usr._.sea)
               .then(function(remember){
-                return hasPin ? sessionStorage.setItem('remember', remember)
-                : sessionStorage.setItem('remember', remember);
+                return !pin ? sessionStorage.setItem('remember', remember)
+                : Gun.SEA.enc(remember, pin).then(function(encauth){
+                  return new Promise(function(resolve){
+                    callOnStore(function(store){
+                      store.put({id: usr._.alias, auth: encauth});
+                    }, resolve);
+                  });
+                });
               });
             });
           };
@@ -672,10 +732,10 @@ Gun().user && describe('Gun', function(){
           });
 
           it('valid localStorage session bootstrap', function(done){
+            var sUser;
+            var sRemember;
+            var iAuth;
             user.auth(alias+type, pass+' new', {pin: 'PIN'}).then(function(usr){
-              var sUser;
-              var sRemember;
-              var lRemember;
               try{
                 expect(usr).to.not.be(undefined);
                 expect(usr).to.not.be('');
@@ -689,49 +749,76 @@ Gun().user && describe('Gun', function(){
 
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
-                lRemember = root.localStorage.getItem('remember');
               }catch(e){ done(e); return }
 
-              user.leave().then(function(ack){
-                try{
-                  expect(ack).to.have.key('ok');
-                  expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
-                  expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
-                  expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
-                  expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
-                }catch(e){ done(e); return }
-
-                root.sessionStorage.setItem('user', sUser);
-                root.sessionStorage.setItem('remember', sRemember);
-                root.localStorage.setItem('remember', lRemember);
-
-                user.recall(12 * 60, {session: false}).then(doCheck(done))
-                .catch(done);
-              }).catch(done);
-            }).catch(done);
-          });
-
-          it('valid localStorage session bootstraps using PIN', function(done){
-            user.recall(12 * 60, {session: false}).then(function(){
-              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
-            }).then(doCheck(function(){
-              // Let's save remember props
-              var sUser = root.sessionStorage.getItem('user');
-              var sRemember = root.sessionStorage.getItem('remember');
-              var lRemember = root.localStorage.getItem('remember');
-              // Then logout user
+              return new Promise(function(resolve){
+                checkIndexedDB(sUser, 'auth', function(auth){ resolve(iAuth = auth) });
+              });
+            }).then(function(){
               return user.leave().then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
                   expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
-                  expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
                 }catch(e){ done(e); return }
-                // Then restore localStorage remember data, skip sessionStorage
-                root.localStorage.setItem('remember', lRemember);
+
+                return new Promise(function(resolve){
+                  checkIndexedDB(sUser, 'auth', function(auth){
+                    expect(auth).to.not.be(iAuth);
+                    resolve();
+                  });
+                });
+              }).then(function(){
+                root.sessionStorage.setItem('user', sUser);
+                root.sessionStorage.setItem('remember', sRemember);
+
+                return new Promise(function(resolve){
+                  callOnStore(function(store){
+                    store.put({id: sUser, auth: iAuth});
+                  }, resolve);
+                });
+              }).then(function(){
+                user.recall(12 * 60, {session: false}).then(doCheck(done))
+                .catch(done);
+              }).catch(done);
+            }).catch(done);
+          });
+
+          it('valid IndexedDB session bootstraps using PIN', function(done){
+            user.recall(12 * 60, {session: false}).then(function(){
+              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
+            }).then(doCheck(function(ack){
+              // Let's save remember props
+              var sUser = root.sessionStorage.getItem('user');
+              var sRemember = root.sessionStorage.getItem('remember');
+              var iAuth = ack.auth;
+              return new Promise(function(resolve){
+                checkIndexedDB(sUser, 'auth', function(auth){
+                  iAuth = auth;
+                  resolve(user.leave());  // Then logout user
+                });
+              }).then(function(ack){
+                try{
+                  expect(ack).to.have.key('ok');
+                  expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
+                  expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
+                  expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
+                }catch(e){ done(e); return }
+                return new Promise(function(resolve){
+                  checkIndexedDB(sUser, 'auth', function(auth){
+                    try{ expect(auth).to.not.be(iAuth) }catch(e){ done(e) }
+                    // Then restore IndexedDB auth data, skip sessionStorage
+                    callOnStore(function(store){
+                      store.put({id: sUser, auth: iAuth});
+                    }, function(){
+                      root.sessionStorage.setItem('user', sUser);
+                      resolve(ack);
+                    });
+                  });
+                });
               });
-            }, true)).then(function(){
+            }, true, true)).then(function(){
               // Then try to recall authentication
               return user.recall(12 * 60, {session: false}).then(function(props){
                 try{
@@ -757,25 +844,40 @@ Gun().user && describe('Gun', function(){
             }, true, true)).catch(done);
           });
 
-          it('valid localStorage session fails to bootstrap using wrong PIN',
+          it('valid IndexedDB session fails to bootstrap using wrong PIN',
           function(done){
             user.recall(12 * 60, {session: false}).then(function(){
               return user.auth(alias+type, pass+' new', {pin: 'PIN'});
-            }).then(doCheck(function(){
+            }).then(doCheck(function(ack){
               var sUser = root.sessionStorage.getItem('user');
               var sRemember = root.sessionStorage.getItem('remember');
-              var lRemember = root.localStorage.getItem('remember');
-              return user.leave().then(function(ack){
+              var iAuth = ack.auth;
+              return new Promise(function(resolve){
+                checkIndexedDB(sUser, 'auth', function(auth){
+                  iAuth = auth;
+                  resolve(user.leave());  // Then logout user
+                });
+              }).then(function(ack){
                 try{
                   expect(ack).to.have.key('ok');
                   expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
-                  expect(root.localStorage.getItem('remember')).to.not.be(lRemember);
                 }catch(e){ done(e); return }
-                root.localStorage.setItem('remember', lRemember);
+                return new Promise(function(resolve){
+                  checkIndexedDB(sUser, 'auth', function(auth){
+                    try{ expect(auth).to.not.be(iAuth) }catch(e){ done(e) }
+                    // Then restore IndexedDB auth data, skip sessionStorage
+                    callOnStore(function(store){
+                      store.put({id: sUser, auth: iAuth});
+                    }, function(){
+                      root.sessionStorage.setItem('user', sUser);
+                      resolve(ack);
+                    });
+                  });
+                });
               });
-            }, true)).then(function(){
+            }, true, true)).then(function(){
                 // Ok, time to try auth with alias & PIN
                 return user.auth(alias+type, undefined, {pin: 'PiN'});
             }).then(function(){
@@ -794,18 +896,19 @@ Gun().user && describe('Gun', function(){
           });
 
           it('expired session fails to bootstrap', function(done){
-            user.recall(60, {session: true}).then(function(){
-              return user.auth(alias+type, pass+' new');
+            var pin = 'PIN';
+            user.recall(60, {session: false}).then(function(){
+              return user.auth(alias+type, pass+' new', {pin: pin});
             }).then(doCheck(function(){
               // Storage data OK, let's back up time of auth to exp + 65 seconds
               return manipulateStorage(function(props){
                 var ret = Object.assign({}, props, {iat: props.iat - 65 - props.exp});
                 return ret;
-              }, false);
+              }, pin);
             })).then(function(){
               // Simulate browser reload
               throwOutUser();
-              user.recall(60, {session: true}).then(function(ack){
+              user.recall(60, {session: false}).then(function(ack){
                 expect(ack).to.not.be(undefined);
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.keys([ 'pub', 'sea' ]);
@@ -820,34 +923,37 @@ Gun().user && describe('Gun', function(){
           });
 
           it('changed password', function(done){
+            var pin = 'PIN';
+            var sUser;
+            var sRemember;
+            var iAuth;
             user.recall(60, {session: false}).then(function(){
-              return user.auth(alias+type, pass+' new', {pin: 'PIN'});
+              return user.auth(alias+type, pass+' new', {pin: pin});
             }).then(function(usr){
-              var sUser;
-              var sRemember;
-              var lRemember;
               try{
                 expect(usr).to.not.be(undefined);
                 expect(usr).to.not.be('');
                 expect(usr).to.not.have.key('err');
                 expect(usr).to.have.key('put');
-                expect(root.sessionStorage.getItem('user')).to.be(alias+type);
-                expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
-                expect(root.sessionStorage.getItem('remember')).to.not.be('');
-                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
-                expect(root.localStorage.getItem('remember')).to.not.be('');
 
                 sUser = root.sessionStorage.getItem('user');
-                sRemember = root.sessionStorage.getItem('remember');
-                lRemember = root.localStorage.getItem('remember');
-              }catch(e){ done(e); return }
-              // Time to do new login with new password set
-              user.leave().then(function(ack){
-                try{
-                  expect(ack).to.have.key('ok');
-                }catch(e){ done(e); return }
+                expect(sUser).to.be(alias+type);
 
-                return user.auth(alias+type, pass+' new', {newpass: pass, pin: 'PIN'})
+                sRemember = root.sessionStorage.getItem('remember');
+                expect(sRemember).to.not.be(undefined);
+                expect(sRemember).to.not.be('');
+                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
+                expect(root.localStorage.getItem('remember')).to.not.be('');
+              }catch(e){ done(e); return }
+
+              return new Promise(function(resolve){
+                checkIndexedDB(sUser, 'auth', function(auth){ resolve(iAuth = auth) });
+              });
+            }).then(function(){
+              return user.leave().then(function(ack){
+                try{ expect(ack).to.have.key('ok') }catch(e){ done(e); return }
+
+                return user.auth(alias+type, pass+' new', {newpass: pass, pin: pin})
                 .then(function(usr){ expect(usr).to.not.have.key('err') });
               }).then(function(){
                 return user.leave().then(function(ack){
@@ -861,8 +967,13 @@ Gun().user && describe('Gun', function(){
                 // Call back previous remember data
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
-                root.localStorage.setItem('remember', lRemember);
 
+                return new Promise(function(resolve){
+                  callOnStore(function(store){
+                    store.put({id: sUser, auth: iAuth});
+                  }, resolve);
+                });
+              }).then(function(){
                 user.recall(60, {session: false}).then(function(props){
                   expect(props).to.not.be(undefined);
                   expect(props).to.not.be('');
@@ -878,6 +989,7 @@ Gun().user && describe('Gun', function(){
           });
 
           it('recall hook session manipulation', function(done){
+            var pin = 'PIN';
             var exp;
             var hookFunc = function(props){
               exp = props.exp * 2;
@@ -886,8 +998,8 @@ Gun().user && describe('Gun', function(){
                 resolve(ret);
               });
             };
-            user.recall(60, {session: true, hook: hookFunc}).then(function(){
-              return user.auth(alias+type, pass);
+            user.recall(60, {session: false, hook: hookFunc}).then(function(){
+              return user.auth(alias+type, pass, {pin: pin});
             }).then(function(){
               // Storage data OK, let's back up time of auth 65 minutes
               return manipulateStorage(function(props){
@@ -895,7 +1007,7 @@ Gun().user && describe('Gun', function(){
                 expect(props).to.have.key('exp');
                 expect(props.exp).to.be(exp);
                 return props;
-              }, false);
+              }, pin);
             }).then(done).catch(done);
           });
         });

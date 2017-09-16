@@ -57,6 +57,7 @@
     "buffer": "^5.0.7",
     "eccrypto": "^1.0.3",
     "express": ">=4.15.2",
+    "fake-indexeddb": "^2.0.3",
     "hapi": "^16.1.1",
     "inert": "^4.2.0",
     "ip": "^1.1.5",
