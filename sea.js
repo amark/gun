@@ -22,7 +22,7 @@
   }
 
   var subtle, TextEncoder, TextDecoder, getRandomBytes;
-  var localStorage, sessionStorage, indexedDB;
+  var sessionStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
     var wc = window.crypto || window.msCrypto;  // STD or M$
@@ -30,7 +30,6 @@
     getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
-    localStorage = window.localStorage;
     sessionStorage = window.sessionStorage;
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB;
@@ -40,9 +39,8 @@
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
-    localStorage = new require('node-localstorage').LocalStorage('local');
     sessionStorage = new require('node-localstorage').LocalStorage('session');
-    indexedDB = undefined;  // TODO: simulate IndexedDB in NodeJS but how?
+    indexedDB = require("fake-indexeddb");
   }
 
   // Encryption parameters - TODO: maybe to be changed via init?
@@ -179,7 +177,7 @@
   }
 
   function callOnStore(fn_, resolve_){
-    var open = indexedDB.open("GunDB", 1);  // Open (or create) the database; 1 === 'version'
+    var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
     open.onupgradeneeded = function(){  // Create the schema; props === current version
       var db = open.result;
       db.createObjectStore('SEA', {keyPath: 'id'});
@@ -211,21 +209,37 @@
             sessionStorage.setItem('user', props.alias);
             sessionStorage.setItem('remember', signed);
             if(!encrypted){
-              localStorage.removeItem('remember');
+              return new Promise(function(resolve){
+                callOnStore(function(store) {
+                  var act = store.clear();  // Wipes whole IndexedDB
+                  act.onsuccess = function(){};
+                }, function(){ resolve() });
+              });
             }
+          }).then(function(){
             return !encrypted || SEA.enc(encrypted, pin).then(function(encrypted){
               return encrypted && SEA.write(encrypted, priv).then(function(encsig){
-                localStorage.setItem('remember', encsig);
+                return new Promise(function(resolve){
+                  callOnStore(function(store){
+                    store.put({id: props.alias, auth: encsig});
+                  }, function(){ resolve() });
+                });
               }).catch(reject);
             }).catch(reject);
           }).then(function(){ resolve(props) })
           .catch(function(e){ reject({err: 'Session persisting failed!'}) });
         } else  {
-          localStorage.removeItem('remember');
-          sessionStorage.removeItem('user');
-          sessionStorage.removeItem('remember');
+          return new Promise(function(resolve){
+            callOnStore(function(store) {
+              var act = store.clear();  // Wipes whole IndexedDB
+              act.onsuccess = function(){};
+            }, function(){ resolve() });
+          }).then(function(){
+            sessionStorage.removeItem('user');
+            sessionStorage.removeItem('remember');
+            resolve(props);
+          });
         }
-        resolve(props);
       });
     };
   }
@@ -317,8 +331,19 @@
                 if(Gun.obj.has(props, 'pin') && Gun.obj.has(props, 'alias')
                 && props.alias === alias){
                   pin = props.pin; // Got PIN so get localStorage secret if signature is ok
-                  return readAndDecrypt(localStorage.getItem('remember'), pub, pin)
-                  .then(checkRememberData); // And return proof if for matching alias
+                  return new Promise(function(resolve){
+                    var remember;
+                    callOnStore(function(store) {
+                      var getData = store.get(alias);
+                      getData.onsuccess = function(){
+                        remember = getData.result && getData.result.auth;
+                      };
+                    }, function(){  // And return proof if for matching alias
+                      return readAndDecrypt(remember, pub, pin)
+                      .then(checkRememberData).then(resolve)
+                      .catch(function(){ resolve() });
+                    });
+                  });
                 }
                 // No PIN, let's try short-term proof if for matching alias
                 return checkRememberData(props);
@@ -348,7 +373,8 @@
             });
           });
         }).then(function(user){
-          finalizelogin(alias, user, root).then(resolve).catch(function(e){
+          pin = pin && {pin: pin};
+          finalizelogin(alias, user, root, pin).then(resolve).catch(function(e){
             Gun.log('Failed to finalize login with new password!');
             reject({
               err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''
@@ -358,9 +384,20 @@
           reject({err: 'No authentication session found!'});
         });
       }
-      reject({
-        err: (localStorage.getItem('remember') && 'Missing PIN and alias!')
-        || 'No authentication session found!'});
+      if(!alias){
+        return reject({err: 'No authentication session found!'});
+      }
+      var gotRemember;
+      callOnStore(function(store) {
+        var getData = store.get(alias);
+        getData.onsuccess = function(){
+          gotRemember = getData.result && getData.result.auth;
+        };
+      }, function(){  // And return proof if for matching alias
+        reject({
+          err: (gotRemember && 'Missing PIN and alias!')
+          || 'No authentication session found!'});
+      });
     });
   }
 
@@ -393,10 +430,11 @@
       o
     ); };
     return new Promise(function(resolve){
-      if(authsettings.validity && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
+      if(authsettings.validity && typeof window !== 'undefined'
+      && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
         var importAndStoreKey = function(){ // Creates new CryptoKey & stores it
           importKey(p).then(function(key){ callOnStore(function(store){
-            store.put({id: p.pub, key: key, auth: 'just testing'});
+            store.put({id: p.pub, key: key});
           }, function(){ resolve(key) }); });
         };
         if(Gun.obj.has(p, 'set')){ return importAndStoreKey() } // proof update so overwrite
@@ -603,6 +641,7 @@
         validity = v * 60;  // minutes to seconds
       }
     }
+
     var doIt = function(resolve, reject){
       // opts = { hook: function({ iat, exp, alias, proof }),
       //   session: false } // true disables PIN requirement/support
