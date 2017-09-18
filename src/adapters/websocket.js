@@ -15,7 +15,7 @@ Gun.on('opt', function(ctx){
 	this.to.next(ctx);
 	var opt = ctx.opt;
 	if(ctx.once){ return }
-	if(false === opt.WebSocket || !websocket){ return }
+	if(!websocket || false === opt.WebSocket){ return }
 	var ws = opt.ws || (opt.ws = {}); ws.who = 0;
 	Gun.obj.map(opt.peers, function(){ ++ws.who });
 	if(ctx.once){ return }
