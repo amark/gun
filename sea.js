@@ -112,7 +112,6 @@
       });
     });
   }
-
   // This is internal User authentication func.
   function authenticate(alias,pass,root){
     return new Promise(function(resolve, reject){
@@ -154,7 +153,6 @@
       }).catch(function(e){ reject({err: e}) });
     });
   }
-
   // This internal func finalizes User authentication
   function finalizelogin(alias,key,root,opts){
     var user = root._.user;
@@ -175,25 +173,7 @@
       return user._;
     });
   }
-
-  function callOnStore(fn_, resolve_){
-    var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
-    open.onupgradeneeded = function(){  // Create the schema; props === current version
-      var db = open.result;
-      db.createObjectStore('SEA', {keyPath: 'id'});
-    };
-    open.onsuccess = function(){  // Start a new transaction
-      var db = open.result;
-      var tx = db.transaction('SEA', 'readwrite');
-      var store = tx.objectStore('SEA');
-      fn_(store);
-      tx.oncomplete = function(){   // Close the db when the transaction is done
-        db.close();
-        if(typeof resolve_ === 'function'){ resolve_() }
-      };
-    };
-  }
-
+  // This updates sessionStorage & IndexedDB to persist authenticated "session"
   function updatestorage(proof,priv,pin){
     return function(props){
       return new Promise(function(resolve, reject){
@@ -203,43 +183,42 @@
           delete props.remember;  // Not stored if present
 
           var remember = (pin && {alias: props.alias, pin: pin}) || props;
-          var encrypted = !authsettings.session && pin && props;
+          var persist = !authsettings.session && pin && props;
 
           return SEA.write(JSON.stringify(remember), priv).then(function(signed){
             sessionStorage.setItem('user', props.alias);
             sessionStorage.setItem('remember', signed);
-            if(!encrypted){
+            if(!persist){
               return new Promise(function(resolve){
-                callOnStore(function(store) {
+                SEA._callonstore_(function(store) {
                   var act = store.clear();  // Wipes whole IndexedDB
                   act.onsuccess = function(){};
                 }, function(){ resolve() });
               });
             }
           }).then(function(){
-            return !encrypted || SEA.enc(encrypted, pin).then(function(encrypted){
-              return encrypted && SEA.write(encrypted, priv).then(function(encsig){
+            return !persist || SEA.enc(persist, pin).then(function(encrypted){
+              return encrypted && SEA.write(encrypted, priv).then(function(signed){
                 return new Promise(function(resolve){
-                  callOnStore(function(store){
-                    store.put({id: props.alias, auth: encsig});
+                  SEA._callonstore_(function(store){
+                    store.put({id: props.alias, auth: signed});
                   }, function(){ resolve() });
                 });
               }).catch(reject);
             }).catch(reject);
           }).then(function(){ resolve(props) })
           .catch(function(e){ reject({err: 'Session persisting failed!'}) });
-        } else  {
-          return new Promise(function(resolve){
-            callOnStore(function(store) {
-              var act = store.clear();  // Wipes whole IndexedDB
-              act.onsuccess = function(){};
-            }, function(){ resolve() });
-          }).then(function(){
-            sessionStorage.removeItem('user');
-            sessionStorage.removeItem('remember');
-            resolve(props);
-          });
         }
+        return new Promise(function(resolve){
+          SEA._callonstore_(function(store) {
+            var act = store.clear();  // Wipes whole IndexedDB
+            act.onsuccess = function(){};
+          }, function(){ resolve() });
+        }).then(function(){
+          sessionStorage.removeItem('user');
+          sessionStorage.removeItem('remember');
+          resolve(props);
+        });
       });
     };
   }
@@ -251,7 +230,7 @@
     // TODO: how this works:
     // called when app bootstraps, with wanted options
     // IF authsettings.validity === 0 THEN no remember-me, ever
-    // IF authsettings.session === true THEN no window.localStorage in use; nor PIN
+    // IF authsettings.session === true THEN no window.indexedDB in use; nor PIN
     // ELSE if no PIN then window.sessionStorage
     var pin = Gun.obj.has(opts, 'pin') && opts.pin
     && new Buffer(opts.pin, 'utf8').toString('base64');
@@ -274,6 +253,7 @@
   // This internal func recalls persisted User authentication if so configured
   function authrecall(root,authprops){
     return new Promise(function(resolve, reject){
+      // TODO: sessionStorage to only hold signed { alias, pin } !!!
       var remember = authprops || sessionStorage.getItem('remember');
       var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
       || sessionStorage.getItem('user');
@@ -330,10 +310,10 @@
                 try{ props = props.slice ? JSON.parse(props) : props }catch(e){}  //eslint-disable-line no-empty
                 if(Gun.obj.has(props, 'pin') && Gun.obj.has(props, 'alias')
                 && props.alias === alias){
-                  pin = props.pin; // Got PIN so get localStorage secret if signature is ok
+                  pin = props.pin; // Got PIN so get IndexedDB secret if signature is ok
                   return new Promise(function(resolve){
                     var remember;
-                    callOnStore(function(store) {
+                    SEA._callonstore_(function(store) {
                       var getData = store.get(alias);
                       getData.onsuccess = function(){
                         remember = getData.result && getData.result.auth;
@@ -388,7 +368,7 @@
         return reject({err: 'No authentication session found!'});
       }
       var gotRemember;
-      callOnStore(function(store) {
+      SEA._callonstore_(function(store) {
         var getData = store.get(alias);
         getData.onsuccess = function(){
           gotRemember = getData.result && getData.result.auth;
@@ -433,13 +413,13 @@
       if(authsettings.validity && typeof window !== 'undefined'
       && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
         var importAndStoreKey = function(){ // Creates new CryptoKey & stores it
-          importKey(p).then(function(key){ callOnStore(function(store){
+          importKey(p).then(function(key){ SEA._callonstore_(function(store){
             store.put({id: p.pub, key: key});
           }, function(){ resolve(key) }); });
         };
         if(Gun.obj.has(p, 'set')){ return importAndStoreKey() } // proof update so overwrite
         var aesKey;
-        callOnStore(function(store) {
+        SEA._callonstore_(function(store) {
           var getData = store.get(p.pub);
           getData.onsuccess = function(){ aesKey = getData.result && getData.result.key };
         }, function(){ return aesKey ? resolve(aesKey) : importAndStoreKey() });
@@ -649,7 +629,7 @@
       // TODO: how this works:
       // called when app bootstraps, with wanted options
       // IF validity === 0 THEN no remember-me, ever
-      // IF opt.session === true THEN no window.localStorage in use; nor PIN
+      // IF opt.session === true THEN no window.indexedDB in use; nor PIN
       authsettings.validity = typeof validity !== 'undefined' ? validity
       :  _initial_authsettings.validity;
       if(Gun.obj.has(opts, 'session')){
@@ -984,6 +964,24 @@
     if(cb && typeof cb === 'function'){
       doIt(cb, function(){cb()});
     } else { return new Promise(doIt) }
+  };
+  // Internal helper for IndexedDB use
+  SEA._callonstore_ = function(fn_, resolve_){
+    var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
+    open.onupgradeneeded = function(){  // Create the schema; props === current version
+      var db = open.result;
+      db.createObjectStore('SEA', {keyPath: 'id'});
+    };
+    open.onsuccess = function(){  // Start a new transaction
+      var db = open.result;
+      var tx = db.transaction('SEA', 'readwrite');
+      var store = tx.objectStore('SEA');
+      fn_(store);
+      tx.oncomplete = function(){   // Close the db when the transaction is done
+        db.close();
+        if(typeof resolve_ === 'function'){ resolve_() }
+      };
+    };
   };
 
   Gun.SEA = SEA;

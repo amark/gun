@@ -7,34 +7,15 @@ var root;
 
 (function(env){
   root = env.window ? env.window : global;
-  root.indexedDB = require("fake-indexeddb");
 }(this));
 
 if(typeof Buffer === 'undefined'){
   var Buffer = require('buffer').Buffer;
 }
 
-function callOnStore(fn_, resolve_){
-  var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
-  open.onupgradeneeded = function(){  // Create the schema; props === current version
-    var db = open.result;
-    db.createObjectStore('SEA', {keyPath: 'id'});
-  };
-  open.onsuccess = function(){  // Start a new transaction
-    var db = open.result;
-    var tx = db.transaction('SEA', 'readwrite');
-    var store = tx.objectStore('SEA');
-    fn_(store);
-    tx.oncomplete = function(){   // Close the db when the transaction is done
-      db.close();
-      if(typeof resolve_ === 'function'){ resolve_() }
-    };
-  };
-}
-
 function checkIndexedDB(key, prop, resolve_){
   var result;
-  callOnStore(function(store) {
+  Gun.SEA._callonstore_(function(store) {
     var getData = store.get(key);
     getData.onsuccess = function(){
       result = getData.result && getData.result[prop];
@@ -258,10 +239,9 @@ Gun().user && describe('Gun', function(){
 
       if(wipeStorageData){
         // ... and persisted session
-        // localStorage.removeItem('remember');
         sessionStorage.removeItem('remember');
         sessionStorage.removeItem('alias');
-        callOnStore(function(store) {
+        Gun.SEA._callonstore_(function(store) {
           var act = store.clear();  // Wipes whole IndexedDB
           act.onsuccess = function(){};
         });
@@ -641,7 +621,7 @@ Gun().user && describe('Gun', function(){
                 return !pin ? sessionStorage.setItem('remember', remember)
                 : Gun.SEA.enc(remember, pin).then(function(encauth){
                   return new Promise(function(resolve){
-                    callOnStore(function(store){
+                    Gun.SEA._callonstore_(function(store){
                       store.put({id: usr._.alias, auth: encauth});
                     }, resolve);
                   });
@@ -650,7 +630,7 @@ Gun().user && describe('Gun', function(){
             });
           };
 
-          it('with PIN auth session stored to localStorage', function(done){
+          it('with PIN auth session stored to IndexedDB', function(done){
             var doAction = function(){
               user.auth(alias+type, pass+' new', {pin: 'PIN'})
               .then(doCheck(done, true)).catch(done);
@@ -731,7 +711,7 @@ Gun().user && describe('Gun', function(){
             }).catch(done);
           });
 
-          it('valid localStorage session bootstrap', function(done){
+          it('valid IndexedDB session bootstrap', function(done){
             var sUser;
             var sRemember;
             var iAuth;
@@ -744,8 +724,6 @@ Gun().user && describe('Gun', function(){
                 expect(root.sessionStorage.getItem('user')).to.be(alias+type);
                 expect(root.sessionStorage.getItem('remember')).to.not.be(undefined);
                 expect(root.sessionStorage.getItem('remember')).to.not.be('');
-                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
-                expect(root.localStorage.getItem('remember')).to.not.be('');
 
                 sUser = root.sessionStorage.getItem('user');
                 sRemember = root.sessionStorage.getItem('remember');
@@ -774,7 +752,7 @@ Gun().user && describe('Gun', function(){
                 root.sessionStorage.setItem('remember', sRemember);
 
                 return new Promise(function(resolve){
-                  callOnStore(function(store){
+                  Gun.SEA._callonstore_(function(store){
                     store.put({id: sUser, auth: iAuth});
                   }, resolve);
                 });
@@ -809,7 +787,7 @@ Gun().user && describe('Gun', function(){
                   checkIndexedDB(sUser, 'auth', function(auth){
                     try{ expect(auth).to.not.be(iAuth) }catch(e){ done(e) }
                     // Then restore IndexedDB auth data, skip sessionStorage
-                    callOnStore(function(store){
+                    Gun.SEA._callonstore_(function(store){
                       store.put({id: sUser, auth: iAuth});
                     }, function(){
                       root.sessionStorage.setItem('user', sUser);
@@ -868,7 +846,7 @@ Gun().user && describe('Gun', function(){
                   checkIndexedDB(sUser, 'auth', function(auth){
                     try{ expect(auth).to.not.be(iAuth) }catch(e){ done(e) }
                     // Then restore IndexedDB auth data, skip sessionStorage
-                    callOnStore(function(store){
+                    Gun.SEA._callonstore_(function(store){
                       store.put({id: sUser, auth: iAuth});
                     }, function(){
                       root.sessionStorage.setItem('user', sUser);
@@ -942,8 +920,6 @@ Gun().user && describe('Gun', function(){
                 sRemember = root.sessionStorage.getItem('remember');
                 expect(sRemember).to.not.be(undefined);
                 expect(sRemember).to.not.be('');
-                expect(root.localStorage.getItem('remember')).to.not.be(undefined);
-                expect(root.localStorage.getItem('remember')).to.not.be('');
               }catch(e){ done(e); return }
 
               return new Promise(function(resolve){
@@ -969,7 +945,7 @@ Gun().user && describe('Gun', function(){
                 root.sessionStorage.setItem('remember', sRemember);
 
                 return new Promise(function(resolve){
-                  callOnStore(function(store){
+                  Gun.SEA._callonstore_(function(store){
                     store.put({id: sUser, auth: iAuth});
                   }, resolve);
                 });
