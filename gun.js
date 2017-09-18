@@ -1704,8 +1704,7 @@
 	})(require, './adapters/localStorage');
 
 	;require(function(module){
-		var Gun = require('./index');
-		var WS = WebSocket;
+		var Gun = require('./index'), WS = WebSocket;
 		if(!WS && typeof window !== 'undefined'){
 			WS = window.WebSocket || window.webkitWebSocket || window.mozWebSocket;
 		}
