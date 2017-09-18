@@ -1705,8 +1705,8 @@
 
 	;require(function(module){
 		var Gun = require('./index');
-		var WS = WebSocket
-		if(typeof window !== 'undefined'){
+		var WS = WebSocket;
+		if(!WS && typeof window !== 'undefined'){
 			WS = window.WebSocket || window.webkitWebSocket || window.mozWebSocket;
 		}
 		if (WS) {
