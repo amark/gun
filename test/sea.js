@@ -312,9 +312,8 @@ Gun().user && describe('Gun', function(){
             return function(){
               var checkValue = function(data, val){
                 if(notStored){
-                  if(typeof data !== 'undefined' && data !== null && data !== ''){
-                    expect(data).to.not.be(undefined);
-                  }
+                  expect(typeof data !== 'undefined' && data !== null && data !== '')
+                  .to.not.eql(true);
                 } else {
                   expect(data).to.not.be(undefined);
                   expect(data).to.not.be('');
@@ -592,7 +591,7 @@ Gun().user && describe('Gun', function(){
           });
         });
 
-        describe('recall', function(){
+        describe('recall (from IndexedDB)', function(){
           var doCheck = function(done, hasPin, wantAck){
             expect(typeof done).to.be('function');
             return function(ack){
@@ -658,7 +657,7 @@ Gun().user && describe('Gun', function(){
             });
           };
 
-          it('with PIN auth session stored to IndexedDB', function(done){
+          it('with PIN auth session stores', function(done){
             var doAction = function(){
               user.auth(alias+type, pass+' new', {pin: 'PIN'})
               .then(doCheck(done, true)).catch(done);
@@ -670,7 +669,7 @@ Gun().user && describe('Gun', function(){
             }
           });
 
-          it('without PIN auth session stored to IndexedDB', function(done){
+          it('without PIN auth session stores', function(done){
             var doAction = function(){
               user.auth(alias+type, pass+' new').then(doCheck(done));
             };
@@ -694,7 +693,7 @@ Gun().user && describe('Gun', function(){
             }
           });
 
-          it('validity but no PIN stored to IndexedDB using random PIN', function(done){
+          it('with validity but no PIN stores using random PIN', function(done){
             var doAction = function(){
               user.auth(alias+type, pass+' new').then(doCheck(done)).catch(done);
             };
@@ -706,7 +705,7 @@ Gun().user && describe('Gun', function(){
             }
           });
 
-          it('valid sessionStorage session', function(done){
+          it('validity and auth with PIN but storage empty', function(done){
             user.auth(alias+type, pass+' new').then(function(usr){
               var sUser;
               var sRemember;
@@ -730,17 +729,26 @@ Gun().user && describe('Gun', function(){
                   expect(root.sessionStorage.getItem('user')).to.not.be(sUser);
                   expect(root.sessionStorage.getItem('remember')).to.not.be(sRemember);
                 }catch(e){ done(e); return }
-
+                // Restore but leave IndexedDB empty
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
 
-                user.recall(12 * 60).then(doCheck(done))
+                user.recall(12 * 60).then(
+                  doCheck(function(ack){
+                    expect(ack).to.have.key('err');
+                    expect(ack.err.toLowerCase().indexOf('no authentication')).to.not.be(-1);
+                      checkIndexedDB(alias+type, 'auth', function(auth){
+                        expect((typeof auth !== 'undefined' && auth !== null && auth !== ''))
+                        .to.not.eql(true);
+                        done();
+                      });
+                  }, false, true))
                 .catch(done);
               }).catch(done);
             }).catch(done);
           });
 
-          it('valid IndexedDB session bootstrap', function(done){
+          it('valid session bootstrap', function(done){
             var sUser;
             var sRemember;
             var iAuth;
@@ -790,7 +798,7 @@ Gun().user && describe('Gun', function(){
             }).catch(done);
           });
 
-          it('valid IndexedDB session bootstraps using PIN', function(done){
+          it('valid session bootstrap using alias & PIN', function(done){
             user.recall(12 * 60).then(function(){
               return user.auth(alias+type, pass+' new', {pin: 'PIN'});
             }).then(doCheck(function(ack){
@@ -813,7 +821,7 @@ Gun().user && describe('Gun', function(){
                 return new Promise(function(resolve){
                   checkIndexedDB(sUser, 'auth', function(auth){
                     try{ expect(auth).to.not.be(iAuth) }catch(e){ done(e) }
-                    // Then restore IndexedDB auth data, skip sessionStorage
+                    // Then restore IndexedDB but skip sessionStorage remember
                     setIndexedDB(sUser, iAuth, function(){
                       root.sessionStorage.setItem('user', sUser);
                       resolve(ack);
@@ -847,7 +855,7 @@ Gun().user && describe('Gun', function(){
             }, true, true)).catch(done);
           });
 
-          it('valid IndexedDB session fails to bootstrap using wrong PIN',
+          it('valid session fails to bootstrap with alias & wrong PIN',
           function(done){
             user.recall(12 * 60).then(function(){
               return user.auth(alias+type, pass+' new', {pin: 'PIN'});
@@ -963,10 +971,10 @@ Gun().user && describe('Gun', function(){
                 });
               }).then(function(){
                 // Simulate browser reload
-                // Call back previous remember data
+                // Call back pre-update remember...
                 root.sessionStorage.setItem('user', sUser);
                 root.sessionStorage.setItem('remember', sRemember);
-
+                // ... and IndexedDB auth
                 return new Promise(function(resolve){
                   setIndexedDB(sUser, iAuth, resolve);
                 });
@@ -989,16 +997,15 @@ Gun().user && describe('Gun', function(){
             var pin = 'PIN';
             var exp;
             var hookFunc = function(props){
-              exp = props.exp * 2;
+              exp = props.exp * 2;  // Doubles session expiration time
               var ret = Object.assign({}, props, {exp: exp});
               return (type === 'callback' && ret) || new Promise(function(resolve){
-                resolve(ret);
+                resolve(ret); // Both callback & Promise methods here
               });
             };
             user.recall(60, {hook: hookFunc}).then(function(){
               return user.auth(alias+type, pass, {pin: pin});
             }).then(function(){
-              // Storage data OK, let's back up time of auth 65 minutes
               return manipulateStorage(function(props){
                 expect(props).to.not.be(undefined);
                 expect(props).to.have.key('exp');
