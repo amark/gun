@@ -198,19 +198,24 @@
             return !persist || SEA.enc(persist, pin).then(function(encrypted){
               return encrypted && SEA.write(encrypted, priv).then(function(signed){
                 return new Promise(function(resolve){
-                  SEA._callonstore_(function(store){
-                    store.put({id: props.alias, auth: signed});
-                  }, function(){ resolve() });
+                  SEA._callonstore_(function(store) { // Wipe IndexedDB completedy!
+                    var act = store.clear();
+                    act.onsuccess = function(){};
+                  }, function(){  // Then set encrypted auth props
+                    SEA._callonstore_(function(store){
+                      store.put({id: props.alias, auth: signed});
+                    }, function(){ resolve() });
+                  });
                 });
               }).catch(reject);
             }).catch(reject);
           }).then(function(){ resolve(props) })
           .catch(function(e){ reject({err: 'Session persisting failed!'}) });
         }
-        // TODO: remove IndexedDB when using random PIN
+        // WIping IndexedDB completely when using random PIN
         return new Promise(function(resolve){
           SEA._callonstore_(function(store) {
-            var act = store.clear();  // Wipes whole IndexedDB
+            var act = store.clear();
             act.onsuccess = function(){};
           }, function(){ resolve() });
         }).then(function(){
@@ -382,7 +387,6 @@
   // This internal func executes logout actions
   function authleave(root, alias){
     return function(resolve, reject){
-      // remove persisted authentication
       var user = root._.user;
       alias = alias || (user._ && user._.alias);
       var doIt = function(){
@@ -394,6 +398,7 @@
         // Let's use default
         resolve({ok: 0});
       };
+      // Removes persisted authentication & CryptoKeys
       authpersist(alias && {alias: alias}).then(doIt).catch(doIt);
     };
   }
