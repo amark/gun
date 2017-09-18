@@ -1,16 +1,21 @@
 
 var Gun = require('./index');
-var WebSocket;
-if(typeof window !== 'undefined'){
-	WebSocket = window.WebSocket || window.webkitWebSocket || window.mozWebSocket;
+var websocket;
+if(typeof WebSocket !== 'undefined'){
+	websocket = WebSocket;
 } else {
-	return;
+	if(typeof webkitWebSocket !== 'undefined'){
+		websocket = webkitWebSocket;
+	}
+	if(typeof mozWebSocket !== 'undefined'){
+		websocket = mozWebSocket;
+	}
 }
 Gun.on('opt', function(ctx){
 	this.to.next(ctx);
 	var opt = ctx.opt;
 	if(ctx.once){ return }
-	if(false === opt.WebSocket){ return }
+	if(false === opt.WebSocket || !websocket){ return }
 	var ws = opt.ws || (opt.ws = {}); ws.who = 0;
 	Gun.obj.map(opt.peers, function(){ ++ws.who });
 	if(ctx.once){ return }
@@ -62,7 +67,7 @@ Gun.on('opt', function(ctx){
 	function open(peer, as){
 		if(!peer || !peer.url){ return }
 		var url = peer.url.replace('http', 'ws');
-		var wire = peer.wire = new WebSocket(url);
+		var wire = peer.wire = new websocket(url);
 		wire.onclose = function(){
 			ctx.on('bye', peer);
 			reconnect(peer, as);
