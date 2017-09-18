@@ -52,14 +52,12 @@
 
   var _initial_authsettings = {
     validity: 12 * 60 * 60, // internally in seconds : 12 hours
-    session: true,
     hook: function(props){ return props } // { iat, exp, alias, remember }
     // or return new Promise(function(resolve, reject){(resolve(props))})
   };
   // These are used to persist user's authentication "session"
   var authsettings = {
     validity: _initial_authsettings.validity,
-    session: _initial_authsettings.session,
     hook: _initial_authsettings.hook
   };
 
@@ -178,12 +176,12 @@
     return function(props){
       return new Promise(function(resolve, reject){
         if(!Gun.obj.has(props, 'alias')){ return resolve() }
-        if(proof && Gun.obj.has(props, 'iat')){
+        if(authsettings.validity && proof && Gun.obj.has(props, 'iat')){
           props.proof = proof;
           delete props.remember;  // Not stored if present
 
-          var remember = (pin && {alias: props.alias, pin: pin}) || props;
-          var persist = !authsettings.session && pin && props;
+          var remember = {alias: props.alias, pin: pin};
+          var persist = props;
 
           return SEA.write(JSON.stringify(remember), priv).then(function(signed){
             sessionStorage.setItem('user', props.alias);
@@ -209,6 +207,7 @@
           }).then(function(){ resolve(props) })
           .catch(function(e){ reject({err: 'Session persisting failed!'}) });
         }
+        // TODO: remove IndexedDB when using random PIN
         return new Promise(function(resolve){
           SEA._callonstore_(function(store) {
             var act = store.clear();  // Wipes whole IndexedDB
@@ -226,14 +225,13 @@
   // This internal func persists User authentication if so configured
   function authpersist(user,proof,opts){
     // opts = { pin: 'string' }
-    // authsettings.session = true // disables PIN method
-    // TODO: how this works:
+    // no opts.pin then uses random PIN
+    // How this works:
     // called when app bootstraps, with wanted options
     // IF authsettings.validity === 0 THEN no remember-me, ever
-    // IF authsettings.session === true THEN no window.indexedDB in use; nor PIN
-    // ELSE if no PIN then window.sessionStorage
-    var pin = Gun.obj.has(opts, 'pin') && opts.pin
-    && new Buffer(opts.pin, 'utf8').toString('base64');
+    // IF PIN then signed 'remember' to window.sessionStorage and 'auth' to IndexedDB
+    var pin = (Gun.obj.has(opts, 'pin') && opts.pin) || Gun.text.random(10);
+    pin = new Buffer(pin, 'utf8').toString('base64');
 
     if(proof && user && user.alias && authsettings.validity){
       var args = {alias: user.alias};
@@ -253,7 +251,7 @@
   // This internal func recalls persisted User authentication if so configured
   function authrecall(root,authprops){
     return new Promise(function(resolve, reject){
-      // TODO: sessionStorage to only hold signed { alias, pin } !!!
+      // window.sessionStorage only holds signed { alias, pin } !!!
       var remember = authprops || sessionStorage.getItem('remember');
       var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
       || sessionStorage.getItem('user');
@@ -375,7 +373,7 @@
         };
       }, function(){  // And return proof if for matching alias
         reject({
-          err: (gotRemember && 'Missing PIN and alias!')
+          err: (gotRemember && authsettings.validity && 'Missing PIN and alias!')
           || 'No authentication session found!'});
       });
     });
@@ -498,8 +496,6 @@
     cb = typeof cb === 'function' && cb;
 
     var doIt = function(resolve, reject){
-      // TODO: !pass && opt.pin => try to recall
-      // return reject({err: 'Auth attempt failed! Reason: No session data for alias & PIN'});
       if(!pass && Gun.obj.has(opts, 'pin')){
         return authrecall(root, {alias: alias, pin: opts.pin}).then(function(props){
           resolve(props);
@@ -624,17 +620,14 @@
 
     var doIt = function(resolve, reject){
       // opts = { hook: function({ iat, exp, alias, proof }),
-      //   session: false } // true disables PIN requirement/support
+      //   session: false } // true uses random PIN, no PIN UX error generated
       // iat == Date.now() when issued, exp == seconds to expire from iat
-      // TODO: how this works:
+      // How this works:
       // called when app bootstraps, with wanted options
-      // IF validity === 0 THEN no remember-me, ever
-      // IF opt.session === true THEN no window.indexedDB in use; nor PIN
+      // IF authsettings.validity === 0 THEN no remember-me, ever
+      // IF PIN then signed 'remember' to window.sessionStorage and 'auth' to IndexedDB
       authsettings.validity = typeof validity !== 'undefined' ? validity
       :  _initial_authsettings.validity;
-      if(Gun.obj.has(opts, 'session')){
-        authsettings.session = opts.session;
-      }
       authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
       ? opts.hook : _initial_authsettings.hook;
       // All is good. Should we do something more with actual recalled data?
