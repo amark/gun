@@ -60,7 +60,7 @@ if (WS) {
 		function open(peer, as){
 			if(!peer || !peer.url){ return }
 			var url = peer.url.replace('http', 'ws');
-			var wire = peer.wire = new WebSocket(url);
+			var wire = peer.wire = new WS(url);
 			wire.onclose = function(){
 				ctx.on('bye', peer);
 				reconnect(peer, as);
