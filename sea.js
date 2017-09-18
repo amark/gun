@@ -186,14 +186,6 @@
           return SEA.write(JSON.stringify(remember), priv).then(function(signed){
             sessionStorage.setItem('user', props.alias);
             sessionStorage.setItem('remember', signed);
-            if(!persist){
-              return new Promise(function(resolve){
-                SEA._callonstore_(function(store) {
-                  var act = store.clear();  // Wipes whole IndexedDB
-                  act.onsuccess = function(){};
-                }, function(){ resolve() });
-              });
-            }
           }).then(function(){
             return !persist || SEA.enc(persist, pin).then(function(encrypted){
               return encrypted && SEA.write(encrypted, priv).then(function(signed){
@@ -212,7 +204,7 @@
           }).then(function(){ resolve(props) })
           .catch(function(e){ reject({err: 'Session persisting failed!'}) });
         }
-        // WIping IndexedDB completely when using random PIN
+        // Wiping IndexedDB completely when using random PIN
         return new Promise(function(resolve){
           SEA._callonstore_(function(store) {
             var act = store.clear();
