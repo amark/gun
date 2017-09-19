@@ -142,36 +142,37 @@
             return !remaining && reject({err: 'Public key does not exist!'});
           }
           // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-          SEA.read(at.put.salt, pub).then(function(salt){
-            return SEA.proof(pass, salt)
-            .catch(function(e){ reject({err: 'Failed to create proof!'}) });
-          }).catch(function(e){ reject({err: 'Failed to create proof!'}) })
-          .then(function(proof){
-            var user = {pub: pub, proof: proof, at: at};
-            // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-            SEA.read(at.put.auth, pub).then(function(auth){
-              return SEA.dec(auth, {pub: pub, key: proof})
-              .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) });
-            }).then(function(sea){
-              // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
-              // if we were successful, then that meanswe're logged in!
-              if(sea){
-                user.priv = sea.priv;
-                SEA.read(at.put.epub, pub).then(function(epub){
-                  Object.assign(user, {epub: epub, epriv: sea.epriv});
-                  resolve(user);
-                }).catch(function(){
-                  return !remaining && reject({err: 'Public key does not exist!'});
-                });
-              } else if(!remaining){
-                reject({err: 'Public key does not exist!'});
-              }
-              // return remaining ? undefined // Not done yet
-              // : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
-              // // Or else we failed to log in...
-              // : reject({err: 'Failed to decrypt private key!'});
-            }).catch(function(e){ reject({err: 'Failed read secret!'})} );
-          });
+          SEA.read(at.put.auth, pub).then(function(auth){
+            auth = auth.slice ? JSON.parse(auth) : auth;
+            return SEA.proof(pass, auth.salt)
+            .catch(function(e){ reject({err: 'Failed to create proof!'}) })
+            .then(function(proof){
+              var user = {pub: pub, proof: proof, at: at};
+              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+              SEA.dec(auth.auth, {pub: pub, key: proof})
+              .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) })
+              .then(function(sea){
+                // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
+                // if we were successful, then that meanswe're logged in!
+                if(sea){
+                  user.priv = sea.priv;
+                  user.salt = auth.salt;  // TODO: needed?
+                  SEA.read(at.put.epub, pub).then(function(epub){
+                    Object.assign(user, {epub: epub, epriv: sea.epriv});
+                    resolve(user);
+                  }).catch(function(){
+                    return !remaining && reject({err: 'Public key does not exist!'});
+                  });
+                } else if(!remaining){
+                  reject({err: 'Public key does not exist!'});
+                }
+                // return remaining ? undefined // Not done yet
+                // : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
+                // // Or else we failed to log in...
+                // : reject({err: 'Failed to decrypt private key!'});
+              }).catch(function(e){ reject({err: 'Failed read secret!'})} );
+            });
+          }).catch(function(e){ reject({err: 'Failed to create proof!'}) });
         });
       }).catch(function(e){ reject({err: e}) });
     });
@@ -361,15 +362,17 @@
                     reject({err: 'Expired session!'});
                   });
                 }
-                return readAndDecrypt(at.put.auth, pub, proof).catch(function(e){
+                var auth = JSON.parse(at.put.auth).auth;
+                return SEA.dec(auth, proof).catch(function(e){
                   return !remaining && reject({err: 'Failed to decrypt private key!'});
                 }).then(function(sea){
-                  var key = sea && {priv: sea.priv};
+                  if(!sea){ return }
+                  return SEA.read(at.put.epub, pub).then(function(epub){
+                    return {pub: pub, priv: sea.priv, epriv: sea.epriv, epub: epub};
+                  });
+                }).then(function(key){
                   // now we have AES decrypted the private key,
                   // if we were successful, then that means we're logged in!
-                  if(key){
-                    Object.assign(key, {pub: pub});
-                  }
                   return updatestorage(proof, key, pin)(args).then(function(){
                     return remaining ? undefined // Not done yet
                     : key ? resolve(Object.assign(key, {at: at, proof: proof}))
@@ -492,9 +495,6 @@
             // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
             SEA.write(alias, pairs).then(function(signedalias){
               user.alias = signedalias;
-              return SEA.write(salt, pairs);
-            }).then(function(signedsalt){
-              user.salt = signedsalt;
               return SEA.write(pairs.epub, pairs);
             }).then(function(signedepub){
               user.epub = signedepub;
@@ -503,7 +503,9 @@
                 priv: pairs.priv, epriv: pairs.epriv
               }, {pub: pairs.epub, key: proof});
             }).then(function(encryptedprivs){
-              return SEA.write(encryptedprivs, pairs);
+              return SEA.write(salt, pairs).then(function(signedsalt){
+                return SEA.write({salt: salt, auth: encryptedprivs}, pairs);
+              });
             }).then(function(encsigauth){
               user.auth = encsigauth;
               var tmp = 'pub/'+pairs.pub;
@@ -547,20 +549,17 @@
               priv: keys.priv, epriv: keys.epriv
             }, {pub: keys.pub, key: newproof, set: true})
             .then(function(encryptedpriv){
-              return SEA.write(encryptedpriv, keys);
+              return SEA.write({salt: newsalt, auth: encryptedpriv}, keys);
             });
           }).then(function(encsigauth){
-            return SEA.write(newsalt, keys).then(function(signedsalt){
-              return SEA.write(keys.epub, keys).then(function(signedepub){
-                return SEA.write(alias, keys).then(function(signedalias){
-                  return {
-                    alias: signedalias,
-                    salt: signedsalt,
-                    auth: encsigauth,
-                    epub: signedepub,
-                    pub: keys.pub
-                  };
-                });
+            return SEA.write(keys.epub, keys).then(function(signedepub){
+              return SEA.write(alias, keys).then(function(signedalias){
+                return {
+                  alias: signedalias,
+                  auth: encsigauth,
+                  epub: signedepub,
+                  pub: keys.pub
+                };
               });
             });
           }).then(function(user){
