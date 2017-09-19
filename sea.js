@@ -1,3 +1,4 @@
+/* global buffer */
 /*eslint max-len: ["error", 95, { "ignoreComments": true }]*/
 /*eslint semi: ["error", "always", { "omitLastInOneLineBlock": true}]*/
 /*eslint object-curly-spacing: ["error", "never"]*/
@@ -14,18 +15,20 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  if(typeof Buffer === 'undefined'){
-    var Buffer = require('buffer').Buffer;
+  if(typeof buffer !== 'undefined'){
+    var Buffer = buffer.Buffer;
   }
-
-  if(typeof SparkMD5 === 'undefined'){
-    var SparkMD5 = require('spark-md5');
+  if(typeof Buffer === 'undefined'){
+    var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
   var sessionStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
+    if(typeof window.SparkMD5 !== 'undefined'){
+      var SparkMD5 = window.SparkMD5;
+    }
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
     getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
@@ -46,6 +49,10 @@
     // Let's have Storage for NodeJS / testing
     sessionStorage = new require('node-localstorage').LocalStorage('session');
     indexedDB = require("fake-indexeddb");
+  }
+
+  if(typeof SparkMD5 === 'undefined'){
+    var SparkMD5 = require('spark-md5');  //eslint-disable-line no-redeclare
   }
 
   // Encryption parameters - TODO: maybe to be changed via init?
