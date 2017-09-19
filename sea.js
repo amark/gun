@@ -12,12 +12,14 @@
 
   /* THIS IS AN EARLY ALPHA!!! */
 
-  var crypto = require('crypto');
-
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
   if(typeof Buffer === 'undefined'){
     var Buffer = require('buffer').Buffer;
+  }
+
+  if(typeof SparkMD5 === 'undefined'){
+    var SparkMD5 = require('spark-md5');
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
@@ -33,6 +35,7 @@
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB;
   } else {
+    var crypto = require('crypto');
     var WebCrypto = require('node-webcrypto-ossl');
     var webcrypto = new WebCrypto({directory: 'key_storage'});
     subtleossl = webcrypto.subtle;
@@ -47,7 +50,7 @@
 
   // Encryption parameters - TODO: maybe to be changed via init?
   var pbkdf2 = {
-    hash: 'SHA-256',  // Was 'SHA-1'
+    hash: 'SHA-256',
     iter: 50000,
     ks: 64
   };
@@ -459,15 +462,11 @@
       }
     });
   }
-  // Takes data (defaults as Buffer) and returns 'md5' hash
-  function hashData(data,intype,outtype){
-    return crypto.createHash(outtype || 'md5').update(data, intype).digest();
-  }
-
   // This internal func returns hashed data for signing
-  function nodehash(m){
+  function sha256hash(m){
+    var hashSubtle = subtleossl || subtle;
     try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
-    return hashData(m, 'utf8', nHash);
+    return hashSubtle.digest(pbkdf2.hash, new TextEncoder("utf-8").encode(m));
   }
 
   // How does it work?
@@ -855,12 +854,12 @@
   // Does enc/dec key like OpenSSL - works with CryptoJS encryption/decryption
   function makeKey(p,s){
     var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
-    // TODO: 'md5' is insecure, do we need OpenSSL compatibility anymore ?
-    var h128 = hashData(ps);
-    return Buffer.concat([h128, hashData(Buffer.concat([h128, ps]))]);
+    var h128 = new Buffer((new SparkMD5()).appendBinary(ps).end(true), 'binary');
+    return Buffer.concat([
+      h128,
+      new Buffer((new SparkMD5()).appendBinary(Buffer.concat([h128, ps])).end(true), 'binary')
+    ]);
   }
-
-  var nHash = pbkdf2.hash.replace('-', '').toLowerCase();
 
   // These SEA functions support both callback AND Promises
   var SEA = {};
@@ -884,7 +883,11 @@
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
         var hash = crypto.pbkdf2Sync(
-          pass, new Buffer(salt, 'utf8'), pbkdf2.iter, pbkdf2.ks, nHash
+          pass,
+          new Buffer(salt, 'utf8'),
+          pbkdf2.iter,
+          pbkdf2.ks,
+          pbkdf2.hash.replace('-', '').toLowerCase()
         );
         pass = getRandomBytes(pass.length);
         resolve(hash && hash.toString('base64'));
@@ -963,15 +966,15 @@
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.sign = function(m,p,cb){
-    m = m.slice ? m : JSON.stringify(m);
     var doIt = function(resolve, reject){
       var jwk = keystoecdsajwk(p.pub, p.priv);
-      var mm = nodehash(m);
-      subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
-        subtle.sign(ecdsasignprops, key, mm)
-        .then(function(s){ resolve(new Buffer(s, 'binary').toString('base64')) })
-        .catch(function(e){ Gun.log(e); reject(e) });
-      }).catch(function(e){ Gun.log(e); reject(e) });
+      sha256hash(m.slice ? m : JSON.stringify(m)).then(function(mm){
+        subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
+          subtle.sign(ecdsasignprops, key, mm)
+          .then(function(s){ resolve(new Buffer(s, 'binary').toString('base64')) })
+          .catch(function(e){ Gun.log(e); reject(e) });
+        }).catch(function(e){ Gun.log(e); reject(e) });
+      });
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
   };
@@ -979,9 +982,11 @@
     var doIt = function(resolve, reject){
       subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
       .then(function(key){
-        subtle.verify(ecdsasignprops, key, new Buffer(s, 'base64'), nodehash(m))
-        .then(function(v){ resolve(v) })
-        .catch(function(e){ Gun.log(e); reject(e) });
+        sha256hash(m).then(function(mm){
+          subtle.verify(ecdsasignprops, key, new Buffer(s, 'base64'), mm)
+          .then(function(v){ resolve(v) })
+          .catch(function(e){ Gun.log(e); reject(e) });
+        });
       }).catch(function(e){ Gun.log(e); reject(e) });
     };
     if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
