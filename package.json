@@ -50,6 +50,7 @@
     "@std/esm": "^0.8.3",
     "aws-sdk": ">=2.41.0",
     "formidable": ">=1.1.1",
+    "spark-md5": "^3.0.0",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
