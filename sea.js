@@ -89,19 +89,6 @@
     });
   }
 
-  var _initial_authsettings = {
-    validity: 12 * 60 * 60, // internally in seconds : 12 hours
-    session: true,
-    hook: function(props){ return props } // { iat, exp, alias, remember }
-    // or return new Promise(function(resolve, reject){(resolve(props))})
-  }
-  // These are used to persist user's authentication "session"
-  var authsettings = {
-    validity: _initial_authsettings.validity,
-    session: _initial_authsettings.session,
-    hook: _initial_authsettings.hook
-  };
-
   // let's extend the gun chain with a `user` function.
   // only one user can be logged in at a time, per gun instance.
   Gun.chain.user = function(){
@@ -438,7 +425,7 @@
   // This internal func executes logout actions
   function authleave(root, alias){
     return function(resolve, reject){
-      var user = root._.user;m
+      var user = root._.user;
       alias = alias || (user._ && user._.alias);
       var doIt = function(){
         // TODO: is this correct way to 'logout' user from Gun.User ?
