@@ -64,6 +64,7 @@ Gun.on('opt', function(ctx){
 		var url = peer.url.replace('http', 'ws');
 		var wire = peer.wire = new WebSocket(url);
 		wire.onclose = function(){
+			ctx.on('bye', peer);
 			reconnect(peer, as);
 		};
 		wire.onerror = function(error){
@@ -74,6 +75,7 @@ Gun.on('opt', function(ctx){
 			}
 		};
 		wire.onopen = function(){
+			ctx.on('hi', peer);
 			var queue = peer.queue;
 			peer.queue = [];
 			Gun.obj.map(queue, function(msg){

@@ -68,7 +68,7 @@
         <h3>Active</h3>
 
         <div v-for="active in activeTodos">
-            <label><input type="checkbox" @click="completeTodo(active.key)"> {{ active.todo.description }}</label>
+            <label><input type="checkbox" @click.prevent="completeTodo(active.key)"> {{ active.todo.description }}</label>
         </div>
 
         <h5 v-show="completedTodos.length > 0" class="completed-header">Completed</h5>
