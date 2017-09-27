@@ -469,11 +469,16 @@
       }
     });
   }
-  // This internal func returns hashed data for signing
+  // This internal func returns SHA-256 hashed data for signing
   function sha256hash(m){
     var hashSubtle = subtleossl || subtle;
     try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
     return hashSubtle.digest(pbkdf2.hash, new TextEncoder("utf-8").encode(m));
+  }
+  // This internal func returns SHA-1 hashed data for KeyID generation
+  function sha1hash(b){
+    var hashSubtle = subtleossl || subtle;
+    return hashSubtle.digest('SHA-1', b);
   }
 
   // How does it work?
@@ -902,6 +907,21 @@
     };
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
+  // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
+  SEA.keyid = function(p,cb){
+    var doIt = function(resolve, reject){
+      // base64('base64(x):base64(y)') => Buffer(xy)
+      var pb = Buffer.concat((new Buffer(p, 'base64')).toString('utf8').split(':')
+      .map(function(t){ return new Buffer(t, 'base64') }));
+      // id is PGPv4 compliant raw key
+      var id = Buffer.concat([new Buffer([0x99, pb.length/0x100, pb.length%0x100]), pb]);
+      sha1hash(id).then(function(sha1){
+        var hash = new Buffer(sha1, 'binary');
+        resolve(hash.slice(hash.length-8).toString('hex')); // 16-bit ID as hex
+      });
+    };
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+  };
   SEA.pair = function(cb){
     var doIt = function(resolve, reject){
       // First: ECDSA keys for signing/verifying...
@@ -913,6 +933,10 @@
         }).then(function(keys){
           return subtle.exportKey('jwk', pubkey).then(function(k){
             keys.pub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+            // return SEA.keyid(keys.pub).then(function(id){
+            //   keys.pubId = id;
+            //   return keys;
+            // });
             return keys;
           });
         }).catch(function(e){ Gun.log(e); reject(e) });
