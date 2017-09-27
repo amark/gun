@@ -77,6 +77,23 @@ Gun.SEA && describe('SEA', function(){
         }
       });
 
+      it('keyid', function(done){
+        Gun.SEA.pair().then(function(key){
+          var check = function(keyid){
+            expect(keyid).to.not.be(undefined);
+            expect(keyid).to.not.be('');
+            expect(keyid.length).to.eql(16);
+            done();
+          };
+          // keyid - creates 8 byte KeyID from public key
+          if(type === 'callback'){
+            Gun.SEA.keyid(key.pub, check);
+          } else {
+            Gun.SEA.keyid(key.pub).then(check);
+          }
+        }).catch(function(e){done(e)});
+      });
+
       it('enc', function(done){
         Gun.SEA.pair().then(function(key){
           var check = function(jsonSecret){
