@@ -7,11 +7,11 @@ var root;
 (function(env){
 	root = env.window? env.window : global;
 	if(!root.sessionStorage){
-		root.sessionStorage = new require('node-localstorage').LocalStorage('session');
+		root.sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage');
 	}
 	root.sessionStorage.clear();
 	if(!root.localStorage){
-		root.localStorage = new require('node-localstorage').LocalStorage('local');
+		root.localStorage = new require('node-localstorage').LocalStorage('.localStorage');
 	}
 	root.localStorage.clear();
 	try{ require('fs').unlinkSync('data.json') }catch(e){}	//eslint-disable-line no-empty
