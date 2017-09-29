@@ -23,7 +23,7 @@
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
-  var sessionStorage, indexedDB;
+  var sessionStorage, localStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
     if(typeof window.SparkMD5 !== 'undefined'){
@@ -35,6 +35,7 @@
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     sessionStorage = window.sessionStorage;
+    localStorage = window.localStorage;
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB;
   } else {
@@ -47,8 +48,13 @@
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
-    sessionStorage = new require('node-localstorage').LocalStorage('session');
+    sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage');
+    localStorage = new require('node-localstorage').LocalStorage('.localStorage');
     indexedDB = require("fake-indexeddb");
+    if(typeof global !== 'undefined'){
+      global.sessionStorage = sessionStorage;
+      global.localStorage = localStorage;
+    }
   }
 
   if(typeof SparkMD5 === 'undefined'){
