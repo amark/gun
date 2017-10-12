@@ -1,0 +1,29 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "standard",
+    "eslint:recommended"
+  ],
+  "plugins": [
+    "babel",
+    "promise"
+  ],
+  "env": {
+    "browser" : true
+  },
+  "globals": {
+    "__DEV__"      : false,
+    "__TEST__"     : false,
+    "__PROD__"     : false,
+    "__COVERAGE__" : false
+  },
+  "rules": {
+    "key-spacing"             : 0,
+    "jsx-quotes"              : [2, "prefer-single"],
+    "max-len"                 : [2, 80, 2],
+    "object-curly-spacing"    : [2, "always"],
+    "semi"                    : [2, "never"],
+    "no-mixed-spaces-and-tabs": [2],
+    "arrow-parens"            : [2, "always"]
+  }
+}
