@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node examples/http.js 8080",
     "prepublish": "npm run unbuild",
-    "test": "mocha",
+    "test": "mocha && SEA=true mocha",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
@@ -44,25 +44,29 @@
   },
   "homepage": "https://github.com/amark/gun#readme",
   "engines": {
-    "node": ">=0.6.6"
+    "node": ">=8.6.0"
   },
   "dependencies": {
+    "@std/esm": "^0.8.3",
     "aws-sdk": ">=2.41.0",
     "formidable": ">=1.1.1",
+    "spark-md5": "^3.0.0",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
-    "express": ">=4.15.2",
-    "subtle": "^0.1.8",
-    "text-encoding": "^0.6.4",
+    "@trust/webcrypto": "^0.5.0",
     "buffer": "^5.0.7",
-    "eccrypto": "^1.0.3",
+    "express": ">=4.15.2",
+    "fake-indexeddb": "^2.0.3",
     "hapi": "^16.1.1",
     "inert": "^4.2.0",
     "ip": "^1.1.5",
     "mocha": ">=3.2.0",
+    "node-localstorage": "^1.3.0",
+    "node-webcrypto-ossl": "^1.0.31",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
+    "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22",
     "uws": "~>0.14.1"
   }
