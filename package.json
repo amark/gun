@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node examples/http.js 8080",
     "prepublish": "npm run unbuild",
-    "test": "mocha",
+    "test": "mocha && SEA=true mocha",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
