@@ -835,6 +835,7 @@
 	;require(function(module){
 		var Gun = require('./root');
 		Gun.chain.back = function(n, opt){ var tmp;
+			n = n || 1;
 			if(-1 === n || Infinity === n){
 				return this._.root;
 			} else
@@ -865,6 +866,7 @@
 				&& !(yes = n(tmp, opt))){}
 				return yes;
 			}
+			return this;
 		}
 		var empty = {}, u;
 	})(require, './back');
