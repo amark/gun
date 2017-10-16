@@ -859,7 +859,7 @@
           console.log('NO!', each.err);
           return;
         }
-        if(Gun.obj.map(check, function(no, key){
+        if(Gun.obj.map(check, function(no){
           if(no){ return true }
         })){ return }
         to.next(msg);
