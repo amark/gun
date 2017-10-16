@@ -127,6 +127,22 @@ Gun.chain.off = function(){
 	}
 	return gun;
 }
+Gun.chain.off = function(){
+	var gun = this, at = gun._, tmp;
+	var back = at.back || {}, cat = back._;
+	if(!cat){ return }
+	if(tmp = cat.next){
+		if(tmp[at.get]){
+			obj_del(tmp, at.get);
+		} else {
+
+		}
+	}
+	if(tmp = at.soul){
+		obj_del(cat.root._.graph, tmp);
+	}
+	return gun;
+}
 var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 var rel = Gun.val.rel;
 var empty = {}, noop = function(){}, u;

@@ -66,13 +66,13 @@ function ify(as){
 function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
 	(as.res||iife)(function(){
+		var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
+			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+			if(!as.ack){ return }
+			as.ack(ack, this);
+		}, as.opt);
 		(as.ref._).on('out', {
-			cap: 3,
-			gun: as.ref, put: as.out = as.env.graph, opt: as.opt,
-			'#': as.gun.back(-1)._.ask(function(ack){ this.off(); // One response is good enough for us currently. Later we may want to adjust this.
-				if(!as.ack){ return }
-				as.ack(ack, this);
-			}, as.opt)
+			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
 	}, as);
 	if(as.res){ as.res() }

@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.8.1",
+  "version": "0.8.8",
   "description": "Graph engine",
   "main": "index.js",
   "browser": "gun.min.js",
@@ -43,11 +43,8 @@
     "url": "https://github.com/amark/gun/issues"
   },
   "homepage": "https://github.com/amark/gun#readme",
-  "engines": {
-    "node": ">=0.6.6"
-  },
   "dependencies": {
-    "aws-sdk": ">=2.41.0",
+    "aws-sdk": ">=2.86.0",
     "formidable": ">=1.1.1",
     "ws": "~>2.2.3"
   },
