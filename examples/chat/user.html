@@ -1,0 +1,22 @@
+<script src="/gun.js"></script>
+<!--
+<script src="/gun/lib/cryptomodules.js" type="text/javascript"></script>
+<script src="/gun/sea.js"></script>
+-->
+<script>
+	var gun = Gun(location.origin+'/gun');
+	var user = gun.user && gun.user();
+	if(user){
+		// 1st: call create. 2nd call auth. After that, call recall
+		// user.create('dude', 'my secret').then(function(ack) { console.log('created ack:', ack) });
+		// user.recall().then(function(ack){
+		// 	if (!ack || !ack.sea){
+		// 		console.log('user.recall not bootstrapping...');
+		// 		user.auth('dude', 'my secret', {pin: 'PIN'}).then(function(user) { console.log('authenticated user:', user) });
+		// 		// user.auth('dude', 'my secret', {pin: 'PIN', newpass: 'my new secret'}).then(function(user) { console.log('authenticated user:', user) });
+		// 	} else {
+		// 		console.log('user.recall authenticated user:', ack.alias);
+		// 	}
+		// });
+	}
+</script>
