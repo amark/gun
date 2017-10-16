@@ -811,13 +811,13 @@
       };
       each.pubs = function(val, key, node, soul){
         if(!val){ return on.to('end', {err: "Alias must exist!"}) } // data MUST exist
-        if(key === Gun.val.rel.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
+        if(key === Gun.val.rel.is(val)){ return (check['pubs'+soul+key] = 0) } // and the ID must be EXACTLY equal to its property
         return on.to('end', {err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
       };
       each.pub = function(val, key, node, soul, pub){
         //console.log("WE ARE HERE", key, val, soul, node, pub);
         if('pub' === key){
-          if(val === pub){ return check['pub'+soul+key] = 0 } // the account MUST have a `pub` property that equals the ID of the public key.
+          if(val === pub){ return (check['pub'+soul+key] = 0) } // the account MUST have a `pub` property that equals the ID of the public key.
           return on.to('end', {err: "Account must match!"});
         }
         /*
@@ -859,7 +859,7 @@
           console.log('NO!', each.err);
           return;
         }
-        if(Gun.obj.map(check, function(no){
+        if(Gun.obj.map(check, function(no, key){
           if(no){ return true }
         })){ return }
         to.next(msg);
