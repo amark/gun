@@ -3,10 +3,25 @@
 /*eslint semi: ["error", "always", { "omitLastInOneLineBlock": true}]*/
 /*eslint object-curly-spacing: ["error", "never"]*/
 /*eslint node/no-deprecated-api: [error, {ignoreModuleItems: ["new buffer.Buffer()"]}] */
-var root;
 
+var root;
 (function(env){
   root = env.window ? env.window : global;
+  env.window && root.localStorage && root.localStorage.clear();
+  try{ require('fs').unlinkSync('data.json') }catch(e){}
+  //root.Gun = root.Gun || require('../gun');
+  if(root.Gun){
+    root.Gun = root.Gun;
+  } else {
+    var expect = global.expect = require("./expect");
+    root.Gun = require('../gun');
+    Gun.serve = require('../lib/serve');
+    //require('./s3');
+    //require('./uws');
+    //require('./wsp/server');
+    require('../lib/file');
+    require('../sea');
+  }
 }(this));
 
 if(typeof Buffer === 'undefined'){

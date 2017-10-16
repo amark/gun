@@ -11,17 +11,18 @@ if(typeof WebSocket !== 'undefined'){
 		websocket = mozWebSocket;
 	}
 }
-Gun.on('opt', function(ctx){
-	this.to.next(ctx);
-	var opt = ctx.opt;
-	if(ctx.once){ return }
+
+Gun.on('opt', function(root){
+	this.to.next(root);
+	var opt = root.opt;
+	if(root.once){ return }
 	if(!websocket || false === opt.WebSocket){ return }
 	var ws = opt.ws || (opt.ws = {}); ws.who = 0;
 	Gun.obj.map(opt.peers, function(){ ++ws.who });
-	if(ctx.once){ return }
+	if(root.once){ return }
 	var batch;
 
-	ctx.on('out', function(at){
+	root.on('out', function(at){
 		this.to.next(at);
 		if(at.ws && 1 == ws.who){ return } // performance hack for reducing echoes.
 		batch = JSON.stringify(at);
@@ -36,13 +37,13 @@ Gun.on('opt', function(ctx){
 			ws.drain = null;
 			if(!tmp.length){ return }
 			batch = JSON.stringify(tmp);
-			Gun.obj.map(opt.peers, send, ctx);
+			Gun.obj.map(opt.peers, send, root);
 		}, opt.wait || 1);
-		Gun.obj.map(opt.peers, send, ctx);
+		Gun.obj.map(opt.peers, send, root);
 	});
 	function send(peer){
-		var ctx = this, msg = batch;
-		var wire = peer.wire || open(peer, ctx);
+		var root = this, msg = batch;
+		var wire = peer.wire || open(peer, root);
 		if(!wire){ return }
 		if(wire.readyState === wire.OPEN){
 			wire.send(msg);
@@ -50,26 +51,26 @@ Gun.on('opt', function(ctx){
 		}
 		(peer.queue = peer.queue || []).push(msg);
 	}
-	function receive(msg, peer, ctx){
-		if(!ctx || !msg){ return }
+	function receive(msg, peer, root){
+		if(!root || !msg){ return }
 		try{msg = JSON.parse(msg.data || msg);
 		}catch(e){}
 		if(msg instanceof Array){
 			var i = 0, m;
 			while(m = msg[i++]){
-				receive(m, peer, ctx);
+				receive(m, peer, root);
 			}
 			return;
 		}
 		if(1 == ws.who){ msg.ws = noop } // If there is only 1 client, just use noop since it doesn't matter.
-		ctx.on('in', msg);
+		root.on('in', msg);
 	}
 	function open(peer, as){
 		if(!peer || !peer.url){ return }
 		var url = peer.url.replace('http', 'ws');
 		var wire = peer.wire = new websocket(url);
 		wire.onclose = function(){
-			ctx.on('bye', peer);
+			root.on('bye', peer);
 			reconnect(peer, as);
 		};
 		wire.onerror = function(error){
@@ -80,7 +81,7 @@ Gun.on('opt', function(ctx){
 			}
 		};
 		wire.onopen = function(){
-			ctx.on('hi', peer);
+			root.on('hi', peer);
 			var queue = peer.queue;
 			peer.queue = [];
 			Gun.obj.map(queue, function(msg){

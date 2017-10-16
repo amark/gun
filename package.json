@@ -1,13 +1,13 @@
 {
   "name": "gun",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "Graph engine",
   "main": "index.js",
   "browser": "gun.min.js",
   "scripts": {
     "start": "node examples/http.js 8080",
     "prepublish": "npm run unbuild",
-    "test": "mocha && SEA=true mocha",
+    "test": "mocha",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
@@ -44,16 +44,15 @@
   },
   "homepage": "https://github.com/amark/gun#readme",
   "engines": {
-    "node": ">=8.6.0"
+    "node": ">=0.6.6"
   },
   "dependencies": {
-    "@std/esm": "^0.8.3",
-    "aws-sdk": ">=2.41.0",
-    "formidable": ">=1.1.1",
-    "spark-md5": "^3.0.0",
+    "aws-sdk": ">=2.86.0",
     "ws": "~>2.2.3"
   },
   "devDependencies": {
+    "spark-md5": "^3.0.0",
+    "@std/esm": "^0.8.3",
     "@trust/webcrypto": "^0.5.0",
     "buffer": "^5.0.7",
     "express": ">=4.15.2",

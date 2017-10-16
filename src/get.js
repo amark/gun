@@ -9,15 +9,16 @@ Gun.chain.get = function(key, cb, as){
 		}
 	} else
 	if(key instanceof Function){
-		var gun = this, at = gun._;
+		var gun = this, at = gun._, root = at.root._;
 		as = cb || {};
 		as.use = key;
-		as.out = as.out || {cap: 1};
+		as.out = as.out || {};
 		as.out.get = as.out.get || {};
-		'_' != at.get && ((at.root._).now = true); // ugly hack for now.
-		at.on('in', use, as);
+		var tmp = at.on('in', use, as);
+		if(root.now){ ++root.now.$ }
+		(root.now || (root.now = {$:1}))[as.now = at.id] = tmp;
 		at.on('out', as.out);
-		(at.root._).now = false;
+		if(!(--root.now.$)){ obj.del(root, 'now'); }
 		return gun;
 	} else
 	if(num_is(key)){
@@ -39,23 +40,33 @@ function cache(key, back){
 	var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 	if(!next){ next = cat.next = {} }
 	next[at.get = key] = gun;
-	if(cat.root === back){ at.soul = key }
-	else if(cat.soul || cat.field){ at.field = key }
-	return gun;
-}
-function use(at){
-	var ev = this, as = ev.as, gun = at.gun, cat = gun._, data = at.put, tmp;
-	if(u === data){
-		data = cat.put;
-	}
-	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
-		tmp = (cat.root.get(tmp)._);
-		if(u !== tmp.put){
-			at = obj_to(at, {put: tmp.put});
+	if(cat.root === back){ 
+		at.soul = key;
+	} else
+	if(cat.soul || cat.field){  // TODO: Convert field to has!
+		at.field = at.has = key;
+		if(obj_has(cat.put, key)){
+			//at.put = cat.put[key];
 		}
 	}
-	as.use(at, at.event || ev);
-	ev.to.next(at);
+	return gun;
+}
+function use(msg){
+	var ev = this, as = ev.as, gun = msg.gun, at = gun._, root = at.root._, data = msg.put, tmp;
+	if((tmp = root.now) && ev !== tmp[as.now]){
+		return ev.to.next(msg);
+	}
+	if(u === data){
+		data = at.put;
+	}
+	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
+		tmp = (at.root.get(tmp)._);
+		if(u !== tmp.put){
+			msg = obj_to(msg, {put: tmp.put});
+		}
+	}
+	as.use(msg, msg.event || ev);
+	ev.to.next(msg);
 }
 var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
 var num_is = Gun.num.is;

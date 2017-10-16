@@ -3,6 +3,7 @@ var Gun = require('./index');
 Gun.chain.set = function(item, cb, opt){
 	var gun = this, soul;
 	cb = cb || function(){};
+	opt = opt || {}; opt.item = opt.item || item;
 	if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 	if(!Gun.is(item)){
 		if(Gun.obj.is(item)){ return gun.set(gun._.root.put(item), cb, opt) }

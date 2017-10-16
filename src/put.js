@@ -28,10 +28,11 @@ Gun.chain.put = function(data, cb, as){
 		return gun;
 	}
 	if(Gun.is(data)){
-		data.get(function(at,ev){ev.off();
-			var s = Gun.node.soul(at.put);
-			if(!s){Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');return}
-			gun.put(Gun.val.rel.ify(s), cb, as);
+		data.get('_').get(function(at, ev, tmp){ ev.off();
+			if(!(tmp = at.gun) || !(tmp = tmp._.back) || !tmp._.soul){
+				return Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');
+			}
+			gun.put(Gun.val.rel.ify(tmp._.soul), cb, as);
 		});
 		return gun;
 	}
@@ -81,15 +82,20 @@ function stun(cb){
 
 function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
-	(as.res||iife)(function(){
+	as.res = as.res || function(cb){ if(cb){ cb() } };
+	as.res(function(){
 		var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
 			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
 			if(!as.ack){ return }
 			as.ack(ack, this);
 		}, as.opt);
+		var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+		(as.ref._).now = true;
 		(as.ref._).on('out', {
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
+		obj.del((as.ref._), 'now');
+		cat.root._.now = tmp;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,f){ if(v){ return true } }
@@ -133,6 +139,7 @@ function any(at, ev){
 		return;
 	}
 	var cat = (at.gun._.back._), data = cat.put, opt = as.opt||{}, root, tmp;
+	if((tmp = as.ref) && tmp._.now){ return }
 	ev.off();
 	if(as.ref !== as.gun){
 		tmp = (as.gun._).get || cat.get;

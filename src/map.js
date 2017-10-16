@@ -6,6 +6,7 @@ Gun.chain.map = function(cb, opt, t){
 		if(chain = cat.fields){ return chain }
 		chain = cat.fields = gun.chain();
 		chain._.val = gun.back('val');
+		chain._.MAPOF = cat.soul;
 		gun.on('in', map, chain._);
 		return chain;
 	}
@@ -22,16 +23,16 @@ Gun.chain.map = function(cb, opt, t){
 	});
 	return chain;
 }
-function map(at){
-	if(!at.put || Gun.val.is(at.put)){ return }
+function map(msg){
+	if(!msg.put || Gun.val.is(msg.put)){ return }
 	if(this.as.val){ this.off() } // TODO: Ugly hack!
-	obj_map(at.put, each, {cat: this.as, gun: at.gun});
-	this.to.next(at);
+	obj_map(msg.put, each, {at: this.as, msg: msg});
+	this.to.next(msg);
 }
 function each(v,f){
 	if(n_ === f){ return }
-	var cat = this.cat, gun = this.gun.get(f), at = (gun._);
-	(at.echo || (at.echo = {}))[cat.id] = cat;
+	var msg = this.msg, gun = msg.gun, at = this.at, tmp = (gun.get(f)._);
+	(tmp.echo || (tmp.echo = {}))[at.id] = at;
 }
 var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	
