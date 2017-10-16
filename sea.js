@@ -733,10 +733,11 @@
   // Here is a problem: Multiple public keys can "claim" any node's ID, so this is dangerous!
   // This means we should ONLY trust our "friends" (our key ring) public keys, not any ones.
   // I have not yet added that to SEA yet in this alpha release. That is coming soon, but beware in the meanwhile!
-  function each(at){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
-    var own = (at.gun.back(-1)._).sea.own, soul = at.get;
-    var pub = own[soul] || soul.slice(4), vertex = (at.gun._).put;
-    Gun.node.is(at.put, function(val, key, node){ // for each property on the node.
+  function each(msg){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
+    var ctx = this.as;
+    var own = ctx.sea.own, soul = msg.get;
+    var pub = own[soul] || soul.slice(4), vertex = (msg.gun._).put;
+    Gun.node.is(msg.put, function(val, key, node){ // for each property on the node.
       SEA.read(val, pub).then(function(data){
         vertex[key] = node[key] = val = data; // verify signature and get plain value.
         if(val && val['#'] && (key = Gun.val.rel.is(val))){ // if it is a relation / edge
@@ -748,9 +749,10 @@
   }
 
   // signature handles data output, it is a proxy to the security function.
-  function signature(at){
-    at.user = at.gun.back(-1)._.user;
-    security.call(this, at);
+  function signature(msg){
+    var ctx = this.as;
+    msg.user = ctx.user;
+    security.call(this, msg);
   }
 
   // okay! The security function handles all the heavy lifting.
