@@ -17,6 +17,9 @@ module.exports = function onto(tag, arg, as){
 				this.to.back = this.back;
 				this.next = onto._.next;
 				this.back.to = this.to;
+				if(this.the.last === this.the){
+					delete this.on.tag[this.the.tag];
+				}
 			}),
 			to: onto._,
 			next: arg,

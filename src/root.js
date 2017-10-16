@@ -148,14 +148,21 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	Gun.on.ask = function(cb, as){
 		if(!this.on){ return }
 		var id = text_rand(9);
-		if(cb){ this.on(id, cb, as) }
+		if(cb){ 
+			var to = this.on(id, cb, as);
+			to.err = setTimeout(function(){
+				to.next({err: "Error: No ACK received yet."});
+				to.off();
+			}, 1000 * 9); // TODO: Make configurable!!!
+		}
 		return id;
 	}
 	Gun.on.ack = function(at, reply){
 		if(!at || !reply || !this.on){ return }
-		var id = at['#'] || at;
-		if(!this.tag || !this.tag[id]){ return }
+		var id = at['#'] || at, tmp = (this.tag||empty)[id];
+		if(!tmp){ return }
 		this.on(id, reply);
+		clearTimeout(tmp.err);
 		return true;
 	}
 }());
