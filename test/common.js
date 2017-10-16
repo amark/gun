@@ -1,33 +1,23 @@
-/* global Gun,describe,expect,it */
-/*eslint max-len: ["error", 95, { "ignoreComments": true }]*/
-/*eslint semi: ["error", "always", { "omitLastInOneLineBlock": true}]*/
-/*eslint object-curly-spacing: ["error", "never"]*/
-/*eslint node/no-deprecated-api: [error, {ignoreModuleItems: ["new buffer.Buffer()"]}] */
 var root;
 (function(env){
 	root = env.window? env.window : global;
-	if(!root.sessionStorage){
-		root.sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage');
-	}
-	root.sessionStorage.clear();
-	if(!root.localStorage){
-		root.localStorage = new require('node-localstorage').LocalStorage('.localStorage');
-	}
-	root.localStorage.clear();
-	try{ require('fs').unlinkSync('data.json') }catch(e){}	//eslint-disable-line no-empty
+	env.window && root.localStorage && root.localStorage.clear();
+	try{ require('fs').unlinkSync('data.json') }catch(e){}
 	//root.Gun = root.Gun || require('../gun');
 	if(root.Gun){
 		root.Gun = root.Gun;
-		if (process.env.SEA && !root.Gun.SEA) {
-			root.Gun.SEA = require('../sea');
-		}
 	} else {
-		root.Gun = require('./index');
+		root.Gun = require('../gun');
+		Gun.serve = require('../lib/serve');
+		//require('./s3');
+		//require('./uws');
+		//require('./wsp/server');
+		require('../lib/file');
 	}
 }(this));
 //Gun.log.squelch = true;
 var gleak = {globals: {}, check: function(){ // via tobyho
-  var leaked = [];
+  var leaked = []
   for (var key in gleak.globe){ if (!(key in gleak.globals)){ leaked.push(key)} }
   if (leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
 }};
@@ -177,7 +167,7 @@ describe('Performance', function(){ return; // performance tests
 describe('Gun', function(){
 	var t = {};
 
-	!Gun.SEA && describe('Utility', function(){
+	describe('Utility', function(){
 		var u;
 		/* // causes logger to no longer log.
 		it('verbose console.log debugging', function(done) {
@@ -1405,7 +1395,7 @@ describe('Gun', function(){
 		});
 	});
 
-	!Gun.SEA && describe('API', function(){
+	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		var gun = Gun();
 
@@ -1652,6 +1642,7 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.Fluffy).to.be('name');
 							expect(check.Frisky).to.be('name');
+							//console.log("????", gun._.graph);
 							Gun.obj.map(gun._.graph, function(n,s){
 								if('u/m/p/n/p' === s){ return }
 								var a = Gun.obj.map(n, function(v,f,t){t(v)});
@@ -1734,7 +1725,6 @@ describe('Gun', function(){
 					}
 				});
 				setTimeout(function(){
-					//console.debug.i=1;console.log("-----------------------");
 					gun.get('u/m/mutate/n').get('alice').put({
 						_:{'#':'u/m/m/n/soul'},
 						name: 'Alice Zzxyz'
@@ -2992,13 +2982,13 @@ describe('Gun', function(){
 
 			var parent = gun.get('parent');
 			var child = gun.get('child');
-
+			
 			child.put({
 				way: 'down'
 			});
-
+			
 			parent.get('sub').put(child);
-
+			
 			parent.get('sub').on(function(data){
 				//console.log("sub", data);
 				done.sub = data;
@@ -3021,6 +3011,7 @@ describe('Gun', function(){
 			gun.get('val/follow').val(function(data){
 				//console.log("val", data);
 			}).get(function(at){
+				//console.log("?????", at);
 				if(done.c){ return } done.c = 1;
 				done();
 			});
@@ -3028,29 +3019,28 @@ describe('Gun', function(){
 		});
 
 		it('map val get put', function(done){
-
 			var gun = Gun().get('chat/asdf');
 
 			var check = {}, count = {};
 			gun.map().val(function(v,f){
 				check[f] = v;
 				count[f] = (count[f] || 0) + 1;
-				if(check['1_1'] && check['2_2']){
+				//	console.log("**************", f, v);
+				if(check['1-1'] && check['2-2']){
 					clearTimeout(done.to);
 					done.to = setTimeout(function(){
-						expect(check['1_1'].what).to.be('hi');
-						expect(check['2_2'].what).to.be('you.');
-						expect(count['1_1']).to.be(1);
-						expect(count['2_2']).to.be(1);
+						expect(check['1-1'].what).to.be('hi');
+						expect(check['2-2'].what).to.be('you.');
+						expect(count['1-1']).to.be(1);
+						expect(count['2-2']).to.be(1);
 						done();
 					},50);
 				}
 			});
-
 			setTimeout(function(){
-				gun.get('1_1').put({what: "hi"});
+				gun.get('1-1').put({what: "hi"});
 				setTimeout(function(){
-					gun.get('2_2').put({what: "you."});
+					gun.get('2-2').put({what: "you."});
 				},40);
 			},40);
 		});
@@ -3142,6 +3132,7 @@ describe('Gun', function(){
 					salt: 'random'
 				})
 			);
+			//return;
 			setTimeout(function(){
 				gun.get(function(at){
 					//console.log('*', at.put);
@@ -3154,8 +3145,9 @@ describe('Gun', function(){
 				gun.get('alias').get(function(at){
 					//console.log("***", at.put);
 					done.alias = done.alias || at.put.mark;
+					//!console.debug.i&&(console.debug.i=1)&&console.log("---------------------");
 				}).get('mark').get(function(at){
-					//console.log("************", at.put);return;
+					//console.log("************", at.put);//return;
 					setTimeout(function(){
 						done.mark = done.mark || at.put.pub;
 						expect(Gun.val.rel.is(done.mark)).to.be('pub');
@@ -3170,6 +3162,7 @@ describe('Gun', function(){
 		});
 
 		it('get put get get put reload get get then get', function(done){
+			this.timeout(6000);
 			var gun = Gun();
 
 			gun.get('stef').put({name:'Stef'});
@@ -3182,7 +3175,10 @@ describe('Gun', function(){
 			// reload
 			setTimeout(function(){
 				var gun2 = Gun();
+				//console.log(require('fs').readFileSync('./radata/!').toString());
+				//console.debug.i=1;console.log("-----------------");
 				gun2.get('stef').get('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
+					//console.log("******", data);
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
 					expect(data.zip).to.be('999999');
@@ -3191,6 +3187,8 @@ describe('Gun', function(){
 					done();
 				});
 				gun2.get('stef').val(function(data){ //Object {_: Object, address: Object} "stef"
+					//console.log("**************", data);
+					//return;
 					done.s = true;
 					expect(data.name).to.be('Stef');
 					expect(data.address).to.be.ok();
@@ -3198,7 +3196,7 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				});
-			},300);
+			},5000);
 		});
 
 		it('get get get any parallel', function(done){
@@ -3211,7 +3209,7 @@ describe('Gun', function(){
 			}, s)});
 			gun.get('parallel').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data, at.gun._.ack);return;
+				//console.log("***** age", data, at.gun._.ack);//return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
@@ -3286,6 +3284,7 @@ describe('Gun', function(){
 				done.age = true;
 			});
 			setTimeout(function(){
+				//console.debug.i=1;console.log('---------------');
 				gun.get('parallel/not/later').get('bob').get('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
 					//console.log("*********** name", field, data);
@@ -3392,11 +3391,13 @@ describe('Gun', function(){
 			var app = gun.get(s.soul);
 
 			app.get('alias').get('mark').map().val(function(alias){
+				//console.log("***", alias);
 				done.alias = alias;
 			});
 
 			setTimeout(function(){
 				app.get('alias').map().map().get('born').on(function(data){
+					//console.log("*******", data);
 					expect(data).to.be(1);
 					expect(done.alias.pub).to.be("asdf");
 					expect(done.alias.alias).to.be("mark");
@@ -3404,11 +3405,32 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				});
-			},300);
+			},400);
+		});
+
+		it('put on a put', function(done){
+			var gun = Gun();
+			var foo = gun.get('put/on/put').get('a').get('b');
+			var bar = gun.get('put/on/put/ok').get('a').get('b');
+
+			bar.put({a:1})
+
+			bar.on(function(data){
+				if(1 === data.a && 3 === data.c){
+					if(done.c){ return } done.c = 1;
+					done();
+				}
+			});
+
+			foo.on(function(ack){
+				bar.put({c:3});
+			});
+
+			foo.put({b:2});
+
 		});
 
 		it('map with map function', function(done){
-					console.debug.i=0;
 			var gun = Gun(), s = 'map/mapfunc', u;
 			var app = gun.get(s);
 			var list = app.get('list');
@@ -3484,13 +3506,13 @@ describe('Gun', function(){
 			Gun.on('opt', function(ctx){
 				ctx.on('out', function(msg){
 					this.to.next(msg);
-					var onGun = msg.gun.back(-1);
-					if(onGun === b) {
+					var onGun = ctx;
+					if(onGun.gun === b) {
 						if(d){
 							//console.log("b can send to d....", Gun.obj.copy(msg));
 							d.on("in", msg);
 						}
-					} else if(onGun === d){
+					} else if(onGun.gun === d){
 						//console.log("d sends to b....", Gun.obj.copy(msg));
 						b.on("in", msg);
 					}
@@ -3502,7 +3524,7 @@ describe('Gun', function(){
 
 			var bb = b.get("key");
 			bb.put({msg: "hello"});
-
+				
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
@@ -3544,11 +3566,11 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('ds/safe').put({a: 1});
-
+			
 			gun.get('ds/safe').on(function(data){
 				data.b = 2;
 			});
-
+			
 			gun.get('ds/safe').val(function(data){
 				expect(gun._.root._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
@@ -3586,7 +3608,7 @@ describe('Gun', function(){
 			      context._.valid = false;
 			      chain._.on('in', {get: key, gun: this});
 			      return false;
-			    } else {
+			    } else { 
 			     _tags = Gun.obj.ify(obj.tags);
 			      if(Array.isArray(filter)){
 			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
