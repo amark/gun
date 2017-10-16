@@ -604,7 +604,7 @@
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
 			to.err = to.err || setTimeout(function(){
-				console.log(50, 'TIME OUT', to.err, id);
+				//console.log(50, 'TIME OUT', to.err, id);
 				to.next({err: "Error: No ACK received yet."});
 				to.off();
 			}, 1000 * 9); // TODO: Make configurable!!!
@@ -1287,6 +1287,7 @@
 				as.ref._.tag = as.after;
 			}
 		}
+
 		function batch(){ var as = this;
 			if(!as.graph || obj_map(as.stun, no)){ return }
 			as.res = as.res || function(cb){ if(cb){ cb() } };
@@ -1687,17 +1688,23 @@
 
 	;require(function(module){
 		var Gun = require('./index');
-		var WebSocket;
-		if(typeof window !== 'undefined'){
-			WebSocket = window.WebSocket || window.webkitWebSocket || window.mozWebSocket;
+		var websocket;
+		if(typeof WebSocket !== 'undefined'){
+			websocket = WebSocket;
 		} else {
-			return;
+			if(typeof webkitWebSocket !== 'undefined'){
+				websocket = webkitWebSocket;
+			}
+			if(typeof mozWebSocket !== 'undefined'){
+				websocket = mozWebSocket;
+			}
 		}
+
 		Gun.on('opt', function(root){
 			this.to.next(root);
 			var opt = root.opt;
 			if(root.once){ return }
-			if(false === opt.WebSocket){ return }
+			if(!websocket || false === opt.WebSocket){ return }
 			var ws = opt.ws || (opt.ws = {}); ws.who = 0;
 			Gun.obj.map(opt.peers, function(){ ++ws.who });
 			if(root.once){ return }
@@ -1749,8 +1756,9 @@
 			function open(peer, as){
 				if(!peer || !peer.url){ return }
 				var url = peer.url.replace('http', 'ws');
-				var wire = peer.wire = new WebSocket(url);
+				var wire = peer.wire = new websocket(url);
 				wire.onclose = function(){
+					root.on('bye', peer);
 					reconnect(peer, as);
 				};
 				wire.onerror = function(error){
@@ -1761,6 +1769,7 @@
 					}
 				};
 				wire.onopen = function(){
+					root.on('hi', peer);
 					var queue = peer.queue;
 					peer.queue = [];
 					Gun.obj.map(queue, function(msg){

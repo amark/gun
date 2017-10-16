@@ -20,7 +20,7 @@ Gun.chain.on = function(tag, arg, eas, as){
 	opt = (true === opt)? {change: true} : opt || {};
 	opt.ok = tag;
 	opt.last = {};
-	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!????
+	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!?
 	return gun;
 }
 
@@ -61,6 +61,7 @@ Gun.chain.val = function(cb, opt){
 	if(cb){
 		(opt = opt || {}).ok = cb;
 		opt.cat = at;
+		opt.out = {'#': Gun.text.random(9)};
 		gun.get(val, {as: opt});
 		opt.async = true; //opt.async = at.stun? 1 : true;
 	} else {
@@ -74,23 +75,25 @@ Gun.chain.val = function(cb, opt){
 	return gun;
 }
 
-function val(at, ev, to){
-	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
+function val(msg, ev, to){
+	var opt = this.as, cat = opt.cat, gun = msg.gun, coat = gun._, data = coat.put || msg.put, tmp;
 	if(u === data){
 		//return;
 	}
-	if(data && data[rel._] && (tmp = rel.is(data))){
+	//if(coat.soul && !(0 < coat.ack)){ return }
+	if(tmp = Gun.node.soul(data) || rel.is(data)){
+	//if(data && data[rel._] && (tmp = rel.is(data))){
 		tmp = (cat.root.get(tmp)._);
-		if(u === tmp.put){
+		if(u === tmp.put){//} || !(0 < tmp.ack)){
 			return;
 		}
 		data = tmp.put;
 	}
 	if(ev.wait){ clearTimeout(ev.wait) }
 	//if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
-	if(!opt.async){
+	if(!to){
 		ev.wait = setTimeout(function(){
-			val.call({as:opt}, at, ev, ev.wait || 1)
+			val.call({as:opt}, msg, ev, ev.wait || 1);
 		}, opt.wait || 99);
 		return;
 	}
@@ -100,7 +103,7 @@ function val(at, ev, to){
 		if((opt.seen = opt.seen || {})[coat.id]){ return }
 		opt.seen[coat.id] = true;
 	}
-	opt.ok.call(at.gun || opt.gun, data, at.get);
+	opt.ok.call(msg.gun || opt.gun, data, msg.get);
 }
 
 Gun.chain.off = function(){

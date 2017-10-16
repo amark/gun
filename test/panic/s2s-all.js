@@ -105,7 +105,7 @@ describe("Sync all data from one server to another!", function(){
 			test.async();
 			var raw = require('fs').readFileSync(env.i+'alldata');
 			var json = JSON.parse(raw);
-			var graph = json.graph;
+			var graph = json;
 			console.log("Bob's graph on disk:", json);
 
 			if(!graph.a1 || graph.a1.a !== 1){
