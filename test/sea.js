@@ -509,7 +509,8 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
-                expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
+                //expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
+                expect(gun.back(-1)._.user).to.not.be.ok();
               }catch(e){ done(e); return }
               done();
             };
