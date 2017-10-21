@@ -119,7 +119,6 @@ describe("End-to-End Encryption on User Accounts", function(){
 		return bob.run(function(test){
 			test.async();
 			window.user.create('bob', 'zyxcbaqponm', function(ack){
-				alert("???");
 				if(ack.err || !ack.pub){ return }
 				test.done();
 			});
