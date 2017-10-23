@@ -441,6 +441,7 @@
         });
         user._.is = user.is = {};
         // Let's use default
+        root.user();
         resolve({ok: 0});
       };
       // Removes persisted authentication & CryptoKeys
