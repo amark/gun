@@ -533,7 +533,7 @@
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
               root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              resolve({ok: 0, pub: pairs.pub});
+              setTimeout(function(){ resolve({ok: 0, pub: pairs.pub}) },10); // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
             }).catch(function(e){ Gun.log('SEA.en or SEA.write calls failed!'); reject(e) });
           }).catch(function(e){ Gun.log('SEA.pair call failed!'); reject(e) });
         });
@@ -637,6 +637,7 @@
             delete user._[key];
           });
           user._.is = user.is = {};
+          root.user();
           resolve({ok: 0});
         }).catch(function(e){
           Gun.log('User.delete failed! Error:', e);
