@@ -119,7 +119,6 @@ describe("End-to-End Encryption on User Accounts", function(){
 		return bob.run(function(test){
 			test.async();
 			window.user.create('bob', 'zyxcbaqponm', function(ack){
-				alert("???");
 				if(ack.err || !ack.pub){ return }
 				test.done();
 			});
@@ -223,7 +222,9 @@ describe("End-to-End Encryption on User Accounts", function(){
 			gun.get('pub/' + window.PUB).val(function(data){
 				if(data.pub === window.PUB
 				&& data.hello === 'mars'
-				&& data.alias === 'bob'){
+				&& data.alias === 'bob'
+				&& data.crackers !== 'gonna crack'
+				&& undefined === data.crackers){
 					test.done();
 				}
 			});
@@ -235,7 +236,9 @@ describe("End-to-End Encryption on User Accounts", function(){
 			test.async();
 			user.val(function(data){
 				if(data.hello === 'mars'
-				&& data.alias === 'bob'){
+				&& data.alias === 'bob'
+				&& data.crackers !== 'gonna crack'
+				&& undefined === data.crackers){
 					test.done();
 				}
 			});
