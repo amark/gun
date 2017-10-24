@@ -41,7 +41,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 - An online demo of the examples are available here: http://gunjs.herokuapp.com/
 - Or write a quick app: ([try now in jsbin](http://jsbin.com/saxewigote/edit?js,console))
 ```html
-<script src="http://rawgit.com/amark/gun/master/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
 // var Gun = require('gun'); // in NodeJS
 // var Gun = require('gun/gun'); // in React
