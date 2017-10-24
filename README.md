@@ -39,7 +39,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
 - An online demo of the examples are available here: http://gunjs.herokuapp.com/
-- Or write a quick app: ([try now in jsbin](http://jsbin.com/saxewigote/edit?js,console))
+- Or write a quick app: ([try now in jsbin](http://jsbin.com/sovihaveso/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
