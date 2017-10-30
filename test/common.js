@@ -3216,7 +3216,7 @@ describe('Gun', function(){
 			});
 			gun.get('parallel').get('bob').get('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("*********** name", data, at.gun._.ack);return;
+				//console.log("*********** name", data, at.gun._.ack);//return;
 				expect(data).to.be('Bob!');
 				expect(field).to.be('name');
 				done.name = true;
@@ -3576,6 +3576,67 @@ describe('Gun', function(){
 				if(done.c){ return } done.c = 1;
 				done();
 			});
+		});
+
+		it('Nested listener should be called does it?', function(done){
+
+			var gun = Gun(), u;
+
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				wat: 1,
+				a: true
+			}, 'nl/app')});
+
+			var app = gun.get('nl/app');
+
+			app.get(function(d){
+				expect(d.put.wat).to.be(1);
+				expect(d.put.a).to.be(true);
+				done.a = 1;
+			});
+
+			//console.debug.i=1;console.log('-------------------');
+			app.get('a').get('b').get(function(d){
+				expect(d.put).to.be(u);
+				expect(done.a).to.be.ok();
+				if(done.c){ return }
+				done(); done.c = 1;
+			});
+			window.app = app;
+			return;
+		});
+		return;
+		it('Nested listener should be called', function(done){
+			
+			var gun = Gun();
+
+			var app = gun.get('nl/app').get('bar');
+
+			app.on(function(d){
+				console.log("!!", d);
+			})
+
+			app.put({wat: 1});
+
+			console.debug.i=1;console.log("------------");
+			console.log(gun._.now);
+			app.put({a: {b:2}});
+			console.log('_______________________');
+			return;
+
+			var app = gun.get('nl/app');
+			var node = app.get('watcher/1').put({"stats":{"num":3},"name":"trex"});
+
+			app.get('watcher/1').get('stats').on(function (v, k) {
+			  console.log('v:', k, v);
+			});
+
+			setTimeout(function(){
+			  
+			  console.log("Huh?");
+			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
+			  
+			},100);
 		});
 		return;
 		it.only('Memory management', function(done){

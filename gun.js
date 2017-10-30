@@ -1079,7 +1079,7 @@
 			if(!root.now || !root.now[at.id]){
 				if((u === msg.put && !msg['@']) && null === tmp){ return }
 			}
-			if(u === tmp && at.put !== u){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
+			if(u === tmp && Gun.val.rel.is(at.put)){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
 			obj_map(tmp, function(proxy){
 				if(!(proxy = proxy.at)){ return }
 				obj_del(proxy.echo, at.id);
@@ -1147,16 +1147,15 @@
 				}
 			} else
 			if(key instanceof Function){
-				var gun = this, at = gun._, root = at.root._;
+				var gun = this, at = gun._, root = at.root._, tmp = root.now, ev;
 				as = cb || {};
 				as.use = key;
 				as.out = as.out || {};
 				as.out.get = as.out.get || {};
-				var tmp = at.on('in', use, as);
-				if(root.now){ ++root.now.$ }
-				(root.now || (root.now = {$:1}))[as.now = at.id] = tmp;
+				ev = at.on('in', use, as);
+				(root.now = {$:1})[as.now = at.id] = ev;
 				at.on('out', as.out);
-				if(!(--root.now.$)){ obj.del(root, 'now'); }
+				root.now = tmp;
 				return gun;
 			} else
 			if(num_is(key)){
@@ -1181,7 +1180,7 @@
 			if(cat.root === back){ 
 				at.soul = key;
 			} else
-			if(cat.soul || cat.field){  // TODO: Convert field to has!
+			if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
 				at.field = at.has = key;
 				if(obj_has(cat.put, key)){
 					//at.put = cat.put[key];
