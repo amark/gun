@@ -3578,8 +3578,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it('Nested listener should be called does it?', function(done){
-
+		it('If chain cannot be called, ack', function(done){
 			var gun = Gun(), u;
 
 			gun.on('put', {gun: gun, put: Gun.graph.ify({
@@ -3595,21 +3594,45 @@ describe('Gun', function(){
 				done.a = 1;
 			});
 
-			//console.debug.i=1;console.log('-------------------');
 			app.get('a').get('b').get(function(d){
 				expect(d.put).to.be(u);
 				expect(done.a).to.be.ok();
 				if(done.c){ return }
 				done(); done.c = 1;
 			});
-			window.app = app;
-			return;
+		});
+
+		it('Chain on known nested object should ack', function(done){
+			var gun = Gun(), u;
+
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				bar: {
+					wat: 1
+				}
+			}, 'nl/app')});
+
+			var app = gun.get('nl/app').get('bar');
+
+			app.get(function(d){
+				//console.log("!!", d.put);
+				if(!d || !d.put || !d.put.wat){ return }
+				expect(d.put.wat).to.be(1);
+				done.a = 1;
+			});
+
+			app.get('a').get('b').get(function(d){
+				//console.log("????", d.put);
+				expect(d.put).to.be(u);
+				expect(done.a).to.be.ok();
+				if(done.c){ return }
+				done(); done.c = 1;
+			});
 		});
 		return;
 		it('Nested listener should be called', function(done){
 			
 			var gun = Gun();
-
+			/*
 			var app = gun.get('nl/app').get('bar');
 
 			app.on(function(d){
@@ -3622,7 +3645,7 @@ describe('Gun', function(){
 			console.log(gun._.now);
 			app.put({a: {b:2}});
 			console.log('_______________________');
-			return;
+			return;*/
 
 			var app = gun.get('nl/app');
 			var node = app.get('watcher/1').put({"stats":{"num":3},"name":"trex"});
