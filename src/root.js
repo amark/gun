@@ -108,15 +108,19 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		};
 		if(this.ack){ msg['@'] = this.ack }
 		obj_map(node, each, this);
-		cat.on('node', msg);
 	}
 	function each(val, key){
 		var graph = this.graph, soul = this.soul, at = (this.at._), tmp;
 		graph[soul] = Gun.state.to(this.node, key, graph[soul]);
 		at.put = Gun.state.to(this.node, key, at.put);
 	}
-	function map(msg, soul){
+	function map(msg, soul){ var tmp;
 		if(!msg.gun){ return }
+		if((tmp = this.gun._).tag.node){
+			return tmp.on('node', function(msg){ this.off();
+				(msg.gun._).on('in', msg);
+			}).on.on('node', msg);
+		}
 		(msg.gun._).on('in', msg);
 	}
 
