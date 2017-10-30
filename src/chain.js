@@ -55,6 +55,7 @@ function output(msg){
 		if(get['.']){
 			if(at.get){
 				msg = {get: {'.': at.get}, gun: at.gun};
+				(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
 				return back.on('out', msg);
 			}
 			msg = {get: {}, gun: at.gun};
@@ -64,6 +65,7 @@ function output(msg){
 		if(at.get){
 			msg.gun = at.gun;
 			get['.'] = at.get;
+			(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
 			return back.on('out', msg);
 		}
 	}
@@ -202,7 +204,7 @@ function not(at, msg){
 	if(!root.now || !root.now[at.id]){
 		if((u === msg.put && !msg['@']) && null === tmp){ return }
 	}
-	if(u === tmp && at.put !== u){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
+	if(u === tmp && Gun.val.rel.is(at.put)){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
 	obj_map(tmp, function(proxy){
 		if(!(proxy = proxy.at)){ return }
 		obj_del(proxy.echo, at.id);
@@ -225,14 +227,15 @@ function ask(at, soul){
 	if(at.ack){
 		//tmp.ack = tmp.ack || -1;
 		tmp.on('out', {get: {'#': soul}});
-		return;
+		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}
-	obj_map(at.next, function(gun, key){
+	obj_map(at.ask || at.next, function(gun, key){
 		//(tmp.gun.get(key)._).on('out', {get: {'#': soul, '.': key}});
 		//tmp.on('out', {get: {'#': soul, '.': key}});
 		(gun._).on('out', {get: {'#': soul, '.': key}});
 		//at.on('out', {get: {'#': soul, '.': key}});
 	});
+	Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 }
 function ack(msg, ev){
 	var as = this.as, get = as.get || empty, at = as.gun._;

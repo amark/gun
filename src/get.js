@@ -9,16 +9,15 @@ Gun.chain.get = function(key, cb, as){
 		}
 	} else
 	if(key instanceof Function){
-		var gun = this, at = gun._, root = at.root._;
+		var gun = this, at = gun._, root = at.root._, tmp = root.now, ev;
 		as = cb || {};
 		as.use = key;
 		as.out = as.out || {};
 		as.out.get = as.out.get || {};
-		var tmp = at.on('in', use, as);
-		if(root.now){ ++root.now.$ }
-		(root.now || (root.now = {$:1}))[as.now = at.id] = tmp;
+		ev = at.on('in', use, as);
+		(root.now = {$:1})[as.now = at.id] = ev;
 		at.on('out', as.out);
-		if(!(--root.now.$)){ obj.del(root, 'now'); }
+		root.now = tmp;
 		return gun;
 	} else
 	if(num_is(key)){
@@ -43,7 +42,7 @@ function cache(key, back){
 	if(cat.root === back){ 
 		at.soul = key;
 	} else
-	if(cat.soul || cat.field){  // TODO: Convert field to has!
+	if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
 		at.field = at.has = key;
 		if(obj_has(cat.put, key)){
 			//at.put = cat.put[key];
