@@ -1,7 +1,7 @@
 <p>
     <a href="http://gun.js.org/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
     <img width="50%" align="right" vspace="25" src="http://gun.js.org/see/demo.gif"/>
-</p>
+</p> 
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
