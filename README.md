@@ -1,10 +1,7 @@
-<table>
-  <tr>
-    <td align="left" width="40%" style="border: 0;"><a href="http://gun.js.org/"><img src="https://cldup.com/TEy9yGh45l.svg"/></a></td>
-    <td align="middle" width="10%" style="border: 0;"></td>
-    <td align="right" width="40%" style="border: 0;"><img src="http://gun.js.org/see/demo.gif"/></td>
-  </tr>
-</table>
+<p>
+    <a href="http://gun.js.org/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
+    <img width="50%" align="right" vspace="25" src="http://gun.js.org/see/demo.gif"/>
+</p>
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
