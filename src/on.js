@@ -107,30 +107,7 @@ function val(msg, ev, to){
 }
 
 Gun.chain.off = function(){
-	var gun = this, at = gun._, tmp;
-	var back = at.back || {}, cat = back._;
-	if(!cat){ return }
-	if(tmp = cat.next){
-		if(tmp[at.get]){
-			obj_del(tmp, at.get);
-		} else {
-			obj_map(tmp, function(path, key){
-				if(gun !== path){ return }
-				obj_del(tmp, key);
-			});
-		}
-	}
-	if((tmp = gun.back(-1)) === back){
-		obj_del(tmp.graph, at.get);
-	}
-	if(at.ons && (tmp = at.ons['@$'])){
-		obj_map(tmp.s, function(ev){
-			ev.off();
-		});
-	}
-	return gun;
-}
-Gun.chain.off = function(){
+	// make off more aggressive. Warning, it might backfire!
 	var gun = this, at = gun._, tmp;
 	var back = at.back || {}, cat = back._;
 	if(!cat){ return }
@@ -141,12 +118,31 @@ Gun.chain.off = function(){
 
 		}
 	}
+	if(tmp = cat.ask){
+		obj_del(tmp, at.get);
+	}
+	if(tmp = cat.put){
+		obj_del(tmp, at.get);
+	}
 	if(tmp = at.soul){
 		obj_del(cat.root._.graph, tmp);
 	}
+	if(tmp = at.map){
+		obj_map(tmp, function(at){
+			if(at.rel){
+				cat.root.get(at.rel).off();
+			}
+		});
+	}
+	if(tmp = at.next){
+		obj_map(tmp, function(ref){
+			ref.off();
+		});
+	}
+	at.on('off', {});
 	return gun;
 }
-var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
+var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 var rel = Gun.val.rel;
 var empty = {}, noop = function(){}, u;
 	
