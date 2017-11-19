@@ -1,7 +1,7 @@
 var Radix = require('../../lib/radix');
 var Radisk = require('../../lib/radisk');
 var Store = require('../../lib/store');
-//var Store = require('../../lib/rs3');
+var Store = require('../../lib/rs3');
 var Gun = require('../../gun');
 var fs = require('fs');
 
@@ -21,8 +21,8 @@ var diff;
 	var last = start;
 	var t = Gun.time.is;
 	var at = c;
-	;(function(){
 
+	;(function(){return;
 		start = Gun.time.is();
 		gun.get('j59an5jj2LUW8IJXl0u3').get('foo').on(function(data){
 			/*Radix.map(data, function(val, key){
@@ -39,8 +39,6 @@ var diff;
 		});
 
 	}());
-	return;
-
 	var toc, alldone = function(){
 		acked++;
 		if(acked < TOTAL){ return }
