@@ -832,8 +832,6 @@
 		if(typeof window !== "undefined"){ window.Gun = Gun }
 		if(typeof common !== "undefined"){ common.exports = Gun }
 		module.exports = Gun;
-
-		Gun.log.once("0.8", "0.8 WARNING! Breaking changes, test that your app works before upgrading! The adapter interface has been upgraded (non-default storage and transport layers probably won't work). Also, `.path()` and `.not()` are outside core and now in 'lib/'.");
 	})(require, './root');
 
 	;require(function(module){

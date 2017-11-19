@@ -3176,7 +3176,6 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var gun2 = Gun();
 				//console.log(require('fs').readFileSync('./radata/!').toString());
-				//console.debug.i=1;console.log("-----------------");
 				gun2.get('stef').get('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
 					//console.log("******", data);
 					done.a = true;
@@ -3346,7 +3345,6 @@ describe('Gun', function(){
 
 		it('multiple times', function(done){
 			var gun = Gun();
-
 			var app = gun.get('mult/times');
 
 			app.get('alias').get('mark').set(gun.get('ASDF').put({
@@ -3389,7 +3387,8 @@ describe('Gun', function(){
 			}, s)});
 
 			var app = gun.get(s.soul);
-
+			
+			//console.debug.i=1;console.log("===================");
 			app.get('alias').get('mark').map().val(function(alias){
 				//console.log("***", alias);
 				done.alias = alias;
