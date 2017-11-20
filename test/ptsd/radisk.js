@@ -1,8 +1,8 @@
 var Radix = require('../../lib/radix');
 var Radisk = require('../../lib/radisk');
-var Store = require('../../lib/store');
-var Store = require('../../lib/rs3');
+//var Store = require('../../lib/rs3');
 var Gun = require('../../gun');
+var Store = require('../../lib/store');
 var fs = require('fs');
 
 var TOTAL = 25000;
