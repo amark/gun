@@ -649,7 +649,7 @@
 
 		Gun.is = function(gun){ return (gun instanceof Gun) }
 
-		Gun.version = 0.8;
+		Gun.version = 0.9;
 
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
