@@ -131,7 +131,7 @@
     <script>
       ;(function(){
         // the actual GPS tracking app!
-        var gun = Gun('https://gunjs.herokuapp.com/gun');
+        var gun = Gun(location.origin + '/gun');
         var gps = {};
         gps.opt = {
           continuous: true, // get location just once uses `getCurrentPosition()` while continuously uses `watchPosition()`
