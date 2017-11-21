@@ -7,6 +7,7 @@
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 
 GUN is a realtime, distributed, offline-first, graph database engine. Doing **[20M+](https://github.com/amark/gun/wiki/100000-ops-sec-in-IE6-on-2GB-Atom-CPU) ops/sec** in just **~9KB** gzipped.
 
