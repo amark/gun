@@ -1,5 +1,6 @@
 import React, { Component }  from 'react'
 import Gun from 'gun'
+import path from 'gun/lib/path'
 
 const formatMsgs = msgs => Object.keys(msgs)
   .map(key => ({ key, ...msgs[key] }))
