@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react'
+import Gun from 'gun'
 import Todos from './Todos'
 import Chat from './Chat'
 import Json from './Json'
