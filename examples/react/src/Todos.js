@@ -1,5 +1,6 @@
 import React, { Component }  from 'react'
 import Gun from 'gun'
+import path from 'gun/lib/path'
 import './style.css'
 
 const formatTodos = todos => Object.keys(todos)
