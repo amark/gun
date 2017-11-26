@@ -1,6 +1,6 @@
-import './style.css'
 import React, { Component }  from 'react'
 import Gun from 'gun'
+import './style.css'
 
 const formatTodos = todos => Object.keys(todos)
   .map(key => ({ key, val: todos[key] }))
@@ -12,23 +12,28 @@ export default class Todos extends Component {
     this.gun = gun.get('todos');
     this.state = {newTodo: '', todos: []}
   }
+
   componentWillMount() {
     this.gun.on(todos => this.setState({
       todos: formatTodos(todos)
     }))
   }
+
   add = e => {
     e.preventDefault()
     this.gun.path(Gun.text.random()).put(this.state.newTodo)
     this.setState({newTodo: ''})
   }
+
   del = key => this.gun.path(key).put(null)
+
   handleChange = e => this.setState({ newTodo: e.target.value})
+
   render() {
     return <div>
       <form onSubmit={this.add}>
-      <input value={this.state.newTodo} onChange={this.handleChange} />
-      <button onClick={this.add}>Add</button>
+        <input value={this.state.newTodo} onChange={this.handleChange} />
+        <button onClick={this.add}>Add</button>
       </form>
       <br />
       <ul>
@@ -36,5 +41,6 @@ export default class Todos extends Component {
       </ul>
     </div>
   }
+
 }
 
