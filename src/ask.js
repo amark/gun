@@ -15,10 +15,9 @@ module.exports = function ask(cb, as){
 	if(!cb){ return id }
 	var to = this.on(id, cb, as);
 	to.err = to.err || setTimeout(function(){
-		//console.log(50, 'TIME OUT', to.err, id);
 		to.next({err: "Error: No ACK received yet."});
 		to.off();
-	}, 1000 * 9); // TODO: Make configurable!!!
+	}, (this.opt||{}).lack || 9000);
 	return id;
 }
 	
