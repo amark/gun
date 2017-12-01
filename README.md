@@ -92,7 +92,8 @@ Thanks to:<br/>
 <a href="http://github.com/coolaj86">AJ ONeal</a>, 
 <a href="http://github.com/ottman">Bill Ottman</a>,
 <a href="http://github.com/ctrlplusb">Sean Matheson</a>, 
-<a href="http://github.com/alanmimms">Alan Mimms</a>
+<a href="http://github.com/alanmimms">Alan Mimms</a>,
+<a href="http://github.com/velua">John Williamson</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
