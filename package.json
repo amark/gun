@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "aws-sdk": ">=2.153.0",
+    "formidable": "^1.1.1",
     "ws": "~>3.3.2"
   },
   "devDependencies": {
