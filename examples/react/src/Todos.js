@@ -1,5 +1,5 @@
 import React, { Component }  from 'react'
-import Gun from 'gun'
+import Gun from 'gun/gun'
 import path from 'gun/lib/path'
 import './style.css'
 
