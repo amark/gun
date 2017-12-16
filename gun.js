@@ -376,6 +376,7 @@
 			if(!tmp){ return }
 			return num_is(tmp = tmp[f])? tmp : -Infinity;
 		}
+		State.lex = function(){ return State().toString(36).replace('.','') }
 		State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
@@ -804,7 +805,7 @@
 					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
 				at.opt.uuid = at.opt.uuid || function(){ 
-					return state().toString(36).replace('.','') + text_rand(12);
+					return state_lex() + text_rand(12);
 				}
 				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
@@ -816,7 +817,7 @@
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state = Gun.state, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
+		var state_lex = Gun.state.lex, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -899,7 +900,7 @@
 				}*/
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
-					msg['#'] || (msg['#'] = root.opt.uuid());
+					msg['#'] || (msg['#'] = text_rand());
 					back = (root.gun.get(get['#'])._);
 					if(!(get = get['.'])){
 						if(obj_has(back, 'put')){
@@ -1133,6 +1134,7 @@
 		}
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
+		var text_rand = Gun.text.random;
 		var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
 	})(require, './chain');
 
@@ -1235,7 +1237,14 @@
 					if(as.res){ as.res() }
 					return gun;
 				}
-				as.gun = gun = root.get(as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)()));
+				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)());
+				if(!as.soul){ // polyfill async uuid for SEA
+					(root._).opt.uuid(function(soul){ // TODO: improve perf without anonymous callback
+						(as.ref||as.gun).put(as.data, as.soul = soul, as);
+					});
+					return gun;
+				}
+				as.gun = gun = root.get(as.soul);
 				as.ref = as.gun;
 				ify(as);
 				return gun;
@@ -1322,7 +1331,17 @@
 					ref = ref.get(path[i]);
 				}
 				if(as.not || Gun.node.soul(at.obj)){
-					var id = Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+					var id = Gun.node.soul(at.obj) || (ref.back('opt.uuid') || Gun.text.random)();
+					if(!id){ // polyfill async uuid for SEA
+						(as.stun = as.stun || {})[path] = true; // make DRY
+						ref.back('opt.uuid')(function(id){ // TODO: improve perf without anonymous callback
+							ref.back(-1).get(id);
+							at.soul(id);
+							as.stun[path] = false;
+							as.batch();
+						});
+						return;
+					}
 					ref.back(-1).get(id);
 					at.soul(id);
 					return;
@@ -1336,8 +1355,18 @@
 			//ev.stun(); // TODO: BUG!?
 			if(!at.gun || !at.gun._.back){ return } // TODO: Handle
 			ev.off();
-			at = (at.gun._.back._);
-			var id = Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			at = (at.gun._.back._); // go up 1!
+			var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			if(!id){ // polyfill async uuid for SEA
+				at.gun.back('opt.uuid')(function(id){ // TODO: improve perf without anonymous callback
+					solve(at, id, cat, as);
+				});
+				return;
+			}
+			solve(at, id, cat, as);
+		}
+
+		function solve(at, id, cat, as){
 			at.gun.back(-1).get(id);
 			cat.soul(id);
 			as.stun[cat.path] = false;
@@ -1382,6 +1411,12 @@
 				} else {
 					//as.data = obj_put({}, as.gun._.get, as.data);
 					as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+				}
+				if(!as.soul){ // polyfill async uuid for SEA
+					ref.back('opt.uuid')(function(soul){ // TODO: improve perf without anonymous callback
+						as.ref.put(as.data, as.soul = soul, as);
+					});
+					return;
 				}
 			}
 			as.ref.put(as.data, as.soul, as);
@@ -1595,8 +1630,9 @@
 			opt = opt || {}; opt.item = opt.item || item;
 			if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 			if(!Gun.is(item)){
-				if(Gun.obj.is(item)){ return gun.set(gun._.root.put(item), cb, opt) }
-				return gun.get(gun._.root._.opt.uuid()).put(item);
+				var id = gun._.root._.opt.uuid() || (Gun.state.lex() + Gun.text.random(12));
+				if(Gun.obj.is(item)){ return gun.set(gun._.root.put(item, id), cb, opt) }
+				return gun.get(id).put(item);
 			}
 			item.get('_').get(function(at, ev){
 				if(!at.gun || !at.gun._.back){ return }
