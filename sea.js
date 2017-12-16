@@ -202,7 +202,7 @@
     user._.is = user.is = {};
     // that is input/output through gun (see below)
     user._.alias = alias;
-    user._.sea = {priv: key.priv, epriv: key.epriv};
+    user._.sea = {priv: key.priv, epriv: key.epriv, pub: key.pub, epub: key.epub};
     user._.pub = key.pub;
     user._.epub = key.epub;
     //console.log("authorized", user._);
@@ -715,6 +715,15 @@
   Gun.on('opt', function(at){
     if(!at.sea){ // only add SEA once per instance, on the "at" context.
       at.sea = {own: {}};
+      var uuid = at.opt.uuid || Gun.state.lex;
+      at.opt.uuid = function(cb){
+        if(!cb){ return }
+        var id = uuid(), pair = at.user && (at.user._).sea;
+        if(!pair){ return id }
+        SEA.sign(id, pair).then(function(sig){
+          cb(null, id + '~' + sig);
+        }).catch(function(e){cb(e)});
+      }
       at.on('in', security, at); // now listen to all input data, acting as a firewall.
       at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
       at.on('node', each, at);
@@ -810,6 +819,7 @@
         if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
           each.pub(val, key, node, soul, soul.slice(4), msg.user); return;
         }
+        each.any(val, key, node, soul, msg.user); return;
         return each.end({err: "No other data allowed!"});
         /*if(!(tmp = at.user)){ return }
         if(soul.slice(4) === (tmp = tmp._).pub){ // not a special case, if we are logged in and have outbound data on us.
@@ -849,14 +859,54 @@
           }
           return;
         }
-        SEA.read(val, pub).then(function(data){
+        SEA.read(val, pub).then(function(data){ var rel, tmp;
           if(u === data){ // make sure the signature matches the account it claims to be on.
             return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
+          }
+          if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
+            SEA.verify(tmp[0], pub, tmp[1], function(ok){
+              if(!ok){ return each.end({err: "Signature did not match account."}) }
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+              check['user'+soul+key] = 0;
+              each.end({ok: 1});
+            });
+            return;
           }
           check['user'+soul+key] = 0;
           each.end({ok: 1});
         });
       };
+      each.any = function(val, key, node, soul, user){
+        if(!user || !(user = user._) || !(user = user.sea)){
+          if(user = at.sea.own[soul]){
+            check['any'+soul+key] = 1;
+            user = Gun.obj.map(user, function(a,b){ return b });
+            SEA.read(val, user, function(data){ var rel, tmp;
+              if(!data){ return each.end({err: "Mismatched owner."}) }
+              if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
+                SEA.verify(tmp[0], user, tmp[1], function(ok){
+                  if(!ok){ return each.end({err: "Signature did not match account."}) }
+                  (at.sea.own[rel] = at.sea.own[rel] || {})[user] = true;
+                  check['any'+soul+key] = 0;
+                  each.end({ok: 1});
+                });
+                return;
+              }
+              check['any'+soul+key] = 0;
+              each.end({ok: 1});
+            });
+            return;
+          }
+          each.end({err: "Data cannot be written to."});
+          return;
+        }
+        check['any'+soul+key] = 1;
+        SEA.write(val, user, function(data){
+          node[key] = data;
+          check['any'+soul+key] = 0;
+          each.end({ok: 1});
+        });
+      }
       /*
       each.user = function(val, key, node, soul, tmp){
         check['user'+soul+key] = 1;
@@ -878,11 +928,12 @@
       };
       */
       each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
-        if(each.err || !each.end.ed){ return }
+        if(each.err){ return }
         if((each.err = ctx.err) || ctx.no){
           console.log('NO!', each.err);
           return;
         }
+        if(!each.end.ed){ return }
         if(Gun.obj.map(check, function(no){
           if(no){ return true }
         })){ return }
@@ -1110,7 +1161,7 @@
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.read = function(m,p,cb){
-    var doIt = function(resolve, reject) {
+    var doIt = function(resolve, reject){ var d;
       if(!m){ if(false === p){ return resolve(m) }
         return resolve();
       }
@@ -1122,9 +1173,12 @@
       try{ m = m.slice ? JSON.parse(m) : m;
       }catch(e){ return reject(e) }
       m = m || '';
-      if(false === p){ resolve(m[0]) }
+      d = m[0];
+      try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
+      if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
-        resolve(ok && m[0]);
+        if(!ok){ return resolve() }
+        resolve(d);
       }).catch(function(e){reject(e)});
     };
     if(cb && typeof cb === 'function'){

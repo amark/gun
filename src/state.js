@@ -22,6 +22,7 @@ State.is = function(n, f, o){ // convenience function to get the state on a fiel
 	if(!tmp){ return }
 	return num_is(tmp = tmp[f])? tmp : -Infinity;
 }
+State.lex = function(){ return State().toString(36).replace('.','') }
 State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
 	if(!n || !n[N_]){ // reject if it is not node-like.
 		if(!soul){ // unless they passed a soul

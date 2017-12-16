@@ -6,8 +6,9 @@ Gun.chain.set = function(item, cb, opt){
 	opt = opt || {}; opt.item = opt.item || item;
 	if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 	if(!Gun.is(item)){
-		if(Gun.obj.is(item)){ return gun.set(gun._.root.put(item), cb, opt) }
-		return gun.get(gun._.root._.opt.uuid()).put(item);
+		var id = gun._.root._.opt.uuid() || (Gun.state.lex() + Gun.text.random(12));
+		if(Gun.obj.is(item)){ return gun.set(gun._.root.put(item, id), cb, opt) }
+		return gun.get(id).put(item);
 	}
 	item.get('_').get(function(at, ev){
 		if(!at.gun || !at.gun._.back){ return }

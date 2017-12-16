@@ -22,7 +22,15 @@ Gun.chain.put = function(data, cb, as){
 			if(as.res){ as.res() }
 			return gun;
 		}
-		as.gun = gun = root.get(as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)()));
+		as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)());
+		if(!as.soul){ // polyfill async uuid for SEA
+			(root._).opt.uuid(function(err, soul){ // TODO: improve perf without anonymous callback
+				if(err){ return Gun.log(err) } // TODO: Handle error!
+				(as.ref||as.gun).put(as.data, as.soul = soul, as);
+			});
+			return gun;
+		}
+		as.gun = gun = root.get(as.soul);
 		as.ref = as.gun;
 		ify(as);
 		return gun;
@@ -109,7 +117,18 @@ function map(v,f,n, at){ var as = this;
 			ref = ref.get(path[i]);
 		}
 		if(as.not || Gun.node.soul(at.obj)){
-			var id = Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+			var id = Gun.node.soul(at.obj) || (ref.back('opt.uuid') || Gun.text.random)();
+			if(!id){ // polyfill async uuid for SEA
+				(as.stun = as.stun || {})[path] = true; // make DRY
+				ref.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+					if(err){ return Gun.log(err) } // TODO: Handle error.
+					ref.back(-1).get(id);
+					at.soul(id);
+					as.stun[path] = false;
+					as.batch();
+				});
+				return;
+			}
 			ref.back(-1).get(id);
 			at.soul(id);
 			return;
@@ -123,8 +142,19 @@ function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
 	//ev.stun(); // TODO: BUG!?
 	if(!at.gun || !at.gun._.back){ return } // TODO: Handle
 	ev.off();
-	at = (at.gun._.back._);
-	var id = Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	at = (at.gun._.back._); // go up 1!
+	var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	if(!id){ // polyfill async uuid for SEA
+		at.gun.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+			if(err){ return Gun.log(e) } // TODO: Handle error.
+			solve(at, id, cat, as);
+		});
+		return;
+	}
+	solve(at, id, cat, as);
+}
+
+function solve(at, id, cat, as){
 	at.gun.back(-1).get(id);
 	cat.soul(id);
 	as.stun[cat.path] = false;
@@ -169,6 +199,13 @@ function any(at, ev){
 		} else {
 			//as.data = obj_put({}, as.gun._.get, as.data);
 			as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+		}
+		if(!as.soul){ // polyfill async uuid for SEA
+			ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
+				if(err){ return Gun.log(err) } // Handle error.
+				as.ref.put(as.data, as.soul = soul, as);
+			});
+			return;
 		}
 	}
 	as.ref.put(as.data, as.soul, as);
