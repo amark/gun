@@ -849,7 +849,10 @@
         check['user'+soul+key] = 1;
         if(user && (user = user._) && user.sea){
           if(pub === user.pub){
-            SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){
+            SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){ var rel;
+              if(rel = Gun.val.rel.is(val)){
+                (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+              }
               node[key] = data;
               check['user'+soul+key] = 0;
               each.end({ok: 1});

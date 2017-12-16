@@ -758,9 +758,10 @@
 			function map(msg, soul){ var tmp;
 				if(!msg.gun){ return }
 				if((tmp = this.gun._).tag.node){
-					return tmp.on('node', function(msg){ this.off();
+					tmp.on('node', function(msg){ this.off();
 						(msg.gun._).on('in', msg);
 					}).on.on('node', msg);
+					return;
 				}
 				(msg.gun._).on('in', msg);
 			}
