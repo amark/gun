@@ -25,7 +25,7 @@ function output(msg){
 		}*/
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
-			msg['#'] || (msg['#'] = root.opt.uuid());
+			msg['#'] || (msg['#'] = text_rand());
 			back = (root.gun.get(get['#'])._);
 			if(!(get = get['.'])){
 				if(obj_has(back, 'put')){
@@ -259,5 +259,6 @@ function ack(msg, ev){
 }
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
+var text_rand = Gun.text.random;
 var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
 	

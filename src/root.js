@@ -163,12 +163,10 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
-		at.opt.uuid = at.opt.uuid || function(){ 
-			return state().toString(36).replace('.','') + text_rand(12);
-		}
 		at.opt.peers = at.opt.peers || {};
 		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 		Gun.on('opt', at);
+		at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 		return gun;
 	}
 }());
@@ -176,7 +174,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 var list_is = Gun.list.is;
 var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var state = Gun.state, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
+var state_lex = Gun.state.lex, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };

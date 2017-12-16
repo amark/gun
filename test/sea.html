@@ -1,0 +1,38 @@
+<script src="../gun.js"></script>
+<script src="../lib/cryptomodules.js"></script>
+<script src="../sea.js"></script>
+<script>
+;(function(){
+	//localStorage.clear();
+	
+	var gun = window.gun = Gun();
+	var user = gun.user();
+
+	//user.create('alice', 'asdf', login);
+	//login();
+	get();
+
+	function login(ack){
+		user.auth('alice', 'asdf', read);
+	}
+
+	function read(ack){
+		console.log(ack);
+		user.get('foo').put('yay!').val(write);
+	}
+
+	function write(data){
+		var test = {I: "go infinitely"};
+		test.bar = {yes: "please!", parent: test};
+		user.get('test').put(test);
+	}
+
+	function get(){
+		//user.get('obj').get('some').val(function(data){
+		gun.get('alias/alice').map().get('test').get('bar').get('parent').get('I').val(function(data){
+			console.log("!!!", data);
+		})
+	}
+
+}());
+</script>
