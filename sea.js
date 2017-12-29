@@ -847,19 +847,16 @@
           return each.end({err: "Account must match!"});
         }
         check['user'+soul+key] = 1;
-        if(user && (user = user._) && user.sea){
-          if(pub === user.pub){
-            SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){ var rel;
-              if(rel = Gun.val.rel.is(val)){
-                (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
-              }
-              node[key] = data;
-              check['user'+soul+key] = 0;
-              each.end({ok: 1});
-            });
-          } else {
-            each.end({err: "Please stop trying to hack/impersonate somebody else!"});
-          }
+        if(user && (user = user._) && user.sea && pub === user.pub){
+            var id = Gun.text.random(3);
+          SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){ var rel;
+            if(rel = Gun.val.rel.is(val)){
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+            }
+            node[key] = data;
+            check['user'+soul+key] = 0;
+            each.end({ok: 1});
+          });
           return;
         }
         SEA.read(val, pub).then(function(data){ var rel, tmp;
@@ -900,7 +897,12 @@
             });
             return;
           }
-          each.end({err: "Data cannot be written to."});
+          check['any'+soul+key] = 1;
+          at.on('secure', function(msg){ this.off();
+            check['any'+soul+key] = 0;
+            each.end(msg || {err: "Data cannot be modified."});
+          }).on.on('secure', msg);
+          //each.end({err: "Data cannot be modified."});
           return;
         }
         check['any'+soul+key] = 1;
@@ -910,26 +912,6 @@
           each.end({ok: 1});
         });
       }
-      /*
-      each.user = function(val, key, node, soul, tmp){
-        check['user'+soul+key] = 1;
-        SEA.write(val, tmp, function(data){ // TODO: BUG! Convert to use imported.
-          node[key] = data; // be signed by our logged in account.
-          check['user'+soul+key] = 0;
-          on.to('end', {ok: 1});
-        });
-      };
-      each.own = function(val, key, node, soul, tmp){
-        check['own'+soul+key] = 1;
-        SEA.read(val, tmp, function(data){
-          var u;
-          check['own'+soul+key] = 0;
-          // TODO: hopefully fixed this right, typeof u === 'undefined' thus
-          // if there is signature, and data is undefined, then:
-          on.to('end', {no: tmp = (u === (val = data)), err: tmp && "Signature mismatch!"});
-        });
-      };
-      */
       each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
         if(each.err){ return }
         if((each.err = ctx.err) || ctx.no){
