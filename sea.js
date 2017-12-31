@@ -876,13 +876,13 @@
           each.end({ok: 1});
         });
       };
-      each.any = function(val, key, node, soul, user){
+      each.any = function(val, key, node, soul, user){ var tmp;
         if(!user || !(user = user._) || !(user = user.sea)){
           if(user = at.sea.own[soul]){
             check['any'+soul+key] = 1;
             user = Gun.obj.map(user, function(a,b){ return b });
-            SEA.read(val, user, function(data){ var rel, tmp;
-              if(!data){ return each.end({err: "Mismatched owner."}) }
+            SEA.read(val, user, function(data){ var rel;
+              if(!data){ return each.end({err: "Mismatched owner on '" + key + "'.", }) }
               if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
                 SEA.verify(tmp[0], user, tmp[1], function(ok){
                   if(!ok){ return each.end({err: "Signature did not match account."}) }
@@ -905,11 +905,19 @@
           //each.end({err: "Data cannot be modified."});
           return;
         }
+        if(!(tmp = soul.split('~')) || 2 !== tmp.length){
+          each.end({err: "Soul is not signed at '" + key + "'."})
+          return;
+        }
         check['any'+soul+key] = 1;
-        SEA.write(val, user, function(data){
-          node[key] = data;
-          check['any'+soul+key] = 0;
-          each.end({ok: 1});
+        SEA.verify(tmp[0], user.pub, tmp[1], function(ok){
+          if(!ok){ return each.end({err: "Signature did not match account at '" + key + "'."}) }
+          (at.sea.own[soul] = at.sea.own[soul] || {})[user.pub] = true;
+          SEA.write(val, user, function(data){
+            node[key] = data;
+            check['any'+soul+key] = 0;
+            each.end({ok: 1});
+          });
         });
       }
       each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?

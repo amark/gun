@@ -116,7 +116,7 @@ function map(v,f,n, at){ var as = this;
 		for(i; i < l; i++){
 			ref = ref.get(path[i]);
 		}
-		if(as.not || Gun.node.soul(at.obj)){
+		if(Gun.node.soul(at.obj)){
 			var id = Gun.node.soul(at.obj) || (ref.back('opt.uuid') || Gun.text.random)();
 			if(!id){ // polyfill async uuid for SEA
 				(as.stun = as.stun || {})[path] = true; // make DRY
@@ -146,7 +146,7 @@ function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
 	var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 	if(!id){ // polyfill async uuid for SEA
 		at.gun.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
-			if(err){ return Gun.log(e) } // TODO: Handle error.
+			if(err){ return Gun.log(err) } // TODO: Handle error.
 			solve(at, id, cat, as);
 		});
 		return;
@@ -201,7 +201,7 @@ function any(at, ev){
 			as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 		}
 		if(!as.soul){ // polyfill async uuid for SEA
-			ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
+			as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 				if(err){ return Gun.log(err) } // Handle error.
 				as.ref.put(as.data, as.soul = soul, as);
 			});
