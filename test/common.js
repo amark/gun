@@ -3626,6 +3626,26 @@ describe('Gun', function(){
 				done(); done.c = 1;
 			});
 		});
+
+		it('Soul above but not beneath', function(done){
+			var gun = Gun();
+
+			var a = gun.get('sabnb');
+
+			a.get('profile').put({_:{'#': 'sabnbprofile'}, name: "Plum"});
+
+			setTimeout(function(){
+				a.get('profile').get('said').get('asdf').put('yes');
+				setTimeout(function(){
+					a.val(function(data){
+						expect(data.profile).to.be.eql({'#': 'sabnbprofile'});
+						if(done.c){ return } done.c = 1;
+						done();
+					})
+				}, 100);
+			}, 100);
+
+		});
 		return;
 		it('Nested listener should be called', function(done){
 			
