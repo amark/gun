@@ -166,7 +166,10 @@
             .catch(function(e){ reject({err: 'Failed to create proof!'}) })
             .then(function(proof){
               var user = {pub: pub, proof: proof, at: at};
-              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.         
+              /*
+                MARK TO @mhelander : pub vs epub!???
+              */
               SEA.dec(auth.auth, {pub: pub, key: proof})
               .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) })
               .then(function(sea){
@@ -209,7 +212,8 @@
     // persist authentication
     return authpersist(user._, key.proof, opts).then(function(){
       // emit an auth event, useful for page redirects and stuff.
-      root._.on('auth', user._);
+      try{root._.on('auth', user._);
+      }catch(e){console.log("Your 'auth' callback crashed with:", e)}
       // returns success with the user data credentials.
       return user._;
     });
@@ -747,14 +751,19 @@
   function each(msg){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
     // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
     // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
-    var to = this.to, vertex = (msg.gun._).put, c = 0;
+    var to = this.to, vertex = (msg.gun._).put, c = 0, d;
+    console.debug(7, 'seach', Gun.obj.copy(msg.put));
     Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
+      console.debug(8, 'seach it', key, val);
       SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
+        console.log(10, 'seach got', key, data, c, vertex, node, '?????', msg);
         vertex[key] = node[key] = val = data; // transform to plain value.
-        if(!c && (c = -1)){ to.next(msg) }
+        if(d && !c && (c = -1)){ to.next(msg) }
       });
+      console.log("-----", key, "-----", val);
     });
-    if(!c){ to.next(msg) }
+    d = true;
+    if(d && !c){ to.next(msg) }
     return;
     /*var to = this.to, ctx = this.as;
     var own = ctx.sea.own, soul = msg.get, c = 0;
@@ -906,7 +915,7 @@
           return;
         }
         if(!(tmp = soul.split('~')) || 2 !== tmp.length){
-          each.end({err: "Soul is not signed at '" + key + "'."})
+          each.end({err: "Soul is not signed at '" + key + "'."});
           return;
         }
         check['any'+soul+key] = 1;
@@ -923,13 +932,14 @@
       each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
         if(each.err){ return }
         if((each.err = ctx.err) || ctx.no){
-          console.log('NO!', each.err);
+          console.log('NO!', each.err, msg.put);
           return;
         }
         if(!each.end.ed){ return }
         if(Gun.obj.map(check, function(no){
           if(no){ return true }
         })){ return }
+          console.debug(2, 'security', msg);
         to.next(msg);
       };
       Gun.obj.map(msg.put, each.node);
@@ -1168,6 +1178,7 @@
       m = m || '';
       d = m[0];
       try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
+      console.debug(9, 'SEAread', p, m, d);
       if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
         if(!ok){ return resolve() }
