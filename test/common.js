@@ -3025,7 +3025,7 @@ describe('Gun', function(){
 			gun.map().val(function(v,f){
 				check[f] = v;
 				count[f] = (count[f] || 0) + 1;
-				//	console.log("**************", f, v);
+				//console.log("**************", f, v);
 				if(check['1-1'] && check['2-2']){
 					clearTimeout(done.to);
 					done.to = setTimeout(function(){
@@ -3038,6 +3038,7 @@ describe('Gun', function(){
 				}
 			});
 			setTimeout(function(){
+				//console.debug.i=1;console.log("-----------------");
 				gun.get('1-1').put({what: "hi"});
 				setTimeout(function(){
 					gun.get('2-2').put({what: "you."});
@@ -3343,6 +3344,45 @@ describe('Gun', function(){
 			},400);
 		});
 
+		it('multiple times map', function(done){
+			var gun = Gun();
+
+			gun.get('usersMM').put({
+				'mark': {
+					fdsa: {
+						pub: 'fdsa',
+						name: "mark"
+					}
+				},
+				'amber': {
+					asdf: {
+						pub: 'asdf',
+						name: "amber"
+					}
+				}
+			});
+
+			var check = {A: {}, B: {}};
+			setTimeout(function(){
+				gun.get('usersMM').map().map().val(function(data){
+					//console.log('A', data);
+					check.A[data.pub] = true;
+				})
+			}, 900);
+
+			setTimeout(function(){
+				gun.get('usersMM').map().map().val(function(data){
+					//console.log('B', data, check);
+					check.B[data.pub] = true;
+					if(check.A['asdf'] && check.A['fdsa'] && check.B['asdf'] && check.B['fdsa']){
+						if(done.c){ return } done.c = 1;
+						done();
+					}
+				})
+			}, 1200);
+
+		});
+
 		it('multiple times', function(done){
 			var gun = Gun();
 			var app = gun.get('mult/times');
@@ -3434,16 +3474,19 @@ describe('Gun', function(){
 			var list = app.get('list');
 
 			var check = {};
-			list.map(function(user){ return user.age === 27? user.name + "thezombie" : u }).on(function(data){
-				//console.log('data:', data);
+			list.map(function(user){ /*console.log("****", user);*/ return user.age === 27? user.name + "thezombie" : u }).on(function(data){
+				//console.log('+++++', data);
 				check[data] = true;
 				if(check.alicethezombie && check.bobthezombie){
 					if(done.c){return}done.c=1;
 					done();
 				}
 			});
+			//console.debug.i=1;console.log("----------------");
 			list.set({name: 'alice', age: 27}); // on put, table-scan flag doesn't get set, but is needed for initial!??
 			list.set({name: 'bob', age: 27});
+			//console.log("vvvvvvvvvvv");
+			//return;
 			list.set({name: 'carl', age: 29});
 			list.set({name: 'dave', age: 25});
 		});
@@ -3925,11 +3968,11 @@ describe('Gun', function(){
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				here: "we go"
 			}, s)});
-			console.debug.i=1;console.log("---------------");
+			//console.debug.i=1;console.log("---------------");
 			gun.get('get/put/any')
 				.put({})
 				.any(function(err, data, field, at, ev){
-					console.log("***** 1", data);
+					//console.log("***** 1", data);
 					done();
 			});
 		});
