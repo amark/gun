@@ -85,7 +85,7 @@ gun.get('list').set({type: "cucumber", goal: "scare cat"});
 
 <p align="center">
 Thanks to:<br/>
-<a href="http://qxip.net/"><img src="http://qxip.net/images/qxip_logo.png" width="100"></a><br/>
+<a href="http://qxip.net/">Lorenzo Mangani</a>, 
 <a href="http://github.com/samliu">Sam Liu</a>, 
 <a href="http://github.com/ddombrow">Daniel Dombrowsky</a>, 
 <a href="http://github.com/vincentwoo">Vincent Woo</a>, 
@@ -93,6 +93,7 @@ Thanks to:<br/>
 <a href="http://github.com/ottman">Bill Ottman</a>,
 <a href="http://github.com/ctrlplusb">Sean Matheson</a>, 
 <a href="http://github.com/alanmimms">Alan Mimms</a>,
+<a href="https://github.com/dfreire">Dário Freire</a>,
 <a href="http://github.com/velua">John Williamson</a>
 </p>
 
