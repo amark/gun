@@ -172,7 +172,7 @@
 			var tag = (this.tag || (this.tag = {}))[tag] ||
 			(this.tag[tag] = {tag: tag, to: onto._ = {
 				next: function(arg){ var tmp;
-					if((tmp = this.to) && tmp.next !== this.next){ 
+					if((tmp = this.to)){ 
 						tmp.next(arg);
 				}}
 			}});
@@ -774,19 +774,18 @@
 				var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.gun._), tmp;
 				graph[soul] = Gun.state.to(node, key, graph[soul]);
 				if(ctx.async){ return }
-				//console.log("::::", at.put[key]);
 				at.put = Gun.state.to(node, key, at.put);
 			}
 			function aeach(val, key){
 				var msg = this, node = msg.put, at = (msg.gun._);
-				//console.log("::", at.put[key]);
 				at.put = Gun.state.to(node, key, at.put);
 			}
 			function map(msg, soul){
 				if(!msg.gun){ return }
-				msg.gun._.stop = {};
+				msg.gun._.root._.stop = {};
+				//console.log("map ->", soul, msg.put);
 				(msg.gun._).on('in', msg);
-				msg.gun._.stop = {};
+				msg.gun._.root._.stop = {};
 			}
 
 			Gun.on.get = function(msg, gun){
@@ -855,14 +854,14 @@
 		if(typeof common !== "undefined"){ common.exports = Gun }
 		module.exports = Gun;
 
-		/*Gun.on('opt', function(ctx){
+		/*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
 			this.to.next(ctx);
 			if(ctx.once){ return }
 			ctx.on('node', function(msg){
 				var to = this.to;
-				//console.log(">>>>");
+				//console.log(">>>", msg.put);
 				setTimeout(function(){
-					//console.log("<<<<", msg.put);
+					//console.log("<<<<<", msg.put);
 					to.next(msg);
 				},1);
 			})
@@ -1070,11 +1069,22 @@
 			}
 			tmp = (at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from};
 			var now = at.root._.now;
-			now = now || at.root._.stop;
+			//now = now || at.root._.stop;
 			if(rel === tmp.rel){
-				if(!now){ return }
-				if(u === now[at.id]){ return }
-				if((now._ || (now._ = {}))[at.id] === rel){ return } now._[at.id] = rel;
+				// NOW is a hack to get synchronous replies to correctly call.
+				// and STOP is a hack to get async behavior to correctly call.
+				// neither of these are ideal, need to be fixed without hacks,
+				// but for now, this works for current tests. :/
+				if(!now){
+					var stop = at.root._.stop;
+					if(!stop){ return }
+					if(stop[at.id] === rel){ return }
+					stop[at.id] = rel;
+				} else {
+					if(u === now[at.id]){ return }
+					if((now._ || (now._ = {}))[at.id] === rel){ return }
+					now._[at.id] = rel;
+				}
 			}
 			ask(at, tmp.rel = rel);
 		}
@@ -1223,9 +1233,9 @@
 			} else
 			if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
 				at.field = at.has = key;
-				if(obj_has(cat.put, key)){
+				//if(obj_has(cat.put, key)){
 					//at.put = cat.put[key];
-				}
+				//}
 			}
 			return gun;
 		}
@@ -1351,13 +1361,19 @@
 					if(!as.ack){ return }
 					as.ack(ack, this);
 				}, as.opt);
+				// NOW is a hack to get synchronous replies to correctly call.
+				// and STOP is a hack to get async behavior to correctly call.
+				// neither of these are ideal, need to be fixed without hacks,
+				// but for now, this works for current tests. :/
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
 				obj.del((as.ref._), 'now');
 				cat.root._.now = tmp;
+				cat.root._.stop = tmp2;
 			}, as);
 			if(as.res){ as.res() }
 		} function no(v,f){ if(v){ return true } }
@@ -1417,7 +1433,6 @@
 
 		function any(at, ev){
 			var as = this.as;
-			//console.log('any', at);
 			if(!at.gun || !at.gun._){ return } // TODO: Handle
 			if(at.err){ // TODO: Handle
 				console.log("Please report this as an issue! Put.any.err");
@@ -1642,7 +1657,6 @@
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			chain = gun.chain();
 			gun.map().on(function(data, key, at, ev){
-				//console.log("** MAP FN ** MAP FN **", key, data);
 				var next = (cb||noop).call(this, data, key, at, ev);
 				if(u === next){ return }
 				if(Gun.is(next)){
