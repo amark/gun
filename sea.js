@@ -752,15 +752,11 @@
     // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
     // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
     var to = this.to, vertex = (msg.gun._).put, c = 0, d;
-    console.debug(7, 'seach', Gun.obj.copy(msg.put));
     Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
-      console.debug(8, 'seach it', key, val);
       SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
-        console.log(10, 'seach got', key, data, c, vertex, node, '?????', msg);
-        vertex[key] = node[key] = val = data; // transform to plain value.
+        node[key] = val = data; // transform to plain value.
         if(d && !c && (c = -1)){ to.next(msg) }
       });
-      console.log("-----", key, "-----", val);
     });
     d = true;
     if(d && !c){ to.next(msg) }
@@ -939,7 +935,6 @@
         if(Gun.obj.map(check, function(no){
           if(no){ return true }
         })){ return }
-          console.debug(2, 'security', msg);
         to.next(msg);
       };
       Gun.obj.map(msg.put, each.node);
@@ -1178,7 +1173,6 @@
       m = m || '';
       d = m[0];
       try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
-      console.debug(9, 'SEAread', p, m, d);
       if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
         if(!ok){ return resolve() }

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" type="text/css" href="../style.css">
+	</head>
+	<body class="whitet black">
+
+		<div id="sign" class="hue page">
+			<style>
+				input, button {
+					font-size: 1em;
+					margin: 1em 0;
+					padding: 1em;
+					border: none;
+					background: white;
+				}
+				.sigbut {
+					display: inline-block;
+				}
+				.or {
+					display: inline-block;
+					width: 15%;
+				}
+			</style>
+			<form class="sign pad center">
+				<div class="rubric">Welcome,</div>
+				<div class="mid row col">
+					<input name="alias" class="huet jot sap" placeholder="alias">
+					Enter your public username.
+				</div>
+				<div class="mid row col">
+					<input name="pass" class="huet jot sap" type="password" placeholder="passphrase">
+					And a long private passphrase.
+				</div>
+				<div class="mid row col go">
+					<button class="huet act sigbut">sign in</button>
+					<div class="or">or</div>
+					<button class="huet act sigbut">sign up</button>
+				</div>
+				<a href="info">more info</a>
+			</form>
+		</div id="sign">
+		
+		<div id="people" class="hue2 page">
+			<style>
+				#people a {
+					color: white;
+					text-decoration: none;
+				}
+			</style>
+			<ul name="users" class="pad">
+				<h3>Here is a list of people:</h3>
+				<li name="#">
+					<!-- <h3 name="."></h3> -->
+					<ul>
+						<a href="person" name="#">
+							<li>
+								<span name="profile">
+									<b name="name"></b>
+								</span>
+								<i>~</i><i name="alias"></i>
+								<input name="pub">
+							</li>
+						</a>
+					</ul>
+				</li>
+			</ul>
+		</div id="people">
+		
+		<div id="converse" class="page">
+			<ul>
+			</ul>
+			<div class="model">
+				<li class="msg">
+					<span name="fro">Alias</span>: <span name="what"></span>
+				</li>
+			</div>
+			<form>
+				<input placeholder="to" name="to">
+				<textarea name="what"></textarea>
+				<input type="submit" value="submit">
+				<div class="status"></div>
+			</form>
+		</div id="converse">
+		
+		<div id="person" class="hue3 page">
+			<div class="pad">
+				<div name="profile">
+					<!-- img src="" -->
+					<h2 name="name" contenteditable="true">Name</h2>
+					<i name="born"></i>
+					<span name="bio" contenteditable="true">bio</span>
+					<form id="say" class="center">
+						<input class="jot" placeholder="Say something!" style="width: 80%;">
+						<input type="submit" id="speak" class="huet2" style="min-width: 5em; width: 10%;" value="speak">
+					</form>
+					<div>
+						<ul name="said">
+							<li name="#"><span name="what"></span></li>
+						</ul>
+					</div>
+				</div>
+				<input name="pub">
+			</div>
+		</div id="person">
+
+		<div id="info" class="page">
+			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
+		</div id="info">
+
+		<script src="../jquery.js"></script>
+		<script src="../../gun.js"></script>
+		<script src="../../lib/cryptomodules.js"></script>
+		<script src="../../sea.js"></script>
+		<script src="../../as.js"></script>
+		<script>
+			//var gun = Gun('http://localhost:8080/gun'); // DOESN'T WORK YET :(
+			var gun = Gun();
+			var app = gun.get('example/contacts/4');
+			var user = gun.user();
+			var c = window.c = {};
+			(function(){
+				c.hash = location.hash.slice(1);
+				gun.on('auth', function(at){
+					if('sign' === c.hash){ c.hash = '' }
+					as.route(c.hash || 'people');
+				});
+				gun.on('secure', function(at){
+					/* enforce some rules about shared app level data */
+					if(!at.put || !at.put.users){ return }
+					var no;
+					Gun.node.is(at.put.users, function(val, key){
+						Gun.SEA.read(val, false, function(val){
+							if('alias/'+key === Gun.val.rel.is(val)){ return }
+							no = true;
+						})
+						if(no){ return no }
+					});
+					if(no){ return }
+					this.to.next(at);
+				});
+				$(document).on('keyup', "form.sign input:first", as.wait(function(){
+					/*
+					var form = $(this).closest('form'), data = {alias: $(this).val()};
+					if(!data.alias || data.alias.length < 5){
+						return;
+					}
+					var exist = gun.path('alias').path(data.alias);
+					exist.get(function(at){
+						form.find('.or').addClass('none');
+						form.find('button:first').toggleClass('none', at.put? false : true);
+						form.find('button:last').toggleClass('none', at.put? true : false);
+					});
+					*/
+				})).on('click','form.sign button:last', function(){
+					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					data.born = Gun.time.is();
+					if(!data.alias || data.alias.length < 5){
+						console.log("Alias needs to be longer than 5 characters.");
+						return;
+					}
+					if(!data.pass || data.pass.length < 9){
+						console.log("Passphrase needs to be longer than 9 characters.");
+						return;
+					}
+					user.create(data.alias, data.pass, function(ack){
+						if(ack.err){ return }
+						if(ack.pub){
+							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
+						}
+						session(data);
+						user.auth(data.alias, data.pass);
+					});
+				}).on('click','form.sign button:first', become);
+				function become(){
+					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					if(window.sessionStorage){
+						data.alias = data.alias || sessionStorage.alias;
+						data.pass = data.pass || sessionStorage.tmp;
+					}
+					if(!data.alias || data.alias.length < 5){
+						console.log("Alias needs to be longer than 5 characters.");
+						return;
+					}
+					if(!data.pass || data.pass.length < 9){
+						console.log("Passphrase needs to be longer than 9 characters.");
+						return;
+					}
+					user.auth(data.alias, data.pass, function(ack){
+						session(data);
+					});
+				}
+				if(window.sessionStorage && sessionStorage.tmp){
+					become();
+				}
+				function session(data){
+					if(!window.sessionStorage){ return }
+					sessionStorage.alias = data.alias;
+					sessionStorage.tmp = data.pass;
+				}
+			}());
+			(function(){
+				$(document).on('submit', '#say', function(e){
+					e.preventDefault();
+					user.get('profile').get('said').set({
+						what: $(this).find('.jot').val()
+					});
+					$(this).find('.jot').val('');
+				});
+			}());
+			as.route.page('people', function(){
+				if(!user.is){ return as.route('sign') }
+				as('#people', gun, function(data, key, el){
+					if('pub' !== key){ return }
+					el.closest('a').attr('href', '#person/' + data);
+				});
+			});
+			as.route.page('person', function(){
+				if(!user.is){ return as.route('sign') }
+				var pub = location.hash.split('/').slice(-1)[0];
+				as('#person', gun.get('pub/'+pub));
+			});
+
+
+
+
+
+
+
+			(function(converse){
+				as.route.page('converse', function(){
+					if(!c.me){ return as.route('sign') }
+					converse.lock = false;
+					var alias = location.hash.split('/').slice(-1);
+					$('#converse form').find('input:first').val(alias);
+					function inbox(msg, id){
+						if(!sign.verify(msg.pub, msg.what, msg.sig)){ return }
+						msg.fro = (msg.to === c.me.alias? alias : c.me.alias);
+						as.route.render(id, '.msg', $('#converse ul'), msg);
+					}
+					sign.is(alias, function(acc){
+						sign.is(c.me.alias).path('msgs').path(acc.pub).map(inbox);
+					}).path('msgs').path(c.me.pub).map(inbox);
+				});
+				$(document).on('submit', '#converse form', function(e){
+					e.preventDefault();
+					if(converse.lock){ return console.log('message sending already') }
+					converse.lock = true; // prevent duplicate sends.
+					var form = $(this), msg = {};
+					msg.to = form.find('input:first').val();
+					msg.what = form.find('textarea').val();
+					sign.is(msg.to, function(to){
+						if(!priv){
+							form.find('.status').text("Failed to send. Please sign in again.");
+							converse.lock = false;
+							return;
+						}
+						msg.sig = sign.sig(msg.what, priv);
+						msg.pub = c.me.pub;
+						msg.when = Gun.time.is();
+						console.log("sending msg", msg);
+						sign.is(c.me.alias).path('msgs').path(to.pub).set(gun.put(msg));
+						converse.lock = false;
+					}, function(){
+						form.attr('disabled', false).find('.status').text(msg.to + " cannot be found! Alias is case sensitive.");
+						converse.lock = false;
+					});
+				});
+			}({}));
+		//}());</script>
+	</body>
+</html>
