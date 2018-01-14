@@ -22,16 +22,25 @@ Gun.chain.put = function(data, cb, as){
 			if(as.res){ as.res() }
 			return gun;
 		}
-		as.gun = gun = root.get(as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)()));
+		as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)());
+		if(!as.soul){ // polyfill async uuid for SEA
+			(root._).opt.uuid(function(err, soul){ // TODO: improve perf without anonymous callback
+				if(err){ return Gun.log(err) } // TODO: Handle error!
+				(as.ref||as.gun).put(as.data, as.soul = soul, as);
+			});
+			return gun;
+		}
+		as.gun = gun = root.get(as.soul);
 		as.ref = as.gun;
 		ify(as);
 		return gun;
 	}
 	if(Gun.is(data)){
-		data.get(function(at,ev){ev.off();
-			var s = Gun.node.soul(at.put);
-			if(!s){Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');return}
-			gun.put(Gun.val.rel.ify(s), cb, as);
+		data.get('_').get(function(at, ev, tmp){ ev.off();
+			if(!(tmp = at.gun) || !(tmp = tmp._.back) || !tmp._.soul){
+				return Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');
+			}
+			gun.put(Gun.val.rel.ify(tmp._.soul), cb, as);
 		});
 		return gun;
 	}
@@ -81,15 +90,26 @@ function stun(cb){
 
 function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
-	(as.res||iife)(function(){
+	as.res = as.res || function(cb){ if(cb){ cb() } };
+	as.res(function(){
 		var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
 			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
 			if(!as.ack){ return }
 			as.ack(ack, this);
 		}, as.opt);
+		// NOW is a hack to get synchronous replies to correctly call.
+		// and STOP is a hack to get async behavior to correctly call.
+		// neither of these are ideal, need to be fixed without hacks,
+		// but for now, this works for current tests. :/
+		var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+		var tmp2 = cat.root._.stop;
+		(as.ref._).now = true;
 		(as.ref._).on('out', {
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
+		obj.del((as.ref._), 'now');
+		cat.root._.now = tmp;
+		cat.root._.stop = tmp2;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,f){ if(v){ return true } }
@@ -102,8 +122,19 @@ function map(v,f,n, at){ var as = this;
 		for(i; i < l; i++){
 			ref = ref.get(path[i]);
 		}
-		if(as.not || Gun.node.soul(at.obj)){
-			var id = Gun.node.soul(at.obj) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)();
+		if(Gun.node.soul(at.obj)){
+			var id = Gun.node.soul(at.obj) || (ref.back('opt.uuid') || Gun.text.random)();
+			if(!id){ // polyfill async uuid for SEA
+				(as.stun = as.stun || {})[path] = true; // make DRY
+				ref.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+					if(err){ return Gun.log(err) } // TODO: Handle error.
+					ref.back(-1).get(id);
+					at.soul(id);
+					as.stun[path] = false;
+					as.batch();
+				});
+				return;
+			}
 			ref.back(-1).get(id);
 			at.soul(id);
 			return;
@@ -117,8 +148,19 @@ function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
 	//ev.stun(); // TODO: BUG!?
 	if(!at.gun || !at.gun._.back){ return } // TODO: Handle
 	ev.off();
-	at = (at.gun._.back._);
-	var id = Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || ((as.opt||{}).uuid || as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	at = (at.gun._.back._); // go up 1!
+	var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	if(!id){ // polyfill async uuid for SEA
+		at.gun.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+			if(err){ return Gun.log(err) } // TODO: Handle error.
+			solve(at, id, cat, as);
+		});
+		return;
+	}
+	solve(at, id, cat, as);
+}
+
+function solve(at, id, cat, as){
 	at.gun.back(-1).get(id);
 	cat.soul(id);
 	as.stun[cat.path] = false;
@@ -133,6 +175,7 @@ function any(at, ev){
 		return;
 	}
 	var cat = (at.gun._.back._), data = cat.put, opt = as.opt||{}, root, tmp;
+	if((tmp = as.ref) && tmp._.now){ return }
 	ev.off();
 	if(as.ref !== as.gun){
 		tmp = (as.gun._).get || cat.get;
@@ -162,6 +205,13 @@ function any(at, ev){
 		} else {
 			//as.data = obj_put({}, as.gun._.get, as.data);
 			as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+		}
+		if(!as.soul){ // polyfill async uuid for SEA
+			as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
+				if(err){ return Gun.log(err) } // Handle error.
+				as.ref.put(as.data, as.soul = soul, as);
+			});
+			return;
 		}
 	}
 	as.ref.put(as.data, as.soul, as);

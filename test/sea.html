@@ -1,0 +1,33 @@
+<script src="../gun.js"></script>
+<script src="../lib/cryptomodules.js"></script>
+<script src="../sea.js"></script>
+<script>
+;(function(){
+	localStorage.clear();
+	
+	var gun = window.gun = Gun();
+	var user = gun.user();
+
+	user.create('alice', 'unsafepassword', login);
+
+	function login(ack){
+		console.log("login...");
+		user.auth('alice', 'unsafepassword', write);
+	}
+
+	function write(data){
+		console.log("write...");
+		var alice = {name: "Alice"};
+		alice.boss = {name: "Fluffy", slave: alice};
+		user.get('profile').put(alice, get);
+	}
+
+	function get(){
+		console.log("get...");
+		user.get('profile').get('boss').get('slave').get('name').val(function(data){
+			console.log("The boss's slave's name is:", data);
+		})
+	}
+
+}());
+</script>

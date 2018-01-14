@@ -20,7 +20,7 @@ Gun.chain.on = function(tag, arg, eas, as){
 	opt = (true === opt)? {change: true} : opt || {};
 	opt.ok = tag;
 	opt.last = {};
-	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!????
+	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!?
 	return gun;
 }
 
@@ -61,6 +61,7 @@ Gun.chain.val = function(cb, opt){
 	if(cb){
 		(opt = opt || {}).ok = cb;
 		opt.cat = at;
+		opt.out = {'#': Gun.text.random(9)};
 		gun.get(val, {as: opt});
 		opt.async = true; //opt.async = at.stun? 1 : true;
 	} else {
@@ -74,23 +75,25 @@ Gun.chain.val = function(cb, opt){
 	return gun;
 }
 
-function val(at, ev, to){
-	var opt = this.as, cat = opt.cat, gun = at.gun, coat = gun._, data = coat.put || at.put, tmp;
+function val(msg, ev, to){
+	var opt = this.as, cat = opt.cat, gun = msg.gun, coat = gun._, data = coat.put || msg.put, tmp;
 	if(u === data){
 		//return;
 	}
-	if(data && data[rel._] && (tmp = rel.is(data))){
+	//if(coat.soul && !(0 < coat.ack)){ return }
+	if(tmp = Gun.node.soul(data) || rel.is(data)){
+	//if(data && data[rel._] && (tmp = rel.is(data))){
 		tmp = (cat.root.get(tmp)._);
-		if(u === tmp.put){
+		if(u === tmp.put){//} || !(0 < tmp.ack)){
 			return;
 		}
 		data = tmp.put;
 	}
 	if(ev.wait){ clearTimeout(ev.wait) }
 	//if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
-	if(!opt.async){
+	if(!to){
 		ev.wait = setTimeout(function(){
-			val.call({as:opt}, at, ev, ev.wait || 1)
+			val.call({as:opt}, msg, ev, ev.wait || 1);
 		}, opt.wait || 99);
 		return;
 	}
@@ -100,34 +103,11 @@ function val(at, ev, to){
 		if((opt.seen = opt.seen || {})[coat.id]){ return }
 		opt.seen[coat.id] = true;
 	}
-	opt.ok.call(at.gun || opt.gun, data, at.get);
+	opt.ok.call(msg.gun || opt.gun, data, msg.get);
 }
 
 Gun.chain.off = function(){
-	var gun = this, at = gun._, tmp;
-	var back = at.back || {}, cat = back._;
-	if(!cat){ return }
-	if(tmp = cat.next){
-		if(tmp[at.get]){
-			obj_del(tmp, at.get);
-		} else {
-			obj_map(tmp, function(path, key){
-				if(gun !== path){ return }
-				obj_del(tmp, key);
-			});
-		}
-	}
-	if((tmp = gun.back(-1)) === back){
-		obj_del(tmp.graph, at.get);
-	}
-	if(at.ons && (tmp = at.ons['@$'])){
-		obj_map(tmp.s, function(ev){
-			ev.off();
-		});
-	}
-	return gun;
-}
-Gun.chain.off = function(){
+	// make off more aggressive. Warning, it might backfire!
 	var gun = this, at = gun._, tmp;
 	var back = at.back || {}, cat = back._;
 	if(!cat){ return }
@@ -137,13 +117,32 @@ Gun.chain.off = function(){
 		} else {
 
 		}
+	}
+	if(tmp = cat.ask){
+		obj_del(tmp, at.get);
+	}
+	if(tmp = cat.put){
+		obj_del(tmp, at.get);
 	}
 	if(tmp = at.soul){
 		obj_del(cat.root._.graph, tmp);
 	}
+	if(tmp = at.map){
+		obj_map(tmp, function(at){
+			if(at.rel){
+				cat.root.get(at.rel).off();
+			}
+		});
+	}
+	if(tmp = at.next){
+		obj_map(tmp, function(ref){
+			ref.off();
+		});
+	}
+	at.on('off', {});
 	return gun;
 }
-var obj = Gun.obj, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
+var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 var rel = Gun.val.rel;
 var empty = {}, noop = function(){}, u;
 	
