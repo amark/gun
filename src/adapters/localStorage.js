@@ -10,16 +10,16 @@ var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop
 	If you update anything here, consider updating the other adapters as well.
 */
 
-Gun.on('opt', function(ctx){
-	this.to.next(ctx);
-	var opt = ctx.opt;
-	if(ctx.once){ return }
+Gun.on('opt', function(root){
+	this.to.next(root);
+	var opt = root.opt;
+	if(root.once){ return }
 	if(false === opt.localStorage){ return }
 	opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
-	var graph = ctx.graph, acks = {}, count = 0, to;
+	var graph = root.graph, acks = {}, count = 0, to;
 	var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
 	
-	ctx.on('put', function(at){
+	root.on('put', function(at){
 		this.to.next(at);
 		Gun.graph.is(at.put, null, map);
 		if(!at['@']){ acks[at['#']] = true; } // only ack non-acks.
@@ -31,9 +31,9 @@ Gun.on('opt', function(ctx){
 		to = setTimeout(flush, opt.wait || 1);
 	});
 
-	ctx.on('get', function(at){
+	root.on('get', function(at){
 		this.to.next(at);
-		var gun = at.gun, lex = at.get, soul, data, opt, u;
+		var lex = at.get, soul, data, u;
 		//setTimeout(function(){
 		if(!lex || !(soul = lex[Gun._.soul])){ return }
 		//if(0 >= at.cap){ return }
@@ -42,11 +42,11 @@ Gun.on('opt', function(ctx){
 		if(data && field){
 			data = Gun.state.to(data, field);
 		}
-		if(!data && !Gun.obj.empty(gun.back('opt.peers'))){ // if data not found, don't ack if there are peers.
+		if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
 			return; // Hmm, what if we have peers but we are disconnected?
 		}
-		gun.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
-		//},11);
+		root.on('in', {'@': at['#'], put: Gun.graph.node(data), how: 'lS'});
+		//},1);
 	});
 
 	var map = function(val, key, node, soul){
@@ -64,7 +64,7 @@ Gun.on('opt', function(ctx){
 		}catch(e){ Gun.log(err = e || "localStorage failure") }
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 		Gun.obj.map(ack, function(yes, id){
-			ctx.on('in', {
+			root.on('in', {
 				'@': id,
 				err: err,
 				ok: 0 // localStorage isn't reliable, so make its `ok` code be a low number.

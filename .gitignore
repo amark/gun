@@ -9,3 +9,5 @@ yarn.lock
 *.new
 *.DS_store
 .esm-cache
+.sessionStorage
+.localStorage

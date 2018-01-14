@@ -1,4 +1,4 @@
-
+/*
 
 // Let's do all old-fashion require stuff before '@std/mjs' steps in...
 const Gun = require('../gun')
@@ -14,3 +14,5 @@ const myDir = __dirname // TODO: where did __dirname go ?
 require = require('@std/esm')(module) // eslint-disable-line no-global-assign
 
 module.exports = require('../lib/server.mjs').default(Gun, myDir)
+
+*/

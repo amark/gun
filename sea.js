@@ -23,7 +23,7 @@
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
-  var sessionStorage, indexedDB;
+  var sessionStorage, localStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
     if(typeof window.SparkMD5 !== 'undefined'){
@@ -35,6 +35,7 @@
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     sessionStorage = window.sessionStorage;
+    localStorage = window.localStorage;
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB;
   } else {
@@ -47,8 +48,13 @@
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
-    sessionStorage = new require('node-localstorage').LocalStorage('session');
+    sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage');
+    localStorage = new require('node-localstorage').LocalStorage('.localStorage');
     indexedDB = require("fake-indexeddb");
+    if(typeof global !== 'undefined'){
+      global.sessionStorage = sessionStorage;
+      global.localStorage = localStorage;
+    }
   }
 
   if(typeof SparkMD5 === 'undefined'){
@@ -122,19 +128,21 @@
           return reject(err);
         }
         // then figuring out all possible candidates having matching username
-        var aliases = [];
+        var aliases = [], c = 0;
         Gun.obj.map(rat.put, function(at, pub){
+          if(!pub.slice || 'pub/' !== pub.slice(0,4)){ return }
+          c++;
           // grab the account associated with this public key.
           root.get(pub).get(function(at, ev){
-            if(!pub.slice || 'pub/' !== pub.slice(0,4)){ return }
             pub = pub.slice(4);
-            ev.off();
-            if(!at.put){ return }
-            aliases.push({pub: pub, at: at});
+            ev.off(); c--;
+            if(at.put){ 
+              aliases.push({pub: pub, at: at}); 
+            }
+            if(!c && (c = -1)){ resolve(aliases) }
           });
         });
-        return aliases.length && resolve(aliases)
-        || reject('Public key does not exist!');
+        if(!c){ reject('Public key does not exist!') }
       });
     });
   }
@@ -152,13 +160,16 @@
             return !remaining && reject({err: 'Public key does not exist!'});
           }
           // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-          SEA.read(at.put.auth, pub).then(function(auth){
+          var auth = at.put.auth; // SEA.read(at.put.auth, pub).then(function(auth){ // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
             auth = auth.slice ? JSON.parse(auth) : auth;
             return SEA.proof(pass, auth.salt)
             .catch(function(e){ reject({err: 'Failed to create proof!'}) })
             .then(function(proof){
               var user = {pub: pub, proof: proof, at: at};
-              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.         
+              /*
+                MARK TO @mhelander : pub vs epub!???
+              */
               SEA.dec(auth.auth, {pub: pub, key: proof})
               .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) })
               .then(function(sea){
@@ -167,12 +178,10 @@
                 if(sea){
                   user.priv = sea.priv;
                   user.salt = auth.salt;  // TODO: needed?
-                  SEA.read(at.put.epub, pub).then(function(epub){
+                  var epub = at.put.epub; //SEA.read(at.put.epub, pub).then(function(epub){ // NOTE: see above "NOTE"!
                     Object.assign(user, {epub: epub, epriv: sea.epriv});
                     resolve(user);
-                  }).catch(function(){
-                    return !remaining && reject({err: 'Public key does not exist!'});
-                  });
+                  //}).catch(function(){ return !remaining && reject({err: 'Public key does not exist!'}) });
                 } else if(!remaining){
                   reject({err: 'Public key does not exist!'});
                 }
@@ -182,7 +191,7 @@
                 // : reject({err: 'Failed to decrypt private key!'});
               }).catch(function(e){ reject({err: 'Failed read secret!'})} );
             });
-          }).catch(function(e){ reject({err: 'Failed to create proof!'}) });
+          //}).catch(function(e){ reject({err: 'Failed to create proof!'}) });
         });
       }).catch(function(e){ reject({err: e}) });
     });
@@ -196,14 +205,15 @@
     user._.is = user.is = {};
     // that is input/output through gun (see below)
     user._.alias = alias;
-    user._.sea = {priv: key.priv, epriv: key.epriv};
+    user._.sea = {priv: key.priv, epriv: key.epriv, pub: key.pub, epub: key.epub};
     user._.pub = key.pub;
     user._.epub = key.epub;
     //console.log("authorized", user._);
     // persist authentication
     return authpersist(user._, key.proof, opts).then(function(){
       // emit an auth event, useful for page redirects and stuff.
-      root._.on('auth', user._);
+      try{root._.on('auth', user._);
+      }catch(e){console.log("Your 'auth' callback crashed with:", e)}
       // returns success with the user data credentials.
       return user._;
     });
@@ -323,7 +333,7 @@
       };
 
       // Already authenticated?
-      if(Gun.obj.has(root._.user._, 'pub') && Gun.obj.has(root._.user._, 'sea')){
+      if(root._.user && Gun.obj.has(root._.user._, 'pub') && Gun.obj.has(root._.user._, 'sea')){
         return resolve(root._.user._);
       }
       // No, got alias?
@@ -377,9 +387,9 @@
                   return !remaining && reject({err: 'Failed to decrypt private key!'});
                 }).then(function(sea){
                   if(!sea){ return }
-                  return SEA.read(at.put.epub, pub).then(function(epub){
+                  var epub = at.put.epub; //return SEA.read(at.put.epub, pub).then(function(epub){ // NOTE: queryalias uses `gun.get` which internally verifies data with `SEA.read` so we do not need to do it again.
                     return {pub: pub, priv: sea.priv, epriv: sea.epriv, epub: epub};
-                  });
+                  //});
                 }).then(function(key){
                   // now we have AES decrypted the private key,
                   // if we were successful, then that means we're logged in!
@@ -425,8 +435,9 @@
   // This internal func executes logout actions
   function authleave(root, alias){
     return function(resolve, reject){
-      var user = root._.user;
-      alias = alias || (user._ && user._.alias);
+      var user = root._.user || {_:{}};
+      root._.user = null;
+      alias = alias || user._.alias;
       var doIt = function(){
         // TODO: is this correct way to 'logout' user from Gun.User ?
         [ 'alias', 'sea', 'pub' ].forEach(function(key){
@@ -434,6 +445,7 @@
         });
         user._.is = user.is = {};
         // Let's use default
+        root.user();
         resolve({ok: 0});
       };
       // Removes persisted authentication & CryptoKeys
@@ -469,11 +481,16 @@
       }
     });
   }
-  // This internal func returns hashed data for signing
+  // This internal func returns SHA-256 hashed data for signing
   function sha256hash(m){
     var hashSubtle = subtleossl || subtle;
     try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
     return hashSubtle.digest(pbkdf2.hash, new TextEncoder("utf-8").encode(m));
+  }
+  // This internal func returns SHA-1 hashed data for KeyID generation
+  function sha1hash(b){
+    var hashSubtle = subtleossl || subtle;
+    return hashSubtle.digest('SHA-1', b);
   }
 
   // How does it work?
@@ -521,7 +538,7 @@
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
               root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              resolve({ok: 0, pub: pairs.pub});
+              setTimeout(function(){ resolve({ok: 0, pub: pairs.pub}) },10); // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
             }).catch(function(e){ Gun.log('SEA.en or SEA.write calls failed!'); reject(e) });
           }).catch(function(e){ Gun.log('SEA.pair call failed!'); reject(e) });
         });
@@ -543,7 +560,6 @@
           reject({err: 'Auth attempt failed! Reason: No session data for alias & PIN'});
         });
       }
-
       authenticate(alias, pass, root).then(function(keys){
         // we're logged in!
         var pin = Gun.obj.has(opts, 'pin') && {pin: opts.pin};
@@ -620,12 +636,13 @@
           // Delete user data
           root.get('pub/'+key.pub).put(null);
           // Wipe user data from memory
-          var user = root._.user;
+          var user = root._.user || {_: {}};
           // TODO: is this correct way to 'logout' user from Gun.User ?
           [ 'alias', 'sea', 'pub' ].forEach(function(key){
             delete user._[key];
           });
           user._.is = user.is = {};
+          root.user();
           resolve({ok: 0});
         }).catch(function(e){
           Gun.log('User.delete failed! Error:', e);
@@ -702,6 +719,15 @@
   Gun.on('opt', function(at){
     if(!at.sea){ // only add SEA once per instance, on the "at" context.
       at.sea = {own: {}};
+      var uuid = at.opt.uuid || Gun.state.lex;
+      at.opt.uuid = function(cb){
+        if(!cb){ return }
+        var id = uuid(), pair = at.user && (at.user._).sea;
+        if(!pair){ return id }
+        SEA.sign(id, pair).then(function(sig){
+          cb(null, id + '~' + sig);
+        }).catch(function(e){cb(e)});
+      }
       at.on('in', security, at); // now listen to all input data, acting as a firewall.
       at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
       at.on('node', each, at);
@@ -722,24 +748,42 @@
   // Here is a problem: Multiple public keys can "claim" any node's ID, so this is dangerous!
   // This means we should ONLY trust our "friends" (our key ring) public keys, not any ones.
   // I have not yet added that to SEA yet in this alpha release. That is coming soon, but beware in the meanwhile!
-  function each(at){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
-    var own = (at.gun.back(-1)._).sea.own, soul = at.get;
-    var pub = own[soul] || soul.slice(4), vertex = (at.gun._).put;
-    Gun.node.is(at.put, function(val, key, node){ // for each property on the node.
-      SEA.read(val, pub).then(function(data){
-        vertex[key] = node[key] = val = data; // verify signature and get plain value.
-        if(val && val['#'] && (key = Gun.val.rel.is(val))){ // if it is a relation / edge
-          if('alias/' === soul.slice(0,6)){ return } // if it is itself
-          own[key] = pub; // associate the public key with a node
-        }
+  function each(msg){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
+    // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
+    // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
+    var to = this.to, vertex = (msg.gun._).put, c = 0, d;
+    Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
+      SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
+        node[key] = val = data; // transform to plain value.
+        if(d && !c && (c = -1)){ to.next(msg) }
       });
     });
+    d = true;
+    if(d && !c){ to.next(msg) }
+    return;
+    /*var to = this.to, ctx = this.as;
+    var own = ctx.sea.own, soul = msg.get, c = 0;
+    var pub = own[soul] || soul.slice(4), vertex = (msg.gun._).put;
+    Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node.
+      SEA.read(val, pub).then(function(data){ c--;
+        vertex[key] = node[key] = val = data; // verify signature and get plain value.
+        if(val && val['#'] && (key = Gun.val.rel.is(val))){ // if it is a relation / edge
+          if('alias/' !== soul.slice(0,6)){ own[key] = pub; } // associate the public key with a node if it is itself
+        }
+        if(!c && (c = -1)){ to.next(msg) }
+      });
+    });
+    if(!c){ to.next(msg) }*/
   }
 
   // signature handles data output, it is a proxy to the security function.
-  function signature(at){
-    at.user = at.gun.back(-1)._.user;
-    security.call(this, at);
+  function signature(msg){
+    if(msg.user){
+      return this.to.next(msg);
+    }
+    var ctx = this.as;
+    msg.user = ctx.user;
+    security.call(this, msg);
   }
 
   // okay! The security function handles all the heavy lifting.
@@ -763,7 +807,7 @@
     }
     if(msg.put){
       // potentially parallel async operations!!!
-      var check = {}, on = Gun.on(), each = {};
+      var check = {}, on = Gun.on(), each = {}, u;
       each.node = function(node, soul){
         if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them.
         Gun.obj.map(node, each.way, {soul: soul, node: node});
@@ -772,87 +816,129 @@
         var soul = this.soul, node = this.node, tmp;
         if('_' === key){ return } // ignore meta data
         if('alias' === soul){  // special case for shared system data, the list of aliases.
-          each.alias(val, key, node, soul);
+          each.alias(val, key, node, soul); return;
         }
         if('alias/' === soul.slice(0,6)){ // special case for shared system data, the list of public keys for an alias.
-          each.pubs(val, key, node, soul);
+          each.pubs(val, key, node, soul); return;
         }
         if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
-          each.pub(val, key, node, soul, soul.slice(4));
+          each.pub(val, key, node, soul, soul.slice(4), msg.user); return;
         }
-        if(at.user && at.user._.sea){ // not special case, if we are logged in, then
-          var u = at.user._, p = u.sea;
+        each.any(val, key, node, soul, msg.user); return;
+        return each.end({err: "No other data allowed!"});
+        /*if(!(tmp = at.user)){ return }
+        if(soul.slice(4) === (tmp = tmp._).pub){ // not a special case, if we are logged in and have outbound data on us.
           each.user(val, key, node, soul, {
-            pub: u.pub, priv: p.priv, epub: u.epub, epriv: p.epriv
+            pub: tmp.pub, priv: tmp.sea.priv, epub: tmp.sea.epub, epriv: tmp.sea.epriv
           });
         }
         if((tmp = sea.own[soul])){ // not special case, if we receive an update on an ID associated with a public key, then
           each.own(val, key, node, soul, tmp);
-        }
+        }*/
       };
-      each.alias = function(val, key, node, soul){
-        if(!val){ return on.to('end', {err: "Data must exist!"}) } // data MUST exist
-        if('alias/'+key !== Gun.val.rel.is(val)){ // in fact, it must be EXACTLY equal to itself
-          return on.to('end', {err: "Mismatching alias."}); // if it isn't, reject.
-        }
+      each.alias = function(val, key, node, soul){ // Example: {_:#alias, alias/alice: {#alias/alice}}
+        if(!val){ return each.end({err: "Data must exist!"}) } // data MUST exist
+        if('alias/'+key === Gun.val.rel.is(val)){ return check['alias'+key] = 0 } // in fact, it must be EXACTLY equal to itself
+        each.end({err: "Mismatching alias."}); // if it isn't, reject.
       };
-      each.pubs = function(val, key, node, soul){
-        if(!val){ return on.to('end', {err: "Alias must exist!"}) } // data MUST exist
+      each.pubs = function(val, key, node, soul){ // Example: {_:#alias/alice, pub/asdf: {#pub/asdf}}
+        if(!val){ return each.end({err: "Alias must exist!"}) } // data MUST exist
         if(key === Gun.val.rel.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
-        return on.to('end', {err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
+        each.end({err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
       };
-      each.pub = function(val, key, node, soul, pub){
-        //console.log("WE ARE HERE", key, val, soul, node, pub);
+      each.pub = function(val, key, node, soul, pub, user){ // Example: {_:#pub/asdf, hello:SEA['world',fdsa]}
         if('pub' === key){
-          if(val === pub){ return check['pub'+soul+key] = 0 } // the account MUST have a `pub` property that equals the ID of the public key.
-          return on.to('end', {err: "Account must match!"});
+          if(val === pub){ return (check['pub'+soul+key] = 0) } // the account MUST match `pub` property that equals the ID of the public key.
+          return each.end({err: "Account must match!"});
         }
-        /*
-        if(at.user && at.user._){ // if we are logged in
-          if(pub === at.user._.pub){ // as this user
-            SEA.write(val, at.user._.sea).then(function(data){
-              val = node[key] = data; // then sign our updates as we output them.
-            });
-          } // (if we are lying about our signature, other peer's will reject our update)
-        }
-        SEA.read(val, pub).then(function(data){
-          if(u === (val = data)){ // make sure the signature matches the account it claims to be on.
-            return no = true; // reject any updates that are signed with a mismatched account.
-          }
-        });
-        */
-      };
-      each.user = function(val, key, node, soul, tmp){
         check['user'+soul+key] = 1;
-        SEA.write(val, tmp, function(data){ // TODO: BUG! Convert to use imported.
-          node[key] = data; // be signed by our logged in account.
-          check['user'+soul+key] = 0;
-          on.to('end', {ok: 1});
-        });
-      };
-      each.own = function(val, key, node, soul, tmp){
-        check['own'+soul+key] = 1;
-        SEA.read(val, tmp, function(data){
-          var u;
-          check['own'+soul+key] = 0;
-          // TODO: hopefully fixed this right, typeof u === 'undefined' thus
-          // if there is signature, and data is undefined, then:
-          on.to('end', {no: tmp = (u === (val = data)), err: tmp && "Signature mismatch!"});
-        });
-      };
-      on.to('end', function(ctx){ // TODO: Can't you just switch this to each.end = cb?
-        if(each.err || !each.end){ return }
-        if((each.err = ctx.err) || ctx.no){
-          console.log('NO!', each.err);
+        if(user && (user = user._) && user.sea && pub === user.pub){
+            var id = Gun.text.random(3);
+          SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){ var rel;
+            if(rel = Gun.val.rel.is(val)){
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+            }
+            node[key] = data;
+            check['user'+soul+key] = 0;
+            each.end({ok: 1});
+          });
           return;
         }
+        SEA.read(val, pub).then(function(data){ var rel, tmp;
+          if(u === data){ // make sure the signature matches the account it claims to be on.
+            return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
+          }
+          if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
+            SEA.verify(tmp[0], pub, tmp[1], function(ok){
+              if(!ok){ return each.end({err: "Signature did not match account."}) }
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+              check['user'+soul+key] = 0;
+              each.end({ok: 1});
+            });
+            return;
+          }
+          check['user'+soul+key] = 0;
+          each.end({ok: 1});
+        });
+      };
+      each.any = function(val, key, node, soul, user){ var tmp;
+        if(!user || !(user = user._) || !(user = user.sea)){
+          if(user = at.sea.own[soul]){
+            check['any'+soul+key] = 1;
+            user = Gun.obj.map(user, function(a,b){ return b });
+            SEA.read(val, user, function(data){ var rel;
+              if(!data){ return each.end({err: "Mismatched owner on '" + key + "'.", }) }
+              if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
+                SEA.verify(tmp[0], user, tmp[1], function(ok){
+                  if(!ok){ return each.end({err: "Signature did not match account."}) }
+                  (at.sea.own[rel] = at.sea.own[rel] || {})[user] = true;
+                  check['any'+soul+key] = 0;
+                  each.end({ok: 1});
+                });
+                return;
+              }
+              check['any'+soul+key] = 0;
+              each.end({ok: 1});
+            });
+            return;
+          }
+          check['any'+soul+key] = 1;
+          at.on('secure', function(msg){ this.off();
+            check['any'+soul+key] = 0;
+            each.end(msg || {err: "Data cannot be modified."});
+          }).on.on('secure', msg);
+          //each.end({err: "Data cannot be modified."});
+          return;
+        }
+        if(!(tmp = soul.split('~')) || 2 !== tmp.length){
+          each.end({err: "Soul is not signed at '" + key + "'."});
+          return;
+        }
+        check['any'+soul+key] = 1;
+        SEA.verify(tmp[0], user.pub, tmp[1], function(ok){
+          if(!ok){ return each.end({err: "Signature did not match account at '" + key + "'."}) }
+          (at.sea.own[soul] = at.sea.own[soul] || {})[user.pub] = true;
+          SEA.write(val, user, function(data){
+            node[key] = data;
+            check['any'+soul+key] = 0;
+            each.end({ok: 1});
+          });
+        });
+      }
+      each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
+        if(each.err){ return }
+        if((each.err = ctx.err) || ctx.no){
+          console.log('NO!', each.err, msg.put);
+          return;
+        }
+        if(!each.end.ed){ return }
         if(Gun.obj.map(check, function(no){
           if(no){ return true }
         })){ return }
         to.next(msg);
-      });
+      };
       Gun.obj.map(msg.put, each.node);
-      on.to('end', {end: each.end = true});
+      each.end({end: each.end.ed = true});
       return; // need to manually call next after async.
     }
     to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
@@ -902,6 +988,21 @@
     };
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
+  // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
+  SEA.keyid = function(p,cb){
+    var doIt = function(resolve, reject){
+      // base64('base64(x):base64(y)') => Buffer(xy)
+      var pb = Buffer.concat((new Buffer(p, 'base64')).toString('utf8').split(':')
+      .map(function(t){ return new Buffer(t, 'base64') }));
+      // id is PGPv4 compliant raw key
+      var id = Buffer.concat([new Buffer([0x99, pb.length/0x100, pb.length%0x100]), pb]);
+      sha1hash(id).then(function(sha1){
+        var hash = new Buffer(sha1, 'binary');
+        resolve(hash.slice(hash.length-8).toString('hex')); // 16-bit ID as hex
+      });
+    };
+    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+  };
   SEA.pair = function(cb){
     var doIt = function(resolve, reject){
       // First: ECDSA keys for signing/verifying...
@@ -913,6 +1014,10 @@
         }).then(function(keys){
           return subtle.exportKey('jwk', pubkey).then(function(k){
             keys.pub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+            // return SEA.keyid(keys.pub).then(function(id){
+            //   keys.pubId = id;
+            //   return keys;
+            // });
             return keys;
           });
         }).catch(function(e){ Gun.log(e); reject(e) });
@@ -1038,14 +1143,15 @@
     var doIt = function(resolve, reject) {
       // TODO: something's bugging double 'SEA[]' treatment to mm...
       var m = mm;
-      if(mm.slice){
+      if(m && m.slice && 'SEA[' === m.slice(0,4)){ return resolve(m) }
+      if(mm && mm.slice){
         // Needs to remove previous signature envelope
         while('SEA[' === m.slice(0,4)){
           try{ m = JSON.parse(m.slice(3))[0];
           }catch(e){ break }
         }
       }
-      m = m.slice ? m : JSON.stringify(m);
+      m = (m && m.slice) ? m : JSON.stringify(m);
       SEA.sign(m, p).then(function(signature){
         resolve('SEA'+JSON.stringify([m,signature]));
       }).catch(function(e){Gun.log(e); reject(e)});
@@ -1053,15 +1159,24 @@
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
   };
   SEA.read = function(m,p,cb){
-    var doIt = function(resolve, reject) {
-      if(!m){ return resolve() }
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){ return resolve(m) }
+    var doIt = function(resolve, reject){ var d;
+      if(!m){ if(false === p){ return resolve(m) }
+        return resolve();
+      }
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){ 
+        if(false === p){ return resolve(m) }
+        return resolve()
+      }
       m = m.slice(3);
       try{ m = m.slice ? JSON.parse(m) : m;
       }catch(e){ return reject(e) }
       m = m || '';
+      d = m[0];
+      try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
+      if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
-        resolve(ok && m[0]);
+        if(!ok){ return resolve() }
+        resolve(d);
       }).catch(function(e){reject(e)});
     };
     if(cb && typeof cb === 'function'){
