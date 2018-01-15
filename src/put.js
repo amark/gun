@@ -204,7 +204,10 @@ function any(at, ev){
 			as.soul = (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 		} else {
 			//as.data = obj_put({}, as.gun._.get, as.data);
-			as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+			if(node_ == at.get){
+				as.soul = (at.put||empty)['#'];
+			}
+			as.soul = as.soul || at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 		}
 		if(!as.soul){ // polyfill async uuid for SEA
 			as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -218,4 +221,5 @@ function any(at, ev){
 }
 var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
 var u, empty = {}, noop = function(){}, iife = function(fn,as){fn.call(as||empty)};
+var node_ = Gun.node._;
 	

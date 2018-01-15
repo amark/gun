@@ -15,8 +15,10 @@ Gun.chain.set = function(item, cb, opt){
 	item.get('_').get(function(at, ev){
 		if(!at.gun || !at.gun._.back){ return }
 		ev.off();
+		var soul = (at.put||{})['#'];
 		at = (at.gun._.back._);
-		var put = {}, node = at.put, soul = Gun.node.soul(node);
+		var put = {}, node = at.put;
+		soul = at.soul || Gun.node.soul(node) || soul;
 		if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 		gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
 	},{wait:0});
