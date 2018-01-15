@@ -44,9 +44,9 @@ function cache(key, back){
 	} else
 	if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
 		at.field = at.has = key;
-		if(obj_has(cat.put, key)){
+		//if(obj_has(cat.put, key)){
 			//at.put = cat.put[key];
-		}
+		//}
 	}
 	return gun;
 }

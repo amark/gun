@@ -1,0 +1,27 @@
+<script src="../../gun.js"></script>
+<script>
+;(function(){
+	//localStorage.clear();
+	
+	var gun = window.gun = Gun('http://localhost:8080/gun');
+	var user = window.user = gun.get('pub/alice');
+	return;
+	user.put({pub: 'alice'}, write);
+
+
+	function write(data){
+		console.log("write...");
+		user.get('profile').get('said').set({
+			what: "Hello world! " + Gun.text.random(3)
+		}, get);
+	}
+
+	function get(){
+		console.log("get...");
+		user.get('profile').get('said').map().val(function(data){
+			console.log("read...", data);
+		})
+	}
+
+}());
+</script>

@@ -71,11 +71,11 @@ Gun._ = { // some reserved key words, these are not the only ones.
 
 ;(function(){
 	Gun.on.put = function(msg, gun){
-		var at = gun._, ctx = {gun: gun, graph: at.graph, put: {}, map: {}, machine: Gun.state(), ack: msg['@']};
+		var at = gun._, ctx = {gun: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@']};
 		if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
-		obj_map(ctx.map, map, ctx);
+		if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 		if(u !== ctx.defer){
 			setTimeout(function(){
 				Gun.on.put(msg, gun);
@@ -97,32 +97,51 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		}
 		ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
 		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
+		ctx.souls[soul] = true;
 	}
 	function merge(node, soul){
-		var cat = this.gun._, at = (cat.next || empty)[soul];
+		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
 		if(!at){ return }
-		var msg = this.map[soul] = {
-			put: this.node = node,
-			get: this.soul = soul,
-			gun: this.at = at
-		};
-		if(this.ack){ msg['@'] = this.ack }
-		obj_map(node, each, this);
+		var msg = ctx.map[soul] = {
+			put: node,
+			get: soul,
+			gun: at
+		}, as = {ctx: ctx, msg: msg};
+		ctx.async = !!cat.tag.node;
+		if(ctx.ack){ msg['@'] = ctx.ack }
+		obj_map(node, each, as);
+		if(!ctx.async){ return }
+		if(!ctx.and){
+			cat.on('node', function(m){
+				this.to.next(m);
+				if(m !== ctx.map[m.get]){ return }
+				ctx.souls[m.get] = false;
+				obj_map(m.put, aeach, m);
+				if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return }
+				if(ctx.c){ return } ctx.c = 1;
+				this.off();
+				obj_map(ctx.map, map, ctx);
+			});
+		}
+		ctx.and = true;
+		cat.on('node', msg);
 	}
 	function each(val, key){
-		var graph = this.graph, soul = this.soul, at = (this.at._), tmp;
-		graph[soul] = Gun.state.to(this.node, key, graph[soul]);
-		at.put = Gun.state.to(this.node, key, at.put);
+		var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.gun._), tmp;
+		graph[soul] = Gun.state.to(node, key, graph[soul]);
+		if(ctx.async){ return }
+		at.put = Gun.state.to(node, key, at.put);
 	}
-	function map(msg, soul){ var tmp;
+	function aeach(val, key){
+		var msg = this, node = msg.put, at = (msg.gun._);
+		at.put = Gun.state.to(node, key, at.put);
+	}
+	function map(msg, soul){
 		if(!msg.gun){ return }
-		if((tmp = this.gun._).tag.node){
-			tmp.on('node', function(msg){ this.off();
-				(msg.gun._).on('in', msg);
-			}).on.on('node', msg);
-			return;
-		}
+		msg.gun._.root._.stop = {};
+		//console.log("map ->", soul, msg.put);
 		(msg.gun._).on('in', msg);
+		msg.gun._.root._.stop = {};
 	}
 
 	Gun.on.get = function(msg, gun){
@@ -190,4 +209,17 @@ Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel f
 if(typeof window !== "undefined"){ window.Gun = Gun }
 if(typeof common !== "undefined"){ common.exports = Gun }
 module.exports = Gun;
+
+/*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
+	this.to.next(ctx);
+	if(ctx.once){ return }
+	ctx.on('node', function(msg){
+		var to = this.to;
+		//console.log(">>>", msg.put);
+		setTimeout(function(){
+			//console.log("<<<<<", msg.put);
+			to.next(msg);
+		},1);
+	})
+});*/
 	

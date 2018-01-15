@@ -903,6 +903,12 @@
             return;
           }
           check['any'+soul+key] = 1;
+          if((tmp = soul.split('~')) && 2 == tmp.length){
+            setTimeout(function(){ // hacky idea, what would be better?
+              each.any(val, key, node, soul);
+            },1);
+            return;
+          }
           at.on('secure', function(msg){ this.off();
             check['any'+soul+key] = 0;
             each.end(msg || {err: "Data cannot be modified."});
@@ -912,6 +918,13 @@
         }
         if(!(tmp = soul.split('~')) || 2 !== tmp.length){
           each.end({err: "Soul is not signed at '" + key + "'."});
+          return;
+        }
+        var other = Gun.obj.map(at.sea.own[soul], function(v, p){
+          if(user.pub !== p){ return p }
+        });
+        if(other){
+          each.any(val, key, node, soul);
           return;
         }
         check['any'+soul+key] = 1;

@@ -1162,9 +1162,9 @@
 			Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 		}
 		function ack(msg, ev){
-			var as = this.as, get = as.get || empty, at = as.gun._;
+			var as = this.as, get = as.get || empty, at = as.gun._, tmp = (msg.put||empty)[get['#']];
 			if(at.ack){ at.ack = (at.ack + 1) || 1 }
-			if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
+			if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(tmp, at.get))){
 				if(at.put !== u){ return }
 				//at.ack = 0;
 				at.on('in', {
@@ -1173,6 +1173,10 @@
 					gun: at.gun,
 					'@': msg['@']
 				})
+				return;
+			}
+			if(node_ == get['.']){ // is this a security concern?
+				at.on('in', {get: at.get, put: tmp[at.get], gun: at.gun, '@': msg['@']});
 				return;
 			}
 			//if(/*!msg.gun &&*/ !get['.'] && get['#']){ at.ack = (at.ack + 1) || 1 }
@@ -1228,7 +1232,7 @@
 			var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 			if(!next){ next = cat.next = {} }
 			next[at.get = key] = gun;
-			if(cat.root === back){ 
+			if(cat.root === back){
 				at.soul = key;
 			} else
 			if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
@@ -1368,6 +1372,7 @@
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
+				//console.log('PUT!', as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
@@ -1468,7 +1473,10 @@
 					as.soul = (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 				} else {
 					//as.data = obj_put({}, as.gun._.get, as.data);
-					as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+					if(node_ == at.get){
+						as.soul = (at.put||empty)['#'];
+					}
+					as.soul = as.soul || at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -1482,6 +1490,7 @@
 		}
 		var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
 		var u, empty = {}, noop = function(){}, iife = function(fn,as){fn.call(as||empty)};
+		var node_ = Gun.node._;
 	})(require, './put');
 
 	;require(function(module){
@@ -1698,8 +1707,10 @@
 			item.get('_').get(function(at, ev){
 				if(!at.gun || !at.gun._.back){ return }
 				ev.off();
+				var soul = (at.put||{})['#'];
 				at = (at.gun._.back._);
-				var put = {}, node = at.put, soul = Gun.node.soul(node);
+				var put = {}, node = at.put;
+				soul = at.soul || Gun.node.soul(node) || soul;
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 				gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
 			},{wait:0});

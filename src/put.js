@@ -97,13 +97,19 @@ function batch(){ var as = this;
 			if(!as.ack){ return }
 			as.ack(ack, this);
 		}, as.opt);
+		// NOW is a hack to get synchronous replies to correctly call.
+		// and STOP is a hack to get async behavior to correctly call.
+		// neither of these are ideal, need to be fixed without hacks,
+		// but for now, this works for current tests. :/
 		var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+		var tmp2 = cat.root._.stop;
 		(as.ref._).now = true;
 		(as.ref._).on('out', {
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
 		obj.del((as.ref._), 'now');
 		cat.root._.now = tmp;
+		cat.root._.stop = tmp2;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,f){ if(v){ return true } }
