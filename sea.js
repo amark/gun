@@ -17,7 +17,6 @@
 
   if(typeof Buffer === 'undefined'){
     var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
-    // var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
