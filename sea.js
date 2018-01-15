@@ -19,7 +19,8 @@
     var Buffer = buffer.Buffer;
   }
   if(typeof Buffer === 'undefined'){
-    var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
+    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
+    // var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
@@ -136,8 +137,8 @@
           root.get(pub).get(function(at, ev){
             pub = pub.slice(4);
             ev.off(); c--;
-            if(at.put){ 
-              aliases.push({pub: pub, at: at}); 
+            if(at.put){
+              aliases.push({pub: pub, at: at});
             }
             if(!c && (c = -1)){ resolve(aliases) }
           });
@@ -678,8 +679,7 @@
     }
 
     var doIt = function(resolve, reject){
-      // opts = { hook: function({ iat, exp, alias, proof }),
-      //   session: false } // true uses random PIN, no PIN UX error generated
+      // opts = { hook: function({ iat, exp, alias, proof }) }
       // iat == Date.now() when issued, exp == seconds to expire from iat
       // How this works:
       // called when app bootstraps, with wanted options
@@ -1176,7 +1176,7 @@
       if(!m){ if(false === p){ return resolve(m) }
         return resolve();
       }
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){ 
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){
         if(false === p){ return resolve(m) }
         return resolve()
       }
@@ -1185,7 +1185,7 @@
       }catch(e){ return reject(e) }
       m = m || '';
       d = m[0];
-      try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
+      try{ d = d.slice ? JSON.parse(d) : d }catch(e){}
       if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
         if(!ok){ return resolve() }

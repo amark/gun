@@ -52,7 +52,6 @@
     "ws": "~>4.0.0"
   },
   "devDependencies": {
-    "spark-md5": "^3.0.0",
     "@std/esm": "^0.8.3",
     "@trust/webcrypto": "^0.7.1",
     "buffer": "^5.0.7",
@@ -66,6 +65,8 @@
     "node-webcrypto-ossl": "^1.0.31",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
+    "safe-buffer": "^5.1.1",
+    "spark-md5": "^3.0.0",
     "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22",
     "uws": "~>0.14.1"

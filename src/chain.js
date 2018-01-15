@@ -250,9 +250,9 @@ function ask(at, soul){
 	Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 }
 function ack(msg, ev){
-	var as = this.as, get = as.get || empty, at = as.gun._;
+	var as = this.as, get = as.get || empty, at = as.gun._, tmp = (msg.put||empty)[get['#']];
 	if(at.ack){ at.ack = (at.ack + 1) || 1 }
-	if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
+	if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(tmp, at.get))){
 		if(at.put !== u){ return }
 		//at.ack = 0;
 		at.on('in', {
@@ -261,6 +261,10 @@ function ack(msg, ev){
 			gun: at.gun,
 			'@': msg['@']
 		})
+		return;
+	}
+	if(node_ == get['.']){ // is this a security concern?
+		at.on('in', {get: at.get, put: tmp[at.get], gun: at.gun, '@': msg['@']});
 		return;
 	}
 	//if(/*!msg.gun &&*/ !get['.'] && get['#']){ at.ack = (at.ack + 1) || 1 }
