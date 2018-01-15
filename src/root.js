@@ -101,7 +101,10 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	}
 	function merge(node, soul){
 		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
-		if(!at){ return }
+		if(!at){
+			ctx.souls[soul] = false;
+			return
+		}
 		var msg = ctx.map[soul] = {
 			put: node,
 			get: soul,
@@ -139,7 +142,6 @@ Gun._ = { // some reserved key words, these are not the only ones.
 	function map(msg, soul){
 		if(!msg.gun){ return }
 		msg.gun._.root._.stop = {};
-		//console.log("map ->", soul, msg.put);
 		(msg.gun._).on('in', msg);
 		msg.gun._.root._.stop = {};
 	}
@@ -220,6 +222,5 @@ module.exports = Gun;
 			//console.log("<<<<<", msg.put);
 			to.next(msg);
 		},1);
-	})
+	});
 });*/
-	
