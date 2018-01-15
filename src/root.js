@@ -103,7 +103,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
 		if(!at){
 			ctx.souls[soul] = false;
-			return
+			return 
 		}
 		var msg = ctx.map[soul] = {
 			put: node,
@@ -224,3 +224,4 @@ module.exports = Gun;
 		},1);
 	});
 });*/
+	
