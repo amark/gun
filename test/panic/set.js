@@ -173,7 +173,6 @@ describe("Make sure SEA syncs correctly", function(){
 			test.async();
 			console.log(window.count);
 			setTimeout(function(){
-				console.log("!!!!!!!!!!!!!!!!!!!!!!!!", window.count);
 				if('AAA' === window.count[1].what){
 					test.done();
 				}

@@ -745,7 +745,10 @@
 			}
 			function merge(node, soul){
 				var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
-				if(!at){ return }
+				if(!at){
+					ctx.souls[soul] = false;
+					return 
+				}
 				var msg = ctx.map[soul] = {
 					put: node,
 					get: soul,
@@ -783,7 +786,6 @@
 			function map(msg, soul){
 				if(!msg.gun){ return }
 				msg.gun._.root._.stop = {};
-				//console.log("map ->", soul, msg.put);
 				(msg.gun._).on('in', msg);
 				msg.gun._.root._.stop = {};
 			}
@@ -864,7 +866,7 @@
 					//console.log("<<<<<", msg.put);
 					to.next(msg);
 				},1);
-			})
+			});
 		});*/
 	})(require, './root');
 
@@ -1372,7 +1374,6 @@
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
-				//console.log('PUT!', as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
