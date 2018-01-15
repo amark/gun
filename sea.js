@@ -15,9 +15,6 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  if(typeof buffer !== 'undefined'){
-    var Buffer = buffer.Buffer;
-  }
   if(typeof Buffer === 'undefined'){
     var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
     // var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
