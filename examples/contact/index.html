@@ -13,7 +13,8 @@
 					margin: 1em 0;
 					padding: 1em;
 					border: none;
-					background: white;
+					background: rgba(100%, 100%, 100%, 0.9);
+					back-ground: white;
 				}
 				.sigbut {
 					display: inline-block;
@@ -56,7 +57,7 @@
 					<ul>
 						<a href="person" name="#">
 							<li>
-								<span name="profile">
+								<span name="who">
 									<b name="name"></b>
 								</span>
 								<i>~</i><i name="alias"></i>
@@ -86,7 +87,7 @@
 		
 		<div id="person" class="hue3 page">
 			<div class="pad">
-				<div name="profile">
+				<div name="who">
 					<!-- img src="" -->
 					<h2 name="name" contenteditable="true">Name</h2>
 					<i name="born"></i>
@@ -97,7 +98,7 @@
 					</form>
 					<div>
 						<ul name="said">
-							<li name="#"><span name="what"></span></li>
+							<li name="#" class="shade rim"><div name="what" class="rim"></div></li>
 						</ul>
 					</div>
 				</div>
@@ -109,15 +110,21 @@
 			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
 		</div id="info">
 
-		<script src="../jquery.js"></script>
-		<script src="../../gun.js"></script>
-		<script src="../../lib/cryptomodules.js"></script>
-		<script src="../../sea.js"></script>
-		<script src="../../as.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/gun.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/lib/cryptomodules.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/sea.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/as.js"></script>
+
+		<!-- script src="/jquery.js"></script>
+		<script src="/gun.js"></script>
+		<script src="/gun/lib/cryptomodules.js"></script>
+		<script src="/gun/sea.js"></script>
+		<script src="/gun/as.js"></script -->
 		<script>
-			//var gun = Gun('http://localhost:8080/gun'); // DOESN'T WORK YET :(
-			var gun = Gun();
-			var app = gun.get('example/contacts/4');
+			var gun = Gun('http://localhost:8080/gun'); // DOESN'T WORK YET :(
+			//var gun = Gun();
+			var app = gun.get('example/contacts/5');
 			var user = gun.user();
 			var c = window.c = {};
 			(function(){
@@ -203,7 +210,7 @@
 			(function(){
 				$(document).on('submit', '#say', function(e){
 					e.preventDefault();
-					user.get('profile').get('said').set({
+					user.get('who').get('said').set({
 						what: $(this).find('.jot').val()
 					});
 					$(this).find('.jot').val('');
@@ -219,7 +226,7 @@
 			as.route.page('person', function(){
 				if(!user.is){ return as.route('sign') }
 				var pub = location.hash.split('/').slice(-1)[0];
-				as('#person', gun.get('pub/'+pub));
+				as('#person', window.PUB = gun.get('pub/'+pub));
 			});
 
 

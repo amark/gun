@@ -157,10 +157,22 @@ function relate(at, msg, from, rel){
 	}
 	tmp = (at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from};
 	var now = at.root._.now;
+	//now = now || at.root._.stop;
 	if(rel === tmp.rel){
-		if(!now){ return }
-		if(u === now[at.id]){ return }
-		if((now._ || (now._ = {}))[at.id]){ return } now._[at.id] = true;
+		// NOW is a hack to get synchronous replies to correctly call.
+		// and STOP is a hack to get async behavior to correctly call.
+		// neither of these are ideal, need to be fixed without hacks,
+		// but for now, this works for current tests. :/
+		if(!now){
+			var stop = at.root._.stop;
+			if(!stop){ return }
+			if(stop[at.id] === rel){ return }
+			stop[at.id] = rel;
+		} else {
+			if(u === now[at.id]){ return }
+			if((now._ || (now._ = {}))[at.id] === rel){ return }
+			now._[at.id] = rel;
+		}
 	}
 	ask(at, tmp.rel = rel);
 }
@@ -240,7 +252,7 @@ function ask(at, soul){
 function ack(msg, ev){
 	var as = this.as, get = as.get || empty, at = as.gun._;
 	if(at.ack){ at.ack = (at.ack + 1) || 1 }
-	if(!msg.put || node_ == get['.'] || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
+	if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
 		if(at.put !== u){ return }
 		//at.ack = 0;
 		at.on('in', {
