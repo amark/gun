@@ -39,7 +39,7 @@ function cache(key, back){
 	var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 	if(!next){ next = cat.next = {} }
 	next[at.get = key] = gun;
-	if(cat.root === back){ 
+	if(cat.root === back){
 		at.soul = key;
 	} else
 	if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!

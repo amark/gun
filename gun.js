@@ -6,19 +6,19 @@
 	if(typeof global !== "undefined"){ root = global }
 	root = root || {};
 	var console = root.console || {log: function(){}};
-	function require(arg){
-		return arg.slice? require[resolve(arg)] : function(mod, path){
+	function USE(arg){
+		return arg.slice? USE[R(arg)] : function(mod, path){
 			arg(mod = {exports: {}});
-			require[resolve(path)] = mod.exports;
+			USE[R(path)] = mod.exports;
 		}
-		function resolve(path){
-			return path.split('/').slice(-1).toString().replace('.js','');
+		function R(p){
+			return p.split('/').slice(-1).toString().replace('.js','');
 		}
 	}
 	if(typeof module !== "undefined"){ var common = module }
 	/* UNBUILD */
 
-	;require(function(module){
+	;USE(function(module){
 		// Generic javascript utilities.
 		var Type = {};
 		//Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
@@ -163,9 +163,9 @@
 		var list_is = Type.list.is;
 		var obj = Type.obj, obj_is = obj.is, obj_has = obj.has, obj_map = obj.map;
 		module.exports = Type;
-	})(require, './type');
+	})(USE, './type');
 
-	;require(function(module){
+	;USE(function(module){
 		// On event emitter generic javascript utility.
 		module.exports = function onto(tag, arg, as){
 			if(!tag){ return {to: onto} }
@@ -203,9 +203,9 @@
 			(tag = tag.to).next(arg);
 			return tag;
 		};
-	})(require, './onto');
+	})(USE, './onto');
 
-	;require(function(module){
+	;USE(function(module){
 		/* Based on the Hypothetical Amnesia Machine thought experiment */
 		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){
 			if(machineState < incomingState){
@@ -250,10 +250,10 @@
 		}
 		var Lexical = JSON.stringify, undefined;
 		module.exports = HAM;
-	})(require, './HAM');
+	})(USE, './HAM');
 
-	;require(function(module){
-		var Type = require('./type');
+	;USE(function(module){
+		var Type = USE('./type');
 		var Val = {};
 		Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
 			if(v === u){ return false }
@@ -294,11 +294,11 @@
 		var text_is = Type.text.is;
 		var obj = Type.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
 		module.exports = Val;
-	})(require, './val');
+	})(USE, './val');
 
-	;require(function(module){
-		var Type = require('./type');
-		var Val = require('./val');
+	;USE(function(module){
+		var Type = USE('./type');
+		var Val = USE('./val');
 		var Node = {_: '_'};
 		Node.soul = function(n, o){ return (n && n._ && n._[o || soul_]) } // convenience function to check to see if there is a soul on a node and return it.
 		Node.soul.ify = function(n, o){ // put a soul on an object.
@@ -353,11 +353,11 @@
 		var soul_ = Node.soul._;
 		var u;
 		module.exports = Node;
-	})(require, './node');
+	})(USE, './node');
 
-	;require(function(module){
-		var Type = require('./type');
-		var Node = require('./node');
+	;USE(function(module){
+		var Type = USE('./type');
+		var Node = USE('./node');
 		function State(){
 			var t;
 			if(perf){
@@ -437,12 +437,12 @@
 		var fn = Type.fn, fn_is = fn.is;
 		var N_ = Node._, u;
 		module.exports = State;
-	})(require, './state');
+	})(USE, './state');
 
-	;require(function(module){
-		var Type = require('./type');
-		var Val = require('./val');
-		var Node = require('./node');
+	;USE(function(module){
+		var Type = USE('./type');
+		var Val = USE('./val');
+		var Node = USE('./node');
 		var Graph = {};
 		;(function(){
 			Graph.is = function(g, cb, fn, as){ // checks to see if an object is a valid graph.
@@ -589,11 +589,11 @@
 		var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_has = obj.has, obj_empty = obj.empty, obj_put = obj.put, obj_map = obj.map, obj_copy = obj.copy;
 		var u;
 		module.exports = Graph;
-	})(require, './graph');
+	})(USE, './graph');
 
-	;require(function(module){
+	;USE(function(module){
 		// request / response module, for asking and acking messages.
-		require('./onto'); // depends upon onto!
+		USE('./onto'); // depends upon onto!
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
 			if(!(cb instanceof Function)){
@@ -613,10 +613,10 @@
 			}, (this.opt||{}).lack || 9000);
 			return id;
 		}
-	})(require, './ask');
+	})(USE, './ask');
 
-	;require(function(module){
-		var Type = require('./type');
+	;USE(function(module){
+		var Type = USE('./type');
 		function Dup(opt){
 			var dup = {s:{}};
 			opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
@@ -640,9 +640,9 @@
 		}
 		var time_is = Type.time.is;
 		module.exports = Dup;
-	})(require, './dup');
+	})(USE, './dup');
 
-	;require(function(module){
+	;USE(function(module){
 
 		function Gun(o){
 			if(o instanceof Gun){ return (this._ = {gun: this}).gun }
@@ -657,16 +657,16 @@
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
 
-		var Type = require('./type');
+		var Type = USE('./type');
 		Type.obj.to(Type, Gun);
-		Gun.HAM = require('./HAM');
-		Gun.val = require('./val');
-		Gun.node = require('./node');
-		Gun.state = require('./state');
-		Gun.graph = require('./graph');
-		Gun.on = require('./onto');
-		Gun.ask = require('./ask');
-		Gun.dup = require('./dup');
+		Gun.HAM = USE('./HAM');
+		Gun.val = USE('./val');
+		Gun.node = USE('./node');
+		Gun.state = USE('./state');
+		Gun.graph = USE('./graph');
+		Gun.on = USE('./onto');
+		Gun.ask = USE('./ask');
+		Gun.dup = USE('./dup');
 
 		Gun._ = { // some reserved key words, these are not the only ones.
 			node: Gun.node._ // all metadata of a node is stored in the meta property on the node.
@@ -745,7 +745,10 @@
 			}
 			function merge(node, soul){
 				var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
-				if(!at){ return }
+				if(!at){
+					ctx.souls[soul] = false;
+					return 
+				}
 				var msg = ctx.map[soul] = {
 					put: node,
 					get: soul,
@@ -783,7 +786,6 @@
 			function map(msg, soul){
 				if(!msg.gun){ return }
 				msg.gun._.root._.stop = {};
-				//console.log("map ->", soul, msg.put);
 				(msg.gun._).on('in', msg);
 				msg.gun._.root._.stop = {};
 			}
@@ -864,12 +866,12 @@
 					//console.log("<<<<<", msg.put);
 					to.next(msg);
 				},1);
-			})
+			});
 		});*/
-	})(require, './root');
+	})(USE, './root');
 
-	;require(function(module){
-		var Gun = require('./root');
+	;USE(function(module){
+		var Gun = USE('./root');
 		Gun.chain.back = function(n, opt){ var tmp;
 			n = n || 1;
 			if(-1 === n || Infinity === n){
@@ -908,13 +910,13 @@
 			return this;
 		}
 		var empty = {}, u;
-	})(require, './back');
+	})(USE, './back');
 
-	;require(function(module){
+	;USE(function(module){
 		// WARNING: GUN is very simple, but the JavaScript chaining API around GUN
 		// is complicated and was extremely hard to build. If you port GUN to another
 		// language, consider implementing an easier API to build.
-		var Gun = require('./root');
+		var Gun = USE('./root');
 		Gun.chain.chain = function(){
 			var at = this._, chain = new this.constructor(this), cat = chain._, root;
 			cat.root = root = at.root;
@@ -1162,9 +1164,9 @@
 			Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 		}
 		function ack(msg, ev){
-			var as = this.as, get = as.get || empty, at = as.gun._;
+			var as = this.as, get = as.get || empty, at = as.gun._, tmp = (msg.put||empty)[get['#']];
 			if(at.ack){ at.ack = (at.ack + 1) || 1 }
-			if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
+			if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(tmp, at.get))){
 				if(at.put !== u){ return }
 				//at.ack = 0;
 				at.on('in', {
@@ -1173,6 +1175,10 @@
 					gun: at.gun,
 					'@': msg['@']
 				})
+				return;
+			}
+			if(node_ == get['.']){ // is this a security concern?
+				at.on('in', {get: at.get, put: tmp[at.get], gun: at.gun, '@': msg['@']});
 				return;
 			}
 			//if(/*!msg.gun &&*/ !get['.'] && get['#']){ at.ack = (at.ack + 1) || 1 }
@@ -1185,10 +1191,10 @@
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 		var text_rand = Gun.text.random;
 		var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
-	})(require, './chain');
+	})(USE, './chain');
 
-	;require(function(module){
-		var Gun = require('./root');
+	;USE(function(module){
+		var Gun = USE('./root');
 		Gun.chain.get = function(key, cb, as){
 			if(typeof key === 'string'){
 				var gun, back = this, cat = back._;
@@ -1228,7 +1234,7 @@
 			var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 			if(!next){ next = cat.next = {} }
 			next[at.get = key] = gun;
-			if(cat.root === back){ 
+			if(cat.root === back){
 				at.soul = key;
 			} else
 			if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
@@ -1260,10 +1266,10 @@
 		var num_is = Gun.num.is;
 		var rel = Gun.val.rel, node_ = Gun.node._;
 		var empty = {}, u;
-	})(require, './get');
+	})(USE, './get');
 
-	;require(function(module){
-		var Gun = require('./root');
+	;USE(function(module){
+		var Gun = USE('./root');
 		Gun.chain.put = function(data, cb, as){
 			// #soul.field=value>state
 			// ~who#where.where=what>when@was
@@ -1468,7 +1474,10 @@
 					as.soul = (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 				} else {
 					//as.data = obj_put({}, as.gun._.get, as.data);
-					as.soul = at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
+					if(node_ == at.get){
+						as.soul = (at.put||empty)['#'];
+					}
+					as.soul = as.soul || at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -1482,19 +1491,20 @@
 		}
 		var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
 		var u, empty = {}, noop = function(){}, iife = function(fn,as){fn.call(as||empty)};
-	})(require, './put');
+		var node_ = Gun.node._;
+	})(USE, './put');
 
-	;require(function(module){
-		var Gun = require('./root');
-		require('./chain');
-		require('./back');
-		require('./put');
-		require('./get');
+	;USE(function(module){
+		var Gun = USE('./root');
+		USE('./chain');
+		USE('./back');
+		USE('./put');
+		USE('./get');
 		module.exports = Gun;
-	})(require, './index');
+	})(USE, './index');
 
-	;require(function(module){
-		var Gun = require('./index');
+	;USE(function(module){
+		var Gun = USE('./index');
 		Gun.chain.on = function(tag, arg, eas, as){
 			var gun = this, at = gun._, tmp, act, off;
 			if(typeof tag === 'string'){
@@ -1640,10 +1650,10 @@
 		var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
 		var rel = Gun.val.rel;
 		var empty = {}, noop = function(){}, u;
-	})(require, './on');
+	})(USE, './on');
 
-	;require(function(module){
-		var Gun = require('./index');
+	;USE(function(module){
+		var Gun = USE('./index');
 		Gun.chain.map = function(cb, opt, t){
 			var gun = this, cat = gun._, chain;
 			if(!cb){
@@ -1679,10 +1689,10 @@
 			(tmp.echo || (tmp.echo = {}))[at.id] = at;
 		}
 		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
-	})(require, './map');
+	})(USE, './map');
 
-	;require(function(module){
-		var Gun = require('./index');
+	;USE(function(module){
+		var Gun = USE('./index');
 		Gun.chain.set = function(item, cb, opt){
 			var gun = this, soul;
 			cb = cb || function(){};
@@ -1698,16 +1708,18 @@
 			item.get('_').get(function(at, ev){
 				if(!at.gun || !at.gun._.back){ return }
 				ev.off();
+				var soul = (at.put||{})['#'];
 				at = (at.gun._.back._);
-				var put = {}, node = at.put, soul = Gun.node.soul(node);
+				var put = {}, node = at.put;
+				soul = at.soul || Gun.node.soul(node) || soul;
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
 				gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
 			},{wait:0});
 			return item;
 		}
-	})(require, './set');
+	})(USE, './set');
 
-	;require(function(module){
+	;USE(function(module){
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
 		var root, noop = function(){}, u;
@@ -1781,10 +1793,10 @@
 				});
 			}
 		});
-	})(require, './adapters/localStorage');
+	})(USE, './adapters/localStorage');
 
-	;require(function(module){
-		var Gun = require('./index');
+	;USE(function(module){
+		var Gun = USE('./index');
 		var websocket;
 		if(typeof WebSocket !== 'undefined'){
 			websocket = WebSocket;
@@ -1887,6 +1899,6 @@
 			}
 		});
 		var noop = function(){};
-	})(require, './adapters/websocket');
+	})(USE, './adapters/websocket');
 
 }());
