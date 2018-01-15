@@ -110,21 +110,21 @@
 			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
 		</div id="info">
 
-		<script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
+		<!-- script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
 		<script src="/Users/mark/Dropbox/Public/gun/db/gun.js"></script>
 		<script src="/Users/mark/Dropbox/Public/gun/db/lib/cryptomodules.js"></script>
 		<script src="/Users/mark/Dropbox/Public/gun/db/sea.js"></script>
-		<script src="/Users/mark/Dropbox/Public/gun/db/as.js"></script>
+		<script src="/Users/mark/Dropbox/Public/gun/db/as.js"></script -->
 
-		<!-- script src="/jquery.js"></script>
+		<script src="/jquery.js"></script>
 		<script src="/gun.js"></script>
 		<script src="/gun/lib/cryptomodules.js"></script>
 		<script src="/gun/sea.js"></script>
-		<script src="/gun/as.js"></script -->
+		<script src="/gun/as.js"></script>
 		<script>
-			var gun = Gun('http://localhost:8080/gun'); // DOESN'T WORK YET :(
+			var gun = Gun(location.origin+'/gun');
 			//var gun = Gun();
-			var app = gun.get('example/contacts/5');
+			var app = gun.get('example/contacts/6');
 			var user = gun.user();
 			var c = window.c = {};
 			(function(){

@@ -199,7 +199,6 @@ describe("Make sure SEA syncs correctly", function(){
 			window.gun = gun;
 			var user = window.user = gun.user();
 			user.auth('alice', 'xyzabcmnopq', function(ack){
-					console.log("????", ack);
 				if(ack.err || !ack.pub){ return }
 				test.done();
 			});
@@ -224,11 +223,10 @@ describe("Make sure SEA syncs correctly", function(){
 			test.async();
 			console.log(window.count);
 			setTimeout(function(){
-				console.log("!!!!!!!!!!!!!!!!!!!!!!!!", window.count);
 				if('AAA' === window.count[1].what){
 					test.done();
 				}
-			}, 100);
+			}, 1200);
 		});
 	});
 
