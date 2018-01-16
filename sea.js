@@ -15,20 +15,14 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  if(typeof buffer !== 'undefined'){
-    var Buffer = buffer.Buffer;
-  }
   if(typeof Buffer === 'undefined'){
-    var Buffer = require('buffer').Buffer;  //eslint-disable-line no-redeclare
+    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
   }
 
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
   var sessionStorage, localStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
-    if(typeof window.SparkMD5 !== 'undefined'){
-      var SparkMD5 = window.SparkMD5;
-    }
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
     getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
@@ -55,10 +49,6 @@
       global.sessionStorage = sessionStorage;
       global.localStorage = localStorage;
     }
-  }
-
-  if(typeof SparkMD5 === 'undefined'){
-    var SparkMD5 = require('spark-md5');  //eslint-disable-line no-redeclare
   }
 
   // Encryption parameters - TODO: maybe to be changed via init?
@@ -136,8 +126,8 @@
           root.get(pub).get(function(at, ev){
             pub = pub.slice(4);
             ev.off(); c--;
-            if(at.put){ 
-              aliases.push({pub: pub, at: at}); 
+            if(at.put){
+              aliases.push({pub: pub, at: at});
             }
             if(!c && (c = -1)){ resolve(aliases) }
           });
@@ -166,7 +156,7 @@
             .catch(function(e){ reject({err: 'Failed to create proof!'}) })
             .then(function(proof){
               var user = {pub: pub, proof: proof, at: at};
-              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.         
+              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
               /*
                 MARK TO @mhelander : pub vs epub!???
               */
@@ -455,13 +445,18 @@
   // This recalls Web Cryptography API CryptoKeys from IndexedDB or creates & stores
   function recallCryptoKey(p,s,o){  // {pub, key}|proof, salt, optional:['sign']
     o = o || ['encrypt', 'decrypt'];  // Default operations
-    var importKey = function(key){ return subtle.importKey(
-      'raw',
-      makeKey((Gun.obj.has(key, 'key') && key.key) || key, s || getRandomBytes(8)),
-      'AES-CBC',
-      false,
-      o
-    ); };
+    var importKey = function(key){
+      return makeKey((Gun.obj.has(key, 'key') && key.key) || key, s || getRandomBytes(8))
+      .then(function(hashedKey){
+        return subtle.importKey(
+          'raw',
+          hashedKey,
+          'AES-CBC',
+          false,
+          o
+        );
+      });
+    };
     return new Promise(function(resolve){
       if(authsettings.validity && typeof window !== 'undefined'
       && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
@@ -678,8 +673,7 @@
     }
 
     var doIt = function(resolve, reject){
-      // opts = { hook: function({ iat, exp, alias, proof }),
-      //   session: false } // true uses random PIN, no PIN UX error generated
+      // opts = { hook: function({ iat, exp, alias, proof }) }
       // iat == Date.now() when issued, exp == seconds to expire from iat
       // How this works:
       // called when app bootstraps, with wanted options
@@ -957,14 +951,11 @@
     to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
   }
 
-  // Does enc/dec key like OpenSSL - works with CryptoJS encryption/decryption
   function makeKey(p,s){
     var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
-    var h128 = new Buffer((new SparkMD5()).appendBinary(ps).end(true), 'binary');
-    return Buffer.concat([
-      h128,
-      new Buffer((new SparkMD5()).appendBinary(Buffer.concat([h128, ps])).end(true), 'binary')
-    ]);
+    return sha256hash(ps.toString('utf8')).then(function(s){
+      return new Buffer(s, 'binary');
+    });
   }
 
   // These SEA functions support both callback AND Promises
@@ -1176,7 +1167,7 @@
       if(!m){ if(false === p){ return resolve(m) }
         return resolve();
       }
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){ 
+      if(!m.slice || 'SEA[' !== m.slice(0,4)){
         if(false === p){ return resolve(m) }
         return resolve()
       }
@@ -1185,7 +1176,7 @@
       }catch(e){ return reject(e) }
       m = m || '';
       d = m[0];
-      try{ d = d.slice ? JSON.parse(d) : d }catch(e){} 
+      try{ d = d.slice ? JSON.parse(d) : d }catch(e){}
       if(false === p){ resolve(d) }
       SEA.verify(m[0], p, m[1]).then(function(ok){
         if(!ok){ return resolve() }
