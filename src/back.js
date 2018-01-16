@@ -1,6 +1,7 @@
 
 var Gun = require('./root');
 Gun.chain.back = function(n, opt){ var tmp;
+	n = n || 1;
 	if(-1 === n || Infinity === n){
 		return this._.root;
 	} else
@@ -31,6 +32,10 @@ Gun.chain.back = function(n, opt){ var tmp;
 		&& !(yes = n(tmp, opt))){}
 		return yes;
 	}
+	if(Gun.num.is(n)){
+		return at.back.back(n - 1);
+	}
+	return this;
 }
 var empty = {}, u;
 	

@@ -8,7 +8,7 @@ function Gun(o){
 
 Gun.is = function(gun){ return (gun instanceof Gun) }
 
-Gun.version = 0.8;
+Gun.version = 0.9;
 
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
@@ -71,11 +71,11 @@ Gun._ = { // some reserved key words, these are not the only ones.
 
 ;(function(){
 	Gun.on.put = function(msg, gun){
-		var at = gun._, ctx = {gun: gun, graph: at.graph, put: {}, map: {}, machine: Gun.state(), ack: msg['@']};
+		var at = gun._, ctx = {gun: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@']};
 		if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
-		obj_map(ctx.map, map, ctx);
+		if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 		if(u !== ctx.defer){
 			setTimeout(function(){
 				Gun.on.put(msg, gun);
@@ -97,27 +97,53 @@ Gun._ = { // some reserved key words, these are not the only ones.
 		}
 		ctx.put[soul] = Gun.state.to(node, key, ctx.put[soul]);
 		(ctx.diff || (ctx.diff = {}))[soul] = Gun.state.to(node, key, ctx.diff[soul]);
+		ctx.souls[soul] = true;
 	}
 	function merge(node, soul){
-		var cat = this.gun._, at = (cat.next || empty)[soul];
-		if(!at){ return }
-		var msg = this.map[soul] = {
-			put: this.node = node,
-			get: this.soul = soul,
-			gun: this.at = at
-		};
-		if(this.ack){ msg['@'] = this.ack }
-		obj_map(node, each, this);
+		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
+		if(!at){
+			ctx.souls[soul] = false;
+			return 
+		}
+		var msg = ctx.map[soul] = {
+			put: node,
+			get: soul,
+			gun: at
+		}, as = {ctx: ctx, msg: msg};
+		ctx.async = !!cat.tag.node;
+		if(ctx.ack){ msg['@'] = ctx.ack }
+		obj_map(node, each, as);
+		if(!ctx.async){ return }
+		if(!ctx.and){
+			cat.on('node', function(m){
+				this.to.next(m);
+				if(m !== ctx.map[m.get]){ return }
+				ctx.souls[m.get] = false;
+				obj_map(m.put, aeach, m);
+				if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return }
+				if(ctx.c){ return } ctx.c = 1;
+				this.off();
+				obj_map(ctx.map, map, ctx);
+			});
+		}
+		ctx.and = true;
 		cat.on('node', msg);
 	}
 	function each(val, key){
-		var graph = this.graph, soul = this.soul, at = (this.at._), tmp;
-		graph[soul] = Gun.state.to(this.node, key, graph[soul]);
-		at.put = Gun.state.to(this.node, key, at.put);
+		var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.gun._), tmp;
+		graph[soul] = Gun.state.to(node, key, graph[soul]);
+		if(ctx.async){ return }
+		at.put = Gun.state.to(node, key, at.put);
+	}
+	function aeach(val, key){
+		var msg = this, node = msg.put, at = (msg.gun._);
+		at.put = Gun.state.to(node, key, at.put);
 	}
 	function map(msg, soul){
 		if(!msg.gun){ return }
+		msg.gun._.root._.stop = {};
 		(msg.gun._).on('in', msg);
+		msg.gun._.root._.stop = {};
 	}
 
 	Gun.on.get = function(msg, gun){
@@ -159,12 +185,10 @@ Gun._ = { // some reserved key words, these are not the only ones.
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
-		at.opt.uuid = at.opt.uuid || function(){ 
-			return state().toString(36).replace('.','') + text_rand(12);
-		}
 		at.opt.peers = at.opt.peers || {};
 		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
 		Gun.on('opt', at);
+		at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 		return gun;
 	}
 }());
@@ -172,7 +196,7 @@ Gun._ = { // some reserved key words, these are not the only ones.
 var list_is = Gun.list.is;
 var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var state = Gun.state, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
+var state_lex = Gun.state.lex, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -188,5 +212,16 @@ if(typeof window !== "undefined"){ window.Gun = Gun }
 if(typeof common !== "undefined"){ common.exports = Gun }
 module.exports = Gun;
 
-Gun.log.once("0.8", "0.8 WARNING! Breaking changes, test that your app works before upgrading! The adapter interface has been upgraded (non-default storage and transport layers probably won't work). Also, `.path()` and `.not()` are outside core and now in 'lib/'.");
+/*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
+	this.to.next(ctx);
+	if(ctx.once){ return }
+	ctx.on('node', function(msg){
+		var to = this.to;
+		//console.log(">>>", msg.put);
+		setTimeout(function(){
+			//console.log("<<<<<", msg.put);
+			to.next(msg);
+		},1);
+	});
+});*/
 	

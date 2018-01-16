@@ -4,7 +4,10 @@ module.exports = function onto(tag, arg, as){
 	if(!tag){ return {to: onto} }
 	var tag = (this.tag || (this.tag = {}))[tag] ||
 	(this.tag[tag] = {tag: tag, to: onto._ = {
-		next: function(){}
+		next: function(arg){ var tmp;
+			if((tmp = this.to)){ 
+				tmp.next(arg);
+		}}
 	}});
 	if(arg instanceof Function){
 		var be = {

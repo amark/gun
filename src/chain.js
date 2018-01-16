@@ -25,7 +25,7 @@ function output(msg){
 		}*/
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
-			msg['#'] || (msg['#'] = root.opt.uuid());
+			msg['#'] || (msg['#'] = text_rand());
 			back = (root.gun.get(get['#'])._);
 			if(!(get = get['.'])){
 				if(obj_has(back, 'put')){
@@ -55,6 +55,7 @@ function output(msg){
 		if(get['.']){
 			if(at.get){
 				msg = {get: {'.': at.get}, gun: at.gun};
+				(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
 				return back.on('out', msg);
 			}
 			msg = {get: {}, gun: at.gun};
@@ -64,6 +65,7 @@ function output(msg){
 		if(at.get){
 			msg.gun = at.gun;
 			get['.'] = at.get;
+			(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
 			return back.on('out', msg);
 		}
 	}
@@ -155,10 +157,22 @@ function relate(at, msg, from, rel){
 	}
 	tmp = (at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from};
 	var now = at.root._.now;
+	//now = now || at.root._.stop;
 	if(rel === tmp.rel){
-		if(!now){ return }
-		if(u === now[at.id]){ return }
-		if((now._ || (now._ = {}))[at.id]){ return } now._[at.id] = true;
+		// NOW is a hack to get synchronous replies to correctly call.
+		// and STOP is a hack to get async behavior to correctly call.
+		// neither of these are ideal, need to be fixed without hacks,
+		// but for now, this works for current tests. :/
+		if(!now){
+			var stop = at.root._.stop;
+			if(!stop){ return }
+			if(stop[at.id] === rel){ return }
+			stop[at.id] = rel;
+		} else {
+			if(u === now[at.id]){ return }
+			if((now._ || (now._ = {}))[at.id] === rel){ return }
+			now._[at.id] = rel;
+		}
 	}
 	ask(at, tmp.rel = rel);
 }
@@ -202,7 +216,7 @@ function not(at, msg){
 	if(!root.now || !root.now[at.id]){
 		if((u === msg.put && !msg['@']) && null === tmp){ return }
 	}
-	if(u === tmp && at.put !== u){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
+	if(u === tmp && Gun.val.rel.is(at.put)){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
 	obj_map(tmp, function(proxy){
 		if(!(proxy = proxy.at)){ return }
 		obj_del(proxy.echo, at.id);
@@ -225,19 +239,20 @@ function ask(at, soul){
 	if(at.ack){
 		//tmp.ack = tmp.ack || -1;
 		tmp.on('out', {get: {'#': soul}});
-		return;
+		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}
-	obj_map(at.next, function(gun, key){
+	obj_map(at.ask || at.next, function(gun, key){
 		//(tmp.gun.get(key)._).on('out', {get: {'#': soul, '.': key}});
 		//tmp.on('out', {get: {'#': soul, '.': key}});
 		(gun._).on('out', {get: {'#': soul, '.': key}});
 		//at.on('out', {get: {'#': soul, '.': key}});
 	});
+	Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 }
 function ack(msg, ev){
-	var as = this.as, get = as.get || empty, at = as.gun._;
+	var as = this.as, get = as.get || empty, at = as.gun._, tmp = (msg.put||empty)[get['#']];
 	if(at.ack){ at.ack = (at.ack + 1) || 1 }
-	if(!msg.put || node_ == get['.'] || (get['.'] && !obj_has(msg.put[get['#']], at.get))){
+	if(!msg.put /*|| node_ == get['.']*/ || (get['.'] && !obj_has(tmp, at.get))){
 		if(at.put !== u){ return }
 		//at.ack = 0;
 		at.on('in', {
@@ -248,6 +263,10 @@ function ack(msg, ev){
 		})
 		return;
 	}
+	if(node_ == get['.']){ // is this a security concern?
+		at.on('in', {get: at.get, put: tmp[at.get], gun: at.gun, '@': msg['@']});
+		return;
+	}
 	//if(/*!msg.gun &&*/ !get['.'] && get['#']){ at.ack = (at.ack + 1) || 1 }
 	//msg = obj_to(msg);
 	msg.gun = at.root;
@@ -256,5 +275,6 @@ function ack(msg, ev){
 }
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
+var text_rand = Gun.text.random;
 var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
 	
