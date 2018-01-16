@@ -62,6 +62,13 @@ input, textarea {
 	background: white;
 }
 
+.shade {
+  background: rgba(0%, 0%, 0%, 0.1);
+}
+.tint {
+  background: rgba(100%, 100%, 100%, 0.1);
+}
+
 .redt {
 	color: #ea3224;
 }
@@ -86,6 +93,10 @@ input, textarea {
 	min-width: 250px;
 	width: 95%;
 	max-width: 50em;
+}
+
+.rim {
+  margin: 2%;
 }
 
 .right {
@@ -125,17 +136,17 @@ input, textarea {
 }
 
 @keyframes hue {
-  0%   {background: #4D79D8;}
-  25%  {background: #33cc33;}
-  50%  {background: #f2b919;}
-  75%  {background: #ea3224;}
-  100% {background: #4D79D8;}
+  0%   {background-color: #4D79D8;}
+  25%  {background-color: #33cc33;}
+  50%  {background-color: #f2b919;}
+  75%  {background-color: #ea3224;}
+  100% {background-color: #4D79D8;}
 } @-webkit-keyframes hue {
-  0%   {background: #4D79D8;}
-  25%  {background: #33cc33;}
-  50%  {background: #f2b919;}
-  75%  {background: #ea3224;}
-  100% {background: #4D79D8;}
+  0%   {background-color: #4D79D8;}
+  25%  {background-color: #33cc33;}
+  50%  {background-color: #f2b919;}
+  75%  {background-color: #ea3224;}
+  100% {background-color: #4D79D8;}
 }
 
 .huet {
@@ -165,17 +176,17 @@ input, textarea {
 }
 
 @keyframes hue2 {
-  0%	 {background: #ea3224;}
-  25%  {background: #4D79D8;}
-  50%  {background: #33cc33;}
-  75%  {background: #f2b919;}
-  100% {background: #ea3224;}
+  0%	 {background-color: #ea3224;}
+  25%  {background-color: #4D79D8;}
+  50%  {background-color: #33cc33;}
+  75%  {background-color: #f2b919;}
+  100% {background-color: #ea3224;}
 } @-webkit-keyframes hue2 {
-  0%	 {background: #ea3224;}
-  25%  {background: #4D79D8;}
-  50%  {background: #33cc33;}
-  75%  {background: #f2b919;}
-  100% {background: #ea3224;}
+  0%	 {background-color: #ea3224;}
+  25%  {background-color: #4D79D8;}
+  50%  {background-color: #33cc33;}
+  75%  {background-color: #f2b919;}
+  100% {background-color: #ea3224;}
 }
 
 .huet2 {
@@ -205,17 +216,17 @@ input, textarea {
 }
 
 @keyframes hue3 {
-  0%	 {background: #33cc33;}
-  25%  {background: #f2b919;}
-  50%  {background: #ea3224;}
-  75%  {background: #4D79D8;}
-  100% {background: #33cc33;}
+  0%	 {background-color: #33cc33;}
+  25%  {background-color: #f2b919;}
+  50%  {background-color: #ea3224;}
+  75%  {background-color: #4D79D8;}
+  100% {background-color: #33cc33;}
 } @-webkit-keyframes hue3 {
-  0%	 {background: #33cc33;}
-  25%  {background: #f2b919;}
-  50%  {background: #ea3224;}
-  75%  {background: #4D79D8;}
-  100% {background: #33cc33;}
+  0%	 {background-color: #33cc33;}
+  25%  {background-color: #f2b919;}
+  50%  {background-color: #ea3224;}
+  75%  {background-color: #4D79D8;}
+  100% {background-color: #33cc33;}
 }
 
 .huet3 {
@@ -245,17 +256,17 @@ input, textarea {
 }
 
 @keyframes hue4 {
-  0%   {background: #f2b919;}
-  25%  {background: #ea3224;}
-  50%  {background: #4D79D8;}
-  75%	 {background: #33cc33;}
-  100% {background: #f2b919;}
+  0%   {background-color: #f2b919;}
+  25%  {background-color: #ea3224;}
+  50%  {background-color: #4D79D8;}
+  75%	 {background-color: #33cc33;}
+  100% {background-color: #f2b919;}
 } @-webkit-keyframes hue4 {
-  0%   {background: #f2b919;}
-  25%  {background: #ea3224;}
-  50%  {background: #4D79D8;}
-  75%	 {background: #33cc33;}
-  100% {background: #f2b919;}
+  0%   {background-color: #f2b919;}
+  25%  {background-color: #ea3224;}
+  50%  {background-color: #4D79D8;}
+  75%	 {background-color: #33cc33;}
+  100% {background-color: #f2b919;}
 }
 
 .huet4 {

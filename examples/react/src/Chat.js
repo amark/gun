@@ -1,5 +1,5 @@
 import React, { Component }  from 'react'
-import Gun from 'gun'
+import Gun from 'gun/gun'
 
 const formatMsgs = msgs => Object.keys(msgs)
   .map(key => ({ key, ...msgs[key] }))

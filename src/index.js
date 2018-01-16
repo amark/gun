@@ -1,6 +1,5 @@
 
 var Gun = require('./root');
-require('./opt');
 require('./chain');
 require('./back');
 require('./put');

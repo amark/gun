@@ -3025,7 +3025,7 @@ describe('Gun', function(){
 			gun.map().val(function(v,f){
 				check[f] = v;
 				count[f] = (count[f] || 0) + 1;
-				//	console.log("**************", f, v);
+				//console.log("**************", f, v);
 				if(check['1-1'] && check['2-2']){
 					clearTimeout(done.to);
 					done.to = setTimeout(function(){
@@ -3038,6 +3038,7 @@ describe('Gun', function(){
 				}
 			});
 			setTimeout(function(){
+				//console.debug.i=1;console.log("-----------------");
 				gun.get('1-1').put({what: "hi"});
 				setTimeout(function(){
 					gun.get('2-2').put({what: "you."});
@@ -3176,7 +3177,6 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var gun2 = Gun();
 				//console.log(require('fs').readFileSync('./radata/!').toString());
-				//console.debug.i=1;console.log("-----------------");
 				gun2.get('stef').get('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
 					//console.log("******", data);
 					done.a = true;
@@ -3216,7 +3216,7 @@ describe('Gun', function(){
 			});
 			gun.get('parallel').get('bob').get('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("*********** name", data, at.gun._.ack);return;
+				//console.log("*********** name", data, at.gun._.ack);//return;
 				expect(data).to.be('Bob!');
 				expect(field).to.be('name');
 				done.name = true;
@@ -3344,9 +3344,47 @@ describe('Gun', function(){
 			},400);
 		});
 
-		it('multiple times', function(done){
+		it('multiple times map', function(done){
 			var gun = Gun();
 
+			gun.get('usersMM').put({
+				'mark': {
+					fdsa: {
+						pub: 'fdsa',
+						name: "mark"
+					}
+				},
+				'amber': {
+					asdf: {
+						pub: 'asdf',
+						name: "amber"
+					}
+				}
+			});
+
+			var check = {A: {}, B: {}};
+			setTimeout(function(){
+				gun.get('usersMM').map().map().val(function(data){
+					//console.log('A', data);
+					check.A[data.pub] = true;
+				})
+			}, 900);
+
+			setTimeout(function(){
+				gun.get('usersMM').map().map().val(function(data){
+					//console.log('B', data, check);
+					check.B[data.pub] = true;
+					if(check.A['asdf'] && check.A['fdsa'] && check.B['asdf'] && check.B['fdsa']){
+						if(done.c){ return } done.c = 1;
+						done();
+					}
+				})
+			}, 1200);
+
+		});
+
+		it('multiple times', function(done){
+			var gun = Gun();
 			var app = gun.get('mult/times');
 
 			app.get('alias').get('mark').set(gun.get('ASDF').put({
@@ -3389,7 +3427,8 @@ describe('Gun', function(){
 			}, s)});
 
 			var app = gun.get(s.soul);
-
+			
+			//console.debug.i=1;console.log("===================");
 			app.get('alias').get('mark').map().val(function(alias){
 				//console.log("***", alias);
 				done.alias = alias;
@@ -3409,11 +3448,12 @@ describe('Gun', function(){
 		});
 
 		it('put on a put', function(done){
+			try{
 			var gun = Gun();
 			var foo = gun.get('put/on/put').get('a').get('b');
 			var bar = gun.get('put/on/put/ok').get('a').get('b');
 
-			bar.put({a:1})
+			bar.put({a:1});
 
 			bar.on(function(data){
 				if(1 === data.a && 3 === data.c){
@@ -3425,9 +3465,8 @@ describe('Gun', function(){
 			foo.on(function(ack){
 				bar.put({c:3});
 			});
-
 			foo.put({b:2});
-
+			}catch(e){ console.log("!!!!!!!!!!!", e)}
 		});
 
 		it('map with map function', function(done){
@@ -3436,8 +3475,8 @@ describe('Gun', function(){
 			var list = app.get('list');
 
 			var check = {};
-			list.map(function(user){ return user.age === 27? user.name + "thezombie" : u }).on(function(data){
-				//console.log('data:', data);
+			list.map(function(user){ /*console.log("****", user);*/ return user.age === 27? user.name + "thezombie" : u }).on(function(data){
+				//console.log('+++++', data);
 				check[data] = true;
 				if(check.alicethezombie && check.bobthezombie){
 					if(done.c){return}done.c=1;
@@ -3576,6 +3615,116 @@ describe('Gun', function(){
 				if(done.c){ return } done.c = 1;
 				done();
 			});
+		});
+
+		it('If chain cannot be called, ack', function(done){
+			var gun = Gun(), u;
+
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				wat: 1,
+				a: true
+			}, 'nl/app')});
+
+			var app = gun.get('nl/app');
+
+			app.get(function(d){
+				expect(d.put.wat).to.be(1);
+				expect(d.put.a).to.be(true);
+				done.a = 1;
+			});
+
+			app.get('a').get('b').get(function(d){
+				expect(d.put).to.be(u);
+				expect(done.a).to.be.ok();
+				if(done.c){ return }
+				done(); done.c = 1;
+			});
+		});
+
+		it('Chain on known nested object should ack', function(done){
+			var gun = Gun(), u;
+
+			gun.on('put', {gun: gun, put: Gun.graph.ify({
+				bar: {
+					wat: 1
+				}
+			}, 'nl/app')});
+
+			var app = gun.get('nl/app').get('bar');
+
+			app.get(function(d){
+				//console.log("!!", d.put);
+				if(!d || !d.put || !d.put.wat){ return }
+				expect(d.put.wat).to.be(1);
+				done.a = 1;
+				if(!done.u){ return }
+				expect(done.u).to.be.ok();
+				if(done.c){ return } done.c = 1;
+				done();
+			});
+
+			app.get('a').get('b').get(function(d){
+				//console.log("????", d.put);
+				expect(d.put).to.be(u);
+				done.u = true;
+				if(!done.a){ return }
+				expect(done.a).to.be.ok();
+				if(done.c){ return } done.c = 1;
+				done();
+			});
+		});
+
+		it('Soul above but not beneath', function(done){
+			var gun = Gun();
+
+			var a = gun.get('sabnb');
+
+			a.get('profile').put({_:{'#': 'sabnbprofile'}, name: "Plum"});
+
+			setTimeout(function(){
+				a.get('profile').get('said').get('asdf').put('yes');
+				setTimeout(function(){
+					a.val(function(data){
+						expect(data.profile).to.be.eql({'#': 'sabnbprofile'});
+						if(done.c){ return } done.c = 1;
+						done();
+					})
+				}, 100);
+			}, 100);
+
+		});
+		return;
+		it('Nested listener should be called', function(done){
+			
+			var gun = Gun();
+			/*
+			var app = gun.get('nl/app').get('bar');
+
+			app.on(function(d){
+				console.log("!!", d);
+			})
+
+			app.put({wat: 1});
+
+			console.debug.i=1;console.log("------------");
+			console.log(gun._.now);
+			app.put({a: {b:2}});
+			console.log('_______________________');
+			return;*/
+
+			var app = gun.get('nl/app');
+			var node = app.get('watcher/1').put({"stats":{"num":3},"name":"trex"});
+
+			app.get('watcher/1').get('stats').on(function (v, k) {
+			  console.log('v:', k, v);
+			});
+
+			setTimeout(function(){
+			  
+			  console.log("Huh?");
+			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
+			  
+			},100);
 		});
 		return;
 		it.only('Memory management', function(done){
@@ -3823,11 +3972,11 @@ describe('Gun', function(){
 			Gun.on('put', {gun: gun, put: Gun.graph.ify({
 				here: "we go"
 			}, s)});
-			console.debug.i=1;console.log("---------------");
+			//console.debug.i=1;console.log("---------------");
 			gun.get('get/put/any')
 				.put({})
 				.any(function(err, data, field, at, ev){
-					console.log("***** 1", data);
+					//console.log("***** 1", data);
 					done();
 			});
 		});
