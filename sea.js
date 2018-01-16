@@ -15,6 +15,113 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
+  function SafeBuffer(...props) {
+    console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
+    return this.from(...props)
+  }
+  Object.assign(SafeBuffer, {
+    // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
+    from() {
+      if (!Object.keys(arguments).length) {
+        throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+      }
+      const input = arguments[0]
+      let buf
+      if (typeof input === 'string') {
+        const enc = arguments[1] || 'utf8'
+        if (enc === 'hex') {
+          const bytes = input.match(/([\da-fA-F]{2})/g)
+          if (!bytes || !bytes.length) {
+            throw new TypeError('Invalid first argument for type \'hex\'.')
+          }
+          buf = new ArrayBuffer(input.length / 2)
+          const bufView = new Uint8Array(buf)
+          bytes.map((byte, index) => bufView[index] = parseInt(byte, 16))
+        } else if (enc === 'utf8') {
+          const { length } = input
+          buf = new ArrayBuffer(length * 2)
+          const bufView = new Uint16Array(buf)
+          Array.from({ length }).map((_, i) => bufView[i] = input.charCodeAt(i))
+        } else if (enc === 'base64') {
+          const bytes = atob(input)
+          const { length } = bytes
+          buf = new ArrayBuffer(length)
+          const bufView = new Uint8Array(buf)
+          Array.from({ length }).map((_, i) => bufView[i] = bytes.charCodeAt(i))
+        } else {
+          console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
+        }
+        return buf
+      }
+      if (Array.isArray(input)) {
+        const { length } = input
+        buf = new ArrayBuffer(length)
+        const bufView = new Uint8Array(buf)
+        input.map((byte, i) => bufView[i] = byte)
+        return buf
+      }
+      if (input instanceof ArrayBuffer) {
+        const { byteLength, length = byteLength } = input
+        buf = new ArrayBuffer(length)
+        const bufView = new Uint8Array(buf)
+        const itmView = new Uint8Array(input)
+        Array.from({ length }).map((_, i) => bufView[i] = itmView[i])
+        return buf
+      }
+      if (input instanceof Uint8Array) {
+        const { byteLength, length = byteLength } = input
+        buf = new ArrayBuffer(length)
+        const bufView = new Uint8Array(buf)
+        Array.from({ length }).map((_, i) => bufView[i] = input[i])
+        return buf
+      }
+    },
+    alloc(length, fill = 0 /*, enc*/ ) {
+      buf = new ArrayBuffer(length)
+      const bufView = new Uint8Array(buf)
+      Array.from({ length }).map((_, i) => bufView[i] = fill)
+      return buf
+    },
+    concat(arr) { // octet array
+      if (!Array.isArray(arr)) {
+        throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
+      }
+      const length = arr.reduce((sum, item) => {
+        const { byteLength, length = byteLength } = item
+        return sum + length
+      }, 0)
+      buf = new ArrayBuffer(length)
+      const bufView = new Uint8Array(buf)
+      arr.reduce((index, item) => {
+        const { byteLength, length = byteLength } = item
+        const itmView = new Uint8Array(item)
+        Array.from({ length }).map((_, i) => bufView[index + i] = itmView[i])
+        return index + length
+      }, 0)
+      return buf
+    }
+  })
+  SafeBuffer.prototype.from = SafeBuffer.from
+  ArrayBuffer.prototype.toString = function(enc = 'utf8', start, end) {
+    if (enc === 'hex') {
+      const { byteLength: length } = this
+      const bufView = new Uint8Array(this)
+      return Array.from({ length })
+      .map((_, i) => bufView[i].toString(16))
+      .map((byte) => byte.toString(16).padStart(2, '0')).join('')
+    }
+    if (enc === 'utf8') {
+      const { byteLength, length = byteLength } = this
+      const bufView = new Uint16Array(this)
+      return Array.from({ length })
+      .map((_, i) => String.fromCharCode(bufView[i])).join('')
+    }
+    if (enc === 'base64') {
+      return btoa(this)
+    }
+  }
+
+  // var Buffer = SafeBuffer;
   if(typeof Buffer === 'undefined'){
     var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
   }
@@ -25,7 +132,7 @@
   if(typeof window !== 'undefined'){
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
-    getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
+    getRandomBytes = function(len){ return wc.getRandomValues(Buffer.alloc(len)) };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     sessionStorage = window.sessionStorage;
@@ -74,7 +181,7 @@
   };
   // This creates Web Cryptography API compliant JWK for sign/verify purposes
   function keystoecdsajwk(pub,priv){
-    var pubkey = (new Buffer(pub, 'base64')).toString('utf8').split(':');
+    var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
     var jwk = priv ? {d: priv, key_ops: ['sign']} : {key_ops: ['verify']};
     return Object.assign(jwk, {
       kty: 'EC',
@@ -265,7 +372,7 @@
     // IF authsettings.validity === 0 THEN no remember-me, ever
     // IF PIN then signed 'remember' to window.sessionStorage and 'auth' to IndexedDB
     var pin = (Gun.obj.has(opts, 'pin') && opts.pin) || Gun.text.random(10);
-    pin = new Buffer(pin, 'utf8').toString('base64');
+    pin = Buffer.from(pin, 'utf8').toString('base64');
 
     if(proof && user && user.alias && authsettings.validity){
       var args = {alias: user.alias};
@@ -293,7 +400,7 @@
       var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
       || sessionStorage.getItem('user');
       var pin = Gun.obj.has(authprops, 'pin')
-      && new Buffer(authprops.pin, 'utf8').toString('base64');
+      && Buffer.from(authprops.pin, 'utf8').toString('base64');
 
       var checkRememberData = function(decr){
         if(Gun.obj.has(decr, 'proof')
@@ -952,9 +1059,9 @@
   }
 
   function makeKey(p,s){
-    var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
+    var ps = Buffer.concat([Buffer.from(p, 'utf8'), s]);
     return sha256hash(ps.toString('utf8')).then(function(s){
-      return new Buffer(s, 'binary');
+      return Buffer.from(s, 'binary');
     });
   }
 
@@ -975,13 +1082,13 @@
         }, key, pbkdf2.ks*8);
       }).then(function(result){
         pass = getRandomBytes(pass.length);
-        return new Buffer(result, 'binary').toString('base64');
+        return Buffer.from(result, 'binary').toString('base64');
       }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
         var hash = crypto.pbkdf2Sync(
           pass,
-          new Buffer(salt, 'utf8'),
+          Buffer.from(salt, 'utf8'),
           pbkdf2.iter,
           pbkdf2.ks,
           pbkdf2.hash.replace('-', '').toLowerCase()
@@ -996,12 +1103,12 @@
   SEA.keyid = function(p,cb){
     var doIt = function(resolve, reject){
       // base64('base64(x):base64(y)') => Buffer(xy)
-      var pb = Buffer.concat((new Buffer(p, 'base64')).toString('utf8').split(':')
-      .map(function(t){ return new Buffer(t, 'base64') }));
+      var pb = Buffer.concat(Buffer.from(p, 'base64').toString('utf8').split(':')
+      .map(function(t){ return Buffer.from(t, 'base64') }));
       // id is PGPv4 compliant raw key
-      var id = Buffer.concat([new Buffer([0x99, pb.length/0x100, pb.length%0x100]), pb]);
+      var id = Buffer.concat([Buffer.from([0x99, pb.length/0x100, pb.length%0x100]), pb]);
       sha1hash(id).then(function(sha1){
-        var hash = new Buffer(sha1, 'binary');
+        var hash = Buffer.from(sha1, 'binary');
         resolve(hash.slice(hash.length-8).toString('hex')); // 16-bit ID as hex
       });
     };
@@ -1017,7 +1124,7 @@
           return {priv: k.d};
         }).then(function(keys){
           return subtle.exportKey('jwk', pubkey).then(function(k){
-            keys.pub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+            keys.pub = Buffer.from([k.x, k.y].join(':')).toString('base64');
             // return SEA.keyid(keys.pub).then(function(id){
             //   keys.pubId = id;
             //   return keys;
@@ -1036,7 +1143,7 @@
             return keys;
           }).then(function(keys){
             return ecdhSubtle.exportKey('jwk', pubkey).then(function(k){
-              keys.epub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+              keys.epub = Buffer.from([k.x, k.y].join(':')).toString('base64');
               return keys;
             });
           }).catch(function(e){ Gun.log(e); reject(e) });
@@ -1049,7 +1156,7 @@
   SEA.derive = function(m,p,cb){
     var ecdhSubtle = subtleossl || subtle;
     var keystoecdhjwk = function(pub, priv){
-      var pubkey = (new Buffer(pub, 'base64')).toString('utf8').split(':');
+      var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
       var jwk = priv ? {d: priv, key_ops: ['decrypt']} : {key_ops: ['encrypt']};
       var ret = Object.assign(jwk, {
         kty: 'EC',
@@ -1087,7 +1194,7 @@
       sha256hash(m.slice ? m : JSON.stringify(m)).then(function(mm){
         subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
           subtle.sign(ecdsasignprops, key, mm)
-          .then(function(s){ resolve(new Buffer(s, 'binary').toString('base64')) })
+          .then(function(s){ resolve(Buffer.from(s, 'binary').toString('base64')) })
           .catch(function(e){ Gun.log(e); reject(e) });
         }).catch(function(e){ Gun.log(e); reject(e) });
       });
@@ -1099,7 +1206,7 @@
       subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
       .then(function(key){
         sha256hash(m).then(function(mm){
-          subtle.verify(ecdsasignprops, key, new Buffer(s, 'base64'), mm)
+          subtle.verify(ecdsasignprops, key, Buffer.from(s, 'base64'), mm)
           .then(function(v){ resolve(v) })
           .catch(function(e){ Gun.log(e); reject(e) });
         });
@@ -1118,7 +1225,7 @@
           name: 'AES-CBC', iv: iv
         }, aesKey, new TextEncoder().encode(m)).then(function(ct){
           aesKey = getRandomBytes(32);
-          r.ct = new Buffer(ct, 'binary').toString('base64');
+          r.ct = Buffer.from(ct, 'binary').toString('base64');
           return JSON.stringify(r);
         }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
       }).catch(function(e){ Gun.log(e); reject(e)} );
@@ -1128,12 +1235,12 @@
   SEA.dec = function(m,p,cb){
     var doIt = function(resolve, reject){
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
-      var iv = new Buffer(m.iv, 'hex');
-      var s = new Buffer(m.s, 'hex');
+      var iv = Buffer.from(m.iv, 'hex');
+      var s = Buffer.from(m.s, 'hex');
       recallCryptoKey(p, s).then(function(aesKey){
         subtle.decrypt({
           name: 'AES-CBC', iv: iv
-        }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
+        }, aesKey, Buffer.from(m.ct, 'base64')).then(function(ct){
           aesKey = getRandomBytes(32);
           var ctUtf8 = new TextDecoder('utf8').decode(ct);
           try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
