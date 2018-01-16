@@ -15,6 +15,9 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
+  if(typeof buffer !== 'undefined'){ // polyfill from cryptomodules for now, not needed after safe-buffer!
+    var Buffer = buffer.Buffer;		
+  }
   if(typeof Buffer === 'undefined'){
     var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
   }
