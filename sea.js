@@ -15,117 +15,6 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  function SafeBuffer(...props) {
-    console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
-    return this.from(...props)
-  }
-  Object.assign(SafeBuffer, {
-    // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
-    from() {
-      if (!Object.keys(arguments).length) {
-        throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
-      }
-      const input = arguments[0]
-      let buf
-      if (typeof input === 'string') {
-        const enc = arguments[1] || 'utf8'
-        if (enc === 'hex') {
-          const bytes = input.match(/([\da-fA-F]{2})/g)
-          if (!bytes || !bytes.length) {
-            throw new TypeError('Invalid first argument for type \'hex\'.')
-          }
-          buf = new ArrayBuffer(input.length / 2)
-          const bufView = new Uint8Array(buf)
-          bytes.map((byte, index) => bufView[index] = parseInt(byte, 16))
-        } else if (enc === 'utf8') {
-          const { length } = input
-          buf = new ArrayBuffer(length * 2)
-          const bufView = new Uint16Array(buf)
-          Array.from({ length }).map((_, i) => bufView[i] = input.charCodeAt(i))
-        } else if (enc === 'base64') {
-          const bytes = atob(input)
-          const { length } = bytes
-          buf = new ArrayBuffer(length)
-          const bufView = new Uint8Array(buf)
-          Array.from({ length }).map((_, i) => bufView[i] = bytes.charCodeAt(i))
-        } else {
-          console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
-        }
-        return buf
-      }
-      if (Array.isArray(input)) {
-        const { length } = input
-        buf = new ArrayBuffer(length)
-        const bufView = new Uint8Array(buf)
-        input.map((byte, i) => bufView[i] = byte)
-        return buf
-      }
-      if (input instanceof ArrayBuffer) {
-        const { byteLength, length = byteLength } = input
-        buf = new ArrayBuffer(length)
-        const bufView = new Uint8Array(buf)
-        const itmView = new Uint8Array(input)
-        Array.from({ length }).map((_, i) => bufView[i] = itmView[i])
-        return buf
-      }
-      if (input instanceof Uint8Array) {
-        const { byteLength, length = byteLength } = input
-        buf = new ArrayBuffer(length)
-        const bufView = new Uint8Array(buf)
-        Array.from({ length }).map((_, i) => bufView[i] = input[i])
-        return buf
-      }
-    },
-    alloc(length, fill = 0 /*, enc*/ ) {
-      buf = new ArrayBuffer(length)
-      const bufView = new Uint8Array(buf)
-      Array.from({ length }).map((_, i) => bufView[i] = fill)
-      return buf
-    },
-    concat(arr) { // octet array
-      if (!Array.isArray(arr)) {
-        throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
-      }
-      const length = arr.reduce((sum, item) => {
-        const { byteLength, length = byteLength } = item
-        return sum + length
-      }, 0)
-      buf = new ArrayBuffer(length)
-      const bufView = new Uint8Array(buf)
-      arr.reduce((index, item) => {
-        const { byteLength, length = byteLength } = item
-        const itmView = new Uint8Array(item)
-        Array.from({ length }).map((_, i) => bufView[index + i] = itmView[i])
-        return index + length
-      }, 0)
-      return buf
-    }
-  })
-  SafeBuffer.prototype.from = SafeBuffer.from
-  ArrayBuffer.prototype.toString = function(enc = 'utf8', start, end) {
-    if (enc === 'hex') {
-      const { byteLength: length } = this
-      const bufView = new Uint8Array(this)
-      return Array.from({ length })
-      .map((_, i) => bufView[i].toString(16))
-      .map((byte) => byte.toString(16).padStart(2, '0')).join('')
-    }
-    if (enc === 'utf8') {
-      const { byteLength, length = byteLength } = this
-      const bufView = new Uint16Array(this)
-      return Array.from({ length })
-      .map((_, i) => String.fromCharCode(bufView[i])).join('')
-    }
-    if (enc === 'base64') {
-      return btoa(this)
-    }
-  }
-
-  // var Buffer = SafeBuffer;
-  if(typeof Buffer === 'undefined'){
-    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
-  }
-
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
   var sessionStorage, localStorage, indexedDB;
 
@@ -157,6 +46,78 @@
       global.localStorage = localStorage;
     }
   }
+
+  if(typeof Buffer === 'undefined'){
+    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
+  }
+
+  // This is Buffer implementation used in SEA:
+  function SafeBuffer(...props) {
+    console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
+    return this.from(...props)
+  }
+  Object.assign(SafeBuffer, {
+    // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
+    from() {
+      if (!Object.keys(arguments).length) {
+        throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+      }
+      const input = arguments[0]
+      let buf
+      if (typeof input === 'string') {
+        const enc = arguments[1] || 'utf8'
+        if (enc === 'hex') {
+          const bytes = input.match(/([\da-fA-F]{2})/g)
+          .map((byte) => parseInt(byte, 16))
+          if (!bytes || !bytes.length) {
+            throw new TypeError('Invalid first argument for type \'hex\'.')
+          }
+          buf = new Uint8Array(bytes)
+        } else if (enc === 'utf8') {
+          const src = new TextEncoder().encode(input)
+          buf = new Uint8Array(src)
+        } else if (enc === 'base64') {
+          const bytes = atob(input)
+          buf = new Uint8Array(bytes)
+        } else {
+          console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
+        }
+        return buf
+      }
+      if (Array.isArray(input)
+      || input instanceof ArrayBuffer
+      || input instanceof Uint8Array) {
+        return new Uint8Array(input)
+      }
+    },
+    alloc(length, fill = 0 /*, enc*/ ) {
+      return new Uint8Array(Array.from({ length }, () => fill))
+    },
+    concat(arr) { // octet array
+      if (!Array.isArray(arr)) {
+        throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
+      }
+      return new Uint8Array(arr.reduce((ret, item) => ret.concat(Array.from(item)), []))
+    }
+  })
+  SafeBuffer.prototype.from = SafeBuffer.from
+  Uint8Array.prototype.toString = function(enc = 'utf8', start, end) {
+    if (enc === 'hex') {
+      const { byteLength: length } = this
+      return Array.from({ length })
+      .map((_, i) => this[i].toString(16))
+      .map((byte) => byte.toString(16).padStart(2, '0')).join('')
+    }
+    if (enc === 'utf8') {
+      const { byteLength, length = byteLength } = this
+      return Array.from({ length })
+      .map((_, i) => String.fromCharCode(this[i])).join('')
+    }
+    if (enc === 'base64') {
+      return btoa(this)
+    }
+  }
+  // var Buffer = SafeBuffer;
 
   // Encryption parameters - TODO: maybe to be changed via init?
   var pbkdf2 = {
@@ -587,7 +548,8 @@
   function sha256hash(m){
     var hashSubtle = subtleossl || subtle;
     try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
-    return hashSubtle.digest(pbkdf2.hash, new TextEncoder("utf-8").encode(m));
+    return hashSubtle.digest(pbkdf2.hash, new TextEncoder().encode(m))
+    .then(function(hash){ return Buffer.from(hash) });
   }
   // This internal func returns SHA-1 hashed data for KeyID generation
   function sha1hash(b){
@@ -1065,8 +1027,11 @@
     });
   }
 
-  // These SEA functions support both callback AND Promises
   var SEA = {};
+  // This is Buffer used in SEA and usable from Gun/SEA application also.
+  // For documentation see https://nodejs.org/api/buffer.html
+  SEA.Buffer = SafeBuffer;
+  // These SEA functions support both callback AND Promises
   // create a wrapper library around Web Crypto API.
   // now wrap the various AES, ECDSA, PBKDF2 functions we called above.
   SEA.proof = function(pass,salt,cb){
@@ -1088,7 +1053,7 @@
       try{
         var hash = crypto.pbkdf2Sync(
           pass,
-          Buffer.from(salt, 'utf8'),
+          new TextEncoder().encode(salt),
           pbkdf2.iter,
           pbkdf2.ks,
           pbkdf2.hash.replace('-', '').toLowerCase()
