@@ -15,20 +15,13 @@
 
   var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
 
-  if(typeof buffer !== 'undefined'){ // polyfill from cryptomodules for now, not needed after safe-buffer!
-    var Buffer = buffer.Buffer;		
-  }
-  if(typeof Buffer === 'undefined'){
-    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
-  }
-
   var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
   var sessionStorage, localStorage, indexedDB;
 
   if(typeof window !== 'undefined'){
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
-    getRandomBytes = function(len){ return wc.getRandomValues(new Buffer(len)) };
+    getRandomBytes = function(len){ return wc.getRandomValues(Buffer.alloc(len)) };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     sessionStorage = window.sessionStorage;
@@ -54,7 +47,100 @@
     }
   }
 
-  // Encryption parameters - TODO: maybe to be changed via init?
+  // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
+  function SeaArray() {}
+  Object.assign(SeaArray, { from: Array.from })
+  SeaArray.prototype = Object.create(Array.prototype)
+  SeaArray.prototype.toString = function(enc = 'utf8', start = 0, end) {
+    const { length } = this
+    if (enc === 'hex') {
+      const buf = new Uint8Array(this)
+      return [ ...Array(((end && (end + 1)) || length) - start).keys()]
+      .map((i) => buf[ i + start ].toString(16).padStart(2, '0')).join('')
+    }
+    if (enc === 'utf8') {
+      return Array.from(
+        { length: (end || length) - start },
+        (_, i) => String.fromCharCode(this[ i + start])
+      ).join('')
+    }
+    if (enc === 'base64') {
+      return btoa(this)
+    }
+  }
+
+  // This is Buffer implementation used in SEA:
+  function SafeBuffer(...props) {
+    console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
+    return SafeBuffer.from(...props)
+  }
+  SafeBuffer.prototype = Object.create(Array.prototype)
+  Object.assign(SafeBuffer, {
+    // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
+    from() {
+      if (!Object.keys(arguments).length) {
+        throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+      }
+      const input = arguments[0]
+      let buf
+      if (typeof input === 'string') {
+        const enc = arguments[1] || 'utf8'
+        if (enc === 'hex') {
+          const bytes = input.match(/([\da-fA-F]{2})/g)
+          .map((byte) => parseInt(byte, 16))
+          if (!bytes || !bytes.length) {
+            throw new TypeError('Invalid first argument for type \'hex\'.')
+          }
+          buf = SeaArray.from(bytes)
+        } else if (enc === 'utf8') {
+          const { length } = input
+          const words = new Uint16Array(length)
+          Array.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
+          buf = SeaArray.from(words)
+        } else if (enc === 'base64') {
+          const dec = atob(input)
+          const { length } = dec
+          const bytes = new Uint8Array(length)
+          Array.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
+          buf = SeaArray.from(bytes)
+        } else if (enc === 'binary') {
+          buf = SeaArray.from(input)
+        } else {
+          console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
+        }
+        return buf
+      }
+      const { byteLength, length = byteLength } = input
+      if (length) {
+        let buf
+        if (input instanceof ArrayBuffer) {
+          buf = new Uint8Array(input)
+        }
+        return SeaArray.from(buf || input)
+      }
+    },
+
+    alloc(length, fill = 0 /*, enc*/ ) {
+      return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
+    },
+
+    allocUnsafe(length) {
+      return SeaArray.from(new Uint8Array(Array.from({ length })))
+    },
+
+    concat(arr) { // octet array
+      if (!Array.isArray(arr)) {
+        throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
+      }
+      return SeaArray.from(arr.reduce((ret, item) => ret.concat(Array.from(item)), []))
+    }
+  })
+  SafeBuffer.prototype.from = SafeBuffer.from
+  SafeBuffer.prototype.toString = SeaArray.prototype.toString
+
+  const Buffer = SafeBuffer
+
+  // Encryption parameters
   var pbkdf2 = {
     hash: 'SHA-256',
     iter: 50000,
@@ -77,7 +163,7 @@
   };
   // This creates Web Cryptography API compliant JWK for sign/verify purposes
   function keystoecdsajwk(pub,priv){
-    var pubkey = (new Buffer(pub, 'base64')).toString('utf8').split(':');
+    var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
     var jwk = priv ? {d: priv, key_ops: ['sign']} : {key_ops: ['verify']};
     return Object.assign(jwk, {
       kty: 'EC',
@@ -268,7 +354,7 @@
     // IF authsettings.validity === 0 THEN no remember-me, ever
     // IF PIN then signed 'remember' to window.sessionStorage and 'auth' to IndexedDB
     var pin = (Gun.obj.has(opts, 'pin') && opts.pin) || Gun.text.random(10);
-    pin = new Buffer(pin, 'utf8').toString('base64');
+    pin = Buffer.from(pin, 'utf8').toString('base64');
 
     if(proof && user && user.alias && authsettings.validity){
       var args = {alias: user.alias};
@@ -296,7 +382,7 @@
       var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
       || sessionStorage.getItem('user');
       var pin = Gun.obj.has(authprops, 'pin')
-      && new Buffer(authprops.pin, 'utf8').toString('base64');
+      && Buffer.from(authprops.pin, 'utf8').toString('base64');
 
       var checkRememberData = function(decr){
         if(Gun.obj.has(decr, 'proof')
@@ -483,12 +569,13 @@
   function sha256hash(m){
     var hashSubtle = subtleossl || subtle;
     try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
-    return hashSubtle.digest(pbkdf2.hash, new TextEncoder("utf-8").encode(m));
+    return hashSubtle.digest(pbkdf2.hash, new TextEncoder().encode(m))
+    .then(function(hash){ return Buffer.from(hash) });
   }
   // This internal func returns SHA-1 hashed data for KeyID generation
   function sha1hash(b){
     var hashSubtle = subtleossl || subtle;
-    return hashSubtle.digest('SHA-1', b);
+    return hashSubtle.digest('SHA-1', new ArrayBuffer(b));
   }
 
   // How does it work?
@@ -955,14 +1042,17 @@
   }
 
   function makeKey(p,s){
-    var ps = Buffer.concat([new Buffer(p, 'utf8'), s]);
+    var ps = Buffer.concat([Buffer.from(p, 'utf8'), s]);
     return sha256hash(ps.toString('utf8')).then(function(s){
-      return new Buffer(s, 'binary');
+      return Buffer.from(s, 'binary');
     });
   }
 
-  // These SEA functions support both callback AND Promises
   var SEA = {};
+  // This is Buffer used in SEA and usable from Gun/SEA application also.
+  // For documentation see https://nodejs.org/api/buffer.html
+  SEA.Buffer = SafeBuffer;
+  // These SEA functions support both callback AND Promises
   // create a wrapper library around Web Crypto API.
   // now wrap the various AES, ECDSA, PBKDF2 functions we called above.
   SEA.proof = function(pass,salt,cb){
@@ -978,13 +1068,13 @@
         }, key, pbkdf2.ks*8);
       }).then(function(result){
         pass = getRandomBytes(pass.length);
-        return new Buffer(result, 'binary').toString('base64');
+        return Buffer.from(result, 'binary').toString('base64');
       }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
     }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
       try{
         var hash = crypto.pbkdf2Sync(
           pass,
-          new Buffer(salt, 'utf8'),
+          new TextEncoder().encode(salt),
           pbkdf2.iter,
           pbkdf2.ks,
           pbkdf2.hash.replace('-', '').toLowerCase()
@@ -999,13 +1089,13 @@
   SEA.keyid = function(p,cb){
     var doIt = function(resolve, reject){
       // base64('base64(x):base64(y)') => Buffer(xy)
-      var pb = Buffer.concat((new Buffer(p, 'base64')).toString('utf8').split(':')
-      .map(function(t){ return new Buffer(t, 'base64') }));
+      var pb = Buffer.concat(Buffer.from(p, 'base64').toString('utf8').split(':')
+      .map(function(t){ return Buffer.from(t, 'base64') }));
       // id is PGPv4 compliant raw key
-      var id = Buffer.concat([new Buffer([0x99, pb.length/0x100, pb.length%0x100]), pb]);
+      var id = Buffer.concat([Buffer.from([0x99, pb.length/0x100, pb.length%0x100]), pb]);
       sha1hash(id).then(function(sha1){
-        var hash = new Buffer(sha1, 'binary');
-        resolve(hash.slice(hash.length-8).toString('hex')); // 16-bit ID as hex
+        var hash = Buffer.from(sha1, 'binary');
+        resolve(hash.toString('hex', hash.length-8)); // 16-bit ID as hex
       });
     };
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
@@ -1020,7 +1110,7 @@
           return {priv: k.d};
         }).then(function(keys){
           return subtle.exportKey('jwk', pubkey).then(function(k){
-            keys.pub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+            keys.pub = Buffer.from([k.x, k.y].join(':')).toString('base64');
             // return SEA.keyid(keys.pub).then(function(id){
             //   keys.pubId = id;
             //   return keys;
@@ -1039,7 +1129,7 @@
             return keys;
           }).then(function(keys){
             return ecdhSubtle.exportKey('jwk', pubkey).then(function(k){
-              keys.epub = (new Buffer([k.x, k.y].join(':'))).toString('base64');
+              keys.epub = Buffer.from([k.x, k.y].join(':')).toString('base64');
               return keys;
             });
           }).catch(function(e){ Gun.log(e); reject(e) });
@@ -1052,7 +1142,7 @@
   SEA.derive = function(m,p,cb){
     var ecdhSubtle = subtleossl || subtle;
     var keystoecdhjwk = function(pub, priv){
-      var pubkey = (new Buffer(pub, 'base64')).toString('utf8').split(':');
+      var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
       var jwk = priv ? {d: priv, key_ops: ['decrypt']} : {key_ops: ['encrypt']};
       var ret = Object.assign(jwk, {
         kty: 'EC',
@@ -1089,8 +1179,8 @@
       var jwk = keystoecdsajwk(p.pub, p.priv);
       sha256hash(m.slice ? m : JSON.stringify(m)).then(function(mm){
         subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
-          subtle.sign(ecdsasignprops, key, mm)
-          .then(function(s){ resolve(new Buffer(s, 'binary').toString('base64')) })
+          subtle.sign(ecdsasignprops, key, new Uint8Array(mm))
+          .then(function(s){ resolve(Buffer.from(s, 'binary').toString('base64')) })
           .catch(function(e){ Gun.log(e); reject(e) });
         }).catch(function(e){ Gun.log(e); reject(e) });
       });
@@ -1102,7 +1192,7 @@
       subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
       .then(function(key){
         sha256hash(m).then(function(mm){
-          subtle.verify(ecdsasignprops, key, new Buffer(s, 'base64'), mm)
+          subtle.verify(ecdsasignprops, key, Buffer.from(s, 'base64'), mm)
           .then(function(v){ resolve(v) })
           .catch(function(e){ Gun.log(e); reject(e) });
         });
@@ -1121,7 +1211,7 @@
           name: 'AES-CBC', iv: iv
         }, aesKey, new TextEncoder().encode(m)).then(function(ct){
           aesKey = getRandomBytes(32);
-          r.ct = new Buffer(ct, 'binary').toString('base64');
+          r.ct = Buffer.from(ct, 'binary').toString('base64');
           return JSON.stringify(r);
         }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
       }).catch(function(e){ Gun.log(e); reject(e)} );
@@ -1131,12 +1221,12 @@
   SEA.dec = function(m,p,cb){
     var doIt = function(resolve, reject){
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
-      var iv = new Buffer(m.iv, 'hex');
-      var s = new Buffer(m.s, 'hex');
+      var iv = new Uint8Array(Buffer.from(m.iv, 'hex'));
+      var s = new Uint8Array(Buffer.from(m.s, 'hex'));
       recallCryptoKey(p, s).then(function(aesKey){
         subtle.decrypt({
           name: 'AES-CBC', iv: iv
-        }, aesKey, new Buffer(m.ct, 'base64')).then(function(ct){
+        }, aesKey, new Uint8Array(Buffer.from(m.ct, 'base64'))).then(function(ct){
           aesKey = getRandomBytes(32);
           var ctUtf8 = new TextDecoder('utf8').decode(ct);
           try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
