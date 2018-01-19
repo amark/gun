@@ -47,15 +47,34 @@
     }
   }
 
-  if(typeof Buffer === 'undefined'){
-    var Buffer = require('safe-buffer').Buffer;  //eslint-disable-line no-redeclare
+  // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
+  function SeaArray() {}
+  Object.assign(SeaArray, { from: Array.from })
+  SeaArray.prototype = Object.create(Array.prototype)
+  SeaArray.prototype.toString = function(enc = 'utf8', start = 0, end) {
+    const { length } = this
+    if (enc === 'hex') {
+      const buf = new Uint8Array(this)
+      return [ ...Array(((end && (end + 1)) || length) - start).keys()]
+      .map((i) => buf[ i + start ].toString(16).padStart(2, '0')).join('')
+    }
+    if (enc === 'utf8') {
+      return Array.from(
+        { length: (end || length) - start },
+        (_, i) => String.fromCharCode(this[ i + start])
+      ).join('')
+    }
+    if (enc === 'base64') {
+      return btoa(this)
+    }
   }
 
   // This is Buffer implementation used in SEA:
   function SafeBuffer(...props) {
     console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
-    return this.from(...props)
+    return SafeBuffer.from(...props)
   }
+  SafeBuffer.prototype = Object.create(Array.prototype)
   Object.assign(SafeBuffer, {
     // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
     from() {
@@ -72,54 +91,56 @@
           if (!bytes || !bytes.length) {
             throw new TypeError('Invalid first argument for type \'hex\'.')
           }
-          buf = new Uint8Array(bytes)
+          buf = SeaArray.from(bytes)
         } else if (enc === 'utf8') {
-          const src = new TextEncoder().encode(input)
-          buf = new Uint8Array(src)
+          const { length } = input
+          const words = new Uint16Array(length)
+          Array.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
+          buf = SeaArray.from(words)
         } else if (enc === 'base64') {
-          const bytes = atob(input)
-          buf = new Uint8Array(bytes)
+          const dec = atob(input)
+          const { length } = dec
+          const bytes = new Uint8Array(length)
+          Array.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
+          buf = SeaArray.from(bytes)
+        } else if (enc === 'binary') {
+          buf = SeaArray.from(input)
         } else {
           console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
         }
         return buf
       }
-      if (Array.isArray(input)
-      || input instanceof ArrayBuffer
-      || input instanceof Uint8Array) {
-        return new Uint8Array(input)
+      const { byteLength, length = byteLength } = input
+      if (length) {
+        let buf
+        if (input instanceof ArrayBuffer) {
+          buf = new Uint8Array(input)
+        }
+        return SeaArray.from(buf || input)
       }
     },
+
     alloc(length, fill = 0 /*, enc*/ ) {
-      return new Uint8Array(Array.from({ length }, () => fill))
+      return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
     },
+
+    allocUnsafe(length) {
+      return SeaArray.from(new Uint8Array(Array.from({ length })))
+    },
+
     concat(arr) { // octet array
       if (!Array.isArray(arr)) {
         throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
       }
-      return new Uint8Array(arr.reduce((ret, item) => ret.concat(Array.from(item)), []))
+      return SeaArray.from(arr.reduce((ret, item) => ret.concat(Array.from(item)), []))
     }
   })
   SafeBuffer.prototype.from = SafeBuffer.from
-  Uint8Array.prototype.toString = function(enc = 'utf8', start, end) {
-    if (enc === 'hex') {
-      const { byteLength: length } = this
-      return Array.from({ length })
-      .map((_, i) => this[i].toString(16))
-      .map((byte) => byte.toString(16).padStart(2, '0')).join('')
-    }
-    if (enc === 'utf8') {
-      const { byteLength, length = byteLength } = this
-      return Array.from({ length })
-      .map((_, i) => String.fromCharCode(this[i])).join('')
-    }
-    if (enc === 'base64') {
-      return btoa(this)
-    }
-  }
-  // var Buffer = SafeBuffer;
+  SafeBuffer.prototype.toString = SeaArray.prototype.toString
 
-  // Encryption parameters - TODO: maybe to be changed via init?
+  const Buffer = SafeBuffer
+
+  // Encryption parameters
   var pbkdf2 = {
     hash: 'SHA-256',
     iter: 50000,
@@ -554,7 +575,7 @@
   // This internal func returns SHA-1 hashed data for KeyID generation
   function sha1hash(b){
     var hashSubtle = subtleossl || subtle;
-    return hashSubtle.digest('SHA-1', b);
+    return hashSubtle.digest('SHA-1', new ArrayBuffer(b));
   }
 
   // How does it work?
@@ -1074,7 +1095,7 @@
       var id = Buffer.concat([Buffer.from([0x99, pb.length/0x100, pb.length%0x100]), pb]);
       sha1hash(id).then(function(sha1){
         var hash = Buffer.from(sha1, 'binary');
-        resolve(hash.slice(hash.length-8).toString('hex')); // 16-bit ID as hex
+        resolve(hash.toString('hex', hash.length-8)); // 16-bit ID as hex
       });
     };
     if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
@@ -1158,7 +1179,7 @@
       var jwk = keystoecdsajwk(p.pub, p.priv);
       sha256hash(m.slice ? m : JSON.stringify(m)).then(function(mm){
         subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
-          subtle.sign(ecdsasignprops, key, mm)
+          subtle.sign(ecdsasignprops, key, new Uint8Array(mm))
           .then(function(s){ resolve(Buffer.from(s, 'binary').toString('base64')) })
           .catch(function(e){ Gun.log(e); reject(e) });
         }).catch(function(e){ Gun.log(e); reject(e) });
@@ -1200,12 +1221,12 @@
   SEA.dec = function(m,p,cb){
     var doIt = function(resolve, reject){
       try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
-      var iv = Buffer.from(m.iv, 'hex');
-      var s = Buffer.from(m.s, 'hex');
+      var iv = new Uint8Array(Buffer.from(m.iv, 'hex'));
+      var s = new Uint8Array(Buffer.from(m.s, 'hex'));
       recallCryptoKey(p, s).then(function(aesKey){
         subtle.decrypt({
           name: 'AES-CBC', iv: iv
-        }, aesKey, Buffer.from(m.ct, 'base64')).then(function(ct){
+        }, aesKey, new Uint8Array(Buffer.from(m.ct, 'base64'))).then(function(ct){
           aesKey = getRandomBytes(32);
           var ctUtf8 = new TextDecoder('utf8').decode(ct);
           try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;

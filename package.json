@@ -54,7 +54,6 @@
   "devDependencies": {
     "@std/esm": "^0.8.3",
     "@trust/webcrypto": "^0.7.1",
-    "buffer": "^5.0.7",
     "express": ">=4.15.2",
     "fake-indexeddb": "^2.0.3",
     "hapi": "^16.1.1",
@@ -65,7 +64,6 @@
     "node-webcrypto-ossl": "^1.0.31",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.0",
-    "safe-buffer": "^5.1.1",
     "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22",
     "uws": "~>0.14.1"
