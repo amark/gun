@@ -22,7 +22,7 @@
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
     getRandomBytes = function(len){
-      return wc.getRandomValues(new UInt8Array(Buffer.alloc(len)));
+      return wc.getRandomValues(new Uint8Array(Buffer.alloc(len)));
     };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
@@ -541,7 +541,7 @@
       .then(function(hashedKey){
         return subtle.importKey(
           'raw',
-          hashedKey,
+          new Uint8Array(hashedKey),
           'AES-CBC',
           false,
           o
@@ -1194,7 +1194,7 @@
       subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
       .then(function(key){
         sha256hash(m).then(function(mm){
-          subtle.verify(ecdsasignprops, key, new Uint8Array(Buffer.from(s, 'base64')), mm)
+          subtle.verify(ecdsasignprops, key, new Uint8Array(Buffer.from(s, 'base64')), new Uint8Array(mm))
           .then(function(v){ resolve(v) })
           .catch(function(e){ Gun.log(e); reject(e) });
         });
