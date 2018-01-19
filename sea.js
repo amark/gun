@@ -22,7 +22,7 @@
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
     getRandomBytes = function(len){
-      return wc.getRandomValues(new Uint8Array(Buffer.alloc(len)));
+      return Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))));
     };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
@@ -36,7 +36,7 @@
     var webcrypto = new WebCrypto({directory: 'key_storage'});
     subtleossl = webcrypto.subtle;
     subtle = require('@trust/webcrypto').subtle;  // All but ECDH
-    getRandomBytes = function(len){ return crypto.randomBytes(len) };
+    getRandomBytes = function(len){ return Buffer.from(crypto.randomBytes(len)) };
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
@@ -1210,7 +1210,7 @@
       m = (m.slice && m) || JSON.stringify(m);
       recallCryptoKey(p, s).then(function(aesKey){
         subtle.encrypt({
-          name: 'AES-CBC', iv: iv
+          name: 'AES-CBC', iv: new Uint8Array(iv)
         }, aesKey, new TextEncoder().encode(m)).then(function(ct){
           aesKey = getRandomBytes(32);
           r.ct = Buffer.from(ct, 'binary').toString('base64');
