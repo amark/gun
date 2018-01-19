@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/amark/gun#readme",
   "engines": {
-    "node": ">=8.6.0"
+    "node": ">=0.8.4"
   },
   "dependencies": {
     "aws-sdk": ">=2.153.0",
