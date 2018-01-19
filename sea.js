@@ -21,7 +21,9 @@
   if(typeof window !== 'undefined'){
     var wc = window.crypto || window.msCrypto;  // STD or M$
     subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
-    getRandomBytes = function(len){ return wc.getRandomValues(Buffer.alloc(len)) };
+    getRandomBytes = function(len){
+      return Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))));
+    };
     TextEncoder = window.TextEncoder;
     TextDecoder = window.TextDecoder;
     sessionStorage = window.sessionStorage;
@@ -34,7 +36,7 @@
     var webcrypto = new WebCrypto({directory: 'key_storage'});
     subtleossl = webcrypto.subtle;
     subtle = require('@trust/webcrypto').subtle;  // All but ECDH
-    getRandomBytes = function(len){ return crypto.randomBytes(len) };
+    getRandomBytes = function(len){ return Buffer.from(crypto.randomBytes(len)) };
     TextEncoder = require('text-encoding').TextEncoder;
     TextDecoder = require('text-encoding').TextDecoder;
     // Let's have Storage for NodeJS / testing
@@ -539,7 +541,7 @@
       .then(function(hashedKey){
         return subtle.importKey(
           'raw',
-          hashedKey,
+          new Uint8Array(hashedKey),
           'AES-CBC',
           false,
           o
@@ -1192,7 +1194,7 @@
       subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
       .then(function(key){
         sha256hash(m).then(function(mm){
-          subtle.verify(ecdsasignprops, key, Buffer.from(s, 'base64'), mm)
+          subtle.verify(ecdsasignprops, key, new Uint8Array(Buffer.from(s, 'base64')), new Uint8Array(mm))
           .then(function(v){ resolve(v) })
           .catch(function(e){ Gun.log(e); reject(e) });
         });
@@ -1208,7 +1210,7 @@
       m = (m.slice && m) || JSON.stringify(m);
       recallCryptoKey(p, s).then(function(aesKey){
         subtle.encrypt({
-          name: 'AES-CBC', iv: iv
+          name: 'AES-CBC', iv: new Uint8Array(iv)
         }, aesKey, new TextEncoder().encode(m)).then(function(ct){
           aesKey = getRandomBytes(32);
           r.ct = Buffer.from(ct, 'binary').toString('base64');
