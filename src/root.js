@@ -213,7 +213,6 @@ if(typeof common !== "undefined"){ common.exports = Gun }
 module.exports = Gun;
 
 /*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
-	// G and F!!!!!
 	this.to.next(ctx);
 	if(ctx.once){ return }
 	ctx.on('node', function(msg){
