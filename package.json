@@ -52,10 +52,8 @@
     "ws": "~>4.0.0"
   },
   "devDependencies": {
-    "spark-md5": "^3.0.0",
     "@std/esm": "^0.8.3",
     "@trust/webcrypto": "^0.7.1",
-    "buffer": "^5.0.7",
     "express": ">=4.15.2",
     "fake-indexeddb": "^2.0.3",
     "hapi": "^16.1.1",

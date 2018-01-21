@@ -67,9 +67,9 @@ Gun.SEA && describe('SEA', function(){
         // proof - generates PBKDF2 hash from user's alias and password
         // which is then used to decrypt user's auth record
         if(type === 'callback'){
-          Gun.SEA.proof(alias, pass, check);
+          Gun.SEA.proof(pass, Gun.text.random(64), check);
         } else {
-          Gun.SEA.proof(alias, pass).then(check).catch(done);
+          Gun.SEA.proof(pass, Gun.text.random(64)).then(check).catch(done);
         }
       });
 
@@ -509,8 +509,8 @@ Gun().user && describe('Gun', function(){
                 expect(ack).to.not.be('');
                 expect(ack).to.not.have.key('err');
                 expect(ack).to.have.key('ok');
-                //expect(gun.back(-1)._.user).to.not.have.keys([ 'sea', 'pub' ]);
-                expect(gun.back(-1)._.user).to.not.be.ok();
+                expect(gun.back(-1)._.user._).to.not.have.keys([ 'sea', 'pub' ]);
+                // expect(gun.back(-1)._.user).to.not.be.ok();
               }catch(e){ done(e); return }
               done();
             };
