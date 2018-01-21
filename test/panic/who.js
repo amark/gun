@@ -112,7 +112,6 @@ describe("Make sure SEA syncs correctly", function(){
 				if(ack.err || !ack.pub){ return }
 				window.user.auth('alice', 'xyzabcmnopq', function(ack){
 					if(ack.err || !ack.pub){ return }
-					test.done();
 					user.get('who').get('said').set({
 						what: "Hello world!"
 					}, function(ack){

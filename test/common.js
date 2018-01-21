@@ -3693,6 +3693,67 @@ describe('Gun', function(){
 			}, 100);
 
 		});
+
+		it('users map map who said map on', function(done){
+			this.timeout(1000 * 60 * 5);
+			localStorage.clear();
+			var gun = Gun();
+
+			gun.get('users').put({
+				alice: {_:{'#':'alias/alice'},
+					'pub/asdf': {_:{'#':'pub/asdf'},
+						pub: 'asdf'
+					}
+				},
+				bob: {_:{'#':'alias/bob'},
+					'pub/fdsa': {_:{'#':'pub/fdsa'},
+						pub: 'fdsa'
+					}
+				}
+			});
+
+			var check = {}, c = 0, end;
+			//console.log(check);
+			gun.get('users').map().map()
+				.get('who').get('said').map().on(function(msg){
+					if(check[msg.num]){
+						//console.log("!!!!", msg.num, "!!!!");
+					}
+					check[msg.num] = false;
+					c++;
+					clearTimeout(end); end = setTimeout(function(){
+						//console.log("?", c, check);
+						if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
+						done();
+					},100);
+			});
+
+			var said = gun.get('pub/asdf').get('who').get('said');
+
+			function run(i){
+
+				//console.log("----", i, "----");
+				//2 === i && (console.debug.i = 1) && console.debug(1, '======= what happens?');
+				said.set({
+					what: i + " Hello world!",
+					num: i,
+					who: 'asdf',
+					id: 'alice',
+				});
+
+			}
+
+			var i = 0, m = 9, to = setInterval(function frame(){
+				if(m <= i){
+					clearTimeout(to);
+					return;
+				}
+				i++;
+				check[i] = true;
+				run(i);
+			}, 1);
+
+		});
 		return;
 		it('Nested listener should be called', function(done){
 			
