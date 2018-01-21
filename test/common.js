@@ -3696,7 +3696,6 @@ describe('Gun', function(){
 
 		it('users map map who said map on', function(done){
 			this.timeout(1000 * 60 * 5);
-			localStorage.clear();
 			var gun = Gun();
 
 			gun.get('users').put({
