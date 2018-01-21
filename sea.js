@@ -151,6 +151,7 @@
     return new Promise(function(resolve, reject){
       // load all public keys associated with the username alias we want to log in with.
       querygunaliases(alias, root).then(function(aliases){
+        // TODO: BUG! Occasionally returns [], need to add line to auto-requery!
         // then attempt to log into each one until we find ours!
         // (if two users have the same username AND the same password... that would be bad)
         aliases.forEach(function(one, index){

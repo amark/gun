@@ -85,6 +85,10 @@ function input(at){
 			//cat.ack = cat.ack || coat.ack;
 		}
 	}
+	if(node_ === cat.get && change && change['#']){
+		// TODO: Potential bug? What if (soul.field = pointer) gets changed to (soul.field = primitive), we still need to clear out / wipe /reset (soul.field._) to have _id = nothing, or puts might have false positives (revert back to old soul).
+		cat._id = change['#'];
+	}
 	if(u === change){
 		ev.to.next(at);
 		if(cat.soul){ return }
@@ -214,7 +218,7 @@ function not(at, msg){
 	var tmp = at.map, root = at.root._;
 	at.map = null;
 	if(!root.now || !root.now[at.id]){
-		if((u === msg.put && !msg['@']) && null === tmp){ return }
+		if((!msg['@']) && null === tmp){ return }
 	}
 	if(u === tmp && Gun.val.rel.is(at.put)){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
 	obj_map(tmp, function(proxy){
