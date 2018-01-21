@@ -1,9 +1,9 @@
 var config = {
 	IP: require('ip').address(),
 	port: 8080,
-	servers: 2,
+	servers: 1,
 	browsers: 2,
-	each: 500,
+	each: 100,
 	burst: 2, // do not go below 1!
 	wait: 1,
 	route: {
@@ -66,6 +66,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 					res.end("I am "+ env.i +"!");
 				});
 				// Launch the server and start gun!
+				require('/Users/mark/gun24key.js');
 				var Gun = require('gun');
 				// Attach the server to gun.
 				var gun = Gun({file: env.i+'data', web: server, localStorage: false});
@@ -298,7 +299,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 		console.log("Done! Cleaning things up...");
 		setTimeout(function(){
 			done();
-		},1000);
+		},1000 * 60);
 	});
 
 	after("Everything shut down.", function(){
