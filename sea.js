@@ -13,39 +13,42 @@
 
   /* THIS IS AN EARLY ALPHA!!! */
 
-  var Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun');
+  const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun')
 
-  var subtle, subtleossl, TextEncoder, TextDecoder, getRandomBytes;
-  var sessionStorage, localStorage, indexedDB;
+  let subtle
+  let subtleossl
+  let TextEncoder
+  let TextDecoder
+  let getRandomBytes
+  let sessionStorage
+  let localStorage
+  let indexedDB
+  let crypto
 
-  if(typeof window !== 'undefined'){
-    var wc = window.crypto || window.msCrypto;  // STD or M$
-    subtle = wc.subtle || wc.webkitSubtle;      // STD or iSafari
-    getRandomBytes = function(len){
-      return Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))));
-    };
-    TextEncoder = window.TextEncoder;
-    TextDecoder = window.TextDecoder;
-    sessionStorage = window.sessionStorage;
-    localStorage = window.localStorage;
+  if (typeof window !== 'undefined') {
+    const wc = window.crypto || window.msCrypto   // STD or M$
+    subtle = wc.subtle || wc.webkitSubtle         // STD or iSafari
+    getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+    ({ TextEncoder, TextDecoder, sessionStorage, localStorage }) = window
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
-    || window.msIndexedDB || window.shimIndexedDB;
+    || window.msIndexedDB || window.shimIndexedDB
   } else {
-    var crypto = require('crypto');
-    var WebCrypto = require('node-webcrypto-ossl');
-    var webcrypto = new WebCrypto({directory: 'key_storage'});
-    subtleossl = webcrypto.subtle;
-    subtle = require('@trust/webcrypto').subtle;  // All but ECDH
-    getRandomBytes = function(len){ return Buffer.from(crypto.randomBytes(len)) };
-    TextEncoder = require('text-encoding').TextEncoder;
-    TextDecoder = require('text-encoding').TextDecoder;
+    crypto = require('crypto')
+    const WebCrypto = require('node-webcrypto-ossl')
+    const webcrypto = new WebCrypto({directory: 'key_storage'})
+    subtleossl = webcrypto.subtle
+    subtle = require('@trust/webcrypto').subtle   // All but ECDH
+    getRandomBytes = (len) => Buffer.from(crypto.randomBytes(len))
+    const textEncoding = require('text-encoding')
+    TextEncoder = textEncoding.TextEncoder
+    TextDecoder = textEncoding.TextDecoder
     // Let's have Storage for NodeJS / testing
-    sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage');
-    localStorage = new require('node-localstorage').LocalStorage('.localStorage');
-    indexedDB = require("fake-indexeddb");
-    if(typeof global !== 'undefined'){
-      global.sessionStorage = sessionStorage;
-      global.localStorage = localStorage;
+    sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
+    localStorage = new require('node-localstorage').LocalStorage('.localStorage')
+    indexedDB = require('fake-indexeddb')
+    if (typeof global !== 'undefined') {
+      global.sessionStorage = sessionStorage
+      global.localStorage = localStorage
     }
   }
 
@@ -71,7 +74,11 @@
     }
   }
 
-  // This is Buffer implementation used in SEA:
+  // This is Buffer implementation used in SEA. Functionality is mostly
+  // compatible with NodeJS 'safe-buffer' and is used for encoding conversions
+  // between binary and 'hex' | 'utf8' | 'base64'
+  // See documentation and validation for safe implementation in:
+  // https://github.com/feross/safe-buffer#update
   function SafeBuffer(...props) {
     console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
     return SafeBuffer.from(...props)
@@ -121,15 +128,15 @@
         return SeaArray.from(buf || input)
       }
     },
-
+    // This is 'safe-buffer.alloc' sans encoding support
     alloc(length, fill = 0 /*, enc*/ ) {
       return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
     },
-
+    // This is normal UNSAFE 'buffer.alloc' or 'new Buffer(length)' - don't use!
     allocUnsafe(length) {
       return SeaArray.from(new Uint8Array(Array.from({ length })))
     },
-
+    // This puts together array of array like members
     concat(arr) { // octet array
       if (!Array.isArray(arr)) {
         throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
@@ -143,44 +150,33 @@
   const Buffer = SafeBuffer
 
   // Encryption parameters
-  var pbkdf2 = {
-    hash: 'SHA-256',
-    iter: 50000,
-    ks: 64
-  };
+  const pbkdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
 
-  var ecdsasignprops = {name: 'ECDSA', hash: {name: 'SHA-256'}};
-  var ecdsakeyprops = {name: 'ECDSA', namedCurve: 'P-256'};
-  var ecdhkeyprops = {name: 'ECDH', namedCurve: 'P-256'};
+  const ecdsasignprops = {name: 'ECDSA', hash: {name: 'SHA-256'}}
+  const ecdsakeyprops = {name: 'ECDSA', namedCurve: 'P-256'}
+  const ecdhkeyprops = {name: 'ECDH', namedCurve: 'P-256'}
 
-  var _initial_authsettings = {
+  const _initial_authsettings = {
     validity: 12 * 60 * 60, // internally in seconds : 12 hours
-    hook: function(props){ return props } // { iat, exp, alias, remember }
-    // or return new Promise(function(resolve, reject){(resolve(props))})
-  };
+    hook: (props) => props  // { iat, exp, alias, remember }
+    // or return new Promise((resolve, reject) => resolve(props)
+  }
   // These are used to persist user's authentication "session"
-  var authsettings = {
-    validity: _initial_authsettings.validity,
-    hook: _initial_authsettings.hook
-  };
+  const authsettings = Object.assign({}, _initial_authsettings)
   // This creates Web Cryptography API compliant JWK for sign/verify purposes
-  function keystoecdsajwk(pub,priv){
-    var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
-    var jwk = priv ? {d: priv, key_ops: ['sign']} : {key_ops: ['verify']};
+  const keystoecdsajwk = (pub,priv) => {
+    const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
+    const jwk = priv ? { d: priv, key_ops: ['sign'] } : { key_ops: ['verify'] }
     return Object.assign(jwk, {
-      kty: 'EC',
-      crv: 'P-256',
-      x: pubkey[0],
-      y: pubkey[1],
-      ext: false
+      x, y, kty: 'EC', crv: 'P-256', ext: false
     });
   }
 
   // let's extend the gun chain with a `user` function.
   // only one user can be logged in at a time, per gun instance.
-  Gun.chain.user = function(){
-    var root = this.back(-1); // always reference the root gun instance.
-    var user = root._.user || (root._.user = root.chain()); // create a user context.
+  Gun.chain.user = function() {
+    let root = this.back(-1)  // always reference the root gun instance.
+    let user = root._.user || (root._.user = root.chain()); // create a user context.
     // then methods...
     [ 'create', // factory
       'auth',   // login
@@ -188,563 +184,549 @@
       'delete', // account delete
       'recall', // existing auth boostrap
       'alive'   // keep/check auth validity
-    ].forEach(function(method){
-      user[method] = User[method];
-    });
-    return user; // return the user!
-  };
+    ].map((method)=> user[method] = User[method])
+    return user // return the user!
+  }
 
   // Practical examples about usage found from ./test/common.js
 
-  // This is internal func queries public key(s) for alias.
-  function querygunaliases(alias,root){
-    return new Promise(function(resolve, reject){
-      // load all public keys associated with the username alias we want to log in with.
-      root.get('alias/'+alias).get(function(rat, rev){
-        rev.off();
-        if(!rat.put){
-          // if no user, don't do anything.
-          var err = 'No user!';
-          Gun.log(err);
-          return reject(err);
-        }
-        // then figuring out all possible candidates having matching username
-        var aliases = [], c = 0;
-        Gun.obj.map(rat.put, function(at, pub){
-          if(!pub.slice || 'pub/' !== pub.slice(0,4)){ return }
-          c++;
-          // grab the account associated with this public key.
-          root.get(pub).get(function(at, ev){
-            pub = pub.slice(4);
-            ev.off(); c--;
-            if(at.put){
-              aliases.push({pub: pub, at: at});
-            }
-            if(!c && (c = -1)){ resolve(aliases) }
-          });
-        });
-        if(!c){ reject('Public key does not exist!') }
-      });
-    });
+  // These are internal wrappers for ES6 async/await use:
+  const seaCallOnStorage = async (...props) => SEA._callonstore_(...props)
+  const seaRead = async (...props) => SEA.read(...props)
+  const seaWrite = async (...props) => SEA.write(...props)
+  const seaEnc = async (...props) => SEA.enc(...props)
+  const seaDec = async (...props) => SEA.dec(...props)
+  const seaProof = async (...props) => SEA.proof(...props)
+  const seaKeyId = async (...props) => SEA.keyid(...props)
+  const seaPair = async (...props) => SEA.pair(...props)
+  const seaVerify = async (...props) => SEA.verify(...props)
+  const seaSign = async (...props) => SEA.sign(...props)
+  const seaDerive = async (...props) => SEA.derive(...props)
+
+  const parseProps = (props) => {
+    try {
+      return props.slice ? JSON.parse(props) : props
+    } catch (e) {}  //eslint-disable-line no-empty
+    return props
   }
-  // This is internal User authentication func.
-  function authenticate(alias,pass,root){
-    return new Promise(function(resolve, reject){
-      // load all public keys associated with the username alias we want to log in with.
-      querygunaliases(alias, root).then(function(aliases){
-        // then attempt to log into each one until we find ours!
-        // (if two users have the same username AND the same password... that would be bad)
-        aliases.forEach(function(one, index){
-          var at = one.at, pub = one.pub;
-          var remaining = (aliases.length - index) > 1;
-          if(!at.put){
-            return !remaining && reject({err: 'Public key does not exist!'});
+  const seaIndexedDbGetter = async (key, prop) =>
+  await seaCallOnStorage((store) => new Promise((resolve) => {
+    const getData = store.get(key)
+    getData.onsuccess = () => {
+      const { result = {} } = getData
+      resolve(result[prop])
+    }
+  }))
+
+  // This is internal func queries public key(s) for alias.
+  const querygunaliases = (alias,root) => new Promise((resolve, reject) => {
+    // load all public keys associated with the username alias we want to log in with.
+    root.get(`alias/${alias}`).get((rat, rev) => {
+      rev.off()
+      if (!rat.put) {
+        // if no user, don't do anything.
+        const err = 'No user!'
+        Gun.log(err)
+        return reject({ err })
+      }
+      // then figuring out all possible candidates having matching username
+      let aliases = []
+      let c = 0
+      // TODO: how about having real chainable map without callback ?
+      Gun.obj.map(rat.put, (at, pub) => {
+        if (!pub.slice || 'pub/' !== pub.slice(0, 4)) {
+          // TODO: ... this would then be .filter((at, pub))
+          return
+        }
+        ++c
+        // grab the account associated with this public key.
+        root.get(pub).get((at, ev) => {
+          pub = pub.slice(4)
+          ev.off()
+          --c
+          if (at.put){
+            aliases.push({ pub, at })
           }
-          // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-          var auth = at.put.auth; // SEA.read(at.put.auth, pub).then(function(auth){ // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
-            auth = auth.slice ? JSON.parse(auth) : auth;
-            return SEA.proof(pass, auth.salt)
-            .catch(function(e){ reject({err: 'Failed to create proof!'}) })
-            .then(function(proof){
-              var user = {pub: pub, proof: proof, at: at};
-              // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
-              /*
-                MARK TO @mhelander : pub vs epub!???
-              */
-              SEA.dec(auth.auth, {pub: pub, key: proof})
-              .catch(function(e){ reject({err: 'Failed to decrypt secret!'}) })
-              .then(function(sea){
-                // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
-                // if we were successful, then that meanswe're logged in!
-                if(sea){
-                  user.priv = sea.priv;
-                  user.salt = auth.salt;  // TODO: needed?
-                  var epub = at.put.epub; //SEA.read(at.put.epub, pub).then(function(epub){ // NOTE: see above "NOTE"!
-                    Object.assign(user, {epub: epub, epriv: sea.epriv});
-                    resolve(user);
-                  //}).catch(function(){ return !remaining && reject({err: 'Public key does not exist!'}) });
-                } else if(!remaining){
-                  reject({err: 'Public key does not exist!'});
-                }
-                // return remaining ? undefined // Not done yet
-                // : priv ? resolve({pub: pub, priv: priv, at: at, proof: proof})
-                // // Or else we failed to log in...
-                // : reject({err: 'Failed to decrypt private key!'});
-              }).catch(function(e){ reject({err: 'Failed read secret!'})} );
-            });
-          //}).catch(function(e){ reject({err: 'Failed to create proof!'}) });
-        });
-      }).catch(function(e){ reject({err: e}) });
-    });
+          if (!c && (c = -1)) {
+            resolve(aliases)
+          }
+        })
+      })
+      if (!c) {
+        reject({ err: 'Public key does not exist!' })
+      }
+    })
+  })
+  // This is internal User authentication func.
+  const authenticate = async (alias, pass, root) => {
+    // load all public keys associated with the username alias we want to log in with.
+    const aliases = (await querygunaliases(alias, root))
+    .filter(({ pub, at: { put } = {} } = {}) => !!pub && !!put)
+    // Got any?
+    if (!aliases.length) {
+      throw { err: 'Public key does not exist!' }
+    }
+    let err
+    // then attempt to log into each one until we find ours!
+    // (if two users have the same username AND the same password... that would be bad)
+    const [ user ] = await Promise.all(aliases.map(async ({ at, pub }) => {
+      // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
+      const auth = parseProps(at.put.auth)
+    // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
+    // seaRead(at.put.auth, pub).then(function(auth){
+      try {
+        const proof = await seaProof(pass, auth.salt)
+        const props = { pub, proof, at }
+        // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+        /*
+        MARK TO @mhelander : pub vs epub!???
+        */
+        const { salt } = auth
+        const sea = await seaDec(auth.auth, { pub, key: proof })
+        if (!sea) {
+          err = 'Failed to decrypt secret!'
+          return
+        }
+        // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
+        // if we were successful, then that meanswe're logged in!
+        const { priv, epriv } = sea
+        const { epub } = at.put
+        // TODO: 'salt' needed?
+        err = null
+        return Object.assign(props, { priv, salt, epub, epriv })
+      } catch (e) {
+        err = 'Failed to decrypt secret!'
+        return
+      }
+    }))
+
+    if (!user) {
+      throw { err: err || 'Public key does not exist!' }
+    }
+    return user
   }
   // This internal func finalizes User authentication
-  function finalizelogin(alias,key,root,opts){
-    var user = root._.user;
+  const finalizelogin = async (alias, key, root, opts) => {
+    const { user } = root._
     // add our credentials in-memory only to our root gun instance
-    user._ = key.at.gun._;
+    user._ = key.at.gun._
     // so that way we can use the credentials to encrypt/decrypt data
-    user._.is = user.is = {};
+    user._.is = user.is = {}
     // that is input/output through gun (see below)
-    user._.alias = alias;
-    user._.sea = {priv: key.priv, epriv: key.epriv, pub: key.pub, epub: key.epub};
-    user._.pub = key.pub;
-    user._.epub = key.epub;
+    const { pub, priv, epub, epriv } = key
+    Object.assign(user._, { alias, pub, epub, sea: { pub, priv, epub, epriv } })
     //console.log("authorized", user._);
     // persist authentication
-    return authpersist(user._, key.proof, opts).then(function(){
-      // emit an auth event, useful for page redirects and stuff.
-      try{root._.on('auth', user._);
-      }catch(e){console.log("Your 'auth' callback crashed with:", e)}
-      // returns success with the user data credentials.
-      return user._;
-    });
+    await authpersist(user._, key.proof, opts)
+    // emit an auth event, useful for page redirects and stuff.
+    try {
+      root._.on('auth', user._)
+    } catch (e) {
+      console.log('Your \'auth\' callback crashed with:', e)
+    }
+    // returns success with the user data credentials.
+    return user._
   }
   // This updates sessionStorage & IndexedDB to persist authenticated "session"
-  function updatestorage(proof,key,pin){
-    return function(props){
-      return new Promise(function(resolve, reject){
-        if(!Gun.obj.has(props, 'alias')){ return resolve() }
-        if(authsettings.validity && proof && Gun.obj.has(props, 'iat')){
-          props.proof = proof;
-          delete props.remember;  // Not stored if present
+  const updatestorage = (proof, key, pin) => async (props) => {
+    if (!Gun.obj.has(props, 'alias')) {
+      return  // No 'alias' - we're done.
+    }
+    if (authsettings.validity && proof && Gun.obj.has(props, 'iat')) {
+      props.proof = proof
+      delete props.remember   // Not stored if present
 
-          var remember = {alias: props.alias, pin: pin};
-          var persist = props;
+      const { alias, alias: id } = props
+      const remember = { alias, pin }
 
-          return SEA.write(JSON.stringify(remember), key).then(function(signed){
-            sessionStorage.setItem('user', props.alias);
-            sessionStorage.setItem('remember', signed);
-          }).then(function(){
-            return !persist || SEA.enc(persist, pin).then(function(encrypted){
-              return encrypted && SEA.write(encrypted, key).then(function(signed){
-                return new Promise(function(resolve){
-                  SEA._callonstore_(function(store) { // Wipe IndexedDB completedy!
-                    var act = store.clear();
-                    act.onsuccess = function(){};
-                  }, function(){  // Then set encrypted auth props
-                    SEA._callonstore_(function(store){
-                      store.put({id: props.alias, auth: signed});
-                    }, function(){ resolve() });
-                  });
-                });
-              }).catch(reject);
-            }).catch(reject);
-          }).then(function(){ resolve(props) })
-          .catch(function(e){ reject({err: 'Session persisting failed!'}) });
+      try {
+        const signed = await seaWrite(JSON.stringify(remember), key)
+
+        sessionStorage.setItem('user', alias)
+        sessionStorage.setItem('remember', signed)
+
+        const encrypted = await seaEnc(props, pin)
+
+        if (encrypted) {
+          const auth = await seaWrite(encrypted, key)
+
+          await seaCallOnStorage((store) => {
+            const act = store.clear()   // Wipe IndexedDB completedy!
+            act.onsuccess = () => {}
+          })                            // Then set encrypted auth props
+          await seaCallOnStorage((store) => {
+            store.put({ id, auth })
+          })
         }
-        // Wiping IndexedDB completely when using random PIN
-        return new Promise(function(resolve){
-          SEA._callonstore_(function(store) {
-            var act = store.clear();
-            act.onsuccess = function(){};
-          }, function(){ resolve() });
-        }).then(function(){
-          sessionStorage.removeItem('user');
-          sessionStorage.removeItem('remember');
-          resolve(props);
-        });
-      });
-    };
+
+        return props
+      } catch (err) {
+        return reject({ err: 'Session persisting failed!' })
+      }
+    }
+
+    // Wiping IndexedDB completely when using random PIN
+    await seaCallOnStorage((store) => {
+      const act = store.clear()
+      act.onsuccess = () => {}
+    })
+    // And remove sessionStorage data
+    sessionStorage.removeItem('user')
+    sessionStorage.removeItem('remember')
+
+    return props
   }
 
   // This internal func persists User authentication if so configured
-  function authpersist(user,proof,opts){
+  const authpersist = async (user, proof, opts) => {
     // opts = { pin: 'string' }
     // no opts.pin then uses random PIN
     // How this works:
     // called when app bootstraps, with wanted options
     // IF authsettings.validity === 0 THEN no remember-me, ever
     // IF PIN then signed 'remember' to window.sessionStorage and 'auth' to IndexedDB
-    var pin = (Gun.obj.has(opts, 'pin') && opts.pin) || Gun.text.random(10);
-    pin = Buffer.from(pin, 'utf8').toString('base64');
+    const pin = Buffer.from(
+      (Gun.obj.has(opts, 'pin') && opts.pin) || Gun.text.random(10),
+      'utf8'
+    ).toString('base64')
 
-    if(proof && user && user.alias && authsettings.validity){
-      var args = {alias: user.alias};
-      args.iat = Math.ceil(Date.now() / 1000);  // seconds
-      args.exp = authsettings.validity;         // seconds
-      if(Gun.obj.has(opts, 'pin')){
-        args.remember = true;                   // for hook - not stored
+    const { alias } = user || {}
+    const { validity: exp } = authsettings      // seconds
+
+    if (proof && alias && exp) {
+      const iat = Math.ceil(Date.now() / 1000)  // seconds
+      const remember = Gun.obj.has(opts, 'pin') || undefined  // for hook - not stored
+      const props = authsettings.hook({ alias, iat, exp, remember })
+      const { pub, epub, sea: { priv, epriv } } = user
+      const key = { pub, priv, epub, epriv }
+      if (props instanceof Promise) {
+        const asyncProps = await props.then()
+        return await updatestorage(proof, key, pin)(asyncProps)
       }
-      var props = authsettings.hook(args);
-      var key = {
-        pub: user.pub, priv: user.sea.priv, epub: user.epub, epriv: user.sea.epriv
-      };
-      if(props instanceof Promise){
-        return props.then(updatestorage(proof, key, pin));
-      }
-      return updatestorage(proof, key, pin)(props);
+      return await updatestorage(proof, key, pin)(props)
     }
-    return updatestorage()({alias: 'delete'});
+    return await updatestorage()({ alias: 'delete' })
   }
   // This internal func recalls persisted User authentication if so configured
-  function authrecall(root,authprops){
-    return new Promise(function(resolve, reject){
-      // window.sessionStorage only holds signed { alias, pin } !!!
-      var remember = authprops || sessionStorage.getItem('remember');
-      var alias = Gun.obj.has(authprops, 'alias') && authprops.alias
-      || sessionStorage.getItem('user');
-      var pin = Gun.obj.has(authprops, 'pin')
-      && Buffer.from(authprops.pin, 'utf8').toString('base64');
-
-      var checkRememberData = function(decr){
-        if(Gun.obj.has(decr, 'proof')
-        && Gun.obj.has(decr, 'alias') && decr.alias === alias){
-          var proof = decr.proof;
-          var iat = decr.iat; // No way hook to update this
-          delete decr.proof;  // We're not gonna give proof to hook!
-          var checkNotExpired = function(args){
-            if(Math.floor(Date.now() / 1000) < (iat + args.exp)){
-              args.iat = iat;
-              args.proof = proof;
-              return args;
-            } else { Gun.log('Authentication expired!') }
-          };
-          var hooked = authsettings.hook(decr);
-          return ((hooked instanceof Promise)
-          && hooked.then(checkNotExpired)) || checkNotExpired(hooked);
+  const authrecall = async (root, authprops) => {
+    // window.sessionStorage only holds signed { alias, pin } !!!
+    const remember = authprops || sessionStorage.getItem('remember')
+    const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {}
+    const pin = pIn && Buffer.from(pIn, 'utf8').toString('base64')
+    // Checks for existing proof, matching alias and expiration:
+    const checkRememberData = async ({ proof, alias: aLias, iat, exp, remember }) => {
+      if (!!proof && alias === aLias) {
+        const checkNotExpired = (args) => {
+          if (Math.floor(Date.now() / 1000) < (iat + args.exp)) {
+            // No way hook to update 'iat'
+            return Object.assign(args, { iat, proof })
+          } else {
+            Gun.log('Authentication expired!')
+          }
         }
-      };
-      var readAndDecrypt = function(data, pub, key){
-        return SEA.read(data, pub).then(function(encrypted){
-          return SEA.dec(encrypted, key);
-        }).then(function(decrypted){
-          try{ return decrypted.slice ? JSON.parse(decrypted) : decrypted }catch(e){} //eslint-disable-line no-empty
-          return decrypted;
-        });
-      };
+        // We're not gonna give proof to hook!
+        const hooked = authsettings.hook({ alias, iat, exp, remember })
+        return ((hooked instanceof Promise)
+        && await hooked.then(checkNotExpired)) || checkNotExpired(hooked)
+      }
+    }
+    const readAndDecrypt = async (data, pub, key) =>
+      parseProps(await seaDec(await seaRead(data, pub), key))
+    // Returns auth value prop from IndexedDB (encryption key)
+    const getIndexedDbAuth = async () => await seaIndexedDbGetter(alias, 'auth')
 
-      // Already authenticated?
-      if(root._.user && Gun.obj.has(root._.user._, 'pub') && Gun.obj.has(root._.user._, 'sea')){
-        return resolve(root._.user._);
+    // Already authenticated?
+    if (root._.user
+    && Gun.obj.has(root._.user._, 'pub')
+    && Gun.obj.has(root._.user._, 'sea')) {
+      return root._.user._  // Yes, we're done here.
+    }
+    // No, got persisted 'alias'?
+    if (!alias) {
+      throw { err: 'No authentication session found!' }
+    }
+    // Yes, got persisted 'remember'?
+    if (!remember) {
+      throw {  // And return proof if for matching alias
+        err: (await getIndexedDbAuth() && authsettings.validity
+        && 'Missing PIN and alias!') || 'No authentication session found!'
       }
-      // No, got alias?
-      if(alias && remember){
-        return querygunaliases(alias, root).then(function(aliases){
-          return new Promise(function(resolve, reject){
-            // then attempt to log into each one until we find ours!
-            // (if two users have the same username AND the same password... that would be bad)
-            aliases.forEach(function(one, index){
-              var at = one.at, pub = one.pub;
-              var remaining = (aliases.length - index) > 1;
-              if(!at.put){
-                return !remaining && reject({err: 'Public key does not exist!'});
-              }
-              // got pub, time to try auth with alias & PIN...
-              return ((pin && Promise.resolve({pin: pin, alias: alias}))
-              // or just unwrap Storage data...
-              || SEA.read(remember, pub, true)).then(function(props){
-                try{ props = props.slice ? JSON.parse(props) : props }catch(e){}  //eslint-disable-line no-empty
-                if(Gun.obj.has(props, 'pin') && Gun.obj.has(props, 'alias')
-                && props.alias === alias){
-                  pin = props.pin; // Got PIN so get IndexedDB secret if signature is ok
-                  return new Promise(function(resolve){
-                    var remember;
-                    SEA._callonstore_(function(store) {
-                      var getData = store.get(alias);
-                      getData.onsuccess = function(){
-                        remember = getData.result && getData.result.auth;
-                      };
-                    }, function(){  // And return proof if for matching alias
-                      return readAndDecrypt(remember, pub, pin)
-                      .then(checkRememberData).then(resolve)
-                      .catch(function(){ resolve() });
-                    });
-                  });
-                }
-                // No PIN, let's try short-term proof if for matching alias
-                return checkRememberData(props);
-              }).then(function(args){
-                var proof = args && args.proof;
-                if(!proof){
-                  return (!args && reject({err: 'No valid authentication session found!'}))
-                  || updatestorage()(args).then(function(){
-                    reject({err: 'Expired session!'});
-                  }).catch(function(){
-                    reject({err: 'Expired session!'});
-                  });
-                }
-                var auth = JSON.parse(at.put.auth).auth;
-                return SEA.dec(auth, proof).catch(function(e){
-                  return !remaining && reject({err: 'Failed to decrypt private key!'});
-                }).then(function(sea){
-                  if(!sea){ return }
-                  var epub = at.put.epub; //return SEA.read(at.put.epub, pub).then(function(epub){ // NOTE: queryalias uses `gun.get` which internally verifies data with `SEA.read` so we do not need to do it again.
-                    return {pub: pub, priv: sea.priv, epriv: sea.epriv, epub: epub};
-                  //});
-                }).then(function(key){
-                  // now we have AES decrypted the private key,
-                  // if we were successful, then that means we're logged in!
-                  return updatestorage(proof, key, pin)(args).then(function(){
-                    return remaining ? undefined // Not done yet
-                    : key ? resolve(Object.assign(key, {at: at, proof: proof}))
-                    // Or else we failed to log in...
-                    : reject({err: 'Failed to decrypt private key!'});
-                  }).catch(function(e){ reject({err: 'Failed to store credentials!'}) });
-                }).catch(function(e){ reject({err: 'Failed read secret!'}) });
-              }).catch(function(e){ reject({err: 'Failed to access stored credentials!'}) });
-            });
-          });
-        }).then(function(user){
-          pin = pin && {pin: pin};
-          finalizelogin(alias, user, root, pin).then(resolve).catch(function(e){
-            Gun.log('Failed to finalize login with new password!');
-            reject({
-              err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''
-            });
-          });
-        }).catch(function(e){
-          reject({err: 'No authentication session found!'});
-        });
+    }
+    // Yes, let's get (all?) matching aliases
+    const aliases = await querygunaliases(alias, root)
+    .filter(({ pub } = {}) => !!pub)
+    // Got any?
+    if (!aliases.length) {
+      throw { err: 'Public key does not exist!' }
+    }
+    let err
+    // Yes, then attempt to log into each one until we find ours!
+    // (if two users have the same username AND the same password... that would be bad)
+    const [ key ] = await Promise.all(aliases.filter(({ at: { put } = {} }) => !!put)
+    .map(async ({ at, pub }) => {
+      const readStorageData = async () => {
+        const props = parseProps(await seaRead(remember, pub, true))
+        const { pin, alias: aLias } = props
+
+        return (!pin || alias === aLias)
+        // No PIN, let's try short-term proof if for matching alias
+        ? await checkRememberData(props)
+        // Got PIN so get IndexedDB secret if signature is ok
+        : await checkRememberData(await readAndDecrypt(await getIndexedDbAuth(), pub, pin))
       }
-      if(!alias){
-        return reject({err: 'No authentication session found!'});
+      // got pub, try auth with pin & alias :: or unwrap Storage data...
+      const args = pin ? { pin, alias } : await readStorageData()
+      const { proof } = args || {}
+
+      if (!proof) {
+        if (!args) {
+          err = 'No valid authentication session found!'
+          return
+        }
+        try { // Wipes IndexedDB silently
+          await updatestorage()(args)
+        } catch (e) {}  //eslint-disable-line no-empty
+        err = 'Expired session!'
+        return
       }
-      var gotRemember;
-      SEA._callonstore_(function(store) {
-        var getData = store.get(alias);
-        getData.onsuccess = function(){
-          gotRemember = getData.result && getData.result.auth;
-        };
-      }, function(){  // And return proof if for matching alias
-        reject({
-          err: (gotRemember && authsettings.validity && 'Missing PIN and alias!')
-          || 'No authentication session found!'});
-      });
-    });
+
+      try { // auth parsing or decryption fails or returns empty - silently done
+        const { auth } = JSON.parse(at.put.auth)
+        const sea = await seaDec(auth, proof)
+        if (!sea) {
+          err = 'Failed to decrypt private key!'
+          return
+        }
+        const { priv, epriv } = sea
+        const { epub } = at.put
+        // Success! we've found our private data!
+        err = null
+        return { pub, priv, epriv, epub }
+      } catch (e) {
+        err = 'Failed to decrypt private key!'
+        return
+      }
+    }).filter((props) => !!props))
+
+    if (!key) {
+      throw new { err: err || 'Public key does not exist!' }
+    }
+
+    // now we have AES decrypted the private key,
+    // if we were successful, then that means we're logged in!
+    try {
+      await updatestorage(proof, key, pin)(args)
+
+      const user = Object.assign(key, { at, proof })
+
+      return await finalizelogin(alias, user, root, { pin })
+    } catch (e) { // TODO: right log message ?
+      Gun.log('Failed to finalize login with new password!')
+      const { err = '' } = e || {}
+      throw { err: `Finalizing new password login failed! Reason: ${err}` }
+    }
   }
 
   // This internal func executes logout actions
-  function authleave(root, alias){
-    return function(resolve, reject){
-      var user = root._.user || {_:{}};
-      root._.user = null;
-      alias = alias || user._.alias;
-      var doIt = function(){
-        // TODO: is this correct way to 'logout' user from Gun.User ?
-        [ 'alias', 'sea', 'pub' ].forEach(function(key){
-          delete user._[key];
-        });
-        user._.is = user.is = {};
-        // Let's use default
-        root.user();
-        resolve({ok: 0});
-      };
-      // Removes persisted authentication & CryptoKeys
-      authpersist(alias && {alias: alias}).then(doIt).catch(doIt);
-    };
+  const authleave = async (root, alias = root._.user._.alias) => {
+    const { user = { _: {} } } = root._
+    root._.user = null
+    // Removes persisted authentication & CryptoKeys
+    try {
+      await authpersist({ alias })
+    } catch (e) {}  //eslint-disable-line no-empty
+    // TODO: is this correct way to 'logout' user from Gun.User ?
+    [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
+    user._.is = user.is = {}
+    // Let's use default
+    root.user();
+    return { ok: 0 }
   }
   // This recalls Web Cryptography API CryptoKeys from IndexedDB or creates & stores
-  function recallCryptoKey(p,s,o){  // {pub, key}|proof, salt, optional:['sign']
-    o = o || ['encrypt', 'decrypt'];  // Default operations
-    var importKey = function(key){
-      return makeKey((Gun.obj.has(key, 'key') && key.key) || key, s || getRandomBytes(8))
-      .then(function(hashedKey){
-        return subtle.importKey(
-          'raw',
-          new Uint8Array(hashedKey),
-          'AES-CBC',
-          false,
-          o
-        );
-      });
-    };
-    return new Promise(function(resolve){
-      if(authsettings.validity && typeof window !== 'undefined'
-      && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')){
-        var importAndStoreKey = function(){ // Creates new CryptoKey & stores it
-          importKey(p).then(function(key){ SEA._callonstore_(function(store){
-            store.put({id: p.pub, key: key});
-          }, function(){ resolve(key) }); });
-        };
-        if(Gun.obj.has(p, 'set')){ return importAndStoreKey() } // proof update so overwrite
-        var aesKey;
-        SEA._callonstore_(function(store) {
-          var getData = store.get(p.pub);
-          getData.onsuccess = function(){ aesKey = getData.result && getData.result.key };
-        }, function(){ return aesKey ? resolve(aesKey) : importAndStoreKey() });
-      } else { // No secure store usage
-        importKey(p).then(function(aesKey){ resolve(aesKey) });
+  // {pub, key}|proof, salt, optional:['sign']
+  const recallCryptoKey = async (p, s, o = [ 'encrypt', 'decrypt' ]) => {
+    const importKey = async (key) => {
+      const hashedKey = await makeKey((Gun.obj.has(key, 'key') && key.key) || key, s || getRandomBytes(8))
+      return await subtle.importKey(
+        'raw',
+        new Uint8Array(hashedKey),
+        'AES-CBC',
+        false,
+        o
+      )
+    }
+
+    if (authsettings.validity && typeof window !== 'undefined'
+    && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')) {
+      const importAndStoreKey = async () => {
+        const { pub: id } = p
+        const key = importKey(p)
+        await seaCallOnStorage((store) => {
+          store.put({ id, key })
+        })
+        return key
       }
-    });
+      if (Gun.obj.has(p, 'set')) {
+        return importAndStoreKey()  // proof update so overwrite
+      }
+      const aesKey = await seaIndexedDbGetter(id, 'key')
+      return aesKey ? aesKey : importAndStoreKey()
+    }
+
+    // No secure store usage
+    return importKey(p)
   }
   // This internal func returns SHA-256 hashed data for signing
-  function sha256hash(m){
-    var hashSubtle = subtleossl || subtle;
-    try{ m = m.slice ? m : JSON.stringify(m) }catch(e){}  //eslint-disable-line no-empty
-    return hashSubtle.digest(pbkdf2.hash, new TextEncoder().encode(m))
-    .then(function(hash){ return Buffer.from(hash) });
+  const sha256hash = async (mm) => {
+    const hashSubtle = subtleossl || subtle
+    const m = parseProps(mm)
+    const hash = await hashSubtle.digest(pbkdf2.hash, new TextEncoder().encode(m))
+    return Buffer.from(hash)
   }
   // This internal func returns SHA-1 hashed data for KeyID generation
-  function sha1hash(b){
-    var hashSubtle = subtleossl || subtle;
-    return hashSubtle.digest('SHA-1', new ArrayBuffer(b));
-  }
+  const sha1hash = (b) => (subtleossl || subtle).digest('SHA-1', new ArrayBuffer(b))
 
   // How does it work?
   function User(){}
   // Well first we have to actually create a user. That is what this function does.
-  User.create = function(alias, pass, cb){
-    var root = this.back(-1);
-    var doIt = function(resolve, reject){
+Object.assign(User, {
+  create(alias, pass, cb) {
+    const root = this.back(-1)
+    const doIt = (resolve, reject) => {
       // Because more than 1 user might have the same username, we treat the alias as a list of those users.
-      root.get('alias/'+alias).get(function(at, ev){
-        ev.off();
-        if(at.put){
+      root.get(`alias/${alias}`).get((at, ev) => {
+        ev.off()
+        if (at.put) {
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-          var err = 'User already created!';
-          Gun.log(err);
-          return reject({err: err});
+          const err = 'User already created!'
+          Gun.log(err)
+          return reject({ err })
         }
-        var salt = Gun.text.random(64);
+        const salt = Gun.text.random(64)
         // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
-        SEA.proof(pass, salt).then(function(proof){
+        seaProof(pass, salt).then((proof) => {
           // this will take some short amount of time to produce a proof, which slows brute force attacks.
-          SEA.pair().then(function(pairs){
+          seaPair().then((pairs) => {
             // now we have generated a brand new ECDSA key pair for the user account.
-            var user = {pub: pairs.pub};
+            const { pub, priv, epriv } = pairs
+            const user = { pub }
             // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-            SEA.write(alias, pairs).then(function(signedalias){
-              user.alias = signedalias;
-              return SEA.write(pairs.epub, pairs);
-            }).then(function(signedepub){
-              user.epub = signedepub;
-              // to keep the private key safe, we AES encrypt it with the proof of work!
-              return SEA.enc({
-                priv: pairs.priv, epriv: pairs.epriv
-              }, {pub: pairs.epub, key: proof});
-            }).then(function(encryptedprivs){
-              return SEA.write(salt, pairs).then(function(signedsalt){
-                return SEA.write({salt: salt, auth: encryptedprivs}, pairs);
-              });
-            }).then(function(encsigauth){
-              user.auth = encsigauth;
-              var tmp = 'pub/'+pairs.pub;
+            seaWrite(alias, pairs).then((alias) =>
+              Object.assign(user, {alias }) && seaWrite(pairs.epub, pairs)
+            ).then((epub) => Object.assign(user, { epub })
+            // to keep the private key safe, we AES encrypt it with the proof of work!
+            && seaEnc({ priv, epriv }, { pub: pairs.epub, key: proof })
+            ).then((auth) => // TODO: So signedsalt isn't needed?
+              // seaWrite(salt, pairs).then((signedsalt) =>
+                seaWrite({ salt, auth }, pairs)
+              // )
+            ).then((auth) => {
+              Object.assign(user, { auth })
+              const tmp = `pub/${pairs.pub}`
               //console.log("create", user, pair.pub);
               // awesome, now we can actually save the user with their public key as their ID.
-              root.get(tmp).put(user);
+              root.get(tmp).put(user)
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
-              root.get('alias/'+alias).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)));
+              root.get(`alias/${alias}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              setTimeout(function(){ resolve({ok: 0, pub: pairs.pub}) },10); // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
-            }).catch(function(e){ Gun.log('SEA.en or SEA.write calls failed!'); reject(e) });
-          }).catch(function(e){ Gun.log('SEA.pair call failed!'); reject(e) });
-        });
-      });
-    };
-    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
-  };
-  // now that we have created a user, we want to authenticate them!
-  User.auth = function(alias,pass,cb,opt){
-    var opts = opt || (typeof cb !== 'function' && cb);
-    var root = this.back(-1);
-    cb = typeof cb === 'function' && cb;
-
-    var doIt = function(resolve, reject){
-      if(!pass && Gun.obj.has(opts, 'pin')){
-        return authrecall(root, {alias: alias, pin: opts.pin}).then(function(props){
-          resolve(props);
-        }).catch(function(e){
-          reject({err: 'Auth attempt failed! Reason: No session data for alias & PIN'});
-        });
-      }
-      authenticate(alias, pass, root).then(function(keys){
-        // we're logged in!
-        var pin = Gun.obj.has(opts, 'pin') && {pin: opts.pin};
-        if(Gun.obj.has(opts, 'newpass')){
-          // password update so encrypt private key using new pwd + salt
-          var newsalt = Gun.text.random(64);
-          SEA.proof(opts.newpass, newsalt).then(function(newproof){
-            return SEA.enc({
-              priv: keys.priv, epriv: keys.epriv
-            }, {pub: keys.pub, key: newproof, set: true})
-            .then(function(encryptedpriv){
-              return SEA.write({salt: newsalt, auth: encryptedpriv}, keys);
-            });
-          }).then(function(encsigauth){
-            return SEA.write(keys.epub, keys).then(function(signedepub){
-              return SEA.write(alias, keys).then(function(signedalias){
-                return {
-                  alias: signedalias,
-                  auth: encsigauth,
-                  epub: signedepub,
-                  pub: keys.pub
-                };
-              });
-            });
-          }).then(function(user){
-            var tmp = 'pub/'+user.pub;
-            // awesome, now we can update the user using public key ID.
-            // root.get(tmp).put(null);
-            root.get(tmp).put(user);
-            // then we're done
-            finalizelogin(alias, keys, root, pin).then(resolve).catch(function(e){
-              Gun.log('Failed to finalize login with new password!');
-              reject({
-                err: 'Finalizing new password login failed! Reason: '+(e && e.err) || e || ''
-              });
-            });
-          }).catch(function(e){
-            Gun.log('Failed encrypt private key using new password!');
-            reject({err: 'Password set attempt failed! Reason: ' + (e && e.err) || e || ''});
-          });
-        } else {
-          finalizelogin(alias, keys, root, pin).then(resolve).catch(function(e){
-            Gun.log('Failed to finalize login!');
-            reject({err: 'Finalizing login failed! Reason: ' + (e && e.err) || e || ''});
-          });
-        }
-      }).catch(function(e){
-        Gun.log('Failed to sign in!');
-        reject({err: 'Auth attempt failed! Reason: ' + (e && e.err) || e || ''});
-      });
-    };
-    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
-  };
-  Gun.chain.trust = function(user){
-    // TODO: BUG!!! SEA `node` read listener needs to be async, which means core needs to be async too.
-    //gun.get('alice').get('age').trust(bob);
-    if(Gun.is(user)){
-      user.get('pub').get(function(ctx, ev){
-        console.log(ctx, ev);
-      });
+              setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
+            }).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+          }).catch((e) => { Gun.log('SEA.pair call failed!'); reject(e) })
+        })
+      })
     }
-  };
-  User.leave = function(cb){
-    var root = this.back(-1);
-    if(cb){authleave(root)(cb, cb)} else { return new Promise(authleave(root)) }
-  };
+    if (cb){ doIt(cb, cb) } else { return new Promise(doIt) }
+  },
+  // now that we have created a user, we want to authenticate them!
+  auth(alias, pass, cb, opt) {
+    const opts = opt || (typeof cb !== 'function' && cb)
+    const { pin, newpass } = opts || {}
+    const root = this.back(-1)
+    cb = typeof cb === 'function' && cb
+
+    const doIt = (resolve, reject) => {
+      const putErr = (msg) => (e) => {
+        const { message, err = message || '' } = e
+        Gun.log(msg)
+        reject({ err: `${msg} Reason: ${err}` })
+      }
+
+      if (!pass && pin) {
+        return authrecall(root, { alias, pin }).then(resolve).catch((e) => {
+          reject({ err: 'Auth attempt failed! Reason: No session data for alias & PIN' })
+        })
+      }
+      authenticate(alias, pass, root).then((keys) => {
+        if (!keys) {
+          return putErr('Auth attempt failed!')({ message: 'No keys' })
+        }
+        const { pub, priv, epub, epriv } = keys
+        // we're logged in!
+        if (newpass) {
+          // password update so encrypt private key using new pwd + salt
+          const salt = Gun.text.random(64)
+          seaProof(newpass, salt).then((key) =>
+            seaEnc({ priv, epriv }, { pub, key, set: true })
+            .then((auth) => seaWrite({ salt, auth }, keys))
+          ).then((encSigAuth) =>
+            seaWrite(epub, keys).then((signedEpub) =>
+              seaWrite(alias, keys).then((signedAlias) => ({
+                pub,
+                alias: signedAlias,
+                auth: encSigAuth,
+                epub: signedEpub
+              }))
+            )
+          ).then((user) => {
+            // awesome, now we can update the user using public key ID.
+            root.get(`pub/${user.pub}`).put(user)
+            // then we're done
+            finalizelogin(alias, keys, root, { pin }).then(resolve)
+            .catch(putErr('Failed to finalize login with new password!'))
+          }).catch(putErr('Password set attempt failed!'))
+        } else {
+          finalizelogin(alias, keys, root, pin).then(resolve)
+          .catch(putErr('Finalizing login failed!'))
+        }
+      }).catch(putErr('Auth attempt failed!'))
+    }
+    if (cb){ doIt(cb, cb) } else { return new Promise(doIt) }
+  },
+  leave(cb) {
+    const doIt = (resolve) => authleave(this.back(-1)).then(resolve)
+    if (cb) { doIt(cb) } else { return new Promise(doIt) }
+  },
   // If authenticated user wants to delete his/her account, let's support it!
-  User.delete = function(alias,pass,cb){
-    var root = this.back(-1);
-    var doIt = function(resolve, reject){
-      authenticate(alias, pass, root).then(function(key){
-        new Promise(authleave(root, alias)).catch(function(){})
-        .then(function(){
+  delete(alias, pass, cb) {
+    const root = this.back(-1)
+    const doIt = (resolve, reject) => {
+      authenticate(alias, pass, root)
+      .then(({ pub }) => authleave(root, alias).then(() => pub))
+      .then((pub) => {
+        try {
           // Delete user data
-          root.get('pub/'+key.pub).put(null);
+          root.get(`pub/${pub}`).put(null)
           // Wipe user data from memory
-          var user = root._.user || {_: {}};
+          const { user = { _: {} } } = root._
           // TODO: is this correct way to 'logout' user from Gun.User ?
-          [ 'alias', 'sea', 'pub' ].forEach(function(key){
-            delete user._[key];
-          });
-          user._.is = user.is = {};
-          root.user();
-          resolve({ok: 0});
-        }).catch(function(e){
-          Gun.log('User.delete failed! Error:', e);
-          reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''});
-        });
-      }).catch(function(e){
-        Gun.log('User.delete authentication failed! Error:', e);
-        reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''});
-      });
-    };
-    if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
-  };
+          [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
+          user._.is = user.is = {}
+          root.user()
+          resolve({ ok: 0 })
+        } catch(e) {
+          Gun.log('User.delete failed! Error:', e)
+          reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''})
+        }
+      }).catch((e) => {
+        Gun.log('User.delete authentication failed! Error:', e)
+        reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''})
+      })
+    }
+    if (cb) { doIt(cb, cb) } else { return new Promise(doIt) }
+  },
   // If authentication is to be remembered over reloads or browser closing,
   // set validity time in minutes.
-  User.recall = function(v,cb,o){
+  recall(v,cb,o){
     var root = this.back(-1);
     var validity, callback, opts;
     if(!o && typeof cb !== 'function' && !Gun.val.is(cb)){
@@ -783,8 +765,8 @@
       });
     };
     if(callback){doIt(callback, callback)} else { return new Promise(doIt) }
-  };
-  User.alive = function(cb){
+  },
+  alive(cb) {
     var root = this.back(-1);
     var doIt = function(resolve, reject){
       authrecall(root).then(function(){
@@ -797,7 +779,18 @@
       });
     };
     if(cb){doIt(cb, cb)} else { return new Promise(doIt) }
-  };
+  }
+})
+
+  Gun.chain.trust = function(user) {
+    // TODO: BUG!!! SEA `node` read listener needs to be async, which means core needs to be async too.
+    //gun.get('alice').get('age').trust(bob);
+    if (Gun.is(user)) {
+      user.get('pub').get((ctx, ev) => {
+        console.log(ctx, ev)
+      })
+    }
+  }
 
   // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
@@ -810,7 +803,7 @@
         if(!cb){ return }
         var id = uuid(), pair = at.user && (at.user._).sea;
         if(!pair){ return id }
-        SEA.sign(id, pair).then(function(sig){
+        seaSign(id, pair).then(function(sig){
           cb(null, id + '~' + sig);
         }).catch(function(e){cb(e)});
       }
@@ -839,7 +832,7 @@
     // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
     var to = this.to, vertex = (msg.gun._).put, c = 0, d;
     Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
-      SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
+      seaRead(val, false).then(function(data){ c--; // false just extracts the plain data.
         node[key] = val = data; // transform to plain value.
         if(d && !c && (c = -1)){ to.next(msg) }
       });
@@ -851,7 +844,7 @@
     var own = ctx.sea.own, soul = msg.get, c = 0;
     var pub = own[soul] || soul.slice(4), vertex = (msg.gun._).put;
     Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node.
-      SEA.read(val, pub).then(function(data){ c--;
+      seaRead(val, pub).then(function(data){ c--;
         vertex[key] = node[key] = val = data; // verify signature and get plain value.
         if(val && val['#'] && (key = Gun.val.rel.is(val))){ // if it is a relation / edge
           if('alias/' !== soul.slice(0,6)){ own[key] = pub; } // associate the public key with a node if it is itself
@@ -940,7 +933,7 @@
         check['user'+soul+key] = 1;
         if(user && (user = user._) && user.sea && pub === user.pub){
             var id = Gun.text.random(3);
-          SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub}), function(data){ var rel;
+          seaWrite(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub})).then(function(data){ var rel;
             if(rel = Gun.val.rel.is(val)){
               (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
             }
@@ -950,12 +943,12 @@
           });
           return;
         }
-        SEA.read(val, pub).then(function(data){ var rel, tmp;
+        seaRead(val, pub).then(function(data){ var rel, tmp;
           if(u === data){ // make sure the signature matches the account it claims to be on.
             return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
           }
           if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-            SEA.verify(tmp[0], pub, tmp[1], function(ok){
+            seaVerify(tmp[0], pub, tmp[1]).then(function(ok){
               if(!ok){ return each.end({err: "Signature did not match account."}) }
               (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
               check['user'+soul+key] = 0;
@@ -972,10 +965,10 @@
           if(user = at.sea.own[soul]){
             check['any'+soul+key] = 1;
             user = Gun.obj.map(user, function(a,b){ return b });
-            SEA.read(val, user, function(data){ var rel;
+            seaRead(val, user).then(function(data){ var rel;
               if(!data){ return each.end({err: "Mismatched owner on '" + key + "'.", }) }
               if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-                SEA.verify(tmp[0], user, tmp[1], function(ok){
+                seaVerify(tmp[0], user, tmp[1]).then(function(ok){
                   if(!ok){ return each.end({err: "Signature did not match account."}) }
                   (at.sea.own[rel] = at.sea.own[rel] || {})[user] = true;
                   check['any'+soul+key] = 0;
@@ -1014,10 +1007,10 @@
           return;
         }
         check['any'+soul+key] = 1;
-        SEA.verify(tmp[0], user.pub, tmp[1], function(ok){
+        seaVerify(tmp[0], user.pub, tmp[1]).then(function(ok){
           if(!ok){ return each.end({err: "Signature did not match account at '" + key + "'."}) }
           (at.sea.own[soul] = at.sea.own[soul] || {})[user.pub] = true;
-          SEA.write(val, user, function(data){
+          seaWrite(val, user).then(function(data){
             node[key] = data;
             check['any'+soul+key] = 0;
             each.end({ok: 1});
@@ -1043,265 +1036,289 @@
     to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
   }
 
-  function makeKey(p,s){
-    var ps = Buffer.concat([Buffer.from(p, 'utf8'), s]);
-    return sha256hash(ps.toString('utf8')).then(function(s){
-      return Buffer.from(s, 'binary');
-    });
+  const makeKey = async (p, s) => {
+    const ps = Buffer.concat([Buffer.from(p, 'utf8'), s]).toString('utf8')
+    return Buffer.from(await sha256hash(ps), 'binary')
   }
 
-  var SEA = {};
-  // This is Buffer used in SEA and usable from Gun/SEA application also.
-  // For documentation see https://nodejs.org/api/buffer.html
-  SEA.Buffer = SafeBuffer;
-  // These SEA functions support both callback AND Promises
-  // create a wrapper library around Web Crypto API.
-  // now wrap the various AES, ECDSA, PBKDF2 functions we called above.
-  SEA.proof = function(pass,salt,cb){
-    var doIt = (typeof window !== 'undefined' && function(resolve, reject){
-      subtle.importKey(  // For browser subtle works fine
-        'raw', new TextEncoder().encode(pass), {name: 'PBKDF2'}, false, ['deriveBits']
-      ).then(function(key){
-        return subtle.deriveBits({
-          name: 'PBKDF2',
-          iterations: pbkdf2.iter,
-          salt: new TextEncoder().encode(salt),
-          hash: pbkdf2.hash,
-        }, key, pbkdf2.ks*8);
-      }).then(function(result){
-        pass = getRandomBytes(pass.length);
-        return Buffer.from(result, 'binary').toString('base64');
-      }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
-    }) || function(resolve, reject){  // For NodeJS crypto.pkdf2 rocks
-      try{
-        var hash = crypto.pbkdf2Sync(
-          pass,
-          new TextEncoder().encode(salt),
-          pbkdf2.iter,
-          pbkdf2.ks,
-          pbkdf2.hash.replace('-', '').toLowerCase()
-        );
-        pass = getRandomBytes(pass.length);
-        resolve(hash && hash.toString('base64'));
-      }catch(e){ reject(e) }
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
-  SEA.keyid = function(p,cb){
-    var doIt = function(resolve, reject){
-      // base64('base64(x):base64(y)') => Buffer(xy)
-      var pb = Buffer.concat(Buffer.from(p, 'base64').toString('utf8').split(':')
-      .map(function(t){ return Buffer.from(t, 'base64') }));
-      // id is PGPv4 compliant raw key
-      var id = Buffer.concat([Buffer.from([0x99, pb.length/0x100, pb.length%0x100]), pb]);
-      sha1hash(id).then(function(sha1){
-        var hash = Buffer.from(sha1, 'binary');
-        resolve(hash.toString('hex', hash.length-8)); // 16-bit ID as hex
-      });
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.pair = function(cb){
-    var doIt = function(resolve, reject){
-      // First: ECDSA keys for signing/verifying...
-      return subtle.generateKey(ecdsakeyprops, true, ['sign', 'verify'])
-      .then(function(key){  // privateKey scope doesn't leak out from here!
-        var pubkey = key.publicKey;
-        return subtle.exportKey('jwk', key.privateKey).then(function(k){
-          return {priv: k.d};
-        }).then(function(keys){
-          return subtle.exportKey('jwk', pubkey).then(function(k){
-            keys.pub = Buffer.from([k.x, k.y].join(':')).toString('base64');
-            // return SEA.keyid(keys.pub).then(function(id){
-            //   keys.pubId = id;
-            //   return keys;
-            // });
-            return keys;
-          });
-        }).catch(function(e){ Gun.log(e); reject(e) });
-      }).then(function(keys){
-        // Next: ECDH keys for encryption/decryption...
-        var ecdhSubtle = subtleossl || subtle;
-        return ecdhSubtle.generateKey(ecdhkeyprops, true, ['deriveKey'])
-        .then(function(key){
-          var pubkey = key.publicKey;
-          return ecdhSubtle.exportKey('jwk', key.privateKey).then(function(k){
-            keys.epriv = k.d;
-            return keys;
-          }).then(function(keys){
-            return ecdhSubtle.exportKey('jwk', pubkey).then(function(k){
-              keys.epub = Buffer.from([k.x, k.y].join(':')).toString('base64');
-              return keys;
-            });
-          }).catch(function(e){ Gun.log(e); reject(e) });
-        }).catch(function(e){ Gun.log(e); reject(e) });
-      }).then(resolve)
-      .catch(function(e){ Gun.log(e); reject(e) });
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.derive = function(m,p,cb){
-    var ecdhSubtle = subtleossl || subtle;
-    var keystoecdhjwk = function(pub, priv){
-      var pubkey = Buffer.from(pub, 'base64').toString('utf8').split(':');
-      var jwk = priv ? {d: priv, key_ops: ['decrypt']} : {key_ops: ['encrypt']};
-      var ret = Object.assign(jwk, {
-        kty: 'EC',
-        crv: 'P-256',
-        x: pubkey[0],
-        y: pubkey[1],
-        ext: false
-      });
-      return ret;
-    };
-    var doIt = function(resolve, reject){
-      ecdhSubtle.importKey('jwk', keystoecdhjwk(m), ecdhkeyprops, false, ['deriveKey'])
-      .then(function(pub){
-        var pubkey = pub;
-        ecdhSubtle.importKey(
-          'jwk', keystoecdhjwk(p.epub, p.epriv), ecdhkeyprops, false, ['deriveKey']
-        ).then(function(privkey){
-          var props = Object.assign({}, ecdhkeyprops);
-          props.public = pubkey;
-          ecdhSubtle.deriveKey(
-            props, privkey, {name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt']
-          ).then(function(derivedkey){
-            ecdhSubtle.exportKey('jwk', derivedkey).then(function(key){
-              resolve(key.k);
-            });
-          }).catch(function(e){ Gun.log(e); reject(e) });
-        }).catch(function(e){ Gun.log(e); reject(e) });
-      }).catch(function(e){ Gun.log(e); reject(e) });
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.sign = function(m,p,cb){
-    var doIt = function(resolve, reject){
-      var jwk = keystoecdsajwk(p.pub, p.priv);
-      sha256hash(m.slice ? m : JSON.stringify(m)).then(function(mm){
-        subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign']).then(function(key){
-          subtle.sign(ecdsasignprops, key, new Uint8Array(mm))
-          .then(function(s){ resolve(Buffer.from(s, 'binary').toString('base64')) })
-          .catch(function(e){ Gun.log(e); reject(e) });
-        }).catch(function(e){ Gun.log(e); reject(e) });
-      });
-    };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
-  };
-  SEA.verify = function(m, p, s, cb){
-    var doIt = function(resolve, reject){
-      subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
-      .then(function(key){
-        sha256hash(m).then(function(mm){
-          subtle.verify(ecdsasignprops, key, new Uint8Array(Buffer.from(s, 'base64')), new Uint8Array(mm))
-          .then(function(v){ resolve(v) })
-          .catch(function(e){ Gun.log(e); reject(e) });
-        });
-      }).catch(function(e){ Gun.log(e); reject(e) });
-    };
-    if(cb){doIt(cb, function(){cb()})} else { return new Promise(doIt) }
-  };
-  SEA.enc = function(m,p,cb){
-    var doIt = function(resolve, reject){
-      var s = getRandomBytes(8);
-      var iv = getRandomBytes(16);
-      var r = {iv: iv.toString('hex'), s: s.toString('hex')};
-      m = (m.slice && m) || JSON.stringify(m);
-      recallCryptoKey(p, s).then(function(aesKey){
-        subtle.encrypt({
-          name: 'AES-CBC', iv: new Uint8Array(iv)
-        }, aesKey, new TextEncoder().encode(m)).then(function(ct){
-          aesKey = getRandomBytes(32);
-          r.ct = Buffer.from(ct, 'binary').toString('base64');
-          return JSON.stringify(r);
-        }).then(resolve).catch(function(e){ Gun.log(e); reject(e) });
-      }).catch(function(e){ Gun.log(e); reject(e)} );
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.dec = function(m,p,cb){
-    var doIt = function(resolve, reject){
-      try{ m = m.slice ? JSON.parse(m) : m }catch(e){}  //eslint-disable-line no-empty
-      var iv = new Uint8Array(Buffer.from(m.iv, 'hex'));
-      var s = new Uint8Array(Buffer.from(m.s, 'hex'));
-      recallCryptoKey(p, s).then(function(aesKey){
-        subtle.decrypt({
-          name: 'AES-CBC', iv: iv
-        }, aesKey, new Uint8Array(Buffer.from(m.ct, 'base64'))).then(function(ct){
-          aesKey = getRandomBytes(32);
-          var ctUtf8 = new TextDecoder('utf8').decode(ct);
-          try{ return ctUtf8.slice ? JSON.parse(ctUtf8) : ctUtf8;
-          }catch(e){ return ctUtf8 }
-        }).then(resolve).catch(function(e){Gun.log(e); reject(e)});
-      }).catch(function(e){Gun.log(e); reject(e)});
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.write = function(mm,p,cb){
-    var doIt = function(resolve, reject) {
-      // TODO: something's bugging double 'SEA[]' treatment to mm...
-      var m = mm;
-      if(m && m.slice && 'SEA[' === m.slice(0,4)){ return resolve(m) }
-      if(mm && mm.slice){
-        // Needs to remove previous signature envelope
-        while('SEA[' === m.slice(0,4)){
-          try{ m = JSON.parse(m.slice(3))[0];
-          }catch(e){ break }
+  const SEA = {
+    // This is Buffer used in SEA and usable from Gun/SEA application also.
+    // For documentation see https://nodejs.org/api/buffer.html
+    Buffer: SafeBuffer,
+    // These SEA functions support both callback AND Promises. Thus no
+    // async/await (compatible) code, use those like Promises.
+    //
+    // Creates a wrapper library around Web Crypto API
+    // for various AES, ECDSA, PBKDF2 functions we called above.
+    proof(pass, salt, cb) {
+      const nodeJsPbkdf2 = (resolve, reject) => {
+        try { // For NodeJS crypto.pkdf2 rocks
+          var hash = crypto.pbkdf2Sync(
+            pass,
+            new TextEncoder().encode(salt),
+            pbkdf2.iter,
+            pbkdf2.ks,
+            pbkdf2.hash.replace('-', '').toLowerCase()
+          );
+          pass = getRandomBytes(pass.length)
+          resolve(hash && hash.toString('base64'))
+        } catch (e) { reject(e) }
+      }
+      const doIt = (resolve, reject) => (typeof window !== 'undefined'
+      && subtle.importKey(  // For browser subtle works fine
+          'raw', new TextEncoder().encode(pass), {name: 'PBKDF2'}, false, ['deriveBits']
+        ).then((key) => subtle.deriveBits({
+            name: 'PBKDF2',
+            iterations: pbkdf2.iter,
+            salt: new TextEncoder().encode(salt),
+            hash: pbkdf2.hash,
+          }, key, pbkdf2.ks * 8)
+        ).then((result) => {
+          pass = getRandomBytes(pass.length)  // Erase passphrase for app
+          return Buffer.from(result, 'binary').toString('base64')
+        }).then(resolve).catch((e) => { Gun.log(e); reject(e) })
+      ) || nodeJsPbkdf2(resolve, reject)
+      if (cb) { doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+    },
+    // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
+    keyid(p, cb) {
+      const doIt = (resolve, reject) => {
+        // base64('base64(x):base64(y)') => Buffer(xy)
+        const pb = Buffer.concat(
+          Buffer.from(p, 'base64').toString('utf8').split(':')
+          .map((t) => Buffer.from(t, 'base64'))
+        )
+        // id is PGPv4 compliant raw key
+        const id = Buffer.concat([
+          Buffer.from([0x99, pb.length/0x100, pb.length%0x100]), pb
+        ])
+        sha1hash(id).then((sha1) => {
+          const hash = Buffer.from(sha1, 'binary')
+          resolve(hash.toString('hex', hash.length - 8))  // 16-bit ID as hex
+        })
+      }
+      if (cb) { doIt(cb, () => cb()) } else { return new Promise(doIt) }
+    },
+    pair(cb) {
+      const doIt = (resolve, reject) => {
+        const catcher = (e) => { Gun.log(e); reject(e) }
+        const ecdhSubtle = subtleossl || subtle
+        // First: ECDSA keys for signing/verifying...
+        subtle.generateKey(ecdsakeyprops, true, ['sign', 'verify'])
+        .then(({ publicKey, privateKey }) => subtle.exportKey('jwk', privateKey)
+        // privateKey scope doesn't leak out from here!
+          .then(({ d: priv }) => ({ priv }))
+          .then((keys) => subtle.exportKey('jwk', publicKey)
+            .then(({ x, y }) => Object.assign(keys, {
+              pub: Buffer.from([ x, y ].join(':')).toString('base64')
+            }))
+          ).catch(catcher)
+          // return seaKeyid(keys.pub).then(function(id){
+          //   keys.pubId = id;
+          //   return keys;
+          // });
+        ).then((signingKeys) => ecdhSubtle.generateKey(ecdhkeyprops, true, ['deriveKey'])
+          // Next: ECDH keys for encryption/decryption...
+          .then(({ publicKey, privateKey }) => ecdhSubtle.exportKey('jwk', privateKey)
+          // privateKey scope doesn't leak out from here!
+            .then(({ d: epriv }) => Object.assign(signingKeys, { epriv }))
+            .then((bothKeys) => ecdhSubtle.exportKey('jwk', publicKey)
+              .then(({ x, y }) => Object.assign(bothKeys, {
+                epub: Buffer.from([ x, y ].join(':')).toString('base64')
+              }))
+            ).catch(catcher)
+          ).catch(catcher)
+        ).then(resolve)
+        .catch(catcher)
+      }
+      if (cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+    },
+    derive(m, p, cb) {
+      const ecdhSubtle = subtleossl || subtle
+      const keystoecdhjwk = (pub, priv) => {
+        const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
+        const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
+        return Object.assign(jwk, {
+          kty: 'EC',
+          crv: 'P-256',
+          ext: false,
+          x,
+          y
+        })
+      }
+      const doIt = (resolve, reject) => {
+        ecdhSubtle.importKey('jwk', keystoecdhjwk(m), ecdhkeyprops, false, ['deriveKey'])
+        .then((public) => {
+          ecdhSubtle.importKey(
+            'jwk', keystoecdhjwk(p.epub, p.epriv), ecdhkeyprops, false, ['deriveKey']
+          ).then((privkey) => {
+            const props = Object.assign({}, ecdhkeyprops, { public })
+            ecdhSubtle.deriveKey(
+              props, privkey, {name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt']
+            ).then((derivedkey) => ecdhSubtle.exportKey('jwk', derivedkey)
+              .then(({ k }) => resolve(k))
+            ).catch((e) => { Gun.log(e); reject(e) })
+          }).catch((e) => { Gun.log(e); reject(e) })
+        }).catch((e) => { Gun.log(e); reject(e) })
+      }
+      if (cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+    },
+    sign(m, { pub, priv }, cb) {
+      const doIt = (resolve, reject) => {
+        const jwk = keystoecdsajwk(pub, priv)
+        sha256hash(m).then((mm) =>
+          subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign'])
+          .then((key) => subtle.sign(ecdsasignprops, key, new Uint8Array(mm))
+            .then((s) => resolve(Buffer.from(s, 'binary').toString('base64')))
+            .catch((e) => { Gun.log(e); reject(e) })
+          ).catch((e) => { Gun.log(e); reject(e) })
+        )
+      }
+      if (cb) { doIt(cb, () => { cb() }) } else { return new Promise(doIt) }
+    },
+    verify(m, p, s, cb) {
+      const doIt = (resolve, reject) => {
+        const catcher = (e) => { Gun.log(e); reject(e) }
+        subtle.importKey('jwk', keystoecdsajwk(p), ecdsakeyprops, false, ['verify'])
+        .then((key) => sha256hash(m).then((hash) => ({ key, hash })))
+        .then(({ key, hash }) => {
+          const ss = new Uint8Array(Buffer.from(s, 'base64'))
+          subtle.verify(ecdsasignprops, key, ss, new Uint8Array(hash))
+          .then(resolve).catch(catcher)
+        }).catch(catcher)
+      }
+      if (cb) { doIt(cb, () => cb()) } else { return new Promise(doIt) }
+    },
+    enc(m, p, cb) {
+      const doIt = (resolve, reject) => {
+        const rands = { s: getRandomBytes(8), iv: getRandomBytes(16) }
+        const r = Object.keys(rands)
+        .reduce((obj, key) => Object.assign(obj, { [key]: rands[key].toString('hex') }), {})
+        try {
+          m = (m.slice && m) || JSON.stringify(m)
+        } catch(e) {} //eslint-disable-line no-empty
+        try {
+          recallCryptoKey(p, rands.s).then((aesKey) =>
+            subtle.encrypt({
+              name: 'AES-CBC', iv: new Uint8Array(rands.iv)
+            }, aesKey, new TextEncoder().encode(m)).then((ct) => {
+              aesKey.handle.fill(0)
+              r.ct = Buffer.from(ct, 'binary').toString('base64')
+              resolve(JSON.stringify(r))
+            }).catch((e) => {
+              aesKey.handle.fill(0)
+              throw e
+            })
+          )
+        } catch (e) {
+          Gun.log(e)
+          reject(e)
         }
       }
-      m = (m && m.slice) ? m : JSON.stringify(m);
-      SEA.sign(m, p).then(function(signature){
-        resolve('SEA'+JSON.stringify([m,signature]));
-      }).catch(function(e){Gun.log(e); reject(e)});
-    };
-    if(cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
-  };
-  SEA.read = function(m,p,cb){
-    var doIt = function(resolve, reject){ var d;
-      if(!m){ if(false === p){ return resolve(m) }
-        return resolve();
+      if (cb) { doIt(cb, () => cb()) } else { return new Promise(doIt) }
+    },
+    dec(m, p, cb) {
+      const doIt = (resolve, reject) => {
+        const { s, iv, ct } = parseProps(m)
+        const mm = { s, iv, ct }
+        const rands = [ 'iv', 's' ].reduce((obj, key) => Object.assign(obj, {
+          [key]: new Uint8Array(Buffer.from(mm[key], 'hex'))
+        }), {})
+        try {
+          recallCryptoKey(p, rands.s).then((aesKey) =>
+            subtle.decrypt({
+              name: 'AES-CBC', iv: rands.iv
+            }, aesKey, new Uint8Array(Buffer.from(mm.ct, 'base64'))).then(
+              (ct) => new TextDecoder('utf8').decode(ct)
+            ).then((ctUtf8) => {
+              aesKey.handle.fill(0)
+              resolve(parseProps(ctUtf8))
+            })
+          ).catch((e) => { Gun.log(e); reject(e) })
+        } catch (e) { Gun.log(e); reject(e) }
       }
-      if(!m.slice || 'SEA[' !== m.slice(0,4)){
-        if(false === p){ return resolve(m) }
-        return resolve()
+      if (cb) { doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+    },
+    write(mm, p, cb) {
+      const doIt = (resolve, reject) => {
+        // TODO: something's bugging double 'SEA[]' treatment to mm...
+        let m = mm
+        if (m && m.slice && 'SEA[' === m.slice(0, 4)) {
+          return resolve(m)
+        }
+        if (mm && mm.slice) {
+          // Needs to remove previous signature envelope
+          while ('SEA[' === m.slice(0, 4)) {
+            try {
+              m = JSON.parse(m.slice(3))[0]
+            } catch (e){
+              break
+            }
+          }
+        }
+        m = (m && m.slice) ? m : JSON.stringify(m)
+        seaSign(m, p).then(
+          (signature) => resolve(`SEA${JSON.stringify([ m, signature ])}`)
+        ).catch((e) => { Gun.log(e); reject(e) })
       }
-      m = m.slice(3);
-      try{ m = m.slice ? JSON.parse(m) : m;
-      }catch(e){ return reject(e) }
-      m = m || '';
-      d = m[0];
-      try{ d = d.slice ? JSON.parse(d) : d }catch(e){}
-      if(false === p){ resolve(d) }
-      SEA.verify(m[0], p, m[1]).then(function(ok){
-        if(!ok){ return resolve() }
-        resolve(d);
-      }).catch(function(e){reject(e)});
-    };
-    if(cb && typeof cb === 'function'){
-      doIt(cb, function(){cb()});
-    } else { return new Promise(doIt) }
-  };
-  // Internal helper for IndexedDB use
-  SEA._callonstore_ = function(fn_, resolve_){
-    var open = indexedDB.open('GunDB', 1);  // Open (or create) the database; 1 === 'version'
-    open.onupgradeneeded = function(){  // Create the schema; props === current version
-      var db = open.result;
-      db.createObjectStore('SEA', {keyPath: 'id'});
-    };
-    open.onsuccess = function(){  // Start a new transaction
-      var db = open.result;
-      var tx = db.transaction('SEA', 'readwrite');
-      var store = tx.objectStore('SEA');
-      fn_(store);
-      tx.oncomplete = function(){   // Close the db when the transaction is done
-        db.close();
-        if(typeof resolve_ === 'function'){ resolve_() }
-      };
-    };
-  };
+      if (cb){ doIt(cb, function(){cb()}) } else { return new Promise(doIt) }
+    },
+    read(m, p, cb) {
+      const doIt = (resolve, reject) => {
+        let d
+        if (!m) {
+          if (false === p) {
+            return resolve(m)
+          }
+          return resolve()
+        }
+        if (!m.slice || 'SEA[' !== m.slice(0, 4)) {
+          if (false === p) {
+            return resolve(m)
+          }
+          return resolve()
+        }
+        m = parseProps(m.slice(3))
+        m = m || ''
+        d = parseProps(m[0])
+        if (false === p){
+          resolve(d)
+        }
+        seaVerify(m[0], p, m[1]).then(function(ok){
+          if (!ok) {
+            return resolve()
+          }
+          resolve(d);
+        }).catch((e) => { reject(e) })
+      }
+      if (cb && typeof cb === 'function') { doIt(cb, () => cb()) } else {
+        return new Promise(doIt)
+      }
+    },
+    // Internal helper for IndexedDB use - exposed for testing purposes only
+    _callonstore_(fn_) {
+      return new Promise((resolve) => {
+        const open = indexedDB.open('GunDB', 1) // Open (or create) the database; 1 === 'version'
+        open.onupgradeneeded = () => {  // Create the schema; props === current version
+          const db = open.result
+          db.createObjectStore('SEA', { keyPath: 'id' })
+        }
+        let result
+        open.onsuccess = () => {    // Start a new transaction
+          const db = open.result
+          const tx = db.transaction('SEA', 'readwrite')
+          const store = tx.objectStore('SEA')
+          tx.oncomplete = () => {   // Close the db when the transaction is done
+            db.close()
+            resolve(result)
+          }
+          result = fn_(store)
+        }
+      })
+    }
+  }
 
-  Gun.SEA = SEA;
+  Gun.SEA = SEA
 
   // all done!
   // Obviously it is missing MANY necessary features. This is only an alpha release.
@@ -1313,5 +1330,7 @@
   // Adding friends (trusted public keys), sending private messages, etc.
   // Cheers! Tell me what you think.
 
-  try{module.exports = SEA}catch(e){} //eslint-disable-line no-empty
+  try {
+    module.exports = SEA
+  } catch (e) {}  //eslint-disable-line no-empty
 }());
