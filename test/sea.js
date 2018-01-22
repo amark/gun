@@ -28,16 +28,24 @@ if(typeof Buffer === 'undefined'){
   var Buffer = require('buffer').Buffer;
 }
 
-function checkIndexedDB(key, prop, resolve_){
-  var result;
-  Gun.SEA._callonstore_(function(store) {
-    var getData = store.get(key);
-    getData.onsuccess = function(){
-      result = getData.result && getData.result[prop];
-    };
-  }, function(){
-    resolve_(result);
-  });
+const checkIndexedDB = (key, prop, resolve_) => {
+  const doIt = (resolve, reject) => {
+    try {
+      Gun.SEA._callonstore_((store) => new Promise((reslv) => {
+        const getData = store.get(key)
+        getData.onsuccess = () => {
+          reslv(getData.result && getData.result[prop])
+        }
+      })).then(resolve)
+    } catch (e) {
+      reject(e)
+    }
+  }
+  if (resolve_) {
+    doIt(resolve_, (e) => { throw e })
+  } else {
+    return new Promise(doIt)
+  }
 }
 
 function setIndexedDB(key, prop, resolve_){
@@ -346,31 +354,31 @@ Gun().user && describe('Gun', function(){
         });
 
         describe('auth', function(){
-          var checkStorage = function(done, notStored){
-            return function(){
-              var checkValue = function(data, val){
-                if(notStored){
-                  expect(typeof data !== 'undefined' && data !== null && data !== '')
-                  .to.not.eql(true);
-                } else {
-                  expect(data).to.not.be(undefined);
-                  expect(data).to.not.be('');
-                  if(val){ expect(data).to.eql(val) }
-                }
-              };
-              var alias = root.sessionStorage.getItem('user');
-              checkValue(alias);
-              checkValue(root.sessionStorage.getItem('remember'));
-              if(alias){
-                checkIndexedDB(alias, 'auth', function(auth){
-                  checkValue(auth);
-                  done();
-                });
+          const checkStorage = (done, notStored) => () => {
+            const checkValue = (data, val) => {
+              if (notStored) {
+                expect(typeof data !== 'undefined' && data !== null && data !== '')
+                .to.not.eql(true)
               } else {
-                done();
+                expect(data).to.not.be(undefined)
+                expect(data).to.not.be('')
+                if (val) {
+                  expect(data).to.eql(val)
+                }
               }
-            };
-          };
+            }
+            const alias = root.sessionStorage.getItem('user')
+            checkValue(alias)
+            checkValue(root.sessionStorage.getItem('remember'))
+            if (alias) {
+              checkIndexedDB(alias, 'auth').then((auth) => {
+                checkValue(auth)
+                done()
+              }).catch(done)
+            } else {
+              done()
+            }
+          }
 
           it('login', function(done){
             var check = function(ack){
@@ -478,13 +486,13 @@ Gun().user && describe('Gun', function(){
           });
 
           it('with PIN auth session stored', function(done){
-            if(type === 'callback'){
-              user.auth(alias+type, pass+' new', checkStorage(done), {pin: 'PIN'});
+            if (type === 'callback'){
+              user.auth(alias+type, pass+' new', checkStorage(done), { pin: 'PIN' })
             } else {
-              user.auth(alias+type, pass+' new', {pin: 'PIN'})
-              .then(checkStorage(done)).catch(done);
+              user.auth(alias+type, pass+' new', { pin: 'PIN' })
+              .then(checkStorage(done)).catch(done)
             }
-          });
+          })
 
           it('without PIN and zero validity no auth session storing', function(done){
             user.recall(0).then(function(){
