@@ -17,19 +17,16 @@
 
   let subtle
   let subtleossl
-  let TextEncoder
-  let TextDecoder
   let getRandomBytes
-  let sessionStorage
-  let localStorage
   let indexedDB
   let crypto
+  let funcsSetter
 
   if (typeof window !== 'undefined') {
     const wc = window.crypto || window.msCrypto   // STD or M$
     subtle = wc.subtle || wc.webkitSubtle         // STD or iSafari
     getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
-    ({ TextEncoder, TextDecoder, sessionStorage, localStorage }) = window
+    funcsSetter = () => window
     indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
     || window.msIndexedDB || window.shimIndexedDB
   } else {
@@ -39,18 +36,20 @@
     subtleossl = webcrypto.subtle
     subtle = require('@trust/webcrypto').subtle   // All but ECDH
     getRandomBytes = (len) => Buffer.from(crypto.randomBytes(len))
-    const textEncoding = require('text-encoding')
-    TextEncoder = textEncoding.TextEncoder
-    TextDecoder = textEncoding.TextDecoder
-    // Let's have Storage for NodeJS / testing
-    sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
-    localStorage = new require('node-localstorage').LocalStorage('.localStorage')
+    funcsSetter = () => {
+      const { TextEncoder, TextDecoder } = require('text-encoding')
+      // Let's have Storage for NodeJS / testing
+      const sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
+      const localStorage = new require('node-localstorage').LocalStorage('.localStorage')
+      return { TextEncoder, TextDecoder, sessionStorage, localStorage }
+    }
     indexedDB = require('fake-indexeddb')
     if (typeof global !== 'undefined') {
       global.sessionStorage = sessionStorage
       global.localStorage = localStorage
     }
   }
+  const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
 
   // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
   function SeaArray() {}
