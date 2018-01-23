@@ -557,8 +557,8 @@
 
     if (authsettings.validity && typeof window !== 'undefined'
     && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')) {
+      const { pub: id } = p
       const importAndStoreKey = async () => {
-        const { pub: id } = p
         const key = importKey(p)
         await seaCallOnStorage((store) => {
           store.put({ id, key })
