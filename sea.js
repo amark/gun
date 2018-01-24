@@ -1152,11 +1152,11 @@
       const doIt = (resolve, reject) => {
         const catcher = (e) => { Gun.log(e); reject(e) }
         ecdhSubtle.importKey('jwk', keystoecdhjwk(pub), ecdhkeyprops, false, ['deriveKey'])
-        .then((public) => {
+        .then((pubKey) => {
           ecdhSubtle.importKey(
             'jwk', keystoecdhjwk(epub, epriv), ecdhkeyprops, false, ['deriveKey']
           ).then((privkey) => {
-            const props = Object.assign({}, ecdhkeyprops, { public })
+            const props = Object.assign({}, ecdhkeyprops, { public: pubKey })
             ecdhSubtle.deriveKey(
               props, privkey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ]
             ).then((derivedkey) => ecdhSubtle.exportKey('jwk', derivedkey)
