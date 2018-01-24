@@ -559,7 +559,7 @@
     && Gun.obj.has(p, 'pub') && Gun.obj.has(p, 'key')) {
       const { pub: id } = p
       const importAndStoreKey = async () => {
-        const key = importKey(p)
+        const key = await importKey(p)
         await seaCallOnStorage((store) => {
           store.put({ id, key })
         })
@@ -1147,11 +1147,11 @@ Object.assign(User, {
       }
       const doIt = (resolve, reject) => {
         ecdhSubtle.importKey('jwk', keystoecdhjwk(m), ecdhkeyprops, false, ['deriveKey'])
-        .then((public) => {
+        .then((pub) => {
           ecdhSubtle.importKey(
             'jwk', keystoecdhjwk(p.epub, p.epriv), ecdhkeyprops, false, ['deriveKey']
           ).then((privkey) => {
-            const props = Object.assign({}, ecdhkeyprops, { public })
+            const props = Object.assign({}, ecdhkeyprops, { pub })
             ecdhSubtle.deriveKey(
               props, privkey, {name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt']
             ).then((derivedkey) => ecdhSubtle.exportKey('jwk', derivedkey)
@@ -1201,11 +1201,17 @@ Object.assign(User, {
             subtle.encrypt({
               name: 'AES-CBC', iv: new Uint8Array(rands.iv)
             }, aesKey, new TextEncoder().encode(m)).then((ct) => {
-              aesKey.handle.fill(0)
+              /*
+              MARK TO @mhelander : webcrypto has nu handle
+              */
+              // aesKey.handle.fill(0)
               r.ct = Buffer.from(ct, 'binary').toString('base64')
               resolve(JSON.stringify(r))
             }).catch((e) => {
-              aesKey.handle.fill(0)
+              /*
+              MARK TO @mhelander : webcrypto has nu handle
+              */
+              // aesKey.handle.fill(0)
               throw e
             })
           )
@@ -1230,7 +1236,10 @@ Object.assign(User, {
             }, aesKey, new Uint8Array(Buffer.from(mm.ct, 'base64'))).then(
               (ct) => new TextDecoder('utf8').decode(ct)
             ).then((ctUtf8) => {
-              aesKey.handle.fill(0)
+              /*
+              MARK TO @mhelander : webcrypto has nu handle
+              */
+              // aesKey.handle.fill(0)
               resolve(parseProps(ctUtf8))
             })
           ).catch((e) => { Gun.log(e); reject(e) })
