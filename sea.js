@@ -148,6 +148,55 @@
 
   const Buffer = SafeBuffer
 
+  // This is safe class to operate with IndexedDB data - all methods are Promise
+  function EasyIndexedDB(objectStoreName, dbName = 'GunDB', dbVersion = 1) {
+    // Private internals, including constructor props
+    const runTransaction = (fn_) => new Promise((resolve, reject) => {
+      const open = indexedDB.open(dbName, dbVersion) // Open (or create) the DB
+      open.onerror = (e) => {
+        reject(new Error('IndexedDB error:', e))
+      }
+      open.onupgradeneeded = () => {
+        const db = open.result // Create the schema; props === current version
+        db.createObjectStore(objectStoreName, { keyPath: 'id' })
+      }
+      let result
+      open.onsuccess = () => {    // Start a new transaction
+        const db = open.result
+        const tx = db.transaction(objectStoreName, 'readwrite')
+        const store = tx.objectStore(objectStoreName)
+        tx.oncomplete = () => {
+          db.close()        // Close the db when the transaction is done
+          resolve(result)   // Resolves result returned by action function fn_
+        }
+        result = fn_(store)
+      }
+    })
+
+    Object.assign(this, {
+      async wipe() {  // Wipe IndexedDB completedy!
+        return runTransaction((store) => {
+          const act = store.clear()
+          act.onsuccess = () => {}
+        })
+      },
+      async put(id, props) {
+        const data = Object.assign({}, props, { id })
+        return runTransaction((store) => { store.put(data) })
+      },
+      async get(id, prop) {
+        return runTransaction((store) => new Promise((resolve) => {
+          const getData = store.get(id)
+          getData.onsuccess = () => {
+            const { result = {} } = getData
+            resolve(result[prop])
+          }
+        }))
+      }
+    })
+  }
+  const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1)
+
   // Encryption parameters
   const pbkdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
 
@@ -190,7 +239,6 @@
   // Practical examples about usage found from ./test/common.js
 
   // These are internal wrappers for ES6 async/await use:
-  const seaCallOnStorage = async (...props) => SEA._callonstore_(...props)
   const seaRead = async (...props) => SEA.read(...props)
   const seaWrite = async (...props) => SEA.write(...props)
   const seaEnc = async (...props) => SEA.enc(...props)
@@ -208,14 +256,6 @@
     } catch (e) {}  //eslint-disable-line no-empty
     return props
   }
-  const seaIndexedDbGetter = async (key, prop) =>
-  await seaCallOnStorage((store) => new Promise((resolve) => {
-    const getData = store.get(key)
-    getData.onsuccess = () => {
-      const { result = {} } = getData
-      resolve(result[prop])
-    }
-  }))
 
   // This is internal func queries public key(s) for alias.
   const querygunaliases = (alias,root) => new Promise((resolve, reject) => {
@@ -348,14 +388,8 @@
 
         if (encrypted) {
           const auth = await seaWrite(encrypted, key)
-
-          await seaCallOnStorage((store) => {
-            const act = store.clear()   // Wipe IndexedDB completedy!
-            act.onsuccess = () => {}
-          })                            // Then set encrypted auth props
-          await seaCallOnStorage((store) => {
-            store.put({ id, auth })
-          })
+          await seaIndexedDb.wipe()
+          await seaIndexedDb.put(id, { auth })
         }
 
         return props
@@ -365,10 +399,7 @@
     }
 
     // Wiping IndexedDB completely when using random PIN
-    await seaCallOnStorage((store) => {
-      const act = store.clear()
-      act.onsuccess = () => {}
-    })
+    await seaIndexedDb.wipe()
     // And remove sessionStorage data
     sessionStorage.removeItem('user')
     sessionStorage.removeItem('remember')
@@ -431,8 +462,6 @@
     }
     const readAndDecrypt = async (data, pub, key) =>
       parseProps(await seaDec(await seaRead(data, pub), key))
-    // Returns auth value prop from IndexedDB (encryption key)
-    const getIndexedDbAuth = async () => await seaIndexedDbGetter(alias, 'auth')
 
     // Already authenticated?
     if (root._.user
@@ -447,7 +476,7 @@
     // Yes, got persisted 'remember'?
     if (!remember) {
       throw {  // And return proof if for matching alias
-        err: (await getIndexedDbAuth() && authsettings.validity
+        err: (await seaIndexedDb.get(alias, 'auth') && authsettings.validity
         && 'Missing PIN and alias!') || 'No authentication session found!'
       }
     }
@@ -471,7 +500,7 @@
         // No PIN, let's try short-term proof if for matching alias
         ? await checkRememberData(props)
         // Got PIN so get IndexedDB secret if signature is ok
-        : await checkRememberData(await readAndDecrypt(await getIndexedDbAuth(), pub, pin))
+        : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
       }
       // got pub, try auth with pin & alias :: or unwrap Storage data...
       const args = pin ? { pin, alias } : await readStorageData()
@@ -560,15 +589,13 @@
       const { pub: id } = p
       const importAndStoreKey = async () => {
         const key = await importKey(p)
-        await seaCallOnStorage((store) => {
-          store.put({ id, key })
-        })
+        await seaIndexedDb.put(id, { key })
         return key
       }
       if (Gun.obj.has(p, 'set')) {
         return importAndStoreKey()  // proof update so overwrite
       }
-      const aesKey = await seaIndexedDbGetter(id, 'key')
+      const aesKey = await seaIndexedDb.get(id, 'key')
       return aesKey ? aesKey : importAndStoreKey()
     }
 
@@ -706,7 +733,7 @@
             // Delete user data
             root.get(`pub/${pub}`).put(null)
             // Wipe user data from memory
-            const { user = { _: {} } } = root._
+            const { user = { _: {} } } = root._;
             // TODO: is this correct way to 'logout' user from Gun.User ?
             [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
             user._.is = user.is = {}
@@ -1044,6 +1071,8 @@
   }
 
   const SEA = {
+    // This is easy way to use IndexedDB, all methods are Promises
+    EasyIndexedDB,
     // This is Buffer used in SEA and usable from Gun/SEA application also.
     // For documentation see https://nodejs.org/api/buffer.html
     Buffer: SafeBuffer,
@@ -1304,27 +1333,6 @@
       if (cb && typeof cb === 'function') { doIt(cb, () => cb()) } else {
         return new Promise(doIt)
       }
-    },
-    // Internal helper for IndexedDB use - exposed for testing purposes only
-    _callonstore_(fn_) {
-      return new Promise((resolve) => {
-        const open = indexedDB.open('GunDB', 1) // Open (or create) the database; 1 === 'version'
-        open.onupgradeneeded = () => {  // Create the schema; props === current version
-          const db = open.result
-          db.createObjectStore('SEA', { keyPath: 'id' })
-        }
-        let result
-        open.onsuccess = () => {    // Start a new transaction
-          const db = open.result
-          const tx = db.transaction('SEA', 'readwrite')
-          const store = tx.objectStore('SEA')
-          tx.oncomplete = () => {   // Close the db when the transaction is done
-            db.close()
-            resolve(result)
-          }
-          result = fn_(store)
-        }
-      })
     }
   }
 
