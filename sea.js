@@ -1321,8 +1321,7 @@
           }
           return resolve()
         }
-        m = parseProps(data.slice(3))
-        m = m || ''
+        let m = parseProps(data.slice(3)) || ''
         d = parseProps(m[0])
         if (false === pub) {
           resolve(d)
