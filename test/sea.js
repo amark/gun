@@ -24,7 +24,7 @@ var root;
   }
 }(this));
 
-const Buffer = Gun.SEA.Buffer || require('buffer')
+const Buffer = (Gun.SEA && Gun.SEA.Buffer) || require('buffer')
 
 const seaIndexedDb = new Gun.SEA.EasyIndexedDB('SEA', 'GunDB', 1)
 
