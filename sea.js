@@ -223,7 +223,7 @@
   // let's extend the gun chain with a `user` function.
   // only one user can be logged in at a time, per gun instance.
   Gun.chain.user = function() {
-    let root = this.back(-1)  // always reference the root gun instance.
+    const root = this.back(-1)  // always reference the root gun instance.
     let user = root._.user || (root._.user = root.chain()); // create a user context.
     // then methods...
     [ 'create', // factory
@@ -234,6 +234,15 @@
       'alive'   // keep/check auth validity
     ].map((method)=> user[method] = User[method])
     return user // return the user!
+  }
+
+  // let's extend the gun chain with a `SEA` function.
+  // maps locally used methods to Gun and returns SEA object.
+  Gun.chain.SEA = function() {
+    const root = this.back(-1)
+    const sea = root._.SEA || (root._.SEA = root.chain());  // create a SEA context
+    Object.keys(SEA).map((method) => sea[method] = SEA[method])
+    return sea
   }
 
   // Practical examples about usage found from ./test/common.js
@@ -1335,7 +1344,10 @@
     }
   }
 
-  Gun.SEA = SEA
+  // Usage of the SEA object changed! Now use like this:
+  // const gun = new Gun()
+  // const SEA = gun.SEA()
+  Gun.SEA = () => SEA
 
   // all done!
   // Obviously it is missing MANY necessary features. This is only an alpha release.
