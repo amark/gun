@@ -3,8 +3,8 @@ var config = {
 	port: 8080,
 	servers: 1,
 	browsers: 2,
-	each: 100,
-	burst: 2, // do not go below 1!
+	each: 2500,
+	burst: 25, // do not go below 1!
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -66,7 +66,6 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 					res.end("I am "+ env.i +"!");
 				});
 				// Launch the server and start gun!
-				require('/Users/mark/gun24key.js');
 				var Gun = require('gun');
 				// Attach the server to gun.
 				var gun = Gun({file: env.i+'data', web: server, localStorage: false});
@@ -260,7 +259,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 						return;
 					}
 					go.check[msg.id + msg.num] = false;
-					clearTimeout(end.to); end.to = setTimeout(end, 100);
+					clearTimeout(end.to); end.to = setTimeout(end, 9);
 					reportc.text(++go.num);
 					last.text(msg.what);
 					//who = cols[msg.id];
@@ -299,7 +298,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 		console.log("Done! Cleaning things up...");
 		setTimeout(function(){
 			done();
-		},1000 * 60);
+		}, 2000);
 	});
 
 	after("Everything shut down.", function(){
