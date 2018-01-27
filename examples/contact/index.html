@@ -109,6 +109,31 @@
 		<div id="info" class="page">
 			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
 		</div id="info">
+		
+		<div id="tell" class="model">
+			<style>
+				#tell {
+					position: fixed;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 0;
+					text-align: center;
+					overflow: visible;
+				}
+				#tell .notify {
+					width: 50%;
+					background: black;
+					border: solid #222 0.2em;
+					top: 0.2em;
+					margin: 0 auto;
+					padding: 1%;
+					opacity: 0.8;
+					position-anchor: 50% 50%;
+				}
+			</style>
+			<p class="notify">Hello world!</p>
+		</div>
 
 		<!-- script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
 		<script src="/Users/mark/Dropbox/Public/gun/db/gun.js"></script>
@@ -118,12 +143,14 @@
 
 		<script src="/jquery.js"></script>
 		<script src="/gun.js"></script>
-		<script src="/gun/lib/cryptomodules.js"></script>
 		<script src="/gun/sea.js"></script>
 		<script src="/gun/as.js"></script>
 		<script>
+			// Check out the interactive tutorial
+			// for how to build a simplified version
+			// of this example: https://scrimba.com/c/c2gBgt4
+			if(location.protocol.indexOf('s') < 0 && location.host.indexOf('localhost') < 0){ location.protocol = 'https:'; }
 			var gun = Gun(location.origin+'/gun');
-			//var gun = Gun();
 			var app = gun.get('example/contacts/6');
 			var user = gun.user();
 			var c = window.c = {};
@@ -164,15 +191,15 @@
 					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
 					data.born = Gun.time.is();
 					if(!data.alias || data.alias.length < 5){
-						console.log("Alias needs to be longer than 5 characters.");
+						c.tell("Alias needs to be longer than 5 characters.");
 						return;
 					}
 					if(!data.pass || data.pass.length < 9){
-						console.log("Passphrase needs to be longer than 9 characters.");
+						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
 					user.create(data.alias, data.pass, function(ack){
-						if(ack.err){ return }
+						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
 						}
@@ -182,29 +209,35 @@
 				}).on('click','form.sign button:first', become);
 				function become(){
 					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
-					if(window.sessionStorage){
-						data.alias = data.alias || sessionStorage.alias;
-						data.pass = data.pass || sessionStorage.tmp;
-					}
+					data.alias = data.alias || sessionStorage.alias;
+					data.pass = data.pass || sessionStorage.tmp;
 					if(!data.alias || data.alias.length < 5){
-						console.log("Alias needs to be longer than 5 characters.");
+						c.tell("Alias needs to be longer than 5 characters.");
 						return;
 					}
 					if(!data.pass || data.pass.length < 9){
-						console.log("Passphrase needs to be longer than 9 characters.");
+						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
 					user.auth(data.alias, data.pass, function(ack){
+						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						session(data);
 					});
 				}
-				if(window.sessionStorage && sessionStorage.tmp){
+				if(!window.sessionStorage){ window.sessionStorage = {clear:function(){}} }
+				if(sessionStorage.tmp){
 					become();
 				}
 				function session(data){
-					if(!window.sessionStorage){ return }
+					if(!sessionStorage){ return }
 					sessionStorage.alias = data.alias;
 					sessionStorage.tmp = data.pass;
+				}
+				c.tell = function(what, n){
+					var e = $('#tell');
+					e.find('p').text(what);
+					e.show();
+					setTimeout(function(){e.hide()}, n || 2500);
 				}
 			}());
 			(function(){
