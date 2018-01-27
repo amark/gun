@@ -24,9 +24,10 @@ var root;
   }
 }(this));
 
-const Buffer = (Gun.SEA && Gun.SEA.Buffer) || require('buffer')
+const SEA = Gun.SEA()
+const { Buffer, EasyIndexedDB } = SEA
 
-const seaIndexedDb = new Gun.SEA.EasyIndexedDB('SEA', 'GunDB', 1)
+const seaIndexedDb = new SEA.EasyIndexedDB('SEA', 'GunDB', 1)
 
 const checkIndexedDB = (key, prop, resolve_) => {
   const doIt = (resolve, reject) => seaIndexedDb.get(key, prop)
@@ -50,7 +51,7 @@ const setIndexedDB = (key, auth, resolve_) => {
   }
 }
 
-Gun.SEA && describe('SEA', function(){
+SEA && describe('SEA', function(){
   console.log('TODO: SEA! THIS IS AN EARLY ALPHA!!!');
   var alias = 'dude';
   var pass = 'my secret password';
@@ -69,9 +70,9 @@ Gun.SEA && describe('SEA', function(){
         // proof - generates PBKDF2 hash from user's alias and password
         // which is then used to decrypt user's auth record
         if(type === 'callback'){
-          Gun.SEA.proof(pass, Gun.text.random(64), check);
+          SEA.proof(pass, Gun.text.random(64), check);
         } else {
-          Gun.SEA.proof(pass, Gun.text.random(64)).then(check).catch(done);
+          SEA.proof(pass, Gun.text.random(64)).then(check).catch(done);
         }
       });
 
@@ -88,14 +89,14 @@ Gun.SEA && describe('SEA', function(){
         };
         // pair - generates ECDH key pair (for new user when created)
         if(type === 'callback'){
-          Gun.SEA.pair(check);
+          SEA.pair(check);
         } else {
-          Gun.SEA.pair().then(check).catch(done);
+          SEA.pair().then(check).catch(done);
         }
       });
 
       it('keyid', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(keyid){
             expect(keyid).to.not.be(undefined);
             expect(keyid).to.not.be('');
@@ -104,15 +105,15 @@ Gun.SEA && describe('SEA', function(){
           };
           // keyid - creates 8 byte KeyID from public key
           if(type === 'callback'){
-            Gun.SEA.keyid(key.pub, check);
+            SEA.keyid(key.pub, check);
           } else {
-            Gun.SEA.keyid(key.pub).then(check);
+            SEA.keyid(key.pub).then(check);
           }
         }).catch(function(e){done(e)});
       });
 
       it('enc', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(jsonSecret){
             expect(jsonSecret).to.not.be(undefined);
             expect(jsonSecret).to.not.be('');
@@ -127,15 +128,15 @@ Gun.SEA && describe('SEA', function(){
           };
           // en - encrypts JSON data using user's private or derived ECDH key
           if(type === 'callback'){
-            Gun.SEA.enc(clearText, key.priv, check);
+            SEA.enc(clearText, key.priv, check);
           } else {
-            Gun.SEA.enc(clearText, key.priv).then(check);
+            SEA.enc(clearText, key.priv).then(check);
           }
         }).catch(function(e){done(e)});
       });
 
       it('sign', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(signature){
             expect(signature).to.not.be(undefined);
             expect(signature).to.not.be('');
@@ -144,15 +145,15 @@ Gun.SEA && describe('SEA', function(){
           };
           // sign - calculates signature for data using user's private ECDH key
           if(type === 'callback'){
-            Gun.SEA.sign(key.pub, key, check);
+            SEA.sign(key.pub, key, check);
           } else {
-            Gun.SEA.sign(key.pub, key).then(check);
+            SEA.sign(key.pub, key).then(check);
           }
         }).catch(function(e){done(e)});
       });
 
       it('verify', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(ok){
             expect(ok).to.not.be(undefined);
             expect(ok).to.not.be('');
@@ -160,38 +161,38 @@ Gun.SEA && describe('SEA', function(){
             done();
           };
           // sign - calculates signature for data using user's private ECDH key
-          Gun.SEA.sign(key.pub, key).then(function(signature){
+          SEA.sign(key.pub, key).then(function(signature){
             if(type === 'callback'){
-              Gun.SEA.verify(key.pub, key.pub, signature, check);
+              SEA.verify(key.pub, key.pub, signature, check);
             } else {
-              Gun.SEA.verify(key.pub, key.pub, signature).then(check);
+              SEA.verify(key.pub, key.pub, signature).then(check);
             }
           });
         }).catch(function(e){done(e)});
       });
 
       it('dec', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(decText){
             expect(decText).to.not.be(undefined);
             expect(decText).to.not.be('');
             expect(decText).to.be.eql(clearText);
             done();
           };
-          Gun.SEA.enc(clearText, key.priv).then(function(jsonSecret){
+          SEA.enc(clearText, key.priv).then(function(jsonSecret){
             // de - decrypts JSON data using user's private or derived ECDH key
             if(type === 'callback'){
-              Gun.SEA.dec(jsonSecret, key.priv, check);
+              SEA.dec(jsonSecret, key.priv, check);
             } else {
-              Gun.SEA.dec(jsonSecret, key.priv).then(check);
+              SEA.dec(jsonSecret, key.priv).then(check);
             }
           });
         }).catch(function(e){done(e)});
       });
 
       it('derive', function(done){
-        Gun.SEA.pair().then(function(txKey){
-          return Gun.SEA.pair().then(function(rxKey){
+        SEA.pair().then(function(txKey){
+          return SEA.pair().then(function(rxKey){
             return {tx: txKey, rx: rxKey};
           });
         }).then(function(keys){
@@ -207,16 +208,16 @@ Gun.SEA && describe('SEA', function(){
           // derive - provides shared secret for both receiver and sender
           // which can be used to encrypt or sign data
           if(type === 'callback'){
-            Gun.SEA.derive(keys.rx.pub, keys.tx, check);
+            SEA.derive(keys.rx.pub, keys.tx, check);
           } else {
-            Gun.SEA.derive(keys.rx.pub, keys.tx).then(check);
+            SEA.derive(keys.rx.pub, keys.tx).then(check);
           }
         }).catch(function(e){done(e)});
       });
 
       it('write', function(done){
-        Gun.SEA.pair().then(function(key){
-          Gun.SEA.sign(key.pub, key).then(function(signature){
+        SEA.pair().then(function(key){
+          SEA.sign(key.pub, key).then(function(signature){
             var check = function(result){
               var parts;
               try{
@@ -228,36 +229,36 @@ Gun.SEA && describe('SEA', function(){
                 expect(parts[0]).to.be.eql(key.pub);
                 // expect(parts[1]).to.be.eql(signature);
               }catch(e){ return done(e) }
-              Gun.SEA.verify(key.pub, key.pub, parts[1]).then(function(flag){
+              SEA.verify(key.pub, key.pub, parts[1]).then(function(flag){
                 expect(flag).to.be.true;
                 done();
               });
             };
             // write - wraps data to 'SEA["data","signature"]'
             if(type === 'callback'){
-              Gun.SEA.write(key.pub, key, check);
+              SEA.write(key.pub, key, check);
             } else {
-              Gun.SEA.write(key.pub, key).then(check);
+              SEA.write(key.pub, key).then(check);
             }
           });
         }).catch(function(e){done(e)});
       });
 
       it('read', function(done){
-        Gun.SEA.pair().then(function(key){
+        SEA.pair().then(function(key){
           var check = function(result){
             expect(result).to.not.be(undefined);
             expect(result).to.not.be('');
             expect(result).to.be.equal(key.pub);
             done();
           };
-          Gun.SEA.sign(key.pub, key).then(function(signature){
-            Gun.SEA.write(key.pub, key).then(function(signed){
+          SEA.sign(key.pub, key).then(function(signature){
+            SEA.write(key.pub, key).then(function(signed){
               // read - unwraps data from 'SEA["data","signature"]'
               if(type === 'callback'){
-                Gun.SEA.read(signed, key.pub, check);
+                SEA.read(signed, key.pub, check);
               } else {
-                Gun.SEA.read(signed, key.pub).then(check);
+                SEA.read(signed, key.pub).then(check);
               }
             });
           });
@@ -676,9 +677,9 @@ Gun().user && describe('Gun', function(){
             : new Promise(function(resolve){
               checkIndexedDB(usr._.alias, 'auth', resolve);
             }).then(function(remember){
-              return Gun.SEA.read(remember, usr._.pub).then(function(props){
+              return SEA.read(remember, usr._.pub).then(function(props){
                 return !pin ? props
-                : Gun.SEA.dec(props, pin);
+                : SEA.dec(props, pin);
               });
             }).then(function(props){
               try{ props && (props = JSON.parse(props)) }catch(e){} //eslint-disable-line no-empty
@@ -687,10 +688,10 @@ Gun().user && describe('Gun', function(){
               expect(props).to.not.be(undefined);
               expect(props).to.not.be('');
               var keys = {pub: usr._.pub, priv: usr._.sea.priv};
-              return Gun.SEA.write(JSON.stringify(props), keys)
+              return SEA.write(JSON.stringify(props), keys)
               .then(function(remember){
                 return !pin ? sessionStorage.setItem('remember', remember)
-                : Gun.SEA.enc(remember, pin).then(function(encauth){
+                : SEA.enc(remember, pin).then(function(encauth){
                   return new Promise(function(resolve){
                     setIndexedDB(usr._.alias, encauth, resolve);
                   });
