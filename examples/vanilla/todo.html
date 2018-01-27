@@ -1,0 +1,53 @@
+<html>
+
+<body>
+    <h1>Thoughts</h1>
+
+    <form id="form">
+        <input id="input">
+        <button>Add</button>
+    </form>
+
+    <ul id="parentList"></ul>
+    <!-- <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <link href="style.css" rel="stylesheet">
+    <script>
+        var gun = Gun().get('thoughts');
+        document.getElementById('form').addEventListener('submit', function (e) {
+            e.preventDefault(); // attaches event listener and prevent default form action
+            var data = document.getElementById('input').value;
+            gun.set(data);
+            document.getElementById('input').value = "";
+        });
+        gun.map().on(function (thought, id) {
+            var li = document.getElementById(id) || document.getElementById('parentList').insertAdjacentHTML('beforeend', '<li id =' + id + '> ' + thought + '</li>');
+            var $ = function (selector) {
+                return document.querySelector(selector);
+            };
+            // attach the event listener to the selected li items
+            var links = $('#parentList').getElementsByTagName('li');
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                // console.log(link.innerHTML);
+                link.ondblclick = dynamicEvent;
+                if (link.innerHTML === " null" || link.innerHTML === " " || link.innerHTML === "") {
+                    link.style.display = "none";
+                } else {
+                    link.style.display = "list-item";
+                };
+            };
+        });
+        function dynamicEvent() {
+            gun.get(this.id).put(null);
+            this.innerHTML = document.getElementById(this.id.innerHTML);
+            if (this.innerHTML === " null" || this.innerHTML === " " || this.innerHTML === "") {
+                this.style.display = "none";
+            } else {
+                this.style.display = "list-item";
+            };
+        };
+    </script>
+</body>
+
+</html>
