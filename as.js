@@ -83,12 +83,13 @@
 
 ;(function(){
 	$('.page').not(':first').hide();
-	$('a, button').on('click', function(e){
+	$(document).on('click', 'a, button', function(e){
 		e.preventDefault();
 		r($(this).attr('href'));
 	});
 	function r(href){
 		if(!href){ return }
+		if(href[0] == '#'){ href = href.slice(1) }
 		var h = href.split('/')[0];
 		$('.page').hide();
 		$('#' + h).show();

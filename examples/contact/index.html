@@ -23,8 +23,17 @@
 					display: inline-block;
 					width: 15%;
 				}
+				.loading {
+				  animation: pulse 2s infinite;
+				}
+				@keyframes pulse
+				{
+				  0% {opacity: 1;}
+				  50% {opacity: 0.5;}
+				  100% {opacity: 1;}
+				}
 			</style>
-			<form class="sign pad center">
+			<form id="inup" class="sign pad center">
 				<div class="rubric">Welcome,</div>
 				<div class="mid row col">
 					<input name="alias" class="huet jot sap" placeholder="alias">
@@ -86,13 +95,27 @@
 		</div id="converse">
 		
 		<div id="person" class="hue3 page">
+			<style>
+				#person .back {
+					color: white;
+					text-decoration: none;
+					font-weight: bolder;
+					position: absolute;
+					top: 0.3em;
+					left: 0.5em;
+					width: 2em;
+					height: 2em;
+					border-radius: 100em;
+				}
+			</style>
+			<a href="people" class="back">&#129120</a>
 			<div class="pad">
 				<div name="who">
 					<!-- img src="" -->
 					<h2 name="name" contenteditable="true">Name</h2>
 					<i name="born"></i>
 					<span name="bio" contenteditable="true">bio</span>
-					<form id="say" class="center">
+					<form id="say" class="center none">
 						<input class="jot" placeholder="Say something!" style="width: 80%;">
 						<input type="submit" id="speak" class="huet2" style="min-width: 5em; width: 10%;" value="speak">
 					</form>
@@ -150,6 +173,13 @@
 			// for how to build a simplified version
 			// of this example: https://scrimba.com/c/c2gBgt4
 			if(location.protocol.indexOf('s') < 0 && location.host.indexOf('localhost') < 0){ location.protocol = 'https:'; }
+			/*
+				NOTES:
+				 - SEA should auto redirect to https by default, except if app developer disables it.
+				 - SEA should auto-lock/block itself while login or signup is happening, to prevent duplicates.
+				 - SEA should auto user.leave() if/when errors on login/signup happen to prevent bugs.
+				
+			*/
 			var gun = Gun(location.origin+'/gun');
 			var app = gun.get('example/contacts/6');
 			var user = gun.user();
@@ -188,7 +218,8 @@
 					});
 					*/
 				})).on('click','form.sign button:last', function(){
-					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					var but = $(this), form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					if(but.is('.loading')){ return }
 					data.born = Gun.time.is();
 					if(!data.alias || data.alias.length < 5){
 						c.tell("Alias needs to be longer than 5 characters.");
@@ -198,7 +229,9 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					but.addClass('loading');
 					user.create(data.alias, data.pass, function(ack){
+						but.removeClass('loading');
 						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
@@ -223,6 +256,9 @@
 						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						session(data);
 					});
+				}
+				if(!location.hash){
+					as.route('sign');
 				}
 				if(!window.sessionStorage){ window.sessionStorage = {clear:function(){}} }
 				if(sessionStorage.tmp){
@@ -249,6 +285,9 @@
 					$(this).find('.jot').val('');
 				});
 			}());
+			as.route.page('sign', function(){
+				$(document.forms.inup.alias).focus();
+			});
 			as.route.page('people', function(){
 				if(!user.is){ return as.route('sign') }
 				as('#people', gun, function(data, key, el){
@@ -259,6 +298,7 @@
 			as.route.page('person', function(){
 				if(!user.is){ return as.route('sign') }
 				var pub = location.hash.split('/').slice(-1)[0];
+				(pub === user._.pub? $('#say').show() : $('#say').hide());
 				as('#person', window.PUB = gun.get('pub/'+pub));
 			});
 
