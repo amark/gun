@@ -453,7 +453,7 @@
     const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {}
     const pin = pIn && Buffer.from(pIn, 'utf8').toString('base64')
     // Checks for existing proof, matching alias and expiration:
-    const checkRememberData = async ({ proof, alias: aLias, pin, iat, exp, remember }) => {
+    const checkRememberData = async ({ proof, alias: aLias, iat, exp, remember }) => {
       if (!!proof && alias === aLias) {
         const checkNotExpired = (args) => {
           if (Math.floor(Date.now() / 1000) < (iat + args.exp)) {
@@ -468,7 +468,6 @@
         return ((hooked instanceof Promise)
         && await hooked.then(checkNotExpired)) || checkNotExpired(hooked)
       }
-      return { pin, alias: aLias }
     }
     const readAndDecrypt = async (data, pub, key) =>
       parseProps(await seaDec(await seaRead(data, pub), key))
@@ -504,13 +503,14 @@
     .map(async ({ at, pub }) => {
       const readStorageData = async () => {
         const props = parseProps(await seaRead(remember, pub, true))
-        const { pin, alias: aLias } = props
+        let { pin, alias: aLias } = props
 
-        return (!pin || alias === aLias)
-        // No PIN, let's try short-term proof if for matching alias
-        ? await checkRememberData(props)
+        if (!pin || alias === aLias) {
+          // No PIN, let's try short-term proof if for matching alias
+          pin = (await checkRememberData(props)).pin
+        }
         // Got PIN so get IndexedDB secret if signature is ok
-        : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
+        return await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
       }
       // got pub, try auth with pin & alias :: or unwrap Storage data...
       const args = pin ? { pin, alias } : await readStorageData()
