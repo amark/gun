@@ -528,7 +528,7 @@
       }
 
       try { // auth parsing or decryption fails or returns empty - silently done
-        const { auth } = JSON.parse(at.put.auth)
+        const { auth } = at.put.auth
         const sea = await seaDec(auth, proof)
         if (!sea) {
           err = 'Failed to decrypt private key!'
