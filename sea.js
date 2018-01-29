@@ -557,9 +557,10 @@
 
       const user = Object.assign(key, { at, proof })
       const pIN = newPin || pin
-      const pinProp = pIN && Buffer.from(pIN, 'base64').toString('utf8')
 
-      return await finalizelogin(alias, user, root, { pin: newPin || pin })
+      const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
+
+      return await finalizelogin(alias, user, root, pinProp)
     } catch (e) { // TODO: right log message ?
       Gun.log('Failed to finalize login with new password!')
       const { err = '' } = e || {}
