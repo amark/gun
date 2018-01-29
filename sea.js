@@ -499,8 +499,7 @@
     let err
     // Yes, then attempt to log into each one until we find ours!
     // (if two users have the same username AND the same password... that would be bad)
-    const [ { key, at, proof } ] =
-    (await Promise.all(aliases.filter(({ at: { put } = {} }) => !!put))
+    const [ { key, at, proof } ] = await Promise.all(aliases.filter(({ at: { put } = {} }) => !!put)
     .map(async ({ at, pub }) => {
       const readStorageData = async () => {
         const props = parseProps(await seaRead(remember, pub, true))
