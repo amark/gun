@@ -502,8 +502,8 @@
     const [ { key, at, proof } = {} ] = await Promise
     .all(aliases.filter(({ at: { put } = {} }) => !!put)
     .map(async ({ at, pub }) => {
-      const readStorageData = async () => {
-        const props = parseProps(await seaRead(remember, pub, true))
+      const readStorageData = async (args) => {
+        const props = args || parseProps(await seaRead(remember, pub, true))
         let { pin, alias: aLias } = props
 
         return (!pin && alias === aLias)
