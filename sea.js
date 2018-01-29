@@ -555,7 +555,7 @@
       const { proof } = key
       delete key.proof
 
-      await updatestorage(proof, key, pin)(args)
+      await updatestorage(proof, key, pin)(key)
 
       const user = Object.assign(key, { at, proof })
 
