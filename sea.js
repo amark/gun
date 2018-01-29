@@ -453,7 +453,7 @@
     const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {}
     const pin = pIn && Buffer.from(pIn, 'utf8').toString('base64')
     // Checks for existing proof, matching alias and expiration:
-    const checkRememberData = async ({ proof, alias: aLias, iat, exp, remember }) => {
+    const checkRememberData = async ({ proof, alias: aLias, pin, iat, exp, remember }) => {
       if (!!proof && alias === aLias) {
         const checkNotExpired = (args) => {
           if (Math.floor(Date.now() / 1000) < (iat + args.exp)) {
@@ -468,6 +468,7 @@
         return ((hooked instanceof Promise)
         && await hooked.then(checkNotExpired)) || checkNotExpired(hooked)
       }
+      return { pin, alias: aLias }
     }
     const readAndDecrypt = async (data, pub, key) =>
       parseProps(await seaDec(await seaRead(data, pub), key))
