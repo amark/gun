@@ -513,7 +513,7 @@
         : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
       }
       // got pub, try auth with pin & alias :: or unwrap Storage data...
-      const args = pin ? { pin, alias } : await readStorageData()
+      const args = await readStorageData(pin && { pin, alias })
       const { proof } = args || {}
 
       if (!proof) {
