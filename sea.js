@@ -490,7 +490,7 @@
       }
     }
     // Yes, let's get (all?) matching aliases
-    const aliases = await querygunaliases(alias, root)
+    const aliases = (await querygunaliases(alias, root))
     .filter(({ pub } = {}) => !!pub)
     // Got any?
     if (!aliases.length) {
