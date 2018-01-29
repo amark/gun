@@ -721,7 +721,7 @@
               .catch(putErr('Failed to finalize login with new password!'))
             }).catch(putErr('Password set attempt failed!'))
           } else {
-            finalizelogin(alias, keys, root, pin).then(resolve)
+            finalizelogin(alias, keys, root, { pin }).then(resolve)
             .catch(putErr('Finalizing login failed!'))
           }
         }).catch(putErr('Auth attempt failed!'))
