@@ -538,7 +538,7 @@
         const { epub } = at.put
         // Success! we've found our private data!
         err = null
-        return { pub, priv, epriv, epub }
+        return { proof, pub, priv, epriv, epub }
       } catch (e) {
         err = 'Failed to decrypt private key!'
         return
@@ -552,6 +552,9 @@
     // now we have AES decrypted the private key,
     // if we were successful, then that means we're logged in!
     try {
+      const { proof } = key
+      delete key.proof
+
       await updatestorage(proof, key, pin)(args)
 
       const user = Object.assign(key, { at, proof })
