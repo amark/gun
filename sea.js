@@ -505,12 +505,11 @@
         const props = parseProps(await seaRead(remember, pub, true))
         let { pin, alias: aLias } = props
 
-        if (!pin || alias === aLias) {
-          // No PIN, let's try short-term proof if for matching alias
-          pin = (await checkRememberData(props)).pin
-        }
+        return (!pin && alias === aLias)
+        // No PIN, let's try short-term proof if for matching alias
+        ? await checkRememberData(props)
         // Got PIN so get IndexedDB secret if signature is ok
-        return await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
+        : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
       }
       // got pub, try auth with pin & alias :: or unwrap Storage data...
       const args = pin ? { pin, alias } : await readStorageData()
