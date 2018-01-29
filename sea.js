@@ -556,6 +556,8 @@
       await updatestorage(proof, key, newPin || pin)(key)
 
       const user = Object.assign(key, { at, proof })
+      const pIN = newPin || pin
+      const pinProp = pIN && Buffer.from(pIN, 'base64').toString('utf8')
 
       return await finalizelogin(alias, user, root, { pin: newPin || pin })
     } catch (e) { // TODO: right log message ?
