@@ -506,23 +506,26 @@
         const props = args || parseProps(await seaRead(remember, pub, true))
         let { pin, alias: aLias } = props
 
-        return (!pin && alias === aLias)
+        const data = (!pin && alias === aLias)
         // No PIN, let's try short-term proof if for matching alias
         ? await checkRememberData(props)
         // Got PIN so get IndexedDB secret if signature is ok
         : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
+        pin = pin || data.pin
+        delete data.pin
+        return { pin, data }
       }
       // got pub, try auth with pin & alias :: or unwrap Storage data...
-      const args = await readStorageData(pin && { pin, alias })
-      const { proof } = args || {}
+      const { data, pin: newPin } = await readStorageData(pin && { pin, alias })
+      const { proof } = data || {}
 
       if (!proof) {
-        if (!args) {
+        if (!data) {
           err = 'No valid authentication session found!'
           return
         }
         try { // Wipes IndexedDB silently
-          await updatestorage()(args)
+          await updatestorage()(data)
         } catch (e) {}  //eslint-disable-line no-empty
         err = 'Expired session!'
         return
@@ -539,7 +542,7 @@
         const { epub } = at.put
         // Success! we've found our private data!
         err = null
-        return { proof, at, pin, key: { pub, priv, epriv, epub } }
+        return { proof, at, pin: newPin, key: { pub, priv, epriv, epub } }
       } catch (e) {
         err = 'Failed to decrypt private key!'
         return
