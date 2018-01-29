@@ -499,7 +499,8 @@
     let err
     // Yes, then attempt to log into each one until we find ours!
     // (if two users have the same username AND the same password... that would be bad)
-    const [ key ] = await Promise.all(aliases.filter(({ at: { put } = {} }) => !!put)
+    const [ { key, at, proof } ] =
+    (await Promise.all(aliases.filter(({ at: { put } = {} }) => !!put))
     .map(async ({ at, pub }) => {
       const readStorageData = async () => {
         const props = parseProps(await seaRead(remember, pub, true))
@@ -538,7 +539,7 @@
         const { epub } = at.put
         // Success! we've found our private data!
         err = null
-        return { proof, pub, priv, epriv, epub }
+        return { proof, at, key: { pub, priv, epriv, epub } }
       } catch (e) {
         err = 'Failed to decrypt private key!'
         return
@@ -552,9 +553,6 @@
     // now we have AES decrypted the private key,
     // if we were successful, then that means we're logged in!
     try {
-      const { proof } = key
-      delete key.proof
-
       await updatestorage(proof, key, pin)(key)
 
       const user = Object.assign(key, { at, proof })
