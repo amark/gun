@@ -499,7 +499,7 @@
     let err
     // Yes, then attempt to log into each one until we find ours!
     // (if two users have the same username AND the same password... that would be bad)
-    const [ { key, at, proof } = {} ] = await Promise
+    const [ { key, at, proof, pin: newPin } = {} ] = await Promise
     .all(aliases.filter(({ at: { put } = {} }) => !!put)
     .map(async ({ at, pub }) => {
       const readStorageData = async (args) => {
@@ -539,7 +539,7 @@
         const { epub } = at.put
         // Success! we've found our private data!
         err = null
-        return { proof, at, key: { pub, priv, epriv, epub } }
+        return { proof, at, pin, key: { pub, priv, epriv, epub } }
       } catch (e) {
         err = 'Failed to decrypt private key!'
         return
@@ -553,11 +553,11 @@
     // now we have AES decrypted the private key,
     // if we were successful, then that means we're logged in!
     try {
-      await updatestorage(proof, key, pin)(key)
+      await updatestorage(proof, key, newPin || pin)(key)
 
       const user = Object.assign(key, { at, proof })
 
-      return await finalizelogin(alias, user, root, { pin })
+      return await finalizelogin(alias, user, root, { pin: newPin || pin })
     } catch (e) { // TODO: right log message ?
       Gun.log('Failed to finalize login with new password!')
       const { err = '' } = e || {}
