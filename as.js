@@ -31,7 +31,7 @@
 					ref = ref.get(key);
 				}
 			});
-
+			
 			var many = path.slice().reverse().indexOf('#'), model;
 			many = (0 < ++many)? many : false;
 			if(many){
@@ -45,14 +45,25 @@
 					ui = model.has[(gui._).id];
 					if(!ui){
 						back = gui.back(many - 1);
-						ui = model.has[(back._).id] || (model.has[(back._).id] = model.$.clone(true).appendTo(model.on));
+						ui = model.has[(back._).id];
+						if(!ui){
+							if(!(back._).get){ return }
+							ui = (model.has[(back._).id] = model.$.clone(true).prependTo(model.on));
+						}
 						ui = ui.find("[name='"+key+"']").first();
 						model.has[(gui._).id] = ui;
 					}
 				}
 				ui.data('gun', gui);
+				if(ui.data('was') === data){ return }
+				if(many && ui.is('.sort')){
+					var up = ui.closest("[name='#']");
+					var tmp = as.sort(data, up.parent().children().last());
+					up.insertAfter(tmp);
+				}
 				if(as.lock === gui){ return }
 				(ui[0] && u === ui[0].value)? ui.text(data) : ui.val(data);
+				ui.data('was', data);
 				if(cb){
 					cb(data, key, ui);
 				}
@@ -68,6 +79,13 @@
 				as.typing = me = false;
 			}, wait || 200);
 		}
+	}
+	as.sort = function(sort, el) {
+		var vs = $(el).find('.sort');
+		vs = (vs[0] && u === vs[0].value)? vs.text() : vs.val();
+		var id = sort;
+		var test = id >= vs;
+		return test ? el : as.sort(sort, el.prev());
 	}
 	$(document).on('keyup', 'input, textarea, [contenteditable]', as.wait(function(){
 		var el = $(this);
@@ -103,8 +121,8 @@
 	}
 	r.render = function(id, model, onto, data){
 		var $data = $(
-				$('#' + id).get(0) ||
-				$('.model').find(model).clone(true).attr('id', id).appendTo(onto)
+			$('#' + id).get(0) ||
+			$('.model').find(model).clone(true).attr('id', id).appendTo(onto)
 		);
 		$.each(data, function(field, val){
 			if($.isPlainObject(val)){ return }

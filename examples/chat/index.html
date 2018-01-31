@@ -95,6 +95,7 @@
 
 		<script src="/jquery.js"></script>
 		<script src="/gun.js"></script>
+		<script src="/gun/nts.js"></script>
 		<script>
 			var gun = Gun(location.origin + '/gun');
 			var chat = gun.get('converse');
@@ -126,7 +127,7 @@
 				var time = new Date(msg.when);
 				li.find('.when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
 
-				$('body').stop(true, true)
+				$('html, body').stop(true, true)
 					.animate({
 						scrollTop: ul.height(),
 					});
