@@ -1,3 +1,4 @@
+console.log("If module not found, install hapi globally `npm i hapi inert -g`!");
 const Hapi  = require('hapi')
 const Inert = require('inert')
 const Gun   = require('..')

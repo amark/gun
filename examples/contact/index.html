@@ -69,7 +69,7 @@
 								<span name="who">
 									<b name="name"></b>
 								</span>
-								<i>~</i><i name="alias"></i>
+								<i>~</i><i name="alias" class="sort"></i>
 								<input name="pub">
 							</li>
 						</a>
@@ -98,17 +98,15 @@
 			<style>
 				#person .back {
 					color: white;
-					text-decoration: none;
-					font-weight: bolder;
 					position: absolute;
 					top: 0.3em;
 					left: 0.5em;
 					width: 2em;
 					height: 2em;
-					border-radius: 100em;
+					z-index: 99999;
 				}
 			</style>
-			<a href="people" class="back">&#8592</a>
+			<a href="people" class="act back">&#8592</a>
 			<div class="pad">
 				<div name="who">
 					<!-- img src="" -->
@@ -121,7 +119,7 @@
 					</form>
 					<div>
 						<ul name="said">
-							<li name="#" class="shade rim"><div name="what" class="rim"></div></li>
+							<li name="#" class="sort shade rim"><div name="what" class="rim"></div></li>
 						</ul>
 					</div>
 				</div>
@@ -168,6 +166,7 @@
 		<script src="/gun.js"></script>
 		<script src="/gun/sea.js"></script>
 		<script src="/gun/as.js"></script>
+		<script src="/gun/nts.js"></script>
 		<script>
 			// Check out the interactive tutorial
 			// for how to build a simplified version
@@ -230,6 +229,7 @@
 						return;
 					}
 					but.addClass('loading');
+					data.alias = data.alias.toLowerCase();
 					user.create(data.alias, data.pass, function(ack){
 						but.removeClass('loading');
 						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
@@ -252,6 +252,7 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
 						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						session(data);
@@ -273,7 +274,8 @@
 					var e = $('#tell');
 					e.find('p').text(what);
 					e.show();
-					setTimeout(function(){e.hide()}, n || 2500);
+					clearTimeout(c.tell.to);
+					c.tell.to = setTimeout(function(){e.hide()}, n || 2500);
 				}
 			}());
 			(function(){

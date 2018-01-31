@@ -15,8 +15,17 @@ var config = {
 	}
 }
 
+var fs = require('fs');
+var server = require('https').createServer({
+	key: fs.readFileSync(__dirname+'/../https/server.key'),
+	cert: fs.readFileSync(__dirname+'/../https/server.crt'),
+	ca: fs.readFileSync(__dirname+'/../https/ca.crt'),
+	requestCert: true,
+	rejectUnauthorized: false
+});
+
 var panic = require('panic-server');
-panic.server().on('request', function(req, res){
+panic.server(server).on('request', function(req, res){
 	config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
 }).listen(config.port);
 
@@ -30,7 +39,7 @@ manager.start({
 				port: config.port + (i + 1)
 			}
     }),
-    panic: 'http://' + config.IP + ':' + config.port
+    panic: 'https://' + config.IP + ':' + config.port
 });
 
 // Now lets divide our clients into "servers" and "browsers".
@@ -61,18 +70,25 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 				// As a result, we have to manually pass it scope.
 				test.async();
 				// Clean up from previous test.
-				try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
-				var server = require('http').createServer(function(req, res){
-					res.end("I am "+ env.i +"!");
-				});
-				// Launch the server and start gun!
-				var Gun = require('gun');
-				// Attach the server to gun.
-				var gun = Gun({file: env.i+'data', web: server, localStorage: false});
-				server.listen(env.config.port + env.i, function(){
+				try{ require('fs').unlinkSync(env.i+'data') }catch(e){ console.log("!!! WARNING !!!! MUST MANUALLY REMOVE OLD DATA!!!!, e") }
+				var purl = 'https://'+env.config.IP+':'+env.config.port;
+				require('gun/test/https/test')(env.config.port + env.i, env.i+'data', function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.
 					test.done();
+				}, function(file){
+					file = file.toString();
+					if(0 >= file.indexOf('<script src="/gun.js"></script>')){ return }
+					file = file.replace('<script src="/gun.js"></script>',
+							"<script src='"+purl+"/panic.js'></script><script>panic.server('"+purl+"')</script><script src='/gun.js'></script><script>localStorage.clear();sessionStorage.clear();</script>");
+
+
+
+				// https://rawgit.com/mhelander/gun/sea/sea.js
+
+
+
+					return file;
 				});
 			}, {i: i += 1, config: config})); 
 		});
@@ -84,196 +100,109 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		console.log("PLEASE OPEN https://"+ config.IP +":"+ (config.port+1) +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
-	it("Browsers load SEA!", function(){
-		var tests = [], i = 0;
-		browsers.each(function(client, id){
-			tests.push(client.run(function(test){
-				test.async();
-				//console.log("load?");
-				function load(src, cb){
-					var script = document.createElement('script');
-					script.onload = cb; script.src = src;
-					document.head.appendChild(script);
-				}
-				load('cryptomodules.js', function(){
-					load('sea.js', function(){
-						test.done();
-					});
-				});
-			}, {i: i += 1, config: config})); 
-		});
-		return Promise.all(tests);
-	});
-
-	it("Browsers initialized gun!", function(){
-		var tests = [], ids = {}, i = 0;
-		// Let us create a list of all the browsers IDs connected.
-		// This will later let each browser check against every other browser.
-		browsers.each(function(client, id){
-			ids[id] = 1;
-		});
-		browsers.each(function(client, id){
-			tests.push(client.run(function(test){
-				localStorage.clear();
-				var env = window.env = test.props;
-				var peers = [], i = env.config.servers;
-				while(i--){
-					// For the total number of servers listed in the configuration
-					// Add their URL into an array.
-					peers.push('http://'+ env.config.IP + ':' + (env.config.port + (i + 1)) + '/gun');
-				}
-				var gun = window.gun = Gun(peers);
-				var user = window.user = gun.user();
-				var go = window.go = {num: 0, total: 0, users: {}, pub: {}};
-				window.ID = env.id;
-				go.check = Gun.obj.map(env.ids, function(v,id,t){
-					// for each browser ID
-					// they will be saving X number of messages each.
-					go.users[id] = true; // set an outstanding flag to check against.
-					var i = env.config.each;
-					while(i--){
-						// So add a deterministic key we can check against.
-						t(id + (i + 1), 1);
-						// And count up the total number of messages we expect for all.
-						go.total += 1;
-					}
-				});
-
-				console.log(peers, go);
-			}, {i: i += 1, id: id, ids: ids, config: config}));  
-		});
-		return Promise.all(tests);
-	});
-
-	it("All users created!", function(){
+	it("Use UI to create user.", function(){
 		var tests = [], ids = {}, i = 0;
 		browsers.each(function(client, id){
 			ids[id] = 1;
 		});
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
+				var env = test.props;
 				test.async();
-
-				gun.on('secure', function(at){
-					/* enforce some rules about shared app level data */
-					if(!at.put || !at.put.users){ return }
-					var no;
-					Gun.node.is(at.put.users, function(val, key){
-						Gun.SEA.read(val, false, function(val){
-							if('alias/'+key === Gun.val.rel.is(val)){ return }
-							no = true;
-						})
-						if(no){ return no }
-					});
-					if(no){ return }
-					this.to.next(at);
-				});
-
-				var unsafepassword = 'asdf'+ID;
-				console.log("sign in and up:", ID);
-				window.user.create(ID, unsafepassword, function(ack){
-					if(ack.err || !ack.pub){ return }
-					window.pub = ack.pub;
-					gun.get('users').get(ID).put(gun.get('alias/'+ID));
-					console.log("signed up", ack.pub);
-					console.debug.j = 1;
-					window.user.auth(ID, unsafepassword, function(ack){
-						console.debug.j = 0;
-						console.log("signed in", ack);
-						if(ack.err || !ack.pub){ return }
-						test.done();
-					});
-				});
-
-			}, {i: i += 1, id: id, ids: ids, config: config}));  
-		});
-		return Promise.all(tests);
-	});
-
-	it("Start reading and sending messages!", function(){
-		var tests = [], ids = {}, i = 0;
-		browsers.each(function(client, id){
-			ids[id] = 1;
-		});
-		browsers.each(function(client, id){
-			tests.push(client.run(function(test){
-				test.async();
-
-				gun.get('users').map().map()
-					.get('who').get('said').map().on(function(msg){
-						check(msg);
-				});
-
-				var said = user.get('who').get('said');
-
-				function run(i){
-
-					said.set({
-						what: i + " Hello world! ~ " + pub.slice(0,3),
-						num: i,
-						who: pub,
-						id: ID,
-					});/*, function(ack){
-						if(ack.err){ return }
-						test.done();
-					});*/
-
-				}
-				/* TODO: sometimes sign in hangs */
-				console.log("<<<<< START >>>>>");
-				var i = 0, to = setInterval(function frame(a, b){
-					if(!b && 2 <= (b = env.config.burst)){
-						while(--b){
-							frame(i, true);
-						}
-						return;
-					}
-					if(env.config.each <= i){
-						clearTimeout(to);
-						return;
-					}
-					run(i += 1);
-				}, env.config.wait || 1);
-
-
-				var col = $("<div>").css({width: 250, position: 'relative', float: 'left', border: 'solid 1px black'}), cols = {};
-				var report = $("<div>").css({position: 'fixed', top: 0, right: 0, background: 'white', padding: 10}).text(" / "+ go.total +" Verified").prependTo('body');
-				var reportc = $('<span>').text(0).prependTo(report);
-				var last = $("<div>").text("Processing: ").css({border: "solid 1px black"}).appendTo("body");
-				last = $("<span>").text(" ").appendTo(last);
-
-				function check(msg){
-					var who;
-					if(!go.pub[msg.who]){
-						go.pub[msg.who] = msg.id;
-						go.users[msg.id] = false;
-						//who = cols[msg.id] = col.clone(true).appendTo('body');
-						//who.prepend("<input value='"+ msg.who +"'>");
-						//who.prepend("<input value='"+ msg.id +"'>");
-					}
-					if(!go.check[msg.id + msg.num]){
-						return;
-					}
-					go.check[msg.id + msg.num] = false;
-					clearTimeout(end.to); end.to = setTimeout(end, 9);
-					reportc.text(++go.num);
-					last.text(msg.what);
-					//who = cols[msg.id];
-					//$("<div>").css({border: 'solid 1px blue'}).text(msg.what).appendTo(who);
-				}
-
-				function end(){
-					var wait = Gun.obj.map(go.users, function(v){ if(v){ return true }});
-					if(wait){ return }
-					var more = Gun.obj.map(go.check, function(v){ if(v){ return true }});
-					if(more){ return }
+				localStorage.clear();sessionStorage.clear();
+				$('#sign').find('input').first().val(env.id);
+				setTimeout(function(){
+					$('#sign').find('input').last().val('pass'+env.id+'phrase');
+				},750 * 1);
+				setTimeout(function(){
+					$('#sign').find('button').last().trigger('click');
+				},750 * 2);
+				setTimeout(function(){
+					c.tell("Wait until we are logged in...");
 					test.done();
-				}
+				},750 * 3);
+			}, {i: i += 1, id: id, ids: ids, config: config}));  
+		});
+		return Promise.all(tests);
+	});
 
+	it("Load user UI once logged in.", function(){
+		var tests = [], ids = {}, i = 0;
+		browsers.each(function(client, id){
+			ids[id] = 1;
+		});
+		browsers.each(function(client, id){
+			tests.push(client.run(function(test){
+				var env = test.props;
+				test.async();
+				setTimeout(function waitlogin(){
+					console.log(user._.pub);
+					if(!user._.pub){ return setTimeout(waitlogin, 500) }
+					test.done();
+				}, 750);
+			}, {i: i += 1, id: id, ids: ids, config: config}));  
+		});
+		return Promise.all(tests);
+	});
+
+	it("Update user's name!", function(){
+		var tests = [], ids = {}, i = 0;
+		browsers.each(function(client, id){
+			ids[id] = 1;
+		});
+		browsers.each(function(client, id){
+			tests.push(client.run(function(test){
+				var env = test.props;
+				test.async();
+				setTimeout(function(){
+					location.hash = 'person/' + user._.pub;
+					var $name = $('#person').find('h2').first(), t = 250;
+					setTimeout(function(){
+						$name.text(env.id.slice(0,1));
+						$name.trigger('keyup');
+					},t * 1);
+					setTimeout(function(){
+						$name.text(env.id.slice(0,2));
+						$name.trigger('keyup');
+					},t * 2);
+					setTimeout(function(){
+						$name.text(env.id.slice(0,3));
+						$name.trigger('keyup');
+					},t * 3);
+					setTimeout(function(){
+						$name.text(env.id.slice(0,4));
+						$name.trigger('keyup');
+					},t * 4);
+					setTimeout(function(){
+						$name.text(env.id.slice(0,5));
+						$name.trigger('keyup');
+					},t * 5);
+					setTimeout(function(){
+						location.hash = 'people';
+						test.done();
+					}, 2000);
+				}, 3000 * env.i);
+			}, {i: i += 1, id: id, ids: ids, config: config}));  
+		});
+		return Promise.all(tests);
+	});
+
+	it("Reset", function(){
+		var tests = [], ids = {}, i = 0;
+		browsers.each(function(client, id){
+			ids[id] = 1;
+		});
+		browsers.each(function(client, id){
+			tests.push(client.run(function(test){
+				localStorage.clear();sessionStorage.clear();
+				setTimeout(function(){
+					location.hash = '#sign';
+					location.reload();
+				}, 9000);
 			}, {i: i += 1, id: id, ids: ids, config: config}));  
 		});
 		return Promise.all(tests);
