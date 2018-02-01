@@ -56,7 +56,7 @@
     "@trust/webcrypto": "^0.7.1",
     "express": ">=4.15.2",
     "fake-indexeddb": "^2.0.3",
-    "hapi": "^16.1.1",
+    "hapi": "^17.2.0",
     "inert": "^4.2.0",
     "ip": "^1.1.5",
     "mocha": ">=3.2.0",
