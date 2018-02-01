@@ -1,8 +1,8 @@
-console.log("If module not found, install hapi globally `npm i hapi inert -g`!");
+console.log("If module not found, install hapi globally `npm i hapi inert -g`!")
 
 const Hapi  = require('hapi')
 const Inert = require('inert')
-// const Gun   = require('..')
+const Gun   = require('..')
 
 const server = new Hapi.Server({
   port: 8080,
@@ -14,11 +14,14 @@ const server = new Hapi.Server({
   }
 })
 
-// server.connections.forEach(c => Gun({ web: c.listener, file: 'data.json' }))
-
 async function runtime() {
+  
+  const db = new Gun({
+    web: server.listener,
+    file: 'data.json'
+  })
 
-  await server.register(Inert);
+  await server.register(Inert)
 
   server.route({
     method: 'GET',
@@ -48,8 +51,8 @@ async function runtime() {
     }
   })
 
-  await server.start();
-  console.log('Server running at:', server.info.uri, 'dir:', __dirname)
+  await server.start()
+  console.log('Server running at:', server.info.uri)
 }
 
 runtime()
