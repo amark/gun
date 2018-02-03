@@ -547,7 +547,7 @@
     }).filter((props) => !!props))
 
     if (!key) {
-      throw new { err: err || 'Public key does not exist!' }
+      throw { err: err || 'Public key does not exist!' }
     }
 
     // now we have AES decrypted the private key,
@@ -760,31 +760,21 @@
     },
     // If authentication is to be remembered over reloads or browser closing,
     // set validity time in minutes.
-    recall(setvalidity, cb, options) {
+    async recall(setvalidity, options) {
       const root = this.back(-1)
 
       let validity
-      let callback
       let opts
 
-      if (!options && typeof cb !== 'function' && !Gun.val.is(cb)) {
-        opts = cb
+      if (!Gun.val.is(setvalidity)) {
+        opts = setvalidity
+        validity = _initial_authsettings.validity
       } else {
-        callback = cb
+        opts = options
+        validity = setvalidity * 60 // minutes to seconds
       }
-      if (!callback) {
-        if (typeof setvalidity === 'function') {
-          callback = setvalidity
-          validity = _initial_authsettings.validity
-        } else if (!Gun.val.is(setvalidity)) {
-          opts = setvalidity
-          validity = _initial_authsettings.validity
-        } else {
-          validity = setvalidity * 60 // minutes to seconds
-        }
-      }
-
-      var doIt = function(resolve, reject){
+      // TODO: for some reasong authrecall doesn't work with await here...
+      return await new Promise((resolve, reject) => {
         // opts = { hook: function({ iat, exp, alias, proof }) }
         // iat == Date.now() when issued, exp == seconds to expire from iat
         // How this works:
@@ -801,21 +791,19 @@
           Gun.log(err)
           resolve({ err: (e && e.err) || err })
         })
-      }
-      if (callback) { doIt(callback, callback) } else { return new Promise(doIt) }
+      })
     },
-    alive(cb) {
+    async alive() {
       const root = this.back(-1)
-      const doIt = (resolve, reject) => {
+      try {
         // All is good. Should we do something more with actual recalled data?
-        authrecall(root).then(() => resolve(root._.user._))
-        .catch((e) => {
-          const err = 'No session!'
-          Gun.log(err)
-          reject({ err })
-        })
+        await authrecall(root)
+        return root._.user._
+      } catch (e) {
+        const err = 'No session!'
+        Gun.log(err)
+        throw { err }
       }
-      if (cb) { doIt(cb, cb) } else { return new Promise(doIt) }
     }
   })
 
