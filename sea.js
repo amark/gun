@@ -52,24 +52,23 @@
     global.localStorage = localStorage
   }
   // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
-  function SeaArray() {}
-  Object.assign(SeaArray, { from: Array.from })
-  SeaArray.prototype = Object.create(Array.prototype)
-  SeaArray.prototype.toString = function(enc = 'utf8', start = 0, end) {
-    const { length } = this
-    if (enc === 'hex') {
-      const buf = new Uint8Array(this)
-      return [ ...Array(((end && (end + 1)) || length) - start).keys()]
-      .map((i) => buf[ i + start ].toString(16).padStart(2, '0')).join('')
-    }
-    if (enc === 'utf8') {
-      return Array.from(
-        { length: (end || length) - start },
-        (_, i) => String.fromCharCode(this[ i + start])
-      ).join('')
-    }
-    if (enc === 'base64') {
-      return btoa(this)
+  class SeaArray extends Array {
+    toString(enc = 'utf8', start = 0, end) {
+      const { length } = this
+      if (enc === 'hex') {
+        const buf = new Uint8Array(this)
+        return [ ...Array(((end && (end + 1)) || length) - start).keys()]
+        .map((i) => buf[ i + start ].toString(16).padStart(2, '0')).join('')
+      }
+      if (enc === 'utf8') {
+        return Array.from(
+          { length: (end || length) - start },
+          (_, i) => String.fromCharCode(this[ i + start])
+        ).join('')
+      }
+      if (enc === 'base64') {
+        return btoa(this)
+      }
     }
   }
 
@@ -82,7 +81,7 @@
     console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
     return SafeBuffer.from(...props)
   }
-  SafeBuffer.prototype = Object.create(Array.prototype)
+  SafeBuffer.prototype = Object.create(SeaArray.prototype)
   Object.assign(SafeBuffer, {
     // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
     from() {
@@ -103,13 +102,13 @@
         } else if (enc === 'utf8') {
           const { length } = input
           const words = new Uint16Array(length)
-          Array.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
+          SeaArray.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
           buf = SeaArray.from(words)
         } else if (enc === 'base64') {
           const dec = atob(input)
           const { length } = dec
           const bytes = new Uint8Array(length)
-          Array.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
+          SeaArray.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
           buf = SeaArray.from(bytes)
         } else if (enc === 'binary') {
           buf = SeaArray.from(input)
@@ -144,7 +143,6 @@
     }
   })
   SafeBuffer.prototype.from = SafeBuffer.from
-  SafeBuffer.prototype.toString = SeaArray.prototype.toString
 
   const Buffer = SafeBuffer
 
