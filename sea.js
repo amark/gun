@@ -252,8 +252,6 @@
   const seaWrite = async (...props) => SEA.write(...props)
   const seaEnc = async (...props) => SEA.enc(...props)
   const seaDec = async (...props) => SEA.dec(...props)
-  const seaProof = async (...props) => SEA.proof(...props)
-  const seaKeyId = async (...props) => SEA.keyid(...props)
   const seaPair = async (...props) => SEA.pair(...props)
   const seaVerify = async (...props) => SEA.verify(...props)
   const seaSign = async (...props) => SEA.sign(...props)
@@ -323,7 +321,7 @@
     // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
     // seaRead(at.put.auth, pub).then(function(auth){
       try {
-        const proof = await seaProof(pass, auth.salt)
+        const proof = await SEA.proof(pass, auth.salt)
         const props = { pub, proof, at }
         // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
         /*
@@ -646,7 +644,7 @@
           }
           const salt = Gun.text.random(64)
           // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
-          seaProof(pass, salt).then((proof) => {
+          SEA.proof(pass, salt).then((proof) => {
             // this will take some short amount of time to produce a proof, which slows brute force attacks.
             seaPair().then((pairs) => {
               // now we have generated a brand new ECDSA key pair for the user account.
@@ -707,7 +705,7 @@
           if (newpass) {
             // password update so encrypt private key using new pwd + salt
             const salt = Gun.text.random(64)
-            seaProof(newpass, salt).then((key) =>
+            SEA.proof(newpass, salt).then((key) =>
               seaEnc({ priv, epriv }, { pub, key, set: true })
               .then((auth) => seaWrite({ salt, auth }, keys))
             ).then((encSigAuth) =>
@@ -1092,44 +1090,45 @@
     // This is Buffer used in SEA and usable from Gun/SEA application also.
     // For documentation see https://nodejs.org/api/buffer.html
     Buffer: SafeBuffer,
-    // These SEA functions support both callback AND Promises. Thus no
+    // These SEA functions support now ony Promises or
     // async/await (compatible) code, use those like Promises.
     //
     // Creates a wrapper library around Web Crypto API
     // for various AES, ECDSA, PBKDF2 functions we called above.
-    proof(pass, salt, cb) {
-      const nodeJsPbkdf2 = (resolve, reject) => {
-        try { // For NodeJS crypto.pkdf2 rocks
-          const hash = crypto.pbkdf2Sync(
-            pass,
-            new TextEncoder().encode(salt),
-            pbkdf2.iter,
-            pbkdf2.ks,
-            pbkdf2.hash.replace('-', '').toLowerCase()
+    async proof(pass, salt) {
+      try {
+        if (typeof window !== 'undefined') {
+          // For browser subtle works fine
+          const key = await subtle.importKey(
+            'raw', new TextEncoder().encode(pass), { name: 'PBKDF2' }, false, ['deriveBits']
           )
-          pass = getRandomBytes(pass.length)  // Erase passphrase for app
-          resolve(hash && hash.toString('base64'))
-        } catch (e) { reject(e) }
-      }
-      const doIt = (resolve, reject) => (typeof window !== 'undefined'
-      && subtle.importKey(  // For browser subtle works fine
-          'raw', new TextEncoder().encode(pass), { name: 'PBKDF2' }, false, ['deriveBits']
-        ).then((key) => subtle.deriveBits({
+          const result = subtle.deriveBits({
             name: 'PBKDF2',
             iterations: pbkdf2.iter,
             salt: new TextEncoder().encode(salt),
             hash: pbkdf2.hash,
           }, key, pbkdf2.ks * 8)
-        ).then((result) => {
           pass = getRandomBytes(pass.length)  // Erase passphrase for app
           return Buffer.from(result, 'binary').toString('base64')
-        }).then(resolve).catch((e) => { Gun.log(e); reject(e) })
-      ) || nodeJsPbkdf2(resolve, reject)
-      if (cb) { doIt(cb, () => cb()) } else { return new Promise(doIt) }
+        }
+        // For NodeJS crypto.pkdf2 rocks
+        const hash = crypto.pbkdf2Sync(
+          pass,
+          new TextEncoder().encode(salt),
+          pbkdf2.iter,
+          pbkdf2.ks,
+          pbkdf2.hash.replace('-', '').toLowerCase()
+        )
+        pass = getRandomBytes(pass.length)  // Erase passphrase for app
+        return hash && hash.toString('base64')
+      } catch (e) {
+        Gun.log(e)
+        throw e
+      }
     },
     // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
-    keyid(pub, cb) {
-      const doIt = (resolve, reject) => {
+    async keyid(pub) {
+      try {
         // base64('base64(x):base64(y)') => Buffer(xy)
         const pb = Buffer.concat(
           Buffer.from(pub, 'base64').toString('utf8').split(':')
@@ -1139,12 +1138,13 @@
         const id = Buffer.concat([
           Buffer.from([0x99, pb.length / 0x100, pb.length % 0x100]), pb
         ])
-        sha1hash(id).then((sha1) => {
-          const hash = Buffer.from(sha1, 'binary')
-          resolve(hash.toString('hex', hash.length - 8))  // 16-bit ID as hex
-        })
+        const sha1 = await sha1hash(id)
+        const hash = Buffer.from(sha1, 'binary')
+        return hash.toString('hex', hash.length - 8)  // 16-bit ID as hex
+      } catch (e) {
+        Gun.log(e)
+        throw e
       }
-      if (cb) { doIt(cb, () => cb()) } else { return new Promise(doIt) }
     },
     pair(cb) {
       const doIt = (resolve, reject) => {
