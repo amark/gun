@@ -761,7 +761,7 @@
 				if(!ctx.and){
 					cat.on('node', function(m){
 						this.to.next(m);
-						if(m !== ctx.map[m.get]){ return }
+						if(m !== ctx.map[m.get]){ return } // filter out events not from this context!
 						ctx.souls[m.get] = false;
 						obj_map(m.put, aeach, m);
 						if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return }
@@ -862,6 +862,7 @@
 			ctx.on('node', function(msg){
 				var to = this.to;
 				//console.log(">>>", msg.put);
+				//Gun.node.is(msg.put, function(v,k){ msg.put[k] = v + v });
 				setTimeout(function(){
 					//console.log("<<<<<", msg.put);
 					to.next(msg);
