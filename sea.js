@@ -341,7 +341,7 @@
         return Object.assign(props, { priv, salt, epub, epriv })
       } catch (e) {
         err = 'Failed to decrypt secret!'
-        return
+        throw { err }
       }
     }))
 
@@ -400,7 +400,7 @@
 
         return props
       } catch (err) {
-        return reject({ err: 'Session persisting failed!' })
+        throw { err: 'Session persisting failed!' }
       }
     }
 
@@ -629,9 +629,9 @@
   function User(){}
   // Well first we have to actually create a user. That is what this function does.
   Object.assign(User, {
-    create(alias, pass, cb) {
+    async create(alias, pass, cb) {
       const root = this.back(-1)
-      const doIt = (resolve, reject) => {
+      return new Promise((resolve, reject) => { // Because no Promises or async
         // Because more than 1 user might have the same username, we treat the alias as a list of those users.
         root.get(`alias/${alias}`).get(async (at, ev) => {
           ev.off()
@@ -676,29 +676,29 @@
             reject(e)
           }
         })
-      }
-      if (cb){ doIt(cb, cb) } else { return new Promise(doIt) }
+      })
     },
     // now that we have created a user, we want to authenticate them!
-    auth(alias, pass, cb, opt) {
-      const opts = opt || (typeof cb !== 'function' && cb)
+    async auth(alias, pass, opts) {
       const { pin, newpass } = opts || {}
       const root = this.back(-1)
-      cb = typeof cb === 'function' && cb
 
-      const doIt = (resolve, reject) => {
+      if (!pass && pin) {
+        try {
+          return await authrecall(root, { alias, pin })
+        } catch (e) {
+          throw { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
+        }
+      }
+
+      try {
         const putErr = (msg) => (e) => {
           const { message, err = message || '' } = e
           Gun.log(msg)
-          reject({ err: `${msg} Reason: ${err}` })
+          throw { err: `${msg} Reason: ${err}` }
         }
 
-        if (!pass && pin) {
-          return authrecall(root, { alias, pin }).then(resolve).catch((e) => {
-            reject({ err: 'Auth attempt failed! Reason: No session data for alias & PIN' })
-          })
-        }
-        authenticate(alias, pass, root).then((keys) => {
+        return authenticate(alias, pass, root).then((keys) => {
           if (!keys) {
             return putErr('Auth attempt failed!')({ message: 'No keys' })
           }
@@ -707,7 +707,7 @@
           if (newpass) {
             // password update so encrypt private key using new pwd + salt
             const salt = Gun.text.random(64)
-            SEA.proof(newpass, salt).then((key) =>
+            return SEA.proof(newpass, salt).then((key) =>
               seaEnc({ priv, epriv }, { pub, key, set: true })
               .then((auth) => seaWrite({ salt, auth }, keys))
             ).then((encSigAuth) =>
@@ -723,48 +723,40 @@
               // awesome, now we can update the user using public key ID.
               root.get(`pub/${user.pub}`).put(user)
               // then we're done
-              finalizelogin(alias, keys, root, { pin }).then(resolve)
+              return finalizelogin(alias, keys, root, { pin })
               .catch(putErr('Failed to finalize login with new password!'))
             }).catch(putErr('Password set attempt failed!'))
           } else {
-            finalizelogin(alias, keys, root, { pin }).then(resolve)
+            return finalizelogin(alias, keys, root, { pin })
             .catch(putErr('Finalizing login failed!'))
           }
         }).catch(putErr('Auth attempt failed!'))
+      } catch (e) {
+        putErr('Auth attempt failed!')
       }
-      if (cb){ doIt(cb, cb) } else { return new Promise(doIt) }
     },
-    leave(cb) {
-      const doIt = (resolve) => authleave(this.back(-1)).then(resolve)
-      if (cb) { doIt(cb) } else { return new Promise(doIt) }
+    async leave() {
+      return await authleave(this.back(-1))
     },
     // If authenticated user wants to delete his/her account, let's support it!
-    delete(alias, pass, cb) {
+    async delete(alias, pass) {
       const root = this.back(-1)
-      const doIt = (resolve, reject) => {
-        authenticate(alias, pass, root)
-        .then(({ pub }) => authleave(root, alias).then(() => pub))
-        .then((pub) => {
-          try {
-            // Delete user data
-            root.get(`pub/${pub}`).put(null)
-            // Wipe user data from memory
-            const { user = { _: {} } } = root._;
-            // TODO: is this correct way to 'logout' user from Gun.User ?
-            [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
-            user._.is = user.is = {}
-            root.user()
-            resolve({ ok: 0 })
-          } catch(e) {
-            Gun.log('User.delete failed! Error:', e)
-            reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''})
-          }
-        }).catch((e) => {
-          Gun.log('User.delete authentication failed! Error:', e)
-          reject({err: 'Delete attempt failed! Reason: ' + (e && e.err) || e || ''})
-        })
+      try {
+        const { pub } = await authenticate(alias, pass, root)
+        await authleave(root, alias)
+        // Delete user data
+        root.get(`pub/${pub}`).put(null)
+        // Wipe user data from memory
+        const { user = { _: {} } } = root._;
+        // TODO: is this correct way to 'logout' user from Gun.User ?
+        [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
+        user._.is = user.is = {}
+        root.user()
+        return { ok: 0 }  // TODO: proper return codes???
+      } catch (e) {
+        Gun.log('User.delete failed! Error:', e)
+        throw e // TODO: proper error codes???
       }
-      if (cb) { doIt(cb, cb) } else { return new Promise(doIt) }
     },
     // If authentication is to be remembered over reloads or browser closing,
     // set validity time in minutes.
