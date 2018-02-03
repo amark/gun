@@ -12,12 +12,6 @@
 					font-size: 1em;
 					margin: 1em 0;
 					padding: 1em;
-					border: none;
-					background: rgba(100%, 100%, 100%, 0.9);
-					back-ground: white;
-				}
-				.sigbut {
-					display: inline-block;
 				}
 				.or {
 					display: inline-block;
@@ -34,7 +28,7 @@
 				}
 			</style>
 			<form id="inup" class="sign pad center">
-				<div class="rubric">Welcome,</div>
+				<div class="loud">Welcome,</div>
 				<div class="mid row col">
 					<input name="alias" class="huet jot sap" placeholder="alias">
 					Enter your public username.
@@ -44,27 +38,21 @@
 					And a long private passphrase.
 				</div>
 				<div class="mid row col go">
-					<button class="huet act sigbut">sign in</button>
+					<button class="huet sap act symbol">sign in</button>
 					<div class="or">or</div>
-					<button class="huet act sigbut">sign up</button>
+					<button class="huet sap act symbol">sign up</button>
 				</div>
 				<a href="info">more info</a>
 			</form>
 		</div id="sign">
 		
 		<div id="people" class="hue2 page">
-			<style>
-				#people a {
-					color: white;
-					text-decoration: none;
-				}
-			</style>
 			<ul name="users" class="pad">
 				<h3>Here is a list of people:</h3>
 				<li name="#">
 					<!-- <h3 name="."></h3> -->
 					<ul>
-						<a href="person" name="#">
+						<a href="person" name="#" class="whitet act">
 							<li>
 								<span name="who">
 									<b name="name"></b>
@@ -97,7 +85,6 @@
 		<div id="person" class="hue3 page">
 			<style>
 				#person .back {
-					color: white;
 					position: absolute;
 					top: 0.3em;
 					left: 0.5em;
@@ -106,7 +93,7 @@
 					z-index: 99999;
 				}
 			</style>
-			<a href="people" class="act back">&#8592</a>
+			<a href="people" class="whitet act back">&#8592</a>
 			<div class="pad">
 				<div name="who">
 					<!-- img src="" -->
@@ -115,11 +102,11 @@
 					<span name="bio" contenteditable="true">bio</span>
 					<form id="say" class="center none">
 						<input class="jot" placeholder="Say something!" style="width: 80%;">
-						<input type="submit" id="speak" class="huet2" style="min-width: 5em; width: 10%;" value="speak">
+						<input type="submit" id="speak" class="huet2 sap act symbol" style="min-width: 5em; width: 10%;" value="speak">
 					</form>
 					<div>
 						<ul name="said">
-							<li name="#" class="sort shade rim"><div name="what" class="rim"></div></li>
+							<li name="#" class="sit sort shade rim"><div name="what" class="rim sit"></div></li>
 						</ul>
 					</div>
 				</div>
@@ -131,7 +118,7 @@
 			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
 		</div id="info">
 		
-		<div id="tell" class="model">
+		<div id="tell" class="center">
 			<style>
 				#tell {
 					position: fixed;
@@ -139,21 +126,26 @@
 					left: 0;
 					right: 0;
 					height: 0;
-					text-align: center;
 					overflow: visible;
 				}
-				#tell .notify {
+				#tell p {
+					top: -2em;
 					width: 50%;
-					background: black;
 					border: solid #222 0.2em;
-					top: 0.2em;
-					margin: 0 auto;
+					border-top: none;
 					padding: 1%;
+					opacity: 0;
+					visibility: hidden;
+					transition: visibility 2s, all 1s ease-in;
+				}
+				#tell .notify {
+					top: 0em;
 					opacity: 0.8;
-					position-anchor: 50% 50%;
+					visibility: visible;
+					transition: visibility 0s, all 0.25s ease-out;
 				}
 			</style>
-			<p class="notify">Hello world!</p>
+			<p class="mid black">Hello world!</p>
 		</div>
 
 		<!-- script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
@@ -177,7 +169,6 @@
 				 - SEA should auto redirect to https by default, except if app developer disables it.
 				 - SEA should auto-lock/block itself while login or signup is happening, to prevent duplicates.
 				 - SEA should auto user.leave() if/when errors on login/signup happen to prevent bugs.
-				
 			*/
 			var gun = Gun(location.origin+'/gun');
 			var app = gun.get('example/contacts/6');
@@ -195,6 +186,7 @@
 					var no;
 					Gun.node.is(at.put.users, function(val, key){
 						Gun.SEA.read(val, false, function(val){
+						//Gun.SEA.read(val, false, function(val){
 							if('alias/'+key === Gun.val.rel.is(val)){ return }
 							no = true;
 						})
@@ -271,11 +263,10 @@
 					sessionStorage.tmp = data.pass;
 				}
 				c.tell = function(what, n){
-					var e = $('#tell');
-					e.find('p').text(what);
-					e.show();
+					var e = $('#tell').find('p');
+					e.addClass('notify').text(what);
 					clearTimeout(c.tell.to);
-					c.tell.to = setTimeout(function(){e.hide()}, n || 2500);
+					c.tell.to = setTimeout(function(){e.removeClass('notify')}, n || 2500);
 				}
 			}());
 			(function(){

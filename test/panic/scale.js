@@ -81,13 +81,6 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 					if(0 >= file.indexOf('<script src="/gun.js"></script>')){ return }
 					file = file.replace('<script src="/gun.js"></script>',
 							"<script src='"+purl+"/panic.js'></script><script>panic.server('"+purl+"')</script><script src='/gun.js'></script><script>localStorage.clear();sessionStorage.clear();</script>");
-
-
-
-				// https://rawgit.com/mhelander/gun/sea/sea.js
-
-
-
 					return file;
 				});
 			}, {i: i += 1, config: config})); 
