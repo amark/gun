@@ -79,7 +79,7 @@
   // https://github.com/feross/safe-buffer#update
   class SafeBuffer extends SeaArray {
     constructor(...props) {
-      console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
+      super()
       this.from = SafeBuffer.from
       return SafeBuffer.from(...props)
     }
