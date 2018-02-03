@@ -1078,7 +1078,7 @@
           const key = await subtle.importKey(
             'raw', new TextEncoder().encode(pass), { name: 'PBKDF2' }, false, ['deriveBits']
           )
-          const result = subtle.deriveBits({
+          const result = await subtle.deriveBits({
             name: 'PBKDF2',
             iterations: pbKdf2.iter,
             salt: new TextEncoder().encode(salt),
