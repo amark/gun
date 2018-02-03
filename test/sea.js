@@ -914,7 +914,7 @@ Gun().user && describe('Gun', function(){
               expect(props.err).to.not.be(undefined);
               expect(props.err).to.not.be('');
               expect(props.err.toLowerCase()
-              .indexOf('no session')).not.to.be(-1);
+              .indexOf('failed to decrypt')).not.to.be(-1);
               done();
             }).catch(done);
           }).catch(done);
