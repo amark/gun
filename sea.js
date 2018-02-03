@@ -252,7 +252,6 @@
   const seaWrite = async (...props) => SEA.write(...props)
   const seaEnc = async (...props) => SEA.enc(...props)
   const seaDec = async (...props) => SEA.dec(...props)
-  const seaPair = async (...props) => SEA.pair(...props)
   const seaVerify = async (...props) => SEA.verify(...props)
   const seaSign = async (...props) => SEA.sign(...props)
   const seaDerive = async (...props) => SEA.derive(...props)
@@ -634,7 +633,7 @@
       const root = this.back(-1)
       const doIt = (resolve, reject) => {
         // Because more than 1 user might have the same username, we treat the alias as a list of those users.
-        root.get(`alias/${alias}`).get((at, ev) => {
+        root.get(`alias/${alias}`).get(async (at, ev) => {
           ev.off()
           if (at.put) {
             // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
@@ -644,35 +643,38 @@
           }
           const salt = Gun.text.random(64)
           // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
-          SEA.proof(pass, salt).then((proof) => {
+          try {
+            const proof = await SEA.proof(pass, salt)
             // this will take some short amount of time to produce a proof, which slows brute force attacks.
-            seaPair().then((pairs) => {
-              // now we have generated a brand new ECDSA key pair for the user account.
-              const { pub, priv, epriv } = pairs
-              const user = { pub }
-              // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-              seaWrite(alias, pairs).then((alias) =>
-                Object.assign(user, {alias }) && seaWrite(pairs.epub, pairs)
-              ).then((epub) => Object.assign(user, { epub })
-              // to keep the private key safe, we AES encrypt it with the proof of work!
-              && seaEnc({ priv, epriv }, { pub: pairs.epub, key: proof })
-              ).then((auth) => // TODO: So signedsalt isn't needed?
-                // seaWrite(salt, pairs).then((signedsalt) =>
-                  seaWrite({ salt, auth }, pairs)
-                // )
-              ).then((auth) => {
-                Object.assign(user, { auth })
-                const tmp = `pub/${pairs.pub}`
-                //console.log("create", user, pair.pub);
-                // awesome, now we can actually save the user with their public key as their ID.
-                root.get(tmp).put(user)
-                // next up, we want to associate the alias with the public key. So we add it to the alias list.
-                root.get(`alias/${alias}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
-                // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-                setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
-              }).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
-            }).catch((e) => { Gun.log('SEA.pair call failed!'); reject(e) })
-          })
+            const pairs = await SEA.pair()
+            // now we have generated a brand new ECDSA key pair for the user account.
+            const { pub, priv, epriv } = pairs
+            const user = { pub }
+            // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
+            seaWrite(alias, pairs).then((alias) =>
+              Object.assign(user, {alias }) && seaWrite(pairs.epub, pairs)
+            ).then((epub) => Object.assign(user, { epub })
+            // to keep the private key safe, we AES encrypt it with the proof of work!
+            && seaEnc({ priv, epriv }, { pub: pairs.epub, key: proof })
+            ).then((auth) => // TODO: So signedsalt isn't needed?
+            // seaWrite(salt, pairs).then((signedsalt) =>
+              seaWrite({ salt, auth }, pairs)
+            // )
+            ).then((auth) => {
+              Object.assign(user, { auth })
+              const tmp = `pub/${pairs.pub}`
+              //console.log("create", user, pair.pub);
+              // awesome, now we can actually save the user with their public key as their ID.
+              root.get(tmp).put(user)
+              // next up, we want to associate the alias with the public key. So we add it to the alias list.
+              root.get(`alias/${alias}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+              // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
+              setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
+            }).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+          } catch (e) {
+            Gun.log('SEA.create failed!')
+            reject(e)
+          }
         })
       }
       if (cb){ doIt(cb, cb) } else { return new Promise(doIt) }
@@ -1146,39 +1148,34 @@
         throw e
       }
     },
-    pair(cb) {
-      const doIt = (resolve, reject) => {
-        const catcher = (e) => { Gun.log(e); reject(e) }
+    async pair() {
+      try {
         const ecdhSubtle = subtleossl || subtle
         // First: ECDSA keys for signing/verifying...
-        subtle.generateKey(ecdsakeyprops, true, [ 'sign', 'verify' ])
-        .then(({ publicKey, privateKey }) => subtle.exportKey('jwk', privateKey)
-        // privateKey scope doesn't leak out from here!
-          .then(({ d: priv }) => ({ priv }))
-          .then((keys) => subtle.exportKey('jwk', publicKey)
-            .then(({ x, y }) => Object.assign(keys, {
-              pub: Buffer.from([ x, y ].join(':')).toString('base64')
-            }))
-          ).catch(catcher)
-          // return seaKeyid(keys.pub).then(function(id){
-          //   keys.pubId = id;
-          //   return keys;
-          // });
-        ).then((signingKeys) => ecdhSubtle.generateKey(ecdhkeyprops, true, ['deriveKey'])
-          // Next: ECDH keys for encryption/decryption...
-          .then(({ publicKey, privateKey }) => ecdhSubtle.exportKey('jwk', privateKey)
+        const { pub, priv } = await subtle.generateKey(ecdsakeyprops, true, [ 'sign', 'verify' ])
+        .then(async ({ publicKey, privateKey }) => {
+          const { d: priv } = await subtle.exportKey('jwk', privateKey)
           // privateKey scope doesn't leak out from here!
-            .then(({ d: epriv }) => Object.assign(signingKeys, { epriv }))
-            .then((bothKeys) => ecdhSubtle.exportKey('jwk', publicKey)
-              .then(({ x, y }) => Object.assign(bothKeys, {
-                epub: Buffer.from([ x, y ].join(':')).toString('base64')
-              }))
-            ).catch(catcher)
-          ).catch(catcher)
-        ).then(resolve)
-        .catch(catcher)
+          const { x, y } = await subtle.exportKey('jwk', publicKey)
+          const pub = Buffer.from([ x, y ].join(':')).toString('base64')
+          return { pub, priv }
+        })
+        // To include PGPv4 kind of keyId:
+        // const pubId = await seaKeyid(keys.pub)
+        // Next: ECDH keys for encryption/decryption...
+        const { epub, epriv } = await ecdhSubtle.generateKey(ecdhkeyprops, true, ['deriveKey'])
+        .then(async ({ publicKey, privateKey }) => {
+          // privateKey scope doesn't leak out from here!
+          const { d: epriv } = await ecdhSubtle.exportKey('jwk', privateKey)
+          const { x, y } = await ecdhSubtle.exportKey('jwk', publicKey)
+          const epub = Buffer.from([ x, y ].join(':')).toString('base64')
+          return { epub, epriv }
+        })
+        return { pub, priv, /* pubId, */ epub, epriv }
+      } catch (e) {
+        Gun.log(e)
+        throw e
       }
-      if (cb){ doIt(cb, () => cb()) } else { return new Promise(doIt) }
     },
     // Derive shared secret from other's pub and my epub/epriv
     derive(pub, { epub, epriv }, cb) {
