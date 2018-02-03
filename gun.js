@@ -723,7 +723,7 @@
 				if(u !== ctx.defer){
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
-					}, ctx.defer - at.machine);
+					}, ctx.defer - ctx.machine);
 				}
 				if(!ctx.diff){ return }
 				at.on('put', obj_to(msg, {put: ctx.diff}));
