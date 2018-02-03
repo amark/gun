@@ -80,7 +80,7 @@
   class SafeBuffer extends SeaArray {
     constructor(...props) {
       console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
-      from = SafeBuffer.from
+      this.from = SafeBuffer.from
       return SafeBuffer.from(...props)
     }
     // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
