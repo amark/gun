@@ -77,14 +77,14 @@
   // between binary and 'hex' | 'utf8' | 'base64'
   // See documentation and validation for safe implementation in:
   // https://github.com/feross/safe-buffer#update
-  function SafeBuffer(...props) {
-    console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
-    return SafeBuffer.from(...props)
-  }
-  SafeBuffer.prototype = Object.create(SeaArray.prototype)
-  Object.assign(SafeBuffer, {
+  class SafeBuffer extends SeaArray {
+    constructor(...props) {
+      console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
+      from = SafeBuffer.from
+      return SafeBuffer.from(...props)
+    }
     // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
-    from() {
+    static from() {
       if (!Object.keys(arguments).length) {
         throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
       }
@@ -125,24 +125,23 @@
         }
         return SeaArray.from(buf || input)
       }
-    },
+    }
     // This is 'safe-buffer.alloc' sans encoding support
-    alloc(length, fill = 0 /*, enc*/ ) {
+    static alloc(length, fill = 0 /*, enc*/ ) {
       return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
-    },
+    }
     // This is normal UNSAFE 'buffer.alloc' or 'new Buffer(length)' - don't use!
-    allocUnsafe(length) {
+    static allocUnsafe(length) {
       return SeaArray.from(new Uint8Array(Array.from({ length })))
-    },
+    }
     // This puts together array of array like members
-    concat(arr) { // octet array
+    static concat(arr) { // octet array
       if (!Array.isArray(arr)) {
         throw new TypeError('First argument must be Array containing ArrayBuffer or Uint8Array instances.')
       }
       return SeaArray.from(arr.reduce((ret, item) => ret.concat(Array.from(item)), []))
     }
-  })
-  SafeBuffer.prototype.from = SafeBuffer.from
+  }
 
   const Buffer = SafeBuffer
 
