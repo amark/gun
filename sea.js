@@ -195,14 +195,15 @@
       }
     })
   }
+  // This is IndexedDB used by Gun SEA
   const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1)
 
   // Encryption parameters
-  const pbkdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
+  const pbKdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
 
-  const ecdsasignprops = {name: 'ECDSA', hash: {name: 'SHA-256'}}
-  const ecdsakeyprops = {name: 'ECDSA', namedCurve: 'P-256'}
-  const ecdhkeyprops = {name: 'ECDH', namedCurve: 'P-256'}
+  const ecdsaSignProps = { name: 'ECDSA', hash: { name: 'SHA-256' } }
+  const ecdsaKeyProps = { name: 'ECDSA', namedCurve: 'P-256' }
+  const ecdhKeyProps = { name: 'ECDH', namedCurve: 'P-256' }
 
   const _initial_authsettings = {
     validity: 12 * 60 * 60, // internally in seconds : 12 hours
@@ -212,10 +213,13 @@
   // These are used to persist user's authentication "session"
   const authsettings = Object.assign({}, _initial_authsettings)
   // This creates Web Cryptography API compliant JWK for sign/verify purposes
-  const keystoecdsajwk = (pub, priv) => {
+  const keysToEcdsaJwk = (pub, priv) => {
     const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
     const jwk = priv ? { d: priv, key_ops: ['sign'] } : { key_ops: ['verify'] }
-    return Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: false })
+    return [  // Use with spread returned value...
+      'jwk',
+      Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: false })
+    ]
   }
 
   // let's extend the gun chain with a `user` function.
@@ -253,7 +257,7 @@
   }
 
   // This is internal func queries public key(s) for alias.
-  const querygunaliases = (alias,root) => new Promise((resolve, reject) => {
+  const queryGunAliases = (alias, root) => new Promise((resolve, reject) => {
     // load all public keys associated with the username alias we want to log in with.
     root.get(`alias/${alias}`).get((rat, rev) => {
       rev.off()
@@ -294,7 +298,7 @@
   // This is internal User authentication func.
   const authenticate = async (alias, pass, root) => {
     // load all public keys associated with the username alias we want to log in with.
-    const aliases = (await querygunaliases(alias, root))
+    const aliases = (await queryGunAliases(alias, root))
     .filter(({ pub, at: { put } = {} } = {}) => !!pub && !!put)
     // Got any?
     if (!aliases.length) {
@@ -340,7 +344,7 @@
     return user
   }
   // This internal func finalizes User authentication
-  const finalizelogin = async (alias, key, root, opts) => {
+  const finalizeLogin = async (alias, key, root, opts) => {
     const { user } = root._
     // add our credentials in-memory only to our root gun instance
     user._ = key.at.gun._
@@ -351,7 +355,7 @@
     Object.assign(user._, { alias, pub, epub, sea: { pub, priv, epub, epriv } })
     //console.log("authorized", user._);
     // persist authentication
-    await authpersist(user._, key.proof, opts)
+    await authPersist(user._, key.proof, opts)
     // emit an auth event, useful for page redirects and stuff.
     try {
       root._.on('auth', user._)
@@ -362,7 +366,7 @@
     return user._
   }
   // This updates sessionStorage & IndexedDB to persist authenticated "session"
-  const updatestorage = (proof, key, pin) => async (props) => {
+  const updateStorage = (proof, key, pin) => async (props) => {
     if (!Gun.obj.has(props, 'alias')) {
       return  // No 'alias' - we're done.
     }
@@ -403,7 +407,7 @@
   }
 
   // This internal func persists User authentication if so configured
-  const authpersist = async (user, proof, opts) => {
+  const authPersist = async (user, proof, opts) => {
     // opts = { pin: 'string' }
     // no opts.pin then uses random PIN
     // How this works:
@@ -426,14 +430,14 @@
       const key = { pub, priv, epub, epriv }
       if (props instanceof Promise) {
         const asyncProps = await props.then()
-        return await updatestorage(proof, key, pin)(asyncProps)
+        return await updateStorage(proof, key, pin)(asyncProps)
       }
-      return await updatestorage(proof, key, pin)(props)
+      return await updateStorage(proof, key, pin)(props)
     }
-    return await updatestorage()({ alias: 'delete' })
+    return await updateStorage()({ alias: 'delete' })
   }
   // This internal func recalls persisted User authentication if so configured
-  const authrecall = async (root, authprops) => {
+  const authRecall = async (root, authprops) => {
     // window.sessionStorage only holds signed { alias, pin } !!!
     const remember = authprops || sessionStorage.getItem('remember')
     const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {}
@@ -476,7 +480,7 @@
       }
     }
     // Yes, let's get (all?) matching aliases
-    const aliases = (await querygunaliases(alias, root))
+    const aliases = (await queryGunAliases(alias, root))
     .filter(({ pub } = {}) => !!pub)
     // Got any?
     if (!aliases.length) {
@@ -511,7 +515,7 @@
           return
         }
         try { // Wipes IndexedDB silently
-          await updatestorage()(data)
+          await updateStorage()(data)
         } catch (e) {}  //eslint-disable-line no-empty
         err = 'Expired session!'
         return
@@ -542,14 +546,14 @@
     // now we have AES decrypted the private key,
     // if we were successful, then that means we're logged in!
     try {
-      await updatestorage(proof, key, newPin || pin)(key)
+      await updateStorage(proof, key, newPin || pin)(key)
 
       const user = Object.assign(key, { at, proof })
       const pIN = newPin || pin
 
       const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
 
-      return await finalizelogin(alias, user, root, pinProp)
+      return await finalizeLogin(alias, user, root, pinProp)
     } catch (e) { // TODO: right log message ?
       Gun.log('Failed to finalize login with new password!')
       const { err = '' } = e || {}
@@ -558,12 +562,12 @@
   }
 
   // This internal func executes logout actions
-  const authleave = async (root, alias = root._.user._.alias) => {
+  const authLeave = async (root, alias = root._.user._.alias) => {
     const { user = { _: {} } } = root._
     root._.user = null
     // Removes persisted authentication & CryptoKeys
     try {
-      await authpersist({ alias })
+      await authPersist({ alias })
     } catch (e) {}  //eslint-disable-line no-empty
     // TODO: is this correct way to 'logout' user from Gun.User ?
     [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
@@ -608,7 +612,7 @@
   const sha256hash = async (mm) => {
     const hashSubtle = subtleossl || subtle
     const m = parseProps(mm)
-    const hash = await hashSubtle.digest(pbkdf2.hash, new TextEncoder().encode(m))
+    const hash = await hashSubtle.digest(pbKdf2.hash, new TextEncoder().encode(m))
     return Buffer.from(hash)
   }
   // This internal func returns SHA-1 hashed data for KeyID generation
@@ -618,11 +622,11 @@
   function User(){}
   // Well first we have to actually create a user. That is what this function does.
   Object.assign(User, {
-    async create(alias, pass, cb) {
+    async create(username, pass, cb) {
       const root = this.back(-1)
       return new Promise((resolve, reject) => { // Because no Promises or async
         // Because more than 1 user might have the same username, we treat the alias as a list of those users.
-        root.get(`alias/${alias}`).get(async (at, ev) => {
+        root.get(`alias/${username}`).get(async (at, ev) => {
           ev.off()
           if (at.put) {
             // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
@@ -638,28 +642,24 @@
             const pairs = await SEA.pair()
             // now we have generated a brand new ECDSA key pair for the user account.
             const { pub, priv, epriv } = pairs
-            const user = { pub }
             // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
-            SEA.write(alias, pairs).then((alias) =>
-              Object.assign(user, {alias }) && SEA.write(pairs.epub, pairs)
-            ).then((epub) => Object.assign(user, { epub })
+            const alias = await SEA.write(username, pairs)
+            const epub = await SEA.write(pairs.epub, pairs)
             // to keep the private key safe, we AES encrypt it with the proof of work!
-            && SEA.enc({ priv, epriv }, { pub: pairs.epub, key: proof })
-            ).then((auth) => // TODO: So signedsalt isn't needed?
+            const auth = await SEA.enc({ priv, epriv }, { pub: pairs.epub, key: proof })
+            .then((auth) => // TODO: So signedsalt isn't needed?
             // SEA.write(salt, pairs).then((signedsalt) =>
               SEA.write({ salt, auth }, pairs)
             // )
-            ).then((auth) => {
-              Object.assign(user, { auth })
-              const tmp = `pub/${pairs.pub}`
-              //console.log("create", user, pair.pub);
-              // awesome, now we can actually save the user with their public key as their ID.
-              root.get(tmp).put(user)
-              // next up, we want to associate the alias with the public key. So we add it to the alias list.
-              root.get(`alias/${alias}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
-              // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
-            }).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+            ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+            const user = { alias, pub, epub, auth }
+            const tmp = `pub/${pairs.pub}`
+            // awesome, now we can actually save the user with their public key as their ID.
+            root.get(tmp).put(user)
+            // next up, we want to associate the alias with the public key. So we add it to the alias list.
+            root.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+            // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
+            setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
           } catch (e) {
             Gun.log('SEA.create failed!')
             reject(e)
@@ -674,65 +674,67 @@
 
       if (!pass && pin) {
         try {
-          return await authrecall(root, { alias, pin })
+          return await authRecall(root, { alias, pin })
         } catch (e) {
           throw { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
         }
       }
 
-      try {
-        const putErr = (msg) => (e) => {
-          const { message, err = message || '' } = e
-          Gun.log(msg)
-          throw { err: `${msg} Reason: ${err}` }
-        }
+      const putErr = (msg) => (e) => {
+        const { message, err = message || '' } = e
+        Gun.log(msg)
+        throw { err: `${msg} Reason: ${err}` }
+      }
 
-        return authenticate(alias, pass, root).then((keys) => {
-          if (!keys) {
-            return putErr('Auth attempt failed!')({ message: 'No keys' })
-          }
-          const { pub, priv, epub, epriv } = keys
-          // we're logged in!
-          if (newpass) {
-            // password update so encrypt private key using new pwd + salt
+      try {
+        const keys = await authenticate(alias, pass, root)
+        if (!keys) {
+          return putErr('Auth attempt failed!')({ message: 'No keys' })
+        }
+        const { pub, priv, epub, epriv } = keys
+        // we're logged in!
+        if (newpass) {
+          // password update so encrypt private key using new pwd + salt
+          try {
             const salt = Gun.text.random(64)
-            return SEA.proof(newpass, salt).then((key) =>
+            const encSigAuth = await SEA.proof(newpass, salt)
+            .then((key) =>
               SEA.enc({ priv, epriv }, { pub, key, set: true })
               .then((auth) => SEA.write({ salt, auth }, keys))
-            ).then((encSigAuth) =>
-              SEA.write(epub, keys).then((signedEpub) =>
-                SEA.write(alias, keys).then((signedAlias) => ({
-                  pub,
-                  alias: signedAlias,
-                  auth: encSigAuth,
-                  epub: signedEpub
-                }))
-              )
-            ).then((user) => {
-              // awesome, now we can update the user using public key ID.
-              root.get(`pub/${user.pub}`).put(user)
-              // then we're done
-              return finalizelogin(alias, keys, root, { pin })
-              .catch(putErr('Failed to finalize login with new password!'))
-            }).catch(putErr('Password set attempt failed!'))
-          } else {
-            return finalizelogin(alias, keys, root, { pin })
-            .catch(putErr('Finalizing login failed!'))
+            )
+            const signedEpub = await SEA.write(epub, keys)
+            const signedAlias = await SEA.write(alias, keys)
+            const user = {
+              pub,
+              alias: signedAlias,
+              auth: encSigAuth,
+              epub: signedEpub
+            }
+            // awesome, now we can update the user using public key ID.
+            root.get(`pub/${user.pub}`).put(user)
+            // then we're done
+            return finalizeLogin(alias, keys, root, { pin })
+            .catch(putErr('Failed to finalize login with new password!'))
+          } catch (e) {
+            putErr('Password set attempt failed!')(e)
           }
-        }).catch(putErr('Auth attempt failed!'))
+        } else {
+          return finalizeLogin(alias, keys, root, { pin })
+          .catch(putErr('Finalizing login failed!'))
+        }
       } catch (e) {
-        putErr('Auth attempt failed!')
+        putErr('Auth attempt failed!')(e)
       }
     },
     async leave() {
-      return await authleave(this.back(-1))
+      return await authLeave(this.back(-1))
     },
     // If authenticated user wants to delete his/her account, let's support it!
     async delete(alias, pass) {
       const root = this.back(-1)
       try {
         const { pub } = await authenticate(alias, pass, root)
-        await authleave(root, alias)
+        await authLeave(root, alias)
         // Delete user data
         root.get(`pub/${pub}`).put(null)
         // Wipe user data from memory
@@ -762,8 +764,8 @@
         opts = options
         validity = setvalidity * 60 // minutes to seconds
       }
-      // TODO: for some reasong authrecall doesn't work with await here...
-      return await new Promise((resolve, reject) => {
+
+      try {
         // opts = { hook: function({ iat, exp, alias, proof }) }
         // iat == Date.now() when issued, exp == seconds to expire from iat
         // How this works:
@@ -775,18 +777,20 @@
         authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
         ? opts.hook : _initial_authsettings.hook
         // All is good. Should we do something more with actual recalled data?
-        authrecall(root).then(resolve).catch((e) => {
-          const err = 'No session!'
-          Gun.log(err)
-          resolve({ err: (e && e.err) || err })
-        })
-      })
+        return await authRecall(root)
+      } catch (e) {
+        const err = 'No session!'
+        Gun.log(err)
+        // NOTE! It's fine to resolve recall with reason why not successful
+        // instead of rejecting...
+        return { err: (e && e.err) || err }
+      }
     },
     async alive() {
       const root = this.back(-1)
       try {
         // All is good. Should we do something more with actual recalled data?
-        await authrecall(root)
+        await authRecall(root)
         return root._.user._
       } catch (e) {
         const err = 'No session!'
@@ -813,7 +817,7 @@
     if(!at.sea){ // only add SEA once per instance, on the "at" context.
       at.sea = {own: {}};
       var uuid = at.opt.uuid || Gun.state.lex;
-      at.opt.uuid = function(cb){
+      at.opt.uuid = function(cb){ // TODO: consider async/await and drop callback pattern...
         if(!cb){ return }
         var id = uuid(), pair = at.user && (at.user._).sea;
         if(!pair){ return id }
@@ -846,6 +850,7 @@
     // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
     var to = this.to, vertex = (msg.gun._).put, c = 0, d;
     Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
+      // TODO: consider async/await use here...
       SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
         node[key] = val = data; // transform to plain value.
         if(d && !c && (c = -1)){ to.next(msg) }
@@ -957,6 +962,7 @@
           });
           return;
         }
+        // TODO: consider async/await and drop callback pattern...
         SEA.read(val, pub).then(function(data){ var rel, tmp;
           if(u === data){ // make sure the signature matches the account it claims to be on.
             return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
@@ -979,6 +985,7 @@
           if(user = at.sea.own[soul]){
             check['any'+soul+key] = 1;
             user = Gun.obj.map(user, function(a,b){ return b });
+            // TODO: consider async/await and drop callback pattern...
             SEA.read(val, user).then(function(data){ var rel;
               if(!data){ return each.end({err: "Mismatched owner on '" + key + "'.", }) }
               if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
@@ -1021,6 +1028,7 @@
           return;
         }
         check['any'+soul+key] = 1;
+        // TODO: consider async/await and drop callback pattern...
         SEA.verify(tmp[0], user.pub, tmp[1]).then(function(ok){
           if(!ok){ return each.end({err: "Signature did not match account at '" + key + "'."}) }
           (at.sea.own[soul] = at.sea.own[soul] || {})[user.pub] = true;
@@ -1075,10 +1083,10 @@
           )
           const result = subtle.deriveBits({
             name: 'PBKDF2',
-            iterations: pbkdf2.iter,
+            iterations: pbKdf2.iter,
             salt: new TextEncoder().encode(salt),
-            hash: pbkdf2.hash,
-          }, key, pbkdf2.ks * 8)
+            hash: pbKdf2.hash,
+          }, key, pbKdf2.ks * 8)
           pass = getRandomBytes(pass.length)  // Erase passphrase for app
           return Buffer.from(result, 'binary').toString('base64')
         }
@@ -1086,9 +1094,9 @@
         const hash = crypto.pbkdf2Sync(
           pass,
           new TextEncoder().encode(salt),
-          pbkdf2.iter,
-          pbkdf2.ks,
-          pbkdf2.hash.replace('-', '').toLowerCase()
+          pbKdf2.iter,
+          pbKdf2.ks,
+          pbKdf2.hash.replace('-', '').toLowerCase()
         )
         pass = getRandomBytes(pass.length)  // Erase passphrase for app
         return hash && hash.toString('base64')
@@ -1121,7 +1129,7 @@
       try {
         const ecdhSubtle = subtleossl || subtle
         // First: ECDSA keys for signing/verifying...
-        const { pub, priv } = await subtle.generateKey(ecdsakeyprops, true, [ 'sign', 'verify' ])
+        const { pub, priv } = await subtle.generateKey(ecdsaKeyProps, true, [ 'sign', 'verify' ])
         .then(async ({ publicKey, privateKey }) => {
           const { d: priv } = await subtle.exportKey('jwk', privateKey)
           // privateKey scope doesn't leak out from here!
@@ -1132,7 +1140,7 @@
         // To include PGPv4 kind of keyId:
         // const pubId = await SEA.keyid(keys.pub)
         // Next: ECDH keys for encryption/decryption...
-        const { epub, epriv } = await ecdhSubtle.generateKey(ecdhkeyprops, true, ['deriveKey'])
+        const { epub, epriv } = await ecdhSubtle.generateKey(ecdhKeyProps, true, ['deriveKey'])
         .then(async ({ publicKey, privateKey }) => {
           // privateKey scope doesn't leak out from here!
           const { d: epriv } = await ecdhSubtle.exportKey('jwk', privateKey)
@@ -1161,9 +1169,9 @@
             y
           })
         }
-        const public = await importKey('jwk', keystoecdhjwk(pub), ecdhkeyprops, false, ['deriveKey'])
-        const props = Object.assign({}, ecdhkeyprops, { public })
-        const derived = await importKey('jwk', keystoecdhjwk(epub, epriv), ecdhkeyprops, false, ['deriveKey'])
+        const public = await importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
+        const props = Object.assign({}, ecdhKeyProps, { public })
+        const derived = await importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
         .then(async (privKey) => {
           // privateKey scope doesn't leak out from here!
           const derivedKey = await deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
@@ -1177,11 +1185,11 @@
     },
     async sign(data, { pub, priv }) {
       try {
-        const jwk = keystoecdsajwk(pub, priv)
+        const jwk = keysToEcdsaJwk(pub, priv)
         const hash = await sha256hash(data)
         // privateKey scope doesn't leak out from here!
-        const binSig = await subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['sign'])
-        .then((privKey) => subtle.sign(ecdsasignprops, privKey, new Uint8Array(hash)))
+        const binSig = await subtle.importKey(...jwk, ecdsaKeyProps, false, ['sign'])
+        .then((privKey) => subtle.sign(ecdsaSignProps, privKey, new Uint8Array(hash)))
         return Buffer.from(binSig, 'binary').toString('base64')
       } catch (e) {
         Gun.log(e)
@@ -1190,11 +1198,11 @@
     },
     async verify(data, pub, sig) {
       try {
-        const jwk = keystoecdsajwk(pub)
-        const key = await subtle.importKey('jwk', jwk, ecdsakeyprops, false, ['verify'])
+        const jwk = keysToEcdsaJwk(pub)
+        const key = await subtle.importKey(...jwk, ecdsaKeyProps, false, ['verify'])
         const hash = await sha256hash(data)
         const ss = new Uint8Array(Buffer.from(sig, 'base64'))
-        return await subtle.verify(ecdsasignprops, key, ss, new Uint8Array(hash))
+        return await subtle.verify(ecdsaSignProps, key, ss, new Uint8Array(hash))
       } catch (e) {
         Gun.log(e)
         throw e
