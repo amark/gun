@@ -63,7 +63,7 @@
 		}
 		Type.list = {is: function(l){ return (l instanceof Array) }}
 		Type.list.slit = Array.prototype.slice;
-		Type.list.sort = function(k){ // creates a new sort function based off some field
+		Type.list.sort = function(k){ // creates a new sort function based off some key
 			return function(A,B){
 				if(!A || !B){ return 0 } A = A[k]; B = B[k];
 				if(A < B){ return -1 }else if(A > B){ return 1 }
@@ -73,15 +73,15 @@
 		Type.list.map = function(l, c, _){ return obj_map(l, c, _) }
 		Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 		Type.obj = {is: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }}
-		Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o }
-		Type.obj.has = function(o, f){ return o && Object.prototype.hasOwnProperty.call(o, f) }
+		Type.obj.put = function(o, k, v){ return (o||{})[k] = v, o }
+		Type.obj.has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }
 		Type.obj.del = function(o, k){
 			if(!o){ return }
 			o[k] = null;
 			delete o[k];
 			return o;
 		}
-		Type.obj.as = function(o, f, v, u){ return o[f] = o[f] || (u === v? {} : v) }
+		Type.obj.as = function(o, k, v, u){ return o[k] = o[k] || (u === v? {} : v) }
 		Type.obj.ify = function(o){
 			if(obj_is(o)){ return o }
 			try{o = JSON.parse(o);
@@ -89,9 +89,9 @@
 			return o;
 		}
 		;(function(){ var u;
-			function map(v,f){
-				if(obj_has(this,f) && u !== this[f]){ return }
-				this[f] = v;
+			function map(v,k){
+				if(obj_has(this,k) && u !== this[k]){ return }
+				this[k] = v;
 			}
 			Type.obj.to = function(from, to){
 				to = to || {};
@@ -257,7 +257,7 @@
 		var Val = {};
 		Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number (!Infinity), text, or a soul relation. Arrays need special algorithms to handle concurrency, so they are not supported directly. Use an extension that supports them if needed but research their problems first.
 			if(v === u){ return false }
-			if(v === null){ return true } // "deletes", nulling out fields.
+			if(v === null){ return true } // "deletes", nulling out keys.
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
 			if(text_is(v) // by "text" we mean strings.
 			|| bi_is(v) // by "binary" we mean boolean.
@@ -278,9 +278,9 @@
 				}
 				return false; // the value was not a valid soul relation.
 			}
-			function map(s, f){ var o = this; // map over the object...
+			function map(s, k){ var o = this; // map over the object...
 				if(o.id){ return o.id = false } // if ID is already defined AND we're still looping through the object, it is considered invalid.
-				if(f == rel_ && text_is(s)){ // the field should be '#' and have a text value.
+				if(k == rel_ && text_is(s)){ // the key should be '#' and have a text value.
 					o.id = s; // we found the soul!
 				} else {
 					return o.id = false; // if there exists anything else on the object that isn't the soul, then it is considered invalid.
@@ -317,10 +317,10 @@
 				}
 				return false; // nope! This was not a valid node.
 			}
-			function map(v, f){ // we invert this because the way we check for this is via a negation.
-				if(f === Node._){ return } // skip over the metadata.
+			function map(v, k){ // we invert this because the way we check for this is via a negation.
+				if(k === Node._){ return } // skip over the metadata.
 				if(!Val.is(v)){ return true } // it is true that this is an invalid node.
-				if(this.cb){ this.cb.call(this.as, v, f, this.n, this.s) } // optionally callback each field/value.
+				if(this.cb){ this.cb.call(this.as, v, k, this.n, this.s) } // optionally callback each key/value.
 			}
 		}());
 		;(function(){
@@ -334,17 +334,17 @@
 				}
 				return o.node; // This will only be a valid node if the object wasn't already deep!
 			}
-			function map(v, f){ var o = this.o, tmp, u; // iterate over each field/value.
+			function map(v, k){ var o = this.o, tmp, u; // iterate over each key/value.
 				if(o.map){
-					tmp = o.map.call(this.as, v, ''+f, o.node);
+					tmp = o.map.call(this.as, v, ''+k, o.node);
 					if(u === tmp){
-						obj_del(o.node, f);
+						obj_del(o.node, k);
 					} else
-					if(o.node){ o.node[f] = tmp }
+					if(o.node){ o.node[k] = tmp }
 					return;
 				}
 				if(Val.is(v)){
-					o.node[f] = v;
+					o.node[k] = v;
 				}
 			}
 		}());
@@ -374,13 +374,13 @@
 		var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
 		State._ = '>';
 		State.drift = 0;
-		State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.
-			var tmp = (f && n && n[N_] && n[N_][State._]) || o;
+		State.is = function(n, k, o){ // convenience function to get the state on a key on a node and return it.
+			var tmp = (k && n && n[N_] && n[N_][State._]) || o;
 			if(!tmp){ return }
-			return num_is(tmp = tmp[f])? tmp : -Infinity;
+			return num_is(tmp = tmp[k])? tmp : -Infinity;
 		}
 		State.lex = function(){ return State().toString(36).replace('.','') }
-		State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
+		State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
 					return; 
@@ -388,22 +388,22 @@
 				n = Node.soul.ify(n, soul); // then make it so!
 			} 
 			var tmp = obj_as(n[N_], State._); // grab the states data.
-			if(u !== f && f !== N_){
+			if(u !== k && k !== N_){
 				if(num_is(s)){
-					tmp[f] = s; // add the valid state.
+					tmp[k] = s; // add the valid state.
 				}
 				if(u !== v){ // Note: Not its job to check for valid values!
-					n[f] = v;
+					n[k] = v;
 				}
 			}
 			return n;
 		}
-		State.to = function(from, f, to){
-			var val = from[f];
+		State.to = function(from, k, to){
+			var val = from[k];
 			if(obj_is(val)){
 				val = obj_copy(val);
 			}
-			return State.ify(to, f, State.is(from, f), val, Node.soul(from));
+			return State.ify(to, k, State.is(from, k), val, Node.soul(from));
 		}
 		;(function(){
 			State.map = function(cb, s, as){ var u; // for use with Node.ify
@@ -417,19 +417,19 @@
 				}
 				as = as || obj_is(s)? s : u;
 				s = num_is(s)? s : State();
-				return function(v, f, o, opt){
+				return function(v, k, o, opt){
 					if(!cb){
-						map.call({o: o, s: s}, v,f);
+						map.call({o: o, s: s}, v,k);
 						return v;
 					}
-					cb.call(as || this || {}, v, f, o, opt);
-					if(obj_has(o,f) && u === o[f]){ return }
-					map.call({o: o, s: s}, v,f);
+					cb.call(as || this || {}, v, k, o, opt);
+					if(obj_has(o,k) && u === o[k]){ return }
+					map.call({o: o, s: s}, v,k);
 				}
 			}
-			function map(v,f){
-				if(N_ === f){ return }
-				State.ify(this.o, f, this.s) ;
+			function map(v,k){
+				if(N_ === k){ return }
+				State.ify(this.o, k, this.s) ;
 			}
 		}());
 		var obj = Type.obj, obj_as = obj.as, obj_has = obj.has, obj_is = obj.is, obj_map = obj.map, obj_copy = obj.copy;
@@ -456,7 +456,7 @@
 				this.cb.call(nf.as, n, s, nf);
 			}
 			function nf(fn){ // optional callback for each node.
-				if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
+				if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each key/value.
 			}
 		}());
 		;(function(){
@@ -491,13 +491,13 @@
 				}
 				return at;
 			}
-			function map(v,f,n){
+			function map(v,k,n){
 				var at = this, env = at.env, is, tmp;
-				if(Node._ === f && obj_has(v,Val.rel._)){
+				if(Node._ === k && obj_has(v,Val.rel._)){
 					return n._; // TODO: Bug?
 				}
-				if(!(is = valid(v,f,n, at,env))){ return }
-				if(!f){
+				if(!(is = valid(v,k,n, at,env))){ return }
+				if(!k){
 					at.node = at.node || n || {};
 					if(obj_has(v, Node._)){
 						at.node._ = obj_copy(v._);
@@ -506,21 +506,21 @@
 					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
 				}
 				if(tmp = env.map){
-					tmp.call(env.as || {}, v,f,n, at);
-					if(obj_has(n,f)){
-						v = n[f];
+					tmp.call(env.as || {}, v,k,n, at);
+					if(obj_has(n,k)){
+						v = n[k];
 						if(u === v){
-							obj_del(n, f);
+							obj_del(n, k);
 							return;
 						}
-						if(!(is = valid(v,f,n, at,env))){ return }
+						if(!(is = valid(v,k,n, at,env))){ return }
 					}
 				}
-				if(!f){ return at.node }
+				if(!k){ return at.node }
 				if(true === is){
 					return v;
 				}
-				tmp = node(env, {obj: v, path: at.path.concat(f)});
+				tmp = node(env, {obj: v, path: at.path.concat(k)});
 				if(!tmp.node){ return }
 				return tmp.rel; //{'#': Node.soul(tmp.node)};
 			}
@@ -536,14 +536,14 @@
 					obj_del(graph, prev);
 				}
 			}
-			function valid(v,f,n, at,env){ var tmp;
+			function valid(v,k,n, at,env){ var tmp;
 				if(Val.is(v)){ return true }
 				if(obj_is(v)){ return 1 }
 				if(tmp = env.invalid){
-					v = tmp.call(env.as || {}, v,f,n);
-					return valid(v,f,n, at,env);
+					v = tmp.call(env.as || {}, v,k,n);
+					return valid(v,k,n, at,env);
 				}
-				env.err = "Invalid value at '" + at.path.concat(f).join('.') + "'!";
+				env.err = "Invalid value at '" + at.path.concat(k).join('.') + "'!";
 			}
 			function seen(env, at){
 				var arr = env.seen, i = arr.length, has;
@@ -566,23 +566,23 @@
 				obj_map(graph[root], map, {obj:obj, graph: graph, opt: opt});
 				return obj;
 			}
-			function map(v,f){ var tmp, obj;
-				if(Node._ === f){
+			function map(v,k){ var tmp, obj;
+				if(Node._ === k){
 					if(obj_empty(v, Val.rel._)){
 						return;
 					}
-					this.obj[f] = obj_copy(v);
+					this.obj[k] = obj_copy(v);
 					return;
 				}
 				if(!(tmp = Val.rel.is(v))){
-					this.obj[f] = v;
+					this.obj[k] = v;
 					return;
 				}
 				if(obj = this.opt.seen[tmp]){
-					this.obj[f] = obj;
+					this.obj[k] = obj;
 					return;
 				}
-				this.obj[f] = this.opt.seen[tmp] = Graph.to(this.graph, tmp, this.opt);
+				this.obj[k] = this.opt.seen[tmp] = Graph.to(this.graph, tmp, this.opt);
 			}
 		}());
 		var fn_is = Type.fn.is;
@@ -668,14 +668,6 @@
 		Gun.ask = USE('./ask');
 		Gun.dup = USE('./dup');
 
-		Gun._ = { // some reserved key words, these are not the only ones.
-			node: Gun.node._ // all metadata of a node is stored in the meta property on the node.
-			,soul: Gun.val.rel._ // a soul is a UUID of a node but it always points to the "latest" data known.
-			,state: Gun.state._ // other than the soul, we store HAM metadata.
-			,field: '.' // a field is a property on a node which points to a value.
-			,value: '=' // the primitive value.
-		}
-
 		;(function(){
 			Gun.create = function(at){
 				at.root = at.root || at.gun;
@@ -719,6 +711,7 @@
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 				if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
+				console.debug(3, 'PUT', ctx);
 				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 				if(u !== ctx.defer){
 					setTimeout(function(){
@@ -759,19 +752,20 @@
 				obj_map(node, each, as);
 				if(!ctx.async){ return }
 				if(!ctx.and){
+					// If it is async, we only need to setup on listener per context (ctx)
 					cat.on('node', function(m){
-						this.to.next(m);
+						this.to.next(m); // make sure to call other context's listeners.
 						if(m !== ctx.map[m.get]){ return } // filter out events not from this context!
-						ctx.souls[m.get] = false;
-						obj_map(m.put, aeach, m);
-						if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return }
-						if(ctx.c){ return } ctx.c = 1;
+						ctx.souls[m.get] = false; // set our many-async flag
+						obj_map(m.put, aeach, m); // merge into view
+						if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return } // if flag still outstanding, keep waiting.
+						if(ctx.c){ return } ctx.c = 1; // failsafe for only being called once per context.
 						this.off();
-						obj_map(ctx.map, map, ctx);
+						obj_map(ctx.map, map, ctx); // all done, trigger chains.
 					});
 				}
 				ctx.and = true;
-				cat.on('node', msg);
+				cat.on('node', msg); // each node on the current context's graph needs to be emitted though.
 			}
 			function each(val, key){
 				var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.gun._), tmp;
@@ -786,17 +780,21 @@
 			function map(msg, soul){
 				if(!msg.gun){ return }
 				msg.gun._.root._.stop = {};
+				console.debug(4, 'map ->', soul, msg.put);
 				(msg.gun._).on('in', msg);
 				msg.gun._.root._.stop = {};
 			}
 
 			Gun.on.get = function(msg, gun){
-				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], field = msg.get[_field], tmp;
+				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
 				var next = root.next || (root.next = {}), at = ((next[soul] || empty)._);
 				if(!node || !at){ return root.on('get', msg) }
-				if(field){
-					if(!obj_has(node, field)){ return root.on('get', msg) }
-					node = Gun.state.to(node, field);
+				if(has){
+					if(!obj_has(node, has)){ return root.on('get', msg) }
+					node = Gun.state.to(node, has);
+					// If we have a key in-memory, do we really need to fetch?
+					// Maybe... in case the in-memory key we have is a local write
+					// we still need to trigger a pull/merge from peers.
 				} else {
 					node = Gun.obj.copy(node);
 				}
@@ -840,7 +838,7 @@
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state_lex = Gun.state.lex, _soul = Gun._.soul, _field = Gun._.field, node_ = Gun._.node, rel_is = Gun.val.rel.is;
+		var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.rel.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -993,7 +991,7 @@
 			if(cat.get && at.get !== cat.get){
 				at = obj_to(at, {get: cat.get});
 			}
-			if(cat.field && coat !== cat){
+			if(cat.has && coat !== cat){
 				at = obj_to(at, {gun: cat.gun});
 				if(coat.ack){
 					cat.ack = coat.ack;
@@ -1001,14 +999,14 @@
 				}
 			}
 			if(node_ === cat.get && change && change['#']){
-				// TODO: Potential bug? What if (soul.field = pointer) gets changed to (soul.field = primitive), we still need to clear out / wipe /reset (soul.field._) to have _id = nothing, or puts might have false positives (revert back to old soul).
+				// TODO: Potential bug? What if (soul.has = pointer) gets changed to (soul.has = primitive), we still need to clear out / wipe /reset (soul.has._) to have _id = nothing, or puts might have false positives (revert back to old soul).
 				cat._id = change['#'];
 			}
 			if(u === change){
 				ev.to.next(at);
 				if(cat.soul){ return }
 				echo(cat, at, ev);
-				if(cat.field){
+				if(cat.has){
 					not(cat, at);
 				}
 				obj_del(coat.echo, cat.id);
@@ -1018,6 +1016,7 @@
 			if(cat.soul){
 				//if(cat.root._.now){ at = obj_to(at, {put: change = coat.put}) } // TODO: Ugly hack for uncached synchronous maps.
 				ev.to.next(at);
+				console.debug(5, 'in', cat.soul, change, cat.map, cat.echo, cat.next, cat);
 				echo(cat, at, ev);
 				obj_map(change, map, {at: at, cat: cat});
 				return;
@@ -1031,10 +1030,10 @@
 			if(!rel || tmp){*/
 			if(!(rel = Gun.val.rel.is(change))){
 				if(Gun.val.is(change)){
-					if(cat.field || cat.soul){
+					if(cat.has || cat.soul){
 						not(cat, at);
 					} else
-					if(coat.field || coat.soul){
+					if(coat.has || coat.soul){
 						(coat.echo || (coat.echo = {}))[cat.id] = cat;
 						(cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
 						//if(u === coat.put){ return } // Not necessary but improves performance. If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
@@ -1043,10 +1042,10 @@
 					echo(cat, at, ev);
 					return;
 				}
-				if(cat.field && coat !== cat && obj_has(coat, 'put')){
+				if(cat.has && coat !== cat && obj_has(coat, 'put')){
 					cat.put = coat.put;
 				};
-				if((rel = Gun.node.soul(change)) && coat.field){
+				if((rel = Gun.node.soul(change)) && coat.has){
 					coat.put = (cat.root.get(rel)._).put;
 				}
 				ev.to.next(at);
@@ -1097,7 +1096,7 @@
 		}
 		function echo(at, msg, ev){
 			if(!at.echo){ return } // || node_ === at.get ?
-			if(at.has || at.field){ msg = obj_to(msg, {event: ev}) }
+			if(at.has){ msg = obj_to(msg, {event: ev}) }
 			obj_map(at.echo, reverb, msg);
 		}
 		function reverb(to){
@@ -1113,7 +1112,7 @@
 			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
 			//	data = tmp.put;
 			//}
-			if(at.field){
+			if(at.has){
 				if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 					at.put = data;
 				}
@@ -1195,7 +1194,7 @@
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 		var text_rand = Gun.text.random;
-		var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
+		var _soul = Gun.val.rel._, node_ = Gun.node._;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -1242,8 +1241,8 @@
 			if(cat.root === back){
 				at.soul = key;
 			} else
-			if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
-				at.field = at.has = key;
+			if(cat.soul || cat.has){
+				at.has = key;
 				//if(obj_has(cat.put, key)){
 					//at.put = cat.put[key];
 				//}
@@ -1276,7 +1275,7 @@
 	;USE(function(module){
 		var Gun = USE('./root');
 		Gun.chain.put = function(data, cb, as){
-			// #soul.field=value>state
+			// #soul.has=value>state
 			// ~who#where.where=what>when@was
 			// TODO: BUG! Put probably cannot handle plural chains!
 			var gun = this, at = (gun._), root = at.root, tmp;
@@ -1379,7 +1378,7 @@
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
-				//console.log("PUT!", as.env.graph);
+				console.debug(2, "PUT!", as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
@@ -1388,10 +1387,10 @@
 				cat.root._.stop = tmp2;
 			}, as);
 			if(as.res){ as.res() }
-		} function no(v,f){ if(v){ return true } }
+		} function no(v,k){ if(v){ return true } }
 
-		function map(v,f,n, at){ var as = this;
-			if(f || !at.path.length){ return }
+		function map(v,k,n, at){ var as = this;
+			if(k || !at.path.length){ return }
 			(as.res||iife)(function(){
 				var path = at.path, ref = as.ref, opt = as.opt;
 				var i = 0, l = path.length;
@@ -1610,7 +1609,7 @@
 				}, opt.wait || 99);
 				return;
 			}
-			if(cat.field || cat.soul){
+			if(cat.has || cat.soul){
 				if(ev.off()){ return } // if it is already off, don't call again!
 			} else {
 				if((opt.seen = opt.seen || {})[coat.id]){ return }
@@ -1691,9 +1690,9 @@
 			obj_map(msg.put, each, {at: this.as, msg: msg});
 			this.to.next(msg);
 		}
-		function each(v,f){
-			if(n_ === f){ return }
-			var msg = this.msg, gun = msg.gun, at = this.at, tmp = (gun.get(f)._);
+		function each(v,k){
+			if(n_ === k){ return }
+			var msg = this.msg, gun = msg.gun, at = this.at, tmp = (gun.get(k)._);
 			(tmp.echo || (tmp.echo = {}))[at.id] = at;
 		}
 		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
@@ -1764,12 +1763,12 @@
 				this.to.next(at);
 				var lex = at.get, soul, data, u;
 				//setTimeout(function(){
-				if(!lex || !(soul = lex[Gun._.soul])){ return }
+				if(!lex || !(soul = lex['#'])){ return }
 				//if(0 >= at.cap){ return }
-				var field = lex['.'];
+				var has = lex['.'];
 				data = disk[soul] || u;
-				if(data && field){
-					data = Gun.state.to(data, field);
+				if(data && has){
+					data = Gun.state.to(data, has);
 				}
 				if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
 					return; // Hmm, what if we have peers but we are disconnected?
