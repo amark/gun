@@ -985,14 +985,13 @@
 			return back.on('out', msg);
 		}
 
-		function input(at){
-			at = at._ || at;
-			var ev = this, cat = this.as, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, rel, tmp;
-			if(cat.get && at.get !== cat.get){
-				at = obj_to(at, {get: cat.get});
+		function input(msg){
+			var ev = this, cat = this.as, gun = msg.gun, coat = gun._, change = msg.put, back = cat.back._ || empty, rel, tmp;
+			if(cat.get && msg.get !== cat.get){
+				msg = obj_to(msg, {get: cat.get});
 			}
 			if(cat.has && coat !== cat){
-				at = obj_to(at, {gun: cat.gun});
+				msg = obj_to(msg, {gun: cat.gun});
 				if(coat.ack){
 					cat.ack = coat.ack;
 					//cat.ack = cat.ack || coat.ack;
@@ -1003,22 +1002,21 @@
 				cat._id = change['#'];
 			}
 			if(u === change){
-				ev.to.next(at);
+				ev.to.next(msg);
 				if(cat.soul){ return }
-				echo(cat, at, ev);
+				echo(cat, msg, ev);
 				if(cat.has){
-					not(cat, at);
+					not(cat, msg);
 				}
 				obj_del(coat.echo, cat.id);
 				obj_del(cat.map, coat.id);
 				return;
 			}
 			if(cat.soul){
-				//if(cat.root._.now){ at = obj_to(at, {put: change = coat.put}) } // TODO: Ugly hack for uncached synchronous maps.
-				ev.to.next(at);
+				ev.to.next(msg);
 				console.debug(5, 'in', cat.soul, change, cat.map, cat.echo, cat.next, cat);
-				echo(cat, at, ev);
-				obj_map(change, map, {at: at, cat: cat});
+				echo(cat, msg, ev);
+				obj_map(change, map, {at: msg, cat: cat});
 				return;
 			}
 			/*if(rel = Gun.val.rel.is(change)){
@@ -1031,15 +1029,15 @@
 			if(!(rel = Gun.val.rel.is(change))){
 				if(Gun.val.is(change)){
 					if(cat.has || cat.soul){
-						not(cat, at);
+						not(cat, msg);
 					} else
 					if(coat.has || coat.soul){
 						(coat.echo || (coat.echo = {}))[cat.id] = cat;
 						(cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
 						//if(u === coat.put){ return } // Not necessary but improves performance. If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
 					}
-					ev.to.next(at);
-					echo(cat, at, ev);
+					ev.to.next(msg);
+					echo(cat, msg, ev);
 					return;
 				}
 				if(cat.has && coat !== cat && obj_has(coat, 'put')){
@@ -1048,17 +1046,17 @@
 				if((rel = Gun.node.soul(change)) && coat.has){
 					coat.put = (cat.root.get(rel)._).put;
 				}
-				ev.to.next(at);
-				echo(cat, at, ev);
-				relate(cat, at, coat, rel);
-				obj_map(change, map, {at: at, cat: cat});
+				ev.to.next(msg);
+				echo(cat, msg, ev);
+				relate(cat, msg, coat, rel);
+				obj_map(change, map, {at: msg, cat: cat});
 				return;
 			}
-			relate(cat, at, coat, rel);
-			ev.to.next(at);
-			echo(cat, at, ev);
+			relate(cat, msg, coat, rel);
+			ev.to.next(msg);
+			echo(cat, msg, ev);
 		}
-		Gun.chain.chain.input = input;
+		
 		function relate(at, msg, from, rel){
 			if(!rel || node_ === at.get){ return }
 			var tmp = (at.root.get(rel)._);
