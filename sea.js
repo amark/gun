@@ -1166,8 +1166,8 @@
             y
           })
         }
-        const public = await importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
-        const props = Object.assign({}, ecdhKeyProps, { public })
+        const pubLic = await importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
+        const props = Object.assign({}, ecdhKeyProps, { public: pubLic })
         const derived = await importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
         .then(async (privKey) => {
           // privateKey scope doesn't leak out from here!
