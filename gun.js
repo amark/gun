@@ -711,7 +711,6 @@
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 				if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
-				console.debug(3, 'PUT', ctx);
 				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 				if(u !== ctx.defer){
 					setTimeout(function(){
@@ -780,7 +779,7 @@
 			function map(msg, soul){
 				if(!msg.gun){ return }
 				msg.gun._.root._.stop = {};
-				console.debug(4, 'map ->', soul, msg.put);
+				//console.log('map ->', soul, msg.put);
 				(msg.gun._).on('in', msg);
 				msg.gun._.root._.stop = {};
 			}
@@ -851,7 +850,7 @@
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		
 		if(typeof window !== "undefined"){ window.Gun = Gun }
-		if(typeof common !== "undefined"){ common.exports = Gun }
+		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
 
 		/*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
@@ -986,15 +985,15 @@
 		}
 
 		function input(msg){
-			var ev = this, cat = this.as, gun = msg.gun, coat = gun._, change = msg.put, back = cat.back._ || empty, rel, tmp;
+			var ev = this, cat = this.as, gun = msg.gun, at = gun._, change = msg.put, rel, tmp;
 			if(cat.get && msg.get !== cat.get){
 				msg = obj_to(msg, {get: cat.get});
 			}
-			if(cat.has && coat !== cat){
+			if(cat.has && at !== cat){
 				msg = obj_to(msg, {gun: cat.gun});
-				if(coat.ack){
-					cat.ack = coat.ack;
-					//cat.ack = cat.ack || coat.ack;
+				if(at.ack){
+					cat.ack = at.ack;
+					//cat.ack = cat.ack || at.ack;
 				}
 			}
 			if(node_ === cat.get && change && change['#']){
@@ -1008,13 +1007,12 @@
 				if(cat.has){
 					not(cat, msg);
 				}
-				obj_del(coat.echo, cat.id);
-				obj_del(cat.map, coat.id);
+				obj_del(at.echo, cat.id);
+				obj_del(cat.map, at.id);
 				return;
 			}
 			if(cat.soul){
 				ev.to.next(msg);
-				console.debug(5, 'in', cat.soul, change, cat.map, cat.echo, cat.next, cat);
 				echo(cat, msg, ev);
 				obj_map(change, map, {at: msg, cat: cat});
 				return;
@@ -1031,32 +1029,32 @@
 					if(cat.has || cat.soul){
 						not(cat, msg);
 					} else
-					if(coat.has || coat.soul){
-						(coat.echo || (coat.echo = {}))[cat.id] = cat;
-						(cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
-						//if(u === coat.put){ return } // Not necessary but improves performance. If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
+					if(at.has || at.soul){
+						(at.echo || (at.echo = {}))[cat.id] = cat;
+						(cat.map || (cat.map = {}))[at.id] = cat.map[at.id] || {at: at};
+						//if(u === at.put){ return } // Not necessary but improves performance. If we have it but at does not, that means we got things out of order and at will get it. Once at gets it, it will tell us again.
 					}
 					ev.to.next(msg);
 					echo(cat, msg, ev);
 					return;
 				}
-				if(cat.has && coat !== cat && obj_has(coat, 'put')){
-					cat.put = coat.put;
+				if(cat.has && at !== cat && obj_has(at, 'put')){
+					cat.put = at.put;
 				};
-				if((rel = Gun.node.soul(change)) && coat.has){
-					coat.put = (cat.root.get(rel)._).put;
+				if((rel = Gun.node.soul(change)) && at.has){
+					at.put = (cat.root.get(rel)._).put;
 				}
 				ev.to.next(msg);
 				echo(cat, msg, ev);
-				relate(cat, msg, coat, rel);
+				relate(cat, msg, at, rel);
 				obj_map(change, map, {at: msg, cat: cat});
 				return;
 			}
-			relate(cat, msg, coat, rel);
+			relate(cat, msg, at, rel);
 			ev.to.next(msg);
 			echo(cat, msg, ev);
 		}
-		
+
 		function relate(at, msg, from, rel){
 			if(!rel || node_ === at.get){ return }
 			var tmp = (at.root.get(rel)._);
@@ -1376,7 +1374,6 @@
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
-				console.debug(2, "PUT!", as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
