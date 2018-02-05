@@ -1250,7 +1250,7 @@
         // TODO: something's bugging double 'SEA[]' treatment to mm...
         let m = data
         if (m && m.slice && 'SEA[' === m.slice(0, 4)) {
-          return resolve(m)
+          return m
         }
         if (data && data.slice) {
           // Needs to remove previous signature envelope
