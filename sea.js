@@ -22,7 +22,7 @@
   let crypto
   let funcsSetter
 
-  if (typeof window !== 'undefined') {
+  if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
     const wc = window.crypto || window.msCrypto   // STD or M$
     subtle = wc.subtle || wc.webkitSubtle         // STD or iSafari
     getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
@@ -47,7 +47,7 @@
   }
   const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
 
-  if (typeof global !== 'undefined') {
+  if (typeof __webpack_require__ !== 'function' && typeof global !== 'undefined') {
     global.sessionStorage = sessionStorage
     global.localStorage = localStorage
   }
