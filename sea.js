@@ -953,7 +953,7 @@
         check['user'+soul+key] = 1;
         if(user && (user = user._) && user.sea && pub === user.pub){
             var id = Gun.text.random(3);
-          seaWrite(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub})).then(function(data){ var rel;
+          SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub})).then(function(data){ var rel;
             if(rel = Gun.val.rel.is(val)){
               (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
             }
