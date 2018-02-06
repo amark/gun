@@ -163,13 +163,6 @@
 			// Check out the interactive tutorial
 			// for how to build a simplified version
 			// of this example: https://scrimba.com/c/c2gBgt4
-			if(location.protocol.indexOf('s') < 0 && location.host.indexOf('localhost') < 0){ location.protocol = 'https:'; }
-			/*
-				NOTES:
-				 - SEA should auto redirect to https by default, except if app developer disables it.
-				 - SEA should auto-lock/block itself while login or signup is happening, to prevent duplicates.
-				 - SEA should auto user.leave() if/when errors on login/signup happen to prevent bugs.
-			*/
 			var gun = Gun(location.origin+'/gun');
 			var app = gun.get('example/contacts/6');
 			var user = gun.user();
@@ -210,7 +203,6 @@
 					*/
 				})).on('click','form.sign button:last', function(){
 					var but = $(this), form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
-					if(but.is('.loading')){ return }
 					data.born = Gun.time.is();
 					if(!data.alias || data.alias.length < 5){
 						c.tell("Alias needs to be longer than 5 characters.");
@@ -223,8 +215,8 @@
 					but.addClass('loading');
 					data.alias = data.alias.toLowerCase();
 					user.create(data.alias, data.pass, function(ack){
-						but.removeClass('loading');
-						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
+						if(!ack.wait){ but.removeClass('loading') }
+						if(ack.err){ c.tell(ack.err); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
 						}
@@ -246,7 +238,7 @@
 					}
 					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
-						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
+						if(ack.err){ c.tell(ack.err); return }
 						session(data);
 					});
 				}
