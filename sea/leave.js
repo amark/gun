@@ -5,17 +5,17 @@
     var seaIndexedDb = require('./indexed').scope;
     // This internal func executes logout actions
     const authLeave = async (root, alias = root._.user._.alias) => {
-      const { user = { _: {} } } = root._
-      root._.user = null
+      var user = root._.user._ || {};
+      [ 'get', 'soul', 'ack', 'put', 'is', 'alias', 'pub', 'epub', 'sea' ].map((key) => delete user[key])
+      if(user.gun){
+        delete user.gun.is;
+      }
+      // Let's use default
+      root.user();
       // Removes persisted authentication & CryptoKeys
       try {
         await authPersist({ alias })
       } catch (e) {}  //eslint-disable-line no-empty
-      // TODO: is this correct way to 'logout' user from Gun.User ?
-      [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
-      user._.is = user.is = {}
-      // Let's use default
-      root.user();
       return { ok: 0 }
     }
     module.exports = authLeave;
