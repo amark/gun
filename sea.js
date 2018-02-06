@@ -371,7 +371,7 @@
   })(USE, './remember');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
 
     var wc = USE('./webcrypto');
     var subtle = wc.subtle;
@@ -638,7 +638,7 @@
   })(USE, './sea');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     // This is internal func queries public key(s) for alias.
     const queryGunAliases = (alias, root) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
@@ -683,7 +683,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     var queryGunAliases = USE('./query');
     var parseProps = USE('./parse');
@@ -740,7 +740,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var authsettings = USE('./settings');
     var seaIndexedDb = USE('./indexed').scope;
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
@@ -787,7 +787,7 @@
   })(USE, './update');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var Buffer = USE('./buffer');
     var authsettings = USE('./settings');
     var updateStorage = USE('./update');
@@ -853,7 +853,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var Buffer = USE('./buffer');
     var authsettings = USE('./settings');
     var seaIndexedDb = USE('./indexed').scope;
@@ -1013,7 +1013,7 @@
   ;USE(function(module){
      // How does it work?
     // TODO: Bug! Need to include SEA!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     var authRecall = USE('./recall');
     var authenticate = USE('./authenticate');
@@ -1256,7 +1256,7 @@
   })(USE, './user');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
