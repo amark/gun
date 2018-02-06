@@ -24,7 +24,12 @@ var root;
   }
 }(this));
 
-const SEA = Gun.SEA()
+;(function(){
+
+const SEA = Gun.SEA
+
+if(!SEA){ return }
+
 const { Buffer, EasyIndexedDB } = SEA
 
 const seaIndexedDb = new SEA.EasyIndexedDB('SEA', 'GunDB', 1)
@@ -1000,3 +1005,5 @@ Gun().user && describe('Gun', function(){
     Gun.log.off = false;
   });
 });
+
+}());

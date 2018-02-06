@@ -7,15 +7,6 @@
 ;(function(){ // eslint-disable-line no-extra-semi
 
   /* UNBUILD */
-
-  /*
-    Security, Encryption, and Authorization: SEA.js
-  */
-
-  // NECESSARY PRE-REQUISITE: http://gun.js.org/explainers/data/security.html
-
-  /* THIS IS AN EARLY ALPHA!!! */
-
   var root;
   if(typeof window !== "undefined"){ root = window }
   if(typeof global !== "undefined"){ root = global }
@@ -31,47 +22,25 @@
     }
   }
   if(typeof module !== "undefined"){ var common = module }
-  
-
-  const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('./gun')
-
-  let subtle
-  let subtleossl
-  let getRandomBytes
-  let indexedDB
-  let crypto
-  let funcsSetter
   /* UNBUILD */
 
-  if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
-    const wc = window.crypto || window.msCrypto   // STD or M$
-    subtle = wc.subtle || wc.webkitSubtle         // STD or iSafari
-    getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
-    funcsSetter = () => window
-    indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB
-    || window.msIndexedDB || window.shimIndexedDB
-  } else {
-    crypto = require('crypto')
-    const WebCrypto = require('node-webcrypto-ossl')
-    const webcrypto = new WebCrypto({directory: 'key_storage'})
-    subtleossl = webcrypto.subtle
-    subtle = require('@trust/webcrypto').subtle   // All but ECDH
-    getRandomBytes = (len) => Buffer.from(crypto.randomBytes(len))
-    funcsSetter = () => {
-      const { TextEncoder, TextDecoder } = require('text-encoding')
-      // Let's have Storage for NodeJS / testing
-      const sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
-      const localStorage = new require('node-localstorage').LocalStorage('.localStorage')
-      return { TextEncoder, TextDecoder, sessionStorage, localStorage }
-    }
-    indexedDB = require('fake-indexeddb')
-  }
-  const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
+  ;USE(function(module){
+    /*
+      Security, Encryption, and Authorization: SEA.js
+    */
 
-  if (typeof __webpack_require__ !== 'function' && typeof global !== 'undefined') {
-    global.sessionStorage = sessionStorage
-    global.localStorage = localStorage
-  }
+    // NECESSARY PRE-REQUISITE: http://gun.js.org/explainers/data/security.html
+
+    /* THIS IS AN EARLY ALPHA!!! */
+    
+    if(typeof window !== 'undefined'){
+      if(location.protocol.indexOf('s') < 0
+      && location.host.indexOf('localhost') < 0
+      && location.protocol.indexOf('file:') < 0){
+        location.protocol = 'https:';
+      }
+    }
+  })(USE, './https');
 
   ;USE(function(module){
     // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
@@ -179,6 +148,32 @@
   })(USE, './buffer');
 
   ;USE(function(module){
+
+    let subtle
+    let subtleossl
+    let getRandomBytes
+    let crypto
+    var Buffer = USE('./buffer');
+    var wc;
+    var api = {};
+
+    if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
+      api.crypto = wc = window.crypto || window.msCrypto // STD or M$
+      api.subtle = subtle = wc.subtle || wc.webkitSubtle // STD or iSafari
+      api.random = getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+    } else {
+      api.crypto = crypto = require('crypto')
+      const WebCrypto = require('node-webcrypto-ossl')
+      const webcrypto = new WebCrypto({directory: 'key_storage'})
+      api.ossl = subtleossl = webcrypto.subtle
+      api.subtle = subtle = require('@trust/webcrypto').subtle   // All but ECDH
+      api.random = getRandomBytes = (len) => Buffer.from(crypto.randomBytes(len))
+    }
+
+    module.exports = api;
+  })(USE, './webcrypto');
+
+  ;USE(function(module){
     // This is safe class to operate with IndexedDB data - all methods are Promise
     function EasyIndexedDB(objectStoreName, dbName = 'GunDB', dbVersion = 1) {
       // Private internals, including constructor props
@@ -226,9 +221,34 @@
         }
       })
     }
-    // This is IndexedDB used by Gun SEA
-    const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1)
+
+    let indexedDB
+    let funcsSetter
+
+    if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
+      funcsSetter = () => window
+      indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB
+    } else {
+      funcsSetter = () => {
+        const { TextEncoder, TextDecoder } = require('text-encoding')
+        // Let's have Storage for NodeJS / testing
+        const sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
+        const localStorage = new require('node-localstorage').LocalStorage('.localStorage')
+        return { TextEncoder, TextDecoder, sessionStorage, localStorage }
+      }
+      indexedDB = require('fake-indexeddb')
+    }
+
+    const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
+
+    if (typeof __webpack_require__ !== 'function' && typeof global !== 'undefined') {
+      global.sessionStorage = sessionStorage
+      global.localStorage = localStorage
+    }
+
+    const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1) // This is IndexedDB used by Gun SEA
     EasyIndexedDB.scope = seaIndexedDb; // for now. This module should not export an instance of itself!
+
     module.exports = EasyIndexedDB;
   })(USE, './indexed');
 
@@ -280,13 +300,16 @@
   })(USE, './parse');
 
   ;USE(function(module){
+    var wc = USE('./webcrypto');
+    var subtle = wc.subtle;
+    var getRandomBytes = wc.random;
     var Buffer = USE('./buffer');
     var parseProps = USE('./parse');
     var settings = USE('./settings');
     var pbKdf2 = settings.pbkdf2;
     // This internal func returns SHA-256 hashed data for signing
     const sha256hash = async (mm) => {
-      const hashSubtle = subtleossl || subtle
+      const hashSubtle = wc.ossl || subtle
       const m = parseProps(mm)
       const hash = await hashSubtle.digest(pbKdf2.hash, new TextEncoder().encode(m))
       return Buffer.from(hash)
@@ -303,6 +326,8 @@
   ;USE(function(module){
     var Buffer = USE('./buffer');
     var sha256hash = USE('./sha256');
+    var wc = USE('./webcrypto');
+    var subtle = wc.subtle;
     var seaIndexedDb = USE('./indexed').scope;
     var settings = USE('./settings');
     var authsettings = settings.recall;
@@ -346,7 +371,11 @@
   })(USE, './remember');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
+
+    var wc = USE('./webcrypto');
+    var subtle = wc.subtle;
+    var getRandomBytes = wc.random;
     var EasyIndexedDB = USE('./indexed');
     var SafeBuffer = USE('./buffer');
     var settings = USE('./settings');
@@ -358,15 +387,7 @@
     var sha256hash = USE('./sha256');
     var recallCryptoKey = USE('./remember');
     var parseProps = USE('./parse');
-    // THIS WILL BE DEPRECATED IN FAVOR OF `Gun.SEA`!
-    // let's extend the gun chain with a `SEA` function.
-    // maps locally used methods to Gun and returns SEA object.
-    Gun.chain.SEA = function() {
-      const root = this.back(-1)
-      const sea = root._.SEA || (root._.SEA = root.chain());  // create a SEA context
-      Object.keys(SEA).map((method) => sea[method] = SEA[method])
-      return sea
-    }
+    
     // Practical examples about usage found from ./test/common.js
     const SEA = {
       // This is easy way to use IndexedDB, all methods are Promises
@@ -432,7 +453,7 @@
       },
       async pair() {
         try {
-          const ecdhSubtle = subtleossl || subtle
+          const ecdhSubtle = wc.ossl || subtle
           // First: ECDSA keys for signing/verifying...
           const { pub, priv } = await subtle.generateKey(ecdsaKeyProps, true, [ 'sign', 'verify' ])
           .then(async ({ publicKey, privateKey }) => {
@@ -617,7 +638,7 @@
   })(USE, './sea');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     // This is internal func queries public key(s) for alias.
     const queryGunAliases = (alias, root) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
@@ -662,7 +683,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     var queryGunAliases = USE('./query');
     var parseProps = USE('./parse');
@@ -719,7 +740,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var authsettings = USE('./settings');
     var seaIndexedDb = USE('./indexed').scope;
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
@@ -766,7 +787,7 @@
   })(USE, './update');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var Buffer = USE('./buffer');
     var authsettings = USE('./settings');
     var updateStorage = USE('./update');
@@ -832,7 +853,7 @@
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var Buffer = USE('./buffer');
     var authsettings = USE('./settings');
     var seaIndexedDb = USE('./indexed').scope;
@@ -973,17 +994,17 @@
     var seaIndexedDb = USE('./indexed').scope;
     // This internal func executes logout actions
     const authLeave = async (root, alias = root._.user._.alias) => {
-      const { user = { _: {} } } = root._
-      root._.user = null
+      var user = root._.user._ || {};
+      [ 'get', 'soul', 'ack', 'put', 'is', 'alias', 'pub', 'epub', 'sea' ].map((key) => delete user[key])
+      if(user.gun){
+        delete user.gun.is;
+      }
+      // Let's use default
+      root.user();
       // Removes persisted authentication & CryptoKeys
       try {
         await authPersist({ alias })
       } catch (e) {}  //eslint-disable-line no-empty
-      // TODO: is this correct way to 'logout' user from Gun.User ?
-      [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
-      user._.is = user.is = {}
-      // Let's use default
-      root.user();
       return { ok: 0 }
     }
     module.exports = authLeave;
@@ -992,11 +1013,12 @@
   ;USE(function(module){
      // How does it work?
     // TODO: Bug! Need to include SEA!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     var authRecall = USE('./recall');
     var authenticate = USE('./authenticate');
     var finalizeLogin = USE('./login');
+    var authLeave = USE('./leave');
     // let's extend the gun chain with a `user` function.
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function() {
@@ -1017,7 +1039,14 @@
     Object.assign(User, {
       async create(username, pass, cb) {
         const root = this.back(-1)
-        return new Promise((resolve, reject) => { // Because no Promises or async
+        var gun = this, cat = (gun._);
+        cb = cb || function(){};
+        if(cat.ing){
+          cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
+          return gun;
+        }
+        cat.ing = true;
+        var p = new Promise((resolve, reject) => { // Because no Promises or async
           // Because more than 1 user might have the same username, we treat the alias as a list of those users.
           if(cb){ resolve = reject = cb }
           root.get(`alias/${username}`).get(async (at, ev) => {
@@ -1026,6 +1055,8 @@
               // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
               const err = 'User already created!'
               Gun.log(err)
+              cat.ing = false;
+              gun.leave();
               return reject({ err })
             }
             const salt = Gun.text.random(64)
@@ -1045,7 +1076,7 @@
               // SEA.write(salt, pairs).then((signedsalt) =>
                 SEA.write({ salt, auth }, pairs)
               // )
-              ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+              ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); cat.ing = false; gun.leave(); reject(e) })
               const user = { alias, pub, epub, auth }
               const tmp = `pub/${pairs.pub}`
               // awesome, now we can actually save the user with their public key as their ID.
@@ -1053,25 +1084,38 @@
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
               root.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
+              setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
             } catch (e) {
               Gun.log('SEA.create failed!')
+              cat.ing = false;
+              gun.leave();
               reject(e)
             }
           })
         })
+        return gun; // gun chain commands must return gun chains!
       },
       // now that we have created a user, we want to authenticate them!
       async auth(alias, pass, cb, opts) {
-        if(cb && !(cb instanceof Function)){ opts = cb }
+        if(cb && !(cb instanceof Function)){ opts = cb; cb = function(){} }
         const { pin, newpass } = opts || {}
         const root = this.back(-1)
+        cb = cb || function(){};
+
+        var gun = this, cat = (gun._);
+        if(cat.ing){
+          cb({err: "User is already being created or authenticated!", wait: true});
+          return gun;
+        }
+        cat.ing = true;
 
         if (!pass && pin) {
           try {
-            return await authRecall(root, { alias, pin })
+            var r = await authRecall(root, { alias, pin })
+            return cat.ing = false, cb(r), gun;
           } catch (e) {
-            throw { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
+            var err = { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
+            return cat.ing = false, gun.leave(), cb(err), gun;
           }
         }
 
@@ -1079,8 +1123,7 @@
           const { message, err = message || '' } = e
           Gun.log(msg)
           var error = { err: `${msg} Reason: ${err}` }
-          if(cb){ cb(error) }
-          throw error;
+          return cat.ing = false, gun.leave(), cb(error), gun;
         }
 
         try {
@@ -1112,20 +1155,19 @@
               // then we're done
               var login = finalizeLogin(alias, keys, root, { pin })
               login.catch(putErr('Failed to finalize login with new password!'))
-              if(cb){ cb(login) }
-              return login;
+              return cat.ing = false, cb(login), gun;
             } catch (e) {
-              putErr('Password set attempt failed!')(e)
+              return putErr('Password set attempt failed!')(e)
             }
           } else {
             var login = finalizeLogin(alias, keys, root, { pin })
             login.catch(putErr('Finalizing login failed!'))
-            if(cb){ cb(login) }
-            return login;
+            return cat.ing = false, cb(login), gun;
           }
         } catch (e) {
-          putErr('Auth attempt failed!')(e)
+          return putErr('Auth attempt failed!')(e)
         }
+        return gun;
       },
       async leave() {
         return await authLeave(this.back(-1))
@@ -1214,7 +1256,7 @@
   })(USE, './user');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     var SEA = USE('./sea');
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 

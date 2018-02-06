@@ -1,6 +1,8 @@
 
     var Buffer = require('./buffer');
     var sha256hash = require('./sha256');
+    var wc = require('./webcrypto');
+    var subtle = wc.subtle;
     var seaIndexedDb = require('./indexed').scope;
     var settings = require('./settings');
     var authsettings = settings.recall;

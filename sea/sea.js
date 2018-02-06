@@ -1,5 +1,9 @@
 
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+
+    var wc = require('./webcrypto');
+    var subtle = wc.subtle;
+    var getRandomBytes = wc.random;
     var EasyIndexedDB = require('./indexed');
     var SafeBuffer = require('./buffer');
     var settings = require('./settings');
@@ -11,15 +15,7 @@
     var sha256hash = require('./sha256');
     var recallCryptoKey = require('./remember');
     var parseProps = require('./parse');
-    // THIS WILL BE DEPRECATED IN FAVOR OF `Gun.SEA`!
-    // let's extend the gun chain with a `SEA` function.
-    // maps locally used methods to Gun and returns SEA object.
-    Gun.chain.SEA = function() {
-      const root = this.back(-1)
-      const sea = root._.SEA || (root._.SEA = root.chain());  // create a SEA context
-      Object.keys(SEA).map((method) => sea[method] = SEA[method])
-      return sea
-    }
+    
     // Practical examples about usage found from ./test/common.js
     const SEA = {
       // This is easy way to use IndexedDB, all methods are Promises
@@ -85,7 +81,7 @@
       },
       async pair() {
         try {
-          const ecdhSubtle = subtleossl || subtle
+          const ecdhSubtle = wc.ossl || subtle
           // First: ECDSA keys for signing/verifying...
           const { pub, priv } = await subtle.generateKey(ecdsaKeyProps, true, [ 'sign', 'verify' ])
           .then(async ({ publicKey, privateKey }) => {
