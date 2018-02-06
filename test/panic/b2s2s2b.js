@@ -62,7 +62,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server});
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, localStorage: false});
 				server.listen(port, function(){
 					test.done();
 				});

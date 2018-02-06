@@ -723,7 +723,7 @@
 				if(u !== ctx.defer){
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
-					}, ctx.defer - at.machine);
+					}, ctx.defer - ctx.machine);
 				}
 				if(!ctx.diff){ return }
 				at.on('put', obj_to(msg, {put: ctx.diff}));
@@ -999,6 +999,10 @@
 					//cat.ack = cat.ack || coat.ack;
 				}
 			}
+			if(node_ === cat.get && change && change['#']){
+				// TODO: Potential bug? What if (soul.field = pointer) gets changed to (soul.field = primitive), we still need to clear out / wipe /reset (soul.field._) to have _id = nothing, or puts might have false positives (revert back to old soul).
+				cat._id = change['#'];
+			}
 			if(u === change){
 				ev.to.next(at);
 				if(cat.soul){ return }
@@ -1128,7 +1132,7 @@
 			var tmp = at.map, root = at.root._;
 			at.map = null;
 			if(!root.now || !root.now[at.id]){
-				if((u === msg.put && !msg['@']) && null === tmp){ return }
+				if((!msg['@']) && null === tmp){ return }
 			}
 			if(u === tmp && Gun.val.rel.is(at.put)){ return } // TODO: Bug? Threw second condition in for a particular test, not sure if a counter example is tested though.
 			obj_map(tmp, function(proxy){
@@ -1374,6 +1378,7 @@
 				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
+				//console.log("PUT!", as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
@@ -1414,20 +1419,22 @@
 			}, {as: as, at: at});
 		}
 
-		function soul(at, ev){ var as = this.as, cat = as.at; as = as.as;
+		function soul(msg, ev){ var as = this.as, cat = as.at; as = as.as;
 			//ev.stun(); // TODO: BUG!?
-			if(!at.gun || !at.gun._.back){ return } // TODO: Handle
+			if(!msg.gun || !msg.gun._.back){ return } // TODO: Handle
+			var at = msg.gun._, at_ = at;
+			var _id = (msg.put||empty)['#'];
 			ev.off();
-			at = (at.gun._.back._); // go up 1!
-			var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			at = (msg.gun._.back._); // go up 1!
+			var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || _id || at_._id || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			if(!id){ // polyfill async uuid for SEA
 				at.gun.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 					if(err){ return Gun.log(err) } // TODO: Handle error.
-					solve(at, id, cat, as);
+					solve(at, at_._id = at_._id || id, cat, as);
 				});
 				return;
 			}
-			solve(at, id, cat, as);
+			solve(at, at_._id = at_._id || id, cat, as);
 		}
 
 		function solve(at, id, cat, as){
@@ -1475,7 +1482,7 @@
 				} else {
 					//as.data = obj_put({}, as.gun._.get, as.data);
 					if(node_ == at.get){
-						as.soul = (at.put||empty)['#'];
+						as.soul = (at.put||empty)['#'] || at._id;
 					}
 					as.soul = as.soul || at.soul || cat.soul || (opt.uuid || cat.root._.opt.uuid || Gun.text.random)();
 				}

@@ -7,41 +7,85 @@ html, body {
 	position: relative;
 }
 
-div, ul, li, form, p, span, input, textarea {
-	margin: 0;
-	padding: 0;
-	position: relative;
-	overflow: hidden;
-	-webkit-transition: all 0.3s;
-	transition: all 0.3s;
-	box-sizing: border-box;
-}
-
-ul, li {
-	list-style: none;
-}
-
 body {
 	font-size: 18pt;
 }
 
-.model { display: none }
-.mid { margin-left: auto; margin-right: auto; }
-.row { width: 100%; }
-.col { max-width: 33em; }
+div, ul, li, form, p, span, button, input, textarea {
+  margin: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  -webkit-transition: all 0.3s;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
 input, textarea {
 	border: none;
 	width: 100%;
 }
 
-.none {
-	display: none;
+ul, li {
+  list-style: none;
 }
 
+.model, .none { display: none }
+
 .page {
-	width: 100%;
-	min-height: 100vh;
+  width: 100%;
+  min-height: 100vh;
 }
+
+.pad {
+  margin: 5% auto;
+  min-width: 250px;
+  width: 95%;
+  max-width: 50em;
+}
+
+.right {
+  float: right;
+}
+.left {
+  float: left;
+}
+.center {
+  text-align: center;
+}
+.mid { 
+  margin-left: auto;
+  margin-right: auto; 
+}
+
+.sit { margin-bottom: 0; }
+.row { width: 100%; }
+.col { max-width: 33em; }
+.act {
+  display: block;
+  font-weight: normal;
+  text-decoration: none;
+  -webkit-transition: all 0.3s;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.symbol {
+  display: inline-block;
+}
+
+.rim {
+  margin: 2%;
+}
+.loud {
+  font-size: 150%;
+}
+.jot {
+  border-bottom: 1px dashed #95B2CA;
+}
+.sap {
+  border-radius: 0.1em;
+}
+
 
 .red {
 	background: #ea3224;
@@ -86,47 +130,6 @@ input, textarea {
 }
 .whitet {
 	color: white;
-}
-
-.pad {
-	margin: 5% auto;
-	min-width: 250px;
-	width: 95%;
-	max-width: 50em;
-}
-
-.rim {
-  margin: 2%;
-}
-
-.right {
-	float: right;
-}
-.left {
-	float: left;
-}
-
-.act {
-	display: block;
-	font-weight: normal;
-	text-decoration: none;
-	-webkit-transition: all 0.3s;
-	transition: all 0.3s;
-	cursor: pointer;
-}
-
-.rubric {
-	font-size: 150%;
-}
-.center {
-	text-align: center;
-}
-
-.jot {
-	border-bottom: 1px dashed #95B2CA;
-}
-.sap {
-	border-radius: 0.1em;
 }
 
 .hue {
