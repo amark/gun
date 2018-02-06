@@ -6,6 +6,7 @@
     var authRecall = require('./recall');
     var authenticate = require('./authenticate');
     var finalizeLogin = require('./login');
+    var authLeave = require('./leave');
     // let's extend the gun chain with a `user` function.
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function() {
@@ -26,7 +27,14 @@
     Object.assign(User, {
       async create(username, pass, cb) {
         const root = this.back(-1)
-        return new Promise((resolve, reject) => { // Because no Promises or async
+        var gun = this, cat = (gun._);
+        cb = cb || function(){};
+        if(cat.ing){
+          cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
+          return gun;
+        }
+        cat.ing = true;
+        var p = new Promise((resolve, reject) => { // Because no Promises or async
           // Because more than 1 user might have the same username, we treat the alias as a list of those users.
           if(cb){ resolve = reject = cb }
           root.get(`alias/${username}`).get(async (at, ev) => {
@@ -35,6 +43,8 @@
               // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
               const err = 'User already created!'
               Gun.log(err)
+              cat.ing = false;
+              gun.leave();
               return reject({ err })
             }
             const salt = Gun.text.random(64)
@@ -54,7 +64,7 @@
               // SEA.write(salt, pairs).then((signedsalt) =>
                 SEA.write({ salt, auth }, pairs)
               // )
-              ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); reject(e) })
+              ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); cat.ing = false; gun.leave(); reject(e) })
               const user = { alias, pub, epub, auth }
               const tmp = `pub/${pairs.pub}`
               // awesome, now we can actually save the user with their public key as their ID.
@@ -62,25 +72,38 @@
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
               root.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-              setTimeout(() => { resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
+              setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
             } catch (e) {
               Gun.log('SEA.create failed!')
+              cat.ing = false;
+              gun.leave();
               reject(e)
             }
           })
         })
+        return gun; // gun chain commands must return gun chains!
       },
       // now that we have created a user, we want to authenticate them!
       async auth(alias, pass, cb, opts) {
-        if(cb && !(cb instanceof Function)){ opts = cb }
+        if(cb && !(cb instanceof Function)){ opts = cb; cb = function(){} }
         const { pin, newpass } = opts || {}
         const root = this.back(-1)
+        cb = cb || function(){};
+
+        var gun = this, cat = (gun._);
+        if(cat.ing){
+          cb({err: "User is already being created or authenticated!", wait: true});
+          return gun;
+        }
+        cat.ing = true;
 
         if (!pass && pin) {
           try {
-            return await authRecall(root, { alias, pin })
+            var r = await authRecall(root, { alias, pin })
+            return cat.ing = false, cb(r), gun;
           } catch (e) {
-            throw { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
+            var err = { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
+            return cat.ing = false, gun.leave(), cb(err), gun;
           }
         }
 
@@ -88,8 +111,7 @@
           const { message, err = message || '' } = e
           Gun.log(msg)
           var error = { err: `${msg} Reason: ${err}` }
-          if(cb){ cb(error) }
-          throw error;
+          return cat.ing = false, gun.leave(), cb(error), gun;
         }
 
         try {
@@ -121,20 +143,19 @@
               // then we're done
               var login = finalizeLogin(alias, keys, root, { pin })
               login.catch(putErr('Failed to finalize login with new password!'))
-              if(cb){ cb(login) }
-              return login;
+              return cat.ing = false, cb(login), gun;
             } catch (e) {
-              putErr('Password set attempt failed!')(e)
+              return putErr('Password set attempt failed!')(e)
             }
           } else {
             var login = finalizeLogin(alias, keys, root, { pin })
             login.catch(putErr('Finalizing login failed!'))
-            if(cb){ cb(login) }
-            return login;
+            return cat.ing = false, cb(login), gun;
           }
         } catch (e) {
-          putErr('Auth attempt failed!')(e)
+          return putErr('Auth attempt failed!')(e)
         }
+        return gun;
       },
       async leave() {
         return await authLeave(this.back(-1))

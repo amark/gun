@@ -46,8 +46,33 @@
         }
       })
     }
-    // This is IndexedDB used by Gun SEA
-    const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1)
+
+    let indexedDB
+    let funcsSetter
+
+    if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
+      funcsSetter = () => window
+      indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB
+    } else {
+      funcsSetter = () => {
+        const { TextEncoder, TextDecoder } = require('text-encoding')
+        // Let's have Storage for NodeJS / testing
+        const sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
+        const localStorage = new require('node-localstorage').LocalStorage('.localStorage')
+        return { TextEncoder, TextDecoder, sessionStorage, localStorage }
+      }
+      indexedDB = require('fake-indexeddb')
+    }
+
+    const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
+
+    if (typeof __webpack_require__ !== 'function' && typeof global !== 'undefined') {
+      global.sessionStorage = sessionStorage
+      global.localStorage = localStorage
+    }
+
+    const seaIndexedDb = new EasyIndexedDB('SEA', 'GunDB', 1) // This is IndexedDB used by Gun SEA
     EasyIndexedDB.scope = seaIndexedDb; // for now. This module should not export an instance of itself!
+
     module.exports = EasyIndexedDB;
   
