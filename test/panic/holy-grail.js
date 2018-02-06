@@ -55,7 +55,7 @@ describe("The Holy Grail Test!", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server});
+			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -181,7 +181,7 @@ describe("The Holy Grail Test!", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server});
+			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
 			server.listen(port, function(){
 				test.done();
 			});

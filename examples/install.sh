@@ -5,7 +5,7 @@
 # should work on most places other than Windows.
 # Copy paste and run each line into your terminal.
 # If you are on Windows, http://nodejs.org/download/ has
-# a installer that will automatically do it for you.
+# an installer that will automatically do it for you.
 
 #debian/ubuntu
 sudo apt-get update -y
@@ -22,6 +22,6 @@ sudo ./nave/nave.sh usemain stable
 npm install gun
 
 # to run the gun examples:
-cd ./node_modules/gun/examples
+cd ./node_modules/gun
 npm install .
-sudo /usr/local/bin/node ./express.js 80 # change `80` to `8080` for development purposes.
+sudo /usr/local/bin/node ./examples/http.js 80 # change `80` to `8080` for development purposes.

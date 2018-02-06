@@ -12,20 +12,23 @@
 					font-size: 1em;
 					margin: 1em 0;
 					padding: 1em;
-					border: none;
-					background: rgba(100%, 100%, 100%, 0.9);
-					back-ground: white;
-				}
-				.sigbut {
-					display: inline-block;
 				}
 				.or {
 					display: inline-block;
 					width: 15%;
 				}
+				.loading {
+				  animation: pulse 2s infinite;
+				}
+				@keyframes pulse
+				{
+				  0% {opacity: 1;}
+				  50% {opacity: 0.5;}
+				  100% {opacity: 1;}
+				}
 			</style>
-			<form class="sign pad center">
-				<div class="rubric">Welcome,</div>
+			<form id="inup" class="sign pad center">
+				<div class="loud">Welcome,</div>
 				<div class="mid row col">
 					<input name="alias" class="huet jot sap" placeholder="alias">
 					Enter your public username.
@@ -35,32 +38,26 @@
 					And a long private passphrase.
 				</div>
 				<div class="mid row col go">
-					<button class="huet act sigbut">sign in</button>
+					<button class="huet sap act symbol">sign in</button>
 					<div class="or">or</div>
-					<button class="huet act sigbut">sign up</button>
+					<button class="huet sap act symbol">sign up</button>
 				</div>
 				<a href="info">more info</a>
 			</form>
 		</div id="sign">
 		
 		<div id="people" class="hue2 page">
-			<style>
-				#people a {
-					color: white;
-					text-decoration: none;
-				}
-			</style>
 			<ul name="users" class="pad">
 				<h3>Here is a list of people:</h3>
 				<li name="#">
 					<!-- <h3 name="."></h3> -->
 					<ul>
-						<a href="person" name="#">
+						<a href="person" name="#" class="whitet act">
 							<li>
 								<span name="who">
 									<b name="name"></b>
 								</span>
-								<i>~</i><i name="alias"></i>
+								<i>~</i><i name="alias" class="sort"></i>
 								<input name="pub">
 							</li>
 						</a>
@@ -86,19 +83,30 @@
 		</div id="converse">
 		
 		<div id="person" class="hue3 page">
+			<style>
+				#person .back {
+					position: absolute;
+					top: 0.3em;
+					left: 0.5em;
+					width: 2em;
+					height: 2em;
+					z-index: 99999;
+				}
+			</style>
+			<a href="people" class="whitet act back">&#8592</a>
 			<div class="pad">
 				<div name="who">
 					<!-- img src="" -->
 					<h2 name="name" contenteditable="true">Name</h2>
 					<i name="born"></i>
 					<span name="bio" contenteditable="true">bio</span>
-					<form id="say" class="center">
+					<form id="say" class="center none">
 						<input class="jot" placeholder="Say something!" style="width: 80%;">
-						<input type="submit" id="speak" class="huet2" style="min-width: 5em; width: 10%;" value="speak">
+						<input type="submit" id="speak" class="huet2 sap act symbol" style="min-width: 5em; width: 10%;" value="speak">
 					</form>
 					<div>
 						<ul name="said">
-							<li name="#" class="shade rim"><div name="what" class="rim"></div></li>
+							<li name="#" class="sit sort shade rim"><div name="what" class="rim sit"></div></li>
 						</ul>
 					</div>
 				</div>
@@ -109,6 +117,36 @@
 		<div id="info" class="page">
 			<p>A mysterious new example app has appeared! It is not finished/ready yet.</p>
 		</div id="info">
+		
+		<div id="tell" class="center">
+			<style>
+				#tell {
+					position: fixed;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 0;
+					overflow: visible;
+				}
+				#tell p {
+					top: -2em;
+					width: 50%;
+					border: solid #222 0.2em;
+					border-top: none;
+					padding: 1%;
+					opacity: 0;
+					visibility: hidden;
+					transition: visibility 2s, all 1s ease-in;
+				}
+				#tell .notify {
+					top: 0em;
+					opacity: 0.8;
+					visibility: visible;
+					transition: visibility 0s, all 0.25s ease-out;
+				}
+			</style>
+			<p class="mid black">Hello world!</p>
+		</div>
 
 		<!-- script src="/Users/mark/Dropbox/Public/gun/db/examples/jquery.js"></script>
 		<script src="/Users/mark/Dropbox/Public/gun/db/gun.js"></script>
@@ -118,12 +156,21 @@
 
 		<script src="/jquery.js"></script>
 		<script src="/gun.js"></script>
-		<script src="/gun/lib/cryptomodules.js"></script>
 		<script src="/gun/sea.js"></script>
 		<script src="/gun/as.js"></script>
+		<script src="/gun/nts.js"></script>
 		<script>
+			// Check out the interactive tutorial
+			// for how to build a simplified version
+			// of this example: https://scrimba.com/c/c2gBgt4
+			if(location.protocol.indexOf('s') < 0 && location.host.indexOf('localhost') < 0){ location.protocol = 'https:'; }
+			/*
+				NOTES:
+				 - SEA should auto redirect to https by default, except if app developer disables it.
+				 - SEA should auto-lock/block itself while login or signup is happening, to prevent duplicates.
+				 - SEA should auto user.leave() if/when errors on login/signup happen to prevent bugs.
+			*/
 			var gun = Gun(location.origin+'/gun');
-			//var gun = Gun();
 			var app = gun.get('example/contacts/6');
 			var user = gun.user();
 			var c = window.c = {};
@@ -139,6 +186,7 @@
 					var no;
 					Gun.node.is(at.put.users, function(val, key){
 						Gun.SEA.read(val, false, function(val){
+						//Gun.SEA.read(val, false, function(val){
 							if('alias/'+key === Gun.val.rel.is(val)){ return }
 							no = true;
 						})
@@ -161,18 +209,22 @@
 					});
 					*/
 				})).on('click','form.sign button:last', function(){
-					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					var but = $(this), form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					if(but.is('.loading')){ return }
 					data.born = Gun.time.is();
 					if(!data.alias || data.alias.length < 5){
-						console.log("Alias needs to be longer than 5 characters.");
+						c.tell("Alias needs to be longer than 5 characters.");
 						return;
 					}
 					if(!data.pass || data.pass.length < 9){
-						console.log("Passphrase needs to be longer than 9 characters.");
+						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					but.addClass('loading');
+					data.alias = data.alias.toLowerCase();
 					user.create(data.alias, data.pass, function(ack){
-						if(ack.err){ return }
+						but.removeClass('loading');
+						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
 						}
@@ -182,29 +234,39 @@
 				}).on('click','form.sign button:first', become);
 				function become(){
 					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
-					if(window.sessionStorage){
-						data.alias = data.alias || sessionStorage.alias;
-						data.pass = data.pass || sessionStorage.tmp;
-					}
+					data.alias = data.alias || sessionStorage.alias;
+					data.pass = data.pass || sessionStorage.tmp;
 					if(!data.alias || data.alias.length < 5){
-						console.log("Alias needs to be longer than 5 characters.");
+						c.tell("Alias needs to be longer than 5 characters.");
 						return;
 					}
 					if(!data.pass || data.pass.length < 9){
-						console.log("Passphrase needs to be longer than 9 characters.");
+						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
+						if(ack.err){ c.tell(ack.err); sessionStorage.clear(); user.leave(); return }
 						session(data);
 					});
 				}
-				if(window.sessionStorage && sessionStorage.tmp){
+				if(!location.hash){
+					as.route('sign');
+				}
+				if(!window.sessionStorage){ window.sessionStorage = {clear:function(){}} }
+				if(sessionStorage.tmp){
 					become();
 				}
 				function session(data){
-					if(!window.sessionStorage){ return }
+					if(!sessionStorage){ return }
 					sessionStorage.alias = data.alias;
 					sessionStorage.tmp = data.pass;
+				}
+				c.tell = function(what, n){
+					var e = $('#tell').find('p');
+					e.addClass('notify').text(what);
+					clearTimeout(c.tell.to);
+					c.tell.to = setTimeout(function(){e.removeClass('notify')}, n || 2500);
 				}
 			}());
 			(function(){
@@ -216,6 +278,9 @@
 					$(this).find('.jot').val('');
 				});
 			}());
+			as.route.page('sign', function(){
+				$(document.forms.inup.alias).focus();
+			});
 			as.route.page('people', function(){
 				if(!user.is){ return as.route('sign') }
 				as('#people', gun, function(data, key, el){
@@ -226,6 +291,7 @@
 			as.route.page('person', function(){
 				if(!user.is){ return as.route('sign') }
 				var pub = location.hash.split('/').slice(-1)[0];
+				(pub === user._.pub? $('#say').show() : $('#say').hide());
 				as('#person', window.PUB = gun.get('pub/'+pub));
 			});
 
