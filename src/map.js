@@ -29,9 +29,9 @@ function map(msg){
 	obj_map(msg.put, each, {at: this.as, msg: msg});
 	this.to.next(msg);
 }
-function each(v,f){
-	if(n_ === f){ return }
-	var msg = this.msg, gun = msg.gun, at = this.at, tmp = (gun.get(f)._);
+function each(v,k){
+	if(n_ === k){ return }
+	var msg = this.msg, gun = msg.gun, at = this.at, tmp = (gun.get(k)._);
 	(tmp.echo || (tmp.echo = {}))[at.id] = at;
 }
 var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;

@@ -17,13 +17,13 @@ var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the f
 var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
 State._ = '>';
 State.drift = 0;
-State.is = function(n, f, o){ // convenience function to get the state on a field on a node and return it.
-	var tmp = (f && n && n[N_] && n[N_][State._]) || o;
+State.is = function(n, k, o){ // convenience function to get the state on a key on a node and return it.
+	var tmp = (k && n && n[N_] && n[N_][State._]) || o;
 	if(!tmp){ return }
-	return num_is(tmp = tmp[f])? tmp : -Infinity;
+	return num_is(tmp = tmp[k])? tmp : -Infinity;
 }
 State.lex = function(){ return State().toString(36).replace('.','') }
-State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
+State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 	if(!n || !n[N_]){ // reject if it is not node-like.
 		if(!soul){ // unless they passed a soul
 			return; 
@@ -31,22 +31,22 @@ State.ify = function(n, f, s, v, soul){ // put a field's state on a node.
 		n = Node.soul.ify(n, soul); // then make it so!
 	} 
 	var tmp = obj_as(n[N_], State._); // grab the states data.
-	if(u !== f && f !== N_){
+	if(u !== k && k !== N_){
 		if(num_is(s)){
-			tmp[f] = s; // add the valid state.
+			tmp[k] = s; // add the valid state.
 		}
 		if(u !== v){ // Note: Not its job to check for valid values!
-			n[f] = v;
+			n[k] = v;
 		}
 	}
 	return n;
 }
-State.to = function(from, f, to){
-	var val = from[f];
+State.to = function(from, k, to){
+	var val = from[k];
 	if(obj_is(val)){
 		val = obj_copy(val);
 	}
-	return State.ify(to, f, State.is(from, f), val, Node.soul(from));
+	return State.ify(to, k, State.is(from, k), val, Node.soul(from));
 }
 ;(function(){
 	State.map = function(cb, s, as){ var u; // for use with Node.ify
@@ -60,19 +60,19 @@ State.to = function(from, f, to){
 		}
 		as = as || obj_is(s)? s : u;
 		s = num_is(s)? s : State();
-		return function(v, f, o, opt){
+		return function(v, k, o, opt){
 			if(!cb){
-				map.call({o: o, s: s}, v,f);
+				map.call({o: o, s: s}, v,k);
 				return v;
 			}
-			cb.call(as || this || {}, v, f, o, opt);
-			if(obj_has(o,f) && u === o[f]){ return }
-			map.call({o: o, s: s}, v,f);
+			cb.call(as || this || {}, v, k, o, opt);
+			if(obj_has(o,k) && u === o[k]){ return }
+			map.call({o: o, s: s}, v,k);
 		}
 	}
-	function map(v,f){
-		if(N_ === f){ return }
-		State.ify(this.o, f, this.s) ;
+	function map(v,k){
+		if(N_ === k){ return }
+		State.ify(this.o, k, this.s) ;
 	}
 }());
 var obj = Type.obj, obj_as = obj.as, obj_has = obj.has, obj_is = obj.is, obj_map = obj.map, obj_copy = obj.copy;

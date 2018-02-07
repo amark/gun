@@ -19,10 +19,10 @@ Node.soul._ = Val.rel._;
 		}
 		return false; // nope! This was not a valid node.
 	}
-	function map(v, f){ // we invert this because the way we check for this is via a negation.
-		if(f === Node._){ return } // skip over the metadata.
+	function map(v, k){ // we invert this because the way we check for this is via a negation.
+		if(k === Node._){ return } // skip over the metadata.
 		if(!Val.is(v)){ return true } // it is true that this is an invalid node.
-		if(this.cb){ this.cb.call(this.as, v, f, this.n, this.s) } // optionally callback each field/value.
+		if(this.cb){ this.cb.call(this.as, v, k, this.n, this.s) } // optionally callback each key/value.
 	}
 }());
 ;(function(){
@@ -36,17 +36,17 @@ Node.soul._ = Val.rel._;
 		}
 		return o.node; // This will only be a valid node if the object wasn't already deep!
 	}
-	function map(v, f){ var o = this.o, tmp, u; // iterate over each field/value.
+	function map(v, k){ var o = this.o, tmp, u; // iterate over each key/value.
 		if(o.map){
-			tmp = o.map.call(this.as, v, ''+f, o.node);
+			tmp = o.map.call(this.as, v, ''+k, o.node);
 			if(u === tmp){
-				obj_del(o.node, f);
+				obj_del(o.node, k);
 			} else
-			if(o.node){ o.node[f] = tmp }
+			if(o.node){ o.node[k] = tmp }
 			return;
 		}
 		if(Val.is(v)){
-			o.node[f] = v;
+			o.node[k] = v;
 		}
 	}
 }());
