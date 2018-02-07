@@ -225,7 +225,7 @@
 					});
 				}).on('click','form.sign button:first', become);
 				function become(){
-					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					var form = $('#sign').find('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
 					data.alias = data.alias || sessionStorage.alias;
 					data.pass = data.pass || sessionStorage.tmp;
 					if(!data.alias || data.alias.length < 5){
@@ -236,8 +236,11 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					var but = form.find('button:first');
+					but.addClass('loading');
 					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
+						if(!ack.wait){ but.removeClass('loading') }
 						if(ack.err){ c.tell(ack.err); return }
 						session(data);
 					});
