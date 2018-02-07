@@ -142,8 +142,8 @@
     SafeBuffer.prototype.from = SafeBuffer.from
     SafeBuffer.prototype.toString = SeaArray.prototype.toString
 
-    const Buffer = SafeBuffer
-    if(typeof window !== 'undefined'){ window.Buffer = window.Buffer || Buffer }
+    //const Buffer = SafeBuffer
+    //if(typeof window !== 'undefined'){ window.Buffer = window.Buffer || SafeBuffer }
     module.exports = SafeBuffer;
   })(USE, './buffer');
 
@@ -378,6 +378,7 @@
     var getRandomBytes = wc.random;
     var EasyIndexedDB = USE('./indexed');
     var SafeBuffer = USE('./buffer');
+    var Buffer = SafeBuffer;
     var settings = USE('./settings');
     var pbKdf2 = settings.pbkdf2;
     var ecdsaKeyProps = settings.ecdsa.pair;

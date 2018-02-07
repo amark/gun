@@ -93,7 +93,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN https://"+ config.IP +":"+ (config.port+1) +" IN "+ config.browsers +" BROWSER(S)!");
+		console.log("PLEASE OPEN https://"+ config.IP +":"+ (config.port+1) +"/contact/index.html IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
