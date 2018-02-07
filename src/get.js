@@ -42,8 +42,8 @@ function cache(key, back){
 	if(cat.root === back){
 		at.soul = key;
 	} else
-	if(cat.soul || cat.field || cat.has){  // TODO: Convert field to has!
-		at.field = at.has = key;
+	if(cat.soul || cat.has){
+		at.has = key;
 		//if(obj_has(cat.put, key)){
 			//at.put = cat.put[key];
 		//}
