@@ -392,10 +392,11 @@
     // Practical examples about usage found from ./test/common.js
     const SEA = {
       // This is easy way to use IndexedDB, all methods are Promises
-      EasyIndexedDB,
+      indexedDB: EasyIndexedDB, // Note: Not all SEA interfaces have to support this.
       // This is Buffer used in SEA and usable from Gun/SEA application also.
       // For documentation see https://nodejs.org/api/buffer.html
       Buffer: SafeBuffer,
+      random: getRandomBytes,
       // These SEA functions support now ony Promises or
       // async/await (compatible) code, use those like Promises.
       //
@@ -1156,6 +1157,7 @@
               // then we're done
               var login = finalizeLogin(alias, keys, root, { pin })
               login.catch(putErr('Failed to finalize login with new password!'))
+              login = await login;
               return cat.ing = false, cb(login), gun;
             } catch (e) {
               return putErr('Password set attempt failed!')(e)
@@ -1163,6 +1165,7 @@
           } else {
             var login = finalizeLogin(alias, keys, root, { pin })
             login.catch(putErr('Finalizing login failed!'))
+            login = await login;
             return cat.ing = false, cb(login), gun;
           }
         } catch (e) {
