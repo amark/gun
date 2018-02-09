@@ -17,15 +17,6 @@
 					display: inline-block;
 					width: 15%;
 				}
-				.loading {
-				  animation: pulse 2s infinite;
-				}
-				@keyframes pulse
-				{
-				  0% {opacity: 1;}
-				  50% {opacity: 0.5;}
-				  100% {opacity: 1;}
-				}
 			</style>
 			<form id="inup" class="sign pad center">
 				<div class="loud">Welcome,</div>
@@ -212,10 +203,10 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
-					but.addClass('loading');
+					but.addClass('pulse');
 					data.alias = data.alias.toLowerCase();
 					user.create(data.alias, data.pass, function(ack){
-						if(!ack.wait){ but.removeClass('loading') }
+						if(!ack.wait){ but.removeClass('pulse') }
 						if(ack.err){ c.tell(ack.err); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
@@ -237,10 +228,10 @@
 						return;
 					}
 					var but = form.find('button:first');
-					but.addClass('loading');
+					but.addClass('pulse');
 					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
-						if(!ack.wait){ but.removeClass('loading') }
+						if(!ack.wait){ but.removeClass('pulse') }
 						if(ack.err){ c.tell(ack.err); return }
 						session(data);
 					});
