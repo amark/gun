@@ -11,8 +11,22 @@
 
 GUN is a realtime, distributed, offline-first, graph database engine. Doing **[20M+](https://github.com/amark/gun/wiki/100000-ops-sec-in-IE6-on-2GB-Atom-CPU) ops/sec** in just **~9KB** gzipped.
 
-<a href="https://youtu.be/-i-11T5ZI9o" title="1 minute demo of fault tolerance"><img src="http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg" width="425px"></a>
-<a href="https://youtu.be/-FN_J3etdvY" title="1 minute demo of fault tolerance"><img src="http://img.youtube.com/vi/-FN_J3etdvY/0.jpg" width="425px"></a>
+<table>
+    <tr>
+<a href=""><img width="31%" align="left" src="http://gun.js.org/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="http://gun.js.org/see/aiml.gif" title="AI/ML"/></a>
+<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="http://gun.js.org/see/gps.gif" title="GPS"/></a>
+<a href="https://github.com/lmangani/gun-scape"><img width="31%" align="left" src="http://gun.js.org/see/dataviz.gif" title="Data Viz"/></a>
+<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="http://gun.js.org/see/p2p.gif" title="P2P"/></a>
+<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="http://gun.js.org/see/iot.gif" title="IoT"/></a>
+</tr>
+</table>
+
+<table>
+<tr>
+<a href="https://youtu.be/-i-11T5ZI9o" title="video: 1 minute demo of fault tolerance"><img src="http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg" width="48%" align="left"></a><a href="https://youtu.be/-FN_J3etdvY" title="video: decentralized auto failover"><img src="http://img.youtube.com/vi/-FN_J3etdvY/0.jpg" width="48%"></a>
+</tr>
+</table>
 
 ## Why?
 
