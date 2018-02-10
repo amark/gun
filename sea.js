@@ -7,11 +7,10 @@
 ;(function(){ // eslint-disable-line no-extra-semi
 
   /* UNBUILD */
-  var root;
-  if(typeof window !== "undefined"){ root = window }
-  if(typeof global !== "undefined"){ root = global }
-  root = root || {};
-  var console = root.console || {log: function(){}};
+  const runtimeRoot = typeof window !== 'undefined' ? window
+  : typeof global !== 'undefined' ? global
+  : {}
+  const console = runtimeRoot.console || { log() {} }
   function USE(arg){
     return arg.slice? USE[R(arg)] : function(mod, path){
       arg(mod = {exports: {}});
@@ -32,7 +31,7 @@
     // NECESSARY PRE-REQUISITE: http://gun.js.org/explainers/data/security.html
 
     /* THIS IS AN EARLY ALPHA!!! */
-    
+
     if(typeof window !== 'undefined'){
       if(location.protocol.indexOf('s') < 0
       && location.host.indexOf('localhost') < 0
@@ -148,29 +147,37 @@
   })(USE, './buffer');
 
   ;USE(function(module){
-
-    let subtle
-    let subtleossl
-    let getRandomBytes
-    let crypto
-    var Buffer = USE('./buffer');
-    var wc;
-    var api = {};
+    const Buffer = USE('./buffer')
+    const api = {}
 
     if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
-      api.crypto = wc = window.crypto || window.msCrypto // STD or M$
-      api.subtle = subtle = wc.subtle || wc.webkitSubtle // STD or iSafari
-      api.random = getRandomBytes = (len) => Buffer.from(wc.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+      const { msCrypto, crypto = msCrypto } = window          // STD or M$
+      const { webkitSubtle, subtle = webkitSubtle } = crypto  // STD or iSafari
+      const { TextEncoder, TextDecoder } = window
+      Object.assign(api, {
+        crypto,
+        subtle,
+        TextEncoder,
+        TextDecoder,
+        random: (len) => Buffer.from(crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+      })
     } else {
-      api.crypto = crypto = require('crypto')
+      const crypto = require('crypto')
       const WebCrypto = require('node-webcrypto-ossl')
-      const webcrypto = new WebCrypto({directory: 'key_storage'})
-      api.ossl = subtleossl = webcrypto.subtle
-      api.subtle = subtle = require('@trust/webcrypto').subtle   // All but ECDH
-      api.random = getRandomBytes = (len) => Buffer.from(crypto.randomBytes(len))
+      const { subtle: ossl } = new WebCrypto({directory: 'key_storage'}) // ECDH
+      const { subtle } = require('@trust/webcrypto')             // All but ECDH
+      const { TextEncoder, TextDecoder } = require('text-encoding')
+      Object.assign(api, {
+        crypto,
+        subtle,
+        ossl,
+        TextEncoder,
+        TextDecoder,
+        random: (len) => Buffer.from(crypto.randomBytes(len))
+      })
     }
 
-    module.exports = api;
+    module.exports = api
   })(USE, './webcrypto');
 
   ;USE(function(module){
@@ -230,16 +237,15 @@
       indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB
     } else {
       funcsSetter = () => {
-        const { TextEncoder, TextDecoder } = require('text-encoding')
         // Let's have Storage for NodeJS / testing
         const sessionStorage = new require('node-localstorage').LocalStorage('.sessionStorage')
         const localStorage = new require('node-localstorage').LocalStorage('.localStorage')
-        return { TextEncoder, TextDecoder, sessionStorage, localStorage }
+        return { sessionStorage, localStorage }
       }
       indexedDB = require('fake-indexeddb')
     }
 
-    const { TextEncoder, TextDecoder, sessionStorage, localStorage } = funcsSetter()
+    const { sessionStorage, localStorage } = funcsSetter()
 
     if (typeof __webpack_require__ !== 'function' && typeof global !== 'undefined') {
       global.sessionStorage = sessionStorage
@@ -253,10 +259,10 @@
   })(USE, './indexed');
 
   ;USE(function(module){
-    var Buffer = USE('./buffer');
-    var settings = {};
+    const Buffer = USE('./buffer')
+    const settings = {}
     // Encryption parameters
-    const pbKdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
+    const pbkdf2 = { hash: 'SHA-256', iter: 50000, ks: 64 }
 
     const ecdsaSignProps = { name: 'ECDSA', hash: { name: 'SHA-256' } }
     const ecdsaKeyProps = { name: 'ECDSA', namedCurve: 'P-256' }
@@ -279,14 +285,17 @@
       ]
     }
 
-    settings.pbkdf2 = pbKdf2;
-    settings.ecdsa = {};
-    settings.ecdsa.pair = ecdsaKeyProps;
-    settings.ecdsa.sign = ecdsaSignProps;
-    settings.ecdh = ecdhKeyProps;
-    settings.jwk = keysToEcdsaJwk;
-    settings.recall = authsettings;
-    module.exports = settings;
+    Object.assign(settings, {
+      pbkdf2,
+      ecdsa: {
+        pair: ecdsaKeyProps,
+        sign: ecdsaSignProps
+      },
+      ecdh: ecdhKeyProps,
+      jwk: keysToEcdsaJwk,
+      recall: authsettings
+    })
+    module.exports = settings
   })(USE, './settings');
 
   ;USE(function(module){
@@ -296,41 +305,38 @@
       } catch (e) {}  //eslint-disable-line no-empty
       return props
     }
-    module.exports = parseProps;
+    module.exports = parseProps
   })(USE, './parse');
 
   ;USE(function(module){
-    var wc = USE('./webcrypto');
-    var subtle = wc.subtle;
-    var getRandomBytes = wc.random;
-    var Buffer = USE('./buffer');
-    var parseProps = USE('./parse');
-    var settings = USE('./settings');
-    var pbKdf2 = settings.pbkdf2;
+    const {
+      subtle, ossl = subtle, random: getRandomBytes, TextEncoder, TextDecoder
+    } = USE('./webcrypto')
+    const Buffer = USE('./buffer')
+    const parseProps = USE('./parse')
+    const { pbkdf2 } = USE('./settings')
     // This internal func returns SHA-256 hashed data for signing
     const sha256hash = async (mm) => {
-      const hashSubtle = wc.ossl || subtle
       const m = parseProps(mm)
-      const hash = await hashSubtle.digest(pbKdf2.hash, new TextEncoder().encode(m))
+      const hash = await ossl.digest(pbkdf2.hash, new TextEncoder().encode(m))
       return Buffer.from(hash)
     }
-    module.exports = sha256hash;
+    module.exports = sha256hash
   })(USE, './sha256');
 
   ;USE(function(module){
     // This internal func returns SHA-1 hashed data for KeyID generation
-    const sha1hash = (b) => (subtleossl || subtle).digest('SHA-1', new ArrayBuffer(b))
-    module.exports = sha1hash;
+    const { ossl = subtle } = USE('./webcrypto')
+    const sha1hash = (b) => ossl.digest('SHA-1', new ArrayBuffer(b))
+    module.exports = sha1hash
   })(USE, './sha1');
 
   ;USE(function(module){
-    var Buffer = USE('./buffer');
-    var sha256hash = USE('./sha256');
-    var wc = USE('./webcrypto');
-    var subtle = wc.subtle;
-    var seaIndexedDb = USE('./indexed').scope;
-    var settings = USE('./settings');
-    var authsettings = settings.recall;
+    const Buffer = USE('./buffer')
+    const sha256hash = USE('./sha256')
+    const { subtle } = USE('./webcrypto')
+    const { scope: seaIndexedDb } = USE('./indexed')
+    const { recall: authsettings } = USE('./settings')
     const makeKey = async (p, s) => {
       const ps = Buffer.concat([Buffer.from(p, 'utf8'), s]).toString('utf8')
       return Buffer.from(await sha256hash(ps), 'binary')
@@ -367,35 +373,41 @@
       // No secure store usage
       return importKey(p)
     }
-    module.exports = recallCryptoKey;
+    module.exports = recallCryptoKey
   })(USE, './remember');
 
   ;USE(function(module){
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
 
-    var wc = USE('./webcrypto');
-    var subtle = wc.subtle;
-    var getRandomBytes = wc.random;
-    var EasyIndexedDB = USE('./indexed');
-    var SafeBuffer = USE('./buffer');
-    var Buffer = SafeBuffer;
+    const {
+      crypto,
+      subtle,
+      ossl,
+      random: getRandomBytes,
+      TextEncoder,
+      TextDecoder
+    } = USE('./webcrypto')
+    const EasyIndexedDB = USE('./indexed')
+    const Buffer = USE('./buffer')
     var settings = USE('./settings');
-    var pbKdf2 = settings.pbkdf2;
-    var ecdsaKeyProps = settings.ecdsa.pair;
-    var ecdhKeyProps = settings.ecdh;
-    var keysToEcdsaJwk = settings.jwk;
-    var ecdsaSignProps = settings.ecdsa.sign;
-    var sha256hash = USE('./sha256');
-    var recallCryptoKey = USE('./remember');
-    var parseProps = USE('./parse');
-    
+    const {
+      pbkdf2: pbKdf2,
+      ecdsa: { pair: ecdsaKeyProps, sign: ecdsaSignProps },
+      ecdh: ecdhKeyProps,
+      jwk: keysToEcdsaJwk
+    } = USE('./settings')
+    const sha1hash = USE('./sha1')
+    const sha256hash = USE('./sha256')
+    const recallCryptoKey = USE('./remember')
+    const parseProps = USE('./parse')
+
     // Practical examples about usage found from ./test/common.js
     const SEA = {
       // This is easy way to use IndexedDB, all methods are Promises
-      indexedDB: EasyIndexedDB, // Note: Not all SEA interfaces have to support this.
+      EasyIndexedDB, // Note: Not all SEA interfaces have to support this.
       // This is Buffer used in SEA and usable from Gun/SEA application also.
       // For documentation see https://nodejs.org/api/buffer.html
-      Buffer: SafeBuffer,
+      Buffer,
       random: getRandomBytes,
       // These SEA functions support now ony Promises or
       // async/await (compatible) code, use those like Promises.
@@ -455,7 +467,7 @@
       },
       async pair() {
         try {
-          const ecdhSubtle = wc.ossl || subtle
+          const ecdhSubtle = ossl || subtle
           // First: ECDSA keys for signing/verifying...
           const { pub, priv } = await subtle.generateKey(ecdsaKeyProps, true, [ 'sign', 'verify' ])
           .then(async ({ publicKey, privateKey }) => {
@@ -485,7 +497,7 @@
       // Derive shared secret from other's pub and my epub/epriv
       async derive(pub, { epub, epriv }) {
         try {
-          const { importKey, deriveKey, exportKey } = subtleossl || subtle
+          const { importKey, deriveKey, exportKey } = ossl
           const keystoecdhjwk = (pub, priv) => {
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
             const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
@@ -623,7 +635,7 @@
     // const SEA = gun.SEA()
     //Gun.SEA = () => SEA
     Gun.SEA = SEA
-    
+
     // all done!
     // Obviously it is missing MANY necessary features. This is only an alpha release.
     // Please experiment with it, audit what I've done so far, and complain about what needs to be added.
@@ -642,9 +654,9 @@
   ;USE(function(module){
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     // This is internal func queries public key(s) for alias.
-    const queryGunAliases = (alias, root) => new Promise((resolve, reject) => {
+    const queryGunAliases = (alias, gunRoot) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
-      root.get(`alias/${alias}`).get((rat, rev) => {
+      gunRoot.get(`alias/${alias}`).get((rat, rev) => {
         rev.off()
         if (!rat.put) {
           // if no user, don't do anything.
@@ -653,46 +665,39 @@
           return reject({ err })
         }
         // then figuring out all possible candidates having matching username
-        let aliases = []
-        let c = 0
+        const aliases = []
         // TODO: how about having real chainable map without callback ?
         Gun.obj.map(rat.put, (at, pub) => {
           if (!pub.slice || 'pub/' !== pub.slice(0, 4)) {
             // TODO: ... this would then be .filter((at, pub))
             return
           }
-          ++c
           // grab the account associated with this public key.
-          root.get(pub).get((at, ev) => {
+          gunRoot.get(pub).get((at, ev) => {
             pub = pub.slice(4)
             ev.off()
-            --c
             if (at.put){
               aliases.push({ pub, at })
             }
-            if (!c && (c = -1)) {
-              resolve(aliases)
-            }
           })
         })
-        if (!c) {
-          reject({ err: 'Public key does not exist!' })
-        }
+        return !aliases.length ? reject({ err: 'Public key does not exist!' })
+        : resolve(aliases)
       })
     })
-    module.exports = queryGunAliases;
+    module.exports = queryGunAliases
   })(USE, './query');
 
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var SEA = USE('./sea');
-    var queryGunAliases = USE('./query');
-    var parseProps = USE('./parse');
+    const SEA = USE('./sea');
+    const queryGunAliases = USE('./query')
+    const parseProps = USE('./parse')
     // This is internal User authentication func.
-    const authenticate = async (alias, pass, root) => {
+    const authenticate = async (alias, pass, gunRoot) => {
       // load all public keys associated with the username alias we want to log in with.
-      const aliases = (await queryGunAliases(alias, root))
+      const aliases = (await queryGunAliases(alias, gunRoot))
       .filter(({ pub, at: { put } = {} } = {}) => !!pub && !!put)
       // Got any?
       if (!aliases.length) {
@@ -743,8 +748,8 @@
   ;USE(function(module){
     // TODO: BUG! `SEA` needs to be USED!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var authsettings = USE('./settings');
-    var seaIndexedDb = USE('./indexed').scope;
+    const authsettings = USE('./settings')
+    const { scope: seaIndexedDb } = USE('./indexed')
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
     const updateStorage = (proof, key, pin) => async (props) => {
       if (!Gun.obj.has(props, 'alias')) {
@@ -785,14 +790,14 @@
 
       return props
     }
-    module.exports = updateStorage;
+    module.exports = updateStorage
   })(USE, './update');
 
   ;USE(function(module){
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var Buffer = USE('./buffer');
-    var authsettings = USE('./settings');
-    var updateStorage = USE('./update');
+    const Buffer = USE('./buffer')
+    const authsettings = USE('./settings')
+    const updateStorage = USE('./update')
     // This internal func persists User authentication if so configured
     const authPersist = async (user, proof, opts) => {
       // opts = { pin: 'string' }
@@ -823,14 +828,14 @@
       }
       return await updateStorage()({ alias: 'delete' })
     }
-    module.exports = authPersist;
+    module.exports = authPersist
   })(USE, './persist');
 
   ;USE(function(module){
-    var authPersist = USE('./persist');
+    const authPersist = USE('./persist')
     // This internal func finalizes User authentication
-    const finalizeLogin = async (alias, key, root, opts) => {
-      const { user } = root._
+    const finalizeLogin = async (alias, key, gunRoot, opts) => {
+      const { user } = gunRoot._
       // add our credentials in-memory only to our root gun instance
       user._ = key.at.gun._
       // so that way we can use the credentials to encrypt/decrypt data
@@ -843,27 +848,29 @@
       await authPersist(user._, key.proof, opts)
       // emit an auth event, useful for page redirects and stuff.
       try {
-        root._.on('auth', user._)
+        gunRoot._.on('auth', user._)
       } catch (e) {
         console.log('Your \'auth\' callback crashed with:', e)
       }
       // returns success with the user data credentials.
       return user._
     }
-    module.exports = finalizeLogin;
+    module.exports = finalizeLogin
   })(USE, './login');
 
   ;USE(function(module){
-    // TODO: BUG! `SEA` needs to be USED!
+    // TODO: BUG! `SEA` needs to be USEd!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var Buffer = USE('./buffer');
-    var authsettings = USE('./settings');
-    var seaIndexedDb = USE('./indexed').scope;
-    var queryGunAliases = USE('./query');
-    var parseProps = USE('./parse');
-    var updateStorage = USE('./update');
+
+    const Buffer = USE('./buffer')
+    const authsettings = USE('./settings')
+    const { scope: seaIndexedDb } = USE('./indexed')
+    const queryGunAliases = USE('./query')
+    const parseProps = USE('./parse')
+    const updateStorage = USE('./update')
+
     // This internal func recalls persisted User authentication if so configured
-    const authRecall = async (root, authprops) => {
+    const authRecall = async (gunRoot, authprops) => {
       // window.sessionStorage only holds signed { alias, pin } !!!
       const remember = authprops || sessionStorage.getItem('remember')
       const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {} // @mhelander what is pIn?
@@ -889,10 +896,10 @@
         parseProps(await SEA.dec(await SEA.read(data, pub), key))
 
       // Already authenticated?
-      if (root._.user
-      && Gun.obj.has(root._.user._, 'pub')
-      && Gun.obj.has(root._.user._, 'sea')) {
-        return root._.user._  // Yes, we're done here.
+      if (gunRoot._.user
+      && Gun.obj.has(gunRoot._.user._, 'pub')
+      && Gun.obj.has(gunRoot._.user._, 'sea')) {
+        return gunRoot._.user._  // Yes, we're done here.
       }
       // No, got persisted 'alias'?
       if (!alias) {
@@ -906,7 +913,7 @@
         }
       }
       // Yes, let's get (all?) matching aliases
-      const aliases = (await queryGunAliases(alias, root))
+      const aliases = (await queryGunAliases(alias, gunRoot))
       .filter(({ pub } = {}) => !!pub)
       // Got any?
       if (!aliases.length) {
@@ -979,53 +986,53 @@
 
         const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
 
-        return await finalizeLogin(alias, user, root, pinProp)
+        return await finalizeLogin(alias, user, gunRoot, pinProp)
       } catch (e) { // TODO: right log message ?
         Gun.log('Failed to finalize login with new password!')
         const { err = '' } = e || {}
         throw { err: `Finalizing new password login failed! Reason: ${err}` }
       }
     }
-    module.exports = authRecall;
+    module.exports = authRecall
   })(USE, './recall');
 
   ;USE(function(module){
-    var authPersist = USE('./persist');
-    var authsettings = USE('./settings');
-    var seaIndexedDb = USE('./indexed').scope;
-    var seaIndexedDb = USE('./indexed').scope;
+    const authPersist = USE('./persist')
+    const authsettings = USE('./settings')
+    const { scope: seaIndexedDb } = USE('./indexed')
     // This internal func executes logout actions
-    const authLeave = async (root, alias = root._.user._.alias) => {
-      var user = root._.user._ || {};
+    const authLeave = async (gunRoot, alias = gunRoot._.user._.alias) => {
+      var user = gunRoot._.user._ || {};
       [ 'get', 'soul', 'ack', 'put', 'is', 'alias', 'pub', 'epub', 'sea' ].map((key) => delete user[key])
       if(user.gun){
         delete user.gun.is;
       }
       // Let's use default
-      root.user();
+      gunRoot.user();
       // Removes persisted authentication & CryptoKeys
       try {
         await authPersist({ alias })
       } catch (e) {}  //eslint-disable-line no-empty
       return { ok: 0 }
     }
-    module.exports = authLeave;
+    module.exports = authLeave
   })(USE, './leave');
 
   ;USE(function(module){
      // How does it work?
     // TODO: Bug! Need to include SEA!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var SEA = USE('./sea');
-    var authRecall = USE('./recall');
-    var authenticate = USE('./authenticate');
-    var finalizeLogin = USE('./login');
-    var authLeave = USE('./leave');
+
+    const SEA = USE('./sea')
+    const authRecall = USE('./recall')
+    const authenticate = USE('./authenticate')
+    const finalizeLogin = USE('./login')
+    const authLeave = USE('./leave')
     // let's extend the gun chain with a `user` function.
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function() {
-      const root = this.back(-1)  // always reference the root gun instance.
-      let user = root._.user || (root._.user = root.chain()); // create a user context.
+      const gunRoot = this.back(-1)  // always reference the root gun instance.
+      const user = gunRoot._.user || (gunRoot._.user = gunRoot.chain()); // create a user context.
       // then methods...
       [ 'create', // factory
         'auth',   // login
@@ -1040,7 +1047,7 @@
     // Well first we have to actually create a user. That is what this function does.
     Object.assign(User, {
       async create(username, pass, cb) {
-        const root = this.back(-1)
+        const gunRoot = this.back(-1)
         var gun = this, cat = (gun._);
         cb = cb || function(){};
         if(cat.ing){
@@ -1051,7 +1058,7 @@
         var p = new Promise((resolve, reject) => { // Because no Promises or async
           // Because more than 1 user might have the same username, we treat the alias as a list of those users.
           if(cb){ resolve = reject = cb }
-          root.get(`alias/${username}`).get(async (at, ev) => {
+          gunRoot.get(`alias/${username}`).get(async (at, ev) => {
             ev.off()
             if (at.put) {
               // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
@@ -1082,9 +1089,9 @@
               const user = { alias, pub, epub, auth }
               const tmp = `pub/${pairs.pub}`
               // awesome, now we can actually save the user with their public key as their ID.
-              root.get(tmp).put(user)
+              gunRoot.get(tmp).put(user)
               // next up, we want to associate the alias with the public key. So we add it to the alias list.
-              root.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+              gunRoot.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
               // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
               setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
             } catch (e) {
@@ -1095,14 +1102,14 @@
             }
           })
         })
-        return gun; // gun chain commands must return gun chains!
+        return gun  // gun chain commands must return gun chains!
       },
       // now that we have created a user, we want to authenticate them!
-      async auth(alias, pass, cb, opts) {
-        if(cb && !(cb instanceof Function)){ opts = cb; cb = function(){} }
+      async auth(alias, pass, cb, opt) {
+        const opts = opt || (typeof cb !== 'function' && cb)
         const { pin, newpass } = opts || {}
-        const root = this.back(-1)
-        cb = cb || function(){};
+        const gunRoot = this.back(-1)
+        cb = typeof cb === 'function' ? cb : () => {}
 
         var gun = this, cat = (gun._);
         if(cat.ing){
@@ -1113,7 +1120,7 @@
 
         if (!pass && pin) {
           try {
-            var r = await authRecall(root, { alias, pin })
+            var r = await authRecall(gunRoot, { alias, pin })
             return cat.ing = false, cb(r), gun;
           } catch (e) {
             var err = { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
@@ -1129,7 +1136,7 @@
         }
 
         try {
-          const keys = await authenticate(alias, pass, root)
+          const keys = await authenticate(alias, pass, gunRoot)
           if (!keys) {
             return putErr('Auth attempt failed!')({ message: 'No keys' })
           }
@@ -1153,20 +1160,18 @@
                 epub: signedEpub
               }
               // awesome, now we can update the user using public key ID.
-              root.get(`pub/${user.pub}`).put(user)
+              gunRoot.get(`pub/${user.pub}`).put(user)
               // then we're done
-              var login = finalizeLogin(alias, keys, root, { pin })
+              const login = finalizeLogin(alias, keys, gunRoot, { pin })
               login.catch(putErr('Failed to finalize login with new password!'))
-              login = await login;
-              return cat.ing = false, cb(login), gun;
+              return cat.ing = false, cb(await login), gun
             } catch (e) {
               return putErr('Password set attempt failed!')(e)
             }
           } else {
-            var login = finalizeLogin(alias, keys, root, { pin })
+            const login = finalizeLogin(alias, keys, gunRoot, { pin })
             login.catch(putErr('Finalizing login failed!'))
-            login = await login;
-            return cat.ing = false, cb(login), gun;
+            return cat.ing = false, cb(await login), gun;
           }
         } catch (e) {
           return putErr('Auth attempt failed!')(e)
@@ -1178,18 +1183,18 @@
       },
       // If authenticated user wants to delete his/her account, let's support it!
       async delete(alias, pass) {
-        const root = this.back(-1)
+        const gunRoot = this.back(-1)
         try {
-          const { pub } = await authenticate(alias, pass, root)
-          await authLeave(root, alias)
+          const { pub } = await authenticate(alias, pass, gunRoot)
+          await authLeave(gunRoot, alias)
           // Delete user data
-          root.get(`pub/${pub}`).put(null)
+          gunRoot.get(`pub/${pub}`).put(null)
           // Wipe user data from memory
-          const { user = { _: {} } } = root._;
+          const { user = { _: {} } } = gunRoot._;
           // TODO: is this correct way to 'logout' user from Gun.User ?
           [ 'alias', 'sea', 'pub' ].map((key) => delete user._[key])
           user._.is = user.is = {}
-          root.user()
+          gunRoot.user()
           return { ok: 0 }  // TODO: proper return codes???
         } catch (e) {
           Gun.log('User.delete failed! Error:', e)
@@ -1199,7 +1204,7 @@
       // If authentication is to be remembered over reloads or browser closing,
       // set validity time in minutes.
       async recall(setvalidity, options) {
-        const root = this.back(-1)
+        const gunRoot = this.back(-1)
 
         let validity
         let opts
@@ -1224,7 +1229,7 @@
           authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
           ? opts.hook : _initial_authsettings.hook
           // All is good. Should we do something more with actual recalled data?
-          return await authRecall(root)
+          return await authRecall(gunRoot)
         } catch (e) {
           const err = 'No session!'
           Gun.log(err)
@@ -1234,11 +1239,11 @@
         }
       },
       async alive() {
-        const root = this.back(-1)
+        const gunRoot = this.back(-1)
         try {
           // All is good. Should we do something more with actual recalled data?
-          await authRecall(root)
-          return root._.user._
+          await authRecall(gunRoot)
+          return gunRoot._.user._
         } catch (e) {
           const err = 'No session!'
           Gun.log(err)
@@ -1255,13 +1260,12 @@
         })
       }
     }
-
-    module.exports = User;
+    module.exports = User
   })(USE, './user');
 
   ;USE(function(module){
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-    var SEA = USE('./sea');
+    const SEA = USE('./sea')
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
@@ -1511,5 +1515,4 @@
     }
 
   })(USE, './index');
-
 }());
