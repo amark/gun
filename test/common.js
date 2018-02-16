@@ -3753,18 +3753,18 @@ describe('Gun', function(){
 			}, 1);
 
 		});
-		return;
-		it.only('get map should not slowdown', function(done){
+
+		it('get map should not slowdown', function(done){
 			this.timeout(5000);
-			var gun = (window.gun = Gun()).get('g/m/no/slow');
+			var gun = Gun().get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
-			var prev, diff, max = 25, total = 2, largest = -1, gone = {};
+			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
 			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.get('history').map().on(function(time, index){
-				console.log(">>>", index, time);
+				//console.log(">>>", index, time);
 				diff = Gun.time.is() - time;
-				return;
+				//return;
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;
@@ -3783,8 +3783,8 @@ describe('Gun', function(){
 			  prev = Gun.time.is();
 			  var put = {}; put[turns += 1] = prev;
 			  //console.log("put", put);
-			  console.log("------", turns, "-------");
-			  2 === turns && (console.debug.i = 1);
+			  //console.log("------", turns, "-------");
+			  //3 === turns && (console.debug.i = 1);
 			  console.debug(1, 'save', {history: put});
 			  gun.put({history: put});
 			}, 1);

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<title>Think</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
 		<link rel="stylesheet" type="text/css" href="/style.css">
   </head>
@@ -50,7 +51,7 @@
 				// for how to build a simplified version
 				// of this example: https://scrimba.com/c/cW2Vsa
 				var gun = Gun(location.origin+'/gun');
-				var think = gun.get('think');
+				var think = gun.get('think/' + location.hash.slice(1));
 				var typing, throttle;
 				$('.add').on('click', function(){
 					$('<li>').attr('contenteditable', true).prependTo('ul');

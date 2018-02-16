@@ -67,7 +67,10 @@ Gun.dup = require('./dup');
 		if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
-		if(!ctx.async){ obj_map(ctx.map, map, ctx) }
+		if(!ctx.async){ 
+			at.stop = {}; // temporary fix till a better solution?
+			obj_map(ctx.map, map, ctx)
+		}
 		if(u !== ctx.defer){
 			setTimeout(function(){
 				Gun.on.put(msg, gun);
@@ -116,6 +119,7 @@ Gun.dup = require('./dup');
 				if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return } // if flag still outstanding, keep waiting.
 				if(ctx.c){ return } ctx.c = 1; // failsafe for only being called once per context.
 				this.off();
+				cat.stop = {}; // temporary fix till a better solution?
 				obj_map(ctx.map, map, ctx); // all done, trigger chains.
 			});
 		}
@@ -134,10 +138,8 @@ Gun.dup = require('./dup');
 	}
 	function map(msg, soul){
 		if(!msg.gun){ return }
-		msg.gun._.root._.stop = {};
 		//console.log('map ->', soul, msg.put);
 		(msg.gun._).on('in', msg);
-		msg.gun._.root._.stop = {};
 	}
 
 	Gun.on.get = function(msg, gun){
