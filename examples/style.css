@@ -5,24 +5,33 @@ html, body {
 	padding: 0;
 	font-family: 'Oxygen', 'Trebuchet MS', arial;
 	position: relative;
+  background: black;
+  color: white;
 }
 
 body {
 	font-size: 18pt;
 }
 
-div, ul, li, form, p, span, button, input, textarea {
+div, ul, li, p, span, form, button, input, textarea {
   margin: 0;
   padding: 0;
   position: relative;
   overflow: hidden;
+  font-size: 1em;
+  line-height: 1.5em;
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   box-sizing: border-box;
 }
 
+button, input, textarea {
+  background: white;
+  border: none;
+  color: black;
+}
+
 input, textarea {
-	border: none;
 	width: 100%;
 }
 

@@ -32,9 +32,7 @@ function output(msg){
 				//if(u !== back.put){
 					back.on('in', back);
 				}
-				if(back.ack){
-					return;
-				}
+				if(back.ack){ return }
 				msg.gun = back.gun;
 				back.ack = -1;
 			} else
@@ -90,7 +88,7 @@ function input(msg){
 	}
 	if(u === change){
 		ev.to.next(msg);
-		if(cat.soul){ return }
+		if(cat.soul){ return } // TODO: BUG, I believe the fresh input refactor caught an edge case that a `gun.get('soul').get('key')` that points to a soul that doesn't exist will not trigger val/get etc.
 		echo(cat, msg, ev);
 		if(cat.has){
 			not(cat, msg);
@@ -105,13 +103,6 @@ function input(msg){
 		obj_map(change, map, {at: msg, cat: cat});
 		return;
 	}
-	/*if(rel = Gun.val.rel.is(change)){
-		if(tmp = (gun.back(-1).get(rel)._).put){
-			change = tmp; // this will cause performance to turn to mush, maybe use `.now` check?
-		}
-		//if(tmp.put){ change = tmp.put; }
-	}
-	if(!rel || tmp){*/
 	if(!(rel = Gun.val.rel.is(change))){
 		if(Gun.val.is(change)){
 			if(cat.has || cat.soul){
@@ -166,10 +157,11 @@ function relate(at, msg, from, rel){
 		// neither of these are ideal, need to be fixed without hacks,
 		// but for now, this works for current tests. :/
 		if(!now){
-			var stop = at.root._.stop;
+			return;
+			/*var stop = at.root._.stop;
 			if(!stop){ return }
 			if(stop[at.id] === rel){ return }
-			stop[at.id] = rel;
+			stop[at.id] = rel;*/
 		} else {
 			if(u === now[at.id]){ return }
 			if((now._ || (now._ = {}))[at.id] === rel){ return }
@@ -239,7 +231,6 @@ function not(at, msg){
 function ask(at, soul){
 	var tmp = (at.root.get(soul)._);
 	if(at.ack){
-		//tmp.ack = tmp.ack || -1;
 		tmp.on('out', {get: {'#': soul}});
 		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}

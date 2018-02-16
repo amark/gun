@@ -101,13 +101,14 @@ function batch(){ var as = this;
 		// and STOP is a hack to get async behavior to correctly call.
 		// neither of these are ideal, need to be fixed without hacks,
 		// but for now, this works for current tests. :/
-		var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+		var tmp = cat.root._.now; obj.del(cat.root._, 'now'); cat.root._.PUT = true;
 		var tmp2 = cat.root._.stop;
 		(as.ref._).now = true;
 		(as.ref._).on('out', {
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
 		obj.del((as.ref._), 'now');
+		obj.del((cat.root._), 'PUT');
 		cat.root._.now = tmp;
 		cat.root._.stop = tmp2;
 	}, as);
