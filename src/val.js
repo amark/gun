@@ -34,6 +34,7 @@ Val.rel = {_: '#'};
 	}
 }());
 Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+Type.obj.has._ = '.';
 var rel_ = Val.rel._, u;
 var bi_is = Type.bi.is;
 var num_is = Type.num.is;

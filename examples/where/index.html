@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>GPS by GUN</title>
+    <title>Where</title>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
 		<meta charset="utf-8">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.0.3/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.0.3/dist/leaflet.js"></script>
   </head>
   <body>
     <div id="map"></div>
@@ -68,7 +68,7 @@
         word-wrap: break-word;
       }
     </style>
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="/jquery.js"></script>
     <script src="/gun.js"></script>
     <script>
       function Where(opt, cb){
@@ -96,7 +96,7 @@
         where.map.on('zoomlevelschange', where.opt.zoom.ing, where.opt.err);
 
         where.update = function(latlng){
-          if(new Date().getTime() - where.update.last < 1000){
+          if((+new Date) - where.update.last < 400){
             clearTimeout(where.update.to);
             where.update.to = setTimeout(function(){
               where.update(latlng);
@@ -106,7 +106,7 @@
           where.map.setView(latlng, where.opt.zoom.level, {animate: true});
           where.marker = where.marker || L.marker().setLatLng(latlng).addTo(where.map);
           where.marker.setLatLng(latlng).update();
-          where.update.last = new Date().getTime();
+          where.update.last = (+new Date);
         }
 
         if(where.opt.track){
@@ -165,7 +165,7 @@
               //$('#debug').value = JSON.stringify(gps.last);
             }
             gps.where = gps.where || Where(gps.opt);
-            $('#follow').text(("gps.gunDB.io/" || (location.origin + location.pathname)) + '#' + gps.track);
+            $('#follow').text(("where.gunDB.io/" || (location.origin + location.pathname)) + '#' + gps.track);
             $('#share').toggleClass("hide");
             $('#share').on('click', function(){
               $('#link').toggleClass("hide");
