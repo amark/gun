@@ -288,6 +288,7 @@
 			}
 		}());
 		Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+		Type.obj.has._ = '.';
 		var rel_ = Val.rel._, u;
 		var bi_is = Type.bi.is;
 		var num_is = Type.num.is;
@@ -711,7 +712,10 @@
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 				if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
-				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
+				if(!ctx.async){ 
+					at.stop = {}; // temporary fix till a better solution?
+					obj_map(ctx.map, map, ctx)
+				}
 				if(u !== ctx.defer){
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
@@ -760,6 +764,7 @@
 						if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return } // if flag still outstanding, keep waiting.
 						if(ctx.c){ return } ctx.c = 1; // failsafe for only being called once per context.
 						this.off();
+						cat.stop = {}; // temporary fix till a better solution?
 						obj_map(ctx.map, map, ctx); // all done, trigger chains.
 					});
 				}
@@ -778,10 +783,8 @@
 			}
 			function map(msg, soul){
 				if(!msg.gun){ return }
-				msg.gun._.root._.stop = {};
 				//console.log('map ->', soul, msg.put);
 				(msg.gun._).on('in', msg);
-				msg.gun._.root._.stop = {};
 			}
 
 			Gun.on.get = function(msg, gun){
@@ -944,9 +947,7 @@
 						//if(u !== back.put){
 							back.on('in', back);
 						}
-						if(back.ack){
-							return;
-						}
+						if(back.ack){ return }
 						msg.gun = back.gun;
 						back.ack = -1;
 					} else
@@ -1002,7 +1003,7 @@
 			}
 			if(u === change){
 				ev.to.next(msg);
-				if(cat.soul){ return }
+				if(cat.soul){ return } // TODO: BUG, I believe the fresh input refactor caught an edge case that a `gun.get('soul').get('key')` that points to a soul that doesn't exist will not trigger val/get etc.
 				echo(cat, msg, ev);
 				if(cat.has){
 					not(cat, msg);
@@ -1017,13 +1018,6 @@
 				obj_map(change, map, {at: msg, cat: cat});
 				return;
 			}
-			/*if(rel = Gun.val.rel.is(change)){
-				if(tmp = (gun.back(-1).get(rel)._).put){
-					change = tmp; // this will cause performance to turn to mush, maybe use `.now` check?
-				}
-				//if(tmp.put){ change = tmp.put; }
-			}
-			if(!rel || tmp){*/
 			if(!(rel = Gun.val.rel.is(change))){
 				if(Gun.val.is(change)){
 					if(cat.has || cat.soul){
@@ -1078,10 +1072,11 @@
 				// neither of these are ideal, need to be fixed without hacks,
 				// but for now, this works for current tests. :/
 				if(!now){
-					var stop = at.root._.stop;
+					return;
+					/*var stop = at.root._.stop;
 					if(!stop){ return }
 					if(stop[at.id] === rel){ return }
-					stop[at.id] = rel;
+					stop[at.id] = rel;*/
 				} else {
 					if(u === now[at.id]){ return }
 					if((now._ || (now._ = {}))[at.id] === rel){ return }
@@ -1151,7 +1146,6 @@
 		function ask(at, soul){
 			var tmp = (at.root.get(soul)._);
 			if(at.ack){
-				//tmp.ack = tmp.ack || -1;
 				tmp.on('out', {get: {'#': soul}});
 				if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 			}
@@ -1371,13 +1365,14 @@
 				// and STOP is a hack to get async behavior to correctly call.
 				// neither of these are ideal, need to be fixed without hacks,
 				// but for now, this works for current tests. :/
-				var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+				var tmp = cat.root._.now; obj.del(cat.root._, 'now'); cat.root._.PUT = true;
 				var tmp2 = cat.root._.stop;
 				(as.ref._).now = true;
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
 				obj.del((as.ref._), 'now');
+				obj.del((cat.root._), 'PUT');
 				cat.root._.now = tmp;
 				cat.root._.stop = tmp2;
 			}, as);

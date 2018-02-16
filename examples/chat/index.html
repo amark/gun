@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<title>Converse</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
 		<link rel="stylesheet" type="text/css" href="/style.css">
 		<link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
@@ -49,7 +50,7 @@
 				margin-bottom: 0.5em;
 			}
 
-			.send {
+			.say {
 				margin: 0 0 0.4em 0.4em;
 				padding: 0.2em 0.5em;
 			}
@@ -75,7 +76,7 @@
 
 					<form class="white huet2 box">
 						<div>
-							<div class="send hue2 right whitet box act">send</div>
+							<div class="say hue2 right whitet box act">say</div>
 							<b id="name-input" class="jot left who" contenteditable="true" data-text="Name"></b>
 							<p id="message-input" class="jot left what" contenteditable="true" data-text="Write a message..."></p>
 						</div>
@@ -98,74 +99,61 @@
 		<script src="/gun/nts.js"></script>
 		<script>
 			var gun = Gun(location.origin + '/gun');
-			var chat = gun.get('converse');
+			var chat = gun.get('converse/' + location.hash.slice(1));
 
-			chat.map()
-				.val(mapChatToUI);
-			$("form .send").on('click', submit);
-			$("form .what").on('keydown', handleEnterPressed);
-
-			function mapChatToUI (msg, field) {
-				var ul = $('ul'),
-						last = sort(field, ul.children('li').last());
-
-				// Grab message to update or model
-				var msgField = $("#msg-" + field)[0];
-				if (!msgField) {
-					msgField = $('.model li')
-					.clone(true)
-					.attr('id', 'msg-' + field)
-					.insertAfter(last);
-				}
-
-				// Merge message data to UI model
-				var li = $(msgField);
-				li.find('.who').text(msg.who);
-				li.find('.what').text(msg.what);
-				li.find('.sort').text(field);
-
-				var time = new Date(msg.when);
-				li.find('.when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
-
-				$('html, body').stop(true, true)
-					.animate({
-						scrollTop: ul.height(),
-					});
+			$("form .say").on('click', submit);
+			$("form .what").on('keydown', enter);
+			function enter(e){
+				if(e.which !== 13){ return }
+				submit(e);
 			}
-
-			function submit (e) {
+			function submit(e){
 				e.preventDefault();
 
-				var msg = {
-					when: Gun.time.is(),
-				};
+				var msg = {when: Gun.time.is()};
 
 				msg.who = $('form .who').text();
-				if (!msg.who) {
+				if(!msg.who){
 					msg.who = 'user' + Gun.text.random(3);
 					$('form .who').text(msg.who);
 				}
 
 				msg.what = $('form .what').text();
-				if (!msg.what) {
-					return;
-				}
+				if(!msg.what){ return }
 
-				chat.get(msg.when + 'r' + Gun.text.random(3)).put(msg);
+				chat.set(msg);
 				$('form .what').text('');
 			}
 
-			function handleEnterPressed (e) {
-				if (e.which == 13) {
-					submit(e);
-				}
-			}
+			chat.map().val(function(msg, id){
+				var ul = $('ul');
+				var last = sort(msg.when, ul.children('li').last());
 
-			function sort(fieldId, element) {
-				var numericId = parseFloat(fieldId);
-				var idFromText = $(element).find('.sort').text() || -Infinity;
-				var currentId = numericId >= parseFloat(idFromText);
-				return currentId ? element : sort(fieldId, element.prev());
+				var li = $("#msg-" + id)[0]; // grab if exists
+				if(!li){
+					li = $('.model li').clone(true) // else create it
+						.attr('id', 'msg-' + id)
+						.insertAfter(last);
+				}
+
+				// bind the message data into the UI
+				li = $(li);
+				li.find('.who').text(msg.who);
+				li.find('.what').text(msg.what);
+				li.find('.sort').text(msg.when);
+
+				var time = new Date(msg.when);
+				li.find('.when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
+
+				$('html, body').stop(true, true)
+					.animate({scrollTop: ul.height()});
+			});
+
+			function sort(id, li){
+				var num = parseFloat(id);
+				var id = $(li).find('.sort').text() || -Infinity;
+				var at = num >= parseFloat(id);
+				return at ? li : sort(id, li.prev());
 			}
 		</script>
 	</body>
