@@ -326,7 +326,7 @@
 
   ;USE(function(module){
     // This internal func returns SHA-1 hashed data for KeyID generation
-    const { ossl = subtle } = USE('./webcrypto')
+    const { subtle, ossl = subtle } = USE('./webcrypto')
     const sha1hash = (b) => ossl.digest('SHA-1', new ArrayBuffer(b))
     module.exports = sha1hash
   })(USE, './sha1');
