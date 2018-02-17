@@ -11,7 +11,8 @@
     "testsea": "mocha test/sea.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
-    "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
+    "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m",
+    "postinstall": "opencollective postinstall"
   },
   "repository": {
     "type": "git",
@@ -49,6 +50,7 @@
   },
   "dependencies": {
     "aws-sdk": ">=2.153.0",
+    "opencollective": "^1.0.3",
     "ws": "~>4.0.0"
   },
   "devDependencies": {
@@ -67,5 +69,10 @@
     "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22",
     "uws": "~>0.14.1"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/gun",
+    "logo": "https://opencollective.com/gun/logo.txt"
   }
 }
