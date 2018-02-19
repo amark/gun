@@ -485,7 +485,7 @@
       // Derive shared secret from other's pub and my epub/epriv
       async derive(pub, { epub, epriv }) {
         try {
-          const { importKey, deriveKey, exportKey } = wc.ossl || subtle
+          const sub = wc.ossl || subtle
           const keystoecdhjwk = (pub, priv) => {
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
             const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
@@ -497,12 +497,12 @@
               y
             })
           }
-          const pubLic = await importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
+          const pubLic = await sub.importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
           const props = Object.assign({}, ecdhKeyProps, { public: pubLic })
-          const derived = await importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
+          const derived = await sub.importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
           .then(async (privKey) => {
             // privateKey scope doesn't leak out from here!
-            const derivedKey = await deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
+            const derivedKey = await sub.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
             return exportKey('jwk', derivedKey).then(({ k }) => k)
           })
           return derived
