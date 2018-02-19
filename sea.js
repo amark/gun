@@ -504,7 +504,7 @@
             const jwk = d ? { d } : {}
             return [  // Use with spread returned value...
               'jwk',
-              { ...jwk, x, y, key_ops: 'deriveKey', kty: 'EC', crv: 'P-256', ext: true },
+              { ...jwk, x, y, kty: 'EC', crv: 'P-256', ext: true },
               ecdhKeyProps
             ]
           }
