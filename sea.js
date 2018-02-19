@@ -501,11 +501,10 @@
           const ecdhSubtle = ossl || subtle
           const keysToEcdhJwk = (pub, d) => { // d === priv
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
-            const key_ops = [ `${d ? 'de' : 'en'}crypt`, 'deriveKey' ]
-            const jwk = d ? { d, key_ops } : { key_ops }
+            const jwk = d ? { d } : {}
             return [  // Use with spread returned value...
               'jwk',
-              Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: true }),
+              { ...jwk, x, y, key_ops: 'deriveKey', kty: 'EC', crv: 'P-256', ext: true },
               ecdhKeyProps
             ]
           }
