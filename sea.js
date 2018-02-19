@@ -485,7 +485,7 @@
       // Derive shared secret from other's pub and my epub/epriv
       async derive(pub, { epub, epriv }) {
         try {
-          const { importKey, deriveKey, exportKey } = subtleossl || subtle
+          const { importKey, deriveKey, exportKey } = wc.ossl || subtle
           const keystoecdhjwk = (pub, priv) => {
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
             const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
