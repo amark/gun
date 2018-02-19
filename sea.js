@@ -276,9 +276,9 @@
     // These are used to persist user's authentication "session"
     const authsettings = Object.assign({}, _initial_authsettings)
     // This creates Web Cryptography API compliant JWK for sign/verify purposes
-    const keysToEcdsaJwk = (pub, priv) => {
+    const keysToEcdsaJwk = (pub, d) => {  // d === priv
       const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
-      const jwk = priv ? { d: priv, key_ops: ['sign'] } : { key_ops: ['verify'] }
+      const jwk = d ? { d, key_ops: ['sign'] } : { key_ops: ['verify'] }
       return [  // Use with spread returned value...
         'jwk',
         Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: false })
@@ -498,9 +498,10 @@
       async derive(pub, { epub, epriv }) {
         try {
           const ecdhSubtle = ossl || subtle
-          const keystoecdhjwk = (pub, priv) => {
+          const keysToEcdhJwk = (pub, d) => { // d === priv
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
-            const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
+            const key_ops = [ `${d ? 'de' : 'en'}crypt`, 'deriveKey' ]
+            const jwk = d ? { d, key_ops } : { key_ops }
             return Object.assign(jwk, {
               kty: 'EC',
               crv: 'P-256',
@@ -509,9 +510,11 @@
               y
             })
           }
-          const pubLic = await ecdhSubtle.importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
-          const props = Object.assign({}, ecdhKeyProps, { public: pubLic })
-          const derived = await ecdhSubtle.importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
+          const props = {
+            ...ecdhKeyProps,
+            public: await ecdhSubtle.importKey('jwk', keysToEcdhJwk(pub), ecdhKeyProps, false, ['deriveKey'])
+          }
+          const derived = await ecdhSubtle.importKey('jwk', keysToEcdhJwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
           .then(async (privKey) => {
             // privateKey scope doesn't leak out from here!
             const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
