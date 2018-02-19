@@ -281,7 +281,8 @@
       const jwk = d ? { d, key_ops: ['sign'] } : { key_ops: ['verify'] }
       return [  // Use with spread returned value...
         'jwk',
-        Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: false })
+        Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: false }),
+        ecdsaKeyProps
       ]
     }
 
@@ -502,19 +503,19 @@
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
             const key_ops = [ `${d ? 'de' : 'en'}crypt`, 'deriveKey' ]
             const jwk = d ? { d, key_ops } : { key_ops }
-            return Object.assign(jwk, {
-              kty: 'EC',
-              crv: 'P-256',
-              ext: true,
-              x,
-              y
-            })
+            return [  // Use with spread returned value...
+              'jwk',
+              Object.assign(jwk, { x, y, kty: 'EC', crv: 'P-256', ext: true }),
+              ecdhKeyProps
+            ]
           }
+          const pubKeyData = keysToEcdhJwk(pub)
           const props = {
             ...ecdhKeyProps,
-            public: await ecdhSubtle.importKey('jwk', keysToEcdhJwk(pub), ecdhKeyProps, false, ['deriveKey'])
+            public: await ecdhSubtle.importKey(...pubKeyData, true, ['deriveKey'])
           }
-          const derived = await ecdhSubtle.importKey('jwk', keysToEcdhJwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
+          const privKeyData = keysToEcdhJwk(epub, epriv)
+          const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
           .then(async (privKey) => {
             // privateKey scope doesn't leak out from here!
             const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
@@ -531,7 +532,7 @@
           const jwk = keysToEcdsaJwk(pub, priv)
           const hash = await sha256hash(data)
           // privateKey scope doesn't leak out from here!
-          const binSig = await subtle.importKey(...jwk, ecdsaKeyProps, false, ['sign'])
+          const binSig = await subtle.importKey(...jwk, false, ['sign'])
           .then((privKey) => subtle.sign(ecdsaSignProps, privKey, new Uint8Array(hash)))
           return Buffer.from(binSig, 'binary').toString('base64')
         } catch (e) {
@@ -542,7 +543,7 @@
       async verify(data, pub, sig) {
         try {
           const jwk = keysToEcdsaJwk(pub)
-          const key = await subtle.importKey(...jwk, ecdsaKeyProps, false, ['verify'])
+          const key = await subtle.importKey(...jwk, false, ['verify'])
           const hash = await sha256hash(data)
           const ss = new Uint8Array(Buffer.from(sig, 'base64'))
           return await subtle.verify(ecdsaSignProps, key, ss, new Uint8Array(hash))
