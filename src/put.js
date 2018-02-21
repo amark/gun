@@ -1,7 +1,7 @@
 
 var Gun = require('./root');
 Gun.chain.put = function(data, cb, as){
-	// #soul.field=value>state
+	// #soul.has=value>state
 	// ~who#where.where=what>when@was
 	// TODO: BUG! Put probably cannot handle plural chains!
 	var gun = this, at = (gun._), root = at.root, tmp;
@@ -101,22 +101,22 @@ function batch(){ var as = this;
 		// and STOP is a hack to get async behavior to correctly call.
 		// neither of these are ideal, need to be fixed without hacks,
 		// but for now, this works for current tests. :/
-		var tmp = cat.root._.now; obj.del(cat.root._, 'now');
+		var tmp = cat.root._.now; obj.del(cat.root._, 'now'); cat.root._.PUT = true;
 		var tmp2 = cat.root._.stop;
 		(as.ref._).now = true;
-		//console.log("PUT!", as.env.graph);
 		(as.ref._).on('out', {
 			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
 		obj.del((as.ref._), 'now');
+		obj.del((cat.root._), 'PUT');
 		cat.root._.now = tmp;
 		cat.root._.stop = tmp2;
 	}, as);
 	if(as.res){ as.res() }
-} function no(v,f){ if(v){ return true } }
+} function no(v,k){ if(v){ return true } }
 
-function map(v,f,n, at){ var as = this;
-	if(f || !at.path.length){ return }
+function map(v,k,n, at){ var as = this;
+	if(k || !at.path.length){ return }
 	(as.res||iife)(function(){
 		var path = at.path, ref = as.ref, opt = as.opt;
 		var i = 0, l = path.length;

@@ -32,9 +32,7 @@ function output(msg){
 				//if(u !== back.put){
 					back.on('in', back);
 				}
-				if(back.ack){
-					return;
-				}
+				if(back.ack){ return }
 				msg.gun = back.gun;
 				back.ack = -1;
 			} else
@@ -72,79 +70,70 @@ function output(msg){
 	return back.on('out', msg);
 }
 
-function input(at){
-	at = at._ || at;
-	var ev = this, cat = this.as, gun = at.gun, coat = gun._, change = at.put, back = cat.back._ || empty, rel, tmp;
-	if(cat.get && at.get !== cat.get){
-		at = obj_to(at, {get: cat.get});
+function input(msg){
+	var ev = this, cat = this.as, gun = msg.gun, at = gun._, change = msg.put, rel, tmp;
+	if(cat.get && msg.get !== cat.get){
+		msg = obj_to(msg, {get: cat.get});
 	}
-	if(cat.field && coat !== cat){
-		at = obj_to(at, {gun: cat.gun});
-		if(coat.ack){
-			cat.ack = coat.ack;
-			//cat.ack = cat.ack || coat.ack;
+	if(cat.has && at !== cat){
+		msg = obj_to(msg, {gun: cat.gun});
+		if(at.ack){
+			cat.ack = at.ack;
+			//cat.ack = cat.ack || at.ack;
 		}
 	}
 	if(node_ === cat.get && change && change['#']){
-		// TODO: Potential bug? What if (soul.field = pointer) gets changed to (soul.field = primitive), we still need to clear out / wipe /reset (soul.field._) to have _id = nothing, or puts might have false positives (revert back to old soul).
+		// TODO: Potential bug? What if (soul.has = pointer) gets changed to (soul.has = primitive), we still need to clear out / wipe /reset (soul.has._) to have _id = nothing, or puts might have false positives (revert back to old soul).
 		cat._id = change['#'];
 	}
 	if(u === change){
-		ev.to.next(at);
-		if(cat.soul){ return }
-		echo(cat, at, ev);
-		if(cat.field){
-			not(cat, at);
+		ev.to.next(msg);
+		if(cat.soul){ return } // TODO: BUG, I believe the fresh input refactor caught an edge case that a `gun.get('soul').get('key')` that points to a soul that doesn't exist will not trigger val/get etc.
+		echo(cat, msg, ev);
+		if(cat.has){
+			not(cat, msg);
 		}
-		obj_del(coat.echo, cat.id);
-		obj_del(cat.map, coat.id);
+		obj_del(at.echo, cat.id);
+		obj_del(cat.map, at.id);
 		return;
 	}
 	if(cat.soul){
-		//if(cat.root._.now){ at = obj_to(at, {put: change = coat.put}) } // TODO: Ugly hack for uncached synchronous maps.
-		ev.to.next(at);
-		echo(cat, at, ev);
-		obj_map(change, map, {at: at, cat: cat});
+		ev.to.next(msg);
+		echo(cat, msg, ev);
+		obj_map(change, map, {at: msg, cat: cat});
 		return;
 	}
-	/*if(rel = Gun.val.rel.is(change)){
-		if(tmp = (gun.back(-1).get(rel)._).put){
-			change = tmp; // this will cause performance to turn to mush, maybe use `.now` check?
-		}
-		//if(tmp.put){ change = tmp.put; }
-	}
-	if(!rel || tmp){*/
 	if(!(rel = Gun.val.rel.is(change))){
 		if(Gun.val.is(change)){
-			if(cat.field || cat.soul){
-				not(cat, at);
+			if(cat.has || cat.soul){
+				not(cat, msg);
 			} else
-			if(coat.field || coat.soul){
-				(coat.echo || (coat.echo = {}))[cat.id] = cat;
-				(cat.map || (cat.map = {}))[coat.id] = cat.map[coat.id] || {at: coat};
-				//if(u === coat.put){ return } // Not necessary but improves performance. If we have it but coat does not, that means we got things out of order and coat will get it. Once coat gets it, it will tell us again.
+			if(at.has || at.soul){
+				(at.echo || (at.echo = {}))[cat.id] = cat;
+				(cat.map || (cat.map = {}))[at.id] = cat.map[at.id] || {at: at};
+				//if(u === at.put){ return } // Not necessary but improves performance. If we have it but at does not, that means we got things out of order and at will get it. Once at gets it, it will tell us again.
 			}
-			ev.to.next(at);
-			echo(cat, at, ev);
+			ev.to.next(msg);
+			echo(cat, msg, ev);
 			return;
 		}
-		if(cat.field && coat !== cat && obj_has(coat, 'put')){
-			cat.put = coat.put;
+		if(cat.has && at !== cat && obj_has(at, 'put')){
+			cat.put = at.put;
 		};
-		if((rel = Gun.node.soul(change)) && coat.field){
-			coat.put = (cat.root.get(rel)._).put;
+		if((rel = Gun.node.soul(change)) && at.has){
+			at.put = (cat.root.get(rel)._).put;
 		}
-		ev.to.next(at);
-		echo(cat, at, ev);
-		relate(cat, at, coat, rel);
-		obj_map(change, map, {at: at, cat: cat});
+		ev.to.next(msg);
+		echo(cat, msg, ev);
+		relate(cat, msg, at, rel);
+		obj_map(change, map, {at: msg, cat: cat});
 		return;
 	}
-	relate(cat, at, coat, rel);
-	ev.to.next(at);
-	echo(cat, at, ev);
+	relate(cat, msg, at, rel);
+	ev.to.next(msg);
+	echo(cat, msg, ev);
 }
-Gun.chain.chain.input = input;
+
 function relate(at, msg, from, rel){
 	if(!rel || node_ === at.get){ return }
 	var tmp = (at.root.get(rel)._);
@@ -168,10 +157,11 @@ function relate(at, msg, from, rel){
 		// neither of these are ideal, need to be fixed without hacks,
 		// but for now, this works for current tests. :/
 		if(!now){
-			var stop = at.root._.stop;
+			return;
+			/*var stop = at.root._.stop;
 			if(!stop){ return }
 			if(stop[at.id] === rel){ return }
-			stop[at.id] = rel;
+			stop[at.id] = rel;*/
 		} else {
 			if(u === now[at.id]){ return }
 			if((now._ || (now._ = {}))[at.id] === rel){ return }
@@ -182,7 +172,7 @@ function relate(at, msg, from, rel){
 }
 function echo(at, msg, ev){
 	if(!at.echo){ return } // || node_ === at.get ?
-	if(at.has || at.field){ msg = obj_to(msg, {event: ev}) }
+	if(at.has){ msg = obj_to(msg, {event: ev}) }
 	obj_map(at.echo, reverb, msg);
 }
 function reverb(to){
@@ -198,7 +188,7 @@ function map(data, key){ // Map over only the changes on every update.
 	//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
 	//	data = tmp.put;
 	//}
-	if(at.field){
+	if(at.has){
 		if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 			at.put = data;
 		}
@@ -241,7 +231,6 @@ function not(at, msg){
 function ask(at, soul){
 	var tmp = (at.root.get(soul)._);
 	if(at.ack){
-		//tmp.ack = tmp.ack || -1;
 		tmp.on('out', {get: {'#': soul}});
 		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}
@@ -280,5 +269,5 @@ function ack(msg, ev){
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 var text_rand = Gun.text.random;
-var _soul = Gun._.soul, _field = Gun._.field, node_ = Gun.node._;
+var _soul = Gun.val.rel._, node_ = Gun.node._;
 	

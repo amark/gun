@@ -3753,6 +3753,42 @@ describe('Gun', function(){
 			}, 1);
 
 		});
+
+		it('get map should not slowdown', function(done){
+			this.timeout(5000);
+			var gun = Gun().get('g/m/no/slow');
+			//console.log("---------- setup data done -----------");
+			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
+			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
+			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
+			gun.get('history').map().on(function(time, index){
+				//console.log(">>>", index, time);
+				diff = Gun.time.is() - time;
+				//return;
+				expect(gone[index]).to.not.be.ok();
+				gone[index] = diff;
+			  largest = (largest < diff)? diff : largest;
+			  //console.log(diff, '<', max);
+			  expect(diff > max).to.not.be.ok();
+			});
+			var turns = 0;
+			var many = setInterval(function(){
+				if(turns > total || (diff || 0) > (max + 5)){
+					clearTimeout(many);
+			  	expect(Gun.num.is(diff)).to.be.ok();
+			  	if(done.c){ return } done.c = 1;
+			  	done(); 
+			  	return;
+			  }
+			  prev = Gun.time.is();
+			  var put = {}; put[turns += 1] = prev;
+			  //console.log("put", put);
+			  //console.log("------", turns, "-------");
+			  //3 === turns && (console.debug.i = 1);
+			  console.debug(1, 'save', {history: put});
+			  gun.put({history: put});
+			}, 1);
+		});
 		return;
 		it('Nested listener should be called', function(done){
 			
@@ -5711,7 +5747,7 @@ describe('Gun', function(){
 			//gun.get('user/beth').path('friend').put(gun.get('user/alfred')); // ideal format which we have a future test for.
 			gun.get('user/alfred').val(function(a){
 				//console.log("*****", a);
-				//expect(a[Gun._.meta]['key']).to.be.ok();
+				//expect(a['_']['key']).to.be.ok();
 				gun.get('user/beth').put({friend: a}, function(err, ok){ // b - friend_of -> a
 					expect(err).to.not.be.ok();
 					var keynode = gun.Back(-1)._.graph['user/alfred'];
@@ -5800,8 +5836,8 @@ describe('Gun', function(){
 
 		it.skip('unique val on stream', function(done){ // TODO: THE API HAS CHANGED! REDO TEHSE!
 			var gun = Gun({wire: {get: function(key, cb){
-				if(Gun.obj.has(key, Gun._.soul)){
-					key = key[Gun._.soul];
+				if(Gun.obj.has(key, '#')){
+					key = key['#'];
 					var node = tmp.graph[key];
 					cb(null, node);
 					cb(null, Gun.is.node.ify({}, key));
@@ -5812,10 +5848,10 @@ describe('Gun', function(){
 			Gun.is.node.ify(tmp.node, tmp.soul);
 
 			tmp.graph['me'] = tmp.keynode = {};
-			Gun.obj.put(tmp.rel = {}, Gun._.soul, tmp.soul);
+			Gun.obj.put(tmp.rel = {}, '#', tmp.soul);
 			tmp.keynode[tmp.soul] = tmp.rel;
 			Gun.is.node.ify(tmp.keynode, 'me');
-			tmp.keynode[Gun._.meta]['key'] = 1;
+			tmp.keynode['#']['key'] = 1;
 
 			gun.get('me', function(err, data){
 
@@ -6152,7 +6188,7 @@ describe('Gun', function(){
 			var u, gun = Gun();
 			gun.get('set').set().set().val(function(val){
 				var keynode = gun.__.graph['set'];
-				expect(Gun.node.soul.ify(keynode, Gun._.key)).to.be.ok();
+				expect(Gun.node.soul.ify(keynode, '.')).to.be.ok();
 				Gun.is.node(keynode, function(rel, soul){
 					rel = gun.__.by(soul).node;
 					expect(Gun.obj.empty(rel, Gun._.meta)).to.be.ok();
@@ -6274,7 +6310,7 @@ describe('Gun', function(){
 			Gun.on('opt').event(function(gun, o){
 				if(connect){ return }
 				gun.__.opt.wire = {get: function(key, cb, opt){
-					key = key[Gun._.soul];
+					key = key['#'];
 					if(o.alice){ acb = cb; ag = gun.__.graph; } else { bcb = cb; bg = gun.__.graph; }
 					var other = (o.alice? gun2 : gun1);
 					if(connect){
@@ -6955,38 +6991,6 @@ describe('Gun', function(){
 			})
 		});
 
-		it('path should not slowdown', function(done){
-			this.timeout(5000);
-			var gun = Gun().put({
-			  history: {}
-			});
-			//console.log("---------- setup data done -----------");
-			var prev, diff, max = 25, total = 100, largest = -1, gone = {};
-			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
-			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
-			gun.path('history').map(function(time, index){
-				diff = Gun.time.is() - time;
-				expect(gone[index]).to.not.be.ok();
-				gone[index] = diff;
-			  largest = (largest < diff)? diff : largest;
-			  //console.log(turns, index, 'largest', largest, diff, '???', diff > max, diff, max);
-			  expect(diff > max).to.not.be.ok();
-			});
-			var turns = 0;
-			var many = setInterval(function(){
-				if(turns > total || (diff || 0) > (max + 5)){
-					clearTimeout(many);
-			  	expect(Gun.num.is(diff)).to.be.ok();
-			  	if(done.c){ return } done(); done.c = 1;
-			  	return;
-			  }
-			  prev = Gun.time.is();
-			  var put = {}; put[turns += 1] = prev;
-			  //console.log("put", put);
-			  gun.put({history: put});
-			}, 1);
-		});
-
 		it('path rel should not slowdown', function(done){
 			this.timeout(5000);
 			var gun = Gun(/*gopt*/).put({
@@ -7232,7 +7236,7 @@ describe('Gun', function(){
 							nested: 'lol'
 						}
 					}
-					env.graph[at.node._[Gun._.soul] = at.soul = $.soul] = at.node
+					env.graph[at.node._['#'] = at.soul = $.soul] = at.node
 				}
 			}
 			var start = Date.now();
@@ -7307,13 +7311,13 @@ describe('Gun', function(){
 							}
 							if(!Gun.node.soul(at.node)){
 								if(obj === at.obj){
-									env.graph[at.node._[Gun._.soul] = at.soul = $.soul] = at.node;
+									env.graph[at.node._['#'] = at.soul = $.soul] = at.node;
 									cb(at, at.soul);
 								} else {
 									function path(err, data){
 										if(at.soul){ return }
 										at.soul = Gun.node.soul(data) || Gun.node.soul(at.obj) || Gun.roulette.call(gun); // TODO: refactor Gun.roulette!
-										env.graph[at.node._[Gun._.soul] = at.soul] = at.node;
+										env.graph[at.node._['#'] = at.soul] = at.node;
 							//var start = performance.now();
 										cb(at, at.soul);
 							//first = performance.now() - start;(first > .05) && console.log('here');
@@ -7650,7 +7654,7 @@ describe('Gun', function(){
 				}
 				,get: function(lex, cb){
 					setTimeout(function(){
-						var soul = lex[Gun._.soul];
+						var soul = lex['#'];
 						if(peers.localStorage){
 							var g = peers.localStorage;
 							console.log("VIA LOCALSTORAGE!", lex, g[soul]);
@@ -7708,7 +7712,7 @@ describe('Gun', function(){
 				}
 				,get: function(lex, cb){
 					setTimeout(function(){
-						var soul = lex[Gun._.soul];
+						var soul = lex['#'];
 						var graph = server.__.graph;
 						//console.log('server replying', soul, graph);
 						if(!graph[soul]){
@@ -8088,7 +8092,7 @@ describe('Gun', function(){
 			ctx.get = function(key, cb){
 				var c = 0;
 				cb = cb || function(){};
-				key = key[Gun._.soul];
+				key = key['#'];
 				if('big' !== key){ return cb(null) }
 				setTimeout(function badNetwork(){
 					c += 1;

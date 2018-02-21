@@ -4,27 +4,16 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="../style.css">
 	</head>
-	<body class="whitet black">
-
+	<body>
 		<div id="sign" class="hue page">
 			<style>
 				input, button {
-					font-size: 1em;
 					margin: 1em 0;
 					padding: 1em;
 				}
 				.or {
 					display: inline-block;
 					width: 15%;
-				}
-				.loading {
-				  animation: pulse 2s infinite;
-				}
-				@keyframes pulse
-				{
-				  0% {opacity: 1;}
-				  50% {opacity: 0.5;}
-				  100% {opacity: 1;}
 				}
 			</style>
 			<form id="inup" class="sign pad center">
@@ -212,10 +201,10 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
-					but.addClass('loading');
+					but.addClass('pulse');
 					data.alias = data.alias.toLowerCase();
 					user.create(data.alias, data.pass, function(ack){
-						if(!ack.wait){ but.removeClass('loading') }
+						if(!ack.wait){ but.removeClass('pulse') }
 						if(ack.err){ c.tell(ack.err); return }
 						if(ack.pub){
 							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
@@ -225,7 +214,7 @@
 					});
 				}).on('click','form.sign button:first', become);
 				function become(){
-					var form = $(this).closest('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
+					var form = $('#sign').find('form'), data = {alias: form.find('input:first').val(), pass: form.find('input:last').val()};
 					data.alias = data.alias || sessionStorage.alias;
 					data.pass = data.pass || sessionStorage.tmp;
 					if(!data.alias || data.alias.length < 5){
@@ -236,8 +225,11 @@
 						c.tell("Passphrase needs to be longer than 9 characters.");
 						return;
 					}
+					var but = form.find('button:first');
+					but.addClass('pulse');
 					data.alias = data.alias.toLowerCase();
 					user.auth(data.alias, data.pass, function(ack){
+						if(!ack.wait){ but.removeClass('pulse') }
 						if(ack.err){ c.tell(ack.err); return }
 						session(data);
 					});
