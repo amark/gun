@@ -511,7 +511,7 @@
           const pubKeyData = keysToEcdhJwk(pub)
           const props = {
             ...ecdhKeyProps,
-            public: await ecdhSubtle.importKey(...pubKeyData, true, ['deriveKey'])
+            public: await ecdhSubtle.importKey(...pubKeyData, true, [])
           }
           const privKeyData = keysToEcdhJwk(epub, epriv)
           const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
