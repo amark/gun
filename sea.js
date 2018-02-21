@@ -142,8 +142,8 @@
     SafeBuffer.prototype.from = SafeBuffer.from
     SafeBuffer.prototype.toString = SeaArray.prototype.toString
 
-    const Buffer = SafeBuffer
-    if(typeof window !== 'undefined'){ window.Buffer = window.Buffer || Buffer }
+    //const Buffer = SafeBuffer
+    //if(typeof window !== 'undefined'){ window.Buffer = window.Buffer || SafeBuffer }
     module.exports = SafeBuffer;
   })(USE, './buffer');
 
@@ -378,6 +378,7 @@
     var getRandomBytes = wc.random;
     var EasyIndexedDB = USE('./indexed');
     var SafeBuffer = USE('./buffer');
+    var Buffer = SafeBuffer;
     var settings = USE('./settings');
     var pbKdf2 = settings.pbkdf2;
     var ecdsaKeyProps = settings.ecdsa.pair;
@@ -391,10 +392,11 @@
     // Practical examples about usage found from ./test/common.js
     const SEA = {
       // This is easy way to use IndexedDB, all methods are Promises
-      EasyIndexedDB,
+      indexedDB: EasyIndexedDB, // Note: Not all SEA interfaces have to support this.
       // This is Buffer used in SEA and usable from Gun/SEA application also.
       // For documentation see https://nodejs.org/api/buffer.html
       Buffer: SafeBuffer,
+      random: getRandomBytes,
       // These SEA functions support now ony Promises or
       // async/await (compatible) code, use those like Promises.
       //
@@ -483,7 +485,7 @@
       // Derive shared secret from other's pub and my epub/epriv
       async derive(pub, { epub, epriv }) {
         try {
-          const { importKey, deriveKey, exportKey } = subtleossl || subtle
+          const sub = wc.ossl || subtle
           const keystoecdhjwk = (pub, priv) => {
             const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
             const jwk = priv ? { d: priv, key_ops: ['decrypt'] } : { key_ops: ['encrypt'] }
@@ -495,12 +497,12 @@
               y
             })
           }
-          const pubLic = await importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
+          const pubLic = await sub.importKey('jwk', keystoecdhjwk(pub), ecdhKeyProps, false, ['deriveKey'])
           const props = Object.assign({}, ecdhKeyProps, { public: pubLic })
-          const derived = await importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
+          const derived = await sub.importKey('jwk', keystoecdhjwk(epub, epriv), ecdhKeyProps, false, ['deriveKey'])
           .then(async (privKey) => {
             // privateKey scope doesn't leak out from here!
-            const derivedKey = await deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
+            const derivedKey = await sub.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
             return exportKey('jwk', derivedKey).then(({ k }) => k)
           })
           return derived
@@ -1155,6 +1157,7 @@
               // then we're done
               var login = finalizeLogin(alias, keys, root, { pin })
               login.catch(putErr('Failed to finalize login with new password!'))
+              login = await login;
               return cat.ing = false, cb(login), gun;
             } catch (e) {
               return putErr('Password set attempt failed!')(e)
@@ -1162,6 +1165,7 @@
           } else {
             var login = finalizeLogin(alias, keys, root, { pin })
             login.catch(putErr('Finalizing login failed!'))
+            login = await login;
             return cat.ing = false, cb(login), gun;
           }
         } catch (e) {

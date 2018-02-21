@@ -5,24 +5,33 @@ html, body {
 	padding: 0;
 	font-family: 'Oxygen', 'Trebuchet MS', arial;
 	position: relative;
+  background: black;
+  color: white;
 }
 
 body {
 	font-size: 18pt;
 }
 
-div, ul, li, form, p, span, button, input, textarea {
+div, ul, li, p, span, form, button, input, textarea {
   margin: 0;
   padding: 0;
   position: relative;
   overflow: hidden;
+  font-size: 1em;
+  line-height: 1.5em;
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   box-sizing: border-box;
 }
 
+button, input, textarea {
+  background: white;
+  border: none;
+  color: black;
+}
+
 input, textarea {
-	border: none;
 	width: 100%;
 }
 
@@ -76,6 +85,10 @@ ul, li {
 .rim {
   margin: 2%;
 }
+.gap {
+  padding: 3%;
+}
+
 .loud {
   font-size: 150%;
 }
@@ -130,6 +143,17 @@ ul, li {
 }
 .whitet {
 	color: white;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse
+{
+  0% {opacity: 1;}
+  50% {opacity: 0.5;}
+  100% {opacity: 1;}
 }
 
 .hue {

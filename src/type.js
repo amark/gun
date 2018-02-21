@@ -43,7 +43,7 @@ Type.text.match = function(t, o){ var r = false;
 }
 Type.list = {is: function(l){ return (l instanceof Array) }}
 Type.list.slit = Array.prototype.slice;
-Type.list.sort = function(k){ // creates a new sort function based off some field
+Type.list.sort = function(k){ // creates a new sort function based off some key
 	return function(A,B){
 		if(!A || !B){ return 0 } A = A[k]; B = B[k];
 		if(A < B){ return -1 }else if(A > B){ return 1 }
@@ -53,15 +53,15 @@ Type.list.sort = function(k){ // creates a new sort function based off some fiel
 Type.list.map = function(l, c, _){ return obj_map(l, c, _) }
 Type.list.index = 1; // change this to 0 if you want non-logical, non-mathematical, non-matrix, non-convenient array notation
 Type.obj = {is: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }}
-Type.obj.put = function(o, f, v){ return (o||{})[f] = v, o }
-Type.obj.has = function(o, f){ return o && Object.prototype.hasOwnProperty.call(o, f) }
+Type.obj.put = function(o, k, v){ return (o||{})[k] = v, o }
+Type.obj.has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }
 Type.obj.del = function(o, k){
 	if(!o){ return }
 	o[k] = null;
 	delete o[k];
 	return o;
 }
-Type.obj.as = function(o, f, v, u){ return o[f] = o[f] || (u === v? {} : v) }
+Type.obj.as = function(o, k, v, u){ return o[k] = o[k] || (u === v? {} : v) }
 Type.obj.ify = function(o){
 	if(obj_is(o)){ return o }
 	try{o = JSON.parse(o);
@@ -69,9 +69,9 @@ Type.obj.ify = function(o){
 	return o;
 }
 ;(function(){ var u;
-	function map(v,f){
-		if(obj_has(this,f) && u !== this[f]){ return }
-		this[f] = v;
+	function map(v,k){
+		if(obj_has(this,k) && u !== this[k]){ return }
+		this[k] = v;
 	}
 	Type.obj.to = function(from, to){
 		to = to || {};

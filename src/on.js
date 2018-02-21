@@ -97,7 +97,7 @@ function val(msg, ev, to){
 		}, opt.wait || 99);
 		return;
 	}
-	if(cat.field || cat.soul){
+	if(cat.has || cat.soul){
 		if(ev.off()){ return } // if it is already off, don't call again!
 	} else {
 		if((opt.seen = opt.seen || {})[coat.id]){ return }

@@ -15,7 +15,7 @@ var Graph = {};
 		this.cb.call(nf.as, n, s, nf);
 	}
 	function nf(fn){ // optional callback for each node.
-		if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each field/value.
+		if(fn){ Node.is(nf.n, fn, nf.as) } // where we then have an optional callback for each key/value.
 	}
 }());
 ;(function(){
@@ -50,13 +50,13 @@ var Graph = {};
 		}
 		return at;
 	}
-	function map(v,f,n){
+	function map(v,k,n){
 		var at = this, env = at.env, is, tmp;
-		if(Node._ === f && obj_has(v,Val.rel._)){
+		if(Node._ === k && obj_has(v,Val.rel._)){
 			return n._; // TODO: Bug?
 		}
-		if(!(is = valid(v,f,n, at,env))){ return }
-		if(!f){
+		if(!(is = valid(v,k,n, at,env))){ return }
+		if(!k){
 			at.node = at.node || n || {};
 			if(obj_has(v, Node._)){
 				at.node._ = obj_copy(v._);
@@ -65,21 +65,21 @@ var Graph = {};
 			at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
 		}
 		if(tmp = env.map){
-			tmp.call(env.as || {}, v,f,n, at);
-			if(obj_has(n,f)){
-				v = n[f];
+			tmp.call(env.as || {}, v,k,n, at);
+			if(obj_has(n,k)){
+				v = n[k];
 				if(u === v){
-					obj_del(n, f);
+					obj_del(n, k);
 					return;
 				}
-				if(!(is = valid(v,f,n, at,env))){ return }
+				if(!(is = valid(v,k,n, at,env))){ return }
 			}
 		}
-		if(!f){ return at.node }
+		if(!k){ return at.node }
 		if(true === is){
 			return v;
 		}
-		tmp = node(env, {obj: v, path: at.path.concat(f)});
+		tmp = node(env, {obj: v, path: at.path.concat(k)});
 		if(!tmp.node){ return }
 		return tmp.rel; //{'#': Node.soul(tmp.node)};
 	}
@@ -95,14 +95,14 @@ var Graph = {};
 			obj_del(graph, prev);
 		}
 	}
-	function valid(v,f,n, at,env){ var tmp;
+	function valid(v,k,n, at,env){ var tmp;
 		if(Val.is(v)){ return true }
 		if(obj_is(v)){ return 1 }
 		if(tmp = env.invalid){
-			v = tmp.call(env.as || {}, v,f,n);
-			return valid(v,f,n, at,env);
+			v = tmp.call(env.as || {}, v,k,n);
+			return valid(v,k,n, at,env);
 		}
-		env.err = "Invalid value at '" + at.path.concat(f).join('.') + "'!";
+		env.err = "Invalid value at '" + at.path.concat(k).join('.') + "'!";
 	}
 	function seen(env, at){
 		var arr = env.seen, i = arr.length, has;
@@ -125,23 +125,23 @@ Graph.node = function(node){
 		obj_map(graph[root], map, {obj:obj, graph: graph, opt: opt});
 		return obj;
 	}
-	function map(v,f){ var tmp, obj;
-		if(Node._ === f){
+	function map(v,k){ var tmp, obj;
+		if(Node._ === k){
 			if(obj_empty(v, Val.rel._)){
 				return;
 			}
-			this.obj[f] = obj_copy(v);
+			this.obj[k] = obj_copy(v);
 			return;
 		}
 		if(!(tmp = Val.rel.is(v))){
-			this.obj[f] = v;
+			this.obj[k] = v;
 			return;
 		}
 		if(obj = this.opt.seen[tmp]){
-			this.obj[f] = obj;
+			this.obj[k] = obj;
 			return;
 		}
-		this.obj[f] = this.opt.seen[tmp] = Graph.to(this.graph, tmp, this.opt);
+		this.obj[k] = this.opt.seen[tmp] = Graph.to(this.graph, tmp, this.opt);
 	}
 }());
 var fn_is = Type.fn.is;
