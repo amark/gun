@@ -85,6 +85,10 @@ ul, li {
 .rim {
   margin: 2%;
 }
+.gap {
+  padding: 3%;
+}
+
 .loud {
   font-size: 150%;
 }
