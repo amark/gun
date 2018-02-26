@@ -678,7 +678,7 @@
           }
           ++c
           // grab the account associated with this public key.
-          root.get(pub).get((at, ev) => {
+          gunRoot.get(pub).get((at, ev) => {
             pub = pub.slice(4)
             ev.off()
             --c
