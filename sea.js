@@ -1031,6 +1031,8 @@
     const authenticate = USE('./authenticate')
     const finalizeLogin = USE('./login')
     const authLeave = USE('./leave')
+    const { recall: _initial_authsettings } = USE('./settings')
+
     // let's extend the gun chain with a `user` function.
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function() {
