@@ -759,6 +759,7 @@
     // TODO: BUG! `SEA` needs to be USED!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     const authsettings = USE('./settings')
+    const SEA = USE('./sea');
     const { scope: seaIndexedDb } = USE('./indexed')
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
     const updateStorage = (proof, key, pin) => async (props) => {
@@ -878,6 +879,8 @@
     const queryGunAliases = USE('./query')
     const parseProps = USE('./parse')
     const updateStorage = USE('./update')
+    const SEA = USE('./sea')
+    const finalizeLogin = USE('./login')
 
     // This internal func recalls persisted User authentication if so configured
     const authRecall = async (gunRoot, authprops) => {
@@ -1035,6 +1038,7 @@
 
     const SEA = USE('./sea')
     const authRecall = USE('./recall')
+    const authsettings = USE('./settings')
     const authenticate = USE('./authenticate')
     const finalizeLogin = USE('./login')
     const authLeave = USE('./leave')
