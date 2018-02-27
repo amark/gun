@@ -3,7 +3,7 @@
     <img width="50%" align="right" vspace="25" src="http://gun.js.org/see/demo.gif"/>
 </p> 
 
-[![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
+[![Backers on Open Collective](https://opencollective.com/gun/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/gun/sponsors/badge.svg)](#sponsors) [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
@@ -208,6 +208,36 @@ docker run -p 8080:8080 usenameHere/gun:git
 ```
 
 Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="graphs/contributors"><img src="https://opencollective.com/gun/contributors.svg?width=890&button=false" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/gun#backer)]
+
+<a href="https://opencollective.com/gun#backers" target="_blank"><img src="https://opencollective.com/gun/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/gun#sponsor)]
+
+<a href="https://opencollective.com/gun/sponsor/0/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/1/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/2/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/3/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/4/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/5/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/6/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/7/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/8/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/gun/sponsor/9/website" target="_blank"><img src="https://opencollective.com/gun/sponsor/9/avatar.svg"></a>
+
+
 
 ## License
 
