@@ -1,4 +1,7 @@
 language: node_js
+branches:
+  except:
+    - debug
 node_js:
   - 4.0
   - 4.2
