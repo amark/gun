@@ -1,6 +1,6 @@
 <p>
-    <a href="http://gun.js.org/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
-    <img width="50%" align="right" vspace="25" src="http://gun.js.org/see/demo.gif"/>
+    <a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
+    <img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/>
 </p> 
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
@@ -13,12 +13,12 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 <table>
 <tr>
-<a href=""><img width="31%" align="left" src="http://gun.js.org/see/3dvr.gif" title="3D VR"/></a>
-<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="http://gun.js.org/see/aiml.gif" title="AI/ML"/></a>
-<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="http://gun.js.org/see/gps.gif" title="GPS"/></a>
-<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="http://gun.js.org/see/dataviz.gif" title="Data Viz"/></a>
-<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="http://gun.js.org/see/p2p.gif" title="P2P"/></a>
-<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="http://gun.js.org/see/iot.gif" title="IoT"/></a>
+<a href=""><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
+<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
+<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
+<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
+<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
 </tr>
 </table>
 
@@ -37,7 +37,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 ## Quickstart
 
- - Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer).
+ - Try the [interactive tutorial](https://gun.eco/think.html) in the browser (**5min** ~ average developer).
  - Or `npm install gun` and run the examples with `cd node_modules/gun && npm start` (**5min** ~ average developer).
 
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
@@ -122,7 +122,7 @@ Thanks to:<br/>
 <table>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/API">API reference</a></h3></td>
-    <td style="border: 0;"><h3><a href="http://gun.js.org/think.html">Tutorials</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/think.html">Tutorials</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/tree/master/examples">Examples</a></h3></td>
   </tr>
   <tr>
@@ -137,7 +137,7 @@ Thanks to:<br/>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/CAP-Theorem">CAP Theorem Tradeoffs</a></h3></td>
-    <td style="border: 0;"><h3><a href="http://gun.js.org/distributed/matters.html">How Data Sync Works</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/distributed/matters.html">How Data Sync Works</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/porting-gun">How GUN is Built</a></h3></td>
   </tr>
   <tr>
