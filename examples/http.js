@@ -16,6 +16,7 @@ var server = require('http').createServer(function(req, res){
 var gun = Gun({ 
 	file: 'data.json',
 	web: server,
+	localStorage: false,
 	s3: {
 		key: process.env.AWS_ACCESS_KEY_ID, // Use environment variables
 		secret: process.env.AWS_SECRET_ACCESS_KEY, // so your keys are not
