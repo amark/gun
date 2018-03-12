@@ -88,7 +88,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// Launch the server and start gun!
 				var Gun = require('gun');
 				// Attach the server to gun.
-				var gun = Gun({file: env.i+'data', web: server});
+				var gun = Gun({file: env.i+'data', web: server, localStorage: false});
 				server.listen(env.config.port + env.i, function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.
