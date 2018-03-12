@@ -1856,42 +1856,61 @@
 				}
 			}
 
-			mesh.say = function(msg, peer){
-				/*
-					TODO: Plenty of performance optimizations
-					that can be made just based off of ordering,
-					and reducing function calls for cached writes.
-				*/
-				if(!peer){
-					Type.obj.map(ctx.opt.peers, function(peer){
-						mesh.say(msg, peer);
-					});
-					return;
+			;(function(){
+				mesh.say = function(msg, peer){
+					/*
+						TODO: Plenty of performance optimizations
+						that can be made just based off of ordering,
+						and reducing function calls for cached writes.
+					*/
+					if(!peer){
+						Type.obj.map(ctx.opt.peers, function(peer){
+							mesh.say(msg, peer);
+						});
+						return;
+					}
+					var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
+					if(!wire){ return }
+					msh = msg.mesh || empty;
+					if(peer === msh.via){ return }
+					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
+					if((tmp = msg['@'])
+					&& (tmp = ctx.dup.s[tmp])
+					&& (tmp = tmp.it)){
+						if(tmp.get && tmp['##'] && tmp['##'] === msg['##']){ // PERF: move this condition outside say?
+							return; // TODO: this still needs to be tested in the browser!
+						}
+					}
+					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested			
+					if(peer.batch){
+						peer.batch.push(raw);
+						return;
+					}
+					peer.batch = [];
+					setTimeout(function(){
+						var tmp = peer.batch;
+						if(!tmp){ return }
+						peer.batch = null;
+						if(!tmp.length){ return }
+						send(JSON.stringify(tmp), peer);
+					}, ctx.opt.wait || 1);
+					send(raw, peer);
 				}
-				var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
-				if(!wire){ return }
-				msh = msg.mesh || empty;
-				if(peer === msh.via){ return }
-				if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
-				if((tmp = msg['@'])
-				&& (tmp = ctx.dup.s[tmp])
-				&& (tmp = tmp.it)){
-					if(tmp.get && tmp['##'] && tmp['##'] === msg['##']){ // PERF: move this condition outside say?
-						return; // TODO: this still needs to be tested in the browser!
+				function send(raw, peer){
+					var wire = peer.wire;
+					try{
+						if(wire.send){
+							wire.send(raw);
+						} else
+						if(peer.say){
+							peer.say(raw);
+						}
+					}catch(e){
+						(peer.queue = peer.queue || []).push(raw);
 					}
 				}
-				if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested			
-				try{
-					if(wire.send){
-						wire.send(raw);
-					} else
-					if(peer.say){
-						peer.say(raw);
-					}
-				}catch(e){
-					(peer.queue = peer.queue || []).push(raw);
-				}
-			}
+
+			}());
 			
 			;(function(){
 
