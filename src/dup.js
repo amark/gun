@@ -3,21 +3,25 @@ var Type = require('./type');
 function Dup(opt){
 	var dup = {s:{}};
 	opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
-	dup.check = function(id){
-		return dup.s[id]? dup.track(id) : false;
+	dup.check = function(id){ var tmp;
+		if(!(tmp = dup.s[id])){ return false }
+		if(tmp.pass){ return tmp.pass = false }
+		return dup.track(id);
 	}
-	dup.track = function(id){
-		dup.s[id] = time_is();
+	dup.track = function(id, pass){
+		var it = dup.s[id] || (dup.s[id] = {});
+		it.was = time_is();
+		if(pass){ it.pass = true }
 		if(!dup.to){
 			dup.to = setTimeout(function(){
-				Type.obj.map(dup.s, function(time, id){
-					if(opt.age > (time_is() - time)){ return }
+				Type.obj.map(dup.s, function(it, id){
+					if(opt.age > (time_is() - it.was)){ return }
 					Type.obj.del(dup.s, id);
 				});
 				dup.to = null;
 			}, opt.age);
 		}
-		return id;
+		return it;
 	}
 	return dup;
 }
