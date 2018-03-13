@@ -1,8 +1,8 @@
 var config = {
 	IP: require('ip').address(),
 	port: 8080,
-	servers: 4,
-	browsers: 4,
+	servers: 2,
+	browsers: 2,
 	each: 10000,
 	burst: 100,
 	wait: 1,

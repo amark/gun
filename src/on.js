@@ -53,6 +53,10 @@ function ok(at, ev){ var opt = this;
 }
 
 Gun.chain.val = function(cb, opt){
+	Gun.log.once("onceval", "Future Breaking API Change: .val -> .once, apologies unexpected.");
+	return this.once(cb, opt);
+}
+Gun.chain.once = function(cb, opt){
 	var gun = this, at = gun._, data = at.put;
 	if(0 < at.ack && u !== data){
 		(cb || noop).call(gun, data, at.get);
@@ -67,7 +71,7 @@ Gun.chain.val = function(cb, opt){
 	} else {
 		Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 		var chain = gun.chain();
-		chain._.val = gun.val(function(){
+		chain._.val = gun.once(function(){
 			chain._.on('in', gun._);
 		});
 		return chain;

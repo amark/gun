@@ -808,7 +808,7 @@
 				//tmp = at.ack;
 				root.on('in', {
 					'@': msg['#'],
-					how: 'mem', by: root.PID,
+					how: 'mem',
 					put: node,
 					gun: gun
 				});
@@ -1789,7 +1789,6 @@
 				try{store.setItem(opt.file, JSON.stringify(disk));
 				}catch(e){ Gun.log(err = e || "localStorage failure") }
 				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
-				console.log("@@@", ack);
 				Gun.obj.map(ack, function(yes, id){
 					root.on('in', {
 						'@': id,
