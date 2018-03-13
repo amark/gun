@@ -103,6 +103,7 @@ var Graph = {};
 			return valid(v,k,n, at,env);
 		}
 		env.err = "Invalid value at '" + at.path.concat(k).join('.') + "'!";
+		if(Type.list.is(v)){ env.err += " Use `.set(item)` instead of an Array." }
 	}
 	function seen(env, at){
 		var arr = env.seen, i = arr.length, has;
