@@ -1900,7 +1900,11 @@
 					var wire = peer.wire;
 					try{
 						if(wire.send){
-							wire.send(raw);
+							if(wire.readyState === wire.OPEN){
+								wire.send(raw);
+							} else {
+								(peer.queue = peer.queue || []).push(raw);
+							}
 						} else
 						if(peer.say){
 							peer.say(raw);
