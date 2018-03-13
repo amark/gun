@@ -621,21 +621,25 @@
 		function Dup(opt){
 			var dup = {s:{}};
 			opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
-			dup.check = function(id){
-				return dup.s[id]? dup.track(id) : false;
+			dup.check = function(id){ var tmp;
+				if(!(tmp = dup.s[id])){ return false }
+				if(tmp.pass){ return tmp.pass = false }
+				return dup.track(id);
 			}
-			dup.track = function(id){
-				dup.s[id] = time_is();
+			dup.track = function(id, pass){
+				var it = dup.s[id] || (dup.s[id] = {});
+				it.was = time_is();
+				if(pass){ it.pass = true }
 				if(!dup.to){
 					dup.to = setTimeout(function(){
-						Type.obj.map(dup.s, function(time, id){
-							if(opt.age > (time_is() - time)){ return }
+						Type.obj.map(dup.s, function(it, id){
+							if(opt.age > (time_is() - it.was)){ return }
 							Type.obj.del(dup.s, id);
 						});
 						dup.to = null;
 					}, opt.age);
 				}
-				return id;
+				return it;
 			}
 			return dup;
 		}
@@ -685,13 +689,13 @@
 				return gun;
 			}
 			function root(msg){
-				//console.log("add to.next(at)"); // TODO: BUG!!!
-				var ev = this, at = ev.as, gun = at.gun, tmp;
+				//console.log("add to.next(at)"); // TODO: MISSING FEATURE!!!
+				var ev = this, at = ev.as, gun = at.gun, dup, tmp;
 				//if(!msg.gun){ msg.gun = at.gun }
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
-				if(at.dup.check(tmp)){ return }
-				at.dup.track(tmp);
-				msg = obj_to(msg);//, {gun: at.gun});
+				if((dup = at.dup).check(tmp)){ return }
+				dup.track(tmp);
+				//msg = obj_to(msg);//, {gun: at.gun}); // can we delete this now?
 				if(!at.ask(msg['@'], msg)){
 					if(msg.get){
 						Gun.on.get(msg, gun);
@@ -804,7 +808,7 @@
 				//tmp = at.ack;
 				root.on('in', {
 					'@': msg['#'],
-					//how: 'mem',
+					how: 'mem',
 					put: node,
 					gun: gun
 				});
@@ -940,7 +944,7 @@
 				}*/
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
-					msg['#'] || (msg['#'] = text_rand());
+					msg['#'] || (msg['#'] = text_rand(9));
 					back = (root.gun.get(get['#'])._);
 					if(!(get = get['.'])){
 						if(obj_has(back, 'put')){
@@ -1555,6 +1559,10 @@
 		}
 
 		Gun.chain.val = function(cb, opt){
+			Gun.log.once("onceval", "Future Breaking API Change: .val -> .once, apologies unexpected.");
+			return this.once(cb, opt);
+		}
+		Gun.chain.once = function(cb, opt){
 			var gun = this, at = gun._, data = at.put;
 			if(0 < at.ack && u !== data){
 				(cb || noop).call(gun, data, at.get);
@@ -1569,7 +1577,7 @@
 			} else {
 				Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 				var chain = gun.chain();
-				chain._.val = gun.val(function(){
+				chain._.val = gun.once(function(){
 					chain._.on('in', gun._);
 				});
 				return chain;
@@ -1793,105 +1801,249 @@
 	})(USE, './adapters/localStorage');
 
 	;USE(function(module){
-		var Gun = USE('./index');
-		var websocket;
-		if(typeof WebSocket !== 'undefined'){
-			websocket = WebSocket;
-		} else {
-			if(typeof webkitWebSocket !== 'undefined'){
-				websocket = webkitWebSocket;
+		var Type = USE('./type');
+
+		function Mesh(ctx){
+			var mesh = function(){};
+
+			mesh.out = function(msg){ var tmp;
+				if(this.to){ this.to.next(msg) }
+				if((tmp = msg['@'])
+				&& (tmp = ctx.dup.s[tmp])
+				&& (tmp = tmp.it)){
+					mesh.say(msg, tmp.mesh.via);
+					tmp['##'] = msg['##'];
+					return;
+				}
+				// add hook for AXE?
+				mesh.say(msg);
 			}
-			if(typeof mozWebSocket !== 'undefined'){
-				websocket = mozWebSocket;
+
+			mesh.hear = function(msg, peer){
+				if(!msg){ return }
+				var dup = ctx.dup, id, hash, tmp = msg[0];
+				try{msg = JSON.parse(msg);
+				}catch(e){}
+				if('{' === tmp){
+
+					if(dup.check(id = msg['#'])){ return }
+					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed.
+					if((tmp = msg['@']) && msg.put){
+						hash = msg['##'] || (msg['##'] = mesh.hash(msg));
+						if((tmp = tmp + hash) != id){
+							if(dup.check(tmp)){ return }
+							(tmp = dup.s)[hash] = tmp[id];
+						}
+					}
+					(msg.mesh = function(){}).via = peer;
+					if((tmp = msg['><'])){
+						msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+					}
+					ctx.on('in', msg);
+					
+					return;
+				} else
+				if('[' === tmp){
+
+					var i = 0, m;
+					while(m = msg[i++]){
+						mesh.hear(m, peer);
+					}
+
+					return;
+				}
 			}
+
+			;(function(){
+				mesh.say = function(msg, peer){
+					/*
+						TODO: Plenty of performance optimizations
+						that can be made just based off of ordering,
+						and reducing function calls for cached writes.
+					*/
+					if(!peer){
+						Type.obj.map(ctx.opt.peers, function(peer){
+							mesh.say(msg, peer);
+						});
+						return;
+					}
+					var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
+					if(!wire){ return }
+					msh = msg.mesh || empty;
+					if(peer === msh.via){ return }
+					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
+					if((tmp = msg['@'])
+					&& (tmp = ctx.dup.s[tmp])
+					&& (tmp = tmp.it)){
+						if(tmp.get && tmp['##'] && tmp['##'] === msg['##']){ // PERF: move this condition outside say?
+							return; // TODO: this still needs to be tested in the browser!
+						}
+					}
+					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested			
+					if(peer.batch){
+						peer.batch.push(raw);
+						return;
+					}
+					peer.batch = [];
+					setTimeout(function(){
+						var tmp = peer.batch;
+						if(!tmp){ return }
+						peer.batch = null;
+						if(!tmp.length){ return }
+						send(JSON.stringify(tmp), peer);
+					}, ctx.opt.wait || 1);
+					send(raw, peer);
+				}
+				function send(raw, peer){
+					var wire = peer.wire;
+					try{
+						if(wire.send){
+							if(wire.readyState === wire.OPEN){
+								wire.send(raw);
+							} else {
+								(peer.queue = peer.queue || []).push(raw);
+							}
+						} else
+						if(peer.say){
+							peer.say(raw);
+						}
+					}catch(e){
+						(peer.queue = peer.queue || []).push(raw);
+					}
+				}
+
+			}());
+			
+			;(function(){
+
+				mesh.raw = function(msg){
+					if(!msg){ return '' }
+					var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+					if(tmp = msh.raw){ return tmp }
+					if(typeof msg === 'string'){ return msg }
+					if(msg['@'] && (tmp = msg.put)){
+						if(!(hash = msg['##'])){
+							put = $(tmp, sort) || '';
+							hash = mesh.hash(msg, put);
+							msg['##'] = hash;
+						}
+						(tmp = dup.s)[hash = msg['@']+hash] = tmp[msg['#']];
+						msg['#'] = hash;
+						if(put){ (msg = Type.obj.to(msg)).put = _ }
+					}
+					msg['><'] = (Type.obj.map(ctx.opt.peers, function(p,k,m){
+						m(p.url || p.id);
+					}) || []).join();
+					var raw = $(msg);
+					if(u !== put){
+						raw = raw.replace('"'+ _ +'"', put);
+					}
+					if(msh){
+						msh.raw = raw;
+					}
+					return raw;
+				}
+
+				mesh.hash = function(msg, hash){
+					return Mesh.hash(hash || $(msg.put, sort) || '') || msg['#'] || Type.text.random(9);
+				}
+
+				function sort(k, v){ var tmp;
+					if(!(v instanceof Object)){ return v }
+					Type.obj.map(Object.keys(v).sort(), map, {to: tmp = {}, on: v});
+					return tmp;
+				}
+
+				function map(k){
+					this.to[k] = this.on[k];
+				}
+				var $ = JSON.stringify, _ = ':])([:'
+
+			}());
+
+			mesh.hi = function(peer){
+				ctx.on('hi', peer);
+				var queue = peer.queue;
+				peer.queue = [];
+				Type.obj.map(queue, function(msg){
+					mesh.say(msg, peer);
+				});
+			}
+
+			return mesh;
 		}
+
+		Mesh.hash = function(s){ // via SO
+			if(typeof s !== 'string'){ return {err: 1} }
+	    var c = 0;
+	    if(!s.length){ return c }
+	    for(var i=0,l=s.length,n; i<l; ++i){
+	      n = s.charCodeAt(i);
+	      c = ((c<<5)-c)+n;
+	      c |= 0;
+	    }
+	    return c; // Math.abs(c);
+	  }
+
+	  var empty = {}, u;
+	  Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
+
+	  try{ module.exports = Mesh }catch(e){}
+
+	})(USE, './adapters/mesh');
+
+	;USE(function(module){
+		var Gun = USE('../index');
+		Gun.Mesh = USE('./mesh');
 
 		Gun.on('opt', function(root){
 			this.to.next(root);
 			var opt = root.opt;
 			if(root.once){ return }
-			if(!websocket || false === opt.WebSocket){ return }
-			var ws = opt.ws || (opt.ws = {}); ws.who = 0;
-			Gun.obj.map(opt.peers, function(){ ++ws.who });
-			if(root.once){ return }
-			var batch;
+			if(false === opt.WebSocket){ return }
 
-			root.on('out', function(at){
-				this.to.next(at);
-				if(at.ws && 1 == ws.who){ return } // performance hack for reducing echoes.
-				batch = JSON.stringify(at);
-				if(ws.drain){
-					ws.drain.push(batch);
-					return;
-				}
-				ws.drain = [];
-				setTimeout(function(){
-					if(!ws.drain){ return }
-					var tmp = ws.drain;
-					ws.drain = null;
-					if(!tmp.length){ return }
-					batch = JSON.stringify(tmp);
-					Gun.obj.map(opt.peers, send, root);
-				}, opt.wait || 1);
-				Gun.obj.map(opt.peers, send, root);
-			});
-			function send(peer){
-				var root = this, msg = batch;
-				var wire = peer.wire || open(peer, root);
-				if(!wire){ return }
-				if(wire.readyState === wire.OPEN){
-					wire.send(msg);
-					return;
-				}
-				(peer.queue = peer.queue || []).push(msg);
-			}
-			function receive(msg, peer, root){
-				if(!root || !msg){ return }
-				try{msg = JSON.parse(msg.data || msg);
-				}catch(e){}
-				if(msg instanceof Array){
-					var i = 0, m;
-					while(m = msg[i++]){
-						receive(m, peer, root);
-					}
-					return;
-				}
-				if(1 == ws.who){ msg.ws = noop } // If there is only 1 client, just use noop since it doesn't matter.
-				root.on('in', msg);
-			}
-			function open(peer, as){
+			var env;
+			if(typeof window !== "undefined"){ env = window }
+			if(typeof global !== "undefined"){ env = global }
+			env = env || {};
+
+			var websocket = opt.WebSocket || env.WebSocket || env.webkitWebSocket || env.mozWebSocket;
+			if(!websocket){ return }
+			opt.WebSocket = websocket;
+
+			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
+			root.on('out', mesh.out);
+
+			opt.wire = opt.wire || open;
+			function open(peer){
 				if(!peer || !peer.url){ return }
 				var url = peer.url.replace('http', 'ws');
-				var wire = peer.wire = new websocket(url);
+				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
 					root.on('bye', peer);
-					reconnect(peer, as);
+					reconnect(peer);
 				};
 				wire.onerror = function(error){
-					reconnect(peer, as); // placement?
+					reconnect(peer); // placement?
 					if(!error){ return }
 					if(error.code === 'ECONNREFUSED'){
 						//reconnect(peer, as);
 					}
 				};
 				wire.onopen = function(){
-					root.on('hi', peer);
-					var queue = peer.queue;
-					peer.queue = [];
-					Gun.obj.map(queue, function(msg){
-						batch = msg;
-						send.call(as, peer);
-					});
+					mesh.hi(peer);
 				}
 				wire.onmessage = function(msg){
-					receive(msg, peer, as); // diff: peer not wire!
+					if(!msg){ return }
+					mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
 			}
-			function reconnect(peer, as){
+
+			function reconnect(peer){
 				clearTimeout(peer.defer);
 				peer.defer = setTimeout(function(){
-					open(peer, as);
+					open(peer);
 				}, 2 * 1000);
 			}
 		});

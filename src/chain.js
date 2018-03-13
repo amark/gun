@@ -25,7 +25,7 @@ function output(msg){
 		}*/
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
-			msg['#'] || (msg['#'] = text_rand());
+			msg['#'] || (msg['#'] = text_rand(9));
 			back = (root.gun.get(get['#'])._);
 			if(!(get = get['.'])){
 				if(obj_has(back, 'put')){

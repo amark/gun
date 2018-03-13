@@ -40,13 +40,13 @@ Gun.dup = require('./dup');
 		return gun;
 	}
 	function root(msg){
-		//console.log("add to.next(at)"); // TODO: BUG!!!
-		var ev = this, at = ev.as, gun = at.gun, tmp;
+		//console.log("add to.next(at)"); // TODO: MISSING FEATURE!!!
+		var ev = this, at = ev.as, gun = at.gun, dup, tmp;
 		//if(!msg.gun){ msg.gun = at.gun }
 		if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
-		if(at.dup.check(tmp)){ return }
-		at.dup.track(tmp);
-		msg = obj_to(msg);//, {gun: at.gun});
+		if((dup = at.dup).check(tmp)){ return }
+		dup.track(tmp);
+		//msg = obj_to(msg);//, {gun: at.gun}); // can we delete this now?
 		if(!at.ask(msg['@'], msg)){
 			if(msg.get){
 				Gun.on.get(msg, gun);
@@ -159,7 +159,7 @@ Gun.dup = require('./dup');
 		//tmp = at.ack;
 		root.on('in', {
 			'@': msg['#'],
-			//how: 'mem',
+			how: 'mem',
 			put: node,
 			gun: gun
 		});

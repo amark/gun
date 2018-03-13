@@ -3,8 +3,8 @@ var config = {
 	port: 8080,
 	servers: 2,
 	browsers: 2,
-	each: 12000,
-	burst: 1000,
+	each: 10000,
+	burst: 100,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
