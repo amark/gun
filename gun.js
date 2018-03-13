@@ -835,7 +835,6 @@
 				}
 				at.opt.peers = at.opt.peers || {};
 				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
-				at.PID = at.PID || Gun.log(Gun.text.random(2));
 				Gun.on('opt', at);
 				at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 				return gun;
