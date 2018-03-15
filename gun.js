@@ -754,7 +754,7 @@
 				var msg = ctx.map[soul] = {
 					put: node,
 					get: soul,
-					gun: at
+					gun: at.gun
 				}, as = {ctx: ctx, msg: msg};
 				ctx.async = !!cat.tag.node;
 				if(ctx.ack){ msg['@'] = ctx.ack }
@@ -795,7 +795,7 @@
 
 			Gun.on.get = function(msg, gun){
 				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
-				var next = root.next || (root.next = {}), at = ((next[soul] || empty)._);
+				var next = root.next || (root.next = {}), at = next[soul];
 				if(!node || !at){ return root.on('get', msg) }
 				if(has){
 					if(!obj_has(node, has)){ return root.on('get', msg) }
@@ -1100,12 +1100,11 @@
 			to.on('in', this);
 		}
 		function map(data, key){ // Map over only the changes on every update.
-			var cat = this.cat, next = cat.next || empty, via = this.at, gun, chain, at, tmp;
+			var cat = this.cat, next = cat.next || empty, via = this.at, chain, at, tmp;
 			if(node_ === key && !next[key]){ return }
-			if(!(gun = next[key])){
+			if(!(at = next[key])){
 				return;
 			}
-			at = (gun._);
 			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
 			//	data = tmp.put;
 			//}
@@ -1113,7 +1112,7 @@
 				if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 					at.put = data;
 				}
-				chain = gun;
+				chain = at.gun;
 			} else {
 				chain = via.gun.get(key);
 			}
@@ -1136,15 +1135,14 @@
 				if(!(proxy = proxy.at)){ return }
 				obj_del(proxy.echo, at.id);
 			});
-			obj_map(at.next, function(gun, key){
-				var coat = (gun._);
-				coat.put = u;
-				if(coat.ack){
-					coat.ack = -1;
+			obj_map(at.next, function(neat, key){
+				neat.put = u;
+				if(neat.ack){
+					neat.ack = -1;
 				}
-				coat.on('in', {
+				neat.on('in', {
 					get: key,
-					gun: gun,
+					gun: neat.gun,
 					put: u
 				});
 			});
@@ -1155,10 +1153,10 @@
 				tmp.on('out', {get: {'#': soul}});
 				if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 			}
-			obj_map(at.ask || at.next, function(gun, key){
+			obj_map(at.ask || at.next, function(neat, key){
 				//(tmp.gun.get(key)._).on('out', {get: {'#': soul, '.': key}});
 				//tmp.on('out', {get: {'#': soul, '.': key}});
-				(gun._).on('out', {get: {'#': soul, '.': key}});
+				neat.on('out', {get: {'#': soul, '.': key}});
 				//at.on('out', {get: {'#': soul, '.': key}});
 			});
 			Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
@@ -1196,15 +1194,18 @@
 	;USE(function(module){
 		var Gun = USE('./root');
 		Gun.chain.get = function(key, cb, as){
+			var gun;
 			if(typeof key === 'string'){
-				var gun, back = this, cat = back._;
+				var back = this, cat = back._;
 				var next = cat.next || empty, tmp;
 				if(!(gun = next[key])){
 					gun = cache(key, back);
 				}
+				gun = gun.gun;
 			} else
 			if(key instanceof Function){
-				var gun = this, at = gun._, root = at.root._, tmp = root.now, ev;
+				gun = this;
+				var at = gun._, root = at.root._, tmp = root.now, ev;
 				as = cb || {};
 				as.use = key;
 				as.out = as.out || {};
@@ -1233,8 +1234,8 @@
 		function cache(key, back){
 			var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 			if(!next){ next = cat.next = {} }
-			next[at.get = key] = gun;
-			if(cat.root === back){
+			next[at.get = key] = at;
+			if(back === cat.root){
 				at.soul = key;
 			} else
 			if(cat.soul || cat.has){
@@ -1243,7 +1244,7 @@
 					//at.put = cat.put[key];
 				//}
 			}
-			return gun;
+			return at;
 		}
 		function use(msg){
 			var ev = this, as = ev.as, gun = msg.gun, at = gun._, root = at.root._, data = msg.put, tmp;
@@ -1647,8 +1648,8 @@
 				});
 			}
 			if(tmp = at.next){
-				obj_map(tmp, function(ref){
-					ref.off();
+				obj_map(tmp, function(neat){
+					neat.gun.off();
 				});
 			}
 			at.on('off', {});
@@ -1935,7 +1936,7 @@
 						if(put){ (msg = Type.obj.to(msg)).put = _ }
 					}
 					var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
-						to.push[p.url || p.id]; if(++i > 9){ return true } // limit server, fast fix, improve later!
+						to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 					}); msg['><'] = to.join();
 					var raw = $(msg);
 					if(u !== put){

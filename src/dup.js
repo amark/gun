@@ -20,7 +20,7 @@ function Dup(opt){
 					Type.obj.del(dup.s, id);
 				});
 				dup.to = null;
-			}, opt.age);
+			}, opt.age + 9);
 		}
 		return it;
 	}

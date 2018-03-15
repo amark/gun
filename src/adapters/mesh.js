@@ -8,7 +8,8 @@ function Mesh(ctx){
 		if(this.to){ this.to.next(msg) }
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
-		&& (tmp = tmp.it)){
+		&& (tmp = tmp.it)
+		&& tmp.mesh){
 			mesh.say(msg, tmp.mesh.via);
 			tmp['##'] = msg['##'];
 			return;
@@ -129,9 +130,9 @@ function Mesh(ctx){
 				msg['#'] = hash;
 				if(put){ (msg = Type.obj.to(msg)).put = _ }
 			}
-			msg['><'] = (Type.obj.map(ctx.opt.peers, function(p,k,m){
-				m(p.url || p.id);
-			}) || []).join();
+			var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
+				to.push[p.url || p.id]; if(++i > 9){ return true } // limit server, fast fix, improve later!
+			}); msg['><'] = to.join();
 			var raw = $(msg);
 			if(u !== put){
 				raw = raw.replace('"'+ _ +'"', put);
