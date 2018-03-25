@@ -1,15 +1,18 @@
 
 var Gun = require('./root');
 Gun.chain.get = function(key, cb, as){
+	var gun;
 	if(typeof key === 'string'){
-		var gun, back = this, cat = back._;
+		var back = this, cat = back._;
 		var next = cat.next || empty, tmp;
 		if(!(gun = next[key])){
 			gun = cache(key, back);
 		}
+		gun = gun.gun;
 	} else
 	if(key instanceof Function){
-		var gun = this, at = gun._, root = at.root._, tmp = root.now, ev;
+		gun = this;
+		var at = gun._, root = at.root, tmp = root.now, ev;
 		as = cb || {};
 		as.use = key;
 		as.out = as.out || {};
@@ -38,8 +41,8 @@ Gun.chain.get = function(key, cb, as){
 function cache(key, back){
 	var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 	if(!next){ next = cat.next = {} }
-	next[at.get = key] = gun;
-	if(cat.root === back){
+	next[at.get = key] = at;
+	if(back === cat.root.gun){
 		at.soul = key;
 	} else
 	if(cat.soul || cat.has){
@@ -48,10 +51,10 @@ function cache(key, back){
 			//at.put = cat.put[key];
 		//}
 	}
-	return gun;
+	return at;
 }
 function use(msg){
-	var ev = this, as = ev.as, gun = msg.gun, at = gun._, root = at.root._, data = msg.put, tmp;
+	var ev = this, as = ev.as, gun = msg.gun, at = gun._, root = at.root, data = msg.put, tmp;
 	if((tmp = root.now) && ev !== tmp[as.now]){
 		return ev.to.next(msg);
 	}
@@ -59,7 +62,7 @@ function use(msg){
 		data = at.put;
 	}
 	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
-		tmp = (at.root.get(tmp)._);
+		tmp = (at.root.gun.get(tmp)._);
 		if(u !== tmp.put){
 			msg = obj_to(msg, {put: tmp.put});
 		}

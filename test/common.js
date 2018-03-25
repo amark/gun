@@ -3136,7 +3136,6 @@ describe('Gun', function(){
 			//return;
 			setTimeout(function(){
 				gun.get(function(at){
-					//console.log('*', at.put);
 					done.app = done.app || at.put.alias;
 				});
 				gun.back(-1).get('pub').get(function(at){
@@ -3611,7 +3610,7 @@ describe('Gun', function(){
 			});
 			
 			gun.get('ds/safe').val(function(data){
-				expect(gun._.root._.graph['ds/safe'].b).to.not.be.ok();
+				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
 				done();
 			});
@@ -3695,7 +3694,7 @@ describe('Gun', function(){
 		});
 
 		it('users map map who said map on', function(done){
-			this.timeout(1000 * 60 * 5);
+			this.timeout(1000 * 9);
 			var gun = Gun();
 
 			gun.get('users').put({
@@ -4607,7 +4606,7 @@ describe('Gun', function(){
 			gun.get('hello/earth').key('hello/galaxy', function(err, ok){
 				expect(err).to.not.be.ok();
 			});
-			var node = gun.Back(-1)._.graph['hello/earth'] || {}; // TODO: IS THIS CORRECT?
+			var node = gun.back(-1)._.graph['hello/earth'] || {}; // TODO: IS THIS CORRECT?
 			expect(node['hello/galaxy']).to.not.be.ok();
 			gun.get('hello/earth', function(err, pseudo){
 				expect(pseudo.hello).to.be('world');
@@ -4615,7 +4614,7 @@ describe('Gun', function(){
 				expect(pseudo.place).to.be('asia');
 				expect(pseudo.north).to.not.be.ok();
 			});
-			var galaxy = gun.Back(-1)._.graph['hello/galaxy'] || {}; // TODO: IS THIS CORRECT?
+			var galaxy = gun.back(-1)._.graph['hello/galaxy'] || {}; // TODO: IS THIS CORRECT?
 			expect(galaxy['hello/earth']).to.not.be.ok();
 			gun.get('hello/galaxy', function(err, pseudo){
 				if(done.c || !pseudo.hello || !pseudo.south || !pseudo.place || !pseudo.continent || !pseudo.north){ return }
@@ -4635,9 +4634,9 @@ describe('Gun', function(){
 			kn = Gun.obj.copy(kn);
 			delete kn._;
 			expect(Gun.obj.empty(kn, '##')).to.be.ok();
-			kn = gun.Back(-1)._.graph[Gun.val.rel.is(kn['##'])];
+			kn = gun.back(-1)._.graph[Gun.val.rel.is(kn['##'])];
 			Gun.node.is(kn, function(node, s){
-				var n = gun.Back(-1)._.graph[s];
+				var n = gun.back(-1)._.graph[s];
 				if(Gun.obj.has(n, '##')){
 					soulnode(gun, n, r);
 					return;
@@ -4655,11 +4654,11 @@ describe('Gun', function(){
 				done.soul = Gun.node.soul(node);
 			}).put({hi: 'you'}, function(err, ok){
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				expect(keynode.hi).to.not.be.ok();
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.Back(-1)._.graph[soul];
+				var node = gun.back(-1)._.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('you');
 			}).on(function(node){
@@ -4713,10 +4712,10 @@ describe('Gun', function(){
 			}).put({hi: 'overwritten'}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.Back(-1)._.graph[soul];
+				var node = gun.back(-1)._.graph[soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('overwritten');
 				done.w = 1; if(done.r){ done(); done.c = 1 };
@@ -4804,10 +4803,10 @@ describe('Gun', function(){
 			}).path('hi').put('again', function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var node = gun.Back(-1)._.graph[done.sub = soul];
+				var node = gun.back(-1)._.graph[done.sub = soul];
 				expect(node.hello).to.be('key');
 				expect(node.hi).to.be('again');
 				done.w = 1; if(done.r){ done(); done.c = 1 };
@@ -4829,15 +4828,15 @@ describe('Gun', function(){
 			}).path('hi').put({yay: "value"}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var root = gun.Back(-1)._.graph[soul];
+				var root = gun.back(-1)._.graph[soul];
 				expect(root.hello).to.be('key');
 				expect(root.yay).to.not.be.ok();
 				expect(Gun.val.rel.is(root.hi)).to.be.ok();
 				expect(Gun.val.rel.is(root.hi)).to.not.be(soul);
-				var node = gun.Back(-1)._.graph[Gun.val.rel.is(root.hi)];
+				var node = gun.back(-1)._.graph[Gun.val.rel.is(root.hi)];
 				expect(node.yay).to.be('value');
 				if(done.sub){ expect(done.sub).to.be(Gun.val.rel.is(root.hi)) }
 				else { done.sub = Gun.val.rel.is(root.hi) }
@@ -5103,11 +5102,11 @@ describe('Gun', function(){
 			g.path('hi').put({happy: "faces"}, function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var root = gun.Back(-1)._.graph[soul];
-				var sub = gun.Back(-1)._.graph[done.ref];
+				var root = gun.back(-1)._.graph[soul];
+				var sub = gun.back(-1)._.graph[done.ref];
 				expect(root.hello).to.be('key');
 				expect(root.yay).to.not.be.ok();
 				expect(Gun.node.soul(sub)).to.be(done.ref);
@@ -5136,11 +5135,11 @@ describe('Gun', function(){
 			}).path('hi').put('crushed', function(err, ok){
 				if(done.c){ return }
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph[done.soul], soul;
+				var keynode = gun.back(-1)._.graph[done.soul], soul;
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
-				var root = gun.Back(-1)._.graph[soul];
-				var sub = gun.Back(-1)._.graph[done.ref];
+				var root = gun.back(-1)._.graph[soul];
+				var sub = gun.back(-1)._.graph[done.ref];
 				expect(root.hello).to.be('key');
 				expect(root.yay).to.not.be.ok();
 				expect(Gun.node.soul(sub)).to.be(done.ref);
@@ -5465,8 +5464,8 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 			}).val(function(val){
 				setTimeout(function(){ // TODO: Is this cheating? I don't think so cause we are using things outside of the API!
-					var a = gun.Back(-1)._.graph[Gun.val.rel.is(val.a)];
-					var b = gun.Back(-1)._.graph[Gun.val.rel.is(val.b)];
+					var a = gun.back(-1)._.graph[Gun.val.rel.is(val.a)];
+					var b = gun.back(-1)._.graph[Gun.val.rel.is(val.b)];
 					expect(Gun.val.rel.is(val.a)).to.be(Gun.node.soul(a));
 					expect(Gun.val.rel.is(val.b)).to.be(Gun.node.soul(b));
 					expect(Gun.val.rel.is(a.kid)).to.be(Gun.node.soul(b));
@@ -5577,7 +5576,7 @@ describe('Gun', function(){
 			}).path('wife.pet.name').val(function(val){
 				//console.debug(1, "*****************", val);
 				expect(val).to.be('Hobbes');
-			}).back.path('pet.master').val(function(val){
+			}).back().path('pet.master').val(function(val){
 				//console.log("*****************", val);
 				expect(val.name).to.be("Amber Nadal");
 				expect(val.phd).to.be.ok();
@@ -5750,7 +5749,7 @@ describe('Gun', function(){
 				//expect(a['_']['key']).to.be.ok();
 				gun.get('user/beth').put({friend: a}, function(err, ok){ // b - friend_of -> a
 					expect(err).to.not.be.ok();
-					var keynode = gun.Back(-1)._.graph['user/alfred'];
+					var keynode = gun.back(-1)._.graph['user/alfred'];
 					var c = soulnode(gun, keynode), soul = c[0];
 					expect(c.length).to.be(1);
 				});
@@ -5796,7 +5795,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.key('me', function(err, ok){
 				expect(err).to.not.be.ok();
-				var keynode = gun.Back(-1)._.graph['me'];
+				var keynode = gun.back(-1)._.graph['me'];
 				var c = soulnode(gun, keynode), soul = c[0];
 				expect(c.length).to.be(1);
 
@@ -6984,7 +6983,7 @@ describe('Gun', function(){
 			passengers.map().path('direction.lol').val(function(val){
 				this.path('just').val(function(val){
 					expect(val).to.be('kidding');
-				}).back.path('dude').val(function(val){
+				}).back().path('dude').val(function(val){
 					expect(val).to.be('!');
 					done();
 				});
@@ -7125,7 +7124,7 @@ describe('Gun', function(){
 			gun
 				.path('history')
 				.put(null)
-				.back
+				.back()
 				.path('taken')
 				.put(false)
 
@@ -7322,7 +7321,7 @@ describe('Gun', function(){
 										cb(at, at.soul);
 							//first = performance.now() - start;(first > .05) && console.log('here');
 									};
-									($.empty && !$.field)? path() : chain.back.path(at.path || [], path, {once: true, end: true}); // TODO: clean this up.
+									($.empty && !$.field)? path() : chain.back().path(at.path || [], path, {once: true, end: true}); // TODO: clean this up.
 								}
 								//var diff1 = (first - start), diff2 = (second - first), diff3 = (third - second);
 								//(diff1 || diff2 || diff3) && console.log(diff1, '    ', diff2,  '    ', diff3);
@@ -7785,9 +7784,9 @@ describe('Gun', function(){
 			users.set(carl);
 			users.set(dave);
 
-			alice.path('friends').set(bob).back.set(carl);
+			alice.path('friends').set(bob).back().set(carl);
 			bob.path('friends').set(alice);
-			dave.path('friends').set(alice).back.set(carl);
+			dave.path('friends').set(alice).back().set(carl);
 
 			var team = gun.get('team/lions').put({name: "Lions"});
 			team.path('members').set(alice);

@@ -131,7 +131,7 @@ function Mesh(ctx){
 				if(put){ (msg = Type.obj.to(msg)).put = _ }
 			}
 			var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
-				to.push[p.url || p.id]; if(++i > 9){ return true } // limit server, fast fix, improve later!
+				to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 			}); msg['><'] = to.join();
 			var raw = $(msg);
 			if(u !== put){

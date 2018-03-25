@@ -6,8 +6,8 @@ var Gun = require('./root');
 Gun.chain.chain = function(){
 	var at = this._, chain = new this.constructor(this), cat = chain._, root;
 	cat.root = root = at.root;
-	cat.id = ++root._.once;
-	cat.back = this;
+	cat.id = ++root.once;
+	cat.back = this._;
 	cat.on = Gun.on;
 	cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 	cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
@@ -15,7 +15,7 @@ Gun.chain.chain = function(){
 }
 
 function output(msg){
-	var put, get, at = this.as, back = at.back._, root = at.root._;
+	var put, get, at = this.as, back = at.back, root = at.root;
 	if(!msg.gun){ msg.gun = at.gun }
 	this.to.next(msg);
 	if(get = msg.get){
@@ -53,7 +53,7 @@ function output(msg){
 		if(get['.']){
 			if(at.get){
 				msg = {get: {'.': at.get}, gun: at.gun};
-				(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
+				(back.ask || (back.ask = {}))[at.get] = msg.gun._; // TODO: PERFORMANCE? More elegant way?
 				return back.on('out', msg);
 			}
 			msg = {get: {}, gun: at.gun};
@@ -63,7 +63,7 @@ function output(msg){
 		if(at.get){
 			msg.gun = at.gun;
 			get['.'] = at.get;
-			(back.ask || (back.ask = {}))[at.get] = msg.gun; // TODO: PERFORMANCE? More elegant way?
+			(back.ask || (back.ask = {}))[at.get] = msg.gun._; // TODO: PERFORMANCE? More elegant way?
 			return back.on('out', msg);
 		}
 	}
@@ -121,7 +121,7 @@ function input(msg){
 			cat.put = at.put;
 		};
 		if((rel = Gun.node.soul(change)) && at.has){
-			at.put = (cat.root.get(rel)._).put;
+			at.put = (cat.root.gun.get(rel)._).put;
 		}
 		ev.to.next(msg);
 		echo(cat, msg, ev);
@@ -136,7 +136,7 @@ function input(msg){
 
 function relate(at, msg, from, rel){
 	if(!rel || node_ === at.get){ return }
-	var tmp = (at.root.get(rel)._);
+	var tmp = (at.root.gun.get(rel)._);
 	if(at.has){
 		from = tmp;
 	} else 
@@ -149,8 +149,8 @@ function relate(at, msg, from, rel){
 		not(at, msg);
 	}
 	tmp = (at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from};
-	var now = at.root._.now;
-	//now = now || at.root._.stop;
+	var now = at.root.now;
+	//now = now || at.root.stop;
 	if(rel === tmp.rel){
 		// NOW is a hack to get synchronous replies to correctly call.
 		// and STOP is a hack to get async behavior to correctly call.
@@ -158,7 +158,7 @@ function relate(at, msg, from, rel){
 		// but for now, this works for current tests. :/
 		if(!now){
 			return;
-			/*var stop = at.root._.stop;
+			/*var stop = at.root.stop;
 			if(!stop){ return }
 			if(stop[at.id] === rel){ return }
 			stop[at.id] = rel;*/
@@ -179,20 +179,19 @@ function reverb(to){
 	to.on('in', this);
 }
 function map(data, key){ // Map over only the changes on every update.
-	var cat = this.cat, next = cat.next || empty, via = this.at, gun, chain, at, tmp;
+	var cat = this.cat, next = cat.next || empty, via = this.at, chain, at, tmp;
 	if(node_ === key && !next[key]){ return }
-	if(!(gun = next[key])){
+	if(!(at = next[key])){
 		return;
 	}
-	at = (gun._);
-	//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.get(tmp)._)) && obj_has(tmp, 'put')){
+	//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.gun.get(tmp)._)) && obj_has(tmp, 'put')){
 	//	data = tmp.put;
 	//}
 	if(at.has){
 		if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
 			at.put = data;
 		}
-		chain = gun;
+		chain = at.gun;
 	} else {
 		chain = via.gun.get(key);
 	}
@@ -205,7 +204,7 @@ function map(data, key){ // Map over only the changes on every update.
 }
 function not(at, msg){
 	if(!(at.has || at.soul)){ return }
-	var tmp = at.map, root = at.root._;
+	var tmp = at.map, root = at.root;
 	at.map = null;
 	if(!root.now || !root.now[at.id]){
 		if((!msg['@']) && null === tmp){ return }
@@ -215,29 +214,28 @@ function not(at, msg){
 		if(!(proxy = proxy.at)){ return }
 		obj_del(proxy.echo, at.id);
 	});
-	obj_map(at.next, function(gun, key){
-		var coat = (gun._);
-		coat.put = u;
-		if(coat.ack){
-			coat.ack = -1;
+	obj_map(at.next, function(neat, key){
+		neat.put = u;
+		if(neat.ack){
+			neat.ack = -1;
 		}
-		coat.on('in', {
+		neat.on('in', {
 			get: key,
-			gun: gun,
+			gun: neat.gun,
 			put: u
 		});
 	});
 }
 function ask(at, soul){
-	var tmp = (at.root.get(soul)._);
+	var tmp = (at.root.gun.get(soul)._);
 	if(at.ack){
 		tmp.on('out', {get: {'#': soul}});
 		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}
-	obj_map(at.ask || at.next, function(gun, key){
+	obj_map(at.ask || at.next, function(neat, key){
 		//(tmp.gun.get(key)._).on('out', {get: {'#': soul, '.': key}});
 		//tmp.on('out', {get: {'#': soul, '.': key}});
-		(gun._).on('out', {get: {'#': soul, '.': key}});
+		neat.on('out', {get: {'#': soul, '.': key}});
 		//at.on('out', {get: {'#': soul, '.': key}});
 	});
 	Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
@@ -262,9 +260,9 @@ function ack(msg, ev){
 	}
 	//if(/*!msg.gun &&*/ !get['.'] && get['#']){ at.ack = (at.ack + 1) || 1 }
 	//msg = obj_to(msg);
-	msg.gun = at.root;
+	msg.gun = at.root.gun;
 	//Gun.on('put', at);
-	Gun.on.put(msg, at.root);
+	Gun.on.put(msg, at.root.gun);
 }
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
