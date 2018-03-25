@@ -6,9 +6,9 @@ Gun.chain.set = function(item, cb, opt){
 	opt = opt || {}; opt.item = opt.item || item;
 	if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 	if(!Gun.is(item)){
-		var id = gun._.root._.opt.uuid();
+		var id = gun._.root.opt.uuid();
 		if(id && Gun.obj.is(item)){
-			return gun.set(gun._.root.put(item, id), cb, opt);
+			return gun.set(gun._.root.gun.put(item, id), cb, opt);
 		}
 		return gun.get(id || (Gun.state.lex() + Gun.text.random(12))).put(item, cb, opt);
 	}
@@ -16,7 +16,7 @@ Gun.chain.set = function(item, cb, opt){
 		if(!at.gun || !at.gun._.back){ return }
 		ev.off();
 		var soul = (at.put||{})['#'];
-		at = (at.gun._.back._);
+		at = (at.gun._.back);
 		var put = {}, node = at.put;
 		soul = at.soul || Gun.node.soul(node) || soul;
 		if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }

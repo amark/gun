@@ -26,7 +26,7 @@ Gun.dup = require('./dup');
 
 ;(function(){
 	Gun.create = function(at){
-		at.root = at.root || at.gun;
+		at.root = at.root || at;
 		at.graph = at.graph || {};
 		at.on = at.on || Gun.on;
 		at.ask = at.ask || Gun.ask;
@@ -103,7 +103,7 @@ Gun.dup = require('./dup');
 		var msg = ctx.map[soul] = {
 			put: node,
 			get: soul,
-			gun: at
+			gun: at.gun
 		}, as = {ctx: ctx, msg: msg};
 		ctx.async = !!cat.tag.node;
 		if(ctx.ack){ msg['@'] = ctx.ack }
@@ -144,7 +144,7 @@ Gun.dup = require('./dup');
 
 	Gun.on.get = function(msg, gun){
 		var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
-		var next = root.next || (root.next = {}), at = ((next[soul] || empty)._);
+		var next = root.next || (root.next = {}), at = next[soul];
 		if(!node || !at){ return root.on('get', msg) }
 		if(has){
 			if(!obj_has(node, has)){ return root.on('get', msg) }
