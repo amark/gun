@@ -48,7 +48,6 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "aws-sdk": ">=2.153.0",
     "ws": "~>4.0.0"
   },
   "devDependencies": {
@@ -66,6 +65,7 @@
     "panic-server": "^1.1.1",
     "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22",
-    "uws": "~>0.14.1"
+    "uws": "~>0.14.1",
+    "aws-sdk": ">=2.153.0"
   }
 }
