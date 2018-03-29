@@ -1803,7 +1803,7 @@
 	})(USE, './adapters/localStorage');
 
 	;USE(function(module){
-		var Type = USE('./type');
+		var Type = USE('../type');
 
 		function Mesh(ctx){
 			var mesh = function(){};

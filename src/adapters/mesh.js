@@ -1,5 +1,5 @@
 
-var Type = require('./type');
+var Type = require('../type');
 
 function Mesh(ctx){
 	var mesh = function(){};
