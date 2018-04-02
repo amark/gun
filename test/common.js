@@ -2956,6 +2956,13 @@ describe('Gun', function(){
 			});
 		});
 
+		it('put null on nested get calls callback', function(done) {
+			var gun = Gun();
+			gun.get('parent').get('child').put(null, function() {
+			  done();
+			});
+		});
+
 		it('get node after recursive field', function(done){
 			var s = Gun.state.map();s.soul = 'node/circle';
 			var bob = {age: 29, name: "Bob!"};
@@ -2982,13 +2989,13 @@ describe('Gun', function(){
 
 			var parent = gun.get('parent');
 			var child = gun.get('child');
-			
+
 			child.put({
 				way: 'down'
 			});
-			
+
 			parent.get('sub').put(child);
-			
+
 			parent.get('sub').on(function(data){
 				//console.log("sub", data);
 				done.sub = data;
@@ -3426,7 +3433,7 @@ describe('Gun', function(){
 			}, s)});
 
 			var app = gun.get(s.soul);
-			
+
 			//console.debug.i=1;console.log("===================");
 			app.get('alias').get('mark').map().val(function(alias){
 				//console.log("***", alias);
@@ -3562,7 +3569,7 @@ describe('Gun', function(){
 
 			var bb = b.get("key");
 			bb.put({msg: "hello"});
-				
+
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
@@ -3604,11 +3611,11 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('ds/safe').put({a: 1});
-			
+
 			gun.get('ds/safe').on(function(data){
 				data.b = 2;
 			});
-			
+
 			gun.get('ds/safe').val(function(data){
 				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
@@ -3776,7 +3783,7 @@ describe('Gun', function(){
 					clearTimeout(many);
 			  	expect(Gun.num.is(diff)).to.be.ok();
 			  	if(done.c){ return } done.c = 1;
-			  	done(); 
+			  	done();
 			  	return;
 			  }
 			  prev = Gun.time.is();
@@ -3790,7 +3797,7 @@ describe('Gun', function(){
 		});
 		return;
 		it('Nested listener should be called', function(done){
-			
+
 			var gun = Gun();
 			/*
 			var app = gun.get('nl/app').get('bar');
@@ -3815,10 +3822,10 @@ describe('Gun', function(){
 			});
 
 			setTimeout(function(){
-			  
+
 			  console.log("Huh?");
 			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
-			  
+
 			},100);
 		});
 		return;
@@ -3852,7 +3859,7 @@ describe('Gun', function(){
 			      context._.valid = false;
 			      chain._.on('in', {get: key, gun: this});
 			      return false;
-			    } else { 
+			    } else {
 			     _tags = Gun.obj.ify(obj.tags);
 			      if(Array.isArray(filter)){
 			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
