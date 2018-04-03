@@ -31,6 +31,10 @@ button, input, textarea {
   color: black;
 }
 
+a {
+  color: white;
+}
+
 input, textarea {
 	width: 100%;
 }
@@ -66,6 +70,9 @@ ul, li {
   margin-left: auto;
   margin-right: auto; 
 }
+.flush {
+  line-height: 0em;
+}
 
 .sit { margin-bottom: 0; }
 .row { width: 100%; }
@@ -87,6 +94,10 @@ ul, li {
 }
 .gap {
   padding: 3%;
+}
+.ditch {
+  margin-top: 2em;
+  margin-bottom: 2em;
 }
 
 .loud {
@@ -143,17 +154,6 @@ ul, li {
 }
 .whitet {
 	color: white;
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse
-{
-  0% {opacity: 1;}
-  50% {opacity: 0.5;}
-  100% {opacity: 1;}
 }
 
 .hue {
@@ -314,4 +314,15 @@ ul, li {
   50%  {color: #4D79D8;}
   75%	 {color: #33cc33;}
   100% {color: #f2b919;}
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse
+{
+  0% {opacity: 1;}
+  50% {opacity: 0.5;}
+  100% {opacity: 1;}
 }
