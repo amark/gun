@@ -95,6 +95,7 @@
 		as.lock = g;
 		g.put(data);
 	}, 99));
+	$(document).on('submit', 'form', function(e){ e.preventDefault() });
 	var u;
 	window.as = as;
 	$.as = as;
@@ -113,8 +114,10 @@
 		var h = href.split('/')[0];
 		$('.page').hide();
 		$('#' + h).show();
+		if(r.on === h){ return }
 		location.hash = href;
 		(r.page[h] || {on:function(){}}).on();
+		r.on = h;
 		return r;
 	};
 	r.page = function(h, cb){
