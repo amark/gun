@@ -1,26 +1,33 @@
 
-    var authPersist = require('./persist');
+    const authPersist = require('./persist')
     // This internal func finalizes User authentication
-    const finalizeLogin = async (alias, key, root, opts) => {
-      const { user } = root._
+    const finalizeLogin = async (alias, key, gunRoot, opts) => {
+      const { user } = gunRoot._
       // add our credentials in-memory only to our root gun instance
       user._ = key.at.gun._
       // so that way we can use the credentials to encrypt/decrypt data
-      user._.is = user.is = {}
       // that is input/output through gun (see below)
       const { pub, priv, epub, epriv } = key
+      user._.is = user.is = {alias: alias, pub: pub};
       Object.assign(user._, { alias, pub, epub, sea: { pub, priv, epub, epriv } })
       //console.log("authorized", user._);
       // persist authentication
-      await authPersist(user._, key.proof, opts)
-      // emit an auth event, useful for page redirects and stuff.
+      //await authPersist(user._, key.proof, opts) // temporarily disabled
+      // emit an auth event, useful for page redirects and stuff.  
+    if(typeof window !== 'undefined'){
+      var tmp = window.sessionStorage;
+      if(tmp && gunRoot._.opt.remember){
+        window.sessionStorage.alias = alias;
+        window.sessionStorage.tmp = key;
+      }
+    }
       try {
-        root._.on('auth', user._)
+        gunRoot._.on('auth', user._)
       } catch (e) {
         console.log('Your \'auth\' callback crashed with:', e)
       }
       // returns success with the user data credentials.
       return user._
     }
-    module.exports = finalizeLogin;
+    module.exports = finalizeLogin
   

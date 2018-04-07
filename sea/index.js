@@ -1,6 +1,6 @@
 
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
-    var SEA = require('./sea');
+    const SEA = require('./sea')
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
@@ -9,12 +9,11 @@
         at.sea = {own: {}};
         var uuid = at.opt.uuid || Gun.state.lex;
         at.opt.uuid = function(cb){ // TODO: consider async/await and drop callback pattern...
-          if(!cb){ return }
-          var id = uuid(), pair = at.user && (at.user._).sea;
-          if(!pair){ return id }
-          SEA.sign(id, pair).then(function(sig){
-            cb(null, id + '~' + sig);
-          }).catch(function(e){cb(e)});
+          var id = uuid(), pub = at.user;
+          if(!pub || !(pub = at.user._.sea) || !(pub = pub.pub)){ return id }
+          id = id + '~' + pub;
+          if(cb){ cb(null, id) }
+          return id;
         }
         at.on('in', security, at); // now listen to all input data, acting as a firewall.
         at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
@@ -42,7 +41,7 @@
       var to = this.to, vertex = (msg.gun._).put, c = 0, d;
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
-        SEA.read(val, false).then(function(data){ c--; // false just extracts the plain data.
+        SEA.verify(val, false).then(function(data){ c--; // false just extracts the plain data.
           node[key] = val = data; // transform to plain value.
           if(d && !c && (c = -1)){ to.next(msg) }
         });
@@ -50,19 +49,6 @@
       d = true;
       if(d && !c){ to.next(msg) }
       return;
-      /*var to = this.to, ctx = this.as;
-      var own = ctx.sea.own, soul = msg.get, c = 0;
-      var pub = own[soul] || soul.slice(4), vertex = (msg.gun._).put;
-      Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node.
-        SEA.read(val, pub).then(function(data){ c--;
-          vertex[key] = node[key] = val = data; // verify signature and get plain value.
-          if(val && val['#'] && (key = Gun.val.rel.is(val))){ // if it is a relation / edge
-            if('alias/' !== soul.slice(0,6)){ own[key] = pub; } // associate the public key with a node if it is itself
-          }
-          if(!c && (c = -1)){ to.next(msg) }
-        });
-      });
-      if(!c){ to.next(msg) }*/
     }
 
     // signature handles data output, it is a proxy to the security function.
@@ -96,7 +82,7 @@
       }
       if(msg.put){
         // potentially parallel async operations!!!
-        var check = {}, on = Gun.on(), each = {}, u;
+        var check = {}, each = {}, u;
         each.node = function(node, soul){
           if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them.
           Gun.obj.map(node, each.way, {soul: soul, node: node});
@@ -115,15 +101,6 @@
           }
           each.any(val, key, node, soul, msg.user); return;
           return each.end({err: "No other data allowed!"});
-          /*if(!(tmp = at.user)){ return }
-          if(soul.slice(4) === (tmp = tmp._).pub){ // not a special case, if we are logged in and have outbound data on us.
-            each.user(val, key, node, soul, {
-              pub: tmp.pub, priv: tmp.sea.priv, epub: tmp.sea.epub, epriv: tmp.sea.epriv
-            });
-          }
-          if((tmp = sea.own[soul])){ // not special case, if we receive an update on an ID associated with a public key, then
-            each.own(val, key, node, soul, tmp);
-          }*/
         };
         each.alias = function(val, key, node, soul){ // Example: {_:#alias, alias/alice: {#alias/alice}}
           if(!val){ return each.end({err: "Data must exist!"}) } // data MUST exist
@@ -142,8 +119,8 @@
           }
           check['user'+soul+key] = 1;
           if(user && (user = user._) && user.sea && pub === user.pub){
-              var id = Gun.text.random(3);
-            SEA.write(val, Gun.obj.to(user.sea, {pub: user.pub, epub: user.epub})).then(function(data){ var rel;
+            //var id = Gun.text.random(3);
+            SEA.sign(val, user.sea).then(function(data){ var rel;
               if(rel = Gun.val.rel.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
               }
@@ -151,42 +128,33 @@
               check['user'+soul+key] = 0;
               each.end({ok: 1});
             });
+            // TODO: Handle error!!!!
             return;
           }
           // TODO: consider async/await and drop callback pattern...
-          SEA.read(val, pub).then(function(data){ var rel, tmp;
+          SEA.verify(val, pub).then(function(data){ var rel, tmp;
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
             if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-              SEA.verify(tmp[0], pub, tmp[1]).then(function(ok){
-                if(!ok){ return each.end({err: "Signature did not match account."}) }
+              if(pub === tmp[1]){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
-                check['user'+soul+key] = 0;
-                each.end({ok: 1});
-              });
-              return;
+              }
             }
             check['user'+soul+key] = 0;
             each.end({ok: 1});
           });
         };
-        each.any = function(val, key, node, soul, user){ var tmp;
+        each.any = function(val, key, node, soul, user){ var tmp, pub;
           if(!user || !(user = user._) || !(user = user.sea)){
-            if(user = at.sea.own[soul]){
+            if((tmp = soul.split('~')) && 2 == tmp.length){
               check['any'+soul+key] = 1;
-              user = Gun.obj.map(user, function(a,b){ return b });
-              // TODO: consider async/await and drop callback pattern...
-              SEA.read(val, user).then(function(data){ var rel;
-                if(!data){ return each.end({err: "Mismatched owner on '" + key + "'.", }) }
+              SEA.verify(val, (pub = tmp[1])).then(function(data){ var rel;
+                if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
                 if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-                  SEA.verify(tmp[0], user, tmp[1]).then(function(ok){
-                    if(!ok){ return each.end({err: "Signature did not match account."}) }
-                    (at.sea.own[rel] = at.sea.own[rel] || {})[user] = true;
-                    check['any'+soul+key] = 0;
-                    each.end({ok: 1});
-                  });
-                  return;
+                  if(pub === tmp[1]){
+                    (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+                  }
                 }
                 check['any'+soul+key] = 0;
                 each.end({ok: 1});
@@ -194,12 +162,6 @@
               return;
             }
             check['any'+soul+key] = 1;
-            if((tmp = soul.split('~')) && 2 == tmp.length){
-              setTimeout(function(){ // hacky idea, what would be better?
-                each.any(val, key, node, soul);
-              },1);
-              return;
-            }
             at.on('secure', function(msg){ this.off();
               check['any'+soul+key] = 0;
               each.end(msg || {err: "Data cannot be modified."});
@@ -208,26 +170,26 @@
             return;
           }
           if(!(tmp = soul.split('~')) || 2 !== tmp.length){
-            each.end({err: "Soul is not signed at '" + key + "'."});
+            each.end({err: "Soul is missing public key at '" + key + "'."});
             return;
           }
-          var other = Gun.obj.map(at.sea.own[soul], function(v, p){
+          var pub = tmp[1];
+          if(pub !== user.pub){
+            each.any(val, key, node, soul);
+            return;
+          }
+          /*var other = Gun.obj.map(at.sea.own[soul], function(v, p){
             if(user.pub !== p){ return p }
           });
           if(other){
             each.any(val, key, node, soul);
             return;
-          }
+          }*/
           check['any'+soul+key] = 1;
-          // TODO: consider async/await and drop callback pattern...
-          SEA.verify(tmp[0], user.pub, tmp[1]).then(function(ok){
-            if(!ok){ return each.end({err: "Signature did not match account at '" + key + "'."}) }
-            (at.sea.own[soul] = at.sea.own[soul] || {})[user.pub] = true;
-            SEA.write(val, user).then(function(data){
-              node[key] = data;
-              check['any'+soul+key] = 0;
-              each.end({ok: 1});
-            });
+          SEA.sign(val, user).then(function(data){
+            node[key] = data;
+            check['any'+soul+key] = 0;
+            each.end({ok: 1});
           });
         }
         each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
