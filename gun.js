@@ -1374,7 +1374,6 @@
 				var tmp = cat.root.now; obj.del(cat.root, 'now'); cat.root.PUT = true;
 				var tmp2 = cat.root.stop;
 				(as.ref._).now = true;
-				console.log("PUT!", as.env.graph);
 				(as.ref._).on('out', {
 					gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});

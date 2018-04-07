@@ -13,7 +13,7 @@ body {
 	font-size: 18pt;
 }
 
-div, ul, li, p, span, form, button, input, textarea {
+div, ul, ol, li, p, span, form, button, input, textarea {
   margin: 0;
   padding: 0;
   position: relative;
@@ -74,6 +74,17 @@ ul, li {
   line-height: 0em;
 }
 
+.rim {
+  margin: 2%;
+}
+.gap {
+  padding: 3%;
+}
+.ditch {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
 .sit { margin-bottom: 0; }
 .row { width: 100%; }
 .col { max-width: 33em; }
@@ -87,17 +98,6 @@ ul, li {
 }
 .symbol {
   display: inline-block;
-}
-
-.rim {
-  margin: 2%;
-}
-.gap {
-  padding: 3%;
-}
-.ditch {
-  margin-top: 2em;
-  margin-bottom: 2em;
 }
 
 .loud {
