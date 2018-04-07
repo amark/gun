@@ -1,8 +1,9 @@
 
     // TODO: BUG! `SEA` needs to be USED!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
-    var authsettings = require('./settings');
-    var seaIndexedDb = require('./indexed').scope;
+    const authsettings = require('./settings')
+    const SEA = require('./sea');
+    //const { scope: seaIndexedDb } = require('./indexed')
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
     const updateStorage = (proof, key, pin) => async (props) => {
       if (!Gun.obj.has(props, 'alias')) {
@@ -16,16 +17,16 @@
         const remember = { alias, pin }
 
         try {
-          const signed = await SEA.write(JSON.stringify(remember), key)
+          const signed = await SEA.sign(JSON.stringify(remember), key)
 
           sessionStorage.setItem('user', alias)
           sessionStorage.setItem('remember', signed)
 
-          const encrypted = await SEA.enc(props, pin)
+          const encrypted = await SEA.encrypt(props, pin)
 
           if (encrypted) {
-            const auth = await SEA.write(encrypted, key)
-            await seaIndexedDb.wipe()
+            const auth = await SEA.sign(encrypted, key)
+            await seaIndexedDb.wipe() // NO! Do not do this. It ruins other people's sessionStorage code. This is bad/wrong, commenting it out.
             await seaIndexedDb.put(id, { auth })
           }
 
@@ -36,12 +37,12 @@
       }
 
       // Wiping IndexedDB completely when using random PIN
-      await seaIndexedDb.wipe()
+      await seaIndexedDb.wipe() // NO! Do not do this. It ruins other people's sessionStorage code. This is bad/wrong, commenting it out.
       // And remove sessionStorage data
       sessionStorage.removeItem('user')
       sessionStorage.removeItem('remember')
 
       return props
     }
-    module.exports = updateStorage;
+    module.exports = updateStorage
   
