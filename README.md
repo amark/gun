@@ -78,7 +78,7 @@ gun.get('mark').get('boss').get('name').val(function(data, key){
 });
 
 // traverse a graph of circular references!
-gun.get('mark').get('boss').get('slave').val(function(data, key){
+gun.get('mark').get('boss').get('slave').once(function(data, key){
   console.log("Mark is the slave!", data);
 });
 
@@ -87,7 +87,7 @@ gun.get('list').set(gun.get('mark').get('boss'));
 gun.get('list').set(gun.get('mark'));
 
 // grab each item once from the table, continuously:
-gun.get('list').map().val(function(data, key){
+gun.get('list').map().once(function(data, key){
   console.log("Item:", data);
 });
 
