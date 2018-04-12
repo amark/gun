@@ -30,7 +30,7 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 ## Why?
 
- - **Realtime** - You might use socketio for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
+ - **Realtime** - You might use Socket.IO for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
  - **Distributed** - GUN is peer-to-peer by design, meaning you have no centralized database server to maintain or that could crash. This lets you sleep through the night without worrying about database DevOps - we call it "NoDB". From there, you can build decentralized, federated, or centralized apps.
  - **Offline-first** - GUN works even if your internet or cell reception doesn't. Users can still plug away and save data as normal, and then when the network comes back online GUN will automatically synchronize all the changes and handle any conflicts for you.
  - **Graph** - Most databases force you to bend over backwards to match their storage constraints. But graphs are different, they let you have any data structure you want. Whether that be traditional tables with relations, document oriented trees, or tons of circular references. You choose.
@@ -204,7 +204,7 @@ Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
 
 ```bash
 npm run docker
-docker run -p 8080:8080 usenameHere/gun:git
+docker run -p 8080:8080 username/gun:git
 ```
 
 Then visit [http://localhost:8080](http://localhost:8080) in your browser.
