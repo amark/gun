@@ -703,6 +703,13 @@
           const { epub } = at.put
           // TODO: 'salt' needed?
           err = null
+          if(typeof window !== 'undefined'){
+            var tmp = window.sessionStorage;
+            if(tmp && gunRoot._.opt.remember){
+              window.sessionStorage.alias = alias;
+              window.sessionStorage.tmp = pass;
+            }
+          }
           return Object.assign(props, { priv, salt, epub, epriv })
         } catch (e) {
           err = 'Failed to decrypt secret!'
@@ -821,13 +828,6 @@
       // persist authentication
       //await authPersist(user._, key.proof, opts) // temporarily disabled
       // emit an auth event, useful for page redirects and stuff.  
-    if(typeof window !== 'undefined'){
-      var tmp = window.sessionStorage;
-      if(tmp && gunRoot._.opt.remember){
-        window.sessionStorage.alias = alias;
-        window.sessionStorage.tmp = key;
-      }
-    }
       try {
         gunRoot._.on('auth', user._)
       } catch (e) {
@@ -1141,8 +1141,8 @@
               const salt = Gun.text.random(64);
               const encSigAuth = await SEA.work(newpass, salt)
               .then((key) =>
-                SEA.encrypt({ priv, epriv }, { pub, key, set: true })
-                .then((auth) => SEA.sign({ salt, auth }, keys))
+                SEA.encrypt({ priv, epriv }, key)
+                .then((auth) => SEA.sign({ek: auth, s: salt}, keys))
               )
               const signedEpub = await SEA.sign(epub, keys)
               const signedAlias = await SEA.sign(alias, keys)

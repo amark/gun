@@ -167,7 +167,7 @@
 					if(!at.put || !at.put.users){ return }
 					var no;
 					Gun.node.is(at.put.users, function(val, key){
-						Gun.SEA.read(val, false, function(val){
+						Gun.SEA.verify(val, false, function(val){
 						//Gun.SEA.read(val, false, function(val){
 							if('alias/'+key === Gun.val.rel.is(val)){ return }
 							no = true;

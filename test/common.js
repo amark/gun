@@ -3784,9 +3784,17 @@ describe('Gun', function(){
 			  //console.log("put", put);
 			  //console.log("------", turns, "-------");
 			  //3 === turns && (console.debug.i = 1);
-			  console.debug(1, 'save', {history: put});
+			  //console.debug(1, 'save', {history: put});
 			  gun.put({history: put});
 			}, 1);
+		});
+
+		it('Check put callback', function(done){
+			var gun = Gun();
+
+			gun.get('c/p/c').get('a').put('lol', function(ack){
+				done();
+			});
 		});
 		return;
 		it('Nested listener should be called', function(done){

@@ -1281,7 +1281,7 @@
 			if(typeof cb === 'string'){
 				as.soul = cb;
 			} else {
-				as.ack = cb;
+				as.ack = as.ack || cb;
 			}
 			if(at.soul){
 				as.soul = at.soul;
