@@ -39,6 +39,13 @@
           const { epub } = at.put
           // TODO: 'salt' needed?
           err = null
+          if(typeof window !== 'undefined'){
+            var tmp = window.sessionStorage;
+            if(tmp && gunRoot._.opt.remember){
+              window.sessionStorage.alias = alias;
+              window.sessionStorage.tmp = pass;
+            }
+          }
           return Object.assign(props, { priv, salt, epub, epriv })
         } catch (e) {
           err = 'Failed to decrypt secret!'

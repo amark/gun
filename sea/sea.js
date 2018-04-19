@@ -65,38 +65,6 @@
         throw e
       }
     }
-    // Derive shared secret from other's pub and my epub/epriv
-    SEA.derive = async (pub, { epub, epriv }) => {
-      try {
-        const ecdhSubtle = ossl || subtle
-        const keysToEcdhJwk = (pub, d) => { // d === priv
-          const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':')
-          const jwk = d ? { d } : {}
-          return [  // Use with spread returned value...
-            'jwk',
-            { ...jwk, x, y, kty: 'EC', crv: 'P-256', ext: true },
-            ecdhKeyProps
-          ]
-        }
-        const pubKeyData = keysToEcdhJwk(pub)
-        const props = {
-          ...ecdhKeyProps,
-          public: await ecdhSubtle.importKey(...pubKeyData, true, [])
-        }
-        const privKeyData = keysToEcdhJwk(epub, epriv)
-        const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
-        .then(async (privKey) => {
-          // privateKey scope doesn't leak out from here!
-          const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
-          return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
-        })
-        return derived
-      } catch (e) {
-        console.log(e)
-        throw e
-      }
-    }
-
     // all done!
     // Obviously it is missing MANY necessary features. This is only an alpha release.
     // Please experiment with it, audit what I've done so far, and complain about what needs to be added.

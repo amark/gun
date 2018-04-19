@@ -138,8 +138,8 @@
               const salt = Gun.text.random(64);
               const encSigAuth = await SEA.work(newpass, salt)
               .then((key) =>
-                SEA.encrypt({ priv, epriv }, { pub, key, set: true })
-                .then((auth) => SEA.sign({ salt, auth }, keys))
+                SEA.encrypt({ priv, epriv }, key)
+                .then((auth) => SEA.sign({ek: auth, s: salt}, keys))
               )
               const signedEpub = await SEA.sign(epub, keys)
               const signedAlias = await SEA.sign(alias, keys)

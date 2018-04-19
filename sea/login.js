@@ -14,13 +14,6 @@
       // persist authentication
       //await authPersist(user._, key.proof, opts) // temporarily disabled
       // emit an auth event, useful for page redirects and stuff.  
-    if(typeof window !== 'undefined'){
-      var tmp = window.sessionStorage;
-      if(tmp && gunRoot._.opt.remember){
-        window.sessionStorage.alias = alias;
-        window.sessionStorage.tmp = key;
-      }
-    }
       try {
         gunRoot._.on('auth', user._)
       } catch (e) {
