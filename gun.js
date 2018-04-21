@@ -657,7 +657,7 @@
 			return Gun.create(this._ = {gun: this, opt: o});
 		}
 
-		Gun.is = function(gun){ return (gun instanceof Gun) }
+		Gun.is = function(gun){ return (gun instanceof Gun) || (gun && gun._ && gun._.gun && true) || false }
 
 		Gun.version = 0.9;
 
@@ -923,11 +923,11 @@
 		// is complicated and was extremely hard to build. If you port GUN to another
 		// language, consider implementing an easier API to build.
 		var Gun = USE('./root');
-		Gun.chain.chain = function(){
-			var at = this._, chain = new this.constructor(this), cat = chain._, root;
+		Gun.chain.chain = function(sub){
+			var gun = this, at = gun._, chain = new (sub || gun).constructor(gun), cat = chain._, root;
 			cat.root = root = at.root;
 			cat.id = ++root.once;
-			cat.back = this._;
+			cat.back = gun._;
 			cat.on = Gun.on;
 			cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 			cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
