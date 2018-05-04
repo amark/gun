@@ -6,7 +6,7 @@ function Gun(o){
 	return Gun.create(this._ = {gun: this, opt: o});
 }
 
-Gun.is = function(gun){ return (gun instanceof Gun) }
+Gun.is = function(gun){ return (gun instanceof Gun) || (gun && gun._ && gun._.gun && true) || false }
 
 Gun.version = 0.9;
 
