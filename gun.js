@@ -361,11 +361,11 @@
 		var Node = USE('./node');
 		function State(){
 			var t;
-			if(perf){
-				t = start + perf.now();
-			} else {
+			/*if(perf){
+				t = start + perf.now(); // Danger: Accuracy decays significantly over time, even if precise.
+			} else {*/
 				t = time();
-			}
+			//}
 			if(last < t){
 				return N = 0, last = t + State.drift;
 			}
@@ -500,7 +500,7 @@
 				if(!(is = valid(v,k,n, at,env))){ return }
 				if(!k){
 					at.node = at.node || n || {};
-					if(obj_has(v, Node._)){
+					if(obj_has(v, Node._)){ // && Node.soul(v) ? for safety ?
 						at.node._ = obj_copy(v._);
 					}
 					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
@@ -1386,6 +1386,7 @@
 		} function no(v,k){ if(v){ return true } }
 
 		function map(v,k,n, at){ var as = this;
+			//if(Gun.is(v)){} // TODO: HANDLE!
 			if(k || !at.path.length){ return }
 			(as.res||iife)(function(){
 				var path = at.path, ref = as.ref, opt = as.opt;

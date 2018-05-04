@@ -1303,6 +1303,44 @@
         })
       }
     }
+    User.prototype.grant = function(to, cb){
+      console.log("`.grant` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
+      var gun = this, user = gun.back(-1).user(), pair = user.pair(), path = '';
+      gun.back(function(at){ if(at.pub){ return } path += (at.get||'') });
+      (async function(){
+      var enc, sec = await user.get('trust').get(pair.pub).get(path).then();
+      sec = await SEA.decrypt(sec, pair);
+      if(!sec){
+        sec = SEA.random(16).toString();
+        enc = await SEA.encrypt(sec, pair);
+        user.get('trust').get(pair.pub).get(path).put(enc);
+      }
+      var pub = to.get('pub').then();
+      var epub = to.get('epub').then();
+      pub = await pub; epub = await epub;
+      var dh = await SEA.secret(epub, pair);
+      enc = await SEA.encrypt(sec, dh);
+      user.get('trust').get(pub).get(path).put(enc, cb);
+      }());
+      return gun;
+    }
+    User.prototype.secret = function(data, cb){
+      console.log("`.secret` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
+      var gun = this, user = gun.back(-1).user(), pair = user.pair(), path = '';
+      gun.back(function(at){ if(at.pub){ return } path += (at.get||'') });
+      (async function(){
+      var enc, sec = await user.get('trust').get(pair.pub).get(path).then();
+      sec = await SEA.decrypt(sec, pair);
+      if(!sec){
+        sec = SEA.random(16).toString();
+        enc = await SEA.encrypt(sec, pair);
+        user.get('trust').get(pair.pub).get(path).put(enc);
+      }
+      enc = await SEA.encrypt(data, sec);
+      gun.put(enc, cb);
+      }());
+      return gun;
+    }
     module.exports = User
   })(USE, './create');
 
@@ -1320,7 +1358,7 @@
           var id = uuid(), pub = at.user;
           if(!pub || !(pub = at.user._.sea) || !(pub = pub.pub)){ return id }
           id = id + '~' + pub;
-          if(cb){ cb(null, id) }
+          if(cb && cb.call){ cb(null, id) }
           return id;
         }
         at.on('in', security, at); // now listen to all input data, acting as a firewall.
@@ -1428,7 +1466,8 @@
           check['user'+soul+key] = 1;
           if(user && (user = user._) && user.sea && pub === user.pub){
             //var id = Gun.text.random(3);
-            SEA.sign(val, user.sea).then(function(data){ var rel;
+            SEA.sign(val, user.sea, function(data){ var rel;
+              if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
               if(rel = Gun.val.rel.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
               }
@@ -1440,7 +1479,7 @@
             return;
           }
           // TODO: consider async/await and drop callback pattern...
-          SEA.verify(val, pub).then(function(data){ var rel, tmp;
+          SEA.verify(val, pub, function(data){ var rel, tmp;
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
@@ -1457,7 +1496,7 @@
           if(!user || !(user = user._) || !(user = user.sea)){
             if((tmp = soul.split('~')) && 2 == tmp.length){
               check['any'+soul+key] = 1;
-              SEA.verify(val, (pub = tmp[1])).then(function(data){ var rel;
+              SEA.verify(val, (pub = tmp[1]), function(data){ var rel;
                 if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
                 if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
                   if(pub === tmp[1]){
@@ -1472,13 +1511,29 @@
             check['any'+soul+key] = 1;
             at.on('secure', function(msg){ this.off();
               check['any'+soul+key] = 0;
+              if(at.opt.secure){ msg = null }
               each.end(msg || {err: "Data cannot be modified."});
             }).on.on('secure', msg);
             //each.end({err: "Data cannot be modified."});
             return;
           }
           if(!(tmp = soul.split('~')) || 2 !== tmp.length){
-            each.end({err: "Soul is missing public key at '" + key + "'."});
+            if(at.opt.secure){
+              each.end({err: "Soul is missing public key at '" + key + "'."});
+              return;
+            }
+            if(val && val.slice && 'SEA{' === (val).slice(0,4)){
+              check['any'+soul+key] = 0;
+              each.end({ok: 1});
+              return;
+            }
+            check['any'+soul+key] = 1;
+            SEA.sign(val, user, function(data){
+              if(u === data){ return each.end({err: 'Any signature failed.'}) }
+              node[key] = data;
+              check['any'+soul+key] = 0;
+              each.end({ok: 1});
+            });
             return;
           }
           var pub = tmp[1];
@@ -1494,7 +1549,8 @@
             return;
           }*/
           check['any'+soul+key] = 1;
-          SEA.sign(val, user).then(function(data){
+          SEA.sign(val, user, function(data){
+            if(u === data){ return each.end({err: 'My signature fail.'}) }
             node[key] = data;
             check['any'+soul+key] = 0;
             each.end({ok: 1});
