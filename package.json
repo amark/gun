@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.9.994",
+  "version": "0.9.995",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "main": "index.js",
   "browser": "gun.min.js",
