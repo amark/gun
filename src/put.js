@@ -116,6 +116,7 @@ function batch(){ var as = this;
 } function no(v,k){ if(v){ return true } }
 
 function map(v,k,n, at){ var as = this;
+	//if(Gun.is(v)){} // TODO: HANDLE!
 	if(k || !at.path.length){ return }
 	(as.res||iife)(function(){
 		var path = at.path, ref = as.ref, opt = as.opt;

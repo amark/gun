@@ -3,11 +3,11 @@ var Type = require('./type');
 var Node = require('./node');
 function State(){
 	var t;
-	if(perf){
-		t = start + perf.now();
-	} else {
+	/*if(perf){
+		t = start + perf.now(); // Danger: Accuracy decays significantly over time, even if precise.
+	} else {*/
 		t = time();
-	}
+	//}
 	if(last < t){
 		return N = 0, last = t + State.drift;
 	}
