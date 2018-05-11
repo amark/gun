@@ -407,7 +407,9 @@
     SEA.verify = async (data, pair, cb) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
-        const raw = (json === data)? json : parse(json.m)
+        const raw = (json !== data)? 
+          (json.s && json.m)? parse(json.m) : data
+        : json;
         if(cb){ cb(raw) }
         return raw;
       }
@@ -1387,7 +1389,7 @@
       var to = this.to, vertex = (msg.gun._).put, c = 0, d;
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
-        SEA.verify(val, false).then(function(data){ c--; // false just extracts the plain data.
+        SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
           node[key] = val = data; // transform to plain value.
           if(d && !c && (c = -1)){ to.next(msg) }
         });

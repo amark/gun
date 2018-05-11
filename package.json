@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.9.995",
+  "version": "0.9.996",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "main": "index.js",
   "browser": "gun.min.js",
@@ -51,17 +51,11 @@
     "ws": "~>4.0.0"
   },
   "devDependencies": {
-    "@std/esm": "^0.8.3",
     "@trust/webcrypto": "^0.7.1",
     "aws-sdk": ">=2.153.0",
     "express": ">=4.15.2",
-    "fake-indexeddb": "^2.0.3",
-    "hapi": "^17.2.0",
-    "inert": "^5.1.0",
     "ip": "^1.1.5",
     "mocha": ">=3.2.0",
-    "node-localstorage": "^1.3.0",
-    "node-webcrypto-ossl": "^1.0.36",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
     "text-encoding": "^0.6.4",
