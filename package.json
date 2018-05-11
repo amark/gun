@@ -55,11 +55,11 @@
     "aws-sdk": ">=2.153.0",
     "express": ">=4.15.2",
     "ip": "^1.1.5",
+    "concat-map": "^0.0.1",
     "mocha": ">=3.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
     "text-encoding": "^0.6.4",
-    "uglify-js": ">=2.8.22",
-    "uws": "~>0.14.1"
+    "uglify-js": ">=2.8.22"
   }
 }
