@@ -30,7 +30,7 @@ function ok(at, ev){ var opt = this;
 		return;
 	}
 	if(data && data[rel._] && (tmp = rel.is(data))){
-		tmp = (cat.root.get(tmp)._);
+		tmp = (cat.root.gun.get(tmp)._);
 		if(u === tmp.put){
 			return;
 		}
@@ -87,7 +87,7 @@ function val(msg, ev, to){
 	//if(coat.soul && !(0 < coat.ack)){ return }
 	if(tmp = Gun.node.soul(data) || rel.is(data)){
 	//if(data && data[rel._] && (tmp = rel.is(data))){
-		tmp = (cat.root.get(tmp)._);
+		tmp = (cat.root.gun.get(tmp)._);
 		if(u === tmp.put){//} || !(0 < tmp.ack)){
 			return;
 		}
@@ -113,7 +113,7 @@ function val(msg, ev, to){
 Gun.chain.off = function(){
 	// make off more aggressive. Warning, it might backfire!
 	var gun = this, at = gun._, tmp;
-	var back = at.back || {}, cat = back._;
+	var cat = at.back;
 	if(!cat){ return }
 	if(tmp = cat.next){
 		if(tmp[at.get]){
@@ -129,18 +129,18 @@ Gun.chain.off = function(){
 		obj_del(tmp, at.get);
 	}
 	if(tmp = at.soul){
-		obj_del(cat.root._.graph, tmp);
+		obj_del(cat.root.graph, tmp);
 	}
 	if(tmp = at.map){
 		obj_map(tmp, function(at){
 			if(at.rel){
-				cat.root.get(at.rel).off();
+				cat.root.gun.get(at.rel).off();
 			}
 		});
 	}
 	if(tmp = at.next){
-		obj_map(tmp, function(ref){
-			ref.off();
+		obj_map(tmp, function(neat){
+			neat.gun.off();
 		});
 	}
 	at.on('off', {});

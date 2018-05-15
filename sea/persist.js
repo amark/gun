@@ -1,8 +1,8 @@
 
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
-    var Buffer = require('./buffer');
-    var authsettings = require('./settings');
-    var updateStorage = require('./update');
+    const Buffer = require('./buffer')
+    const authsettings = require('./settings')
+    const updateStorage = require('./update')
     // This internal func persists User authentication if so configured
     const authPersist = async (user, proof, opts) => {
       // opts = { pin: 'string' }
@@ -33,5 +33,5 @@
       }
       return await updateStorage()({ alias: 'delete' })
     }
-    module.exports = authPersist;
+    module.exports = authPersist
   

@@ -1,5 +1,5 @@
 
-var Type = require('./type');
+var Type = require('../type');
 
 function Mesh(ctx){
 	var mesh = function(){};
@@ -8,7 +8,8 @@ function Mesh(ctx){
 		if(this.to){ this.to.next(msg) }
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
-		&& (tmp = tmp.it)){
+		&& (tmp = tmp.it)
+		&& tmp.mesh){
 			mesh.say(msg, tmp.mesh.via);
 			tmp['##'] = msg['##'];
 			return;
@@ -17,13 +18,13 @@ function Mesh(ctx){
 		mesh.say(msg);
 	}
 
-	mesh.hear = function(msg, peer){
-		if(!msg){ return }
-		var dup = ctx.dup, id, hash, tmp = msg[0];
-		try{msg = JSON.parse(msg);
+	mesh.hear = function(raw, peer){
+		if(!raw){ return }
+		var dup = ctx.dup, id, hash, msg, tmp = raw[0];
+		try{msg = JSON.parse(raw);
 		}catch(e){}
 		if('{' === tmp){
-
+			if(!msg){ return }
 			if(dup.check(id = msg['#'])){ return }
 			dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed.
 			if((tmp = msg['@']) && msg.put){
@@ -42,7 +43,7 @@ function Mesh(ctx){
 			return;
 		} else
 		if('[' === tmp){
-
+			if(!msg){ return }
 			var i = 0, m;
 			while(m = msg[i++]){
 				mesh.hear(m, peer);
@@ -126,12 +127,12 @@ function Mesh(ctx){
 					msg['##'] = hash;
 				}
 				(tmp = dup.s)[hash = msg['@']+hash] = tmp[msg['#']];
-				msg['#'] = hash;
+				msg['#'] = hash || msg['#'];
 				if(put){ (msg = Type.obj.to(msg)).put = _ }
 			}
-			msg['><'] = (Type.obj.map(ctx.opt.peers, function(p,k,m){
-				m(p.url || p.id);
-			}) || []).join();
+			var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
+				to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
+			}); msg['><'] = to.join();
 			var raw = $(msg);
 			if(u !== put){
 				raw = raw.replace('"'+ _ +'"', put);

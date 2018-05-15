@@ -73,7 +73,5 @@
     SafeBuffer.prototype.from = SafeBuffer.from
     SafeBuffer.prototype.toString = SeaArray.prototype.toString
 
-    const Buffer = SafeBuffer
-    if(typeof window !== 'undefined'){ window.Buffer = window.Buffer || Buffer }
     module.exports = SafeBuffer;
   
