@@ -1,14 +1,18 @@
 
-    // TODO: BUG! `SEA` needs to be USED!
+    // TODO: BUG! `SEA` needs to be USEd!
     const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
-    var Buffer = require('./buffer');
-    var authsettings = require('./settings');
-    var seaIndexedDb = require('./indexed').scope;
-    var queryGunAliases = require('./query');
-    var parseProps = require('./parse');
-    var updateStorage = require('./update');
+
+    const Buffer = require('./buffer')
+    const authsettings = require('./settings')
+    //const { scope: seaIndexedDb } = require('./indexed')
+    const queryGunAliases = require('./query')
+    const parseProps = require('./parse')
+    const updateStorage = require('./update')
+    const SEA = require('./sea')
+    const finalizeLogin = require('./login')
+
     // This internal func recalls persisted User authentication if so configured
-    const authRecall = async (root, authprops) => {
+    const authRecall = async (gunRoot, authprops) => {
       // window.sessionStorage only holds signed { alias, pin } !!!
       const remember = authprops || sessionStorage.getItem('remember')
       const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {} // @mhelander what is pIn?
@@ -31,13 +35,13 @@
         }
       }
       const readAndDecrypt = async (data, pub, key) =>
-        parseProps(await SEA.dec(await SEA.read(data, pub), key))
+        parseProps(await SEA.decrypt(await SEA.verify(data, pub), key))
 
       // Already authenticated?
-      if (root._.user
-      && Gun.obj.has(root._.user._, 'pub')
-      && Gun.obj.has(root._.user._, 'sea')) {
-        return root._.user._  // Yes, we're done here.
+      if (gunRoot._.user
+      && Gun.obj.has(gunRoot._.user._, 'pub')
+      && Gun.obj.has(gunRoot._.user._, 'sea')) {
+        return gunRoot._.user._  // Yes, we're done here.
       }
       // No, got persisted 'alias'?
       if (!alias) {
@@ -51,7 +55,7 @@
         }
       }
       // Yes, let's get (all?) matching aliases
-      const aliases = (await queryGunAliases(alias, root))
+      const aliases = (await queryGunAliases(alias, gunRoot))
       .filter(({ pub } = {}) => !!pub)
       // Got any?
       if (!aliases.length) {
@@ -64,7 +68,7 @@
       .all(aliases.filter(({ at: { put } = {} }) => !!put)
       .map(async ({ at, pub }) => {
         const readStorageData = async (args) => {
-          const props = args || parseProps(await SEA.read(remember, pub, true))
+          const props = args || parseProps(await SEA.verify(remember, pub, true))
           let { pin, alias: aLias } = props
 
           const data = (!pin && alias === aLias)
@@ -94,7 +98,7 @@
 
         try { // auth parsing or decryption fails or returns empty - silently done
           const { auth } = at.put.auth
-          const sea = await SEA.dec(auth, proof)
+          const sea = await SEA.decrypt(auth, proof)
           if (!sea) {
             err = 'Failed to decrypt private key!'
             return
@@ -124,12 +128,12 @@
 
         const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
 
-        return await finalizeLogin(alias, user, root, pinProp)
+        return await finalizeLogin(alias, user, gunRoot, pinProp)
       } catch (e) { // TODO: right log message ?
         Gun.log('Failed to finalize login with new password!')
         const { err = '' } = e || {}
         throw { err: `Finalizing new password login failed! Reason: ${err}` }
       }
     }
-    module.exports = authRecall;
+    module.exports = authRecall
   

@@ -3,10 +3,10 @@ var Gun = require('./root');
 Gun.chain.back = function(n, opt){ var tmp;
 	n = n || 1;
 	if(-1 === n || Infinity === n){
-		return this._.root;
+		return this._.root.gun;
 	} else
 	if(1 === n){
-		return this._.back || this;
+		return (this._.back || this._).gun;
 	}
 	var gun = this, at = gun._;
 	if(typeof n === 'string'){
@@ -21,19 +21,18 @@ Gun.chain.back = function(n, opt){ var tmp;
 			return opt? gun : tmp;
 		} else
 		if((tmp = at.back)){
-			return tmp.back(n, opt);
+			return tmp.gun.back(n, opt);
 		}
 		return;
 	}
 	if(n instanceof Function){
-		var yes, tmp = {back: gun};
+		var yes, tmp = {back: at};
 		while((tmp = tmp.back)
-		&& (tmp = tmp._)
 		&& !(yes = n(tmp, opt))){}
 		return yes;
 	}
 	if(Gun.num.is(n)){
-		return at.back.back(n - 1);
+		return (at.back || at).gun.back(n - 1);
 	}
 	return this;
 }
