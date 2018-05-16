@@ -748,8 +748,11 @@
 			function merge(node, soul){
 				var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
 				if(!at){
-					ctx.souls[soul] = false;
-					return 
+					if(!(cat.opt||empty).super){
+						ctx.souls[soul] = false;
+						return; 
+					}
+					at = (ctx.gun.get(soul)._);
 				}
 				var msg = ctx.map[soul] = {
 					put: node,
