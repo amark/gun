@@ -35,6 +35,8 @@ Gun.dup = require('./dup');
 		if(!at.once){
 			at.on('in', root, at);
 			at.on('out', root, at);
+			Gun.on('create', at);
+			at.on('create', at);
 		}
 		at.once = 1;
 		return gun;
@@ -97,8 +99,11 @@ Gun.dup = require('./dup');
 	function merge(node, soul){
 		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
 		if(!at){
-			ctx.souls[soul] = false;
-			return 
+			if(!(cat.opt||empty).super){
+				ctx.souls[soul] = false;
+				return; 
+			}
+			at = (ctx.gun.get(soul)._);
 		}
 		var msg = ctx.map[soul] = {
 			put: node,

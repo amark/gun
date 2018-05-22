@@ -5,6 +5,7 @@ function Mesh(ctx){
 	var mesh = function(){};
 
 	mesh.out = function(msg){ var tmp;
+		//console.log("count:", msg['#'], msg);
 		if(this.to){ this.to.next(msg) }
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
@@ -78,7 +79,8 @@ function Mesh(ctx){
 					return; // TODO: this still needs to be tested in the browser!
 				}
 			}
-			if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested			
+			if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested
+			//console.log('out', JSON.parse(raw));	
 			if(peer.batch){
 				peer.batch.push(raw);
 				return;
@@ -90,10 +92,12 @@ function Mesh(ctx){
 				peer.batch = null;
 				if(!tmp.length){ return }
 				send(JSON.stringify(tmp), peer);
-			}, ctx.opt.wait || 1);
+			}, ctx.opt.gap || ctx.opt.wait || 1);
 			send(raw, peer);
 		}
+
 		function send(raw, peer){
+			//console.log("send:", raw.slice(raw.indexOf('#'), 20));
 			var wire = peer.wire;
 			try{
 				if(wire.send){
