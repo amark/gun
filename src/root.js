@@ -34,7 +34,7 @@ Gun.dup = require('./dup');
 		var gun = at.gun.opt(at.opt);
 		if(!at.once){
 			at.on('in', root, at);
-			at.on('out', root, at);
+			at.on('out', root, obj_to(at, {out: root}));
 			Gun.on('create', at);
 			at.on('create', at);
 		}
@@ -46,7 +46,13 @@ Gun.dup = require('./dup');
 		var ev = this, at = ev.as, gun = at.gun, dup, tmp;
 		//if(!msg.gun){ msg.gun = at.gun }
 		if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
-		if((dup = at.dup).check(tmp)){ return }
+		if((dup = at.dup).check(tmp)){
+			if(at.out === msg.out){
+				msg.out = u;
+				ev.to.next(msg);
+			}
+			return;
+		}
 		dup.track(tmp);
 		//msg = obj_to(msg);//, {gun: at.gun}); // can we delete this now?
 		if(!at.ask(msg['@'], msg)){
@@ -59,7 +65,11 @@ Gun.dup = require('./dup');
 				//at.on('put', put(msg));
 			}
 		}
-		at.on('out', msg);
+		ev.to.next(msg);
+		if(!at.out){
+			msg.out = root;
+			at.on('out', msg);
+		}
 	}
 }());
 
