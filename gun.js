@@ -1877,7 +1877,10 @@
 				var ack = acks;
 				acks = {};
 				try{store.setItem(opt.file, JSON.stringify(disk));
-				}catch(e){ Gun.log(err = e || "localStorage failure") }
+				}catch(e){ 
+					Gun.log(err = e || "localStorage failure");
+					root.on('localStorage:error', {err: err, file: opt.file});
+				}
 				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 				Gun.obj.map(ack, function(yes, id){
 					root.on('in', {
