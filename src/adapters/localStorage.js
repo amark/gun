@@ -10,7 +10,7 @@ var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop
 	If you update anything here, consider updating the other adapters as well.
 */
 
-Gun.on('opt', function(root){
+Gun.on('create', function(root){
 	// This code is used to queue offline writes for resync.
 	// See the next 'opt' code below for actual saving of data.
 	var ev = this.to, opt = root.opt;
@@ -75,7 +75,7 @@ Gun.on('opt', function(root){
 	}
 });
 
-Gun.on('opt', function(root){
+Gun.on('create', function(root){
 	this.to.next(root);
 	var opt = root.opt;
 	if(root.once){ return }

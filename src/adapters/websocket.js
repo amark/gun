@@ -18,10 +18,10 @@ Gun.on('opt', function(root){
 	opt.WebSocket = websocket;
 
 	var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
-	//root.on('create', function(at){
-		//this.to.next(at);
+	root.on('create', function(at){
+		this.to.next(at);
 		root.on('out', mesh.out);
-	//});
+	});
 
 	opt.wire = opt.wire || open;
 	function open(peer){

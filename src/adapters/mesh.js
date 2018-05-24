@@ -7,6 +7,7 @@ function Mesh(ctx){
 	mesh.out = function(msg){ var tmp;
 		//console.log("count:", msg['#'], msg);
 		if(this.to){ this.to.next(msg) }
+		//if(mesh.last != msg['#']){ return mesh.last = msg['#'], this.to.next(msg) }
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
 		&& (tmp = tmp.it)
@@ -97,11 +98,11 @@ function Mesh(ctx){
 		}
 
 		function send(raw, peer){
-			//console.log("send:", raw.slice(raw.indexOf('#'), 20));
 			var wire = peer.wire;
 			try{
 				if(wire.send){
 					if(wire.readyState === wire.OPEN){
+						//console.log("send:", raw);
 						wire.send(raw);
 					} else {
 						(peer.queue = peer.queue || []).push(raw);
