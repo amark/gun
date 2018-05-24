@@ -16,6 +16,7 @@ Gun.chain.chain = function(sub){
 
 function output(msg){
 	var put, get, at = this.as, back = at.back, root = at.root;
+	if(!msg.I){ msg.I = at.gun }
 	if(!msg.gun){ msg.gun = at.gun }
 	this.to.next(msg);
 	if(get = msg.get){
