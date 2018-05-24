@@ -120,17 +120,18 @@ Gun.on('create', function(root){
 		disk[soul] = Gun.state.to(node, key, disk[soul]);
 	}
 
-	var flush = function(){
+	var flush = function(data){
 		var err;
 		count = 0;
 		clearTimeout(to);
 		to = false;
 		var ack = acks;
 		acks = {};
+		if(data){ disk = data }
 		try{store.setItem(opt.file, JSON.stringify(disk));
 		}catch(e){ 
 			Gun.log(err = e || "localStorage failure");
-			root.on('localStorage:error', {err: err, file: opt.file});
+			root.on('localStorage:error', {err: err, file: opt.file, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 		Gun.obj.map(ack, function(yes, id){
