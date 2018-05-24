@@ -169,7 +169,7 @@
 		// On event emitter generic javascript utility.
 		module.exports = function onto(tag, arg, as){
 			if(!tag){ return {to: onto} }
-			var tag = (this.tag || (this.tag = {}))[tag] ||
+			var u, tag = (this.tag || (this.tag = {}))[tag] ||
 			(this.tag[tag] = {tag: tag, to: onto._ = {
 				next: function(arg){ var tmp;
 					if((tmp = this.to)){ 
@@ -200,7 +200,7 @@
 				(be.back = tag.last || tag).to = be;
 				return tag.last = be;
 			}
-			(tag = tag.to).next(arg);
+			if((tag = tag.to) && u !== arg){ tag.next(arg) }
 			return tag;
 		};
 	})(USE, './onto');
@@ -685,7 +685,7 @@
 				var gun = at.gun.opt(at.opt);
 				if(!at.once){
 					at.on('in', root, at);
-					at.on('out', root, at);
+					at.on('out', root, obj_to(at, {out: root}));
 					Gun.on('create', at);
 					at.on('create', at);
 				}
@@ -697,7 +697,13 @@
 				var ev = this, at = ev.as, gun = at.gun, dup, tmp;
 				//if(!msg.gun){ msg.gun = at.gun }
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
-				if((dup = at.dup).check(tmp)){ return }
+				if((dup = at.dup).check(tmp)){
+					if(at.out === msg.out){
+						msg.out = u;
+						ev.to.next(msg);
+					}
+					return;
+				}
 				dup.track(tmp);
 				//msg = obj_to(msg);//, {gun: at.gun}); // can we delete this now?
 				if(!at.ask(msg['@'], msg)){
@@ -710,7 +716,11 @@
 						//at.on('put', put(msg));
 					}
 				}
-				at.on('out', msg);
+				ev.to.next(msg);
+				if(!at.out){
+					msg.out = root;
+					at.on('out', msg);
+				}
 			}
 		}());
 
@@ -1746,7 +1756,7 @@
 			If you update anything here, consider updating the other adapters as well.
 		*/
 
-		Gun.on('opt', function(root){
+		Gun.on('create', function(root){
 			// This code is used to queue offline writes for resync.
 			// See the next 'opt' code below for actual saving of data.
 			var ev = this.to, opt = root.opt;
@@ -1811,7 +1821,7 @@
 			}
 		});
 
-		Gun.on('opt', function(root){
+		Gun.on('create', function(root){
 			this.to.next(root);
 			var opt = root.opt;
 			if(root.once){ return }
@@ -1886,6 +1896,7 @@
 			mesh.out = function(msg){ var tmp;
 				//console.log("count:", msg['#'], msg);
 				if(this.to){ this.to.next(msg) }
+				//if(mesh.last != msg['#']){ return mesh.last = msg['#'], this.to.next(msg) }
 				if((tmp = msg['@'])
 				&& (tmp = ctx.dup.s[tmp])
 				&& (tmp = tmp.it)
@@ -1976,11 +1987,11 @@
 				}
 
 				function send(raw, peer){
-					//console.log("send:", raw.slice(raw.indexOf('#'), 20));
 					var wire = peer.wire;
 					try{
 						if(wire.send){
 							if(wire.readyState === wire.OPEN){
+								//console.log("send:", raw);
 								wire.send(raw);
 							} else {
 								(peer.queue = peer.queue || []).push(raw);
@@ -2094,10 +2105,10 @@
 			opt.WebSocket = websocket;
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
-			//root.on('create', function(at){
-				//this.to.next(at);
+			root.on('create', function(at){
+				this.to.next(at);
 				root.on('out', mesh.out);
-			//});
+			});
 
 			opt.wire = opt.wire || open;
 			function open(peer){
