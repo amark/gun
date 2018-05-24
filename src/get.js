@@ -1,10 +1,10 @@
 
 var Gun = require('./root');
 Gun.chain.get = function(key, cb, as){
-	var gun;
+	var gun, tmp;
 	if(typeof key === 'string'){
 		var back = this, cat = back._;
-		var next = cat.next || empty, tmp;
+		var next = cat.next || empty;
 		if(!(gun = next[key])){
 			gun = cache(key, back);
 		}
@@ -25,6 +25,9 @@ Gun.chain.get = function(key, cb, as){
 	} else
 	if(num_is(key)){
 		return this.get(''+key, cb, as);
+	} else
+	if(tmp = rel.is(key)){
+		return this.get(tmp, cb, as);
 	} else {
 		(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 		if(cb){ cb.call(as, as._.err) }

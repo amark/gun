@@ -68,7 +68,7 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 			});
 			var Gun = require('gun');
 			require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, thrash: 6000});
+			var gun = Gun({web: server, localStorage: false, until: 6000});
 			server.listen(port, function(){
 				test.done();
 			});
