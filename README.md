@@ -128,7 +128,7 @@ Thanks to:<br/>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/brysgo/graphql-gun">GraphQL</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/PenguinMan98/electrontest">Electron</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/staltz/gun-asyncstorage">Native</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React Native</a></h3></td>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/sjones6/vue-gun">Vue</a></h3></td>
