@@ -741,10 +741,9 @@
   })(USE, './authenticate');
 
   ;USE(function(module){
-    // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     const authsettings = USE('./settings')
     const SEA = USE('./sea');
+    const Gun = SEA.Gun;
     //const { scope: seaIndexedDb } = USE('./indexed')
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
     const updateStorage = (proof, key, pin) => async (props) => {
@@ -790,7 +789,8 @@
   })(USE, './update');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
+    const SEA = USE('./sea');
+    const Gun = SEA.Gun;
     const Buffer = USE('./buffer')
     const authsettings = USE('./settings')
     const updateStorage = USE('./update')
@@ -857,9 +857,6 @@
   })(USE, './login');
 
   ;USE(function(module){
-    // TODO: BUG! `SEA` needs to be USEd!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
-
     const Buffer = USE('./buffer')
     const authsettings = USE('./settings')
     //const { scope: seaIndexedDb } = USE('./indexed')
@@ -867,6 +864,7 @@
     const parseProps = USE('./parse')
     const updateStorage = USE('./update')
     const SEA = USE('./sea')
+    const Gun = SEA.Gun;
     const finalizeLogin = USE('./login')
 
     // This internal func recalls persisted User authentication if so configured
@@ -1347,8 +1345,8 @@
   })(USE, './create');
 
   ;USE(function(module){
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || USE('gun/gun')
     const SEA = USE('./sea')
+    const Gun = SEA.Gun;
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
