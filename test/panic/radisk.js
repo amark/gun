@@ -3,8 +3,8 @@ var config = {
 	port: 8080,
 	servers: 2,
 	browsers: 2,
-	each: 10000000,
-	burst: 12000,
+	each: 25000,
+	burst: 50,
 	wait: 1,
 	dir: __dirname,
 	route: {
@@ -67,7 +67,7 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			require('gun/lib/store');
+			//require('gun/lib/store');
 			var gun = Gun({web: server, localStorage: false, until: 6000});
 			server.listen(port, function(){
 				test.done();
@@ -108,6 +108,9 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 					if(c < l){ return }
 					setTimeout(function(){
 						test.done();
+						setTimeout(function(){
+							location = 'http://asdf';
+						}, 1500)
 					}, 1000);
 				});
 			}
@@ -122,7 +125,12 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 
 	it("Shut server down!", function(){
 		return server.run(function(test){
-			process.exit();
+			test.async();
+			console.log("giving server 20seconds to cool down...");
+			setTimeout(function(){
+				process.exit();
+				test.done();
+			}, 20 * 1000);
 		});
 	});
 
@@ -145,8 +153,8 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, thrash: 6000});
+			//require('gun/lib/store');
+			var gun = Gun({web: server, localStorage: false, until: 6000});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -156,8 +164,6 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 	it("Bob read data", function(){
 		return bob.run(function(test){
 			test.async();
-			test.done();
-			return;asdf;
 			console.log("I AM BOB");
 			localStorage.clear();
 			var env = test.props;
@@ -168,13 +174,17 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 			var raw = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 			function check(i){
+				if(i > l){
+					return;
+				}
 				var d;
 				var ref = window.gun.get('asdf' + i);
 				ref.on(function(data){
 					if((raw+i) !== data.hello){ return test.fail('wrong ' + i) }
 					if(d){ return } d = true;
-					!(i % b) && console.log(i+'/'+l);//, '@'+Math.floor(b/((-n + (n = Gun.time.is()))/1000))+'/sec'));
-					c++;
+					//!(c % b) && 
+					console.log(c+'/'+l);//, '@'+Math.floor(b/((-n + (n = Gun.time.is()))/1000))+'/sec'));
+					window.GOT = c++;
 					//localStorage.clear();
 					ref.off();
 					//console.log("gl:", Object.keys(window.gun._.graph).length);
@@ -184,6 +194,9 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				});
 			}
 			function burst(){
+				if(i > l){
+					return;
+				}
 				for(var j = 0; j <= b; j++){
 					check(++i);	
 				}
