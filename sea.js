@@ -287,6 +287,7 @@
         return r;
       }
       // For NodeJS crypto.pkdf2 rocks
+      const crypto = require('crypto')
       const hash = crypto.pbkdf2Sync(
         data,
         new shim.TextEncoder().encode(salt),
