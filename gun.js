@@ -1296,7 +1296,7 @@
 			var gun = this, at = (gun._), root = at.root.gun, tmp;
 			as = as || {};
 			as.data = data;
-			as.gun = as.gun || gun;
+			as.via = as.gun = as.via || as.gun || gun;
 			if(typeof cb === 'string'){
 				as.soul = cb;
 			} else {
@@ -1311,9 +1311,9 @@
 					if(as.res){ as.res() }
 					return gun;
 				}
-				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || ((root._).opt.uuid || Gun.text.random)());
+				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') || Gun.text.random)());
 				if(!as.soul){ // polyfill async uuid for SEA
-					(root._).opt.uuid(function(err, soul){ // TODO: improve perf without anonymous callback
+					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 						if(err){ return Gun.log(err) } // TODO: Handle error!
 						(as.ref||as.gun).put(as.data, as.soul = soul, as);
 					});
@@ -1415,10 +1415,10 @@
 					ref = ref.get(path[i]);
 				}
 				if(Gun.node.soul(at.obj)){
-					var id = Gun.node.soul(at.obj) || (ref.back('opt.uuid') || Gun.text.random)();
+					var id = Gun.node.soul(at.obj) || (as.via.back('opt.uuid') || Gun.text.random)();
 					if(!id){ // polyfill async uuid for SEA
 						(as.stun = as.stun || {})[path] = true; // make DRY
-						ref.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+						as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 							if(err){ return Gun.log(err) } // TODO: Handle error.
 							ref.back(-1).get(id);
 							at.soul(id);
@@ -1443,9 +1443,9 @@
 			var _id = (msg.put||empty)['#'];
 			ev.off();
 			at = (msg.gun._.back); // go up 1!
-			var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || _id || at_._id || (as.gun.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || _id || at_._id || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			if(!id){ // polyfill async uuid for SEA
-				at.gun.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+				at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 					if(err){ return Gun.log(err) } // TODO: Handle error.
 					solve(at, at_._id = at_._id || id, cat, as);
 				});
@@ -1495,16 +1495,16 @@
 			}
 			if(!as.not && !(as.soul = Gun.node.soul(data))){
 				if(as.path && obj_is(as.data)){ // Apparently necessary
-					as.soul = (opt.uuid || cat.root.opt.uuid || Gun.text.random)();
+					as.soul = (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				} else {
 					//as.data = obj_put({}, as.gun._.get, as.data);
 					if(node_ == at.get){
 						as.soul = (at.put||empty)['#'] || at._id;
 					}
-					as.soul = as.soul || at.soul || cat.soul || (opt.uuid || cat.root.opt.uuid || Gun.text.random)();
+					as.soul = as.soul || at.soul || cat.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
-					as.ref.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
+					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 						if(err){ return Gun.log(err) } // Handle error.
 						as.ref.put(as.data, as.soul = soul, as);
 					});
@@ -1727,11 +1727,11 @@
 			opt = opt || {}; opt.item = opt.item || item;
 			if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 			if(!Gun.is(item)){
-				var id = gun._.root.opt.uuid();
+				var id = gun.back('opt.uuid')();
 				if(id && Gun.obj.is(item)){
 					return gun.set(gun._.root.gun.put(item, id), cb, opt);
 				}
-				return gun.get(id || (Gun.state.lex() + Gun.text.random(12))).put(item, cb, opt);
+				return gun.get((Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
 			}
 			item.get('_').get(function(at, ev){
 				if(!at.gun || !at.gun._.back){ return }
