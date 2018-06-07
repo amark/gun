@@ -3,7 +3,7 @@ var config = {
 	port: 8080,
 	servers: 2,
 	browsers: 2,
-	each: 25000,
+	each: 2000,
 	burst: 50,
 	wait: 1,
 	dir: __dirname,
@@ -57,18 +57,18 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				explode;
 				return;
 			}
-			setInterval(function(){
+			/*setInterval(function(){
 				var mem = process.memoryUsage();
 				var u = Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100;
 				console.log(u, 'MB of', Math.round(mem.heapTotal / 1024 / 1024 * 100) / 100);
-			}, 1000);
+			}, 1000);*/
 			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
 			//require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, until: 6000});
+			var gun = Gun({web: server, localStorage: false, until: 1, memory: 50, chunk: 1024 * 100});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -130,7 +130,7 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 			setTimeout(function(){
 				process.exit();
 				test.done();
-			}, 20 * 1000);
+			}, 10 * 1000);
 		});
 	});
 
@@ -143,18 +143,18 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				explode;
 				return;
 			}	
-			setInterval(function(){
+			/*setInterval(function(){
 				var mem = process.memoryUsage();
 				var u = Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100;
 				console.log(u, 'MB');
-			}, 1000);
+			}, 1000);*/
 			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
 			//require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, until: 6000});
+			var gun = Gun({web: server, localStorage: false, until: 1, memory: 50, chunk: 1024 * 100});
 			server.listen(port, function(){
 				test.done();
 			});

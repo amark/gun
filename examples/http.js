@@ -13,15 +13,8 @@ var server = require('http').createServer(function(req, res){
 	}).pipe(res); // stream
 });
 
-var gun = Gun({ 
-	file: 'data.json',
-	web: server,
-	s3: {
-		key: process.env.AWS_ACCESS_KEY_ID, // Use environment variables
-		secret: process.env.AWS_SECRET_ACCESS_KEY, // so your keys are not
-		bucket: process.env.AWS_S3_BUCKET // hard coded into your app!
-		// https://devcenter.heroku.com/articles/config-vars
-	}
+var gun = Gun({
+	web: server
 });
 
 server.listen(port);
