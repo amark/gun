@@ -6,11 +6,11 @@ Gun.chain.set = function(item, cb, opt){
 	opt = opt || {}; opt.item = opt.item || item;
 	if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
 	if(!Gun.is(item)){
-		var id = gun._.root.opt.uuid();
+		var id = gun.back('opt.uuid')();
 		if(id && Gun.obj.is(item)){
 			return gun.set(gun._.root.gun.put(item, id), cb, opt);
 		}
-		return gun.get(id || (Gun.state.lex() + Gun.text.random(12))).put(item, cb, opt);
+		return gun.get((Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
 	}
 	item.get('_').get(function(at, ev){
 		if(!at.gun || !at.gun._.back){ return }
