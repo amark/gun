@@ -108,7 +108,7 @@
           } else if (enc === 'binary') {
             buf = SeaArray.from(input)
           } else {
-            console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
+            console.info('SafeBuffer.from unknown encoding: '+enc)
           }
           return buf
         }
@@ -639,7 +639,7 @@
     // This is internal func queries public key(s) for alias.
     const queryGunAliases = (alias, gunRoot) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
-      gunRoot.get(`alias/${alias}`).get((rat, rev) => {
+      gunRoot.get('~@'+alias).get((rat, rev) => {
         rev.off();
         if (!rat.put) {
           // if no user, don't do anything.
@@ -652,14 +652,14 @@
         let c = 0
         // TODO: how about having real chainable map without callback ?
         Gun.obj.map(rat.put, (at, pub) => {
-          if (!pub.slice || 'pub/' !== pub.slice(0, 4)) {
+          if (!pub.slice || '~' !== pub.slice(0, 1)) {
             // TODO: ... this would then be .filter((at, pub))
             return
           }
           ++c
           // grab the account associated with this public key.
           gunRoot.get(pub).get((at, ev) => {
-            pub = pub.slice(4)
+            pub = pub.slice(1)
             ev.off()
             --c
             if (at.put){
@@ -835,7 +835,9 @@
       const { user } = gunRoot._
       // add our credentials in-memory only to our root gun instance
       //var tmp = user._.tag;
-      user._ = key.at.gun._
+      var opt = user._.opt;
+      user._ = key.at.gun._;
+      user._.opt = opt;
       //user._.tag = tmp || user._.tag;
       // so that way we can use the credentials to encrypt/decrypt data
       // that is input/output through gun (see below)
@@ -989,7 +991,7 @@
       } catch (e) { // TODO: right log message ?
         Gun.log('Failed to finalize login with new password!')
         const { err = '' } = e || {}
-        throw { err: `Finalizing new password login failed! Reason: ${err}` }
+        throw { err: 'Finalizing new password login failed! Reason: '+err }
       }
     }
     module.exports = authRecall
@@ -1042,9 +1044,19 @@
     // let's extend the gun chain with a `user` function.
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function(pub){
-      var gun = this, root = gun.back(-1);
-      if(pub){ return root.get('pub/'+pub) }
-      return root.back('user') || ((root._).user = gun.chain(new User));
+      var gun = this, root = gun.back(-1), user;
+      if(pub){ return root.get('~'+pub) }
+      if(user = root.back('user')){ return user }
+      var root = (root._), at = root, uuid = at.opt.uuid || Gun.state.lex;
+      (at = (user = at.user = gun.chain(new User))._).opt = {};
+      at.opt.uuid = function(cb){
+        var id = uuid(), pub = root.user;
+        if(!pub || !(pub = (pub._).sea) || !(pub = pub.pub)){ return id }
+        id = id + '~' + pub + '.';
+        if(cb && cb.call){ cb(null, id) }
+        return id;
+      }
+      return user;
     }
     module.exports = User;
   })(USE, './user');
@@ -1078,7 +1090,7 @@
       var resolve = function(){}, reject = resolve;
       // Because more than 1 user might have the same username, we treat the alias as a list of those users.
       if(cb){ resolve = reject = cb }
-      gunRoot.get(`alias/${username}`).get(async (at, ev) => {
+      gunRoot.get('~@'+username).get(async (at, ev) => {
         ev.off()
         if (at.put) {
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
@@ -1109,14 +1121,14 @@
           // )
           ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); cat.ing = false; gun.leave(); reject(e) })
           const user = { alias, pub, epub, auth }
-          const tmp = `pub/${pairs.pub}`
+          const tmp = '~'+pairs.pub;
           // awesome, now we can actually save the user with their public key as their ID.
           try{
 
           gunRoot.get(tmp).put(user)
         }catch(e){console.log(e)}
           // next up, we want to associate the alias with the public key. So we add it to the alias list.
-          gunRoot.get(`alias/${username}`).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+          gunRoot.get('~@'+username).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
           // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
           setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
         } catch (e) {
@@ -1157,7 +1169,7 @@
       const putErr = (msg) => (e) => {
         const { message, err = message || '' } = e
         Gun.log(msg)
-        var error = { err: `${msg} Reason: ${err}` }
+        var error = { err: msg+' Reason: '+err }
         return cat.ing = false, gun.leave(), cb(error), gun;
       }
 
@@ -1186,7 +1198,7 @@
               epub: signedEpub
             }
             // awesome, now we can update the user using public key ID.
-            gunRoot.get(`pub/${user.pub}`).put(user)
+            gunRoot.get('~'+user.pub).put(user)
             // then we're done
             const login = finalizeLogin(alias, keys, gunRoot, { pin })
             login.catch(putErr('Failed to finalize login with new password!'))
@@ -1219,7 +1231,7 @@
         const { pub } = await authenticate(alias, pass, gunRoot)
         await authLeave(gunRoot, alias)
         // Delete user data
-        gunRoot.get(`pub/${pub}`).put(null)
+        gunRoot.get('~'+pub).put(null)
         // Wipe user data from memory
         const { user = { _: {} } } = gunRoot._;
         // TODO: is this correct way to 'logout' user from Gun.User ?
@@ -1354,14 +1366,6 @@
     Gun.on('opt', function(at){
       if(!at.sea){ // only add SEA once per instance, on the "at" context.
         at.sea = {own: {}};
-        var uuid = at.opt.uuid || Gun.state.lex;
-        at.opt.uuid = function(cb){ // TODO: consider async/await and drop callback pattern...
-          var id = uuid(), pub = at.user;
-          if(!pub || !(pub = at.user._.sea) || !(pub = pub.pub)){ return id }
-          id = id + '~' + pub;
-          if(cb && cb.call){ cb(null, id) }
-          return id;
-        }
         at.on('in', security, at); // now listen to all input data, acting as a firewall.
         at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
         at.on('node', each, at);
@@ -1376,7 +1380,7 @@
     // Now NOTE! Some data is "system" data, not user data. Example: List of public keys, aliases, etc.
     // This data is self-enforced (the value can only match its ID), but that is handled in the `security` function.
     // From the self-enforced data, we can see all the edges in the graph that belong to a public key.
-    // Example: pub/ASDF is the ID of a node with ASDF as its public key, signed alias and salt, and
+    // Example: ~ASDF is the ID of a node with ASDF as its public key, signed alias and salt, and
     // its encrypted private key, but it might also have other signed values on it like `profile = <ID>` edge.
     // Using that directed edge's ID, we can then track (in memory) which IDs belong to which keys.
     // Here is a problem: Multiple public keys can "claim" any node's ID, so this is dangerous!
@@ -1420,7 +1424,7 @@
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else
-          if('alias/' === soul.slice(0,6)){ // Allow reading the list of public keys associated with an alias?
+          if('~@' === soul.slice(0,2)){ // Allow reading the list of public keys associated with an alias?
             return to.next(msg); // yes.
           } else { // Allow reading everything?
             return to.next(msg); // yes // TODO: No! Make this a callback/event that people can filter on.
@@ -1437,29 +1441,29 @@
         each.way = function(val, key){
           var soul = this.soul, node = this.node, tmp;
           if('_' === key){ return } // ignore meta data
-          if('alias' === soul){  // special case for shared system data, the list of aliases.
+          if('~@' === soul){  // special case for shared system data, the list of aliases.
             each.alias(val, key, node, soul); return;
           }
-          if('alias/' === soul.slice(0,6)){ // special case for shared system data, the list of public keys for an alias.
+          if('~@' === soul.slice(0,2)){ // special case for shared system data, the list of public keys for an alias.
             each.pubs(val, key, node, soul); return;
           }
-          if('pub/' === soul.slice(0,4)){ // special case, account data for a public key.
-            each.pub(val, key, node, soul, soul.slice(4), msg.user); return;
+          if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
+            each.pub(val, key, node, soul, tmp, msg.user); return;
           }
           each.any(val, key, node, soul, msg.user); return;
           return each.end({err: "No other data allowed!"});
         };
-        each.alias = function(val, key, node, soul){ // Example: {_:#alias, alias/alice: {#alias/alice}}
+        each.alias = function(val, key, node, soul){ // Example: {_:#~@, ~@alice: {#~@alice}}
           if(!val){ return each.end({err: "Data must exist!"}) } // data MUST exist
-          if('alias/'+key === Gun.val.rel.is(val)){ return check['alias'+key] = 0 } // in fact, it must be EXACTLY equal to itself
+          if('~@'+key === Gun.val.rel.is(val)){ return check['alias'+key] = 0 } // in fact, it must be EXACTLY equal to itself
           each.end({err: "Mismatching alias."}); // if it isn't, reject.
         };
-        each.pubs = function(val, key, node, soul){ // Example: {_:#alias/alice, pub/asdf: {#pub/asdf}}
+        each.pubs = function(val, key, node, soul){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
           if(!val){ return each.end({err: "Alias must exist!"}) } // data MUST exist
           if(key === Gun.val.rel.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
           each.end({err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
         };
-        each.pub = function(val, key, node, soul, pub, user){ // Example: {_:#pub/asdf, hello:SEA['world',fdsa]}
+        each.pub = function(val, key, node, soul, pub, user){ // Example: {_:#~asdf, hello:SEA{'world',fdsa}}
           if('pub' === key){
             if(val === pub){ return (check['pub'+soul+key] = 0) } // the account MUST match `pub` property that equals the ID of the public key.
             return each.end({err: "Account must match!"});
@@ -1479,30 +1483,34 @@
             // TODO: Handle error!!!!
             return;
           }
-          // TODO: consider async/await and drop callback pattern...
           SEA.verify(val, pub, function(data){ var rel, tmp;
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
-            if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-              if(pub === tmp[1]){
-                (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
-              }
+            if((rel = Gun.val.rel.is(data)) && pub === relpub(rel)){
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
             }
             check['user'+soul+key] = 0;
             each.end({ok: 1});
           });
         };
+        function relpub(s){
+          if(!s){ return }
+          s = s.split('~');
+          if(!s || !(s = s[1])){ return }
+          s = s.split('.');
+          if(!s || 2 > s.length){ return }
+          s = s.slice(0,2).join('.');
+          return s;
+        }
         each.any = function(val, key, node, soul, user){ var tmp, pub;
           if(!user || !(user = user._) || !(user = user.sea)){
-            if((tmp = soul.split('~')) && 2 == tmp.length){
+            if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
-              SEA.verify(val, (pub = tmp[1]), function(data){ var rel;
+              SEA.verify(val, pub = tmp, function(data){ var rel;
                 if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
-                if((rel = Gun.val.rel.is(data)) && (tmp = rel.split('~')) && 2 === tmp.length){
-                  if(pub === tmp[1]){
-                    (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
-                  }
+                if((rel = Gun.val.rel.is(data)) && pub === relpub(rel)){
+                  (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }
                 check['any'+soul+key] = 0;
                 each.end({ok: 1});
@@ -1518,7 +1526,7 @@
             //each.end({err: "Data cannot be modified."});
             return;
           }
-          if(!(tmp = soul.split('~')) || 2 !== tmp.length){
+          if(!(tmp = relpub(soul))){
             if(at.opt.secure){
               each.end({err: "Soul is missing public key at '" + key + "'."});
               return;
@@ -1528,16 +1536,16 @@
               each.end({ok: 1});
               return;
             }
-            check['any'+soul+key] = 1;
-            SEA.sign(val, user, function(data){
-              if(u === data){ return each.end({err: 'Any signature failed.'}) }
-              node[key] = data;
+            //check['any'+soul+key] = 1;
+            //SEA.sign(val, user, function(data){
+             // if(u === data){ return each.end({err: 'Any signature failed.'}) }
+            //  node[key] = data;
               check['any'+soul+key] = 0;
               each.end({ok: 1});
-            });
+            //});
             return;
           }
-          var pub = tmp[1];
+          var pub = tmp;
           if(pub !== user.pub){
             each.any(val, key, node, soul);
             return;
