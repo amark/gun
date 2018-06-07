@@ -161,20 +161,37 @@
     } else {
       try{
       const crypto = require('crypto')
-      //const WebCrypto = require('node-webcrypto-ossl')
-      //const { subtle: ossl } = new WebCrypto({directory: 'key_storage'}) // ECDH
-      const { subtle } = require('@trust/webcrypto')             // All but ECDH
-      const { TextEncoder, TextDecoder } = require('text-encoding')
-      Object.assign(api, {
-        crypto,
-        subtle,
-        //ossl,
-        TextEncoder,
-        TextDecoder,
-        random: (len) => Buffer.from(crypto.randomBytes(len))
-      })
+      let nwOSSL = false
+      try{
+        require.resolve('node-webcrypto-ossl')
+        nwOSSL = true
+      }catch(e){}
+      if(nwOSSL){
+        const WebCrypto = require('node-webcrypto-ossl')
+        const { subtle: ossl } = new WebCrypto({directory: 'key_storage'}) // ECDH
+        const { subtle } = require('@trust/webcrypto')             // All but ECDH
+        const { TextEncoder, TextDecoder } = require('text-encoding')
+        Object.assign(api, {
+          crypto,
+          subtle,
+          ossl,
+          TextEncoder,
+          TextDecoder,
+          random: (len) => Buffer.from(crypto.randomBytes(len))
+        })
+      } else {
+        const { subtle } = require('@trust/webcrypto')             // All but ECDH
+        const { TextEncoder, TextDecoder } = require('text-encoding')
+        Object.assign(api, {
+          crypto,
+          subtle,
+          TextEncoder,
+          TextDecoder,
+          random: (len) => Buffer.from(crypto.randomBytes(len))
+        })
+      }
       }catch(e){
-        console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
+        console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json! And if you are in nodejs you should include node-webcrypto-ossl.");
         TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
       }
     }
