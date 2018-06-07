@@ -48,7 +48,7 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "ws": "~>4.0.0"
+    "ws": "~>5.2.0"
   },
   "devDependencies": {
     "@trust/webcrypto": "^0.7.1",
