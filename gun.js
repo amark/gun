@@ -400,7 +400,7 @@
 			return n;
 		}
 		State.to = function(from, k, to){
-			var val = from[k];
+			var val = from[k]; // BUGGY!
 			if(obj_is(val)){
 				val = obj_copy(val);
 			}

@@ -45,7 +45,7 @@
     function SeaArray() {}
     Object.assign(SeaArray, { from: Array.from })
     SeaArray.prototype = Object.create(Array.prototype)
-    SeaArray.prototype.toString = function(enc = 'utf8', start = 0, end) {
+    SeaArray.prototype.toString = function(enc, start, end) { enc = enc || 'utf8'; start = start || 0;
       const length = this.length
       if (enc === 'hex') {
         const buf = new Uint8Array(this)
@@ -342,47 +342,40 @@
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
-      const __gky = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
-      const pub = __gky.pub
-      const priv = __gky.priv
+      const sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
-        const __gky2 = await shim.subtle.exportKey('jwk', keys.privateKey)
-        const priv = __gky2.d
-        const __gky3 = await shim.subtle.exportKey('jwk', keys.publicKey)
-        const x = __gky3.x
-        const y = __gky3.y
+        //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
+        const key = {};
+        key.priv = (await shim.subtle.exportKey('jwk', keys.privateKey)).d;
+        const pub = await shim.subtle.exportKey('jwk', keys.publicKey)
         //const pub = Buff.from([ x, y ].join(':')).toString('base64') // old
-        const pub = x+'.'+y // new
+        key.pub = pub.x+'.'+pub.y // new
         // x and y are already base64
         // pub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
-        return { pub: pub, priv: priv }
+        return key;
       })
       
       // To include PGPv4 kind of keyId:
       // const pubId = await SEA.keyid(keys.pub)
       // Next: ECDH keys for encryption/decryption...
 
-      const __gky4 = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
-      const epub = __gky4.epub
-      const epriv = __gky4.epriv
+      const dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
-        const __gky5 = await ecdhSubtle.exportKey('jwk', keys.privateKey)
-        const epriv = __gky5.d
-        const __gky6 = await ecdhSubtle.exportKey('jwk', keys.publicKey)
-        const x = __gky6.x
-        const y = __gky6.y
+        const key = {};
+        key.epriv = (await ecdhSubtle.exportKey('jwk', keys.privateKey)).d;
+        const pub = await ecdhSubtle.exportKey('jwk', keys.publicKey)
         //const epub = Buff.from([ ex, ey ].join(':')).toString('base64') // old
-        const epub = x+'.'+y // new
+        key.epub = pub.x+'.'+pub.y // new
         // ex and ey are already base64
         // epub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
-        return { epub: epub, epriv: epriv }
+        return key;
       })
 
-      const r = { pub: pub, priv: priv, /* pubId, */ epub: epub, epriv: epriv }
+      const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
       if(cb){ cb(r) }
       return r;
     } catch(e) { 
