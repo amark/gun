@@ -11,7 +11,8 @@
     "testsea": "mocha test/sea.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
-    "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
+    "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m",
+    "heroku-prebuild": "npm install --only=dev"
   },
   "repository": {
     "type": "git",
