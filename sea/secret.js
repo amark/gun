@@ -9,15 +9,15 @@
       const epriv = pair.epriv
       const ecdhSubtle = shim.ossl || shim.subtle
       const pubKeyData = keysToEcdhJwk(pub)
-      const props = {
-        ...S.ecdh,
-        public: await ecdhSubtle.importKey(...pubKeyData, true, [])
-      }
+      const props = Object.assign(
+        S.ecdh,
+        { public: await ecdhSubtle.importKey(...pubKeyData, true, []) }
+      )
       const privKeyData = keysToEcdhJwk(epub, epriv)
       const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
       .then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
+        const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ])
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
       })
       const r = derived;
@@ -32,10 +32,13 @@
     const keysToEcdhJwk = (pub, d) => { // d === priv
       //const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
       const [ x, y ] = pub.split('.') // new
-      const jwk = d ? { d } : {}
+      const jwk = d ? { d: d } : {}
       return [  // Use with spread returned value...
         'jwk',
-        { ...jwk, x, y, kty: 'EC', crv: 'P-256', ext: true }, // ??? refactor
+        Object.assign(
+          jwk,
+          { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
+        ), // ??? refactor
         S.ecdh
       ]
     }

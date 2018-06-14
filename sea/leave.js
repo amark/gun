@@ -13,7 +13,7 @@
       gunRoot.user();
       // Removes persisted authentication & CryptoKeys
       try {
-        await authPersist({ alias })
+        await authPersist({ alias: alias })
       } catch (e) {}  //eslint-disable-line no-empty
       return { ok: 0 }
     }

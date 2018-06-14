@@ -1,8 +1,7 @@
 
-    // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
     const authsettings = require('./settings')
     const SEA = require('./sea');
+    const Gun = SEA.Gun;
     //const { scope: seaIndexedDb } = require('./indexed')
     // This updates sessionStorage & IndexedDB to persist authenticated "session"
     const updateStorage = (proof, key, pin) => async (props) => {
@@ -13,8 +12,9 @@
         props.proof = proof
         delete props.remember   // Not stored if present
 
-        const { alias, alias: id } = props
-        const remember = { alias, pin }
+        const alias = props.alias
+        const id = props.alias
+        const remember = { alias: alias, pin: pin }
 
         try {
           const signed = await SEA.sign(JSON.stringify(remember), key)
@@ -27,7 +27,7 @@
           if (encrypted) {
             const auth = await SEA.sign(encrypted, key)
             await seaIndexedDb.wipe() // NO! Do not do this. It ruins other people's sessionStorage code. This is bad/wrong, commenting it out.
-            await seaIndexedDb.put(id, { auth })
+            await seaIndexedDb.put(id, { auth: auth })
           }
 
           return props

@@ -9,7 +9,9 @@
     SEA.verify = async (data, pair, cb) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
-        const raw = (json === data)? json : parse(json.m)
+        const raw = (json !== data)? 
+          (json.s && json.m)? parse(json.m) : data
+        : json;
         if(cb){ cb(raw) }
         return raw;
       }

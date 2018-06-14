@@ -1,22 +1,21 @@
 
     // Old Code...
-    const {
-      crypto,
-      subtle,
-      ossl,
-      random: getRandomBytes,
-      TextEncoder,
-      TextDecoder
-    } = require('./shim')
+    const __gky10 = require('./shim')
+    const crypto = __gky10.crypto
+    const subtle = __gky10.subtle
+    const ossl = __gky10.ossl
+    const TextEncoder = __gky10.TextEncoder
+    const TextDecoder = __gky10.TextDecoder
+    const getRandomBytes = __gky10.random
     const EasyIndexedDB = require('./indexed')
     const Buffer = require('./buffer')
     var settings = require('./settings');
-    const {
-      pbkdf2: pbKdf2,
-      ecdsa: { pair: ecdsaKeyProps, sign: ecdsaSignProps },
-      ecdh: ecdhKeyProps,
-      jwk: keysToEcdsaJwk
-    } = require('./settings')
+    const __gky11 = require('./settings')
+    const pbKdf2 = __gky11.pbkdf2
+    const ecdsaKeyProps = __gky11.ecdsa.pair
+    const ecdsaSignProps = __gky11.ecdsa.sign
+    const ecdhKeyProps = __gky11.ecdh
+    const keysToEcdsaJwk = __gky11.jwk
     const sha1hash = require('./sha1')
     const sha256hash = require('./sha256')
     const recallCryptoKey = require('./remember')
