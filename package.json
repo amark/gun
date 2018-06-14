@@ -12,7 +12,7 @@
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m",
-    "heroku-prebuild": "export NPM_CONFIG_PRODUCTION=false"
+    "heroku-postbuild": "npm install --only=dev"
   },
   "repository": {
     "type": "git",
