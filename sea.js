@@ -46,7 +46,7 @@
     Object.assign(SeaArray, { from: Array.from })
     SeaArray.prototype = Object.create(Array.prototype)
     SeaArray.prototype.toString = function(enc = 'utf8', start = 0, end) {
-      const { length } = this
+      const length = this.length
       if (enc === 'hex') {
         const buf = new Uint8Array(this)
         return [ ...Array(((end && (end + 1)) || length) - start).keys()]
@@ -95,15 +95,15 @@
             }
             buf = SeaArray.from(bytes)
           } else if (enc === 'utf8') {
-            const { length } = input
+            const length = input.length
             const words = new Uint16Array(length)
-            Array.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
+            Array.from({ length: length }, (_, i) => words[i] = input.charCodeAt(i))
             buf = SeaArray.from(words)
           } else if (enc === 'base64') {
             const dec = atob(input)
-            const { length } = dec
+            const length = dec.length
             const bytes = new Uint8Array(length)
-            Array.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
+            Array.from({ length: length }, (_, i) => bytes[i] = dec.charCodeAt(i))
             buf = SeaArray.from(bytes)
           } else if (enc === 'binary') {
             buf = SeaArray.from(input)
@@ -112,7 +112,8 @@
           }
           return buf
         }
-        const { byteLength, length = byteLength } = input
+        const byteLength = input.byteLength
+        const length = input.byteLength ? input.byteLength : input.length
         if (length) {
           let buf
           if (input instanceof ArrayBuffer) {
@@ -123,11 +124,11 @@
       },
       // This is 'safe-buffer.alloc' sans encoding support
       alloc(length, fill = 0 /*, enc*/ ) {
-        return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
+        return SeaArray.from(new Uint8Array(Array.from({ length: length }, () => fill)))
       },
       // This is normal UNSAFE 'buffer.alloc' or 'new Buffer(length)' - don't use!
       allocUnsafe(length) {
-        return SeaArray.from(new Uint8Array(Array.from({ length })))
+        return SeaArray.from(new Uint8Array(Array.from({ length : length })))
       },
       // This puts together array of array like members
       concat(arr) { // octet array
@@ -148,9 +149,12 @@
     const api = {Buffer: Buffer}
 
     if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
-      const { msCrypto, crypto = msCrypto } = window          // STD or M$
-      const { webkitSubtle, subtle = webkitSubtle } = crypto  // STD or iSafari
-      const { TextEncoder, TextDecoder } = window
+      const msCrypto = window.msCrypto          // STD or M$
+      const crypto = window.crypto ? window.crypto : msCrypto          // STD or M$
+      const webkitSubtle = crypto.webkitSubtle  // STD or iSafari
+      const subtle = crypto.subtle ? crypto.subtle : webkitSubtle  // STD or iSafari
+      const TextEncoder = window.TextEncoder
+      const TextDecoder = window.TextDecoder
       Object.assign(api, {
         crypto,
         subtle,
@@ -168,7 +172,7 @@
       }catch(e){}
       if(nwOSSL){
         const WebCrypto = require('node-webcrypto-ossl')
-        const { subtle: ossl } = new WebCrypto({directory: 'key_storage'}) // ECDH
+        const ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
         const { subtle } = require('@trust/webcrypto')             // All but ECDH
         const { TextEncoder, TextDecoder } = require('text-encoding')
         Object.assign(api, {
@@ -227,7 +231,7 @@
     }
 
     Object.assign(settings, {
-      pbkdf2,
+      pbkdf2: pbkdf2,
       ecdsa: {
         pair: ecdsaKeyProps,
         sign: ecdsaSignProps
@@ -269,7 +273,9 @@
 
   ;USE(function(module){
     // This internal func returns SHA-1 hashed data for KeyID generation
-    const { subtle, ossl = subtle } = USE('./shim')
+    const __shim = USE('./shim')
+    const subtle = __shim.subtle
+    const ossl = __shim.ossl ? __shim.__ossl : subtle
     const sha1hash = (b) => ossl.digest({name: 'SHA-1'}, new ArrayBuffer(b))
     module.exports = sha1hash
   })(USE, './sha1');
@@ -336,37 +342,47 @@
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
-      const { pub, priv } = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      const __gky = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      const pub = __gky.pub
+      const priv = __gky.priv
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
-        const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
-        const { x, y } = await shim.subtle.exportKey('jwk', keys.publicKey)
+        const __gky2 = await shim.subtle.exportKey('jwk', keys.privateKey)
+        const priv = __gky2.d
+        const __gky3 = await shim.subtle.exportKey('jwk', keys.publicKey)
+        const x = __gky3.x
+        const y = __gky3.y
         //const pub = Buff.from([ x, y ].join(':')).toString('base64') // old
         const pub = x+'.'+y // new
         // x and y are already base64
         // pub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
-        return { pub, priv }
+        return { pub: pub, priv: priv }
       })
       
       // To include PGPv4 kind of keyId:
       // const pubId = await SEA.keyid(keys.pub)
       // Next: ECDH keys for encryption/decryption...
 
-      const { epub, epriv } = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      const __gky4 = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      const epub = __gky4.epub
+      const epriv = __gky4.epriv
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
-        const { d: epriv } = await ecdhSubtle.exportKey('jwk', keys.privateKey)
-        const { x, y } = await ecdhSubtle.exportKey('jwk', keys.publicKey)
+        const __gky5 = await ecdhSubtle.exportKey('jwk', keys.privateKey)
+        const epriv = __gky5.d
+        const __gky6 = await ecdhSubtle.exportKey('jwk', keys.publicKey)
+        const x = __gky6.x
+        const y = __gky6.y
         //const epub = Buff.from([ ex, ey ].join(':')).toString('base64') // old
         const epub = x+'.'+y // new
         // ex and ey are already base64
         // epub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
-        return { epub, epriv }
+        return { epub: epub, epriv: epriv }
       })
 
-      const r = { pub, priv, /* pubId, */ epub, epriv }
+      const r = { pub: pub, priv: priv, /* pubId, */ epub: epub, epriv: epriv }
       if(cb){ cb(r) }
       return r;
     } catch(e) { 
@@ -533,10 +549,10 @@
       const epriv = pair.epriv
       const ecdhSubtle = shim.ossl || shim.subtle
       const pubKeyData = keysToEcdhJwk(pub)
-      const props = {
-        ...S.ecdh,
-        public: await ecdhSubtle.importKey(...pubKeyData, true, [])
-      }
+      const props = Object.assign(
+        S.ecdh,
+        { public: await ecdhSubtle.importKey(...pubKeyData, true, []) }
+      )
       const privKeyData = keysToEcdhJwk(epub, epriv)
       const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
       .then(async (privKey) => {
@@ -556,10 +572,13 @@
     const keysToEcdhJwk = (pub, d) => { // d === priv
       //const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
       const [ x, y ] = pub.split('.') // new
-      const jwk = d ? { d } : {}
+      const jwk = d ? { d: d } : {}
       return [  // Use with spread returned value...
         'jwk',
-        { ...jwk, x, y, kty: 'EC', crv: 'P-256', ext: true }, // ??? refactor
+        Object.assign(
+          jwk,
+          { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
+        ), // ??? refactor
         S.ecdh
       ]
     }
@@ -569,23 +588,22 @@
 
   ;USE(function(module){
     // Old Code...
-    const {
-      crypto,
-      subtle,
-      ossl,
-      random: getRandomBytes,
-      TextEncoder,
-      TextDecoder
-    } = USE('./shim')
+    const __gky10 = USE('./shim')
+    const crypto = __gky10.crypto
+    const subtle = __gky10.subtle
+    const ossl = __gky10.ossl
+    const TextEncoder = __gky10.TextEncoder
+    const TextDecoder = __gky10.TextDecoder
+    const getRandomBytes = __gky10.random
     const EasyIndexedDB = USE('./indexed')
     const Buffer = USE('./buffer')
     var settings = USE('./settings');
-    const {
-      pbkdf2: pbKdf2,
-      ecdsa: { pair: ecdsaKeyProps, sign: ecdsaSignProps },
-      ecdh: ecdhKeyProps,
-      jwk: keysToEcdsaJwk
-    } = USE('./settings')
+    const __gky11 = USE('./settings')
+    const pbKdf2 = __gky11.pbkdf2
+    const ecdsaKeyProps = __gky11.ecdsa.pair
+    const ecdsaSignProps = __gky11.ecdsa.sign
+    const ecdhKeyProps = __gky11.ecdh
+    const keysToEcdsaJwk = __gky11.jwk
     const sha1hash = USE('./sha1')
     const sha256hash = USE('./sha256')
     const recallCryptoKey = USE('./remember')
@@ -712,19 +730,19 @@
       let err
       // then attempt to log into each one until we find ours!
       // (if two users have the same username AND the same password... that would be bad)
-      const [ user ] = await Promise.all(aliases.map(async ({ at, pub }) => {
+      const [ user ] = await Promise.all(aliases.map(async ({ at: at, pub: pub }) => {
         // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
         const auth = parseProps(at.put.auth)
       // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
       // SEA.verify(at.put.auth, pub).then(function(auth){
         try {
           const proof = await SEA.work(pass, auth.s)
-          const props = { pub, proof, at }
+          const props = { pub: pub, proof: proof, at: at }
           // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
           /*
           MARK TO @mhelander : pub vs epub!???
           */
-          const { salt } = auth
+          const salt = auth.salt
           const sea = await SEA.decrypt(auth.ek, proof)
           if (!sea) {
             err = 'Failed to decrypt secret!'
@@ -732,8 +750,9 @@
           }
           // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
           // if we were successful, then that meanswe're logged in!
-          const { priv, epriv } = sea
-          const { epub } = at.put
+          const priv = sea.priv
+          const epriv = sea.epriv
+          const epub = at.put.epub
           // TODO: 'salt' needed?
           err = null
           if(typeof window !== 'undefined'){
@@ -743,7 +762,7 @@
               window.sessionStorage.tmp = pass;
             }
           }
-          return Object.assign(props, { priv, salt, epub, epriv })
+          return Object.assign(props, { priv: priv, salt: salt, epub: epub, epriv: epriv })
         } catch (e) {
           err = 'Failed to decrypt secret!'
           throw { err }
@@ -772,8 +791,9 @@
         props.proof = proof
         delete props.remember   // Not stored if present
 
-        const { alias, alias: id } = props
-        const remember = { alias, pin }
+        const alias = props.alias
+        const id = props.alias
+        const remember = { alias: alias, pin: pin }
 
         try {
           const signed = await SEA.sign(JSON.stringify(remember), key)
@@ -786,7 +806,7 @@
           if (encrypted) {
             const auth = await SEA.sign(encrypted, key)
             await seaIndexedDb.wipe() // NO! Do not do this. It ruins other people's sessionStorage code. This is bad/wrong, commenting it out.
-            await seaIndexedDb.put(id, { auth })
+            await seaIndexedDb.put(id, { auth: auth })
           }
 
           return props
@@ -825,15 +845,18 @@
         'utf8'
       ).toString('base64')
 
-      const { alias } = user || {}
-      const { validity: exp } = authsettings      // seconds // @mhelander what is `exp`???
+      const alias = user.alias
+      const exp = authsettings.validity      // seconds // @mhelander what is `exp`???
 
       if (proof && alias && exp) {
         const iat = Math.ceil(Date.now() / 1000)  // seconds
         const remember = Gun.obj.has(opts, 'pin') || undefined  // for hook - not stored
-        const props = authsettings.hook({ alias, iat, exp, remember })
-        const { pub, epub, sea: { priv, epriv } } = user
-        const key = { pub, priv, epub, epriv }
+        const props = authsettings.hook({ alias: alias, iat: iat, exp: exp, remember: remember })
+        const pub = user.pub
+        const epub = user.epub
+        const priv = user.sea.priv
+        const epriv = user.sea.epriv
+        const key = { pub: pub, priv: priv, epub: epub, epriv: epriv }
         if (props instanceof Promise) {
           const asyncProps = await props.then()
           return await updateStorage(proof, key, pin)(asyncProps)
@@ -849,7 +872,7 @@
     const authPersist = USE('./persist')
     // This internal func finalizes User authentication
     const finalizeLogin = async (alias, key, gunRoot, opts) => {
-      const { user } = gunRoot._
+      const user = gunRoot._.user
       // add our credentials in-memory only to our root gun instance
       //var tmp = user._.tag;
       var opt = user._.opt;
@@ -858,9 +881,12 @@
       //user._.tag = tmp || user._.tag;
       // so that way we can use the credentials to encrypt/decrypt data
       // that is input/output through gun (see below)
-      const { pub, priv, epub, epriv } = key
+      const pub = key.pub
+      const priv = key.priv
+      const epub = key.epub
+      const epriv = key.epriv
       user._.is = user.is = {alias: alias, pub: pub};
-      Object.assign(user._, { alias, pub, epub, sea: { pub, priv, epub, epriv } })
+      Object.assign(user._, { alias: alias, pub: pub, epub: epub, sea: { pub: pub, priv: priv, epub: epub, epriv: epriv } })
       //console.log("authorized", user._);
       // persist authentication
       //await authPersist(user._, key.proof, opts) // temporarily disabled
@@ -899,13 +925,13 @@
           const checkNotExpired = (args) => {
             if (Math.floor(Date.now() / 1000) < (iat + args.exp)) {
               // No way hook to update 'iat'
-              return Object.assign(args, { iat, proof })
+              return Object.assign(args, { iat: iat, proof: proof })
             } else {
               Gun.log('Authentication expired!')
             }
           }
           // We're not gonna give proof to hook!
-          const hooked = authsettings.hook({ alias, iat, exp, remember })
+          const hooked = authsettings.hook({ alias: alias, iat: iat, exp: exp, remember: remember })
           return ((hooked instanceof Promise)
           && await hooked.then(checkNotExpired)) || checkNotExpired(hooked)
         }
@@ -942,10 +968,11 @@
       // (if two users have the same username AND the same password... that would be bad)
       const [ { key, at, proof, pin: newPin } = {} ] = await Promise
       .all(aliases.filter(({ at: { put } = {} }) => !!put)
-      .map(async ({ at, pub }) => {
+      .map(async ({ at: at, pub: pub }) => {
         const readStorageData = async (args) => {
           const props = args || parseProps(await SEA.verify(remember, pub, true))
-          let { pin, alias: aLias } = props
+          let pin = props.pin
+          let aLias = props.alias
 
           const data = (!pin && alias === aLias)
           // No PIN, let's try short-term proof if for matching alias
@@ -954,11 +981,13 @@
           : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
           pin = pin || data.pin
           delete data.pin
-          return { pin, data }
+          return { pin: pin, data: data }
         }
         // got pub, try auth with pin & alias :: or unwrap Storage data...
-        const { data, pin: newPin } = await readStorageData(pin && { pin, alias })
-        const { proof } = data || {}
+        const __gky20 = await readStorageData(pin && { pin, alias })
+        const data = __gky20.data
+        const newPin = __gky20.pin
+        const proof = data.proof
 
         if (!proof) {
           if (!data) {
@@ -973,17 +1002,18 @@
         }
 
         try { // auth parsing or decryption fails or returns empty - silently done
-          const { auth } = at.put.auth
+          const auth= at.put.auth.auth
           const sea = await SEA.decrypt(auth, proof)
           if (!sea) {
             err = 'Failed to decrypt private key!'
             return
           }
-          const { priv, epriv } = sea
-          const { epub } = at.put
+          const priv = sea.priv
+          const epriv = sea.epriv
+          const epub = at.put.epub
           // Success! we've found our private data!
           err = null
-          return { proof, at, pin: newPin, key: { pub, priv, epriv, epub } }
+          return { proof: proof, at: at, pin: newPin, key: { pub: pub, priv: priv, epriv: epriv, epub: epub } }
         } catch (e) {
           err = 'Failed to decrypt private key!'
           return
@@ -999,7 +1029,7 @@
       try {
         await updateStorage(proof, key, newPin || pin)(key)
 
-        const user = Object.assign(key, { at, proof })
+        const user = Object.assign(key, { at: at, proof: proof })
         const pIN = newPin || pin
 
         const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
@@ -1029,7 +1059,7 @@
       gunRoot.user();
       // Removes persisted authentication & CryptoKeys
       try {
-        await authPersist({ alias })
+        await authPersist({ alias: alias })
       } catch (e) {}  //eslint-disable-line no-empty
       return { ok: 0 }
     }
@@ -1089,7 +1119,7 @@
     const authenticate = USE('./authenticate')
     const finalizeLogin = USE('./login')
     const authLeave = USE('./leave')
-    const { recall: _initial_authsettings } = USE('./settings')
+    const _initial_authsettings = USE('./settings').recall
     const Gun = SEA.Gun;
 
     var u;
@@ -1115,7 +1145,7 @@
           Gun.log(err)
           cat.ing = false;
           gun.leave();
-          return reject({ err })
+          return reject({ err: err })
         }
         const salt = Gun.text.random(64)
         // pseudo-randomly create a salt, then use CryptoJS's PBKDF2 function to extend the password with it.
@@ -1124,20 +1154,22 @@
           // this will take some short amount of time to produce a proof, which slows brute force attacks.
           const pairs = await SEA.pair()
           // now we have generated a brand new ECDSA key pair for the user account.
-          const { pub, priv, epriv } = pairs
+          const pub = pairs.pub
+          const priv = pairs.priv
+          const epriv = pairs.epriv
           // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
           const alias = await SEA.sign(username, pairs)
           if(u === alias){ throw SEA.err }
           const epub = await SEA.sign(pairs.epub, pairs)
           if(u === epub){ throw SEA.err }
           // to keep the private key safe, we AES encrypt it with the proof of work!
-          const auth = await SEA.encrypt({ priv, epriv }, proof)
+          const auth = await SEA.encrypt({ priv: priv, epriv: epriv }, proof)
           .then((auth) => // TODO: So signedsalt isn't needed?
           // SEA.sign(salt, pairs).then((signedsalt) =>
             SEA.sign({ek: auth, s: salt}, pairs)
           // )
           ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); cat.ing = false; gun.leave(); reject(e) })
-          const user = { alias, pub, epub, auth }
+          const user = { alias: alias, pub: pub, epub: epub, auth: auth }
           const tmp = '~'+pairs.pub;
           // awesome, now we can actually save the user with their public key as their ID.
           try{
@@ -1161,7 +1193,8 @@
     User.prototype.auth = function(alias, pass, cb, opt){
       // TODO: Needs to be cleaned up!!!!
       const opts = opt || (typeof cb !== 'function' && cb)
-      let { pin, newpass } = opts || {}
+      let pin = opts && opts.pin
+      let newpass = opts && opts.newpass
       const gunRoot = this.back(-1)
       cb = typeof cb === 'function' ? cb : () => {}
       newpass = newpass || (opts||{}).change;
@@ -1174,7 +1207,7 @@
 
       if (!pass && pin) { (async function(){
         try {
-          var r = await authRecall(gunRoot, { alias, pin })
+          var r = await authRecall(gunRoot, { alias: alias, pin: pin })
           return cat.ing = false, cb(r), gun;
         } catch (e) {
           var err = { err: 'Auth attempt failed! Reason: No session data for alias & PIN' }
@@ -1195,7 +1228,10 @@
         if (!keys) {
           return putErr('Auth attempt failed!')({ message: 'No keys' })
         }
-        const { pub, priv, epub, epriv } = keys
+        const pub = keys.pub
+        const priv = keys.priv
+        const epub = keys.epub
+        const epriv = keys.epriv
         // we're logged in!
         if (newpass) {
           // password update so encrypt private key using new pwd + salt
@@ -1203,13 +1239,13 @@
             const salt = Gun.text.random(64);
             const encSigAuth = await SEA.work(newpass, salt)
             .then((key) =>
-              SEA.encrypt({ priv, epriv }, key)
+              SEA.encrypt({ priv: priv, epriv: epriv }, key)
               .then((auth) => SEA.sign({ek: auth, s: salt}, keys))
             )
             const signedEpub = await SEA.sign(epub, keys)
             const signedAlias = await SEA.sign(alias, keys)
             const user = {
-              pub,
+              pub: pub,
               alias: signedAlias,
               auth: encSigAuth,
               epub: signedEpub
@@ -1224,7 +1260,7 @@
             return putErr('Password set attempt failed!')(e)
           }
         } else {
-          const login = finalizeLogin(alias, keys, gunRoot, { pin })
+          const login = finalizeLogin(alias, keys, gunRoot, { pin: pin })
           login.catch(putErr('Finalizing login failed!'))
           return cat.ing = false, cb(await login), gun;
         }
@@ -1245,7 +1281,8 @@
     User.prototype.delete = async function(alias, pass){
       const gunRoot = this.back(-1)
       try {
-        const { pub } = await authenticate(alias, pass, gunRoot)
+        const __gky40 = await authenticate(alias, pass, gunRoot)
+        const pub = __gky40.pub
         await authLeave(gunRoot, alias)
         // Delete user data
         gunRoot.get('~'+pub).put(null)
