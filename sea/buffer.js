@@ -28,24 +28,25 @@
             }
             buf = SeaArray.from(bytes)
           } else if (enc === 'utf8') {
-            const { length } = input
+            const length = input.length
             const words = new Uint16Array(length)
-            Array.from({ length }, (_, i) => words[i] = input.charCodeAt(i))
+            Array.from({ length: length }, (_, i) => words[i] = input.charCodeAt(i))
             buf = SeaArray.from(words)
           } else if (enc === 'base64') {
             const dec = atob(input)
-            const { length } = dec
+            const length = dec.length
             const bytes = new Uint8Array(length)
-            Array.from({ length }, (_, i) => bytes[i] = dec.charCodeAt(i))
+            Array.from({ length: length }, (_, i) => bytes[i] = dec.charCodeAt(i))
             buf = SeaArray.from(bytes)
           } else if (enc === 'binary') {
             buf = SeaArray.from(input)
           } else {
-            console.info(`SafeBuffer.from unknown encoding: '${enc}'`)
+            console.info('SafeBuffer.from unknown encoding: '+enc)
           }
           return buf
         }
-        const { byteLength, length = byteLength } = input
+        const byteLength = input.byteLength
+        const length = input.byteLength ? input.byteLength : input.length
         if (length) {
           let buf
           if (input instanceof ArrayBuffer) {
@@ -56,11 +57,11 @@
       },
       // This is 'safe-buffer.alloc' sans encoding support
       alloc(length, fill = 0 /*, enc*/ ) {
-        return SeaArray.from(new Uint8Array(Array.from({ length }, () => fill)))
+        return SeaArray.from(new Uint8Array(Array.from({ length: length }, () => fill)))
       },
       // This is normal UNSAFE 'buffer.alloc' or 'new Buffer(length)' - don't use!
       allocUnsafe(length) {
-        return SeaArray.from(new Uint8Array(Array.from({ length })))
+        return SeaArray.from(new Uint8Array(Array.from({ length : length })))
       },
       // This puts together array of array like members
       concat(arr) { // octet array

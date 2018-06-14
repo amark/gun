@@ -10,7 +10,7 @@
       const rand = {s: shim.random(8), iv: shim.random(16)};
       const ct = await aescbckey(key, rand.s)
       .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
-        name: 'AES-CBC', iv: new Uint8Array(rand.iv)
+        name: 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
         ct: shim.Buffer.from(ct, 'binary').toString('utf8'),

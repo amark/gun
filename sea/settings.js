@@ -26,7 +26,7 @@
     }
 
     Object.assign(settings, {
-      pbkdf2,
+      pbkdf2: pbkdf2,
       ecdsa: {
         pair: ecdsaKeyProps,
         sign: ecdsaSignProps

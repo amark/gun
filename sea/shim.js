@@ -3,9 +3,10 @@
     const api = {Buffer: Buffer}
 
     if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
-      const { msCrypto, crypto = msCrypto } = window          // STD or M$
-      const { webkitSubtle, subtle = webkitSubtle } = crypto  // STD or iSafari
-      const { TextEncoder, TextDecoder } = window
+      var crypto = window.crypto || window.msCrypto;
+      var subtle = crypto.subtle || crypto.webkitSubtle;
+      const TextEncoder = window.TextEncoder
+      const TextDecoder = window.TextDecoder
       Object.assign(api, {
         crypto,
         subtle,
@@ -15,19 +16,22 @@
       })
     } else {
       try{
-      const crypto = require('crypto')
-      //const WebCrypto = require('node-webcrypto-ossl')
-      //const { subtle: ossl } = new WebCrypto({directory: 'key_storage'}) // ECDH
-      const { subtle } = require('@trust/webcrypto')             // All but ECDH
-      const { TextEncoder, TextDecoder } = require('text-encoding')
-      Object.assign(api, {
-        crypto,
-        subtle,
-        //ossl,
-        TextEncoder,
-        TextDecoder,
-        random: (len) => Buffer.from(crypto.randomBytes(len))
-      })
+        var crypto = require('crypto');
+        const { subtle } = require('@trust/webcrypto')             // All but ECDH
+        const { TextEncoder, TextDecoder } = require('text-encoding')
+        Object.assign(api, {
+          crypto,
+          subtle,
+          TextEncoder,
+          TextDecoder,
+          random: (len) => Buffer.from(crypto.randomBytes(len))
+        });
+        try{
+          const WebCrypto = require('node-webcrypto-ossl')
+          api.ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
+        }catch(e){
+          console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
+        }
       }catch(e){
         console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
         TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
