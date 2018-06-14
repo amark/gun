@@ -149,10 +149,8 @@
     const api = {Buffer: Buffer}
 
     if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
-      const msCrypto = window.msCrypto          // STD or M$
-      const crypto = window.crypto ? window.crypto : msCrypto          // STD or M$
-      const webkitSubtle = crypto.webkitSubtle  // STD or iSafari
-      const subtle = crypto.subtle ? crypto.subtle : webkitSubtle  // STD or iSafari
+      var crypto = window.crypto || window.msCrypto;
+      var subtle = crypto.subtle || crypto.webkitSubtle;
       const TextEncoder = window.TextEncoder
       const TextDecoder = window.TextDecoder
       Object.assign(api, {
@@ -164,26 +162,7 @@
       })
     } else {
       try{
-      const crypto = require('crypto')
-      let nwOSSL = false
-      try{
-        require.resolve('node-webcrypto-ossl')
-        nwOSSL = true
-      }catch(e){}
-      if(nwOSSL){
-        const WebCrypto = require('node-webcrypto-ossl')
-        const ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
-        const { subtle } = require('@trust/webcrypto')             // All but ECDH
-        const { TextEncoder, TextDecoder } = require('text-encoding')
-        Object.assign(api, {
-          crypto,
-          subtle,
-          ossl,
-          TextEncoder,
-          TextDecoder,
-          random: (len) => Buffer.from(crypto.randomBytes(len))
-        })
-      } else {
+        var crypto = require('crypto');
         const { subtle } = require('@trust/webcrypto')             // All but ECDH
         const { TextEncoder, TextDecoder } = require('text-encoding')
         Object.assign(api, {
@@ -192,10 +171,15 @@
           TextEncoder,
           TextDecoder,
           random: (len) => Buffer.from(crypto.randomBytes(len))
-        })
-      }
+        });
+        try{
+          const WebCrypto = require('node-webcrypto-ossl')
+          api.ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
+        }catch(e){
+          console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
+        }
       }catch(e){
-        console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json! And if you are in nodejs you should include node-webcrypto-ossl.");
+        console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
         TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
       }
     }
@@ -310,7 +294,7 @@
         return r;
       }
       // For NodeJS crypto.pkdf2 rocks
-      const crypto = require('crypto')
+      const crypto = shim.crypto;
       const hash = crypto.pbkdf2Sync(
         data,
         new shim.TextEncoder().encode(salt),
@@ -342,7 +326,7 @@
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
-      const sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
@@ -361,7 +345,8 @@
       // const pubId = await SEA.keyid(keys.pub)
       // Next: ECDH keys for encryption/decryption...
 
-      const dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      try{
+      var dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         const key = {};
@@ -374,6 +359,11 @@
         // but split on a non-base64 letter.
         return key;
       })
+      }catch(e){
+        if(SEA.window){ throw e }
+        if(e == 'Error: ECDH is not a supported algorithm'){ console.log(e) }
+        else { throw e }
+      } dh = dh || {};
 
       const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
       if(cb){ cb(r) }
@@ -468,7 +458,7 @@
       //const combo = shim.Buffer.concat([shim.Buffer.from(key, 'utf8'), salt || shim.random(8)]).toString('utf8') // old
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      return await shim.subtle.importKey('raw', new Uint8Array(hash), 'AES-CBC', false, ['encrypt', 'decrypt'])
+      return await shim.subtle.importKey('raw', new Uint8Array(hash), 'AES-GCM', false, ['encrypt', 'decrypt'])
     }
     module.exports = importGen;
   })(USE, './aescbc');
@@ -485,7 +475,7 @@
       const rand = {s: shim.random(8), iv: shim.random(16)};
       const ct = await aescbckey(key, rand.s)
       .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
-        name: 'AES-CBC', iv: new Uint8Array(rand.iv)
+        name: 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
         ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
@@ -516,7 +506,7 @@
       const json = parse(data)
       const ct = await aescbckey(key, shim.Buffer.from(json.s, 'utf8'))
       .then((aes) => shim.subtle.decrypt({  // Keeping aesKey scope as private as possible...
-        name: 'AES-CBC', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
+        name: 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
@@ -550,7 +540,7 @@
       const derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey'])
       .then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-CBC', length: 256 }, true, [ 'encrypt', 'decrypt' ])
+        const derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ])
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
       })
       const r = derived;
