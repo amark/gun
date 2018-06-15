@@ -44,7 +44,7 @@
       })
       }catch(e){
         if(SEA.window){ throw e }
-        if(e == 'Error: ECDH is not a supported algorithm'){ console.log(e) }
+        if(e == 'Error: ECDH is not a supported algorithm'){ console.log('Ignoring ECDH...') }
         else { throw e }
       } dh = dh || {};
 

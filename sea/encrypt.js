@@ -2,15 +2,16 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    var aescbckey = require('./aescbc');
+    var aeskey = require('./aeskey');
 
-    SEA.encrypt = async (data, pair, cb) => { try {
+    SEA.encrypt = async (data, pair, cb, opt) => { try {
+      var opt = opt || {};
       const key = pair.epriv || pair;
       const msg = JSON.stringify(data)
       const rand = {s: shim.random(8), iv: shim.random(16)};
-      const ct = await aescbckey(key, rand.s)
+      const ct = await aeskey(key, rand.s, opt)
       .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
-        name: 'AES-GCM', iv: new Uint8Array(rand.iv)
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
         ct: shim.Buffer.from(ct, 'binary').toString('utf8'),

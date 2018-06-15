@@ -361,7 +361,7 @@
       })
       }catch(e){
         if(SEA.window){ throw e }
-        if(e == 'Error: ECDH is not a supported algorithm'){ console.log(e) }
+        if(e == 'Error: ECDH is not a supported algorithm'){ console.log('Ignoring ECDH...') }
         else { throw e }
       } dh = dh || {};
 
@@ -454,28 +454,30 @@
     var shim = USE('./shim');
     var sha256hash = USE('./sha256');
 
-    const importGen = async (key, salt) => {
+    const importGen = async (key, salt, opt) => {
       //const combo = shim.Buffer.concat([shim.Buffer.from(key, 'utf8'), salt || shim.random(8)]).toString('utf8') // old
+      var opt = opt || {};
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      return await shim.subtle.importKey('raw', new Uint8Array(hash), 'AES-GCM', false, ['encrypt', 'decrypt'])
+      return await shim.subtle.importKey('raw', new Uint8Array(hash), opt.name || 'AES-GCM', false, ['encrypt', 'decrypt'])
     }
     module.exports = importGen;
-  })(USE, './aescbc');
+  })(USE, './aeskey');
 
   ;USE(function(module){
     var SEA = USE('./root');
     var shim = USE('./shim');
     var S = USE('./settings');
-    var aescbckey = USE('./aescbc');
+    var aeskey = USE('./aeskey');
 
-    SEA.encrypt = async (data, pair, cb) => { try {
+    SEA.encrypt = async (data, pair, cb, opt) => { try {
+      var opt = opt || {};
       const key = pair.epriv || pair;
       const msg = JSON.stringify(data)
       const rand = {s: shim.random(8), iv: shim.random(16)};
-      const ct = await aescbckey(key, rand.s)
+      const ct = await aeskey(key, rand.s, opt)
       .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
-        name: 'AES-GCM', iv: new Uint8Array(rand.iv)
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
         ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
@@ -498,15 +500,16 @@
     var SEA = USE('./root');
     var shim = USE('./shim');
     var S = USE('./settings');
-    var aescbckey = USE('./aescbc');
+    var aeskey = USE('./aeskey');
     var parse = USE('./parse');
 
-    SEA.decrypt = async (data, pair, cb) => { try {
+    SEA.decrypt = async (data, pair, cb, opt) => { try {
+      var opt = opt || {};
       const key = pair.epriv || pair;
       const json = parse(data)
-      const ct = await aescbckey(key, shim.Buffer.from(json.s, 'utf8'))
+      const ct = await aeskey(key, shim.Buffer.from(json.s, 'utf8'), opt)
       .then((aes) => shim.subtle.decrypt({  // Keeping aesKey scope as private as possible...
-        name: 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
