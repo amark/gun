@@ -2,15 +2,16 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    var aescbckey = require('./aescbc');
+    var aeskey = require('./aeskey');
     var parse = require('./parse');
 
-    SEA.decrypt = async (data, pair, cb) => { try {
+    SEA.decrypt = async (data, pair, cb, opt) => { try {
+      var opt = opt || {};
       const key = pair.epriv || pair;
       const json = parse(data)
-      const ct = await aescbckey(key, shim.Buffer.from(json.s, 'utf8'))
+      const ct = await aeskey(key, shim.Buffer.from(json.s, 'utf8'), opt)
       .then((aes) => shim.subtle.decrypt({  // Keeping aesKey scope as private as possible...
-        name: 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
