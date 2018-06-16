@@ -922,7 +922,7 @@
 			if(n instanceof Function){
 				var yes, tmp = {back: at};
 				while((tmp = tmp.back)
-				&& !(yes = n(tmp, opt))){}
+				&& u === (yes = n(tmp, opt))){}
 				return yes;
 			}
 			if(Gun.num.is(n)){
