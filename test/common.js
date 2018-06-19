@@ -1,170 +1,35 @@
-var root;
-(function(env){
-	root = env.window? env.window : global;
-	env.window && root.localStorage && root.localStorage.clear();
-	try{ require('fs').unlinkSync('data.json') }catch(e){}
-	//root.Gun = root.Gun || require('../gun');
-	if(root.Gun){
-		root.Gun = root.Gun;
-	} else {
-		root.Gun = require('../gun');
-		Gun.serve = require('../lib/serve');
-		//require('./s3');
-		//require('./uws');
-		//require('./wsp/server');
-		require('../lib/file');
-	}
-}(this));
-//Gun.log.squelch = true;
-var gleak = {globals: {}, check: function(){ // via tobyho
-  var leaked = []
-  for (var key in gleak.globe){ if (!(key in gleak.globals)){ leaked.push(key)} }
-  if (leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
-}};
-(function(env){
-	for (var key in (gleak.globe = env)){ gleak.globals[key] = true }
-}(this));
-
-describe('Performance', function(){ return; // performance tests
-	var console = root.console || {log: function(){}};
-	function perf(fn, i){
-		i = i || 1000;
-		while(--i){
-			fn(i);
-		}
-	}
-	perf.now = this.performance? function(){ return performance.now() } : function(){ return Gun.time.now()/1000 };
-	(function(){
-		var t1 = perf.now();
-		var obj = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i'};
-		Object.keys && perf(function(){
-			var l = Object.keys(obj), ll = l.length, i = 0, s = '';
-			for(; i < ll; i++){
-				var v = l[i];
-				s += v;
-			}
-		});
-		console.log('map: native', (t1 = (perf.now() - t1)/1000) + 's');
-
-		var t2 = perf.now();
-		var obj = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i'};
-		perf(function(){
-			var s = '';
-			Gun.obj.map(obj, function(v){
-				s += v;
-			})
-		});
-		console.log('map: gun', (t2 = (perf.now() - t2)/1000) + 's', (t2 / t1).toFixed(1)+'x', 'slower.');
-	}());
-	(function(){
-		if(!Gun.store){
-			var tab = Gun().tab;
-			if(!tab){ return }
-			Gun.store = tab.store;
-		}
-		root.localStorage && root.localStorage.clear();
-		var it = 1000;
-		var t1 = perf.now();
-		perf(function(i){
-			var obj = {'i': i, 'v': Gun.text.random(100)};
-			Gun.store.put('test/native/' + i, obj);
-		}, it);
-		console.log('store: native', (t1 = (perf.now() - t1)/1000) + 's');
-
-		root.localStorage && root.localStorage.clear();
-		var gun = Gun({wire: {get:function(l,cb){cb()},put:function(g,cb){
-			Gun.is.graph(g, function(node, soul){
-				Gun.store.put(soul, node);
-			});
-			cb(null);
-		}}});
-		var t2 = perf.now();
-		perf(function(i){
-			var obj = {'i': i, 'v': Gun.text.random(100)};
-			gun.put(obj);
-		}, it);
-		console.log('store: gun', (t2 = (perf.now() - t2)/1000) + 's', (t2 / t1).toFixed(1)+'x', 'slower.');
-		root.localStorage && root.localStorage.clear();
-	}());
-	(function(){ // setTimeout
-		if(!Gun.store){
-			var tab = Gun().tab;
-			if(!tab){ return }
-			Gun.store = tab.store;
-		}
-		root.localStorage && root.localStorage.clear();
-		var t1 = perf.now();
-		i = i || 1000;
-		while(--i){
-			var obj = {'i': i, 'v': Gun.text.random(100)};
-			Gun.store.put('test/native/' + i, obj);
-		}
-		console.log('store: native', (t1 = (perf.now() - t1)/1000) + 's');
-
-		root.localStorage && root.localStorage.clear();
-		var gun = Gun({wire: {get:function(l,cb){cb()},put:function(g,cb){
-			Gun.is.graph(g, function(node, soul){
-				Gun.store.put(soul, node);
-			});
-			cb(null);
-		}}});
-		var t2 = perf.now();
-		perf(function(i){
-			var obj = {'i': i, 'v': Gun.text.random(100)};
-			gun.put(obj);
-		}, it);
-		console.log('store: gun', (t2 = (perf.now() - t2)/1000) + 's', (t2 / t1).toFixed(1)+'x', 'slower.');
-		root.localStorage && root.localStorage.clear();
-	}());
-	(function(){
-		var t1 = perf.now();
-		var on = Gun.on.create(), c = 0, o = [];
-		perf(function(i){
-			o.push(function(n){
-				c += 1;
-			});
-			var ii = 0, l = o.length;
-			for(; ii < l; ii++){
-				o[ii](i);
-			}
-		});
-		console.log('on: native', (t1 = (perf.now() - t1)/1000) + 's');
-
-		var on = Gun.on.create(), c = 0;
-		var t2 = perf.now();
-		perf(function(i){
-			on('change').event(function(n){
-				c += 1;
-			});
-			on('change').emit(i);
-		});
-		console.log('on: gun', (t2 = (perf.now() - t2)/1000) + 's', (t2 / t1).toFixed(1)+'x', 'slower.');
-	}());return;
-	(function(){ // always do this last!
-		var t1 = perf.now();
-		perf(function(i){
-			setTimeout(function(){
-				if(i === 1){
-					cb1();
-				}
-			},0);
-		}); var cb1 = function(){
-			console.log('setTimeout: native', (t1 = (perf.now() - t1)/1000) + 's', (t1 / t2).toFixed(1)+'x', 'slower.');
-		}
-		var t2 = perf.now();
-		perf(function(i){
-			setImmediate(function(){
-				if(i === 1){
-					cb2();
-				}
-			});
-		}); var cb2 = function(){
-			console.log('setImmediate: gun', (t2 = (perf.now() - t2)/1000) + 's', (t2 / t1).toFixed(1)+'x', 'slower.');
-		}
-	}());
-});
-
 describe('Gun', function(){
+
+	var root;
+	(function(){
+		var env;
+		if(typeof global !== 'undefined'){ env = global }
+		if(typeof window !== 'undefined'){ env = window }
+		root = env.window? env.window : global;
+		env.window && root.localStorage && root.localStorage.clear();
+		try{ require('fs').unlinkSync('data.json') }catch(e){}
+		//root.Gun = root.Gun || require('../gun');
+		if(root.Gun){
+			root.Gun = root.Gun;
+		} else {
+			root.Gun = require('../gun');
+			Gun.serve = require('../lib/serve');
+			//require('./s3');
+			//require('./uws');
+			//require('./wsp/server');
+			require('../lib/file');
+		}
+	}(this));
+	//Gun.log.squelch = true;
+	var gleak = {globals: {}, check: function(){ // via tobyho
+	  var leaked = []
+	  for (var key in gleak.globe){ if (!(key in gleak.globals)){ leaked.push(key)} }
+	  if (leaked.length > 0){ console.log("GLOBAL LEAK!", leaked); return leaked }
+	}};
+	(function(env){
+		for (var key in (gleak.globe = env)){ gleak.globals[key] = true }
+	}(this));
+
 	var t = {};
 
 	describe('Utility', function(){
@@ -278,20 +143,20 @@ describe('Gun', function(){
 				this.document && expect(Gun.obj.is(document.createElement('div'))).to.be(false);
 				expect(Gun.obj.is(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
 			});
-			it('fns',function(){
-				expect(Gun.fns.is(function(){})).to.be(true);
-				expect(Gun.fns.is(u)).to.be(false);
-				expect(Gun.fns.is(null)).to.be(false);
-				expect(Gun.fns.is('')).to.be(false);
-				expect(Gun.fns.is('a')).to.be(false);
-				expect(Gun.fns.is(0)).to.be(false);
-				expect(Gun.fns.is(1)).to.be(false);
-				expect(Gun.fns.is([])).to.be(false);
-				expect(Gun.fns.is([1])).to.be(false);
-				expect(Gun.fns.is({})).to.be(false);
-				expect(Gun.fns.is({a:1})).to.be(false);
-				expect(Gun.fns.is(false)).to.be(false);
-				expect(Gun.fns.is(true)).to.be(false);
+			it('fn',function(){
+				expect(Gun.fn.is(function(){})).to.be(true);
+				expect(Gun.fn.is(u)).to.be(false);
+				expect(Gun.fn.is(null)).to.be(false);
+				expect(Gun.fn.is('')).to.be(false);
+				expect(Gun.fn.is('a')).to.be(false);
+				expect(Gun.fn.is(0)).to.be(false);
+				expect(Gun.fn.is(1)).to.be(false);
+				expect(Gun.fn.is([])).to.be(false);
+				expect(Gun.fn.is([1])).to.be(false);
+				expect(Gun.fn.is({})).to.be(false);
+				expect(Gun.fn.is({a:1})).to.be(false);
+				expect(Gun.fn.is(false)).to.be(false);
+				expect(Gun.fn.is(true)).to.be(false);
 			});
 			it('time',function(){
 				t.ts = Gun.time.is();
@@ -402,7 +267,7 @@ describe('Gun', function(){
 					setTimeout(this.add(function(){
 						this.done(null, num * num);
 					}, key), parseInt((""+Math.random()).substring(2,5)));
-				}, Gun.fns.sum(function(err, val){
+				}, Gun.fn.sum(function(err, val){
 					expect(val.a).to.eql(4);
 					expect(val.b).to.eql(4);
 					expect(val.c).to.eql(9);
@@ -780,24 +645,24 @@ describe('Gun', function(){
 				expect(Gun.val.is({a:1})).to.be(false);
 				expect(Gun.val.is(function(){})).to.be(false);
 			});
-			it('is rel',function(){
-				expect(Gun.val.rel.is({'#':'somesoulidhere'})).to.be('somesoulidhere');
-				expect(Gun.val.rel.is({'#':'somethingelsehere'})).to.be('somethingelsehere');
-				expect(Gun.val.rel.is({'#':'somesoulidhere', and: 'nope'})).to.be(false);
-				expect(Gun.val.rel.is({or: 'nope', '#':'somesoulidhere'})).to.be(false);
-				expect(Gun.val.rel.is(false)).to.be(false);
-				expect(Gun.val.rel.is(true)).to.be(false);
-				expect(Gun.val.rel.is('')).to.be(false);
-				expect(Gun.val.rel.is('a')).to.be(false);
-				expect(Gun.val.rel.is(0)).to.be(false);
-				expect(Gun.val.rel.is(1)).to.be(false);
-				expect(Gun.val.rel.is(Infinity)).to.be(false); // boohoo :(
-				expect(Gun.val.rel.is(NaN)).to.be(false);
-				expect(Gun.val.rel.is([])).to.be(false);
-				expect(Gun.val.rel.is([1])).to.be(false);
-				expect(Gun.val.rel.is({})).to.be(false);
-				expect(Gun.val.rel.is({a:1})).to.be(false);
-				expect(Gun.val.rel.is(function(){})).to.be(false);
+			it('is link',function(){
+				expect(Gun.val.link.is({'#':'somesoulidhere'})).to.be('somesoulidhere');
+				expect(Gun.val.link.is({'#':'somethingelsehere'})).to.be('somethingelsehere');
+				expect(Gun.val.link.is({'#':'somesoulidhere', and: 'nope'})).to.be(false);
+				expect(Gun.val.link.is({or: 'nope', '#':'somesoulidhere'})).to.be(false);
+				expect(Gun.val.link.is(false)).to.be(false);
+				expect(Gun.val.link.is(true)).to.be(false);
+				expect(Gun.val.link.is('')).to.be(false);
+				expect(Gun.val.link.is('a')).to.be(false);
+				expect(Gun.val.link.is(0)).to.be(false);
+				expect(Gun.val.link.is(1)).to.be(false);
+				expect(Gun.val.link.is(Infinity)).to.be(false); // boohoo :(
+				expect(Gun.val.link.is(NaN)).to.be(false);
+				expect(Gun.val.link.is([])).to.be(false);
+				expect(Gun.val.link.is([1])).to.be(false);
+				expect(Gun.val.link.is({})).to.be(false);
+				expect(Gun.val.link.is({a:1})).to.be(false);
+				expect(Gun.val.link.is(function(){})).to.be(false);
 			});
 			it.skip('is lex',function(){
 				expect(Gun.is.lex({'#': 'soul'})).to.eql({soul: 'soul'});
@@ -1021,11 +886,11 @@ describe('Gun', function(){
 			var data = {users: {1: {where: {lat: Math.random(), lng: Math.random(), i: 1}}}};
 			Gun.ify(data, function(err, ctx){
 				var soul, node;
-				expect(soul = Gun.val.rel.is(ctx.root.users)).to.be.ok();
+				expect(soul = Gun.val.link.is(ctx.root.users)).to.be.ok();
 				node = ctx.graph[soul];
-				expect(soul = Gun.val.rel.is(node[1])).to.be.ok();
+				expect(soul = Gun.val.link.is(node[1])).to.be.ok();
 				node = ctx.graph[soul];
-				expect(soul = Gun.val.rel.is(node.where)).to.be.ok();
+				expect(soul = Gun.val.link.is(node.where)).to.be.ok();
 				node = ctx.graph[soul];
 				expect(node.lat).to.be.ok();
 				expect(node.lng).to.be.ok();
@@ -1538,11 +1403,11 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.age).to.be(26);
 							expect(check.alice.name).to.be('Alice');
-							expect(Gun.val.rel.is(check.alice.pet)).to.be.ok();
+							expect(Gun.val.link.is(check.alice.pet)).to.be.ok();
 							//expect(count.alice).to.be(1);
 							expect(check.bob.age).to.be(29);
 							expect(check.bob.name).to.be('Bob!');
-							expect(Gun.val.rel.is(check.bob.pet)).to.be.ok();
+							expect(Gun.val.link.is(check.bob.pet)).to.be.ok();
 							//expect(count.bob).to.be(1);
 							done();
 						},10);
@@ -1756,9 +1621,9 @@ describe('Gun', function(){
 				gun.get('u/m/mutate/n/u').map().on(function(v,f){
 					check[v.name] = f;
 					count[v.name] = (count[v.name] || 0) + 1;
-					//console.log("*****************", f,v);
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						clearTimeout(done.to);
+						//console.log("****", f, v)
 						done.to = setTimeout(function(){
 							expect(done.last).to.be.ok();
 							//expect(check['Alice Aabca']).to.not.be.ok();
@@ -2187,10 +2052,10 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.name).to.be('alice');
 							expect(check.alice.age).to.be(24);
-							expect(Gun.val.rel.is(check.alice.spouse)).to.be.ok();
+							expect(Gun.val.link.is(check.alice.spouse)).to.be.ok();
 							expect(check.bob.name).to.be('bob');
 							expect(check.bob.age).to.be(26);
-							expect(Gun.val.rel.is(check.bob.spouse)).to.be.ok();
+							expect(Gun.val.link.is(check.bob.spouse)).to.be.ok();
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
@@ -2274,10 +2139,10 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.name).to.be('alice');
 							expect(check.alice.age).to.be(24);
-							expect(Gun.val.rel.is(check.alice.spouse)).to.be.ok();
+							expect(Gun.val.link.is(check.alice.spouse)).to.be.ok();
 							expect(check.bob.name).to.be('bob');
 							expect(check.bob.age).to.be(26);
-							expect(Gun.val.rel.is(check.bob.spouse)).to.be.ok();
+							expect(Gun.val.link.is(check.bob.spouse)).to.be.ok();
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
@@ -2970,7 +2835,7 @@ describe('Gun', function(){
 					//console.log("*****************", data);
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
-					expect(Gun.val.rel.is(data.pet)).to.ok();
+					expect(Gun.val.link.is(data.pet)).to.ok();
 					done();
 				//},300);
 			});
@@ -3146,11 +3011,12 @@ describe('Gun', function(){
 					//console.log("***", at.put);
 					done.alias = done.alias || at.put.mark;
 					//!console.debug.i&&(console.debug.i=1)&&console.log("---------------------");
-				}).get('mark').get(function(at){
+				}).get('mark').on(function(data){
 					//console.log("************", at.put);//return;
-					setTimeout(function(){
-						done.mark = done.mark || at.put.pub;
-						expect(Gun.val.rel.is(done.mark)).to.be('pub');
+					clearTimeout(done.to);
+					done.to = setTimeout(function(){
+						done.mark = done.mark || data.pub;
+						expect(Gun.val.link.is(done.mark)).to.be('pub');
 						expect(done.app).to.be.ok();
 						expect(done.pub).to.be.ok();
 						expect(done.alias).to.be.ok();
@@ -3498,9 +3364,10 @@ describe('Gun', function(){
 			list.set(gun.get('dave').put({name: 'dave', age: 25}));
 
 			var check = {};
-			list.val().map().on(function(data, key){
+			list.once().map().on(function(data, key){
 				check[key] = data;
 				clearTimeout(done.to);
+				//console.log("*****", key, data);
 				done.to = setTimeout(function(){
 					if(check.alice && check.bob && check.carl && check.dave && done.last){
 						expect(check.alice.age).to.be(27);
@@ -4157,7 +4024,7 @@ describe('Gun', function(){
 					done.e = 2;
 					return;
 				}
-				expect(Gun.val.rel.is(data.bob)).to.be.ok();
+				expect(Gun.val.link.is(data.bob)).to.be.ok();
 				done.e = 1;
 			});
 		});
@@ -4194,7 +4061,7 @@ describe('Gun', function(){
 			}, s)});
 			gun.get('only/p/soul').path('bob').any(function(err, data){
 				//console.log("*********", err, data);
-				expect(Gun.val.rel.is(data)).to.be.ok();
+				expect(Gun.val.link.is(data)).to.be.ok();
 				//expect(Gun.obj.empty(data, '_')).to.be.ok();
 				done();
 			}, {'.': null});
@@ -4216,7 +4083,7 @@ describe('Gun', function(){
 				if(done.c){
 					expect(data.age).to.be(30);
 					expect(data.name).to.be('Bob!');
-					expect(Gun.val.rel.is(data.pet)).to.be.ok();
+					expect(Gun.val.link.is(data.pet)).to.be.ok();
 					expect(done.c).to.be(1);
 					done();
 					done.c = 2;
@@ -4224,7 +4091,7 @@ describe('Gun', function(){
 				}
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				expect(Gun.val.rel.is(data.pet)).to.be.ok();
+				expect(Gun.val.link.is(data.pet)).to.be.ok();
 				done.c=1;
 			});
 			setTimeout(function(){
@@ -4248,13 +4115,13 @@ describe('Gun', function(){
 				if(done.c){
 					expect(data.age).to.be(30);
 					expect(data.name).to.be('Bob!');
-					expect(Gun.val.rel.is(data.pet)).to.be.ok();
+					expect(Gun.val.link.is(data.pet)).to.be.ok();
 					done();
 					return;
 				}
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				expect(Gun.val.rel.is(data.pet)).to.be.ok();
+				expect(Gun.val.link.is(data.pet)).to.be.ok();
 				done.c=1;
 			});
 			setTimeout(function(){
@@ -4287,7 +4154,7 @@ describe('Gun', function(){
 				}
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				expect(Gun.val.rel.is(data.pet)).to.be.ok();
+				expect(Gun.val.link.is(data.pet)).to.be.ok();
 			});
 			setTimeout(function(){
 				gun.get('change/pointer/to/prime').path('bob').put(3);
@@ -4362,7 +4229,7 @@ describe('Gun', function(){
 				expect(done.soul = Gun.node.soul(data)).to.be('dafssfad');
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				expect(Gun.val.rel.is(data.pet)).to.be.ok();
+				expect(Gun.val.link.is(data.pet)).to.be.ok();
 			});
 			return;
 			setTimeout(function(){
@@ -4437,7 +4304,7 @@ describe('Gun', function(){
 			get.put({foo: 'bar'});
 			get.any(function(err,data){
 				//console.log("data", data);
-				expect(Gun.val.rel.is(data.all)).to.be.ok();
+				expect(Gun.val.link.is(data.all)).to.be.ok();
 				expect(data.foo).to.be('bar');
 			});
 		});
@@ -4642,7 +4509,7 @@ describe('Gun', function(){
 			kn = Gun.obj.copy(kn);
 			delete kn._;
 			expect(Gun.obj.empty(kn, '##')).to.be.ok();
-			kn = gun.back(-1)._.graph[Gun.val.rel.is(kn['##'])];
+			kn = gun.back(-1)._.graph[Gun.val.link.is(kn['##'])];
 			Gun.node.is(kn, function(node, s){
 				var n = gun.back(-1)._.graph[s];
 				if(Gun.obj.has(n, '##')){
@@ -4842,12 +4709,12 @@ describe('Gun', function(){
 				var root = gun.back(-1)._.graph[soul];
 				expect(root.hello).to.be('key');
 				expect(root.yay).to.not.be.ok();
-				expect(Gun.val.rel.is(root.hi)).to.be.ok();
-				expect(Gun.val.rel.is(root.hi)).to.not.be(soul);
-				var node = gun.back(-1)._.graph[Gun.val.rel.is(root.hi)];
+				expect(Gun.val.link.is(root.hi)).to.be.ok();
+				expect(Gun.val.link.is(root.hi)).to.not.be(soul);
+				var node = gun.back(-1)._.graph[Gun.val.link.is(root.hi)];
 				expect(node.yay).to.be('value');
-				if(done.sub){ expect(done.sub).to.be(Gun.val.rel.is(root.hi)) }
-				else { done.sub = Gun.val.rel.is(root.hi) }
+				if(done.sub){ expect(done.sub).to.be(Gun.val.link.is(root.hi)) }
+				else { done.sub = Gun.val.link.is(root.hi) }
 				done.w = 1; if(done.r){ done(); done.c = 1 };
 			}).on(function(node, field){
 				if(done.c){ return }
@@ -4984,7 +4851,7 @@ describe('Gun', function(){
 			get.val(function(data){ // TODO: API CHANGE! Empty objects should react.
 				//console.log("...1", data);
 				expect(Gun.obj.empty(data, '_')).to.be.ok(); // API CHANGED,
-				//expect(Gun.val.rel.is(data.very)).to.be.ok();
+				//expect(Gun.val.link.is(data.very)).to.be.ok();
 			});//, {wait: 10000});
 			setTimeout(function(){
 				var put = get.put({
@@ -4998,12 +4865,12 @@ describe('Gun', function(){
 				});
 				get.val(function(data){
 					//console.log("...2", data);
-					expect(Gun.val.rel.is(data.very)).to.be.ok();
+					expect(Gun.val.link.is(data.very)).to.be.ok();
 				});
 				setTimeout(function(){
 					put.val(function(data){
 						//console.log("...3", data);
-						expect(Gun.val.rel.is(data.very)).to.be.ok();
+						expect(Gun.val.link.is(data.very)).to.be.ok();
 						done.val = true;
 					});
 					var p = put.path('very');
@@ -5012,7 +4879,7 @@ describe('Gun', function(){
 						p.val(function(data){
 							//console.log("...4", data);
 							expect(data.we).to.be('have gone!');
-							expect(Gun.val.rel.is(data.deep)).to.be.ok();
+							expect(Gun.val.link.is(data.deep)).to.be.ok();
 						});
 						p.put('EXPLODE');
 						setTimeout(function(){
@@ -5104,7 +4971,7 @@ describe('Gun', function(){
 			var g = gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
 				expect(err).to.not.be.ok();
-				expect(done.ref = Gun.val.rel.is(node.hi)).to.be.ok();
+				expect(done.ref = Gun.val.link.is(node.hi)).to.be.ok();
 				done.soul = Gun.node.soul(node);
 			});
 			g.path('hi').put({happy: "faces"}, function(err, ok){
@@ -5138,7 +5005,7 @@ describe('Gun', function(){
 			gun.get('hello/key', function(err, node){
 				if(done.soul){ return }
 				expect(err).to.not.be.ok();
-				expect(done.ref = Gun.val.rel.is(node.hi)).to.be.ok();
+				expect(done.ref = Gun.val.link.is(node.hi)).to.be.ok();
 				done.soul = Gun.node.soul(node);
 			}).path('hi').put('crushed', function(err, ok){
 				if(done.c){ return }
@@ -5472,12 +5339,12 @@ describe('Gun', function(){
 				expect(err).to.not.be.ok();
 			}).val(function(val){
 				setTimeout(function(){ // TODO: Is this cheating? I don't think so cause we are using things outside of the API!
-					var a = gun.back(-1)._.graph[Gun.val.rel.is(val.a)];
-					var b = gun.back(-1)._.graph[Gun.val.rel.is(val.b)];
-					expect(Gun.val.rel.is(val.a)).to.be(Gun.node.soul(a));
-					expect(Gun.val.rel.is(val.b)).to.be(Gun.node.soul(b));
-					expect(Gun.val.rel.is(a.kid)).to.be(Gun.node.soul(b));
-					expect(Gun.val.rel.is(b.parent)).to.be(Gun.node.soul(a));
+					var a = gun.back(-1)._.graph[Gun.val.link.is(val.a)];
+					var b = gun.back(-1)._.graph[Gun.val.link.is(val.b)];
+					expect(Gun.val.link.is(val.a)).to.be(Gun.node.soul(a));
+					expect(Gun.val.link.is(val.b)).to.be(Gun.node.soul(b));
+					expect(Gun.val.link.is(a.kid)).to.be(Gun.node.soul(b));
+					expect(Gun.val.link.is(b.parent)).to.be(Gun.node.soul(a));
 					done();
 				},10);
 			});
@@ -5579,8 +5446,8 @@ describe('Gun', function(){
 			}).val(function(val){
 				expect(val.age).to.be(23);
 				expect(val.name).to.be("Mark Nadal");
-				expect(Gun.val.rel.is(val.wife)).to.be.ok();
-				expect(Gun.val.rel.is(val.pet)).to.be.ok();
+				expect(Gun.val.link.is(val.wife)).to.be.ok();
+				expect(Gun.val.link.is(val.pet)).to.be.ok();
 			}).path('wife.pet.name').val(function(val){
 				//console.debug(1, "*****************", val);
 				expect(val).to.be('Hobbes');
@@ -5589,7 +5456,7 @@ describe('Gun', function(){
 				expect(val.name).to.be("Amber Nadal");
 				expect(val.phd).to.be.ok();
 				expect(val.age).to.be(23);
-				expect(Gun.val.rel.is(val.pet)).to.be.ok();
+				expect(Gun.val.link.is(val.pet)).to.be.ok();
 				done();
 			});
 		});
@@ -5686,7 +5553,7 @@ describe('Gun', function(){
 				foo.put({bar: {zoo: 'who'}}).val(function(obj, field){
 					//console.log("terribly terrilby unpleasant", field, obj);
 					expect(obj.foo).to.be('bar');
-					expect(Gun.val.rel.is(obj.bar)).to.ok();
+					expect(Gun.val.link.is(obj.bar)).to.ok();
 					done(); //setTimeout(function(){ done() },1);
 				});
 			});
@@ -5718,8 +5585,8 @@ describe('Gun', function(){
 					expect(obj.another).to.be('node');
 					// double .vals here also RELATED to the #"context no double emit" but because of a faulty .not or .init system.
 					bar.val(function(node){
-						expect(Gun.val.rel.is(node.combo)).to.be.ok();
-						expect(Gun.val.rel.is(node.combo)).to.be(Gun.node.soul(obj));
+						expect(Gun.val.link.is(node.combo)).to.be.ok();
+						expect(Gun.val.link.is(node.combo)).to.be(Gun.node.soul(obj));
 						done(); //setTimeout(function(){ done() },1);
 					});
 				});
@@ -6253,7 +6120,7 @@ describe('Gun', function(){
 			users.path(Gun.text.random()).put('sam');
 			setTimeout(function(){
 				users.val(function(v){
-					expect(Gun.val.rel.is(v)).to.not.be.ok();
+					expect(Gun.val.link.is(v)).to.not.be.ok();
 					expect(Object.keys(v).length).to.be(3);
 					done();
 				});
@@ -7343,11 +7210,11 @@ describe('Gun', function(){
 							//console.log("chain.put PUT <----", ify.graph, '\n');
 							if(err || ify.err){ return cb.call(gun, err || ify.err) }
 							if(err = Gun.union(gun, ify.graph).err){ return cb.call(gun, err) }
-							if($.from = Gun.val.rel.is(ify.root[$.field])){ $.soul = $.from; $.field = null }
+							if($.from = Gun.val.link.is(ify.root[$.field])){ $.soul = $.from; $.field = null }
 							Gun.obj.map(ify.graph, function(node, soul){ Gun.union(gun, Gun.union.pseudo(soul)) });
 							gun._.at('soul').emit({soul: $.soul, field: $.field, key: $.key, PUT: 'SOUL', WAS: 'ON'}); // WAS ON
 							//return cb(null, true);
-							if(Gun.fns.is(ctx.hook = gun.__.opt.hooks.put)){
+							if(Gun.fn.is(ctx.hook = gun.__.opt.hooks.put)){
 								ctx.hook(ify.graph, function(err, data){ // now iterate through those nodes to a persistence layer and get a callback once all are saved
 									if(err){ return cb.call(gun, err) }
 									return cb.call(gun, null, data);
@@ -7506,11 +7373,11 @@ describe('Gun', function(){
 				expect(done.c++).to.be(0);
 			}).val(function(p){
 				done.p = Gun.node.soul(p);
-				done.m = Gun.val.rel.is(p[0]);
-				expect(Gun.val.rel.is(p[0])).to.be.ok();
-				expect(Gun.val.rel.is(p[1])).to.be.ok();
-				expect(Gun.val.rel.is(p[2])).to.be.ok();
-				expect(Gun.val.rel.is(p[3])).to.be.ok();
+				done.m = Gun.val.link.is(p[0]);
+				expect(Gun.val.link.is(p[0])).to.be.ok();
+				expect(Gun.val.link.is(p[1])).to.be.ok();
+				expect(Gun.val.link.is(p[2])).to.be.ok();
+				expect(Gun.val.link.is(p[3])).to.be.ok();
 			})
 
 			var players = [], me;
@@ -8023,19 +7890,19 @@ describe('Gun', function(){
 			test.val(function(node,b){
 				delete node._;
 				expect(Gun.obj.empty(node, 'try')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.val.rel.is(node.try)]);
+				node = Gun.obj.copy(gun.__.graph[Gun.val.link.is(node.try)]);
 
 				delete node._;
 				expect(Gun.obj.empty(node, 'this')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.val.rel.is(node.this)]);
+				node = Gun.obj.copy(gun.__.graph[Gun.val.link.is(node.this)]);
 
 				delete node._;
 				expect(Gun.obj.empty(node, 'at')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.val.rel.is(node.at)]);
+				node = Gun.obj.copy(gun.__.graph[Gun.val.link.is(node.at)]);
 
 				delete node._;
 				expect(Gun.obj.empty(node, 'lvl4')).to.be.ok();
-				node = Gun.obj.copy(gun.__.graph[Gun.val.rel.is(node.lvl4)]);
+				node = Gun.obj.copy(gun.__.graph[Gun.val.link.is(node.lvl4)]);
 
 				delete node._;
 				expect(Gun.obj.empty(node, 'msg')).to.be.ok();

@@ -169,7 +169,7 @@
 					Gun.node.is(at.put.users, function(val, key){
 						Gun.SEA.verify(val, false, function(val){
 						//Gun.SEA.read(val, false, function(val){
-							if('~@'+key === Gun.val.rel.is(val)){ return }
+							if('~@'+key === Gun.val.link.is(val)){ return }
 							no = true;
 						})
 						if(no){ return no }
