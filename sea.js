@@ -862,7 +862,7 @@
       // add our credentials in-memory only to our root gun instance
       //var tmp = user._.tag;
       var opt = user._.opt;
-      user._ = key.at.gun._;
+      user._ = key.at.$._;
       user._.opt = opt;
       //user._.tag = tmp || user._.tag;
       // so that way we can use the credentials to encrypt/decrypt data
@@ -1038,8 +1038,8 @@
     const authLeave = async (gunRoot, alias = gunRoot._.user._.alias) => {
       var user = gunRoot._.user._ || {};
       [ 'get', 'soul', 'ack', 'put', 'is', 'alias', 'pub', 'epub', 'sea' ].map((key) => delete user[key])
-      if(user.gun){
-        delete user.gun.is;
+      if(user.$){
+        delete user.$.is;
       }
       // Let's use default
       gunRoot.user();
@@ -1068,7 +1068,7 @@
     var then = USE('./then');
 
     function User(){ 
-      this._ = {gun: this}
+      this._ = {$: this}
       Gun.call()
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
@@ -1430,7 +1430,7 @@
     function each(msg){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
       // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
       // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
-      var to = this.to, vertex = (msg.gun._).put, c = 0, d;
+      var to = this.to, vertex = (msg.$._).put, c = 0, d;
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
