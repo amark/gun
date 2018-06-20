@@ -1037,7 +1037,7 @@
 						not(cat, msg);
 					} else
 					if(at.has || at.soul){
-						(at.echo || (at.echo = {}))[cat.id] = cat;
+						(at.echo || (at.echo = {}))[cat.id] = at.echo[at.id] || cat;
 						(cat.map || (cat.map = {}))[at.id] = cat.map[at.id] || {at: at};
 						//if(u === at.put){ return } // Not necessary but improves performance. If we have it but at does not, that means we got things out of order and at will get it. Once at gets it, it will tell us again.
 					}
@@ -1072,7 +1072,7 @@
 			}
 			if(from === at){ return }
 			if(!from.$){ from = {} }
-			(from.echo || (from.echo = {}))[at.id] = at;
+			(from.echo || (from.echo = {}))[at.id] = from.echo[at.id] || at;
 			if(at.has && !(at.map||empty)[from.id]){ // if we haven't seen this before.
 				not(at, msg);
 			}
@@ -1115,6 +1115,7 @@
 			obj_map(at.echo, reverb, msg);
 		}
 		function reverb(to){
+			if(!to || !to.on){ return }
 			to.on('in', this);
 		}
 		function map(data, key){ // Map over only the changes on every update.
@@ -1227,7 +1228,7 @@
 				as.use = key;
 				as.out = as.out || {};
 				as.out.get = as.out.get || {};
-				ev = at.on('in', use, as);
+				(ev = at.on('in', use, as)).rid = rid;
 				(root.now = {$:1})[as.now = at.id] = ev;
 				at.on('out', as.out);
 				root.now = tmp;
@@ -1268,7 +1269,6 @@
 		}
 		function use(msg){
 			var ev = this, as = ev.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put, tmp;
-			//(root.stop && root.stop && (root.stop.ID = Gun.text.random(2))); console.log("???", msg, root && root.stop);
 			if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = root.now) && ev !== tmp[as.now]){
 				return ev.to.next(msg);
@@ -1284,6 +1284,16 @@
 			}
 			as.use(msg, msg.event || ev);
 			ev.to.next(msg);
+		}
+		function rid(at){
+			var cat = this.on;
+			if(!at || cat.soul || cat.has){ return this.off() }
+			if(!(at = (at = (at = at.$ || at)._ || at).id)){ return }
+			var map = cat.map, tmp;
+			if(!map || !(tmp = map[at]) || !(tmp = tmp.at)){ return }
+			tmp.echo[cat.id] = {}; // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
+			//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
+			return true;
 		}
 		var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
 		var num_is = Gun.num.is;
@@ -1681,8 +1691,9 @@
 		Gun.chain.map = function(cb, opt, t){
 			var gun = this, cat = gun._, chain;
 			if(!cb){
-				if(chain = cat.each){ return chain }
-				chain = cat.each = gun.chain();
+				//if(chain = cat.each){ return chain }
+				//cat.each = 
+				chain = gun.chain();
 				chain._.nix = gun.back('nix');
 				gun.on('in', map, chain._);
 				return chain;
@@ -1709,7 +1720,7 @@
 		function each(v,k){
 			if(n_ === k){ return }
 			var msg = this.msg, gun = msg.$, at = this.at, tmp = (gun.get(k)._);
-			(tmp.echo || (tmp.echo = {}))[at.id] = at;
+			(tmp.echo || (tmp.echo = {}))[at.id] = tmp.echo[at.id] || at;
 		}
 		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	})(USE, './map');
@@ -1736,7 +1747,6 @@
 				var put = {}, node = at.put;
 				soul = at.soul || Gun.node.soul(node) || soul;
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + node + '"!')}) }
-				console.log("SET?", soul);
 				gun.put(Gun.obj.put(put, soul, Gun.val.rel.ify(soul)), cb, opt);
 			},{wait:0});
 			return item;
