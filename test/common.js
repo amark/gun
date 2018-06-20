@@ -2829,10 +2829,11 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			gun.on('put', {$: gun, put: Gun.graph.ify(user, s)});
+			//console.debug.i=1;console.log("-------------");
 			gun.get(s.soul).get('bob').get('pet').get('slave').val(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
-					//console.log("*****************", data);
+					//console.log("*****************", data);return;
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
 					expect(Gun.val.link.is(data.pet)).to.ok();
@@ -3460,10 +3461,12 @@ describe('Gun', function(){
 				//console.log('*****************', key, val);
 				expect(val).to.be(undefined);
 				done.bzl = true;
-				if(done.fbb && done.t && done.bzl){
-					if(done.c){ return } done.c = 1;
-					done();
-				}
+				setTimeout(function(){
+					if(done.fbb && done.t && done.bzl){
+						if(done.c){ return } done.c = 1;
+						done();
+					}
+				},100);
 			});
 		});
 
@@ -3598,7 +3601,7 @@ describe('Gun', function(){
 
 			function run(i){
 
-				console.log("----", i, "----");
+				//console.log("----", i, "----");
 				//2 === i && (console.debug.i = 1) && console.debug(1, '======= what happens?');
 				said.set({
 					what: i + " Hello world!",
