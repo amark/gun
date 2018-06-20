@@ -1223,6 +1223,7 @@
 				gun = this;
 				var at = gun._, root = at.root, tmp = root.now, ev;
 				as = cb || {};
+				as.at = at;
 				as.use = key;
 				as.out = as.out || {};
 				as.out.get = as.out.get || {};
@@ -1266,16 +1267,16 @@
 			return at;
 		}
 		function use(msg){
-			var ev = this, as = ev.as, gun = msg.$, at = (gun||{})._ || {}, root = at.root, data = msg.put, tmp;
+			var ev = this, as = ev.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put, tmp;
 			//(root.stop && root.stop && (root.stop.ID = Gun.text.random(2))); console.log("???", msg, root && root.stop);
-			if(root && (tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
-			if(root && (tmp = root.now) && ev !== tmp[as.now]){
+			if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
+			if((tmp = root.now) && ev !== tmp[as.now]){
 				return ev.to.next(msg);
 			}
 			if(u === data){
 				data = at.put;
 			}
-			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp)) && root){
+			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 				tmp = (root.$.get(tmp)._);
 				if(u !== tmp.put){
 					msg = obj_to(msg, {put: tmp.put});
