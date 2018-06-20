@@ -1539,12 +1539,6 @@
 				if(eas && eas.$){
 					(eas.subs || (eas.subs = [])).push(act);
 				}
-				off = function() {
-					if (act && act.off) act.off();
-					off.off();
-				};
-				off.off = gun.off.bind(gun) || noop;
-				gun.off = off;
 				return gun;
 			}
 			var opt = arg;
