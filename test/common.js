@@ -2904,7 +2904,6 @@ describe('Gun', function(){
 				}
 			});
 			setTimeout(function(){
-				//console.debug.i=1;console.log("-----------------");
 				gun.get('1-1').put({what: "hi"});
 				setTimeout(function(){
 					gun.get('2-2').put({what: "you."});
@@ -3322,6 +3321,7 @@ describe('Gun', function(){
 			bar.put({a:1});
 
 			bar.on(function(data){
+				//console.log("***", data);
 				if(1 === data.a && 3 === data.c){
 					if(done.c){ return } done.c = 1;
 					done();
@@ -3329,8 +3329,10 @@ describe('Gun', function(){
 			});
 
 			foo.on(function(ack){
+				//console.log("***", ack);
 				bar.put({c:3});
 			});
+			//console.debug.i=1;console.log("---------------");
 			foo.put({b:2});
 			}catch(e){ console.log("!!!!!!!!!!!", e)}
 		});
@@ -3349,6 +3351,7 @@ describe('Gun', function(){
 					done();
 				}
 			});
+			//console.debug.i=1;console.log("--------------");
 			list.set({name: 'alice', age: 27}); // on put, table-scan flag doesn't get set, but is needed for initial!??
 			list.set({name: 'bob', age: 27});
 			list.set({name: 'carl', age: 29});
@@ -3603,6 +3606,7 @@ describe('Gun', function(){
 
 				//console.log("----", i, "----");
 				//2 === i && (console.debug.i = 1) && console.debug(1, '======= what happens?');
+				(console.debug.i = console.debug.i || 1);
 				said.set({
 					what: i + " Hello world!",
 					num: i,

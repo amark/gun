@@ -126,7 +126,7 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 	it("Shut server down!", function(){
 		return server.run(function(test){
 			test.async();
-			console.log("giving server 20seconds to cool down...");
+			console.log("giving server time to cool down...");
 			setTimeout(function(){
 				process.exit();
 				test.done();
