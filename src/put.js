@@ -4,10 +4,10 @@ Gun.chain.put = function(data, cb, as){
 	// #soul.has=value>state
 	// ~who#where.where=what>when@was
 	// TODO: BUG! Put probably cannot handle plural chains!
-	var gun = this, at = (gun._), root = at.root.gun, tmp;
+	var gun = this, at = (gun._), root = at.root.$, tmp;
 	as = as || {};
 	as.data = data;
-	as.via = as.gun = as.via || as.gun || gun;
+	as.via = as.$ = as.via || as.$ || gun;
 	if(typeof cb === 'string'){
 		as.soul = cb;
 	} else {
@@ -26,35 +26,35 @@ Gun.chain.put = function(data, cb, as){
 		if(!as.soul){ // polyfill async uuid for SEA
 			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 				if(err){ return Gun.log(err) } // TODO: Handle error!
-				(as.ref||as.gun).put(as.data, as.soul = soul, as);
+				(as.ref||as.$).put(as.data, as.soul = soul, as);
 			});
 			return gun;
 		}
-		as.gun = gun = root.get(as.soul);
-		as.ref = as.gun;
+		as.$ = gun = root.get(as.soul);
+		as.ref = as.$;
 		ify(as);
 		return gun;
 	}
 	if(Gun.is(data)){
-		data.get('_').get(function(at, ev, tmp){ ev.off();
-			if(!(tmp = at.gun) || !(tmp = tmp._.back) || !tmp.soul){
-				return Gun.log("The reference you are saving is a", typeof at.put, '"'+ as.put +'", not a node (object)!');
+		data.get(function(soul, o, msg){
+			if(!soul && Gun.val.is(msg.put)){
+				return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 			}
-			gun.put(Gun.val.rel.ify(tmp.soul), cb, as);
-		});
+			gun.put(Gun.val.rel.ify(soul), cb, as);
+		}, true);
 		return gun;
 	}
-	as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.gun;
+	as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
 	if(as.ref._.soul && Gun.val.is(as.data) && at.get){
 		as.data = obj_put({}, at.get, as.data);
 		as.ref.put(as.data, as.soul, as);
 		return gun;
 	}
-	as.ref.get('_').get(any, {as: as});
+	as.ref.get(any, true, {as: as});
 	if(!as.out){
 		// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
 		as.res = as.res || stun; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
-		as.gun._.stun = as.ref._.stun;
+		as.$._.stun = as.ref._.stun;
 	}
 	return gun;
 };
@@ -92,7 +92,7 @@ function batch(){ var as = this;
 	if(!as.graph || obj_map(as.stun, no)){ return }
 	as.res = as.res || function(cb){ if(cb){ cb() } };
 	as.res(function(){
-		var cat = (as.gun.back(-1)._), ask = cat.ask(function(ack){
+		var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 			cat.root.on('ack', ack);
 			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
 			if(!as.ack){ return }
@@ -102,22 +102,19 @@ function batch(){ var as = this;
 		// and STOP is a hack to get async behavior to correctly call.
 		// neither of these are ideal, need to be fixed without hacks,
 		// but for now, this works for current tests. :/
-		var tmp = cat.root.now; obj.del(cat.root, 'now'); cat.root.PUT = true;
-		var tmp2 = cat.root.stop;
-		(as.ref._).now = true;
+		var tmp = cat.root.now; obj.del(cat.root, 'now');
+		var mum = cat.root.mum; cat.root.mum = {};
 		(as.ref._).on('out', {
-			gun: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
+			$: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 		});
-		obj.del((as.ref._), 'now');
-		obj.del((cat.root), 'PUT');
+		cat.root.mum = mum? obj.to(mum, cat.root.mum) : mum;
 		cat.root.now = tmp;
-		cat.root.stop = tmp2;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,k){ if(v){ return true } }
 
 function map(v,k,n, at){ var as = this;
-	//if(Gun.is(v)){} // TODO: HANDLE!
+	var is = Gun.is(v);
 	if(k || !at.path.length){ return }
 	(as.res||iife)(function(){
 		var path = at.path, ref = as.ref, opt = as.opt;
@@ -125,65 +122,53 @@ function map(v,k,n, at){ var as = this;
 		for(i; i < l; i++){
 			ref = ref.get(path[i]);
 		}
-		if(Gun.node.soul(at.obj)){
-			var id = Gun.node.soul(at.obj) || (as.via.back('opt.uuid') || Gun.text.random)();
-			if(!id){ // polyfill async uuid for SEA
-				(as.stun = as.stun || {})[path] = true; // make DRY
-				as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
-					if(err){ return Gun.log(err) } // TODO: Handle error.
-					ref.back(-1).get(id);
-					at.soul(id);
-					as.stun[path] = false;
-					as.batch();
-				});
-				return;
-			}
+		if(is){ ref = v }
+		var id = (ref._).dub;
+		if(id || (id = Gun.node.soul(at.obj))){
 			ref.back(-1).get(id);
 			at.soul(id);
 			return;
 		}
 		(as.stun = as.stun || {})[path] = true;
-		ref.get('_').get(soul, {as: {at: at, as: as}});
+		ref.get(soul, true, {as: {at: at, as: as, p:path}});
 	}, {as: as, at: at});
+	//if(is){ return {} }
 }
 
-function soul(msg, ev){ var as = this.as, cat = as.at; as = as.as;
-	//ev.stun(); // TODO: BUG!?
-	if(!msg.gun || !msg.gun._.back){ return } // TODO: Handle
-	var at = msg.gun._, at_ = at;
-	var _id = (msg.put||empty)['#'];
-	ev.off();
-	at = (msg.gun._.back); // go up 1!
-	var id = id || Gun.node.soul(cat.obj) || Gun.node.soul(at.put) || Gun.val.rel.is(at.put) || _id || at_._id || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+function soul(id, as, msg, eve){
+	var as = as.as, cat = as.at; as = as.as;
+	var at = ((msg || {}).$ || {})._ || {};
+	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	if(eve){ eve.stun = true }
 	if(!id){ // polyfill async uuid for SEA
 		at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 			if(err){ return Gun.log(err) } // TODO: Handle error.
-			solve(at, at_._id = at_._id || id, cat, as);
+			solve(at, at.dub = at.dub || id, cat, as);
 		});
 		return;
 	}
-	solve(at, at_._id = at_._id || id, cat, as);
+	solve(at, at.dub = id, cat, as);
 }
 
 function solve(at, id, cat, as){
-	at.gun.back(-1).get(id);
+	at.$.back(-1).get(id);
 	cat.soul(id);
 	as.stun[cat.path] = false;
 	as.batch();
 }
 
-function any(at, ev){
-	var as = this.as;
-	if(!at.gun || !at.gun._){ return } // TODO: Handle
-	if(at.err){ // TODO: Handle
+function any(soul, as, msg, eve){
+	as = as.as;
+	if(!msg.$ || !msg.$._){ return } // TODO: Handle
+	if(msg.err){ // TODO: Handle
 		console.log("Please report this as an issue! Put.any.err");
 		return;
 	}
-	var cat = (at.gun._.back), data = cat.put, opt = as.opt||{}, root, tmp;
+	var at = (msg.$._), data = at.put, opt = as.opt||{}, root, tmp;
 	if((tmp = as.ref) && tmp._.now){ return }
-	ev.off();
-	if(as.ref !== as.gun){
-		tmp = (as.gun._).get || cat.get;
+	if(eve){ eve.stun = true }
+	if(as.ref !== as.$){
+		tmp = (as.$._).get || at.get;
 		if(!tmp){ // TODO: Handle
 			console.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
 			return;
@@ -192,27 +177,27 @@ function any(at, ev){
 		tmp = null;
 	}
 	if(u === data){
-		if(!cat.get){ return } // TODO: Handle
-		if(!cat.soul){
-			tmp = cat.gun.back(function(at){
-				if(at.soul){ return at.soul }
+		if(!at.get){ return } // TODO: Handle
+		if(!soul){
+			tmp = at.$.back(function(at){
+				if(at.link || at.soul){ return at.link || at.soul }
 				as.data = obj_put({}, at.get, as.data);
 			});
 		}
-		tmp = tmp || cat.get;
-		cat = (cat.root.gun.get(tmp)._);
-		as.not = as.soul = tmp;
+		tmp = tmp || at.get;
+		at = (at.root.$.get(tmp)._);
+		as.soul = tmp;
 		data = as.data;
 	}
-	if(!as.not && !(as.soul = Gun.node.soul(data))){
-		if(as.path && obj_is(as.data)){ // Apparently necessary
+	if(!as.not && !(as.soul = as.soul || soul)){
+		if(as.path && obj_is(as.data)){
 			as.soul = (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 		} else {
-			//as.data = obj_put({}, as.gun._.get, as.data);
+			//as.data = obj_put({}, as.$._.get, as.data);
 			if(node_ == at.get){
-				as.soul = (at.put||empty)['#'] || at._id;
+				as.soul = (at.put||empty)['#'] || at.dub;
 			}
-			as.soul = as.soul || at.soul || cat.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+			as.soul = as.soul || at.soul || at.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 		}
 		if(!as.soul){ // polyfill async uuid for SEA
 			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback

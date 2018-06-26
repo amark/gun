@@ -67,7 +67,7 @@
           gunRoot.get(tmp).put(user)
         }catch(e){console.log(e)}
           // next up, we want to associate the alias with the public key. So we add it to the alias list.
-          gunRoot.get('~@'+username).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+          gunRoot.get('~@'+username).put(Gun.obj.put({}, tmp, Gun.val.link.ify(tmp)))
           // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
           setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
         } catch (e) {
