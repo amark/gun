@@ -939,7 +939,7 @@
 		}
 
 		function output(msg){
-			var put, get, at = this.as, back = at.back, root = at.root;
+			var put, get, at = this.as, back = at.back, root = at.root, tmp;
 			if(!msg.I){ msg.I = at.$ }
 			if(!msg.$){ msg.$ = at.$ }
 			this.to.next(msg);
@@ -948,26 +948,29 @@
 					at.on('in', at);
 					return;
 				}*/
+				//console.log("out!", at.get, get);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9));
 					back = (root.$.get(get['#'])._);
 					if(!(get = get['.'])){
+						tmp = back.ack;
+						if(!tmp){ back.ack = -1 }
 						if(obj_has(back, 'put')){
-						//if(u !== back.put){
 							back.on('in', back);
 						}
-						if(back.ack){ return }
+						if(tmp){ return }
 						msg.$ = back.$;
-						back.ack = -1;
 					} else
 					if(obj_has(back.put, get)){
+						put = (back.$.get(get)._);
+						if(!(tmp = put.ack)){ put.ack = -1 }
 						back.on('in', {
 							$: back.$,
 							put: Gun.state.to(back.put, get),
 							get: back.get
 						});
-						return;
+						if(tmp){ return }
 					}
 					root.ask(ack, msg);
 					return root.on('in', msg);
@@ -996,7 +999,7 @@
 		}
 
 		function input(msg){
-			var ev = this, cat = ev.as, root = cat.root, gun = msg.$, at = (gun||empty)._ || empty, change = msg.put, rel, tmp;
+			var eve = this, cat = eve.as, root = cat.root, gun = msg.$, at = (gun||empty)._ || empty, change = msg.put, rel, tmp;
 			if(cat.get && msg.get !== cat.get){
 				msg = obj_to(msg, {get: cat.get});
 			}
@@ -1009,11 +1012,10 @@
 			}
 			if(u === change){
 				tmp = at.put;
-				ev.to.next(msg);
-				if(cat.soul){ return } // TODO: BUG, I believe the fresh input refactor caught an edge case that a `gun.get('soul').get('key')` that points to a soul that doesn't exist will not trigger val/get etc.
-				if(tmp === at.put){
-					echo(cat, msg, ev);
-				}
+				eve.to.next(msg);
+				if(cat.soul){ return } // TODO: BUG, I believee the fresh input refactor caught an edge case that a `gun.get('soul').get('key')` that points to a soul that doesn't exist will not trigger val/get etc.
+				if(u === tmp && u !== at.put){ return }
+				echo(cat, msg, eve);
 				if(cat.has){
 					not(cat, msg);
 				}
@@ -1022,8 +1024,8 @@
 				return;
 			}
 			if(cat.soul){
-				ev.to.next(msg);
-				echo(cat, msg, ev);
+				eve.to.next(msg);
+				echo(cat, msg, eve);
 				if(cat.next){ obj_map(change, map, {msg: msg, cat: cat}) }
 				return;
 			}
@@ -1037,8 +1039,8 @@
 						(cat.map || (cat.map = {}))[at.id] = cat.map[at.id] || {at: at};
 						//if(u === at.put){ return } // Not necessary but improves performance. If we have it but at does not, that means we got things out of order and at will get it. Once at gets it, it will tell us again.
 					}
-					ev.to.next(msg);
-					echo(cat, msg, ev);
+					eve.to.next(msg);
+					echo(cat, msg, eve);
 					return;
 				}
 				if(cat.has && at !== cat && obj_has(at, 'put')){
@@ -1048,24 +1050,27 @@
 					at.put = (cat.root.$.get(rel)._).put;
 				}
 				tmp = (root.stop || {})[at.id];
-				if(tmp && tmp[cat.id]){ } else {
-					ev.to.next(msg);
-				}
+				//if(tmp && tmp[cat.id]){ } else {
+					eve.to.next(msg);
+				//}
 				relate(cat, msg, at, rel);
-				echo(cat, msg, ev);
+				echo(cat, msg, eve);
 				if(cat.next){ obj_map(change, map, {msg: msg, cat: cat}) }
 				return;
 			}
 			var was = root.stop;
 			tmp = root.stop || {};
 			tmp = tmp[at.id] || (tmp[at.id] = {});
-			if(tmp[cat.id]){ return }
+			//if(tmp[cat.id]){ return }
 			tmp.is = tmp.is || at.put;
 			tmp[cat.id] = at.put || true;
-			if(root.stop){ ev.to.next(msg) }
+			//if(root.stop){ 
+				eve.to.next(msg)
+			//}
 			relate(cat, msg, at, rel);
-			echo(cat, msg, ev);
+			echo(cat, msg, eve);
 		}
+		var C = 0;
 
 		function relate(at, msg, from, rel){
 			if(!rel || node_ === at.get){ return }
@@ -1083,6 +1088,7 @@
 				not(at, msg);
 			}
 			tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
+			//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 			if(rel === tmp.link){
 				if(!(tmp.pass || at.pass)){
 					return;
@@ -1121,7 +1127,12 @@
 				}
 				chain = at.$;
 			} else
-			if(via.$){ chain = via.$.get(key) }
+			if(tmp = via.$){
+				tmp = (chain = via.$.get(key))._;
+				if(u === tmp.put || !Gun.val.link.is(data)){
+					tmp.put = data; 
+				}
+			}
 			at.on('in', {
 				put: data,
 				get: key,
@@ -1144,7 +1155,9 @@
 				if(!(proxy = proxy.at)){ return }
 				obj_del(proxy.echo, at.id);
 			});
+			tmp = at.put;
 			obj_map(at.next, function(neat, key){
+				if(u === tmp && u !== at.put){ return true }
 				neat.put = u;
 				if(neat.ack){
 					neat.ack = -1;
@@ -1217,7 +1230,9 @@
 				as.out.get = as.out.get || {};
 				(ev = at.on('in', use, as)).rid = rid;
 				(root.now = {$:1})[as.now = at.id] = ev;
+				var mum = root.mum; root.mum = {};
 				at.on('out', as.out);
+				root.mum = mum;
 				root.now = tmp;
 				return gun;
 			} else
@@ -1268,8 +1283,8 @@
 		}
 		function use(msg){
 			var eve = this, as = eve.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put || at.put, tmp;
-			//console.log("USE:", cat.soul, cat.has, cat.get, data);
 			if((tmp = root.now) && eve !== tmp[as.now]){ return eve.to.next(msg) }
+			//console.log("USE:", cat.id, cat.soul, cat.has, cat.get, msg, root.mum);
 			//if(at.async && msg.root){ return }
 			//if(at.async === 1 && cat.async !== true){ return }
 			//if(root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
@@ -1279,13 +1294,17 @@
 
 			//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
 			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-			if(eve.seen && eve.seen[at.id]){ return eve.to.next(msg) }
+			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 				tmp = ((msg.$$ = at.root.gun.get(tmp))._);
 				if(u !== tmp.put){
-					msg = obj_to(msg, {put: tmp.put});
+					msg = obj_to(msg, {put: data = tmp.put});
 				}
+			}
+			if((tmp = root.mum) && at.id){
+				if(tmp[at.id]){ return }
+				if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
 			}
 			as.use(msg, eve);
 			if(eve.stun){
@@ -1417,14 +1436,13 @@
 				// and STOP is a hack to get async behavior to correctly call.
 				// neither of these are ideal, need to be fixed without hacks,
 				// but for now, this works for current tests. :/
-				//var tmp = cat.root.now; obj.del(cat.root, 'now'); cat.root.PUT = true;
-				//(as.ref._).now = true;
+				var tmp = cat.root.now; obj.del(cat.root, 'now');
+				var mum = cat.root.mum; cat.root.mum = {};
 				(as.ref._).on('out', {
 					$: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
 				});
-				//obj.del((as.ref._), 'now');
-				//obj.del((cat.root), 'PUT');
-				//cat.root.now = tmp;
+				cat.root.mum = mum? obj.to(mum, cat.root.mum) : mum;
+				cat.root.now = tmp;
 			}, as);
 			if(as.res){ as.res() }
 		} function no(v,k){ if(v){ return true } }

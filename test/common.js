@@ -1862,7 +1862,7 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/p').map().get('name').on(function(v,f){
 					check[v] = f;
-					//console.log("****************", f,v);
+					//console.log("****************", f,v, gun);
 					if(check.alice && check.bob && check.Alice){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
@@ -1900,6 +1900,7 @@ describe('Gun', function(){
 						}
 				});
 				setTimeout(function(){
+					//console.debug.i=1;console.log("-------------");
 					gun.get('GALICE3').put({name: 'Alice'});
 				},300);
 			});
@@ -1955,6 +1956,7 @@ describe('Gun', function(){
 				var check = {};
 				gun.get('g/n/m/f/l/n/b/p/p/p').map().get('spouse').get('work').on(function(v,f){
 					check[v.name] = f;
+					//console.log("*******", f, v);
 					if(check['GUN INC'] && check['ACME INC'] && check['ACME INC.']){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
@@ -1992,6 +1994,7 @@ describe('Gun', function(){
 						}
 				});
 				setTimeout(function(){
+					//console.debug.i=1;console.log("----------------");
 					gun.get('CCINEMA1').put({name: 'ACME INC.'});
 				},300);
 			});
@@ -2095,6 +2098,7 @@ describe('Gun', function(){
 						}
 				});
 				setTimeout(function(){
+					//console.debug.i=1;console.log("-------------");
 					gun.get('CCINEMA3').put({corp: "C"});
 				},300);
 			});
@@ -3319,20 +3323,20 @@ describe('Gun', function(){
 			var bar = gun.get('put/on/put/ok').get('a').get('b');
 
 			bar.put({a:1});
-
+			//console.log("vvvvvvvvv");
 			bar.on(function(data){
 				//console.log("***", data);
 				if(1 === data.a && 3 === data.c){
 					if(done.c){ return } done.c = 1;
+					//console.log("-------");
 					done();
 				}
 			});
 
 			foo.on(function(ack){
-				//console.log("***", ack);
+				//console.log("*", ack);
 				bar.put({c:3});
 			});
-			//console.debug.i=1;console.log("---------------");
 			foo.put({b:2});
 			}catch(e){ console.log("!!!!!!!!!!!", e)}
 		});
@@ -3587,7 +3591,7 @@ describe('Gun', function(){
 			//console.log(check);
 			gun.get('users/mm').map().map()
 				.get('who').get('said').map().on(function(msg){
-					console.log("------>", msg.num);
+					//console.log("------>", msg.num);
 					if(check[msg.num]){
 						//console.log("!!!!", msg.num, "!!!!");
 					}
@@ -3606,7 +3610,7 @@ describe('Gun', function(){
 
 				//console.log("----", i, "----");
 				//2 === i && (console.debug.i = 1) && console.debug(1, '======= what happens?');
-				(console.debug.i = console.debug.i || 1);
+				//(console.debug.i = console.debug.i || 1);
 				said.set({
 					what: i + " Hello world!",
 					num: i,
