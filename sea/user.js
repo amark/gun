@@ -4,7 +4,7 @@
     var then = require('./then');
 
     function User(){ 
-      this._ = {gun: this}
+      this._ = {$: this}
       Gun.call()
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
@@ -27,5 +27,6 @@
       }
       return user;
     }
+    Gun.User = User;
     module.exports = User;
   

@@ -43,7 +43,6 @@ Gun.on('opt', function(root){
 			mesh.hi(peer);
 		}
 		wire.onmessage = function(msg){
-			//console.log('in', JSON.parse(msg.data || msg));
 			if(!msg){ return }
 			env.inLength = (env.inLength || 0) + (msg.data || msg).length; // TEMPORARY, NON-STANDARD, FOR DEBUG
 			mesh.hear(msg.data || msg, peer);

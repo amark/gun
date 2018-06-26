@@ -6,7 +6,7 @@
       // add our credentials in-memory only to our root gun instance
       //var tmp = user._.tag;
       var opt = user._.opt;
-      user._ = key.at.gun._;
+      user._ = key.at.$._;
       user._.opt = opt;
       //user._.tag = tmp || user._.tag;
       // so that way we can use the credentials to encrypt/decrypt data

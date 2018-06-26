@@ -30,7 +30,7 @@ Gun.on('create', function(root){
 				});
 			});
 			setTimeout(function(){
-				root.on('out', {put: send, '#': root.ask(ack), I: root.gun});
+				root.on('out', {put: send, '#': root.ask(ack), I: root.$});
 			},10);
 		});
 	}
@@ -101,7 +101,7 @@ Gun.on('create', function(root){
 	root.on('get', function(msg){
 		this.to.next(msg);
 		var lex = msg.get, soul, data, u;
-		//setTimeout(function(){
+		function to(){
 		if(!lex || !(soul = lex['#'])){ return }
 		//if(0 >= msg.cap){ return }
 		var has = lex['.'];
@@ -112,8 +112,10 @@ Gun.on('create', function(root){
 		if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
 			return; // Hmm, what if we have peers but we are disconnected?
 		}
+		//console.log("lS get", lex, data);
 		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
-		//},1);
+		};
+		Gun.debug? setTimeout(to,1) : to();
 	});
 
 	var map = function(val, key, node, soul){

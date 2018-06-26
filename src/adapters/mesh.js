@@ -5,7 +5,6 @@ function Mesh(ctx){
 	var mesh = function(){};
 
 	mesh.out = function(msg){ var tmp;
-		//console.log("count:", msg['#'], msg);
 		if(this.to){ this.to.next(msg) }
 		//if(mesh.last != msg['#']){ return mesh.last = msg['#'], this.to.next(msg) }
 		if((tmp = msg['@'])
@@ -81,7 +80,6 @@ function Mesh(ctx){
 				}
 			}
 			if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested
-			//console.log('out', JSON.parse(raw));	
 			if(peer.batch){
 				peer.batch.push(raw);
 				return;
@@ -102,7 +100,6 @@ function Mesh(ctx){
 			try{
 				if(wire.send){
 					if(wire.readyState === wire.OPEN){
-						//console.log("send:", raw);
 						wire.send(raw);
 					} else {
 						(peer.queue = peer.queue || []).push(raw);

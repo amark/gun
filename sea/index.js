@@ -30,7 +30,7 @@
     function each(msg){ // TODO: Warning: Need to switch to `gun.on('node')`! Do not use `Gun.on('node'` in your apps!
       // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
       // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
-      var to = this.to, vertex = (msg.gun._).put, c = 0, d;
+      var to = this.to, vertex = (msg.$._).put, c = 0, d;
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
@@ -96,12 +96,12 @@
         };
         each.alias = function(val, key, node, soul){ // Example: {_:#~@, ~@alice: {#~@alice}}
           if(!val){ return each.end({err: "Data must exist!"}) } // data MUST exist
-          if('~@'+key === Gun.val.rel.is(val)){ return check['alias'+key] = 0 } // in fact, it must be EXACTLY equal to itself
+          if('~@'+key === Gun.val.link.is(val)){ return check['alias'+key] = 0 } // in fact, it must be EXACTLY equal to itself
           each.end({err: "Mismatching alias."}); // if it isn't, reject.
         };
         each.pubs = function(val, key, node, soul){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
           if(!val){ return each.end({err: "Alias must exist!"}) } // data MUST exist
-          if(key === Gun.val.rel.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
+          if(key === Gun.val.link.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
           each.end({err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
         };
         each.pub = function(val, key, node, soul, pub, user){ // Example: {_:#~asdf, hello:SEA{'world',fdsa}}
@@ -114,7 +114,7 @@
             //var id = Gun.text.random(3);
             SEA.sign(val, user.sea, function(data){ var rel;
               if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
-              if(rel = Gun.val.rel.is(val)){
+              if(rel = Gun.val.link.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
               }
               node[key] = data;
@@ -128,7 +128,7 @@
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
-            if((rel = Gun.val.rel.is(data)) && pub === relpub(rel)){
+            if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
               (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
             }
             check['user'+soul+key] = 0;
@@ -150,7 +150,7 @@
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
                 if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
-                if((rel = Gun.val.rel.is(data)) && pub === relpub(rel)){
+                if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }
                 check['any'+soul+key] = 0;
