@@ -40,7 +40,7 @@
 			} 
 
 			ref.get(function(at){
-				var data = at.put, key = at.get, gui = at.gun, ui = name, back;
+				var data = at.put, key = at.get, gui = at.gun || at.$, ui = name, back;
 				if(model){
 					ui = model.has[(gui._).id];
 					if(!ui){
