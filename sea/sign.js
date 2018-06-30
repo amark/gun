@@ -11,7 +11,7 @@
         // TODO: This would prevent pair2 signing pair1's signature.
         // So we may want to change this in the future.
         // but for now, we want to prevent duplicate double signature.
-        if(cb){ cb(data) }
+        if(cb){ try{ cb(data) }catch(e){console.log(e)} }
         return data;
       }
       const pub = pair.pub
@@ -23,7 +23,7 @@
       .then((key) => shim.subtle.sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;

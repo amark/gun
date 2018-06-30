@@ -12,7 +12,7 @@
         const raw = (json !== data)? 
           (json.s && json.m)? parse(json.m) : data
         : json;
-        if(cb){ cb(raw) }
+        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
       const pub = pair.pub || pair
@@ -24,7 +24,7 @@
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
