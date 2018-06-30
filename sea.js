@@ -290,7 +290,7 @@
         }, key, S.pbkdf2.ks * 8)
         data = shim.random(data.length)  // Erase data in case of passphrase
         const r = shim.Buffer.from(result, 'binary').toString('utf8')
-        if(cb){ cb(r) }
+        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
         return r;
       }
       // For NodeJS crypto.pkdf2 rocks
@@ -304,7 +304,7 @@
       )
       data = shim.random(data.length)  // Erase passphrase for app
       const r = hash && hash.toString('utf8')
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -366,7 +366,7 @@
       } dh = dh || {};
 
       const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -390,7 +390,7 @@
         // TODO: This would prevent pair2 signing pair1's signature.
         // So we may want to change this in the future.
         // but for now, we want to prevent duplicate double signature.
-        if(cb){ cb(data) }
+        if(cb){ try{ cb(data) }catch(e){console.log(e)} }
         return data;
       }
       const pub = pair.pub
@@ -402,7 +402,7 @@
       .then((key) => shim.subtle.sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -427,7 +427,7 @@
         const raw = (json !== data)? 
           (json.s && json.m)? parse(json.m) : data
         : json;
-        if(cb){ cb(raw) }
+        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
       const pub = pair.pub || pair
@@ -439,7 +439,7 @@
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -485,7 +485,7 @@
         s: rand.s.toString('utf8')
       });
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -513,7 +513,7 @@
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -547,7 +547,7 @@
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
       })
       const r = derived;
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
