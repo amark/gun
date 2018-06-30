@@ -1262,6 +1262,12 @@
       return user._.sea;
     }
     User.prototype.leave = async function(){
+      var gun = this, user = (gun.back(-1)._).user;
+      if(user){
+        delete user.is;
+        delete user._.is;
+        delete user._.sea;
+      }
       return await authLeave(this.back(-1))
     }
     // If authenticated user wants to delete his/her account, let's support it!
