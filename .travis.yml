@@ -9,3 +9,6 @@ node_js:
   - 6.8
   - 7.9
   - 8.6
+cache:
+  directories:
+    - node_modules
