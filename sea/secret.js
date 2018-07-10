@@ -21,7 +21,7 @@
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
       })
       const r = derived;
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;

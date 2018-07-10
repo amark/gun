@@ -1,0 +1,34 @@
+<h1>Radisk</h1>
+
+<script src="../examples/jquery.js"></script>
+<script src="../gun.js"></script>
+<script src="../lib/radix.js"></script>
+<script src="../lib/radisk.js"></script>
+<script src="../lib/store.js"></script>
+
+<script>
+localStorage.clear();
+
+function Store(opt){
+  console.log(opt);
+  opt = opt || {};
+  opt.file = String(opt.file || 'radata');
+  var storage = {};
+  var store = function Store(){};
+  store.put = function(file, data, cb){
+    storage[file] = data
+    cb(undefined, 1)
+  };
+  store.get = function(file, cb){
+    var temp = storage[file] || undefined
+    cb(temp)
+  };
+  store.list = function(cb, match){
+    var arr = Object.entries(storage)[0];
+    Gun.obj.map(arr, cb) || cb();
+  };
+  return store;
+}
+
+var gun = Gun({localStorage: false, store: Store()});
+</script>
