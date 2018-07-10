@@ -44,6 +44,11 @@ ul, li {
 }
 
 .model, .none { display: none }
+.hide { 
+  opacity: 0;
+  visibility: hidden;
+  transition: all 2s;
+}
 
 .page {
   width: 100%;
@@ -81,8 +86,7 @@ ul, li {
   padding: 3%;
 }
 .gully {
-  margin-top: 2em;
-  margin-bottom: 2em;
+  margin-bottom: 1%;
 }
 
 .sit { margin-bottom: 0; }
