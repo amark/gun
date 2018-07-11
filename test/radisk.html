@@ -8,27 +8,29 @@
 
 <script>
 localStorage.clear();
-
+var storage = Object(null)
 function Store(opt){
   console.log(opt);
   opt = opt || {};
   opt.file = String(opt.file || 'radata');
-  var storage = {};
   var store = function Store(){};
   store.put = function(file, data, cb){
+    console.log(`called put with ${file} and ${data}`);
     storage[file] = data
     cb(undefined, 1)
   };
   store.get = function(file, cb){
+    console.log(`called get with ${file}`);
     var temp = storage[file] || undefined
     cb(temp)
   };
   store.list = function(cb, match){
-    var arr = Object.entries(storage)[0];
+    var arr = Object.keys(storage);
+    console.log(arr)
     Gun.obj.map(arr, cb) || cb();
   };
   return store;
 }
 
-var gun = Gun({localStorage: false, store: Store()});
+var gun = Gun({localStorage: false, store:Store()});
 </script>
