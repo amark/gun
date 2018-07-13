@@ -382,9 +382,11 @@
     var shim = USE('./shim');
     var S = USE('./settings');
     var sha256hash = USE('./sha256');
+    var u;
 
     SEA.sign = async (data, pair, cb) => { try {
-      if(data.slice
+      // TODO: how should undefined be handled?
+      if((u !== data) && data.slice
       && 'SEA{' === data.slice(0,4)
       && '"m":' === data.slice(4,8)){
         // TODO: This would prevent pair2 signing pair1's signature.
@@ -1150,13 +1152,24 @@
           const epub = await SEA.sign(pairs.epub, pairs)
           if(u === epub){ throw SEA.err }
           // to keep the private key safe, we AES encrypt it with the proof of work!
-          const auth = await SEA.encrypt({ priv: priv, epriv: epriv }, proof)
+          var auth = {};
+          auth.priv = priv;
+          if(epriv){
+            auth.epriv = epriv;
+          }
+          auth = await SEA.encrypt(auth, proof)
           .then((auth) => // TODO: So signedsalt isn't needed?
           // SEA.sign(salt, pairs).then((signedsalt) =>
             SEA.sign({ek: auth, s: salt}, pairs)
           // )
           ).catch((e) => { Gun.log('SEA.en or SEA.write calls failed!'); cat.ing = false; gun.leave(); reject(e) })
-          const user = { alias: alias, pub: pub, epub: epub, auth: auth }
+          const user = {};
+          user.alias = alias;
+          user.pub = pub;
+          user.auth = auth;
+          if(epub){
+            user.epub = epub;
+          }
           const tmp = '~'+pairs.pub;
           // awesome, now we can actually save the user with their public key as their ID.
           try{
