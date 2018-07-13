@@ -41,16 +41,17 @@ describe('SEA', function(){
   })
 
   it('register users', async done => {
-    user.create('bob', 'test123', err => {
-      console.log('sea', SEA.err)
-      expect(err).toHaveProperty('ok')
+    user.create('bob', 'test123', ack => {
+      expect(ack.err).to.not.be.ok();
       setTimeout(done, 30)
     })
   })
 
   it('login users', async done => {
-    user.auth('bob', 'test123', err => {
-      expect(err).toHaveProperty('ok')
+    console.log("------------------");
+    user.auth('bob', 'test123', ack => {
+      console.log("?????", ack, SEA.err);
+      expect(ack.err).to.not.be.ok();
       done()
     })
   })
