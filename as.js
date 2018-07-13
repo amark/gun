@@ -40,7 +40,7 @@
 			} 
 
 			ref.get(function(at){
-				var data = at.put, key = at.get, gui = at.gun, ui = name, back;
+				var data = at.put, key = at.get, gui = at.gun || at.$, ui = name, back;
 				if(model){
 					ui = model.has[(gui._).id];
 					if(!ui){
@@ -95,15 +95,18 @@
 		as.lock = g;
 		g.put(data);
 	}, 99));
+	$(document).on('submit', 'form', function(e){ e.preventDefault() });
 	var u;
 	window.as = as;
+	$.as = as;
 }());
 
 ;(function(){
-	$('.page').not(':first').hide();
 	$(document).on('click', 'a, button', function(e){
+		var tmp = $(this).attr('href') || '';
+		if(0 === tmp.indexOf('http')){ return }
 		e.preventDefault();
-		r($(this).attr('href'));
+		r(tmp);
 	});
 	function r(href){
 		if(!href){ return }
@@ -111,8 +114,10 @@
 		var h = href.split('/')[0];
 		$('.page').hide();
 		$('#' + h).show();
+		if(r.on === h){ return }
 		location.hash = href;
 		(r.page[h] || {on:function(){}}).on();
+		r.on = h;
 		return r;
 	};
 	r.page = function(h, cb){
@@ -130,11 +135,16 @@
 		});
 		return $data;
 	}
-	setTimeout(function(){ r(location.hash.slice(1)) },1);
 	window.onhashchange = function(){ r(location.hash.slice(1)) };
+	$.as && ($.as.route = r);
 	if(window.as){
 		as.route = r;
 	} else {
 		$.route = r;
 	}
 }());
+
+;$(function(){
+	$('.page').not(':first').hide();
+	$.as.route(location.hash.slice(1));
+});

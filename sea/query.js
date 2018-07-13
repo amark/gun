@@ -1,10 +1,11 @@
 
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
+    var SEA = require('./sea');
+    var Gun = SEA.Gun;
     // This is internal func queries public key(s) for alias.
-    const queryGunAliases = (alias, root) => new Promise((resolve, reject) => {
+    const queryGunAliases = (alias, gunRoot) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
-      root.get(`alias/${alias}`).get((rat, rev) => {
-        rev.off()
+      gunRoot.get('~@'+alias).get((rat, rev) => {
+        rev.off();
         if (!rat.put) {
           // if no user, don't do anything.
           const err = 'No user!'
@@ -12,18 +13,18 @@
           return reject({ err })
         }
         // then figuring out all possible candidates having matching username
-        let aliases = []
+        const aliases = []
         let c = 0
         // TODO: how about having real chainable map without callback ?
         Gun.obj.map(rat.put, (at, pub) => {
-          if (!pub.slice || 'pub/' !== pub.slice(0, 4)) {
+          if (!pub.slice || '~' !== pub.slice(0, 1)) {
             // TODO: ... this would then be .filter((at, pub))
             return
           }
           ++c
           // grab the account associated with this public key.
-          root.get(pub).get((at, ev) => {
-            pub = pub.slice(4)
+          gunRoot.get(pub).get((at, ev) => {
+            pub = pub.slice(1)
             ev.off()
             --c
             if (at.put){
@@ -39,5 +40,5 @@
         }
       })
     })
-    module.exports = queryGunAliases;
+    module.exports = queryGunAliases
   

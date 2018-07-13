@@ -2,7 +2,7 @@
 // On event emitter generic javascript utility.
 module.exports = function onto(tag, arg, as){
 	if(!tag){ return {to: onto} }
-	var tag = (this.tag || (this.tag = {}))[tag] ||
+	var u, tag = (this.tag || (this.tag = {}))[tag] ||
 	(this.tag[tag] = {tag: tag, to: onto._ = {
 		next: function(arg){ var tmp;
 			if((tmp = this.to)){ 
@@ -33,7 +33,7 @@ module.exports = function onto(tag, arg, as){
 		(be.back = tag.last || tag).to = be;
 		return tag.last = be;
 	}
-	(tag = tag.to).next(arg);
+	if((tag = tag.to) && u !== arg){ tag.next(arg) }
 	return tag;
 };
 	

@@ -18,6 +18,28 @@
 		<script></script>
 		<script src="../gun.js"></script>
 		<script src="./common.js"></script>
-		<script>mocha.run()</script>
+		<script>
+		if(location.search){
+			Gun.debug = true;
+			console.log('async?', Gun.debug);
+		}
+		mocha.run(function(a,b,c){
+			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
+			if(yes){
+				if(location.search){
+					location.search = '';
+				} else {
+					location.search = '?async';
+				}
+				return;
+			}
+			/*console.log("???????????", a);
+			//if(a !== 0){ return }
+			document.getElementById('mocha-stats').id = 'mocha-stats2';
+			document.getElementById('mocha-report').style.display = 'none';
+			document.getElementById('mocha-report').id = 'mocha-report2';
+			Gun.debug = false;
+			mocha.run();*/
+		})</script>
 	</body>
 </html>

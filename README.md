@@ -1,6 +1,6 @@
 <p>
-    <a href="http://gun.js.org/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
-    <img width="50%" align="right" vspace="25" src="http://gun.js.org/see/demo.gif"/>
+    <a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
+    <img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/>
 </p> 
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
@@ -13,12 +13,12 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 <table>
 <tr>
-<a href=""><img width="31%" align="left" src="http://gun.js.org/see/3dvr.gif" title="3D VR"/></a>
-<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="http://gun.js.org/see/aiml.gif" title="AI/ML"/></a>
-<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="http://gun.js.org/see/gps.gif" title="GPS"/></a>
-<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="http://gun.js.org/see/dataviz.gif" title="Data Viz"/></a>
-<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="http://gun.js.org/see/p2p.gif" title="P2P"/></a>
-<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="http://gun.js.org/see/iot.gif" title="IoT"/></a>
+<a href=""><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
+<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
+<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
+<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
+<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
 </tr>
 </table>
 
@@ -30,14 +30,14 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 
 ## Why?
 
- - **Realtime** - You might use socketio for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
+ - **Realtime** - You might use Socket.IO for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
  - **Distributed** - GUN is peer-to-peer by design, meaning you have no centralized database server to maintain or that could crash. This lets you sleep through the night without worrying about database DevOps - we call it "NoDB". From there, you can build decentralized, federated, or centralized apps.
  - **Offline-first** - GUN works even if your internet or cell reception doesn't. Users can still plug away and save data as normal, and then when the network comes back online GUN will automatically synchronize all the changes and handle any conflicts for you.
  - **Graph** - Most databases force you to bend over backwards to match their storage constraints. But graphs are different, they let you have any data structure you want. Whether that be traditional tables with relations, document oriented trees, or tons of circular references. You choose.
 
 ## Quickstart
 
- - Try the [interactive tutorial](http://gun.js.org/think.html) in the browser (**5min** ~ average developer).
+ - Try the [interactive tutorial](https://gun.eco/think.html) in the browser (**5min** ~ average developer).
  - Or `npm install gun` and run the examples with `cd node_modules/gun && npm start` (**5min** ~ average developer).
 
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
@@ -78,7 +78,7 @@ gun.get('mark').get('boss').get('name').val(function(data, key){
 });
 
 // traverse a graph of circular references!
-gun.get('mark').get('boss').get('slave').val(function(data, key){
+gun.get('mark').get('boss').get('slave').once(function(data, key){
   console.log("Mark is the slave!", data);
 });
 
@@ -87,7 +87,7 @@ gun.get('list').set(gun.get('mark').get('boss'));
 gun.get('list').set(gun.get('mark'));
 
 // grab each item once from the table, continuously:
-gun.get('list').map().val(function(data, key){
+gun.get('list').map().once(function(data, key){
   console.log("Item:", data);
 });
 
@@ -122,13 +122,13 @@ Thanks to:<br/>
 <table>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/API">API reference</a></h3></td>
-    <td style="border: 0;"><h3><a href="http://gun.js.org/think.html">Tutorials</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/think.html">Tutorials</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/tree/master/examples">Examples</a></h3></td>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/brysgo/graphql-gun">GraphQL</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/PenguinMan98/electrontest">Electron</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/staltz/gun-asyncstorage">Native</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React Native</a></h3></td>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/sjones6/vue-gun">Vue</a></h3></td>
@@ -137,7 +137,7 @@ Thanks to:<br/>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/CAP-Theorem">CAP Theorem Tradeoffs</a></h3></td>
-    <td style="border: 0;"><h3><a href="http://gun.js.org/distributed/matters.html">How Data Sync Works</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/distributed/matters.html">How Data Sync Works</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/porting-gun">How GUN is Built</a></h3></td>
   </tr>
   <tr>
@@ -204,7 +204,7 @@ Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
 
 ```bash
 npm run docker
-docker run -p 8080:8080 usenameHere/gun:git
+docker run -p 8080:8080 username/gun:git
 ```
 
 Then visit [http://localhost:8080](http://localhost:8080) in your browser.

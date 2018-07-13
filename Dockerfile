@@ -1,4 +1,4 @@
-FROM alpine:edge
+FROM alpine:latest
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
