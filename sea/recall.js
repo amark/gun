@@ -1,14 +1,16 @@
 
-    // TODO: BUG! `SEA` needs to be USED!
-    const Gun = (typeof window !== 'undefined' ? window : global).Gun || require('gun/gun')
-    var Buffer = require('./buffer');
-    var authsettings = require('./settings');
-    var seaIndexedDb = require('./indexed').scope;
-    var queryGunAliases = require('./query');
-    var parseProps = require('./parse');
-    var updateStorage = require('./update');
+    const Buffer = require('./buffer')
+    const authsettings = require('./settings')
+    //const { scope: seaIndexedDb } = require('./indexed')
+    const queryGunAliases = require('./query')
+    const parseProps = require('./parse')
+    const updateStorage = require('./update')
+    const SEA = require('./sea')
+    const Gun = SEA.Gun;
+    const finalizeLogin = require('./login')
+
     // This internal func recalls persisted User authentication if so configured
-    const authRecall = async (root, authprops) => {
+    const authRecall = async (gunRoot, authprops) => {
       // window.sessionStorage only holds signed { alias, pin } !!!
       const remember = authprops || sessionStorage.getItem('remember')
       const { alias = sessionStorage.getItem('user'), pin: pIn } = authprops || {} // @mhelander what is pIn?
@@ -19,25 +21,25 @@
           const checkNotExpired = (args) => {
             if (Math.floor(Date.now() / 1000) < (iat + args.exp)) {
               // No way hook to update 'iat'
-              return Object.assign(args, { iat, proof })
+              return Object.assign(args, { iat: iat, proof: proof })
             } else {
               Gun.log('Authentication expired!')
             }
           }
           // We're not gonna give proof to hook!
-          const hooked = authsettings.hook({ alias, iat, exp, remember })
+          const hooked = authsettings.hook({ alias: alias, iat: iat, exp: exp, remember: remember })
           return ((hooked instanceof Promise)
           && await hooked.then(checkNotExpired)) || checkNotExpired(hooked)
         }
       }
       const readAndDecrypt = async (data, pub, key) =>
-        parseProps(await SEA.dec(await SEA.read(data, pub), key))
+        parseProps(await SEA.decrypt(await SEA.verify(data, pub), key))
 
       // Already authenticated?
-      if (root._.user
-      && Gun.obj.has(root._.user._, 'pub')
-      && Gun.obj.has(root._.user._, 'sea')) {
-        return root._.user._  // Yes, we're done here.
+      if (gunRoot._.user
+      && Gun.obj.has(gunRoot._.user._, 'pub')
+      && Gun.obj.has(gunRoot._.user._, 'sea')) {
+        return gunRoot._.user._  // Yes, we're done here.
       }
       // No, got persisted 'alias'?
       if (!alias) {
@@ -51,7 +53,7 @@
         }
       }
       // Yes, let's get (all?) matching aliases
-      const aliases = (await queryGunAliases(alias, root))
+      const aliases = (await queryGunAliases(alias, gunRoot))
       .filter(({ pub } = {}) => !!pub)
       // Got any?
       if (!aliases.length) {
@@ -62,10 +64,11 @@
       // (if two users have the same username AND the same password... that would be bad)
       const [ { key, at, proof, pin: newPin } = {} ] = await Promise
       .all(aliases.filter(({ at: { put } = {} }) => !!put)
-      .map(async ({ at, pub }) => {
+      .map(async ({ at: at, pub: pub }) => {
         const readStorageData = async (args) => {
-          const props = args || parseProps(await SEA.read(remember, pub, true))
-          let { pin, alias: aLias } = props
+          const props = args || parseProps(await SEA.verify(remember, pub, true))
+          let pin = props.pin
+          let aLias = props.alias
 
           const data = (!pin && alias === aLias)
           // No PIN, let's try short-term proof if for matching alias
@@ -74,11 +77,13 @@
           : await checkRememberData(await readAndDecrypt(await seaIndexedDb.get(alias, 'auth'), pub, pin))
           pin = pin || data.pin
           delete data.pin
-          return { pin, data }
+          return { pin: pin, data: data }
         }
         // got pub, try auth with pin & alias :: or unwrap Storage data...
-        const { data, pin: newPin } = await readStorageData(pin && { pin, alias })
-        const { proof } = data || {}
+        const __gky20 = await readStorageData(pin && { pin, alias })
+        const data = __gky20.data
+        const newPin = __gky20.pin
+        const proof = data.proof
 
         if (!proof) {
           if (!data) {
@@ -93,17 +98,18 @@
         }
 
         try { // auth parsing or decryption fails or returns empty - silently done
-          const { auth } = at.put.auth
-          const sea = await SEA.dec(auth, proof)
+          const auth= at.put.auth.auth
+          const sea = await SEA.decrypt(auth, proof)
           if (!sea) {
             err = 'Failed to decrypt private key!'
             return
           }
-          const { priv, epriv } = sea
-          const { epub } = at.put
+          const priv = sea.priv
+          const epriv = sea.epriv
+          const epub = at.put.epub
           // Success! we've found our private data!
           err = null
-          return { proof, at, pin: newPin, key: { pub, priv, epriv, epub } }
+          return { proof: proof, at: at, pin: newPin, key: { pub: pub, priv: priv, epriv: epriv, epub: epub } }
         } catch (e) {
           err = 'Failed to decrypt private key!'
           return
@@ -119,17 +125,17 @@
       try {
         await updateStorage(proof, key, newPin || pin)(key)
 
-        const user = Object.assign(key, { at, proof })
+        const user = Object.assign(key, { at: at, proof: proof })
         const pIN = newPin || pin
 
         const pinProp = pIN && { pin: Buffer.from(pIN, 'base64').toString('utf8') }
 
-        return await finalizeLogin(alias, user, root, pinProp)
+        return await finalizeLogin(alias, user, gunRoot, pinProp)
       } catch (e) { // TODO: right log message ?
         Gun.log('Failed to finalize login with new password!')
         const { err = '' } = e || {}
-        throw { err: `Finalizing new password login failed! Reason: ${err}` }
+        throw { err: 'Finalizing new password login failed! Reason: '+err }
       }
     }
-    module.exports = authRecall;
+    module.exports = authRecall
   

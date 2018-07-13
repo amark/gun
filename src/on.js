@@ -5,54 +5,53 @@ Gun.chain.on = function(tag, arg, eas, as){
 	if(typeof tag === 'string'){
 		if(!arg){ return at.on(tag) }
 		act = at.on(tag, arg, eas || at, as);
-		if(eas && eas.gun){
+		if(eas && eas.$){
 			(eas.subs || (eas.subs = [])).push(act);
 		}
-		off = function() {
-			if (act && act.off) act.off();
-			off.off();
-		};
-		off.off = gun.off.bind(gun) || noop;
-		gun.off = off;
 		return gun;
 	}
 	var opt = arg;
 	opt = (true === opt)? {change: true} : opt || {};
+	opt.at = at;
 	opt.ok = tag;
-	opt.last = {};
+	//opt.last = {};
 	gun.get(ok, opt); // TODO: PERF! Event listener leak!!!?
 	return gun;
 }
 
-function ok(at, ev){ var opt = this;
-	var gun = at.gun, cat = gun._, data = cat.put || at.put, tmp = opt.last, id = cat.id+at.get, tmp;
+function ok(msg, ev){ var opt = this;
+	var gun = msg.$, at = (gun||{})._ || {}, data = at.put || msg.put, cat = opt.at, tmp;
 	if(u === data){
 		return;
 	}
-	if(data && data[rel._] && (tmp = rel.is(data))){
-		tmp = (cat.root.get(tmp)._);
+	if(tmp = msg.$$){
+		tmp = (msg.$$._);
 		if(u === tmp.put){
 			return;
 		}
 		data = tmp.put;
 	}
 	if(opt.change){ // TODO: BUG? Move above the undef checks?
-		data = at.put;
+		data = msg.put;
 	}
 	// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
-	if(tmp.put === data && tmp.get === id && !Gun.node.soul(data)){ return }
-	tmp.put = data;
-	tmp.get = id;
+	//if(tmp.put === data && tmp.get === id && !Gun.node.soul(data)){ return }
+	//tmp.put = data;
+	//tmp.get = id;
 	// DEDUPLICATE // TODO: NEEDS WORK! BAD PROTOTYPE
-	cat.last = data;
+	//at.last = data;
 	if(opt.as){
-		opt.ok.call(opt.as, at, ev);
+		opt.ok.call(opt.as, msg, ev);
 	} else {
-		opt.ok.call(gun, data, at.get, at, ev);
+		opt.ok.call(gun, data, msg.get, msg, ev);
 	}
 }
 
 Gun.chain.val = function(cb, opt){
+	Gun.log.once("onceval", "Future Breaking API Change: .val -> .once, apologies unexpected.");
+	return this.once(cb, opt);
+}
+Gun.chain.once = function(cb, opt){
 	var gun = this, at = gun._, data = at.put;
 	if(0 < at.ack && u !== data){
 		(cb || noop).call(gun, data, at.get);
@@ -60,14 +59,14 @@ Gun.chain.val = function(cb, opt){
 	}
 	if(cb){
 		(opt = opt || {}).ok = cb;
-		opt.cat = at;
+		opt.at = at;
 		opt.out = {'#': Gun.text.random(9)};
 		gun.get(val, {as: opt});
 		opt.async = true; //opt.async = at.stun? 1 : true;
 	} else {
 		Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 		var chain = gun.chain();
-		chain._.val = gun.val(function(){
+		chain._.nix = gun.once(function(){
 			chain._.on('in', gun._);
 		});
 		return chain;
@@ -75,41 +74,30 @@ Gun.chain.val = function(cb, opt){
 	return gun;
 }
 
-function val(msg, ev, to){
-	var opt = this.as, cat = opt.cat, gun = msg.gun, coat = gun._, data = coat.put || msg.put, tmp;
-	if(u === data){
-		//return;
-	}
-	//if(coat.soul && !(0 < coat.ack)){ return }
-	if(tmp = Gun.node.soul(data) || rel.is(data)){
-	//if(data && data[rel._] && (tmp = rel.is(data))){
-		tmp = (cat.root.get(tmp)._);
-		if(u === tmp.put){//} || !(0 < tmp.ack)){
+function val(msg, eve, to){
+	var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
+	if(tmp = msg.$$){
+		link = tmp = (msg.$$._);
+		if(u === tmp.put){
 			return;
 		}
 		data = tmp.put;
 	}
-	if(ev.wait){ clearTimeout(ev.wait) }
-	//if(!to && (!(0 < coat.ack) || ((true === opt.async) && 0 !== opt.wait))){
-	if(!to){
-		ev.wait = setTimeout(function(){
-			val.call({as:opt}, msg, ev, ev.wait || 1);
+	if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
+	if(!to && (at.soul || at.link || (link && !(0 < link.ack)))){
+		tmp = (eve.wait = {})[at.id] = setTimeout(function(){
+			val.call({as:opt}, msg, eve, tmp || 1);
 		}, opt.wait || 99);
 		return;
 	}
-	if(cat.has || cat.soul){
-		if(ev.off()){ return } // if it is already off, don't call again!
-	} else {
-		if((opt.seen = opt.seen || {})[coat.id]){ return }
-		opt.seen[coat.id] = true;
-	}
-	opt.ok.call(msg.gun || opt.gun, data, msg.get);
+	eve.rid(msg);
+	opt.ok.call(gun || opt.$, data, msg.get);
 }
 
 Gun.chain.off = function(){
 	// make off more aggressive. Warning, it might backfire!
 	var gun = this, at = gun._, tmp;
-	var back = at.back || {}, cat = back._;
+	var cat = at.back;
 	if(!cat){ return }
 	if(tmp = cat.next){
 		if(tmp[at.get]){
@@ -125,24 +113,24 @@ Gun.chain.off = function(){
 		obj_del(tmp, at.get);
 	}
 	if(tmp = at.soul){
-		obj_del(cat.root._.graph, tmp);
+		obj_del(cat.root.graph, tmp);
 	}
 	if(tmp = at.map){
 		obj_map(tmp, function(at){
-			if(at.rel){
-				cat.root.get(at.rel).off();
+			if(at.link){
+				cat.root.$.get(at.link).off();
 			}
 		});
 	}
 	if(tmp = at.next){
-		obj_map(tmp, function(ref){
-			ref.off();
+		obj_map(tmp, function(neat){
+			neat.$.off();
 		});
 	}
 	at.on('off', {});
 	return gun;
 }
 var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_del = obj.del, obj_to = obj.to;
-var rel = Gun.val.rel;
+var rel = Gun.val.link;
 var empty = {}, noop = function(){}, u;
 	

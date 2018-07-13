@@ -2,7 +2,7 @@
 // Generic javascript utilities.
 var Type = {};
 //Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
-Type.fns = Type.fn = {is: function(fn){ return (!!fn && 'function' == typeof fn) }}
+Type.fn = {is: function(fn){ return (!!fn && 'function' == typeof fn) }}
 Type.bi = {is: function(b){ return (b instanceof Boolean || typeof b == 'boolean') }}
 Type.num = {is: function(n){ return !list_is(n) && ((n - parseFloat(n) + 1) >= 0 || Infinity === n || -Infinity === n) }}
 Type.text = {is: function(t){ return (typeof t == 'string') }}

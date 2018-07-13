@@ -3,10 +3,12 @@ var config = {
 	port: 8080,
 	servers: 2,
 	browsers: 2,
-	each: 1000000,
-	burst: 12000,
+	each: 100,
+	burst: 50,
 	wait: 1,
 	dir: __dirname,
+	chunk: 1024 * 10,
+	notrad: false,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -41,7 +43,7 @@ var bob = browsers.excluding(alice).pluck(1);
 
 describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 	//this.timeout(5 * 60 * 1000);
-	this.timeout(10 * 60 * 1000);
+	this.timeout(100 * 60 * 1000);
 
 	it("Servers have joined!", function(){
 		return servers.atLeast(config.servers);
@@ -61,8 +63,8 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, thrash: 6000});
+			//require('gun/lib/store');
+			var gun = Gun({web: server, localStorage: env.config.notrad, until: 1, memory: 50, chunk: env.config.chunk, file: 'radata'});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -80,10 +82,11 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 			console.log("I AM ALICE");
 			localStorage.clear();
 			var env = test.props;
-			var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun', localStorage: false});
+			var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun', localStorage: env.config.notrad});
 			window.gun = gun;
 
 			var n = Gun.time.is(), i = 0, c = 0, b = env.config.burst, l = env.config.each;
+			var raw = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 			function save(i){
 				if(i > l){
@@ -91,15 +94,19 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				}
 				var d;
 				var ref = window.gun.get('asdf'+i);
-				ref.put({hello: 'world' + i + '!'}, function(ack){
+				ref.put({hello: raw + i}, function(ack){
 					if(d){ return } d = true;
 					c++;
 					!(i % b) && console.log(i+'/'+l);//, '@'+Math.floor(b/((-n + (n = Gun.time.is()))/1000))+'/sec');
 					//localStorage.clear();
 					ref.off();
+					//console.log("gl:", Object.keys(window.gun._.graph).length);
 					if(c < l){ return }
 					setTimeout(function(){
 						test.done();
+						setTimeout(function(){
+							location = 'http://asdf';
+						}, 1500)
 					}, 1000);
 				});
 			}
@@ -114,7 +121,12 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 
 	it("Shut server down!", function(){
 		return server.run(function(test){
-			process.exit();
+			test.async();
+			console.log("giving server time to cool down...");
+			setTimeout(function(){
+				process.exit();
+				test.done();
+			}, 10 * 1000);
 		});
 	});
 
@@ -126,14 +138,19 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 				console.log("Server data could not be found!");
 				explode;
 				return;
-			}
+			}	
+			/*setInterval(function(){
+				var mem = process.memoryUsage();
+				var u = Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100;
+				console.log(u, 'MB');
+			}, 1000);*/
 			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: false, thrash: 6000});
+			//require('gun/lib/store');
+			var gun = Gun({web: server, localStorage: env.config.notrad, until: 1, memory: 50, chunk: env.config.notrad, file: 'radata'});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -146,27 +163,38 @@ describe("Make sure the Radix Storage Engine (RSE) works.", function(){
 			console.log("I AM BOB");
 			localStorage.clear();
 			var env = test.props;
-			var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun', localStorage: false});
+			var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun', localStorage: env.config.notrad});
 			window.gun = gun;
 
 			var n = Gun.time.is(), i = 0, c = 0, b = env.config.burst, l = env.config.each;
+			var raw = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+			window.FOO = [];
 
 			function check(i){
+				if(i > l){
+					return;
+				}
 				var d;
 				var ref = window.gun.get('asdf' + i);
 				ref.on(function(data){
-					if(('world'+i+'!') !== data.hello){ return test.fail('wrong ' + i) }
+					if((raw+i) !== data.hello){ return test.fail('wrong ' + i) }
 					if(d){ return } d = true;
-					!(i % b) && console.log(i+'/'+l);//, '@'+Math.floor(b/((-n + (n = Gun.time.is()))/1000))+'/sec'));
-					c++;
+					//!(c % b) && 
+					window.FOO.push(i);
+					console.log(c+'/'+l, 'yeah?', i, Gun.node.soul(data));//, '@'+Math.floor(b/((-n + (n = Gun.time.is()))/1000))+'/sec'));
+					window.GOT = c++;
 					//localStorage.clear();
 					ref.off();
+					//console.log("gl:", Object.keys(window.gun._.graph).length);
 					if(c < l){ return }
 					console.log("DONE!", c+'/'+l);
 					test.done();
 				});
 			}
 			function burst(){
+				if(i > l){
+					return;
+				}
 				for(var j = 0; j <= b; j++){
 					check(++i);	
 				}
