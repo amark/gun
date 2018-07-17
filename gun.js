@@ -610,7 +610,7 @@
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
 			to.err = to.err || setTimeout(function(){
-				to.next({err: "Error: No ACK received yet."});
+				to.next({err: "Error: No ACK received yet.", lack: true});
 				to.off();
 			}, (this.opt||{}).lack || 9000);
 			return id;
@@ -1428,7 +1428,8 @@
 			as.res(function(){
 				var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 					cat.root.on('ack', ack);
-					this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+					if(ack.err){ Gun.log(ack) }
+					if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 					if(!as.ack){ return }
 					as.ack(ack, this);
 				}, as.opt);
