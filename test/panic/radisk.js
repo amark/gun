@@ -64,7 +64,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			});
 			var Gun = require('gun');
 			//require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.chunk, file: 'radata'});
+			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.chunk, file: 'radata', radisk: true});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -157,7 +157,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			});
 			var Gun = require('gun');
 			//require('gun/lib/store');
-			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.notrad, file: 'radata', lack: 1000 * 60 * 60});
+			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.notrad, file: 'radata', lack: 1000 * 60 * 60, radisk: true});
 			server.listen(port, function(){
 				test.done();
 			});
