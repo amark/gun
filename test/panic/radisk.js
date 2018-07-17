@@ -7,7 +7,7 @@ var config = {
 	burst: 10,
 	wait: 1,
 	dir: __dirname,
-	chunk: 1024 * 100,
+	chunk: 1024 * 1024 * 10,
 	notrad: false,
 	route: {
 		'/': __dirname + '/index.html',
@@ -41,7 +41,7 @@ var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
 
-describe("Make sure the Radix Storage Engine (RSE) works.", function(){
+describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(100 * 60 * 1000);
 
