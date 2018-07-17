@@ -22,7 +22,7 @@ function Store(opt){
   store.get = function(file, cb){
     console.log(`called get with ${file}`);
     var temp = storage[file] || undefined
-    cb(temp)
+    cb(undefined, temp)
   };
   store.list = function(cb, match){
     var arr = Object.keys(storage);
