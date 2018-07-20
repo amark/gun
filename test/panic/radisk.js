@@ -1,7 +1,7 @@
 var config = {
 	IP: require('ip').address(),
 	port: 8080,
-	servers: 1,
+	servers: 2,
 	browsers: 2,
 	each: 100000,
 	burst: 10,
@@ -55,7 +55,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			test.async();
 			if(require('fs').existsSync('radata')){
 				console.log("Please delete previous data first!");
-				explode;
+				explode();
 				return;
 			}
 			var port = env.config.port + env.i;
@@ -143,7 +143,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			test.async();
 			if(!require('fs').existsSync('radata')){
 				console.log("Server data could not be found!");
-				explode;
+				explode();
 				return;
 			}
 			/*setInterval(function(){
