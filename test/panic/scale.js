@@ -10,7 +10,6 @@ var config = {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
 		'/jquery.js': __dirname + '/../../examples/jquery.js',
-		'/cryptomodules.js': __dirname + '/../../lib/cryptomodules.js',
 		'/sea.js': __dirname + '/../../sea.js'
 	}
 }
