@@ -15,6 +15,7 @@ var config = {
 		'/jquery.js': __dirname + '/../../examples/jquery.js'
 	}
 }
+config.gundir = require('path').resolve(config.dir, '../../')+'/';
 
 var panic = require('panic-server');
 panic.server().on('request', function(req, res){
@@ -63,8 +64,8 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
+			console.log('??? ===', require('gun/package.json').version);
 			var Gun = require('gun');
-			//require('gun/lib/store');
 			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.chunk, file: 'radata'});
 			server.listen(port, function(){
 				test.done();
@@ -159,7 +160,6 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			//require('gun/lib/store');
 			var gun = Gun({web: server, localStorage: env.config.notrad, chunk: env.config.notrad, file: 'radata', lack: 1000 * 60 * 60});
 			server.listen(port, function(){
 				test.done();
