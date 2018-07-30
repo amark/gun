@@ -37,8 +37,8 @@
 			;(() => {
 				function S(){};
 				window.S = S;
-				S.gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8080/gun');
-				//S.gun = Gun('http://localhost:8080/gun');
+				S.gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
+				//S.gun = Gun('http://localhost:8765/gun');
 				//S.gun = Gun();
 				S.app = S.gun.get('examples/social/1');
 				S.user = S.gun.user();

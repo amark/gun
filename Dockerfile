@@ -22,4 +22,5 @@ RUN apk update && apk upgrade \
   && npm install \
   && apk del .build-dependencies && rm -rf /var/cache/* /tmp/npm*
 EXPOSE 8080
+EXPOSE 8765
 CMD ["npm","start"]
