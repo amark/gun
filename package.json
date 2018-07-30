@@ -5,7 +5,7 @@
   "main": "index.js",
   "browser": "gun.min.js",
   "scripts": {
-    "start": "node examples/http.js 8080",
+    "start": "node examples/http.js 8765",
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
     "testsea": "mocha test/sea.js",
