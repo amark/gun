@@ -57,7 +57,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			test.async();
 			if(require('fs').existsSync('radata')){
 				console.log("Please delete previous data first!");
-				explode;
+				explode();
 				return;
 			}
 			var port = env.config.port + env.i;
@@ -70,7 +70,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			server.listen(port, function(){
 				test.done();
 			});
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
@@ -100,7 +100,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 					if(ack.err){
 						if(ack.lack){
 							console.log("!!!???", i);
-							return test.fail("ACK timed out, turn your lack of ack up or thruput down."); 
+							return test.fail("ACK timed out, turn your lack of ack up or thruput down.");
 						}
 						return test.fail(ack.err);
 					}
@@ -127,7 +127,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 				}
 			}
 			var t = setInterval(burst, env.config.wait);
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it("Shut server down!", function(){
@@ -147,9 +147,9 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			test.async();
 			if(!require('fs').existsSync('radata')){
 				console.log("Server data could not be found!");
-				explode;
+				explode();
 				return;
-			}	
+			}
 			/*setInterval(function(){
 				var mem = process.memoryUsage();
 				var u = Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100;
@@ -164,7 +164,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 			server.listen(port, function(){
 				test.done();
 			});
-		}, {i: 2, config: config}); 
+		}, {i: 2, config: config});
 	});
 
 	it("Bob read data", function(){
@@ -212,12 +212,12 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 					return;
 				}
 				for(var j = 0; j <= b; j++){
-					check(++i);	
+					check(++i);
 				}
 				setTimeout(burst, env.config.wait);
 			}
 			burst();
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it("Carl read data", function(){
@@ -259,12 +259,12 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 					return;
 				}
 				for(var j = 0; j <= b; j++){
-					check(++i);	
+					check(++i);
 				}
 				setTimeout(burst, env.config.wait);
 			}
 			burst();
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it("All finished!", function(done){
