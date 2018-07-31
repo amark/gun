@@ -1,22 +1,20 @@
-var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 8080 || 8765;
+var fs = require('fs');
+var config = {
+	port: process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 8765
+};
+var Gun = require('../'); // require('gun')
 
-var Gun = require('../');
-
-var server = require('http').createServer(function(req, res){
-	if(Gun.serve(req, res)){ return } // filters gun requests!
-	require('fs').createReadStream(require('path').join(__dirname, req.url)).on('error',function(){ // static files!
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.end(require('fs')
-			.readFileSync(require('path')
-			.join(__dirname, 'index.html') // or default to index
-		));
-	}).pipe(res); // stream
-});
+if(process.env.HTTPS_KEY){
+	config.key = fs.readFileSync(process.env.HTTPS_KEY);
+	config.cert = fs.readFileSync(process.env.HTTPS_CERT);
+	config.server = require('https').createServer(config, Gun.serve(__dirname));
+} else {
+	config.server = require('http').createServer(Gun.serve(__dirname));
+}
 
 var gun = Gun({
-	web: server
+	web: config.server
 });
 
-server.listen(port);
-
-console.log('Server started on port ' + port + ' with /gun');
+config.server.listen(config.port);
+console.log('Server started on port ' + config.port + ' with /gun');

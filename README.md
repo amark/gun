@@ -188,7 +188,7 @@ Then visit the URL in the output of the 'now --npm' step, in your browser.
 Pull from the [Docker Hub](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun). Or:
 
 ```bash
-docker run -p 8080:8080 gundb/gun
+docker run -p 8765:8765 gundb/gun
 ```
 
 Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
@@ -197,17 +197,17 @@ Or build the [Docker](https://docs.docker.com/engine/installation/) image locall
 git clone https://github.com/amark/gun.git
 cd gun
 docker build -t myrepo/gundb:v1 .
-docker run -p 8080:8080 myrepo/gundb:v1
+docker run -p 8765:8765 myrepo/gundb:v1
 ```
 
 Or, if you prefer your Docker image with metadata labels (Linux/Mac only):
 
 ```bash
 npm run docker
-docker run -p 8080:8080 username/gun:git
+docker run -p 8765:8765 username/gun:git
 ```
 
-Then visit [http://localhost:8080](http://localhost:8080) in your browser.
+Then visit [http://localhost:8765](http://localhost:8765) in your browser.
 
 ## License
 

@@ -716,7 +716,7 @@
       let err
       // then attempt to log into each one until we find ours!
       // (if two users have the same username AND the same password... that would be bad)
-      const [ user ] = await Promise.all(aliases.map(async ({ at: at, pub: pub }) => {
+      const users = await Promise.all(aliases.map(async ({ at: at, pub: pub }, i) => {
         // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
         const auth = parseProps(at.put.auth)
       // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
@@ -731,7 +731,7 @@
           const salt = auth.salt
           const sea = await SEA.decrypt(auth.ek, proof)
           if (!sea) {
-            err = 'Failed to decrypt secret!'
+            err = 'Failed to decrypt secret! ' + i +'/'+aliases.length;
             return
           }
           // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
@@ -754,7 +754,7 @@
           throw { err }
         }
       }))
-
+      var user = Gun.list.map(users, function(acc){ if(acc){ return acc } })
       if (!user) {
         throw { err: err || 'Public key does not exist!' }
       }
@@ -1111,7 +1111,7 @@
 
     var u;
     // Well first we have to actually create a user. That is what this function does.
-    User.prototype.create = function(username, pass, cb){
+    User.prototype.create = function(username, pass, cb, opt){
       // TODO: Needs to be cleaned up!!!
       const gunRoot = this.back(-1)
       var gun = this, cat = (gun._);
@@ -1121,12 +1121,13 @@
         return gun;
       }
       cat.ing = true;
+      opt = opt || {};
       var resolve = function(){}, reject = resolve;
       // Because more than 1 user might have the same username, we treat the alias as a list of those users.
       if(cb){ resolve = reject = cb }
       gunRoot.get('~@'+username).get(async (at, ev) => {
         ev.off()
-        if (at.put) {
+        if (at.put && !opt.already) {
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
           const err = 'User already created!'
           Gun.log(err)
