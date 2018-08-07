@@ -1,7 +1,4 @@
-<p>
-    <a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a>
-    <img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/>
-</p> 
+<p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p> 
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
@@ -9,7 +6,9 @@
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
 [![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 
-GUN is a realtime, distributed, offline-first, graph database engine. Doing **[20M+](https://github.com/amark/gun/wiki/100000-ops-sec-in-IE6-on-2GB-Atom-CPU) ops/sec** in just **~9KB** gzipped.
+**GUN** is an _ecosystem_  of tools that let you <u>build tomorrow's dApps, today</u>.
+
+Decentralized alternatives to [Reddit](https://notabug.io/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>
@@ -22,18 +21,10 @@ GUN is a realtime, distributed, offline-first, graph database engine. Doing **[2
 </tr>
 </table>
 
-<table>
-<tr>
-<a href="https://youtu.be/-i-11T5ZI9o" title="video: 1 minute demo of fault tolerance"><img src="http://img.youtube.com/vi/-i-11T5ZI9o/0.jpg" width="48%" align="left"></a><a href="https://youtu.be/-FN_J3etdvY" title="video: decentralized auto failover"><img src="http://img.youtube.com/vi/-FN_J3etdvY/0.jpg" width="48%"></a>
-</tr>
-</table>
+The ecosystem is one nice stack of technologies that looks like this:
 
-## Why?
-
- - **Realtime** - You might use Socket.IO for realtime updates, but what happens if you reload the page? GUN solves *state synchronization* for you, no matter what, on reloads, across all your users, and even on conflicting updates.
- - **Distributed** - GUN is peer-to-peer by design, meaning you have no centralized database server to maintain or that could crash. This lets you sleep through the night without worrying about database DevOps - we call it "NoDB". From there, you can build decentralized, federated, or centralized apps.
- - **Offline-first** - GUN works even if your internet or cell reception doesn't. Users can still plug away and save data as normal, and then when the network comes back online GUN will automatically synchronize all the changes and handle any conflicts for you.
- - **Graph** - Most databases force you to bend over backwards to match their storage constraints. But graphs are different, they let you have any data structure you want. Whether that be traditional tables with relations, document oriented trees, or tons of circular references. You choose.
+<img width="49%" src="https://gun.eco/see/stack.png"/>
+<img width="49%" align="right" src="https://gun.eco/see/layers.png"/>
 
 ## Quickstart
 
