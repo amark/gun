@@ -23,8 +23,10 @@ Decentralized alternatives to [Reddit](https://notabug.io/), [YouTube](https://d
 
 The ecosystem is one nice stack of technologies that looks like this:
 
-<img width="49%" src="https://gun.eco/see/stack.png"/>
-<img width="49%" align="right" src="https://gun.eco/see/layers.png"/>
+<div><img width="45%" src="https://gun.eco/see/stack.png"/>
+<img width="45%" align="right" src="https://gun.eco/see/layers.png"/></div>
+
+For now, it is best to start with GUN and learn the basics:
 
 ## Quickstart
 
