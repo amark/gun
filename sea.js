@@ -1269,6 +1269,11 @@
         delete user._.is;
         delete user._.sea;
       }
+      if(typeof window !== 'undefined'){
+        var tmp = window.sessionStorage;
+        delete tmp.alias;
+        delete tmp.tmp;
+      }
       return await authLeave(this.back(-1))
     }
     // If authenticated user wants to delete his/her account, let's support it!

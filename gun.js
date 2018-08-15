@@ -802,8 +802,24 @@
 			}
 
 			Gun.on.get = function(msg, gun){
-				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
+				if(get['*']){ // TEMPORARY HACK FOR MARTTI, TESTING
+					var graph = {};
+					Gun.obj.map(root.graph, function(node, soul){
+						if(Gun.text.match(soul, get)){
+							graph[soul] = Gun.obj.copy(node);
+						}
+					});
+					if(!Gun.obj.empty(graph)){
+						root.on('in', {
+							'@': msg['#'],
+							how: '*',
+							put: graph,
+							$: gun
+						});
+					}
+				} // TEMPORARY HACK FOR MARTTI, TESTING
 				if(!node || !at){ return root.on('get', msg) }
 				if(has){
 					if(!obj_has(node, has)){ return root.on('get', msg) }
