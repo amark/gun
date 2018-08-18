@@ -475,7 +475,7 @@
 				if(env.soul){
 					at.rel = Val.rel.ify(env.soul);
 				}
-				env.shell = as.shell;
+				env.shell = (as||{}).shell;
 				env.graph = env.graph || {};
 				env.seen = env.seen || [];
 				env.as = env.as || as;
