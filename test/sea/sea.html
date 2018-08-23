@@ -18,14 +18,14 @@
 	function write(data){
 		console.log("write...");
 		var alice = {name: "Alice"};
-		alice.boss = {name: "Fluffy", slave: alice};
+		alice.boss = {name: "Fluffy", child: alice};
 		user.get('profile').put(alice, get);
 	}
 
 	function get(){
 		console.log("get...");
-		user.get('profile').get('boss').get('slave').get('name').val(function(data){
-			console.log("The boss's slave's name is:", data);
+		user.get('profile').get('boss').get('child').get('name').val(function(data){
+			console.log("The boss's child's name is:", data);
 		})
 	}
 
