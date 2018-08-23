@@ -59,7 +59,7 @@ gun.get('mark').on(function(data, key){
 ```javascript
 var cat = {name: "Fluffy", species: "kitty"};
 var mark = {boss: cat};
-cat.slave = mark;
+cat.child = mark;
 
 // partial updates merge with existing data!
 gun.get('mark').put(mark);
@@ -71,8 +71,8 @@ gun.get('mark').get('boss').get('name').once(function(data, key){
 });
 
 // traverse a graph of circular references!
-gun.get('mark').get('boss').get('slave').once(function(data, key){
-  console.log("Mark is the slave!", data);
+gun.get('mark').get('boss').get('child').once(function(data, key){
+  console.log("Mark is the child!", data);
 });
 
 // add both of them to a table!
@@ -121,7 +121,7 @@ Thanks to:<br/>
 
 [GUN](https://gun.eco) was created by [Mark Nadal](https://twitter.com/marknadal) in 2014 after he had spent 4 years trying to get his collaborative web app to scale up with traditional databases. 
 
-<img width="250px" src="https://gun.eco/see/problem.png" align="left" title="pain point" style="margin: 0 1em 1em 0"> After he realized [Master-Slave database architecture causes one big bottleneck](https://gun.eco/distributed/matters.html), he (as a complete newbie outsider) naively decided **to question the status quo** and shake things up with controversial, heretical, and contrarian experiments:
+<img width="250px" src="https://gun.eco/see/problem.png" align="left" title="pain point" style="margin: 0 1em 1em 0"> After he realized [Primary-Replica database architecture causes one big bottleneck](https://gun.eco/distributed/matters.html), he (as a complete newbie outsider) naively decided **to question the status quo** and shake things up with controversial, heretical, and contrarian experiments:
 
 **The NoDB** - no master, no servers, no "single source of truth", not built with a real programming language or real hardware, no DevOps, no locking, not *just* SQL or NoSQL but both (**all** - graphs, documents, tables, key/value).
 

@@ -770,8 +770,8 @@ describe('Gun', function(){
 				alice.spouse = bob;
 				bob.spouse = alice;
 				alice.pet = cat;
-				cat.slave = bob;
-				cat.master = alice;
+				cat.child = bob;
+				cat.parent = alice;
 				var graph = Gun.graph.ify(bob);
 				expect(graph).to.eql({
 					'ASDF': {_:{'#':'ASDF'},
@@ -788,8 +788,8 @@ describe('Gun', function(){
 					'FDSA': {_:{'#':'FDSA'},
 						name: "Fluffy",
 						species: "kitty",
-						slave: {'#':'DASF'},
-						master: {'#':'ASDF'}
+						child: {'#':'DASF'},
+						parent: {'#':'ASDF'}
 					}
 				});
 
