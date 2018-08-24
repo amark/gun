@@ -1067,9 +1067,8 @@
     var Gun = SEA.Gun;
     var then = USE('./then');
 
-    function User(){ 
-      this._ = {$: this}
-      Gun.call()
+    function User(root){ 
+      this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
     User.prototype.constructor = User;

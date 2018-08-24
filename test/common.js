@@ -3366,6 +3366,30 @@ describe('Gun', function(){
 			list.set({name: 'dave', age: 25});
 		});
 
+		it('once map function once', function(done){
+			var gun = Gun(), s = 'o/mf/o', u;
+			var app = gun.get(s);
+			var list = app.get('list');
+
+			var check = {};
+			gun.get('user').get('alice').put({name:'Alice', email:'alice@example.com'})
+			gun.get('user').get('bob').put({name:'Bob', email:'bob@example.com'})
+			gun.get('user').get('carl').put({name:'Carl', email:'carl@example.com'})
+
+			gun.get('user').once().map(v => {
+			  //console.log('this gets called', v);
+			  return v
+			}).once((v, k) => {
+			  //console.log('this is never called', k, v);
+			  check[k] = (check[k] || 0) + 1;
+			  if(1 === check.alice && 1 === check.bob && 1 === check.carl){
+			  	if(done.c){return}done.c=1;
+			  	done();
+			  }
+			});
+
+		});
+
 		it('val and then map', function(done){
 			var gun = Gun(), s = 'val/then/map', u;
 			var list = gun.get(s);
