@@ -967,7 +967,6 @@
 					at.on('in', at);
 					return;
 				}*/
-				//console.log("out!", at.get, get);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9));
@@ -1107,13 +1106,12 @@
 				not(at, msg);
 			}
 			tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
-			//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 			if(rel === tmp.link){
 				if(!(tmp.pass || at.pass)){
 					return;
 				}
 			}
-			if(at.pass){ 
+			if(at.pass){
 				Gun.obj.map(at.map, function(tmp){ tmp.pass = true })
 				obj_del(at, 'pass');
 			}
@@ -1730,10 +1728,8 @@
 			gun.map().on(function(data, key, at, ev){
 				var next = (cb||noop).call(this, data, key, at, ev);
 				if(u === next){ return }
-				if(data === next || Gun.is(next)){
-					chain._.on('in', next._);
-					return;
-				}
+				if(data === next){ return chain._.on('in', at) }
+				if(Gun.is(next)){ return chain._.on('in', next._) }
 				chain._.on('in', {get: key, put: next});
 			});
 			return chain;
@@ -2024,11 +2020,7 @@
 					var wire = peer.wire;
 					try{
 						if(wire.send){
-							if(wire.readyState === wire.OPEN){
 								wire.send(raw);
-							} else {
-								(peer.queue = peer.queue || []).push(raw);
-							}
 						} else
 						if(peer.say){
 							peer.say(raw);
