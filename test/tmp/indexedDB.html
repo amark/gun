@@ -15,11 +15,10 @@
 
 <script>
 localStorage.clear();
-var opt = {localStorage: false, chunk: 1024, batch: 100};
+
+var opt = {};
 
 opt.store = RindexedDB(opt);
 
 var gun = Gun(opt);
-
-//setTimeout(function(){ $('#read').trigger('click') });
 </script>
