@@ -823,7 +823,7 @@
 						});
 					}
 				} // TEMPORARY HACK FOR MARTTI, TESTING
-				if(!node || !at){ return root.on('get', msg) }
+				if(!node){ return root.on('get', msg) }
 				if(has){
 					if(!obj_has(node, has)){ return root.on('get', msg) }
 					node = Gun.state.to(node, has);
@@ -834,7 +834,7 @@
 					node = Gun.obj.copy(node);
 				}
 				node = Gun.graph.node(node);
-				tmp = at.ack;
+				tmp = (at||empty).ack;
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
@@ -1941,7 +1941,8 @@
 				if(!raw){ return }
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
 				try{msg = JSON.parse(raw);
-				}catch(e){}
+				}catch(e){console.log('DAM JSON parse error', e)}
+				console.log("hear:", msg);
 				if('{' === tmp){
 					if(!msg){ return }
 					if(dup.check(id = msg['#'])){ return }
@@ -2017,7 +2018,7 @@
 					var wire = peer.wire;
 					try{
 						if(wire.send){
-								wire.send(raw);
+							wire.send(raw);
 						} else
 						if(peer.say){
 							peer.say(raw);
@@ -2028,7 +2029,7 @@
 				}
 
 			}());
-			
+
 			;(function(){
 
 				mesh.raw = function(msg){
@@ -2051,7 +2052,9 @@
 					}); msg['><'] = to.join();
 					var raw = $(msg);
 					if(u !== put){
-						raw = raw.replace('"'+ _ +'"', put);
+						tmp = raw.indexOf(_, raw.indexOf('put'));
+						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
+						//raw = raw.replace('"'+ _ +'"', put); // https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}
 					if(msh){
 						msh.raw = raw;
