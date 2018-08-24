@@ -23,10 +23,10 @@ Decentralized alternatives to [Reddit](https://notabug.io/), [YouTube](https://d
 
 The ecosystem is one nice stack of technologies that looks like this:
 
-<div><img width="45%" src="https://gun.eco/see/stack.png"/>
-<img width="45%" align="right" src="https://gun.eco/see/layers.png"/></div>
+<div><img width="48%" src="https://gun.eco/see/stack.png"/>
+<img width="48%" align="right" src="https://gun.eco/see/layers.png"/></div>
 
-For now, it is best to start with GUN and learn the basics:
+For now, it is best to start with GUN and _just use it_ to learn the basics, since it is _**so easy**_: (**or** want to read more? Skip ahead to the "[What is GUN?](#what-is-gun)" section.)
 
 ## Quickstart
 
@@ -55,7 +55,7 @@ gun.get('mark').on(function(data, key){
 });
 </script>
 ```
-- Or try something mind blowing, like saving circular references to a table of documents! ([play](http://jsbin.com/wefozepume/edit?js,console))
+- Or try something **mind blowing**, like saving circular references to a table of documents! ([play](http://jsbin.com/wefozepume/edit?js,console))
 ```javascript
 var cat = {name: "Fluffy", species: "kitty"};
 var mark = {boss: cat};
@@ -65,7 +65,7 @@ cat.slave = mark;
 gun.get('mark').put(mark);
 
 // access the data as if it is a document.
-gun.get('mark').get('boss').get('name').val(function(data, key){
+gun.get('mark').get('boss').get('name').once(function(data, key){
   // `val` grabs the data once, no subscriptions.
   console.log("Mark's boss is", data);
 });
@@ -88,7 +88,15 @@ gun.get('list').map().once(function(data, key){
 gun.get('list').set({type: "cucumber", goal: "scare cat"});
 ```
 
-## Support
+Want to keep building more? **Jump to [THE DOCUMENTATION](#documentation)!**
+
+# What is GUN?
+
+First & foremost, GUN is **a community of the nicest and most helpful people** out there. So [I want to invite you](https://gitter.im/amark/gun) to come tell us about what **you** are working on & wanting to build (new or old school alike! Just be nice as well.) and ask us your questions directly. :)
+
+On that note, let's get some official shout outs covered first:
+
+### Support
 
 <p align="center">
 Thanks to:<br/>
@@ -109,6 +117,19 @@ Thanks to:<br/>
  - Found a bug? Report at: https://github.com/amark/gun/issues ;
  - **Need help**? Chat with us: https://gitter.im/amark/gun .
 
+### History
+
+[GUN](https://gun.eco) was created by [Mark Nadal](https://twitter.com/marknadal) in 2014 after he had spent 4 years trying to get his collaborative web app to scale up with traditional databases. 
+
+<img width="250px" src="https://gun.eco/see/problem.png" align="left" title="pain point" style="margin: 0 1em 1em 0"> After he realized [Master-Slave database architecture causes one big bottleneck](https://gun.eco/distributed/matters.html), he (as a complete newbie outsider) naively decided **to question the status quo** and shake things up with controversial, heretical, and contrarian experiments:
+
+**The NoDB** - no master, no servers, no "single source of truth", not built with a real programming language or real hardware, no DevOps, no locking, not *just* SQL or NoSQL but both (**all** - graphs, documents, tables, key/value).
+
+The goal was to build a P2P database that could survive living inside **any** browser, and could correctly sync data between **any** device after assuming **any** offline-first activity.
+
+<img src="https://gun.eco/see/compare.png" title="comparison table">
+
+Technically, **GUN is a graph synchronization protocol** with a *lightweight embedded engine*, capable of doing *[20M+ API ops/sec](https://gun.eco/docs/100000-ops-sec-in-IE6-on-2GB-Atom-CPU)* in **just ~9KB gzipped size**.
 
 ## Documentation
 
