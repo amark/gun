@@ -24,7 +24,7 @@
     // THIS IS AN EARLY ALPHA!
 
     function SEA(){}
-    if(typeof window !== "undefined"){ SEA.window = window }
+    if(typeof window !== "undefined"){ (SEA.window = window).SEA = SEA }
 
     module.exports = SEA;
   })(USE, './root');
@@ -174,7 +174,7 @@
         });
         try{
           const WebCrypto = require('node-webcrypto-ossl')
-          api.ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
+          api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
         }catch(e){
           console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
         }
@@ -240,16 +240,14 @@
   })(USE, './parse');
 
   ;USE(function(module){
-    const {
-      subtle, ossl = subtle, random: getRandomBytes, TextEncoder, TextDecoder
-    } = USE('./shim')
+    const shim = USE('./shim');
     const Buffer = USE('./buffer')
     const parse = USE('./parse')
     const { pbkdf2 } = USE('./settings')
     // This internal func returns SHA-256 hashed data for signing
     const sha256hash = async (mm) => {
       const m = parse(mm)
-      const hash = await ossl.digest({name: pbkdf2.hash}, new TextEncoder().encode(m))
+      const hash = await shim.subtle.digest({name: pbkdf2.hash}, new shim.TextEncoder().encode(m))
       return Buffer.from(hash)
     }
     module.exports = sha256hash
@@ -368,7 +366,8 @@
       const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -404,7 +403,8 @@
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -441,7 +441,8 @@
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
