@@ -7,7 +7,6 @@ var config = {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
 		'/jquery.js': __dirname + '/../../examples/jquery.js',
-		'/cryptomodules.js': __dirname + '/../../lib/cryptomodules.js',
 		'/sea.js': __dirname + '/../../sea.js'
 	}
 }
@@ -57,6 +56,7 @@ describe("Make sure SEA syncs correctly", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
+			require('gun/sea');
 			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
@@ -80,10 +80,8 @@ describe("Make sure SEA syncs correctly", function(){
 					script.onload = cb; script.src = src;
 					document.head.appendChild(script);
 				}
-				load('cryptomodules.js', function(){
-					load('sea.js', function(){
-						test.done();
-					});
+				load('sea.js', function(){
+					test.done();
 				});
 			}, {i: i += 1, config: config})); 
 		});
@@ -140,8 +138,8 @@ describe("Make sure SEA syncs correctly", function(){
 		return bob.run(function(test){
 			test.async();
 
-			window.gun.get('alias/alice').map().val(function(data){
-				window.ref = gun.get('pub/'+data.pub);
+			window.gun.get('~@alice').map().once(function(data){
+				window.ref = gun.get('~'+data.pub);
 				test.done();
 			});
 		});
@@ -152,7 +150,7 @@ describe("Make sure SEA syncs correctly", function(){
 			test.async();
 
 			window.count = [];
-			ref.get('who').get('said').map().val(function(data){
+			ref.get('who').get('said').map().once(function(data){
 				console.log("read...", data);
 				window.count.push(data);
 				if(window.count.length - 1){ return }
@@ -181,10 +179,8 @@ describe("Make sure SEA syncs correctly", function(){
 				script.onload = cb; script.src = src;
 				document.head.appendChild(script);
 			}
-			load('cryptomodules.js', function(){
-				load('sea.js', function(){
-					test.done();
-				});
+			load('sea.js', function(){
+				test.done();
 			});
 		}, {i: 1, config: config});
 	});
