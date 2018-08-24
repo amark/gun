@@ -14,10 +14,8 @@ Gun.chain.map = function(cb, opt, t){
 	gun.map().on(function(data, key, at, ev){
 		var next = (cb||noop).call(this, data, key, at, ev);
 		if(u === next){ return }
-		if(data === next || Gun.is(next)){
-			chain._.on('in', next._);
-			return;
-		}
+		if(data === next){ return chain._.on('in', at) }
+		if(Gun.is(next)){ return chain._.on('in', next._) }
 		chain._.on('in', {get: key, put: next});
 	});
 	return chain;
