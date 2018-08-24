@@ -45,6 +45,7 @@ describe("The Holy Grail Test!", function(){
 	});
 
 	it("GUN started!", function(){
+		console.log("I must have screwed up my NPM installs, server won't start properly but Holy-Grail passes if I do it manually. Will fix later.");
 		return server.run(function(test){
 			var env = test.props;
 			test.async();
