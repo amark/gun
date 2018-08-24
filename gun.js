@@ -1942,7 +1942,6 @@
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
 				try{msg = JSON.parse(raw);
 				}catch(e){console.log('DAM JSON parse error', e)}
-				console.log("hear:", msg);
 				if('{' === tmp){
 					if(!msg){ return }
 					if(dup.check(id = msg['#'])){ return }
