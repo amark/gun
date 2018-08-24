@@ -28,7 +28,7 @@
         });
         try{
           const WebCrypto = require('node-webcrypto-ossl')
-          api.ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
+          api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
         }catch(e){
           console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
         }
