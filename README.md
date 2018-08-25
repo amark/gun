@@ -55,11 +55,11 @@ gun.get('mark').on(function(data, key){
 });
 </script>
 ```
-- Or try something **mind blowing**, like saving circular references to a table of documents! ([play](http://jsbin.com/wefozepume/edit?js,console))
+- Or try something **mind blowing**, like saving circular references to a table of documents! ([play](http://jsbin.com/dujexafuhe/1/edit?js,console))
 ```javascript
-var cat = {name: "Fluffy", species: "kitty"};
-var mark = {boss: cat};
-cat.slave = mark;
+var kat = {name: "Kat"};
+var mark = {name: "Mark", boss: kat};
+kat.assistant = mark;
 
 // partial updates merge with existing data!
 gun.get('mark').put(mark);
@@ -71,8 +71,8 @@ gun.get('mark').get('boss').get('name').once(function(data, key){
 });
 
 // traverse a graph of circular references!
-gun.get('mark').get('boss').get('slave').once(function(data, key){
-  console.log("Mark is the slave!", data);
+gun.get('mark').get('boss').get('assistant').once(function(data, key){
+  console.log("Mark is the assistant!", data);
 });
 
 // add both of them to a table!
@@ -85,7 +85,7 @@ gun.get('list').map().once(function(data, key){
 });
 
 // live update the table!
-gun.get('list').set({type: "cucumber", goal: "scare cat"});
+gun.get('list').set({type: "scream", goal: "scare kat"});
 ```
 
 Want to keep building more? **Jump to [THE DOCUMENTATION](#documentation)!**
