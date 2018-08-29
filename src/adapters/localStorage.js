@@ -29,7 +29,7 @@ Gun.on('create', function(root){
 		});
 		setTimeout(function(){
 			root.on('out', {put: send, '#': root.ask(ack), I: root.$});
-		},10);
+		},1);
 	}
 
 	root.on('out', function(msg){

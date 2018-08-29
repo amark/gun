@@ -169,7 +169,7 @@ Gun.dup = require('./dup');
 				});
 			}
 		} // TEMPORARY HACK FOR MARTTI, TESTING
-		if(!node || !at){ return root.on('get', msg) }
+		if(!node){ return root.on('get', msg) }
 		if(has){
 			if(!obj_has(node, has)){ return root.on('get', msg) }
 			node = Gun.state.to(node, has);
@@ -180,7 +180,7 @@ Gun.dup = require('./dup');
 			node = Gun.obj.copy(node);
 		}
 		node = Gun.graph.node(node);
-		tmp = at.ack;
+		tmp = (at||empty).ack;
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
