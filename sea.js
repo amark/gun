@@ -172,14 +172,15 @@
           TextDecoder,
           random: (len) => Buffer.from(crypto.randomBytes(len))
         });
-        try{
+        //try{
           const WebCrypto = require('node-webcrypto-ossl')
           api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
-        }catch(e){
-          console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
-        }
+        //}catch(e){
+          //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
+        //}
       }catch(e){
         console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
+        console.log("node-webcrypto-ossl is temporarily needed for ECDSA signature verification, and optionally needed for ECDH, please install if needed (currently necessary so add them to your package.json for now).");
         TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
       }
     }
@@ -432,10 +433,10 @@
       }
       const pub = pair.pub || pair
       const jwk = S.jwk(pub)
-      const key = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
+      const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
       const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
-      const check = await shim.subtle.verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
