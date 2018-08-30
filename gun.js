@@ -807,11 +807,11 @@
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
-				if(get['*']){ // TEMPORARY HACK FOR MARTTI, TESTING
+				if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
 					var graph = {};
-					Gun.obj.map(root.graph, function(node, soul){
-						if(Gun.text.match(soul, get)){
-							graph[soul] = Gun.obj.copy(node);
+					Gun.obj.map(root.graph, function(node, s){
+						if(Gun.text.match(s, soul)){
+							graph[s] = Gun.obj.copy(node);
 						}
 					});
 					if(!Gun.obj.empty(graph)){
