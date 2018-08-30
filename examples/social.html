@@ -527,7 +527,7 @@
 			</ul>
 			<div class="model">
 				<li class="spoke tint sap gully">
-					<div class="gap"><img class="face act none"><b class="name"></b><span class="what"></span></div>
+					<div class="gap"><span class="sort none"></span><img class="face act none"><b class="name"></b><span class="what"></span></div>
 				</li>
 			</div>
 			<div style="height: 10%;"></div>
@@ -553,9 +553,9 @@
 						$('#speak .draft').text('');
 					});
 					S.gun.get('@').time(async (data, key, time) => {
-						var ref = S.gun.get(data);
+						var ref = S.gun.get(data), tmp;
 						var said = await ref.then();
-						var $li = $($('#'+key)[0] || $('#draft .model .spoke').clone(true,true).attr('id', key).prependTo('#draft ul'));
+						var $li = $($('#'+key)[0] || $('#draft .model .spoke').clone(true,true).attr('id', key)[(tmp = $.as.sort(time, $('#draft ul').children('li').first()))[0]?'insertBefore':'appendTo'](tmp[0] || '#draft ul'));
 						$li.find('.what').text(said.what);
 						var by = ref.get('by');
 						by.get('face').get('small').on(data => {
@@ -564,6 +564,7 @@
 						by.get('name').on(data => {
 							data && $li.find('b').text(data);
 						});
+						$li.find('.sort').text(time);
 						var time = new Date(time);
 						$li.find('i').text(time.toDateString() + ', ' + time.toLocaleTimeString());
 						return;
