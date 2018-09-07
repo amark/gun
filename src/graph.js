@@ -33,6 +33,7 @@ var Graph = {};
 		if(env.soul){
 			at.rel = Val.rel.ify(env.soul);
 		}
+		env.shell = (as||{}).shell;
 		env.graph = env.graph || {};
 		env.seen = env.seen || [];
 		env.as = env.as || as;
@@ -45,8 +46,10 @@ var Graph = {};
 		at.env = env;
 		at.soul = soul;
 		if(Node.ify(at.obj, map, at)){
-			//at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
-			env.graph[Val.rel.is(at.rel)] = at.node;
+			at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+			if(at.obj !== env.shell){
+				env.graph[Val.rel.is(at.rel)] = at.node;
+			}
 		}
 		return at;
 	}
@@ -58,7 +61,7 @@ var Graph = {};
 		if(!(is = valid(v,k,n, at,env))){ return }
 		if(!k){
 			at.node = at.node || n || {};
-			if(obj_has(v, Node._)){ // && Node.soul(v) ? for safety ?
+			if(obj_has(v, Node._) && Node.soul(v)){ // ? for safety ?
 				at.node._ = obj_copy(v._);
 			}
 			at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
@@ -84,7 +87,7 @@ var Graph = {};
 		return tmp.rel; //{'#': Node.soul(tmp.node)};
 	}
 	function soul(id){ var at = this;
-		var prev = Val.rel.is(at.rel), graph = at.env.graph;
+		var prev = Val.link.is(at.rel), graph = at.env.graph;
 		at.rel = at.rel || Val.rel.ify(id);
 		at.rel[Val.rel._] = id;
 		if(at.node && at.node[Node._]){

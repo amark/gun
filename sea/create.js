@@ -14,7 +14,7 @@
 
     var u;
     // Well first we have to actually create a user. That is what this function does.
-    User.prototype.create = function(username, pass, cb){
+    User.prototype.create = function(username, pass, cb, opt){
       // TODO: Needs to be cleaned up!!!
       const gunRoot = this.back(-1)
       var gun = this, cat = (gun._);
@@ -24,12 +24,13 @@
         return gun;
       }
       cat.ing = true;
+      opt = opt || {};
       var resolve = function(){}, reject = resolve;
       // Because more than 1 user might have the same username, we treat the alias as a list of those users.
       if(cb){ resolve = reject = cb }
       gunRoot.get('~@'+username).get(async (at, ev) => {
         ev.off()
-        if (at.put) {
+        if (at.put && !opt.already) {
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
           const err = 'User already created!'
           Gun.log(err)
@@ -67,7 +68,7 @@
           gunRoot.get(tmp).put(user)
         }catch(e){console.log(e)}
           // next up, we want to associate the alias with the public key. So we add it to the alias list.
-          gunRoot.get('~@'+username).put(Gun.obj.put({}, tmp, Gun.val.rel.ify(tmp)))
+          gunRoot.get('~@'+username).put(Gun.obj.put({}, tmp, Gun.val.link.ify(tmp)))
           // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
           setTimeout(() => { cat.ing = false; resolve({ ok: 0, pub: pairs.pub}) }, 10) // TODO: BUG! If `.auth` happens synchronously after `create` finishes, auth won't work. This setTimeout is a temporary hack until we can properly fix it.
         } catch (e) {
@@ -165,6 +166,17 @@
       return user._.sea;
     }
     User.prototype.leave = async function(){
+      var gun = this, user = (gun.back(-1)._).user;
+      if(user){
+        delete user.is;
+        delete user._.is;
+        delete user._.sea;
+      }
+      if(typeof window !== 'undefined'){
+        var tmp = window.sessionStorage;
+        delete tmp.alias;
+        delete tmp.tmp;
+      }
       return await authLeave(this.back(-1))
     }
     // If authenticated user wants to delete his/her account, let's support it!

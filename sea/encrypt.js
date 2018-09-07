@@ -19,7 +19,7 @@
         s: rand.s.toString('utf8')
       });
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;

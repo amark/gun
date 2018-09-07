@@ -475,6 +475,7 @@
 				if(env.soul){
 					at.rel = Val.rel.ify(env.soul);
 				}
+				env.shell = (as||{}).shell;
 				env.graph = env.graph || {};
 				env.seen = env.seen || [];
 				env.as = env.as || as;
@@ -487,8 +488,10 @@
 				at.env = env;
 				at.soul = soul;
 				if(Node.ify(at.obj, map, at)){
-					//at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
-					env.graph[Val.rel.is(at.rel)] = at.node;
+					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					if(at.obj !== env.shell){
+						env.graph[Val.rel.is(at.rel)] = at.node;
+					}
 				}
 				return at;
 			}
@@ -610,7 +613,7 @@
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
 			to.err = to.err || setTimeout(function(){
-				to.next({err: "Error: No ACK received yet."});
+				to.next({err: "Error: No ACK received yet.", lack: true});
 				to.off();
 			}, (this.opt||{}).lack || 9000);
 			return id;
@@ -802,9 +805,25 @@
 			}
 
 			Gun.on.get = function(msg, gun){
-				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
-				if(!node || !at){ return root.on('get', msg) }
+				if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
+					var graph = {};
+					Gun.obj.map(root.graph, function(node, s){
+						if(Gun.text.match(s, soul)){
+							graph[s] = Gun.obj.copy(node);
+						}
+					});
+					if(!Gun.obj.empty(graph)){
+						root.on('in', {
+							'@': msg['#'],
+							how: '*',
+							put: graph,
+							$: gun
+						});
+					}
+				} // TEMPORARY HACK FOR MARTTI, TESTING
+				if(!node){ return root.on('get', msg) }
 				if(has){
 					if(!obj_has(node, has)){ return root.on('get', msg) }
 					node = Gun.state.to(node, has);
@@ -815,7 +834,7 @@
 					node = Gun.obj.copy(node);
 				}
 				node = Gun.graph.node(node);
-				tmp = at.ack;
+				tmp = (at||empty).ack;
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
@@ -864,7 +883,7 @@
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		
-		if(typeof window !== "undefined"){ window.Gun = Gun }
+		if(typeof window !== "undefined"){ (window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
 
@@ -948,7 +967,6 @@
 					at.on('in', at);
 					return;
 				}*/
-				//console.log("out!", at.get, get);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9));
@@ -1088,13 +1106,12 @@
 				not(at, msg);
 			}
 			tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
-			//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 			if(rel === tmp.link){
 				if(!(tmp.pass || at.pass)){
 					return;
 				}
 			}
-			if(at.pass){ 
+			if(at.pass){
 				Gun.obj.map(at.map, function(tmp){ tmp.pass = true })
 				obj_del(at, 'pass');
 			}
@@ -1428,7 +1445,8 @@
 			as.res(function(){
 				var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 					cat.root.on('ack', ack);
-					this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+					if(ack.err){ Gun.log(ack) }
+					if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 					if(!as.ack){ return }
 					as.ack(ack, this);
 				}, as.opt);
@@ -1643,7 +1661,7 @@
 				data = tmp.put;
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
-			if(!to && (at.soul || at.link || (link && !(0 < link.ack)))){
+			if(!to && (u === data || at.soul || at.link || (link && !(0 < link.ack)))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 					val.call({as:opt}, msg, eve, tmp || 1);
 				}, opt.wait || 99);
@@ -1710,10 +1728,8 @@
 			gun.map().on(function(data, key, at, ev){
 				var next = (cb||noop).call(this, data, key, at, ev);
 				if(u === next){ return }
-				if(data === next || Gun.is(next)){
-					chain._.on('in', next._);
-					return;
-				}
+				if(data === next){ return chain._.on('in', at) }
+				if(Gun.is(next)){ return chain._.on('in', next._) }
 				chain._.on('in', {get: key, put: next});
 			});
 			return chain;
@@ -1771,24 +1787,21 @@
 			// See the next 'opt' code below for actual saving of data.
 			var ev = this.to, opt = root.opt;
 			if(root.once){ return ev.next(root) }
-			if(false === opt.localStorage){ return ev.next(root) }
-			opt.file = opt.file || 'gun/';
-			var gap = Gun.obj.ify(store.getItem('gap/'+opt.file)) || {};
+			//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+			opt.prefix = opt.file || 'gun/';
+			var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 			var empty = Gun.obj.empty, id, to, go;
 			// add re-sync command.
 			if(!empty(gap)){
-				root.on('localStorage', function(disk){
-					this.off();
-					var send = {}
-					Gun.obj.map(gap, function(node, soul){
-						Gun.obj.map(node, function(val, key){
-							send[soul] = Gun.state.to(disk[soul], key, send[soul]);
-						});
+				var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {}, send = {};
+				Gun.obj.map(gap, function(node, soul){
+					Gun.obj.map(node, function(val, key){
+						send[soul] = Gun.state.to(disk[soul], key, send[soul]);
 					});
-					setTimeout(function(){
-						root.on('out', {put: send, '#': root.ask(ack), I: root.$});
-					},10);
 				});
+				setTimeout(function(){
+					root.on('out', {put: send, '#': root.ask(ack), I: root.$});
+				},1);
 			}
 
 			root.on('out', function(msg){
@@ -1826,7 +1839,7 @@
 			var flush = function(){
 				clearTimeout(to);
 				to = false;
-				try{store.setItem('gap/'+opt.file, JSON.stringify(gap));
+				try{store.setItem('gap/'+opt.prefix, JSON.stringify(gap));
 				}catch(e){ Gun.log(err = e || "localStorage failure") }
 			}
 		});
@@ -1836,9 +1849,9 @@
 			var opt = root.opt;
 			if(root.once){ return }
 			if(false === opt.localStorage){ return }
-			opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
+			opt.prefix = opt.file || 'gun/';
 			var graph = root.graph, acks = {}, count = 0, to;
-			var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
+			var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 			var lS = function(){}, u;
 			root.on('localStorage', disk); // NON-STANDARD EVENT!
 			
@@ -1886,10 +1899,10 @@
 				var ack = acks;
 				acks = {};
 				if(data){ disk = data }
-				try{store.setItem(opt.file, JSON.stringify(disk));
+				try{store.setItem(opt.prefix, JSON.stringify(disk));
 				}catch(e){ 
 					Gun.log(err = e || "localStorage failure");
-					root.on('localStorage:error', {err: err, file: opt.file, flush: disk, retry: flush});
+					root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 				}
 				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 				Gun.obj.map(ack, function(yes, id){
@@ -1908,6 +1921,7 @@
 
 		function Mesh(ctx){
 			var mesh = function(){};
+			var opt = ctx.opt;
 
 			mesh.out = function(msg){ var tmp;
 				if(this.to){ this.to.next(msg) }
@@ -1916,7 +1930,7 @@
 				&& (tmp = ctx.dup.s[tmp])
 				&& (tmp = tmp.it)
 				&& tmp.mesh){
-					mesh.say(msg, tmp.mesh.via);
+					mesh.say(msg, tmp.mesh.via, 1);
 					tmp['##'] = msg['##'];
 					return;
 				}
@@ -1924,11 +1938,17 @@
 				mesh.say(msg);
 			}
 
+			ctx.on('create', function(root){
+				root.opt.pid = root.opt.pid || Type.text.random(9);
+				this.to.next(root);
+				ctx.on('out', mesh.out);
+			});
+
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
 				try{msg = JSON.parse(raw);
-				}catch(e){}
+				}catch(e){console.log('DAM JSON parse error', e)}
 				if('{' === tmp){
 					if(!msg){ return }
 					if(dup.check(id = msg['#'])){ return }
@@ -1943,6 +1963,12 @@
 					(msg.mesh = function(){}).via = peer;
 					if((tmp = msg['><'])){
 						msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+					}
+					if(msg.dam){
+						if(tmp = mesh.hear[msg.dam]){
+							tmp(msg, peer, ctx);
+						}
+						return;
 					}
 					ctx.on('in', msg);
 					
@@ -1960,19 +1986,19 @@
 			}
 
 			;(function(){
-				mesh.say = function(msg, peer){
+				mesh.say = function(msg, peer, o){
 					/*
 						TODO: Plenty of performance optimizations
 						that can be made just based off of ordering,
 						and reducing function calls for cached writes.
 					*/
 					if(!peer){
-						Type.obj.map(ctx.opt.peers, function(peer){
+						Type.obj.map(opt.peers, function(peer){
 							mesh.say(msg, peer);
 						});
 						return;
 					}
-					var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
+					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 					if(!wire){ return }
 					msh = msg.mesh || empty;
 					if(peer === msh.via){ return }
@@ -1984,7 +2010,7 @@
 							return; // TODO: this still needs to be tested in the browser!
 						}
 					}
-					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested
+					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 					if(peer.batch){
 						peer.batch.push(raw);
 						return;
@@ -1996,7 +2022,7 @@
 						peer.batch = null;
 						if(!tmp.length){ return }
 						send(JSON.stringify(tmp), peer);
-					}, ctx.opt.gap || ctx.opt.wait || 1);
+					}, opt.gap || opt.wait || 1);
 					send(raw, peer);
 				}
 
@@ -2004,11 +2030,7 @@
 					var wire = peer.wire;
 					try{
 						if(wire.send){
-							if(wire.readyState === wire.OPEN){
-								wire.send(raw);
-							} else {
-								(peer.queue = peer.queue || []).push(raw);
-							}
+							wire.send(raw);
 						} else
 						if(peer.say){
 							peer.say(raw);
@@ -2019,7 +2041,7 @@
 				}
 
 			}());
-			
+
 			;(function(){
 
 				mesh.raw = function(msg){
@@ -2037,12 +2059,14 @@
 						msg['#'] = hash || msg['#'];
 						if(put){ (msg = Type.obj.to(msg)).put = _ }
 					}
-					var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
+					var i = 0, to = []; Type.obj.map(opt.peers, function(p){
 						to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 					}); msg['><'] = to.join();
 					var raw = $(msg);
 					if(u !== put){
-						raw = raw.replace('"'+ _ +'"', put);
+						tmp = raw.indexOf(_, raw.indexOf('put'));
+						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
+						//raw = raw.replace('"'+ _ +'"', put); // https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}
 					if(msh){
 						msh.raw = raw;
@@ -2063,17 +2087,34 @@
 				function map(k){
 					this.to[k] = this.on[k];
 				}
-				var $ = JSON.stringify, _ = ':])([:'
+				var $ = JSON.stringify, _ = ':])([:';
 
 			}());
 
 			mesh.hi = function(peer){
-				ctx.on('hi', peer);
-				var queue = peer.queue;
-				peer.queue = [];
-				Type.obj.map(queue, function(msg){
+				var tmp = peer.wire || {};
+				if(peer.id || peer.url){
+					opt.peers[peer.url || peer.id] = peer;
+					Type.obj.del(opt.peers, tmp.id);
+				} else {
+					tmp = tmp.id = tmp.id || Type.text.random(9);
+					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
+				}
+				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+				tmp = peer.queue; peer.queue = [];
+				Type.obj.map(tmp, function(msg){
 					mesh.say(msg, peer);
 				});
+			}
+			mesh.bye = function(peer){
+				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
+				ctx.on('bye', peer);
+			}
+
+			mesh.hear['?'] = function(msg, peer){
+				if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
+				peer.id = peer.id || msg.pid;
+				mesh.hi(peer);
 			}
 
 			return mesh;
@@ -2118,18 +2159,15 @@
 			opt.WebSocket = websocket;
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
-			root.on('create', function(at){
-				this.to.next(at);
-				root.on('out', mesh.out);
-			});
 
-			opt.wire = opt.wire || open;
+			var wire = opt.wire;
+			opt.wire = open;
 			function open(peer){
-				if(!peer || !peer.url){ return }
+				if(!peer || !peer.url){ return wire && wire(peer) }
 				var url = peer.url.replace('http', 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
-					root.on('bye', peer);
+					opt.mesh.bye(peer);
 					reconnect(peer);
 				};
 				wire.onerror = function(error){
@@ -2140,12 +2178,11 @@
 					}
 				};
 				wire.onopen = function(){
-					mesh.hi(peer);
+					opt.mesh.hi(peer);
 				}
 				wire.onmessage = function(msg){
 					if(!msg){ return }
-					env.inLength = (env.inLength || 0) + (msg.data || msg).length; // TEMPORARY, NON-STANDARD, FOR DEBUG
-					mesh.hear(msg.data || msg, peer);
+					opt.mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
 			}

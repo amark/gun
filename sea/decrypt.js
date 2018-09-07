@@ -15,7 +15,7 @@
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;

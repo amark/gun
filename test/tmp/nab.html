@@ -1,0 +1,101 @@
+<h1>notabug</h1>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun@0.9.9992/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun@0.9.9992/sea.js"></script>
+
+<span id='info'></span>
+
+<h2>homepage</h2>
+<ul>
+</ul>
+
+<div class="model" style="display: none;">
+  <li id="submission">
+    <a href=""></a>
+    <i></i>
+  </li>
+</div>
+
+<script>
+// utilities jacked from NAB
+var getDayStr = function (timestamp) {
+  var d = new Date(timestamp || new Date().getTime());
+  var year = d.getUTCFullYear();
+  var month = d.getUTCMonth() + 1;
+  var dayNum = d.getUTCDate();
+  return year + "/" + month + "/" + dayNum;
+}
+
+function lastDays(days){ --days; 
+  var oneDay = (1000*60*60*24);
+  var start = (new Date()).getTime() - oneDay * parseInt(days, 10);
+  dayStrings = [];
+  for (let i = 0; i <= (days + 1); i++) {
+    dayStrings.push(getDayStr(start + (i * oneDay)));
+  }
+  return dayStrings.reverse();
+}
+</script>
+
+<script>
+Gun.on('create', function(root){
+  var route = {}, rpc = 'homepage', link = Gun.val.link.is;
+  root.on('get', function(msg){
+    var eve = this, get = msg.get, soul = get['#'], ack, tmp;
+    if(soul !== rpc){
+      return eve.to.next(msg);
+    }
+    console.log('get', msg, route);
+    if(tmp = route[rpc]){
+      console.log("do something!", tmp);
+      ack = true;
+      //return;
+    }
+    var graph = root.graph, index = route[rpc] = {};
+    var days = lastDays(2), pre = 'nab/topics/all/days/';
+    days.forEach(function(day){
+      root.$.get(pre + day).map().get('data').once(function(){});
+      if(!(tmp = graph[pre + day])){ return }
+      index[pre + day] = tmp;
+    });
+    Gun.graph.is(index, null, function(val, key){
+      if(!(key = link(val))){ return }
+      console.log("???", key, val);
+      root.$.get(key).once(function(){});
+      if(!(val = graph[key])){ return }
+      index[key] = val;
+    });
+  });
+})
+</script>
+
+<script>;(function(){
+//localStorage.clear();
+// benchmark logic
+var check = {};
+//var gun = Gun('https://notabug.io/gun');
+var gun = Gun();
+window.gun = gun;
+
+// 'nab/topics/all/days/2018/6/26';
+var pre = 'nab/topics/all/days/';
+
+var days = lastDays(2);
+var start = (+new Date);
+
+gun.get('homepage').on(function(){});
+
+days.forEach(function(day){
+  check[pre + day] = true;
+  gun.get(pre + day).map().get('data').once(function(data, key){
+    if(!data || !data.title){ return }
+    $(info).text("loaded in... " + (((+new Date)-start)/1000) +'s.');
+    //console.log('...', key, data);
+    var $li = $(submission).clone(true).attr('id','').appendTo('ul');
+    $li.find('a').attr('src', data.url).text(data.title);
+    $li.find('i').text(data.topic);
+  });
+});
+
+}());</script>

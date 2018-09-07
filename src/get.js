@@ -8,18 +8,22 @@ Gun.chain.get = function(key, cb, as){
 		if(!(gun = next[key])){
 			gun = cache(key, back);
 		}
-		gun = gun.gun;
+		gun = gun.$;
 	} else
 	if(key instanceof Function){
+		if(true === cb){ return soul(this, key, cb, as) }
 		gun = this;
 		var at = gun._, root = at.root, tmp = root.now, ev;
 		as = cb || {};
+		as.at = at;
 		as.use = key;
 		as.out = as.out || {};
 		as.out.get = as.out.get || {};
-		ev = at.on('in', use, as);
+		(ev = at.on('in', use, as)).rid = rid;
 		(root.now = {$:1})[as.now = at.id] = ev;
+		var mum = root.mum; root.mum = {};
 		at.on('out', as.out);
+		root.mum = mum;
 		root.now = tmp;
 		return gun;
 	} else
@@ -45,7 +49,7 @@ function cache(key, back){
 	var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
 	if(!next){ next = cat.next = {} }
 	next[at.get = key] = at;
-	if(back === cat.root.gun){
+	if(back === cat.root.$){
 		at.soul = key;
 	} else
 	if(cat.soul || cat.has){
@@ -56,25 +60,65 @@ function cache(key, back){
 	}
 	return at;
 }
+function soul(gun, cb, opt, as){
+	var cat = gun._, tmp;
+	if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
+	if(tmp = cat.link){ return cb(tmp, as, cat), gun }
+	gun.get(function(msg, ev){
+		ev.rid(msg);
+		var at = ((at = msg.$) && at._) || {};
+		tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);
+		cb(tmp, as, msg, ev);
+	}, {out: {get: {'.':true}}});
+	return gun;
+}
 function use(msg){
-	var ev = this, as = ev.as, gun = msg.gun, at = gun._, root = at.root, data = msg.put, tmp;
-	if((tmp = root.now) && ev !== tmp[as.now]){
-		return ev.to.next(msg);
-	}
-	if(u === data){
-		data = at.put;
-	}
+	var eve = this, as = eve.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put || at.put, tmp;
+	if((tmp = root.now) && eve !== tmp[as.now]){ return eve.to.next(msg) }
+	//console.log("USE:", cat.id, cat.soul, cat.has, cat.get, msg, root.mum);
+	//if(at.async && msg.root){ return }
+	//if(at.async === 1 && cat.async !== true){ return }
+	//if(root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
+	//if(!at.async && !cat.async && at.put && msg.put === at.put){ return }
+	//else if(!cat.async && msg.put !== at.put && root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
+
+
+	//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
+	//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
+	if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
+	//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
-		tmp = (at.root.gun.get(tmp)._);
+		tmp = ((msg.$$ = at.root.gun.get(tmp))._);
 		if(u !== tmp.put){
-			msg = obj_to(msg, {put: tmp.put});
+			msg = obj_to(msg, {put: data = tmp.put});
 		}
 	}
-	as.use(msg, msg.event || ev);
-	ev.to.next(msg);
+	if((tmp = root.mum) && at.id){
+		if(tmp[at.id]){ return }
+		if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
+	}
+	as.use(msg, eve);
+	if(eve.stun){
+		eve.stun = null;
+		return;
+	}
+	eve.to.next(msg);
+}
+function rid(at){
+	var cat = this.on;
+	if(!at || cat.soul || cat.has){ return this.off() }
+	if(!(at = (at = (at = at.$ || at)._ || at).id)){ return }
+	var map = cat.map, tmp, seen;
+	//if(!map || !(tmp = map[at]) || !(tmp = tmp.at)){ return }
+	if(tmp = (seen = this.seen || (this.seen = {}))[at]){ return true }
+	seen[at] = true;
+	return;
+	//tmp.echo[cat.id] = {}; // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
+	//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
+	return;
 }
 var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
 var num_is = Gun.num.is;
-var rel = Gun.val.rel, node_ = Gun.node._;
+var rel = Gun.val.link, node_soul = Gun.node.soul, node_ = Gun.node._;
 var empty = {}, u;
 	

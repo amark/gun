@@ -1,0 +1,24 @@
+<h1>RindexedDB</h1>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../lib/radix.js"></script>
+<script src="../../lib/radisk.js"></script>
+<script src="../../lib/store.js"></script>
+<script src="../../lib/rindexed.js"></script>
+
+<button onclick="var i = 0; window.TO = setInterval(function(){ gun.get(Gun.text.random(3)).put({a: ++i}) }, 0);">start</button>
+<button onclick="clearTimeout(window.TO);">end</button>
+<br/><br/>
+<button onclick="gun.get('a').put({b: Gun.text.random(900)});setTimeout(function(){gun.get('x').put({y: Gun.text.random(900)});},1000);">write</button>
+<button id='read' onclick="console.debug.i=1;gun.get('a').once(d => console.log(1, d));gun.get('x').once(d => console.log(2, d));">read</button>
+
+<script>
+localStorage.clear();
+
+var opt = {};
+
+opt.store = RindexedDB(opt);
+
+var gun = Gun(opt);
+</script>
