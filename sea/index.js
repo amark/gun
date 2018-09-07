@@ -149,7 +149,7 @@
             if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
-                if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
+                if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
                 if((rel = Gun.val.rel.is(data)) && pub === relpub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }
