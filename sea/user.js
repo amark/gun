@@ -3,9 +3,8 @@
     var Gun = SEA.Gun;
     var then = require('./then');
 
-    function User(){ 
-      this._ = {gun: this}
-      Gun.call()
+    function User(root){ 
+      this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
     User.prototype.constructor = User;
@@ -27,5 +26,6 @@
       }
       return user;
     }
+    Gun.User = User;
     module.exports = User;
   

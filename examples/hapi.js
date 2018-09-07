@@ -5,7 +5,7 @@ const Inert = require('inert')
 const Gun   = require('..')
 
 const server = new Hapi.Server({
-  port: 8080,
+  port: 8765,
   host: 'localhost',
   routes: {
     files: {

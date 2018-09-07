@@ -40,7 +40,7 @@
 			} 
 
 			ref.get(function(at){
-				var data = at.put, key = at.get, gui = at.gun, ui = name, back;
+				var data = at.put, key = at.get, gui = at.gun || at.$, ui = name, back;
 				if(model){
 					ui = model.has[(gui._).id];
 					if(!ui){
@@ -80,12 +80,11 @@
 			}, wait || 200);
 		}
 	}
-	as.sort = function(sort, el) {
-		var vs = $(el).find('.sort');
-		vs = (vs[0] && u === vs[0].value)? vs.text() : vs.val();
-		var id = sort;
-		var test = id >= vs;
-		return test ? el : as.sort(sort, el.prev());
+	as.sort = function sort(id, li){
+		var num = parseFloat(id);
+		var id = $(li).find('.sort').text() || -Infinity;
+		var at = num >= parseFloat(id);
+		return at ? li : sort(id, li.prev());
 	}
 	$(document).on('keyup', 'input, textarea, [contenteditable]', as.wait(function(){
 		var el = $(this);

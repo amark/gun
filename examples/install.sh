@@ -24,4 +24,4 @@ npm install gun
 # to run the gun examples:
 cd ./node_modules/gun
 npm install .
-sudo /usr/local/bin/node ./examples/http.js 80 # change `80` to `8080` for development purposes.
+sudo /usr/local/bin/node ./examples/http.js 80 # change `80` to `8765` for development purposes.

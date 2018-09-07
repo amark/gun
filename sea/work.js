@@ -24,7 +24,7 @@
         }, key, S.pbkdf2.ks * 8)
         data = shim.random(data.length)  // Erase data in case of passphrase
         const r = shim.Buffer.from(result, 'binary').toString('utf8')
-        if(cb){ cb(r) }
+        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
         return r;
       }
       // For NodeJS crypto.pkdf2 rocks
@@ -38,7 +38,7 @@
       )
       data = shim.random(data.length)  // Erase passphrase for app
       const r = hash && hash.toString('utf8')
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;

@@ -47,7 +47,7 @@ var bob = browsers.excluding(alice).pluck(1);
 
 var serverPath = path.join(__dirname, 'gun-server.js');
 
-// start the server on :8080
+// start the server on :8765
 spawn('node', [serverPath]);
 
 function waitFor (num, list) {

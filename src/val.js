@@ -12,7 +12,7 @@ Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number
 	}
 	return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 }
-Val.rel = {_: '#'};
+Val.link = Val.rel = {_: '#'};
 ;(function(){
 	Val.rel.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 		if(v && v[rel_] && !v._ && obj_is(v)){ // must be an object.
@@ -35,7 +35,7 @@ Val.rel = {_: '#'};
 }());
 Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
 Type.obj.has._ = '.';
-var rel_ = Val.rel._, u;
+var rel_ = Val.link._, u;
 var bi_is = Type.bi.is;
 var num_is = Type.num.is;
 var text_is = Type.text.is;

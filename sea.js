@@ -24,7 +24,7 @@
     // THIS IS AN EARLY ALPHA!
 
     function SEA(){}
-    if(typeof window !== "undefined"){ SEA.window = window }
+    if(typeof window !== "undefined"){ (SEA.window = window).SEA = SEA }
 
     module.exports = SEA;
   })(USE, './root');
@@ -172,14 +172,15 @@
           TextDecoder,
           random: (len) => Buffer.from(crypto.randomBytes(len))
         });
-        try{
+        //try{
           const WebCrypto = require('node-webcrypto-ossl')
-          api.ossl = new WebCrypto({directory: 'key_storage'}).subtle // ECDH
-        }catch(e){
-          console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
-        }
+          api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+        //}catch(e){
+          //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
+        //}
       }catch(e){
         console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
+        console.log("node-webcrypto-ossl is temporarily needed for ECDSA signature verification, and optionally needed for ECDH, please install if needed (currently necessary so add them to your package.json for now).");
         TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
       }
     }
@@ -240,16 +241,14 @@
   })(USE, './parse');
 
   ;USE(function(module){
-    const {
-      subtle, ossl = subtle, random: getRandomBytes, TextEncoder, TextDecoder
-    } = USE('./shim')
+    const shim = USE('./shim');
     const Buffer = USE('./buffer')
     const parse = USE('./parse')
     const { pbkdf2 } = USE('./settings')
     // This internal func returns SHA-256 hashed data for signing
     const sha256hash = async (mm) => {
       const m = parse(mm)
-      const hash = await ossl.digest({name: pbkdf2.hash}, new TextEncoder().encode(m))
+      const hash = await shim.subtle.digest({name: pbkdf2.hash}, new shim.TextEncoder().encode(m))
       return Buffer.from(hash)
     }
     module.exports = sha256hash
@@ -290,7 +289,7 @@
         }, key, S.pbkdf2.ks * 8)
         data = shim.random(data.length)  // Erase data in case of passphrase
         const r = shim.Buffer.from(result, 'binary').toString('utf8')
-        if(cb){ cb(r) }
+        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
         return r;
       }
       // For NodeJS crypto.pkdf2 rocks
@@ -304,7 +303,7 @@
       )
       data = shim.random(data.length)  // Erase passphrase for app
       const r = hash && hash.toString('utf8')
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -366,9 +365,10 @@
       } dh = dh || {};
 
       const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -384,13 +384,13 @@
     var sha256hash = USE('./sha256');
 
     SEA.sign = async (data, pair, cb) => { try {
-      if(data.slice
+      if(data && data.slice
       && 'SEA{' === data.slice(0,4)
       && '"m":' === data.slice(4,8)){
         // TODO: This would prevent pair2 signing pair1's signature.
         // So we may want to change this in the future.
         // but for now, we want to prevent duplicate double signature.
-        if(cb){ cb(data) }
+        if(cb){ try{ cb(data) }catch(e){console.log(e)} }
         return data;
       }
       const pub = pair.pub
@@ -398,13 +398,14 @@
       const jwk = S.jwk(pub, priv)
       const msg = JSON.stringify(data)
       const hash = await sha256hash(msg)
-      const sig = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
-      .then((key) => shim.subtle.sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
+      const sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
+      .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -427,21 +428,22 @@
         const raw = (json !== data)? 
           (json.s && json.m)? parse(json.m) : data
         : json;
-        if(cb){ cb(raw) }
+        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
       const pub = pair.pub || pair
       const jwk = S.jwk(pub)
-      const key = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
+      const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
       const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
-      const check = await shim.subtle.verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -485,7 +487,7 @@
         s: rand.s.toString('utf8')
       });
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -513,7 +515,7 @@
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -547,7 +549,7 @@
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k)
       })
       const r = derived;
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
@@ -716,7 +718,7 @@
       let err
       // then attempt to log into each one until we find ours!
       // (if two users have the same username AND the same password... that would be bad)
-      const [ user ] = await Promise.all(aliases.map(async ({ at: at, pub: pub }) => {
+      const users = await Promise.all(aliases.map(async ({ at: at, pub: pub }, i) => {
         // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
         const auth = parseProps(at.put.auth)
       // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
@@ -731,7 +733,7 @@
           const salt = auth.salt
           const sea = await SEA.decrypt(auth.ek, proof)
           if (!sea) {
-            err = 'Failed to decrypt secret!'
+            err = 'Failed to decrypt secret! ' + i +'/'+aliases.length;
             return
           }
           // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
@@ -754,7 +756,7 @@
           throw { err }
         }
       }))
-
+      var user = Gun.list.map(users, function(acc){ if(acc){ return acc } })
       if (!user) {
         throw { err: err || 'Public key does not exist!' }
       }
@@ -1067,9 +1069,8 @@
     var Gun = SEA.Gun;
     var then = USE('./then');
 
-    function User(){ 
-      this._ = {$: this}
-      Gun.call()
+    function User(root){ 
+      this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
     User.prototype.constructor = User;
@@ -1111,7 +1112,7 @@
 
     var u;
     // Well first we have to actually create a user. That is what this function does.
-    User.prototype.create = function(username, pass, cb){
+    User.prototype.create = function(username, pass, cb, opt){
       // TODO: Needs to be cleaned up!!!
       const gunRoot = this.back(-1)
       var gun = this, cat = (gun._);
@@ -1121,12 +1122,13 @@
         return gun;
       }
       cat.ing = true;
+      opt = opt || {};
       var resolve = function(){}, reject = resolve;
       // Because more than 1 user might have the same username, we treat the alias as a list of those users.
       if(cb){ resolve = reject = cb }
       gunRoot.get('~@'+username).get(async (at, ev) => {
         ev.off()
-        if (at.put) {
+        if (at.put && !opt.already) {
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
           const err = 'User already created!'
           Gun.log(err)
@@ -1262,6 +1264,17 @@
       return user._.sea;
     }
     User.prototype.leave = async function(){
+      var gun = this, user = (gun.back(-1)._).user;
+      if(user){
+        delete user.is;
+        delete user._.is;
+        delete user._.sea;
+      }
+      if(typeof window !== 'undefined'){
+        var tmp = window.sessionStorage;
+        delete tmp.alias;
+        delete tmp.tmp;
+      }
       return await authLeave(this.back(-1))
     }
     // If authenticated user wants to delete his/her account, let's support it!
@@ -1462,6 +1475,7 @@
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
         if(soul){ // for now, only allow direct IDs to be read.
+          if(soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else

@@ -12,21 +12,22 @@
         const raw = (json !== data)? 
           (json.s && json.m)? parse(json.m) : data
         : json;
-        if(cb){ cb(raw) }
+        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
       const pub = pair.pub || pair
       const jwk = S.jwk(pub)
-      const key = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
+      const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
       const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
-      const check = await shim.subtle.verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
