@@ -6,8 +6,8 @@
   if(typeof global !== "undefined"){ root = global }
   root = root || {};
   var console = root.console || {log: function(){}};
-  function USE(arg){
-    return arg.slice? USE[R(arg)] : function(mod, path){
+  function USE(arg, req){
+    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
       arg(mod = {exports: {}});
       USE[R(path)] = mod.exports;
     }
@@ -20,12 +20,24 @@
 
   ;USE(function(module){
     // Security, Encryption, and Authorization: SEA.js
-    // MANDATORY READING: http://gun.js.org/explainers/data/security.html
+    // MANDATORY READING: https://gun.eco/explainers/data/security.html
+    // IT IS IMPLEMENTED IN A POLYFILL/SHIM APPROACH.
     // THIS IS AN EARLY ALPHA!
 
-    function SEA(){}
-    if(typeof window !== "undefined"){ (SEA.window = window).SEA = SEA }
+    if(typeof window !== "undefined"){ module.window = window }
 
+    var tmp = module.window || module;
+    var SEA = tmp.SEA || function(){};
+
+    if(SEA.window = module.window){ try{
+      SEA.window.SEA = SEA;
+      tmp = document.createEvent('CustomEvent');
+      tmp.initCustomEvent('extension', false, false, {type: "SEA"});
+      (window.dispatchEvent || window.fireEvent)(tmp);
+      window.postMessage({type: "SEA"}, '*');
+    } catch(e){} }
+
+    try{ if(typeof common !== "undefined"){ common.exports = SEA } }catch(e){}
     module.exports = SEA;
   })(USE, './root');
 
@@ -148,7 +160,7 @@
     const Buffer = USE('./buffer')
     const api = {Buffer: Buffer}
 
-    if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       var crypto = window.crypto || window.msCrypto;
       var subtle = crypto.subtle || crypto.webkitSubtle;
       const TextEncoder = window.TextEncoder
@@ -162,9 +174,9 @@
       })
     } else {
       try{
-        var crypto = require('crypto');
-        const { subtle } = require('@trust/webcrypto')             // All but ECDH
-        const { TextEncoder, TextDecoder } = require('text-encoding')
+        var crypto = USE('crypto', 1);
+        const { subtle } = USE('@trust/webcrypto', 1)             // All but ECDH
+        const { TextEncoder, TextDecoder } = USE('text-encoding', 1)
         Object.assign(api, {
           crypto,
           subtle,
@@ -173,7 +185,7 @@
           random: (len) => Buffer.from(crypto.randomBytes(len))
         });
         //try{
-          const WebCrypto = require('node-webcrypto-ossl')
+          const WebCrypto = USE('node-webcrypto-ossl', 1)
           api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
         //}catch(e){
           //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
@@ -269,7 +281,7 @@
     var S = USE('./settings');
     var u;
 
-    SEA.work = async (data, pair, cb) => { try { // used to be named `proof`
+    SEA.work = SEA.work || (async (data, pair, cb) => { try { // used to be named `proof`
       var salt = pair.epub || pair; // epub not recommended, salt should be random!
       if(salt instanceof Function){
         cb = salt;
@@ -309,7 +321,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.work;
   })(USE, './work');
@@ -321,7 +333,7 @@
     var Buff = (typeof Buffer !== 'undefined')? Buffer : shim.Buffer;
 
     //SEA.pair = async (data, proof, cb) => { try {
-    SEA.pair = async (cb) => { try {
+    SEA.pair = SEA.pair || (async (cb) => { try {
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
@@ -372,7 +384,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.pair;
   })(USE, './pair');
@@ -383,7 +395,7 @@
     var S = USE('./settings');
     var sha256hash = USE('./sha256');
 
-    SEA.sign = async (data, pair, cb) => { try {
+    SEA.sign = SEA.sign || (async (data, pair, cb) => { try {
       if(data && data.slice
       && 'SEA{' === data.slice(0,4)
       && '"m":' === data.slice(4,8)){
@@ -409,7 +421,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.sign;
   })(USE, './sign');
@@ -422,7 +434,7 @@
     var parse = USE('./parse');
     var u;
 
-    SEA.verify = async (data, pair, cb) => { try {
+    SEA.verify = SEA.verify || (async (data, pair, cb) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
         const raw = (json !== data)? 
@@ -447,7 +459,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.verify;
   })(USE, './verify');
@@ -472,7 +484,7 @@
     var S = USE('./settings');
     var aeskey = USE('./aeskey');
 
-    SEA.encrypt = async (data, pair, cb, opt) => { try {
+    SEA.encrypt = SEA.encrypt || (async (data, pair, cb, opt) => { try {
       var opt = opt || {};
       const key = pair.epriv || pair;
       const msg = JSON.stringify(data)
@@ -493,7 +505,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.encrypt;
   })(USE, './encrypt');
@@ -505,7 +517,7 @@
     var aeskey = USE('./aeskey');
     var parse = USE('./parse');
 
-    SEA.decrypt = async (data, pair, cb, opt) => { try {
+    SEA.decrypt = SEA.decrypt || (async (data, pair, cb, opt) => { try {
       var opt = opt || {};
       const key = pair.epriv || pair;
       const json = parse(data)
@@ -521,7 +533,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.decrypt;
   })(USE, './decrypt');
@@ -531,7 +543,7 @@
     var shim = USE('./shim');
     var S = USE('./settings');
     // Derive shared secret from other's pub and my epub/epriv
-    SEA.secret = async (key, pair, cb) => { try {
+    SEA.secret = SEA.secret || (async (key, pair, cb) => { try {
       const pub = key.epub || key
       const epub = pair.epub
       const epriv = pair.epriv
@@ -555,7 +567,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     const keysToEcdhJwk = (pub, d) => { // d === priv
       //const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
@@ -605,7 +617,7 @@
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
 
-    SEA.random = getRandomBytes;
+    SEA.random = SEA.random || getRandomBytes;
 
     // This is easy way to use IndexedDB, all methods are Promises
     // Note: Not all SEA interfaces have to support this.
@@ -613,7 +625,7 @@
 
     // This is Buffer used in SEA and usable from Gun/SEA application also.
     // For documentation see https://nodejs.org/api/buffer.html
-    SEA.Buffer = Buffer;
+    SEA.Buffer = SEA.Buffer || Buffer;
 
     // These SEA functions support now ony Promises or
     // async/await (compatible) code, use those like Promises.
@@ -621,7 +633,7 @@
     // Creates a wrapper library around Web Crypto API
     // for various AES, ECDSA, PBKDF2 functions we called above.
     // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
-    SEA.keyid = async (pub) => {
+    SEA.keyid = SEA.keyid || (async (pub) => {
       try {
         // base64('base64(x):base64(y)') => Buffer(xy)
         const pb = Buffer.concat(
@@ -639,7 +651,7 @@
         console.log(e)
         throw e
       }
-    }
+    });
     // all done!
     // Obviously it is missing MANY necessary features. This is only an alpha release.
     // Please experiment with it, audit what I've done so far, and complain about what needs to be added.
@@ -649,7 +661,7 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require('./gun');
+    var Gun = (SEA.window||{}).Gun || USE('./gun', 1);
     Gun.SEA = SEA;
     SEA.Gun = Gun;
 
@@ -862,10 +874,25 @@
     const finalizeLogin = async (alias, key, gunRoot, opts) => {
       const user = gunRoot._.user
       // add our credentials in-memory only to our root gun instance
-      //var tmp = user._.tag;
+      var tmp = user._.tag;
       var opt = user._.opt;
       user._ = key.at.$._;
       user._.opt = opt;
+      var tags = user._.tag;
+      /*Object.values && Object.values(tmp).forEach(function(tag){
+        // TODO: This is ugly & buggy code, it needs to be refactored & tested into a event "merge" utility.
+        var t = tags[tag.tag];
+        console.log("hm??", tag, t);
+        if(!t){
+          tags[tag.tag] = tag;
+          return;
+        }
+        if(tag.last){
+          tag.last.to = t.to;
+          t.last = tag.last = t.last || tag.last;
+        }
+        t.to = tag.to;
+      })*/
       //user._.tag = tmp || user._.tag;
       // so that way we can use the credentials to encrypt/decrypt data
       // that is input/output through gun (see below)
@@ -880,7 +907,8 @@
       //await authPersist(user._, key.proof, opts) // temporarily disabled
       // emit an auth event, useful for page redirects and stuff.  
       try {
-        gunRoot._.on('auth', user._)
+        gunRoot._.on('auth', user._) // TODO: Deprecate this, emit on user instead! Update docs when you do.
+        //user._.on('auth', user._) // Arrgh, this doesn't work without event "merge" code, but "merge" code causes stack overflow and crashes after logging in & trying to write data.
       } catch (e) {
         console.log('Your \'auth\' callback crashed with:', e)
       }
@@ -1563,7 +1591,7 @@
             if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
-                if(!data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
+                if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
                 if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }

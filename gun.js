@@ -1,22 +1,22 @@
 ;(function(){
 
-	/* UNBUILD */
-	var root;
-	if(typeof window !== "undefined"){ root = window }
-	if(typeof global !== "undefined"){ root = global }
-	root = root || {};
-	var console = root.console || {log: function(){}};
-	function USE(arg){
-		return arg.slice? USE[R(arg)] : function(mod, path){
-			arg(mod = {exports: {}});
-			USE[R(path)] = mod.exports;
-		}
-		function R(p){
-			return p.split('/').slice(-1).toString().replace('.js','');
-		}
-	}
-	if(typeof module !== "undefined"){ var common = module }
-	/* UNBUILD */
+  /* UNBUILD */
+  var root;
+  if(typeof window !== "undefined"){ root = window }
+  if(typeof global !== "undefined"){ root = global }
+  root = root || {};
+  var console = root.console || {log: function(){}};
+  function USE(arg, req){
+    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+      arg(mod = {exports: {}});
+      USE[R(path)] = mod.exports;
+    }
+    function R(p){
+      return p.split('/').slice(-1).toString().replace('.js','');
+    }
+  }
+  if(typeof module !== "undefined"){ var common = module }
+  /* UNBUILD */
 
 	;USE(function(module){
 		// Generic javascript utilities.
@@ -2162,7 +2162,7 @@
 
 			var wire = opt.wire;
 			opt.wire = open;
-			function open(peer){
+			function open(peer){ try{
 				if(!peer || !peer.url){ return wire && wire(peer) }
 				var url = peer.url.replace('http', 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
@@ -2185,7 +2185,7 @@
 					opt.mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
-			}
+			}catch(e){}}
 
 			function reconnect(peer){
 				clearTimeout(peer.defer);
