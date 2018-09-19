@@ -30,7 +30,7 @@ For now, it is best to start with GUN and _just use it_ to learn the basics, sin
 
 ## Quickstart
 
- - Try the [interactive tutorial](https://gun.eco/think.html) in the browser (**5min** ~ average developer).
+ - Try the [interactive tutorial](https://gun.eco/docs/Todo-Dapp) in the browser (**5min** ~ average developer).
  - Or `npm install gun` and run the examples with `cd node_modules/gun && npm start` (**5min** ~ average developer).
 
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
@@ -106,6 +106,7 @@ Thanks to:<br/>
 <a href="http://github.com/vincentwoo">Vincent Woo</a>, 
 <a href="http://github.com/coolaj86">AJ ONeal</a>, 
 <a href="http://github.com/ottman">Bill Ottman</a>,
+<a href="http://github.com/mikewlange">Mike Lange</a>, 
 <a href="http://github.com/ctrlplusb">Sean Matheson</a>, 
 <a href="http://github.com/alanmimms">Alan Mimms</a>,
 <a href="https://github.com/dfreire">Dário Freire</a>,
@@ -129,14 +130,14 @@ The goal was to build a P2P database that could survive living inside **any** br
 
 <img src="https://gun.eco/see/compare.png" title="comparison table">
 
-Technically, **GUN is a graph synchronization protocol** with a *lightweight embedded engine*, capable of doing *[20M+ API ops/sec](https://gun.eco/docs/100000-ops-sec-in-IE6-on-2GB-Atom-CPU)* in **just ~9KB gzipped size**.
+Technically, **GUN is a graph synchronization protocol** with a *lightweight embedded engine*, capable of doing *[20M+ API ops/sec](https://gun.eco/docs/Performance)* in **just ~9KB gzipped size**.
 
 ## Documentation
 
 <table>
   <tr>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/API">API reference</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://gun.eco/think.html">Tutorials</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/API">API reference</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Todo-Dapp">Tutorials</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/amark/gun/tree/master/examples">Examples</a></h3></td>
   </tr>
   <tr>
@@ -150,14 +151,14 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
     <td style="border: 0;"><h3><a href="https://github.com/Stefdv/gun-ui-lcd#syncing">Webcomponents</a></h3></td>
   </tr>
   <tr>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/CAP-Theorem">CAP Theorem Tradeoffs</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/CAP-Theorem">CAP Theorem Tradeoffs</a></h3></td>
     <td style="border: 0;"><h3><a href="https://gun.eco/distributed/matters.html">How Data Sync Works</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/porting-gun">How GUN is Built</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Porting-GUN">How GUN is Built</a></h3></td>
   </tr>
   <tr>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/auth">Crypto Auth</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/Modules">Modules</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/roadmap">Roadmap</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Auth">Crypto Auth</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Awesome-GUN">Modules</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Roadmap">Roadmap</a></h3></td>
   </tr>
 </table>
 
