@@ -2,7 +2,7 @@
     const Buffer = require('./buffer')
     const api = {Buffer: Buffer}
 
-    if (typeof __webpack_require__ === 'function' || typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       var crypto = window.crypto || window.msCrypto;
       var subtle = crypto.subtle || crypto.webkitSubtle;
       const TextEncoder = window.TextEncoder
@@ -16,9 +16,9 @@
       })
     } else {
       try{
-        var crypto = require('crypto');
-        const { subtle } = require('@trust/webcrypto')             // All but ECDH
-        const { TextEncoder, TextDecoder } = require('text-encoding')
+        var crypto = require('crypto', 1);
+        const { subtle } = require('@trust/webcrypto', 1)             // All but ECDH
+        const { TextEncoder, TextDecoder } = require('text-encoding', 1)
         Object.assign(api, {
           crypto,
           subtle,
@@ -27,7 +27,7 @@
           random: (len) => Buffer.from(crypto.randomBytes(len))
         });
         //try{
-          const WebCrypto = require('node-webcrypto-ossl')
+          const WebCrypto = require('node-webcrypto-ossl', 1)
           api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
         //}catch(e){
           //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");

@@ -5,7 +5,7 @@
     var Buff = (typeof Buffer !== 'undefined')? Buffer : shim.Buffer;
 
     //SEA.pair = async (data, proof, cb) => { try {
-    SEA.pair = async (cb) => { try {
+    SEA.pair = SEA.pair || (async (cb) => { try {
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
@@ -56,7 +56,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.pair;
   

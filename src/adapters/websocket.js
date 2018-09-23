@@ -21,7 +21,7 @@ Gun.on('opt', function(root){
 
 	var wire = opt.wire;
 	opt.wire = open;
-	function open(peer){
+	function open(peer){ try{
 		if(!peer || !peer.url){ return wire && wire(peer) }
 		var url = peer.url.replace('http', 'ws');
 		var wire = peer.wire = new opt.WebSocket(url);
@@ -44,7 +44,7 @@ Gun.on('opt', function(root){
 			opt.mesh.hear(msg.data || msg, peer);
 		};
 		return wire;
-	}
+	}catch(e){}}
 
 	function reconnect(peer){
 		clearTimeout(peer.defer);
