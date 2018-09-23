@@ -62,6 +62,7 @@
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
         if(soul){ // for now, only allow direct IDs to be read.
+          if(soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else
@@ -149,7 +150,7 @@
             if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
-                if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) }
+                if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
                 if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }
