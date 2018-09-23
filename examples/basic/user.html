@@ -11,7 +11,7 @@
 
 <form id="said">
     <input id="say">
-    <input id="speak" type="button" value="speak">
+    <input id="speak" type="submit" value="speak">
 </form>
 
 <script src="../jquery.js"></script>
@@ -19,8 +19,8 @@
 <script src="../../../gun/sea.js"></script>
 
 <script>
-var gun = Gun();
-var user = gun.user();
+var gun = Gun(); //Gun(['http://localhost:8765/gun', 'https://guntest.herokuapp.com/gun']);
+var user = gun.user().recall({sessionStorage: true});
 
 $('#up').on('click', function(e){
 	user.create($('#alias').val(), $('#pass').val());
@@ -33,7 +33,7 @@ $('#sign').on('submit', function(e){
 
 gun.on('auth', function(){
 	$('#sign').hide();
-	user.get('said').map().val(UI);
+	user.get('said').map().on(UI);
 });
 
 $('#said').on('submit', function(e){

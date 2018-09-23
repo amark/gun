@@ -201,6 +201,7 @@
   })(USE, './shim');
 
   ;USE(function(module){
+    const SEA = USE('./root');
     const Buffer = USE('./buffer')
     const settings = {}
     // Encryption parameters
@@ -237,6 +238,7 @@
       jwk: keysToEcdsaJwk,
       recall: authsettings
     })
+    SEA.opt = settings;
     module.exports = settings
   })(USE, './settings');
 
@@ -279,42 +281,33 @@
     var SEA = USE('./root');
     var shim = USE('./shim');
     var S = USE('./settings');
+    var sha = USE('./sha256');
     var u;
 
-    SEA.work = SEA.work || (async (data, pair, cb) => { try { // used to be named `proof`
-      var salt = pair.epub || pair; // epub not recommended, salt should be random!
+    SEA.work = SEA.work || (async (data, pair, cb, opt) => { try { // used to be named `proof`
+      var salt = (pair||{}).epub || pair; // epub not recommended, salt should be random!
+      var opt = opt || {};
       if(salt instanceof Function){
         cb = salt;
         salt = u;
       }
       salt = salt || shim.random(9);
-      if (SEA.window) {
-        // For browser subtle works fine
-        const key = await shim.subtle.importKey(
-          'raw', new shim.TextEncoder().encode(data), { name: 'PBKDF2' }, false, ['deriveBits']
-        )
-        const result = await shim.subtle.deriveBits({
-          name: 'PBKDF2',
-          iterations: S.pbkdf2.iter,
-          salt: new shim.TextEncoder().encode(salt),
-          hash: S.pbkdf2.hash,
-        }, key, S.pbkdf2.ks * 8)
-        data = shim.random(data.length)  // Erase data in case of passphrase
-        const r = shim.Buffer.from(result, 'binary').toString('utf8')
-        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
-        return r;
+      if('SHA-256' === opt.name){
+        var rsha = shim.Buffer.from(await sha(data), 'binary').toString('utf8')
+        if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
+        return rsha;
       }
-      // For NodeJS crypto.pkdf2 rocks
-      const crypto = shim.crypto;
-      const hash = crypto.pbkdf2Sync(
-        data,
-        new shim.TextEncoder().encode(salt),
-        S.pbkdf2.iter,
-        S.pbkdf2.ks,
-        S.pbkdf2.hash.replace('-', '').toLowerCase()
+      const key = await (shim.ossl || shim.subtle).importKey(
+        'raw', new shim.TextEncoder().encode(data), { name: opt.name || 'PBKDF2' }, false, ['deriveBits']
       )
-      data = shim.random(data.length)  // Erase passphrase for app
-      const r = hash && hash.toString('utf8')
+      const result = await (shim.ossl || shim.subtle).deriveBits({
+        name: opt.name || 'PBKDF2',
+        iterations: opt.iterations || S.pbkdf2.iter,
+        salt: new shim.TextEncoder().encode(opt.salt || salt),
+        hash: opt.hash || S.pbkdf2.hash,
+      }, key, opt.length || (S.pbkdf2.ks * 8))
+      data = shim.random(data.length)  // Erase data in case of passphrase
+      const r = shim.Buffer.from(result, 'binary').toString('utf8')
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
@@ -490,7 +483,7 @@
       const msg = JSON.stringify(data)
       const rand = {s: shim.random(8), iv: shim.random(16)};
       const ct = await aeskey(key, rand.s, opt)
-      .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
+      .then((aes) => (/*shim.ossl ||*/ shim.subtle).encrypt({ // Keeping the AES key scope as private as possible...
         name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
@@ -522,11 +515,10 @@
       const key = pair.epriv || pair;
       const json = parse(data)
       const ct = await aeskey(key, shim.Buffer.from(json.s, 'utf8'), opt)
-      .then((aes) => shim.subtle.decrypt({  // Keeping aesKey scope as private as possible...
+      .then((aes) => (/*shim.ossl ||*/ shim.subtle).decrypt({  // Keeping aesKey scope as private as possible...
         name: opt.name || 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
       }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
-      
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
@@ -674,9 +666,9 @@
     // This is internal func queries public key(s) for alias.
     const queryGunAliases = (alias, gunRoot) => new Promise((resolve, reject) => {
       // load all public keys associated with the username alias we want to log in with.
-      gunRoot.get('~@'+alias).get((rat, rev) => {
-        rev.off();
-        if (!rat.put) {
+      gunRoot.get('~@'+alias).once((data, key) => {
+        //rev.off();
+        if (!data) {
           // if no user, don't do anything.
           const err = 'No user!'
           Gun.log(err)
@@ -686,19 +678,18 @@
         const aliases = []
         let c = 0
         // TODO: how about having real chainable map without callback ?
-        Gun.obj.map(rat.put, (at, pub) => {
+        Gun.obj.map(data, (at, pub) => {
           if (!pub.slice || '~' !== pub.slice(0, 1)) {
             // TODO: ... this would then be .filter((at, pub))
             return
           }
           ++c
           // grab the account associated with this public key.
-          gunRoot.get(pub).get((at, ev) => {
+          gunRoot.get(pub).once(data => {
             pub = pub.slice(1)
-            ev.off()
             --c
-            if (at.put){
-              aliases.push({ pub, at })
+            if (data){
+              aliases.push({ pub, put: data })
             }
             if (!c && (c = -1)) {
               resolve(aliases)
@@ -722,7 +713,7 @@
     const authenticate = async (alias, pass, gunRoot) => {
       // load all public keys associated with the username alias we want to log in with.
       const aliases = (await queryGunAliases(alias, gunRoot))
-      .filter(({ pub, at: { put } = {} } = {}) => !!pub && !!put)
+      .filter(a => !!a.pub && !!a.put)
       // Got any?
       if (!aliases.length) {
         throw { err: 'Public key does not exist!' }
@@ -730,14 +721,14 @@
       let err
       // then attempt to log into each one until we find ours!
       // (if two users have the same username AND the same password... that would be bad)
-      const users = await Promise.all(aliases.map(async ({ at: at, pub: pub }, i) => {
+      const users = await Promise.all(aliases.map(async (a, i) => {
         // attempt to PBKDF2 extend the password with the salt. (Verifying the signature gives us the plain text salt.)
-        const auth = parseProps(at.put.auth)
+        const auth = parseProps(a.put.auth)
       // NOTE: aliasquery uses `gun.get` which internally SEA.read verifies the data for us, so we do not need to re-verify it here.
       // SEA.verify(at.put.auth, pub).then(function(auth){
         try {
           const proof = await SEA.work(pass, auth.s)
-          const props = { pub: pub, proof: proof, at: at }
+          //const props = { pub: pub, proof: proof, at: at }
           // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
           /*
           MARK TO @mhelander : pub vs epub!???
@@ -745,24 +736,24 @@
           const salt = auth.salt
           const sea = await SEA.decrypt(auth.ek, proof)
           if (!sea) {
-            err = 'Failed to decrypt secret! ' + i +'/'+aliases.length;
+            err = 'Failed to decrypt secret! ' + (i+1) +'/'+aliases.length;
             return
           }
           // now we have AES decrypted the private key, from when we encrypted it with the proof at registration.
           // if we were successful, then that meanswe're logged in!
           const priv = sea.priv
           const epriv = sea.epriv
-          const epub = at.put.epub
+          const epub = a.put.epub
           // TODO: 'salt' needed?
           err = null
-          if(typeof window !== 'undefined'){
-            var tmp = window.sessionStorage;
+          if(SEA.window){
+            var tmp = SEA.window.sessionStorage;
             if(tmp && gunRoot._.opt.remember){
-              window.sessionStorage.alias = alias;
-              window.sessionStorage.tmp = pass;
+              SEA.window.sessionStorage.alias = alias;
+              SEA.window.sessionStorage.tmp = pass;
             }
           }
-          return Object.assign(props, { priv: priv, salt: salt, epub: epub, epriv: epriv })
+          return {priv: priv, pub: a.put.pub, salt: salt, epub: epub, epriv: epriv };
         } catch (e) {
           err = 'Failed to decrypt secret!'
           throw { err }
@@ -876,7 +867,7 @@
       // add our credentials in-memory only to our root gun instance
       var tmp = user._.tag;
       var opt = user._.opt;
-      user._ = key.at.$._;
+      user._ = gunRoot.get('~'+key.pub)._;
       user._.opt = opt;
       var tags = user._.tag;
       /*Object.values && Object.values(tmp).forEach(function(tag){
@@ -1328,7 +1319,8 @@
     }
     // If authentication is to be remembered over reloads or browser closing,
     // set validity time in minutes.
-    User.prototype.recall = async function(setvalidity, options){ 
+    User.prototype.recall = function(setvalidity, options){
+      var gun = this;
       const gunRoot = this.back(-1)
 
       let validity
@@ -1345,7 +1337,7 @@
             }
           }
         }
-        return this;
+        return gun;
       }
 
       if (!Gun.val.is(setvalidity)) {
@@ -1368,13 +1360,15 @@
         authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
         ? opts.hook : _initial_authsettings.hook
         // All is good. Should we do something more with actual recalled data?
-        return await authRecall(gunRoot)
+        (async function(){ await authRecall(gunRoot) }());
+        return gun;
       } catch (e) {
         const err = 'No session!'
         Gun.log(err)
         // NOTE! It's fine to resolve recall with reason why not successful
         // instead of rejecting...
-        return { err: (e && e.err) || err }
+        //return { err: (e && e.err) || err }
+        return gun;
       }
     }
     User.prototype.alive = async function(){
