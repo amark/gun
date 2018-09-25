@@ -638,7 +638,7 @@
 					dup.to = setTimeout(function(){
 						var now = time_is();
 						Type.obj.map(dup.s, function(it, id){
-							if(opt.age > (now - it.was)){ return }
+							if(it && opt.age > (now - it.was)){ return }
 							Type.obj.del(dup.s, id);
 						});
 						dup.to = null;
@@ -1902,7 +1902,7 @@
 				if(data){ disk = data }
 				try{store.setItem(opt.prefix, JSON.stringify(disk));
 				}catch(e){ 
-					Gun.log(err = e || "localStorage failure");
+					Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 					root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 				}
 				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
@@ -1922,7 +1922,10 @@
 
 		function Mesh(ctx){
 			var mesh = function(){};
-			var opt = ctx.opt;
+			var opt = ctx.opt || {};
+			opt.log = opt.log || console.log;
+			opt.gap = opt.gap || opt.wait || 1;
+			opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
 
 			mesh.out = function(msg){ var tmp;
 				if(this.to){ this.to.next(msg) }
@@ -1948,8 +1951,9 @@
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
+				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				try{msg = JSON.parse(raw);
-				}catch(e){console.log('DAM JSON parse error', e)}
+				}catch(e){opt.log('DAM JSON parse error', e)}
 				if('{' === tmp){
 					if(!msg){ return }
 					if(dup.check(id = msg['#'])){ return }
@@ -2013,20 +2017,25 @@
 					}
 					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 					if(peer.batch){
-						peer.batch.push(raw);
-						return;
+						peer.tail = (peer.tail || 0) + raw.length;
+						if(peer.tail <= opt.pack){
+							peer.batch.push(raw);
+							return;
+						}
+						flush(peer);
 					}
 					peer.batch = [];
-					setTimeout(function(){
-						var tmp = peer.batch;
-						if(!tmp){ return }
-						peer.batch = null;
-						if(!tmp.length){ return }
-						send(JSON.stringify(tmp), peer);
-					}, opt.gap || opt.wait || 1);
+					setTimeout(function(){flush(peer)}, opt.gap);
 					send(raw, peer);
 				}
-
+				function flush(peer){
+					var tmp = peer.batch;
+					if(!tmp){ return }
+					peer.batch = peer.tail = null;
+					if(!tmp.length){ return }
+					try{send(JSON.stringify(tmp), peer);
+					}catch(e){opt.log('DAM JSON stringify error', e)}
+				}
 				function send(raw, peer){
 					var wire = peer.wire;
 					try{
@@ -2112,6 +2121,7 @@
 				ctx.on('bye', peer);
 			}
 
+			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
 				if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
 				peer.id = peer.id || msg.pid;
