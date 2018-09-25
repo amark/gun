@@ -100,6 +100,7 @@ On that note, let's get some official shout outs covered first:
 
 <p align="center">
 Thanks to:<br/>
+<a href="https://github.com/robertheessels">Robert Heessels</a>, 
 <a href="http://qxip.net/">Lorenzo Mangani</a>, 
 <a href="https://nlnet.nl/">NLnet Foundation</a>, 
 <a href="http://github.com/samliu">Sam Liu</a>, 
