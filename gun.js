@@ -883,7 +883,7 @@
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		
-		if(typeof window !== "undefined"){ (window.Gun = Gun).window = window }
+		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
 
@@ -1290,7 +1290,7 @@
 			var cat = gun._, tmp;
 			if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
 			if(tmp = cat.link){ return cb(tmp, as, cat), gun }
-			gun.get(function(msg, ev){
+			gun.get(function(msg, ev){ // TODO: Bug! Needs once semantics?
 				ev.rid(msg);
 				var at = ((at = msg.$) && at._) || {};
 				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);

@@ -655,7 +655,7 @@
     // Cheers! Tell me what you think.
     var Gun = (SEA.window||{}).Gun || USE('./gun', 1);
     Gun.SEA = SEA;
-    SEA.Gun = Gun;
+    SEA.GUN = SEA.Gun = Gun;
 
     module.exports = SEA
   })(USE, './sea');
@@ -748,7 +748,7 @@
           err = null
           if(SEA.window){
             var tmp = SEA.window.sessionStorage;
-            if(tmp && gunRoot._.opt.remember){
+            if(tmp && gunRoot._.opt.remember){ // TODO: Bug! This needs to be moved to finalize?
               SEA.window.sessionStorage.alias = alias;
               SEA.window.sessionStorage.tmp = pass;
             }
@@ -1213,6 +1213,26 @@
       }
       cat.ing = true;
 
+      const putErr = (msg) => (e) => {
+        const { message, err = message || '' } = e
+        Gun.log(msg)
+        var error = { err: msg+' Reason: '+err }
+        return cat.ing = false, gun.leave(), cb(error), gun;
+      }
+
+      var key = (alias.pub || alias.epub)? alias : (pass.pub || pass.epub)? pass : null;
+      if(key){
+        (async function(){ try {
+          alias = (typeof alias === 'string')? alias : null;
+          const login = finalizeLogin(alias, key, gunRoot, { pin: pin })
+          login.catch(putErr('Finalizing login failed!'))
+          return cat.ing = false, cb(await login), gun;
+        } catch(e){
+          return cat.ing = false, gun.leave(), cb(e), gun;
+        }}())
+        return gun;
+      }
+
       if (!pass && pin) { (async function(){
         try {
           var r = await authRecall(gunRoot, { alias: alias, pin: pin })
@@ -1222,13 +1242,6 @@
           return cat.ing = false, gun.leave(), cb(err), gun;
         }}())
         return gun;
-      }
-
-      const putErr = (msg) => (e) => {
-        const { message, err = message || '' } = e
-        Gun.log(msg)
-        var error = { err: msg+' Reason: '+err }
-        return cat.ing = false, gun.leave(), cb(error), gun;
       }
 
       (async function(){ try {
