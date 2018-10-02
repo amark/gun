@@ -6,7 +6,7 @@
     var parse = require('./parse');
     var u;
 
-    SEA.verify = async (data, pair, cb) => { try {
+    SEA.verify = SEA.verify || (async (data, pair, cb) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
         const raw = (json !== data)? 
@@ -31,7 +31,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.verify;
   

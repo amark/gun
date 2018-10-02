@@ -73,7 +73,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/lib/open.js"></script>
 
 <script>
 //var gun = Gun();
@@ -104,7 +103,6 @@ gun.on('auth', function(){
 $('#profile input').on('keyup', function(e){
   if(!user.is){ return }
   var id = LI.busy = $(this).attr('id');
-  console.log("Huh?", id, user);
   user.get('profile').get(id).secret($(this).val());
 }).on('blur', function(){ LI.busy = false })
 

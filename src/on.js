@@ -84,7 +84,8 @@ function val(msg, eve, to){
 		data = tmp.put;
 	}
 	if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
-	if(!to && (u === data || at.soul || at.link || (link && !(0 < link.ack)))){
+	if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
+	|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (link||at).ack <= tmp)){
 		tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 			val.call({as:opt}, msg, eve, tmp || 1);
 		}, opt.wait || 99);
