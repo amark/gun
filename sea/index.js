@@ -62,7 +62,7 @@
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
         if(soul){ // for now, only allow direct IDs to be read.
-          if(soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
+          if(typeof soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else
