@@ -202,7 +202,8 @@
     }
     // If authentication is to be remembered over reloads or browser closing,
     // set validity time in minutes.
-    User.prototype.recall = async function(setvalidity, options){ 
+    User.prototype.recall = function(setvalidity, options){
+      var gun = this;
       const gunRoot = this.back(-1)
 
       let validity
@@ -219,7 +220,7 @@
             }
           }
         }
-        return this;
+        return gun;
       }
 
       if (!Gun.val.is(setvalidity)) {
@@ -242,13 +243,15 @@
         authsettings.hook = (Gun.obj.has(opts, 'hook') && typeof opts.hook === 'function')
         ? opts.hook : _initial_authsettings.hook
         // All is good. Should we do something more with actual recalled data?
-        return await authRecall(gunRoot)
+        (async function(){ await authRecall(gunRoot) }());
+        return gun;
       } catch (e) {
         const err = 'No session!'
         Gun.log(err)
         // NOTE! It's fine to resolve recall with reason why not successful
         // instead of rejecting...
-        return { err: (e && e.err) || err }
+        //return { err: (e && e.err) || err }
+        return gun;
       }
     }
     User.prototype.alive = async function(){

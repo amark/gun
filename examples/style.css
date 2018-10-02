@@ -330,3 +330,22 @@ ul, li {
   50% {opacity: 0.5;}
   100% {opacity: 1;}
 }
+
+
+.joy {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  background: url(https://cdn.jsdelivr.net/npm/gun/examples/pop.png) no-repeat;
+  background-position: -2800px 0;
+  pointer-events: none;
+  animation: joy 1s steps(28);
+}
+@keyframes joy {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -2800px 0;
+  }
+}
