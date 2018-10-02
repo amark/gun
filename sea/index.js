@@ -77,7 +77,7 @@
         // potentially parallel async operations!!!
         var check = {}, each = {}, u;
         each.node = function(node, soul){
-          if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them.
+          //if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them. @amark, removing this line solves issue #616. 2018-10-02
           Gun.obj.map(node, each.way, {soul: soul, node: node});
         };
         each.way = function(val, key){
