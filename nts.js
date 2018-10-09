@@ -37,8 +37,8 @@
 				NTS.end = Gun.state();
 				Gun.obj.del(ask, ack);
 				NTS.latency = (NTS.end - NTS.start)/2;
-				if(!at.NTS){ return }
-				NTS.calc = NTS.latency + at.NTS;
+				if(!at.nts && !at.NTS){ return }
+				NTS.calc = NTS.latency + (at.NTS || at.nts);
 				Gun.state.drift -= (NTS.end - NTS.calc)/2;
 				setTimeout(ping, 1000);
 			}
