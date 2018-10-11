@@ -124,7 +124,7 @@
           }
           return buf
         }
-        const byteLength = input.byteLength
+        const byteLength = input.byteLength // what is going on here? FOR MARTTI
         const length = input.byteLength ? input.byteLength : input.length
         if (length) {
           let buf
@@ -157,45 +157,40 @@
   })(USE, './buffer');
 
   ;USE(function(module){
+    const SEA = USE('./root')
     const Buffer = USE('./buffer')
     const api = {Buffer: Buffer}
+    var o = {};
 
-    if (typeof window !== 'undefined') {
-      var crypto = window.crypto || window.msCrypto;
-      var subtle = crypto.subtle || crypto.webkitSubtle;
-      const TextEncoder = window.TextEncoder
-      const TextDecoder = window.TextDecoder
+    if(SEA.window){
+      api.crypto = window.crypto || window.msCrypto;
+      api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
+      api.TextEncoder = window.TextEncoder;
+      api.TextDecoder = window.TextDecoder;
+      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+    }
+    if(!api.crypto){try{
+      var crypto = USE('crypto', 1);
+      const { subtle } = USE('@trust/webcrypto', 1)             // All but ECDH
+      const { TextEncoder, TextDecoder } = USE('text-encoding', 1)
       Object.assign(api, {
         crypto,
         subtle,
         TextEncoder,
         TextDecoder,
-        random: (len) => Buffer.from(crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
-      })
-    } else {
-      try{
-        var crypto = USE('crypto', 1);
-        const { subtle } = USE('@trust/webcrypto', 1)             // All but ECDH
-        const { TextEncoder, TextDecoder } = USE('text-encoding', 1)
-        Object.assign(api, {
-          crypto,
-          subtle,
-          TextEncoder,
-          TextDecoder,
-          random: (len) => Buffer.from(crypto.randomBytes(len))
-        });
-        //try{
-          const WebCrypto = USE('node-webcrypto-ossl', 1)
-          api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
-        //}catch(e){
-          //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
-        //}
-      }catch(e){
-        console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
-        console.log("node-webcrypto-ossl is temporarily needed for ECDSA signature verification, and optionally needed for ECDH, please install if needed (currently necessary so add them to your package.json for now).");
-        TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
-      }
-    }
+        random: (len) => Buffer.from(crypto.randomBytes(len))
+      });
+      //try{
+        const WebCrypto = USE('node-webcrypto-ossl', 1)
+        api.ossl = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+      //}catch(e){
+        //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
+      //}
+    }catch(e){
+      console.log("@trust/webcrypto and text-encoding are not included by default, you must add it to your package.json!");
+      console.log("node-webcrypto-ossl is temporarily needed for ECDSA signature verification, and optionally needed for ECDH, please install if needed (currently necessary so add them to your package.json for now).");
+      TRUST_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
+    }}
 
     module.exports = api
   })(USE, './shim');
@@ -436,6 +431,7 @@
         if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
+      if(json === data){ throw "No signature on data." }
       const pub = pair.pub || pair
       const jwk = S.jwk(pub)
       const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
@@ -448,7 +444,7 @@
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.log(e); // mismatched owner FOR MARTTI
       SEA.err = e;
       if(cb){ cb() }
       return;
@@ -747,10 +743,10 @@
           // TODO: 'salt' needed?
           err = null
           if(SEA.window){
-            var tmp = SEA.window.sessionStorage;
+            var tmp; try{tmp = window.sessionStorage}catch(e){}
             if(tmp && gunRoot._.opt.remember){ // TODO: Bug! This needs to be moved to finalize?
-              SEA.window.sessionStorage.alias = alias;
-              SEA.window.sessionStorage.tmp = pass;
+              tmp.alias = alias;
+              tmp.tmp = pass;
             }
           }
           return {priv: priv, pub: a.put.pub, salt: salt, epub: epub, epriv: epriv };
@@ -1302,8 +1298,8 @@
         delete user._.is;
         delete user._.sea;
       }
-      if(typeof window !== 'undefined'){
-        var tmp = window.sessionStorage;
+      if(SEA.window){
+        var tmp; try{tmp = window.sessionStorage}catch(e){}; tmp = tmp || {};
         delete tmp.alias;
         delete tmp.tmp;
       }
@@ -1339,10 +1335,10 @@
       let validity
       let opts
       
-      var o = setvalidity;
+      var o = setvalidity, tmp;
       if(o && o.sessionStorage){
-        if(typeof window !== 'undefined'){
-          var tmp = window.sessionStorage;
+        if(SEA.window){
+          try{tmp = window.sessionStorage}catch(e){}
           if(tmp){
             gunRoot._.opt.remember = true;
             if(tmp.alias && tmp.tmp){
@@ -1658,7 +1654,7 @@
         each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
           if(each.err){ return }
           if((each.err = ctx.err) || ctx.no){
-            console.log('NO!', each.err, msg.put);
+            console.log('NO!', each.err, msg.put); // 451 mistmached data FOR MARTTI
             return;
           }
           if(!each.end.ed){ return }
