@@ -49,7 +49,7 @@
       try {
         // base64('base64(x):base64(y)') => Buffer(xy)
         const pb = Buffer.concat(
-          Buffer.from(pub, 'base64').toString('utf8').split(':')
+          pub.replace(/-/g, '+').replace(/_/g, '/').split('.')
           .map((t) => Buffer.from(t, 'base64'))
         )
         // id is PGPv4 compliant raw key
