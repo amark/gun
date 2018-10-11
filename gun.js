@@ -1655,19 +1655,19 @@
 			var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 			if(tmp = msg.$$){
 				link = tmp = (msg.$$._);
-				if(u === tmp.put){
-					return;
+				if(u !== link.put){
+					data = link.put;
 				}
-				data = tmp.put;
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
 			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
-			|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (link||at).ack <= tmp)){
+			|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (!to && (link||at).ack <= tmp))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 					val.call({as:opt}, msg, eve, tmp || 1);
 				}, opt.wait || 99);
 				return;
 			}
+			if(link && u === link.put && (tmp = rel.is(data))){ data = Gun.node.ify({}, tmp) }
 			eve.rid(msg);
 			opt.ok.call(gun || opt.$, data, msg.get);
 		}
@@ -1774,10 +1774,12 @@
 	;USE(function(module){
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-		var root, noop = function(){}, u;
-		if(typeof window !== 'undefined'){ root = window }
-		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
+		var root, noop = function(){}, store, u;
+		try{store = (Gun.window||noop).localStorage}catch(e){}
+		if(!store){
+			console.log("Warning: No localStorage exists to persist data to!");
+			store = {setItem: noop, removeItem: noop, getItem: noop};
+		}
 		/*
 			NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
 			If you update anything here, consider updating the other adapters as well.

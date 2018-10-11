@@ -229,7 +229,7 @@ Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 ;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 
-if(typeof window !== "undefined"){ (window.Gun = Gun).window = window }
+if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 module.exports = Gun;
 
