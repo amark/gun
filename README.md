@@ -8,7 +8,7 @@
 
 **GUN** is an _ecosystem_  of tools that let you <u>build tomorrow's dApps, today</u>.
 
-Decentralized alternatives to [Reddit](https://notabug.io/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
+Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>

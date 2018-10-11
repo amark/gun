@@ -267,7 +267,7 @@
     // This internal func returns SHA-1 hashed data for KeyID generation
     const __shim = USE('./shim')
     const subtle = __shim.subtle
-    const ossl = __shim.ossl ? __shim.__ossl : subtle
+    const ossl = __shim.ossl ? __shim.ossl : subtle
     const sha1hash = (b) => ossl.digest({name: 'SHA-1'}, new ArrayBuffer(b))
     module.exports = sha1hash
   })(USE, './sha1');
@@ -625,7 +625,7 @@
       try {
         // base64('base64(x):base64(y)') => Buffer(xy)
         const pb = Buffer.concat(
-          Buffer.from(pub, 'base64').toString('utf8').split(':')
+          pub.replace(/-/g, '+').replace(/_/g, '/').split('.')
           .map((t) => Buffer.from(t, 'base64'))
         )
         // id is PGPv4 compliant raw key
