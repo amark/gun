@@ -218,6 +218,9 @@
             if(tmp.alias && tmp.tmp){
               gunRoot.user().auth(tmp.alias, tmp.tmp);
             }
+            else {
+              throw { err: 'No authentication session found!' }
+            }
           }
         }
         return gun;
