@@ -4,7 +4,7 @@
     var S = require('./settings');
     var sha256hash = require('./sha256');
 
-    SEA.sign = SEA.sign || (async (data, pair, cb) => { try {
+    SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       if(data && data.slice
       && 'SEA{' === data.slice(0,4)
       && '"m":' === data.slice(4,8)){
@@ -13,6 +13,10 @@
         // but for now, we want to prevent duplicate double signature.
         if(cb){ try{ cb(data) }catch(e){console.log(e)} }
         return data;
+      }
+      opt = opt || {};
+      if(!(pair||opt).priv){
+        pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
       }
       const pub = pair.pub
       const priv = pair.priv

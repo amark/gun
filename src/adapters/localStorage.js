@@ -1,10 +1,12 @@
 
 if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-var root, noop = function(){}, u;
-if(typeof window !== 'undefined'){ root = window }
-var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
+var root, noop = function(){}, store, u;
+try{store = (Gun.window||noop).localStorage}catch(e){}
+if(!store){
+	console.log("Warning: No localStorage exists to persist data to!");
+	store = {setItem: noop, removeItem: noop, getItem: noop};
+}
 /*
 	NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
 	If you update anything here, consider updating the other adapters as well.

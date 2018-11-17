@@ -7,15 +7,9 @@
     if(typeof window !== "undefined"){ module.window = window }
 
     var tmp = module.window || module;
-    var SEA = tmp.SEA || function(){};
+    var SEA = tmp.SEA || {};
 
-    if(SEA.window = module.window){ try{
-      SEA.window.SEA = SEA;
-      tmp = document.createEvent('CustomEvent');
-      tmp.initCustomEvent('extension', false, false, {type: "SEA"});
-      (window.dispatchEvent || window.fireEvent)(tmp);
-      window.postMessage({type: "SEA"}, '*');
-    } catch(e){} }
+    if(SEA.window = module.window){ SEA.window.SEA = SEA }
 
     try{ if(typeof common !== "undefined"){ common.exports = SEA } }catch(e){}
     module.exports = SEA;

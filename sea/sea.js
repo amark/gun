@@ -1,5 +1,6 @@
 
     // Old Code...
+    try{
     const __gky10 = require('./shim')
     const crypto = __gky10.crypto
     const subtle = __gky10.subtle
@@ -18,8 +19,8 @@
     const keysToEcdsaJwk = __gky11.jwk
     const sha1hash = require('./sha1')
     const sha256hash = require('./sha256')
-    const recallCryptoKey = require('./remember')
     const parseProps = require('./parse')
+    }catch(e){}
 
     // Practical examples about usage found from ./test/common.js
     const SEA = require('./root');
@@ -75,7 +76,7 @@
     // Cheers! Tell me what you think.
     var Gun = (SEA.window||{}).Gun || require('./gun', 1);
     Gun.SEA = SEA;
-    SEA.Gun = Gun;
+    SEA.GUN = SEA.Gun = Gun;
 
     module.exports = SEA
   
