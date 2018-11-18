@@ -597,46 +597,20 @@
   })(USE, './secret');
 
   ;USE(function(module){
-    // Old Code...
-    try{
-    const __gky10 = USE('./shim')
-    const crypto = __gky10.crypto
-    const subtle = __gky10.subtle
-    const ossl = __gky10.ossl
-    const TextEncoder = __gky10.TextEncoder
-    const TextDecoder = __gky10.TextDecoder
-    const getRandomBytes = __gky10.random
-    const EasyIndexedDB = USE('./indexed')
-    const Buffer = USE('./buffer')
-    var settings = USE('./settings');
-    const __gky11 = USE('./settings')
-    const pbKdf2 = __gky11.pbkdf2
-    const ecdsaKeyProps = __gky11.ecdsa.pair
-    const ecdsaSignProps = __gky11.ecdsa.sign
-    const ecdhKeyProps = __gky11.ecdh
-    const keysToEcdsaJwk = __gky11.jwk
-    const sha1hash = USE('./sha1')
-    const sha256hash = USE('./sha256')
-    const parseProps = USE('./parse')
-    }catch(e){}
-
+    var shim = USE('./shim');
     // Practical examples about usage found from ./test/common.js
-    const SEA = USE('./root');
+    var SEA = USE('./root');
     SEA.work = USE('./work');
     SEA.sign = USE('./sign');
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
 
-    SEA.random = SEA.random || getRandomBytes;
-
-    // This is easy way to use IndexedDB, all methods are Promises
-    // Note: Not all SEA interfaces have to support this.
-    try{SEA.EasyIndexedDB = EasyIndexedDB;}catch(e){}
+    SEA.random = SEA.random || shim.random;
 
     // This is Buffer used in SEA and usable from Gun/SEA application also.
     // For documentation see https://nodejs.org/api/buffer.html
-    SEA.Buffer = SEA.Buffer || Buffer;
+    SEA.Buffer = SEA.Buffer || USE('./buffer');
 
     // These SEA functions support now ony Promises or
     // async/await (compatible) code, use those like Promises.
