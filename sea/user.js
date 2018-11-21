@@ -19,7 +19,7 @@
       (at = (user = at.user = gun.chain(new User))._).opt = {};
       at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
-        if(!pub || !(pub = (pub._).sea) || !(pub = pub.pub)){ return id }
+        if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
         id = id + '~' + pub + '.';
         if(cb && cb.call){ cb(null, id) }
         return id;

@@ -9,13 +9,13 @@
 	</div>
 	<p id="debug" style="position: fixed; bottom: 0px; color: white; height: 1em;"></p>
 	<script src="../jquery.js"></script>
-	<script src="/gun.js"></script>
-	<script src="/gun/nts.js"></script>
-	<script src="/gun/lib/webrtc.js"></script>
+	<script src="../../../gun/gun.js"></script>
+	<script src="../../../gun/nts.js"></script>
+	<script src="../../../gun/lib/webrtc.js"></script>
 	<script>
 		// Thanks to https://github.com/dmcinnes/HTML5-Asteroids
 		//var gun = Gun();
-		var gun = Gun(location.origin+'/gun'); 
+		var gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
 		var game = {gun: gun.get('example/game/space'), area: {}, ships: {}};
 		game.keys = {38: 'up', 37: 'left', 39: 'right', 40: 'down', 32: 'space'};
 		$(document).on('keydown', function(e){

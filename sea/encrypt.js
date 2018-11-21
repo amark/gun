@@ -5,8 +5,12 @@
     var aeskey = require('./aeskey');
 
     SEA.encrypt = SEA.encrypt || (async (data, pair, cb, opt) => { try {
-      var opt = opt || {};
-      const key = pair.epriv || pair;
+      opt = opt || {};
+      var key = (pair||opt).epriv || pair;
+      if(!key){
+        pair = await SEA.I(null, {what: data, how: 'encrypt', why: opt.why});
+        key = pair.epriv || pair;
+      }
       const msg = JSON.stringify(data)
       const rand = {s: shim.random(8), iv: shim.random(16)};
       const ct = await aeskey(key, rand.s, opt)

@@ -62,7 +62,7 @@
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
         if(soul){ // for now, only allow direct IDs to be read.
-          if(typeof soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
+          if(soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else
@@ -111,9 +111,9 @@
             return each.end({err: "Account must match!"});
           }
           check['user'+soul+key] = 1;
-          if(user && (user = user._) && user.sea && pub === user.pub){
+          if(user && user.is && pub === user.is.pub){
             //var id = Gun.text.random(3);
-            SEA.sign(val, user.sea, function(data){ var rel;
+            SEA.sign(val, (user._).sea, function(data){ var rel;
               if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
               if(rel = Gun.val.link.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
@@ -146,7 +146,7 @@
           return s;
         }
         each.any = function(val, key, node, soul, user){ var tmp, pub;
-          if(!user || !(user = user._) || !(user = user.sea)){
+          if(!user || !user.is){
             if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
@@ -187,20 +187,19 @@
             //});
             return;
           }
-          var pub = tmp;
-          if(pub !== user.pub){
+          if((pub = tmp) !== (user.is||noop).pub){
             each.any(val, key, node, soul);
             return;
           }
           /*var other = Gun.obj.map(at.sea.own[soul], function(v, p){
-            if(user.pub !== p){ return p }
+            if((user.is||{}).pub !== p){ return p }
           });
           if(other){
             each.any(val, key, node, soul);
             return;
           }*/
           check['any'+soul+key] = 1;
-          SEA.sign(val, user, function(data){
+          SEA.sign(val, (user._).sea, function(data){
             if(u === data){ return each.end({err: 'My signature fail.'}) }
             node[key] = data;
             check['any'+soul+key] = 0;
@@ -210,7 +209,7 @@
         each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
           if(each.err){ return }
           if((each.err = ctx.err) || ctx.no){
-            console.log('NO!', each.err, msg.put);
+            console.log('NO!', each.err, msg.put); // 451 mistmached data FOR MARTTI
             return;
           }
           if(!each.end.ed){ return }
@@ -225,5 +224,6 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
+    var noop = {};
 
   
