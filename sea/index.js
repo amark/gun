@@ -62,7 +62,7 @@
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
         if(soul){ // for now, only allow direct IDs to be read.
-          if(soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
+          if(typeof soul !== 'string'){ return to.next(msg) } // do not handle lexical cursors.
           if('alias' === soul){ // Allow reading the list of usernames/aliases in the system?
             return to.next(msg); // yes.
           } else
@@ -77,7 +77,7 @@
         // potentially parallel async operations!!!
         var check = {}, each = {}, u;
         each.node = function(node, soul){
-          if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them.
+          //if(Gun.obj.empty(node, '_')){ return check['node'+soul] = 0 } // ignore empty updates, don't reject them. @amark, removing this line solves issue #616. 2018-10-02
           Gun.obj.map(node, each.way, {soul: soul, node: node});
         };
         each.way = function(val, key){

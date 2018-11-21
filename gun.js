@@ -1941,6 +1941,7 @@
 					return;
 				}
 				// add hook for AXE?
+				if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; }
 				mesh.say(msg);
 			}
 
