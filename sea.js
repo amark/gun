@@ -37,13 +37,13 @@
 
   ;USE(function(module){
     var SEA = USE('./root');
-    if(SEA.window){
+    try{ if(SEA.window){
       if(location.protocol.indexOf('s') < 0
       && location.host.indexOf('localhost') < 0
       && location.protocol.indexOf('file:') < 0){
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
-    }
+    } }catch(e){}
   })(USE, './https');
 
   ;USE(function(module){
@@ -775,7 +775,7 @@
       }
       cat.ing = true;
       opt = opt || {};
-      var pair = (alias.pub || alias.epub)? alias : (pass.pub || pass.epub)? pass : null;
+      var pair = (alias && (alias.pub || alias.epub))? alias : (pass && (pass.pub || pass.epub))? pass : null;
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -827,10 +827,12 @@
         opt.change? act.z() : cb(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
-          var sS = {}; try{sS = window.sessionStorage}catch(e){}
+          try{var sS = {};
+          sS = window.sessionStorage;
           sS.recall = true;
           sS.alias = alias;
           sS.tmp = pass;
+          }catch(e){}
         }
         try{
           (root._).on('auth', at) // TODO: Deprecate this, emit on user instead! Update docs when you do.
@@ -892,10 +894,12 @@
         delete user._.sea;
       }
       if(SEA.window){
-        var sS = {}; try{sS = window.sessionStorage}catch(e){};
+        try{var sS = {};
+        sS = window.sessionStorage;
         delete sS.alias;
         delete sS.tmp;
         delete sS.recall;
+        }catch(e){};
       }
       return gun;
     }
@@ -921,7 +925,8 @@
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
-          var sS = {}; try{sS = window.sessionStorage}catch(e){}
+          try{var sS = {};
+          sS = window.sessionStorage;
           if(sS){
             (root._).opt.remember = true;
             ((gun.back('user')._).opt||opt).remember = true;
@@ -929,6 +934,7 @@
               root.user().auth(sS.alias, sS.tmp, cb);
             }
           }
+          }catch(e){}
         }
         return gun;
       }
