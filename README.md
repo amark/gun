@@ -170,6 +170,14 @@ This would not be possible without **community contributors**, big shout out to:
 
 I am missing many others, apologies, will be adding them soon!
 
+## Testing
+
+Tests may be run with `npm test`. Tests will trigger persistent writes to the DB, so subsequent runs of the test will fail. You must clear the DB before running the tests again. This can be done by running the following command in the project directory.
+
+```bash
+rm -rf *data*
+```
+
 ## Deploy
 
 To quickly spin up a Gun test server for your development team, utilize either [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. !
