@@ -1,4 +1,4 @@
-
+var Gun = require('../index');
 var Type = require('../type');
 
 function Mesh(ctx){
