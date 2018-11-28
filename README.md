@@ -90,26 +90,6 @@ gun.get('list').set({type: "cucumber", goal: "scare cat"});
 
 Want to keep building more? **Jump to [THE DOCUMENTATION](#documentation)!**
 
-### Importing Modules with Browserify
-
-To install with npm, first install `npm install gun -S`.
-For just the networking layer, import Gun:
-
-```javascript
-var Gun = require('gun/gun');
-```
-
-If you also need to install SEA for user auth and crypto, also install some of its unincluded dependencies like this:
-
-`npm install @trust/crypto --save`
-
-You will need to require it too (it will be automatically added to the Gun object):
-
-```javascript
-var Gun = require('gun/gun');
-var Sea = require('gun/sea');
-```
-
 # What is GUN?
 
 First & foremost, GUN is **a community of the nicest and most helpful people** out there. So [I want to invite you](https://gitter.im/amark/gun) to come tell us about what **you** are working on & wanting to build (new or old school alike! Just be nice as well.) and ask us your questions directly. :)
@@ -197,6 +177,27 @@ Tests may be run with `npm test`. Tests will trigger persistent writes to the DB
 ```bash
 rm -rf *data*
 ```
+
+### Additional Cryptography Libraries
+
+To install with npm, first install `npm install gun -S`.
+For just the networking layer, import Gun:
+
+```javascript
+var Gun = require('gun/gun');
+```
+
+If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
+
+`npm install @trust/crypto text-encoding node-webcrypto-ossl --save`
+
+You will need to require it too (it will be automatically added to the Gun object):
+
+```javascript
+var Gun = require('gun/gun');
+var Sea = require('gun/sea');
+```
+
 
 ## Deploy
 
