@@ -6,7 +6,7 @@
     var parse = require('./parse');
     var u;
 
-    SEA.verify = async (data, pair, cb) => { try {
+    SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
         const raw = (json !== data)? 
@@ -15,22 +15,26 @@
         if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
+      opt = opt || {};
+      // SEA.I // verify is free! Requires no user permission.
+      if(json === data){ throw "No signature on data." }
       const pub = pair.pub || pair
       const jwk = S.jwk(pub)
-      const key = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
+      const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
       const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
-      const check = await shim.subtle.verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e); // mismatched owner FOR MARTTI
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.verify;
   

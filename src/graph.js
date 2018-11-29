@@ -33,6 +33,7 @@ var Graph = {};
 		if(env.soul){
 			at.rel = Val.rel.ify(env.soul);
 		}
+		env.shell = (as||{}).shell;
 		env.graph = env.graph || {};
 		env.seen = env.seen || [];
 		env.as = env.as || as;
@@ -45,8 +46,10 @@ var Graph = {};
 		at.env = env;
 		at.soul = soul;
 		if(Node.ify(at.obj, map, at)){
-			//at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
-			env.graph[Val.rel.is(at.rel)] = at.node;
+			at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+			if(at.obj !== env.shell){
+				env.graph[Val.rel.is(at.rel)] = at.node;
+			}
 		}
 		return at;
 	}

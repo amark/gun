@@ -1,10 +1,12 @@
 
 if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-var root, noop = function(){}, u;
-if(typeof window !== 'undefined'){ root = window }
-var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
+var root, noop = function(){}, store, u;
+try{store = (Gun.window||noop).localStorage}catch(e){}
+if(!store){
+	console.log("Warning: No localStorage exists to persist data to!");
+	store = {setItem: noop, removeItem: noop, getItem: noop};
+}
 /*
 	NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
 	If you update anything here, consider updating the other adapters as well.
@@ -15,24 +17,21 @@ Gun.on('create', function(root){
 	// See the next 'opt' code below for actual saving of data.
 	var ev = this.to, opt = root.opt;
 	if(root.once){ return ev.next(root) }
-	if(false === opt.localStorage){ return ev.next(root) }
-	opt.file = opt.file || 'gun/';
-	var gap = Gun.obj.ify(store.getItem('gap/'+opt.file)) || {};
+	//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+	opt.prefix = opt.file || 'gun/';
+	var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 	var empty = Gun.obj.empty, id, to, go;
 	// add re-sync command.
 	if(!empty(gap)){
-		root.on('localStorage', function(disk){
-			this.off();
-			var send = {}
-			Gun.obj.map(gap, function(node, soul){
-				Gun.obj.map(node, function(val, key){
-					send[soul] = Gun.state.to(disk[soul], key, send[soul]);
-				});
+		var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {}, send = {};
+		Gun.obj.map(gap, function(node, soul){
+			Gun.obj.map(node, function(val, key){
+				send[soul] = Gun.state.to(disk[soul], key, send[soul]);
 			});
-			setTimeout(function(){
-				root.on('out', {put: send, '#': root.ask(ack), I: root.$});
-			},10);
 		});
+		setTimeout(function(){
+			root.on('out', {put: send, '#': root.ask(ack), I: root.$});
+		},1);
 	}
 
 	root.on('out', function(msg){
@@ -70,7 +69,7 @@ Gun.on('create', function(root){
 	var flush = function(){
 		clearTimeout(to);
 		to = false;
-		try{store.setItem('gap/'+opt.file, JSON.stringify(gap));
+		try{store.setItem('gap/'+opt.prefix, JSON.stringify(gap));
 		}catch(e){ Gun.log(err = e || "localStorage failure") }
 	}
 });
@@ -80,9 +79,9 @@ Gun.on('create', function(root){
 	var opt = root.opt;
 	if(root.once){ return }
 	if(false === opt.localStorage){ return }
-	opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
+	opt.prefix = opt.file || 'gun/';
 	var graph = root.graph, acks = {}, count = 0, to;
-	var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
+	var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
 	
@@ -130,10 +129,10 @@ Gun.on('create', function(root){
 		var ack = acks;
 		acks = {};
 		if(data){ disk = data }
-		try{store.setItem(opt.file, JSON.stringify(disk));
+		try{store.setItem(opt.prefix, JSON.stringify(disk));
 		}catch(e){ 
-			Gun.log(err = e || "localStorage failure");
-			root.on('localStorage:error', {err: err, file: opt.file, flush: disk, retry: flush});
+			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
+			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 		Gun.obj.map(ack, function(yes, id){

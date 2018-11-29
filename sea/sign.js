@@ -4,8 +4,8 @@
     var S = require('./settings');
     var sha256hash = require('./sha256');
 
-    SEA.sign = async (data, pair, cb) => { try {
-      if(data.slice
+    SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
+      if(data && data.slice
       && 'SEA{' === data.slice(0,4)
       && '"m":' === data.slice(4,8)){
         // TODO: This would prevent pair2 signing pair1's signature.
@@ -14,22 +14,27 @@
         if(cb){ try{ cb(data) }catch(e){console.log(e)} }
         return data;
       }
+      opt = opt || {};
+      if(!(pair||opt).priv){
+        pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
+      }
       const pub = pair.pub
       const priv = pair.priv
       const jwk = S.jwk(pub, priv)
       const msg = JSON.stringify(data)
       const hash = await sha256hash(msg)
-      const sig = await shim.subtle.importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
-      .then((key) => shim.subtle.sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
+      const sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
+      .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.sign;
   
