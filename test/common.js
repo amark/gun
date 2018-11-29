@@ -11,13 +11,14 @@ describe('Gun', function(){
 		//root.Gun = root.Gun || require('../gun');
 		if(root.Gun){
 			root.Gun = root.Gun;
+			root.Gun.TESTING = true;
 		} else {
 			root.Gun = require('../gun');
+			root.Gun.TESTING = true;
 			Gun.serve = require('../lib/serve');
-			//require('./s3');
-			//require('./uws');
-			//require('./wsp/server');
-			require('../lib/file');
+			//require('../lib/file');
+			require('../lib/store');
+			require('../lib/rfs');
 		}
 	}(this));
 	//Gun.log.squelch = true;
@@ -2892,7 +2893,7 @@ describe('Gun', function(){
 			var gun = Gun().get('chat/asdf');
 
 			var check = {}, count = {};
-			gun.map().val(function(v,f){
+			gun.map().once(function(v,f){
 				check[f] = v;
 				count[f] = (count[f] || 0) + 1;
 				//console.log("**************", f, v);
@@ -2993,6 +2994,7 @@ describe('Gun', function(){
 
 		it('get get get set root get put', function(done){
 			var gun = Gun().get('app');
+			//console.debug.i=1;console.log('---------------');
 			gun.get('alias').get('mark').set(
 				gun.back(-1).get('pub').put({
 					alias: 'mark',
@@ -3004,7 +3006,9 @@ describe('Gun', function(){
 			);
 			//return;
 			setTimeout(function(){
+				//console.debug.i=1;console.log('---------------');
 				gun.get(function(at){
+					//console.log("*", at.put);//return;
 					done.app = done.app || at.put.alias;
 				});
 				gun.back(-1).get('pub').get(function(at){
@@ -3016,7 +3020,7 @@ describe('Gun', function(){
 					done.alias = done.alias || at.put.mark;
 					//!console.debug.i&&(console.debug.i=1)&&console.log("---------------------");
 				}).get('mark').on(function(data){
-					//console.log("************", at.put);//return;
+					//console.log("************", data);//return;
 					clearTimeout(done.to);
 					done.to = setTimeout(function(){
 						done.mark = done.mark || data.pub;
@@ -3360,6 +3364,30 @@ describe('Gun', function(){
 			list.set({name: 'bob', age: 27});
 			list.set({name: 'carl', age: 29});
 			list.set({name: 'dave', age: 25});
+		});
+
+		it('once map function once', function(done){
+			var gun = Gun(), s = 'o/mf/o', u;
+			var app = gun.get(s);
+			var list = app.get('list');
+
+			var check = {};
+			gun.get('user').get('alice').put({name:'Alice', email:'alice@example.com'})
+			gun.get('user').get('bob').put({name:'Bob', email:'bob@example.com'})
+			gun.get('user').get('carl').put({name:'Carl', email:'carl@example.com'})
+
+			gun.get('user').once().map(v => {
+			  //console.log('this gets called', v);
+			  return v
+			}).once((v, k) => {
+			  //console.log('this is never called', k, v);
+			  check[k] = (check[k] || 0) + 1;
+			  if(1 === check.alice && 1 === check.bob && 1 === check.carl){
+			  	if(done.c){return}done.c=1;
+			  	done();
+			  }
+			});
+
 		});
 
 		it('val and then map', function(done){

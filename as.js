@@ -80,12 +80,11 @@
 			}, wait || 200);
 		}
 	}
-	as.sort = function(sort, el) {
-		var vs = $(el).find('.sort');
-		vs = (vs[0] && u === vs[0].value)? vs.text() : vs.val();
-		var id = sort;
-		var test = id >= vs;
-		return test ? el : as.sort(sort, el.prev());
+	as.sort = function sort(id, li){
+		var num = parseFloat(id);
+		var id = $(li).find('.sort').text() || -Infinity;
+		var at = num >= parseFloat(id);
+		return at ? li : sort(id, li.prev());
 	}
 	$(document).on('keyup', 'input, textarea, [contenteditable]', as.wait(function(){
 		var el = $(this);

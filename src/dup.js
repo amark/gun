@@ -16,7 +16,7 @@ function Dup(opt){
 			dup.to = setTimeout(function(){
 				var now = time_is();
 				Type.obj.map(dup.s, function(it, id){
-					if(opt.age > (now - it.was)){ return }
+					if(it && opt.age > (now - it.was)){ return }
 					Type.obj.del(dup.s, id);
 				});
 				dup.to = null;

@@ -151,9 +151,25 @@ Gun.dup = require('./dup');
 	}
 
 	Gun.on.get = function(msg, gun){
-		var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
-		if(!node || !at){ return root.on('get', msg) }
+		if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
+			var graph = {};
+			Gun.obj.map(root.graph, function(node, s){
+				if(Gun.text.match(s, soul)){
+					graph[s] = Gun.obj.copy(node);
+				}
+			});
+			if(!Gun.obj.empty(graph)){
+				root.on('in', {
+					'@': msg['#'],
+					how: '*',
+					put: graph,
+					$: gun
+				});
+			}
+		} // TEMPORARY HACK FOR MARTTI, TESTING
+		if(!node){ return root.on('get', msg) }
 		if(has){
 			if(!obj_has(node, has)){ return root.on('get', msg) }
 			node = Gun.state.to(node, has);
@@ -164,7 +180,7 @@ Gun.dup = require('./dup');
 			node = Gun.obj.copy(node);
 		}
 		node = Gun.graph.node(node);
-		tmp = at.ack;
+		tmp = (at||empty).ack;
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
@@ -213,7 +229,7 @@ Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 ;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 
-if(typeof window !== "undefined"){ window.Gun = Gun }
+if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 module.exports = Gun;
 

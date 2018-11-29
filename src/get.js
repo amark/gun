@@ -64,7 +64,7 @@ function soul(gun, cb, opt, as){
 	var cat = gun._, tmp;
 	if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
 	if(tmp = cat.link){ return cb(tmp, as, cat), gun }
-	gun.get(function(msg, ev){
+	gun.get(function(msg, ev){ // TODO: Bug! Needs once semantics?
 		ev.rid(msg);
 		var at = ((at = msg.$) && at._) || {};
 		tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);

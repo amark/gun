@@ -1,4 +1,5 @@
 
+    const SEA = require('./root');
     const Buffer = require('./buffer')
     const settings = {}
     // Encryption parameters
@@ -35,5 +36,6 @@
       jwk: keysToEcdsaJwk,
       recall: authsettings
     })
+    SEA.opt = settings;
     module.exports = settings
   

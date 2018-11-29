@@ -24,7 +24,6 @@ function output(msg){
 			at.on('in', at);
 			return;
 		}*/
-		//console.log("out!", at.get, get);
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
 			msg['#'] || (msg['#'] = text_rand(9));
@@ -164,13 +163,12 @@ function relate(at, msg, from, rel){
 		not(at, msg);
 	}
 	tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
-	//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 	if(rel === tmp.link){
 		if(!(tmp.pass || at.pass)){
 			return;
 		}
 	}
-	if(at.pass){ 
+	if(at.pass){
 		Gun.obj.map(at.map, function(tmp){ tmp.pass = true })
 		obj_del(at, 'pass');
 	}

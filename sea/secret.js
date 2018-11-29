@@ -2,8 +2,12 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    // Derive shared secret from other's pub and my epub/epriv
-    SEA.secret = async (key, pair, cb) => { try {
+    // Derive shared secret from other's pub and my epub/epriv 
+    SEA.secret = SEA.secret || (async (key, pair, cb, opt) => { try {
+      opt = opt || {};
+      if(!pair || !pair.epriv || !pair.epub){
+        pair = await SEA.I(null, {what: key, how: 'secret', why: opt.why});
+      }
       const pub = key.epub || key
       const epub = pair.epub
       const epriv = pair.epriv
@@ -27,7 +31,7 @@
       SEA.err = e;
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     const keysToEcdhJwk = (pub, d) => { // d === priv
       //const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old

@@ -1,0 +1,60 @@
+<h1>User</h1>
+
+<form id="sign">
+  <input id="alias" placeholder="username">
+  <input id="pass" type="password" placeholder="passphrase">
+  <input id="in" type="submit" value="sign in">
+  <input id="up" type="button" value="sign up">
+</form>
+
+<ul></ul>
+
+<form id="said">
+    <input id="say">
+    <input id="speak" type="button" value="speak">
+</form>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../sea.js"></script>
+<script src="../../lib/open.js"></script>
+<script src="../../lib/time.js"></script>
+
+<script>
+var gun = Gun();
+var user = gun.user();
+user.recall({sessionStorage: true});
+
+$('#up').on('click', function(e){
+	user.create($('#alias').val(), $('#pass').val());
+});
+
+$('#sign').on('submit', function(e){
+	e.preventDefault();
+	user.auth($('#alias').val(), $('#pass').val());
+});
+
+gun.on('auth', function(ack){
+	$('#sign').hide();
+  console.log(window.PUB = ack.pub);
+});
+
+function start(pub){
+  pub = pub || window.PUB; 
+  gun.get(pub+'@time').get('tell').time(UI, {last: 9});
+}
+
+$('#said').on('submit', function(e){
+	e.preventDefault();
+  if(!user.is){ return }
+  user.get('said').set($('#say').val());
+  $('#say').val("");
+});
+
+function UI(say, id){
+  console.log("***", id, say);
+  return;
+  var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
+  $(li).text(say);
+};
+</script>

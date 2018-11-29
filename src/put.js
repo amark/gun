@@ -94,7 +94,8 @@ function batch(){ var as = this;
 	as.res(function(){
 		var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 			cat.root.on('ack', ack);
-			this.off(); // One response is good enough for us currently. Later we may want to adjust this.
+			if(ack.err){ Gun.log(ack) }
+			if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 			if(!as.ack){ return }
 			as.ack(ack, this);
 		}, as.opt);

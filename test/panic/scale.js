@@ -1,6 +1,6 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 1,
 	browsers: 2,
 	each: 2500,
@@ -10,7 +10,6 @@ var config = {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
 		'/jquery.js': __dirname + '/../../examples/jquery.js',
-		'/cryptomodules.js': __dirname + '/../../lib/cryptomodules.js',
 		'/sea.js': __dirname + '/../../sea.js'
 	}
 }
