@@ -389,6 +389,7 @@
     var shim = USE('./shim');
     var S = USE('./settings');
     var sha256hash = USE('./sha256');
+    var u;
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       if(data && data.slice
