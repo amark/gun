@@ -1,4 +1,4 @@
-<p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p> 
+<p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
 [![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
@@ -100,16 +100,16 @@ On that note, let's get some official shout outs covered first:
 
 <p align="center">
 Thanks to:<br/>
-<a href="https://github.com/robertheessels">Robert Heessels</a>, 
-<a href="http://qxip.net/">Lorenzo Mangani</a>, 
-<a href="https://nlnet.nl/">NLnet Foundation</a>, 
-<a href="http://github.com/samliu">Sam Liu</a>, 
-<a href="http://github.com/ddombrow">Daniel Dombrowsky</a>, 
-<a href="http://github.com/vincentwoo">Vincent Woo</a>, 
-<a href="http://github.com/coolaj86">AJ ONeal</a>, 
+<a href="https://github.com/robertheessels">Robert Heessels</a>,
+<a href="http://qxip.net/">Lorenzo Mangani</a>,
+<a href="https://nlnet.nl/">NLnet Foundation</a>,
+<a href="http://github.com/samliu">Sam Liu</a>,
+<a href="http://github.com/ddombrow">Daniel Dombrowsky</a>,
+<a href="http://github.com/vincentwoo">Vincent Woo</a>,
+<a href="http://github.com/coolaj86">AJ ONeal</a>,
 <a href="http://github.com/ottman">Bill Ottman</a>,
-<a href="http://github.com/mikewlange">Mike Lange</a>, 
-<a href="http://github.com/ctrlplusb">Sean Matheson</a>, 
+<a href="http://github.com/mikewlange">Mike Lange</a>,
+<a href="http://github.com/ctrlplusb">Sean Matheson</a>,
 <a href="http://github.com/alanmimms">Alan Mimms</a>,
 <a href="https://github.com/dfreire">Dário Freire</a>,
 <a href="http://github.com/velua">John Williamson</a>
@@ -122,7 +122,7 @@ Thanks to:<br/>
 
 ### History
 
-[GUN](https://gun.eco) was created by [Mark Nadal](https://twitter.com/marknadal) in 2014 after he had spent 4 years trying to get his collaborative web app to scale up with traditional databases. 
+[GUN](https://gun.eco) was created by [Mark Nadal](https://twitter.com/marknadal) in 2014 after he had spent 4 years trying to get his collaborative web app to scale up with traditional databases.
 
 <img width="250px" src="https://gun.eco/see/problem.png" align="left" title="pain point" style="margin: 0 1em 1em 0"> After he realized [Master-Slave database architecture causes one big bottleneck](https://gun.eco/distributed/matters.html), he (as a complete newbie outsider) naively decided **to question the status quo** and shake things up with controversial, heretical, and contrarian experiments:
 
@@ -177,6 +177,27 @@ Tests may be run with `npm test`. Tests will trigger persistent writes to the DB
 ```bash
 rm -rf *data*
 ```
+
+### Additional Cryptography Libraries
+
+To install with npm, first install `npm install gun -S`.
+For just the networking layer, import Gun:
+
+```javascript
+var Gun = require('gun/gun');
+```
+
+If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
+
+`npm install @trust/crypto text-encoding node-webcrypto-ossl --save`
+
+You will need to require it too (it will be automatically added to the Gun object):
+
+```javascript
+var Gun = require('gun/gun');
+var Sea = require('gun/sea');
+```
+
 
 ## Deploy
 

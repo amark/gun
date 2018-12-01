@@ -301,6 +301,7 @@
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -320,6 +321,7 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -374,6 +376,7 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -386,6 +389,7 @@
     var shim = USE('./shim');
     var S = USE('./settings');
     var sha256hash = USE('./sha256');
+    var u;
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       if(data && data.slice
@@ -415,6 +419,7 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -456,6 +461,7 @@
     } catch(e) {
       console.log(e); // mismatched owner FOR MARTTI
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -506,6 +512,7 @@
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -537,6 +544,7 @@
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -575,6 +583,7 @@
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
