@@ -48,19 +48,19 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
+    "@trust/webcrypto": "^0.9.2",
+    "text-encoding": "^0.6.4",
+    "node-webcrypto-ossl": "^1.0.38",
     "ws": "~>5.2.0"
   },
   "devDependencies": {
-    "@trust/webcrypto": "^0.9.2",
     "aws-sdk": ">=2.153.0",
     "concat-map": "^0.0.1",
     "express": ">=4.15.2",
     "ip": "^1.1.5",
     "mocha": ">=3.2.0",
-    "node-webcrypto-ossl": "^1.0.38",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
-    "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22"
   }
 }
