@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<title>Party by Neon ERA</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="./style.css">
 		<link href="https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic" rel="stylesheet" type="text/css">
@@ -68,7 +69,7 @@
 					width: 3em;
 				}
 			</style>
-			<div class="loud write shout rim">A social network you own & control.</div>
+			<div class="loud write shout rim">Party by NEON ERA.</div>
 			<div id="faces" class="flush faces">
 				<div class="right" style="max-width: 20em;">
 					<input id="halias" class="write jot sap" placeholder="username">
@@ -508,6 +509,8 @@
 				}
 				#draft .what {
 				}
+				#draft .spoke {
+				}
 			</style>
 			<p class="pad">Welcome!</p>
 			<!--
@@ -520,7 +523,7 @@
 				- take
 			-->
 			<form id="speak" class="mid row col">
-				<div id="d0" class="draft gap tint sap" contenteditable="true" style="min-height: 1em;" data-text="Express yourself..."></div>
+				<div id="d0" class="draft spoke gap tint sap editable" contenteditable="true" style="min-height: 1em;" data-text="Express yourself..."></div>
 				<input type="submit" class="sap hide" value="speak!">
 			</form>
 			<ul class="mid row col">
@@ -544,6 +547,9 @@
 					});
 					window.user = S.user;
 					$('#speak').on('submit', (e) => {
+						/*var say = normalize($('#speak .draft'));
+						console.log(1, say.html());
+						return;*/
 						var say = $('#speak .draft').text();
 						if(!say){ return }
 						var ref = S.user.get('who').get('all').set({what: say});
@@ -669,7 +675,6 @@
 		</div>
 		
 		<script>
-			
 			$.as.route.page('person', () => {
 				if(!user.is){ return $.as.route('hi') }
 				var pub = location.hash.split('/').slice(-1)[0];
@@ -678,7 +683,6 @@
 			});
 
 			$(document).upload(function resize(e, up){
-				console.log("WOAH");
 				if(e.err){ return }
 				var m = $($("#d"+e.id)[0] || $('#d0').clone(true,true).attr('id', 'd'+e.id).css('backgroundImage', '').appendTo('#draft')).addClass('pulse');
 				if(up){ return up.shrink(e, resize, 1000) }
@@ -690,17 +694,8 @@
 					backgroundSize: 'cover'
 				});
 			});
-
-			window.fun = function fun(e){ setTimeout(() => {
-				e = e || {}; var $img = $('<div class="joy"></div>')
-					.css({position: 'fixed', width: 100,
-						top: (e.y || e.clientY || (Math.random() * $(window).height()))-50,
-						left: (e.x || e.clientX || e.pageX || (Math.random() * $(window).width()))-50,
-						transform: 'rotate('+(Math.random() * 360)+'deg)'
-					}).appendTo('body');
-					setTimeout(() => { $img.remove() },800);
-			},10)};
-			$(document).on('keyup', fun).on('touchstart', fun).on('mousedown', fun);
 		</script>
+		<script async src="../../gun/lib/fun.js"></script>
+		<script async src="../../gun/lib/normalize.js"></script>
 	</body>
 </html>
