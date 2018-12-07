@@ -408,11 +408,10 @@
       const pub = pair.pub
       const priv = pair.priv
       const jwk = S.jwk(pub, priv)
-      const msg = JSON.stringify(data)
-      const hash = await sha256hash(msg)
+      const hash = await sha256hash(JSON.stringify(data))
       const sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
       .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
-      const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
+      const r = 'SEA'+JSON.stringify({m: data, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')});
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
@@ -451,7 +450,9 @@
       const jwk = S.jwk(pub)
       const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
-      const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
+      var buf; try{buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){buf = shim.Buffer.from(json.s, 'utf8')} // AUTO MIGRATE OLD UTF8 DATA!
+      const sig = new Uint8Array(buf)
       const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
       if(!check){ throw "Signature did not match." }
       const r = check? parse(json.m) : u;
@@ -503,9 +504,9 @@
         name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
-        ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
-        iv: rand.iv.toString('utf8'),
-        s: rand.s.toString('utf8')
+        ct: shim.Buffer.from(ct, 'binary').toString(opt.encode || 'base64'),
+        iv: rand.iv.toString(opt.encode || 'base64'),
+        s: rand.s.toString(opt.encode || 'base64')
       });
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
@@ -535,10 +536,18 @@
         key = pair.epriv || pair;
       }
       const json = parse(data)
-      const ct = await aeskey(key, shim.Buffer.from(json.s, 'utf8'), opt)
+
+      var buf; try{buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){buf = shim.Buffer.from(json.s, 'utf8')} // AUTO MIGRATE OLD UTF8 DATA!
+      var bufiv; try{bufiv = shim.Buffer.from(json.iv, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){bufiv = shim.Buffer.from(json.iv, 'utf8')} // AUTO MIGRATE OLD UTF8 DATA!
+      var bufct; try{bufct = shim.Buffer.from(json.ct, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){bufct = shim.Buffer.from(json.ct, 'utf8')} // AUTO MIGRATE OLD UTF8 DATA!
+
+      const ct = await aeskey(key, buf, opt)
       .then((aes) => (/*shim.ossl ||*/ shim.subtle).decrypt({  // Keeping aesKey scope as private as possible...
-        name: opt.name || 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
-      }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv)
+      }, aes, new Uint8Array(bufct)))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
