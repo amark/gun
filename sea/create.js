@@ -37,26 +37,30 @@
         act.proof = proof;
         SEA.pair(act.c); // now we have generated a brand new ECDSA key pair for the user account.
       }
-      act.c = function(pair){
+      act.c = function(pair){ var tmp;
         act.pair = pair || {};
-        // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
+        if(tmp = cat.root.user){
+          tmp._.sea = pair;
+          tmp.is = {pub: pair.pub, epub: pair.epub, alias: alias};
+        }
+        // the user's public key doesn't need to be signed. But everything else needs to be signed with it! // we have now automated it! clean up these extra steps now!
         act.data = {pub: pair.pub};
         SEA.sign(alias, pair, act.d); 
       }
-      act.d = function(alias){
-        act.data.alias = alias;
+      act.d = function(sig){
+        act.data.alias = alias || sig;
         SEA.sign(act.pair.epub, act.pair, act.e);
       }
       act.e = function(epub){
-        act.data.epub = epub; 
+        act.data.epub = act.pair.epub || epub; 
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
-        act.data.auth = auth; 
+        act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
         SEA.sign({ek: auth, s: act.salt}, act.pair, act.g);
       }
       act.g = function(auth){ var tmp;
-        act.data.auth = auth;
+        act.data.auth = act.data.auth || auth;
         root.get(tmp = '~'+act.pair.pub).put(act.data); // awesome, now we can actually save the user with their public key as their ID.
         root.get('~@'+alias).put(Gun.obj.put({}, tmp, Gun.val.link.ify(tmp))); // next up, we want to associate the alias with the public key. So we add it to the alias list.
         setTimeout(function(){ // we should be able to delete this now, right?
@@ -78,7 +82,7 @@
       }
       cat.ing = true;
       opt = opt || {};
-      var pair = (alias.pub || alias.epub)? alias : (pass.pub || pass.epub)? pass : null;
+      var pair = (alias && (alias.pub || alias.epub))? alias : (pass && (pass.pub || pass.epub))? pass : null;
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -100,14 +104,20 @@
       }
       act.c = function(auth){
         if(u === auth){ return act.b() }
-        SEA.work(pass, (act.auth = auth).s, act.d); // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+        if(Gun.text.is(auth)){ return act.c(Gun.obj.ify(auth)) } // new format
+        SEA.work(pass, (act.auth = auth).s, act.d, act.enc); // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
       }
       act.d = function(proof){
-        if(u === proof){ return act.b() }
-        SEA.decrypt(act.auth.ek, proof, act.e);
+        SEA.decrypt(act.auth.ek, proof, act.e, act.enc);
       }
       act.e = function(half){
-        if(u === half){ return act.b() }
+        if(u === half){
+          if(!act.enc){ // try old format
+            act.enc = {encode: 'utf8'};
+            return act.c(act.auth);
+          } act.enc = null; // end backwards
+          return act.b();
+        }
         act.half = half;
         act.f(act.data);
       }
@@ -127,13 +137,16 @@
         user.is = {pub: pair.pub, epub: pair.epub, alias: alias};
         at.sea = act.pair;
         cat.ing = false;
+        if(pass && !Gun.text.is(act.data.auth)){ opt.shuffle = opt.change = pass; } // migrate UTF8 + Shuffle! Test against NAB alias test_sea_shuffle + passw0rd
         opt.change? act.z() : cb(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
-          var sS = {}; try{sS = window.sessionStorage}catch(e){}
+          try{var sS = {};
+          sS = window.sessionStorage;
           sS.recall = true;
           sS.alias = alias;
           sS.tmp = pass;
+          }catch(e){}
         }
         try{
           (root._).on('auth', at) // TODO: Deprecate this, emit on user instead! Update docs when you do.
@@ -151,9 +164,17 @@
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, proof, act.x);
       }
       act.x = function(auth){
-        SEA.sign({ek: auth, s: act.salt}, act.pair, act.w);
+        act.w(JSON.stringify({ek: auth, s: act.salt}));
+        //SEA.sign({ek: auth, s: act.salt}, act.pair, act.w);
       }
       act.w = function(auth){
+        if(opt.shuffle){ // delete in future!
+          var tmp = Gun.obj.to(act.data);
+          Gun.obj.del(tmp, '_');
+          tmp.auth = auth;
+          console.log('migrate core account from UTF8 & shuffle', tmp);
+          root.get('~'+act.pair.pub).put(tmp);
+        } // end delete
         root.get('~'+act.pair.pub).get('auth').put(auth, cb);
       }
       act.err = function(e){
@@ -195,10 +216,12 @@
         delete user._.sea;
       }
       if(SEA.window){
-        var sS = {}; try{sS = window.sessionStorage}catch(e){};
+        try{var sS = {};
+        sS = window.sessionStorage;
         delete sS.alias;
         delete sS.tmp;
         delete sS.recall;
+        }catch(e){};
       }
       return gun;
     }
@@ -224,7 +247,8 @@
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
-          var sS = {}; try{sS = window.sessionStorage}catch(e){}
+          try{var sS = {};
+          sS = window.sessionStorage;
           if(sS){
             (root._).opt.remember = true;
             ((gun.back('user')._).opt||opt).remember = true;
@@ -232,6 +256,7 @@
               root.user().auth(sS.alias, sS.tmp, cb);
             }
           }
+          }catch(e){}
         }
         return gun;
       }

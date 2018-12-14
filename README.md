@@ -112,7 +112,8 @@ Thanks to:<br/>
 <a href="http://github.com/ctrlplusb">Sean Matheson</a>,
 <a href="http://github.com/alanmimms">Alan Mimms</a>,
 <a href="https://github.com/dfreire">Dário Freire</a>,
-<a href="http://github.com/velua">John Williamson</a>
+<a href="http://github.com/velua">John Williamson</a>,
+<a href="http://github.com/finwo">Robin Bron</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !

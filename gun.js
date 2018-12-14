@@ -1319,9 +1319,10 @@
 					msg = obj_to(msg, {put: data = tmp.put});
 				}
 			}
-			if((tmp = root.mum) && at.id){
-				if(tmp[at.id]){ return }
-				if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
+			if((tmp = root.mum) && at.id){ // TODO: can we delete mum entirely now?
+				var id = at.id + (eve.id || (eve.id = Gun.text.random(9)));
+				if(tmp[id]){ return }
+				if(u !== data && !rel.is(data)){ tmp[id] = true; }
 			}
 			as.use(msg, eve);
 			if(eve.stun){
@@ -1778,7 +1779,7 @@
 		try{store = (Gun.window||noop).localStorage}catch(e){}
 		if(!store){
 			console.log("Warning: No localStorage exists to persist data to!");
-			store = {setItem: noop, removeItem: noop, getItem: noop};
+			store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 		}
 		/*
 			NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!

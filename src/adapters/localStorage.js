@@ -5,7 +5,7 @@ var root, noop = function(){}, store, u;
 try{store = (Gun.window||noop).localStorage}catch(e){}
 if(!store){
 	console.log("Warning: No localStorage exists to persist data to!");
-	store = {setItem: noop, removeItem: noop, getItem: noop};
+	store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 }
 /*
 	NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!

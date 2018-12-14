@@ -33,7 +33,6 @@
         check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }
-
       const r = check? parse(json.m) : u;
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
