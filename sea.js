@@ -392,15 +392,6 @@
     var u;
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
-      if(data && data.slice
-      && 'SEA{' === data.slice(0,4)
-      && '"m":' === data.slice(4,8)){
-        // TODO: This would prevent pair2 signing pair1's signature.
-        // So we may want to change this in the future.
-        // but for now, we want to prevent duplicate double signature.
-        if(cb){ try{ cb(data) }catch(e){console.log(e)} }
-        return data;
-      }
       opt = opt || {};
       if(!(pair||opt).priv){
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
@@ -1080,6 +1071,7 @@
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
+          var tmp = data;
           data = SEA.opt.unpack(data, key, node);
           node[key] = val = data; // transform to plain value.
           if(d && !c && (c = -1)){ to.next(msg) }
@@ -1236,7 +1228,7 @@
             //});
             return;
           }
-          if((pub = tmp) !== (user.is||noop).pub){
+          if(!msg.I || (pub = tmp) !== (user.is||noop).pub){
             each.any(val, key, node, soul);
             return;
           }
