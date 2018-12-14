@@ -29,6 +29,7 @@
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});

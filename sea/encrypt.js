@@ -18,15 +18,16 @@
         name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
-        ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
-        iv: rand.iv.toString('utf8'),
-        s: rand.s.toString('utf8')
+        ct: shim.Buffer.from(ct, 'binary').toString(opt.encode || 'base64'),
+        iv: rand.iv.toString(opt.encode || 'base64'),
+        s: rand.s.toString(opt.encode || 'base64')
       });
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
