@@ -93,9 +93,10 @@ function use(msg){
 			msg = obj_to(msg, {put: data = tmp.put});
 		}
 	}
-	if((tmp = root.mum) && at.id){
-		if(tmp[at.id]){ return }
-		if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
+	if((tmp = root.mum) && at.id){ // TODO: can we delete mum entirely now?
+		var id = at.id + (eve.id || (eve.id = Gun.text.random(9)));
+		if(tmp[id]){ return }
+		if(u !== data && !rel.is(data)){ tmp[id] = true; }
 	}
 	as.use(msg, eve);
 	if(eve.stun){

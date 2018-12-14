@@ -20,7 +20,7 @@ function Mesh(ctx){
 			return;
 		}
 		// add hook for AXE?
-		if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; }
+		//if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
 		mesh.say(msg);
 	}
 
@@ -229,3 +229,5 @@ Mesh.hash = function(s){ // via SO
 	  Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 
 	  try{ module.exports = Mesh }catch(e){}
+
+	
