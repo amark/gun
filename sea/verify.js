@@ -9,7 +9,7 @@
     SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
-        const raw = (json !== data)? 
+        const raw = (json !== data)?
           (json.s && json.m)? parse(json.m) : data
         : json;
         if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
@@ -22,11 +22,17 @@
       const jwk = S.jwk(pub)
       const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
-      var buf; try{buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
-      }catch(e){buf = shim.Buffer.from(json.s, 'utf8')} // AUTO BACKWARD OLD UTF8 DATA!
-      const sig = new Uint8Array(buf)
-      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
-      if(!check){ throw "Signature did not match." }
+      var buf; var sig; var check; try{
+        buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }catch(e){
+        buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }
       const r = check? parse(json.m) : u;
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
