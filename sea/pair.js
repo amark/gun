@@ -10,6 +10,7 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
@@ -64,6 +65,7 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});
