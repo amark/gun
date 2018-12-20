@@ -101,7 +101,7 @@ function Mesh(ctx){
 			if(peer.batch){
 				peer.tail = (peer.tail || 0) + raw.length;
 				if(peer.tail <= opt.pack){
-					peer.batch.push(raw);
+					(msg.dam) ? peer.batch.unshift(raw) : peer.batch.push(raw);
 					return;
 				}
 				flush(peer);
