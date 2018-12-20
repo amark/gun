@@ -282,7 +282,7 @@
       }
       salt = salt || shim.random(9);
       if('SHA-256' === opt.name){
-        var rsha = shim.Buffer.from(await sha(data), 'binary').toString('utf8')
+        var rsha = shim.Buffer.from(await sha(data), 'binary').toString(opt.encode || 'base64')
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
@@ -296,7 +296,7 @@
         hash: opt.hash || S.pbkdf2.hash,
       }, key, opt.length || (S.pbkdf2.ks * 8))
       data = shim.random(data.length)  // Erase data in case of passphrase
-      const r = shim.Buffer.from(result, 'binary').toString('utf8')
+      const r = shim.Buffer.from(result, 'binary').toString(opt.encode || 'base64')
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
@@ -392,15 +392,6 @@
     var u;
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
-      if(data && data.slice
-      && 'SEA{' === data.slice(0,4)
-      && '"m":' === data.slice(4,8)){
-        // TODO: This would prevent pair2 signing pair1's signature.
-        // So we may want to change this in the future.
-        // but for now, we want to prevent duplicate double signature.
-        if(cb){ try{ cb(data) }catch(e){console.log(e)} }
-        return data;
-      }
       opt = opt || {};
       if(!(pair||opt).priv){
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
@@ -408,11 +399,10 @@
       const pub = pair.pub
       const priv = pair.priv
       const jwk = S.jwk(pub, priv)
-      const msg = JSON.stringify(data)
-      const hash = await sha256hash(msg)
+      const hash = await sha256hash(JSON.stringify(data))
       const sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
       .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
-      const r = 'SEA'+JSON.stringify({m: msg, s: shim.Buffer.from(sig, 'binary').toString('utf8')});
+      const r = 'SEA'+JSON.stringify({m: data, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')});
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
@@ -438,7 +428,7 @@
     SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
-        const raw = (json !== data)? 
+        const raw = (json !== data)?
           (json.s && json.m)? parse(json.m) : data
         : json;
         if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
@@ -451,9 +441,17 @@
       const jwk = S.jwk(pub)
       const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
       const hash = await sha256hash(json.m)
-      const sig = new Uint8Array(shim.Buffer.from(json.s, 'utf8'))
-      const check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
-      if(!check){ throw "Signature did not match." }
+      var buf; var sig; var check; try{
+        buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }catch(e){
+        buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }
       const r = check? parse(json.m) : u;
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
@@ -503,9 +501,9 @@
         name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)))
       const r = 'SEA'+JSON.stringify({
-        ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
-        iv: rand.iv.toString('utf8'),
-        s: rand.s.toString('utf8')
+        ct: shim.Buffer.from(ct, 'binary').toString(opt.encode || 'base64'),
+        iv: rand.iv.toString(opt.encode || 'base64'),
+        s: rand.s.toString(opt.encode || 'base64')
       });
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
@@ -535,10 +533,18 @@
         key = pair.epriv || pair;
       }
       const json = parse(data)
-      const ct = await aeskey(key, shim.Buffer.from(json.s, 'utf8'), opt)
+
+      var buf; try{buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){buf = shim.Buffer.from(json.s, 'utf8')} // AUTO BACKWARD OLD UTF8 DATA!
+      var bufiv; try{bufiv = shim.Buffer.from(json.iv, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){bufiv = shim.Buffer.from(json.iv, 'utf8')} // AUTO BACKWARD OLD UTF8 DATA!
+      var bufct; try{bufct = shim.Buffer.from(json.ct, opt.encode || 'base64') // NEW DEFAULT!
+      }catch(e){bufct = shim.Buffer.from(json.ct, 'utf8')} // AUTO BACKWARD OLD UTF8 DATA!
+
+      const ct = await aeskey(key, buf, opt)
       .then((aes) => (/*shim.ossl ||*/ shim.subtle).decrypt({  // Keeping aesKey scope as private as possible...
-        name: opt.name || 'AES-GCM', iv: new Uint8Array(shim.Buffer.from(json.iv, 'utf8'))
-      }, aes, new Uint8Array(shim.Buffer.from(json.ct, 'utf8'))))
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv)
+      }, aes, new Uint8Array(bufct)))
       const r = parse(new shim.TextDecoder('utf8').decode(ct))
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
@@ -743,26 +749,30 @@
         act.proof = proof;
         SEA.pair(act.c); // now we have generated a brand new ECDSA key pair for the user account.
       }
-      act.c = function(pair){
+      act.c = function(pair){ var tmp;
         act.pair = pair || {};
-        // the user's public key doesn't need to be signed. But everything else needs to be signed with it!
+        if(tmp = cat.root.user){
+          tmp._.sea = pair;
+          tmp.is = {pub: pair.pub, epub: pair.epub, alias: alias};
+        }
+        // the user's public key doesn't need to be signed. But everything else needs to be signed with it! // we have now automated it! clean up these extra steps now!
         act.data = {pub: pair.pub};
         SEA.sign(alias, pair, act.d); 
       }
-      act.d = function(alias){
-        act.data.alias = alias;
+      act.d = function(sig){
+        act.data.alias = alias || sig;
         SEA.sign(act.pair.epub, act.pair, act.e);
       }
       act.e = function(epub){
-        act.data.epub = epub; 
+        act.data.epub = act.pair.epub || epub; 
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
-        act.data.auth = auth; 
+        act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
         SEA.sign({ek: auth, s: act.salt}, act.pair, act.g);
       }
       act.g = function(auth){ var tmp;
-        act.data.auth = auth;
+        act.data.auth = act.data.auth || auth;
         root.get(tmp = '~'+act.pair.pub).put(act.data); // awesome, now we can actually save the user with their public key as their ID.
         root.get('~@'+alias).put(Gun.obj.put({}, tmp, Gun.val.link.ify(tmp))); // next up, we want to associate the alias with the public key. So we add it to the alias list.
         setTimeout(function(){ // we should be able to delete this now, right?
@@ -806,14 +816,20 @@
       }
       act.c = function(auth){
         if(u === auth){ return act.b() }
-        SEA.work(pass, (act.auth = auth).s, act.d); // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
+        if(Gun.text.is(auth)){ return act.c(Gun.obj.ify(auth)) } // new format
+        SEA.work(pass, (act.auth = auth).s, act.d, act.enc); // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
       }
       act.d = function(proof){
-        if(u === proof){ return act.b() }
-        SEA.decrypt(act.auth.ek, proof, act.e);
+        SEA.decrypt(act.auth.ek, proof, act.e, act.enc);
       }
       act.e = function(half){
-        if(u === half){ return act.b() }
+        if(u === half){
+          if(!act.enc){ // try old format
+            act.enc = {encode: 'utf8'};
+            return act.c(act.auth);
+          } act.enc = null; // end backwards
+          return act.b();
+        }
         act.half = half;
         act.f(act.data);
       }
@@ -833,6 +849,7 @@
         user.is = {pub: pair.pub, epub: pair.epub, alias: alias};
         at.sea = act.pair;
         cat.ing = false;
+        if(pass && !Gun.text.is(act.data.auth)){ opt.shuffle = opt.change = pass; } // migrate UTF8 + Shuffle! Test against NAB alias test_sea_shuffle + passw0rd
         opt.change? act.z() : cb(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
@@ -859,9 +876,17 @@
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, proof, act.x);
       }
       act.x = function(auth){
-        SEA.sign({ek: auth, s: act.salt}, act.pair, act.w);
+        act.w(JSON.stringify({ek: auth, s: act.salt}));
+        //SEA.sign({ek: auth, s: act.salt}, act.pair, act.w);
       }
       act.w = function(auth){
+        if(opt.shuffle){ // delete in future!
+          var tmp = Gun.obj.to(act.data);
+          Gun.obj.del(tmp, '_');
+          tmp.auth = auth;
+          console.log('migrate core account from UTF8 & shuffle', tmp);
+          root.get('~'+act.pair.pub).put(tmp);
+        } // end delete
         root.get('~'+act.pair.pub).get('auth').put(auth, cb);
       }
       act.err = function(e){
@@ -1052,6 +1077,8 @@
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
         // TODO: consider async/await use here...
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
+          var tmp = data;
+          data = SEA.opt.unpack(data, key, node);
           node[key] = val = data; // transform to plain value.
           if(d && !c && (c = -1)){ to.next(msg) }
         });
@@ -1131,7 +1158,7 @@
           check['user'+soul+key] = 1;
           if(user && user.is && pub === user.is.pub){
             //var id = Gun.text.random(3);
-            SEA.sign(val, (user._).sea, function(data){ var rel;
+            SEA.sign([soul, key, val, Gun.state.is(node, key)], (user._).sea, function(data){ var rel;
               if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
               if(rel = Gun.val.link.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
@@ -1144,6 +1171,7 @@
             return;
           }
           SEA.verify(val, pub, function(data){ var rel, tmp;
+            data = SEA.opt.unpack(data, key, node);
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
@@ -1168,6 +1196,7 @@
             if(tmp = relpub(soul)){
               check['any'+soul+key] = 1;
               SEA.verify(val, pub = tmp, function(data){ var rel;
+                data = SEA.opt.unpack(data, key, node);
                 if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
                 if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
@@ -1205,7 +1234,7 @@
             //});
             return;
           }
-          if((pub = tmp) !== (user.is||noop).pub){
+          if(!msg.I || (pub = tmp) !== (user.is||noop).pub){
             each.any(val, key, node, soul);
             return;
           }
@@ -1217,7 +1246,7 @@
             return;
           }*/
           check['any'+soul+key] = 1;
-          SEA.sign(val, (user._).sea, function(data){
+          SEA.sign([soul, key, val, Gun.state.is(node, key)], (user._).sea, function(data){
             if(u === data){ return each.end({err: 'My signature fail.'}) }
             node[key] = data;
             check['any'+soul+key] = 0;
@@ -1242,7 +1271,18 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
-    var noop = {};
+    SEA.opt.unpack = function(data, key, node){
+      if(u === data){ return }
+      var tmp = data, soul = Gun.node.soul(node), s = Gun.state.is(node, key);
+      if(tmp && 4 === tmp.length && soul === tmp[0] && key === tmp[1] && s === tmp[3]){
+        return tmp[2];
+      }
+      if(s < SEA.opt.shuffle_attack){
+        return data;
+      }
+    }
+    SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
+    var noop = {}, u;
 
   })(USE, './index');
 }());

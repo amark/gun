@@ -16,7 +16,7 @@
   </head>
   <body>
     <div id="map"></div>
-    <a id="share" class="hide"><div class="stick button">Share</div></a>
+    <a id="share" class="hide"><div class="stick button">Request Ride</div></a>
     <div id="link" class="hide">
       <p>Copy and Paste this URL to your friends to share your location:</p>
       <center>
@@ -123,6 +123,10 @@
             });
             return;
           }
+          var z = 12;
+          var x = lng2tile(latlng.lng, z);
+          var y = lat2tile(latlng.lat, z);
+          console.log(x, y); //
           where.map.setView(latlng, where.opt.zoom.level, {animate: true});
           where.marker = where.marker || L.marker().setLatLng(latlng).addTo(where.map);
           where.marker.setLatLng(latlng).update();
@@ -144,6 +148,9 @@
             enableHighAccuracy: where.opt.enableHighAccuracy || false
           });
         }
+
+        function lng2tile(lng,z) { return (Math.floor((lng+180)/360*Math.pow(2,z))) }
+        function lat2tile(lat,z)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,z))) }
 
         return where;
       }
