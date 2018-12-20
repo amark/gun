@@ -1982,7 +1982,7 @@
 						}
 						return;
 					}
-          if(msg.BYE){msg.peer = peer}
+          
 					ctx.on('in', msg);
 
 					return;
