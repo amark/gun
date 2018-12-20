@@ -14,7 +14,7 @@
       }
       salt = salt || shim.random(9);
       if('SHA-256' === opt.name){
-        var rsha = shim.Buffer.from(await sha(data), 'binary').toString('utf8')
+        var rsha = shim.Buffer.from(await sha(data), 'binary').toString(opt.encode || 'base64')
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
@@ -28,11 +28,12 @@
         hash: opt.hash || S.pbkdf2.hash,
       }, key, opt.length || (S.pbkdf2.ks * 8))
       data = shim.random(data.length)  // Erase data in case of passphrase
-      const r = shim.Buffer.from(result, 'binary').toString('utf8')
+      const r = shim.Buffer.from(result, 'binary').toString(opt.encode || 'base64')
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
     }});

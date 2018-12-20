@@ -400,7 +400,7 @@
 			return n;
 		}
 		State.to = function(from, k, to){
-			var val = from[k]; // BUGGY!
+			var val = (from||{})[k];
 			if(obj_is(val)){
 				val = obj_copy(val);
 			}
@@ -1287,13 +1287,16 @@
 			return at;
 		}
 		function soul(gun, cb, opt, as){
-			var cat = gun._, tmp;
+			var cat = gun._, acks = 0, tmp;
 			if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
 			if(tmp = cat.link){ return cb(tmp, as, cat), gun }
-			gun.get(function(msg, ev){ // TODO: Bug! Needs once semantics?
+			gun.get(function(msg, ev){
+				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && acks++ <= tmp){
+					return;
+				}
 				ev.rid(msg);
 				var at = ((at = msg.$) && at._) || {};
-				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);
+				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
 				cb(tmp, as, msg, ev);
 			}, {out: {get: {'.':true}}});
 			return gun;
@@ -1319,9 +1322,10 @@
 					msg = obj_to(msg, {put: data = tmp.put});
 				}
 			}
-			if((tmp = root.mum) && at.id){
-				if(tmp[at.id]){ return }
-				if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
+			if((tmp = root.mum) && at.id){ // TODO: can we delete mum entirely now?
+				var id = at.id + (eve.id || (eve.id = Gun.text.random(9)));
+				if(tmp[id]){ return }
+				if(u !== data && !rel.is(data)){ tmp[id] = true; }
 			}
 			as.use(msg, eve);
 			if(eve.stun){
@@ -1343,7 +1347,7 @@
 			//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 			return;
 		}
-		var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
+		var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_to = Gun.obj.to;
 		var num_is = Gun.num.is;
 		var rel = Gun.val.link, node_soul = Gun.node.soul, node_ = Gun.node._;
 		var empty = {}, u;
@@ -1778,7 +1782,7 @@
 		try{store = (Gun.window||noop).localStorage}catch(e){}
 		if(!store){
 			console.log("Warning: No localStorage exists to persist data to!");
-			store = {setItem: noop, removeItem: noop, getItem: noop};
+			store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 		}
 		/*
 			NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
