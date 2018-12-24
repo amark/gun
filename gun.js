@@ -172,13 +172,13 @@
 			var u, tag = (this.tag || (this.tag = {}))[tag] ||
 			(this.tag[tag] = {tag: tag, to: onto._ = {
 				next: function(arg){ var tmp;
-					if((tmp = this.to)){ 
+					if((tmp = this.to)){
 						tmp.next(arg);
 				}}
 			}});
 			if(arg instanceof Function){
 				var be = {
-					off: onto.off || 
+					off: onto.off ||
 					(onto.off = function(){
 						if(this.next === onto._.next){ return !0 }
 						if(this === this.the.last){
@@ -261,7 +261,7 @@
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
 			if(text_is(v) // by "text" we mean strings.
 			|| bi_is(v) // by "binary" we mean boolean.
-			|| num_is(v)){ // by "number" we mean integers or decimals. 
+			|| num_is(v)){ // by "number" we mean integers or decimals.
 				return true; // simple values are valid.
 			}
 			return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
@@ -384,10 +384,10 @@
 		State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
-					return; 
+					return;
 				}
 				n = Node.soul.ify(n, soul); // then make it so!
-			} 
+			}
 			var tmp = obj_as(n[N_], State._); // grab the states data.
 			if(u !== k && k !== N_){
 				if(num_is(s)){
@@ -758,7 +758,7 @@
 				if(!at){
 					if(!(cat.opt||empty).super){
 						ctx.souls[soul] = false;
-						return; 
+						return;
 					}
 					at = (ctx.$.get(soul)._);
 				}
@@ -882,7 +882,7 @@
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
-		
+
 		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
@@ -1082,7 +1082,7 @@
 			//if(tmp[cat.id]){ return }
 			tmp.is = tmp.is || at.put;
 			tmp[cat.id] = at.put || true;
-			//if(root.stop){ 
+			//if(root.stop){
 				eve.to.next(msg)
 			//}
 			relate(cat, msg, at, rel);
@@ -1095,7 +1095,7 @@
 			var tmp = (at.root.$.get(rel)._);
 			if(at.has){
 				from = tmp;
-			} else 
+			} else
 			if(from.has){
 				relate(from, msg, from, rel);
 			}
@@ -1147,7 +1147,7 @@
 			if(tmp = via.$){
 				tmp = (chain = via.$.get(key))._;
 				if(u === tmp.put || !Gun.val.link.is(data)){
-					tmp.put = data; 
+					tmp.put = data;
 				}
 			}
 			at.on('in', {
@@ -1314,7 +1314,7 @@
 
 			//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
 			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
+			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 				tmp = ((msg.$$ = at.root.gun.get(tmp))._);
@@ -1860,7 +1860,7 @@
 			var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 			var lS = function(){}, u;
 			root.on('localStorage', disk); // NON-STANDARD EVENT!
-			
+
 			root.on('put', function(at){
 				this.to.next(at);
 				Gun.graph.is(at.put, null, map);
@@ -1906,7 +1906,7 @@
 				acks = {};
 				if(data){ disk = data }
 				try{store.setItem(opt.prefix, JSON.stringify(disk));
-				}catch(e){ 
+				}catch(e){
 					Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 					root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 				}
@@ -1981,8 +1981,9 @@
 						}
 						return;
 					}
+          
 					ctx.on('in', msg);
-					
+
 					return;
 				} else
 				if('[' === tmp){
