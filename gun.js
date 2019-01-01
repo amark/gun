@@ -2027,7 +2027,7 @@
 					if(peer.batch){
 						peer.tail = (peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
-							(msg.dam) ? peer.batch.unshift(raw) : peer.batch.push(raw);
+							peer.batch.push(raw);
 							return;
 						}
 						flush(peer);
@@ -2119,10 +2119,10 @@
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
 				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
-				tmp = peer.queue; peer.queue = [];
-				Type.obj.map(tmp, function(msg){
-					mesh.say(msg, peer);
-				});
+				// tmp = peer.queue; peer.queue = [];
+				// Type.obj.map(tmp, function(msg){
+				// 	mesh.say(msg, peer);
+				// });
 			}
 			mesh.bye = function(peer){
 				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
@@ -2131,7 +2131,14 @@
 
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
-				if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
+				if(!msg.pid){
+					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer)
+					var tmp = peer.queue; peer.queue = [];
+					Type.obj.map(tmp, function(msg){
+						mesh.say(msg, peer);
+					});
+					return;
+				}
 				peer.id = peer.id || msg.pid;
 				mesh.hi(peer);
 			}
