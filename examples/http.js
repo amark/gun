@@ -16,6 +16,7 @@
 		config.server = require('http').createServer(Gun.serve(__dirname));
 	}
 
-	var gun = Gun({web: config.server.listen(config.port) });
+	require('../lib/multicast');
+	var gun = Gun({web: config.server.listen(config.port), multicast: { port: 8765 } });
 	console.log('Relay peer started on port ' + config.port + ' with /gun');
 }());
