@@ -3705,6 +3705,7 @@ describe('Gun', function(){
 		});
 
 		it('Multiple subscribes should trigger', function(done){
+			// thanks to @ivkan for reporting and providing test.
 			var gun = Gun();
 			var check = {};
 			gun.get('m/s/key').put({property: 'value'});
