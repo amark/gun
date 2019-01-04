@@ -30,7 +30,7 @@ Gun.chain.put = function(data, cb, as){
 			});
 			return gun;
 		}
-		as.$ = gun = root.get(as.soul);
+		as.$ = root.get(as.soul);
 		as.ref = as.$;
 		ify(as);
 		return gun;
@@ -185,8 +185,8 @@ function any(soul, as, msg, eve){
 				as.data = obj_put({}, at.get, as.data);
 			});
 		}
-		tmp = tmp || at.get;
-		at = (at.root.$.get(tmp)._);
+		tmp = tmp || at.soul || at.link || at.dub;// || at.get;
+		at = tmp? (at.root.$.get(tmp)._) : at;
 		as.soul = tmp;
 		data = as.data;
 	}

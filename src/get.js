@@ -61,13 +61,16 @@ function cache(key, back){
 	return at;
 }
 function soul(gun, cb, opt, as){
-	var cat = gun._, tmp;
+	var cat = gun._, acks = 0, tmp;
 	if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
 	if(tmp = cat.link){ return cb(tmp, as, cat), gun }
-	gun.get(function(msg, ev){ // TODO: Bug! Needs once semantics?
+	gun.get(function(msg, ev){
+		if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && acks++ <= tmp){
+			return;
+		}
 		ev.rid(msg);
 		var at = ((at = msg.$) && at._) || {};
-		tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);
+		tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
 		cb(tmp, as, msg, ev);
 	}, {out: {get: {'.':true}}});
 	return gun;
@@ -118,7 +121,7 @@ function rid(at){
 	//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 	return;
 }
-var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
+var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_to = Gun.obj.to;
 var num_is = Gun.num.is;
 var rel = Gun.val.link, node_soul = Gun.node.soul, node_ = Gun.node._;
 var empty = {}, u;
