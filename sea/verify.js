@@ -6,6 +6,15 @@
     var parse = require('./parse');
     var u;
 
+
+    var knownKeys = {};
+    var keyForPair = pair => {
+      if (knownKeys[pair]) return knownKeys[pair];
+      const jwk = S.jwk(pair);
+      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, S.ecdsa.pair, false, ["verify"]);
+      return knownKeys[pair];
+    };
+
     SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
       const json = parse(data)
       if(false === pair){ // don't verify!
@@ -18,9 +27,8 @@
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       if(json === data){ throw "No signature on data." }
-      const pub = pair.pub || pair
-      const jwk = S.jwk(pub)
-      const key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify'])
+      const pub = pair.pub || pair;
+      const key = await keyForPair(pub);
       const hash = await sha256hash(json.m)
       var buf; var sig; var check; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
