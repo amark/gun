@@ -1273,8 +1273,10 @@
     }
     SEA.opt.unpack = function(data, key, node){
       if(u === data){ return }
+      if(data === node[key]){ return data }
+      if(data && data['#'] && rel_is(data) === rel_is(node[key])){ return data }
       var tmp = data, soul = Gun.node.soul(node), s = Gun.state.is(node, key);
-      if(tmp && 4 === tmp.length && soul === tmp[0] && key === tmp[1] && s === tmp[3]){
+      if(tmp && 4 === tmp.length && soul === tmp[0] && key === tmp[1] && fl(s) === fl(tmp[3])){
         return tmp[2];
       }
       if(s < SEA.opt.shuffle_attack){
@@ -1283,6 +1285,9 @@
     }
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var noop = {}, u;
+    var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
+    var rel_is = Gun.val.rel.is;
+    // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
 
   })(USE, './index');
 }());
