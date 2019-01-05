@@ -7,7 +7,7 @@ Val.is = function(v){ // Valid values are a subset of JSON: null, binary, number
 	if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
 	if(text_is(v) // by "text" we mean strings.
 	|| bi_is(v) // by "binary" we mean boolean.
-	|| num_is(v)){ // by "number" we mean integers or decimals. 
+	|| num_is(v)){ // by "number" we mean integers or decimals.
 		return true; // simple values are valid.
 	}
 	return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.

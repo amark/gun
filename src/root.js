@@ -104,7 +104,7 @@ Gun.dup = require('./dup');
 		if(!at){
 			if(!(cat.opt||empty).super){
 				ctx.souls[soul] = false;
-				return; 
+				return;
 			}
 			at = (ctx.$.get(soul)._);
 		}

@@ -57,8 +57,9 @@ function Mesh(ctx){
 				}
 				return;
 			}
+          
 			ctx.on('in', msg);
-			
+
 			return;
 		} else
 		if('[' === tmp){
