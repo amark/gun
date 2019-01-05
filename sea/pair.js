@@ -4,8 +4,19 @@
     var S = require('./settings');
     var Buff = (typeof Buffer !== 'undefined')? Buffer : shim.Buffer;
 
+    SEA.name = SEA.name || (async (cb, opt) => { try {
+      if(cb){ try{ cb() }catch(e){console.log(e)} }
+      return;
+    } catch(e) {
+      console.log(e);
+      SEA.err = e;
+      if(SEA.throw){ throw e }
+      if(cb){ cb() }
+      return;
+    }});
+
     //SEA.pair = async (data, proof, cb) => { try {
-    SEA.pair = async (cb) => { try {
+    SEA.pair = SEA.pair || (async (cb, opt) => { try {
 
       const ecdhSubtle = shim.ossl || shim.subtle
       // First: ECDSA keys for signing/verifying...
@@ -54,9 +65,10 @@
     } catch(e) {
       console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.pair;
   
