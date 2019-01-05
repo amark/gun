@@ -6,7 +6,7 @@ describe('Gun', function(){
 		if(typeof global !== 'undefined'){ env = global }
 		if(typeof window !== 'undefined'){ env = window }
 		root = env.window? env.window : global;
-		env.window && root.localStorage && root.localStorage.clear();
+		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');
 		if(root.Gun){
@@ -3702,6 +3702,29 @@ describe('Gun', function(){
 			gun.get('c/p/c').get('a').put('lol', function(ack){
 				done();
 			});
+		});
+
+		it('Multiple subscribes should trigger', function(done){
+			// thanks to @ivkan for reporting and providing test.
+			var gun = Gun();
+			var check = {};
+			gun.get('m/s/key').put({property: 'value'});
+
+			gun.get('m/s/key').on(function(data, key){
+				check['a'+data.property] = 1;
+			});
+
+			gun.get('m/s/key').on(function(data, key){
+				check['b'+data.property] = 1;
+			  if(check.avalue && check.bvalue && check.anewValue && check.bnewValue){
+			  	if(done.c){ return } done.c = true;
+			  	done();
+			  }
+			});
+
+			setTimeout(function(){
+				gun.get('m/s/key').put({property: 'newValue'});
+			}, 1000);
 		});
 		return;
 		it('Nested listener should be called', function(done){

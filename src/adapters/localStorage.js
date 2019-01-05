@@ -1,10 +1,12 @@
 
 if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-var root, noop = function(){}, u;
-if(typeof window !== 'undefined'){ root = window }
-var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
+var root, noop = function(){}, store, u;
+try{store = (Gun.window||noop).localStorage}catch(e){}
+if(!store){
+	console.log("Warning: No localStorage exists to persist data to!");
+	store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
+}
 /*
 	NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
 	If you update anything here, consider updating the other adapters as well.
@@ -82,7 +84,7 @@ Gun.on('create', function(root){
 	var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
-	
+
 	root.on('put', function(at){
 		this.to.next(at);
 		Gun.graph.is(at.put, null, map);
@@ -128,8 +130,8 @@ Gun.on('create', function(root){
 		acks = {};
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
-		}catch(e){ 
-			Gun.log(err = e || "localStorage failure");
+		}catch(e){
+			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
