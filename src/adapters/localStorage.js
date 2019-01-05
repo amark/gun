@@ -84,7 +84,7 @@ Gun.on('create', function(root){
 	var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
-	
+
 	root.on('put', function(at){
 		this.to.next(at);
 		Gun.graph.is(at.put, null, map);
@@ -130,7 +130,7 @@ Gun.on('create', function(root){
 		acks = {};
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
-		}catch(e){ 
+		}catch(e){
 			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
