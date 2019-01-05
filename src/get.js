@@ -88,7 +88,7 @@ function use(msg){
 
 	//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
 	//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-	if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
+	if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 	//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 		tmp = ((msg.$$ = at.root.gun.get(tmp))._);
