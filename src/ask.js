@@ -2,7 +2,7 @@
 // request / response module, for asking and acking messages.
 require('./onto'); // depends upon onto!
 module.exports = function ask(cb, as){
-	if(!this.on){ return }
+	if(!this.on || !as){ return }
 	if(!(cb instanceof Function)){
 		if(!cb || !as){ return }
 		var id = cb['#'] || cb, tmp = (this.tag||empty)[id];
