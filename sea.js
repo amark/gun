@@ -384,7 +384,8 @@
       var hash = await sha(data);
       var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
       .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
-      var r = 'SEA'+JSON.stringify({m: data, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')});
+      var r = {m: data, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
+      if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
@@ -407,14 +408,6 @@
     var parse = USE('./parse');
     var u;
 
-    var knownKeys = {};
-    var keyForPair = pair => {
-      if (knownKeys[pair]) return knownKeys[pair];
-      var jwk = S.jwk(pair);
-      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, S.ecdsa.pair, false, ["verify"]);
-      return knownKeys[pair];
-    };
-
     SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
       var json = parse(data);
       if(false === pair){ // don't verify!
@@ -427,18 +420,17 @@
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       var pub = pair.pub || pair;
-      var key = await keyForPair(pub);
+      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify']);
       var hash = await sha(json.m);
-      var buf; var sig; var check; try{
+      var buf, sig, check, tmp; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
         sig = new Uint8Array(buf);
         check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash));
         if(!check){ throw "Signature did not match." }
       }catch(e){
-        buf = shim.Buffer.from(json.s, 'utf8'); // AUTO BACKWARD OLD UTF8 DATA!
-        sig = new Uint8Array(buf);
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash));
-        if(!check){ throw "Signature did not match." }
+        if(SEA.opt.fallback){
+          return await SEA.opt.fall_verify(data, pair, cb, opt);
+        }
       }
       var r = check? parse(json.m) : u;
 
@@ -453,6 +445,38 @@
     }});
 
     module.exports = SEA.verify;
+    // legacy & ossl leak mitigation:
+
+    var knownKeys = {};
+    var keyForPair = SEA.opt.slow_leak = pair => {
+      if (knownKeys[pair]) return knownKeys[pair];
+      var jwk = S.jwk(pair);
+      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, S.ecdsa.pair, false, ["verify"]);
+      return knownKeys[pair];
+    };
+
+
+    SEA.opt.fall_verify = async function(data, pair, cb, opt, f){
+      if(f === SEA.opt.fallback){ throw "Signature did not match" } f = f || 1;
+      var json = parse(data), pub = pair.pub || pair, key = await SEA.opt.slow_leak(pub);
+      var hash = (f <= SEA.opt.fallback)? shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, new shim.TextEncoder().encode(parse(json.m)))) : await sha(json.m); // this line is old bad buggy code but necessary for old compatibility.
+      var buf; var sig; var check; try{
+        buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }catch(e){
+        buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
+        sig = new Uint8Array(buf)
+        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        if(!check){ throw "Signature did not match." }
+      }
+      var r = check? parse(json.m) : u;
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      return r;
+    }
+    SEA.opt.fallback = 2;
+
   })(USE, './verify');
 
   ;USE(function(module){
@@ -745,19 +769,19 @@
         }
         // the user's public key doesn't need to be signed. But everything else needs to be signed with it! // we have now automated it! clean up these extra steps now!
         act.data = {pub: pair.pub};
-        SEA.sign(alias, pair, act.d); 
+        act.d(); //SEA.sign(alias, pair, act.d); 
       }
-      act.d = function(sig){
-        act.data.alias = alias || sig;
-        SEA.sign(act.pair.epub, act.pair, act.e);
+      act.d = function(){
+        act.data.alias = alias;
+        act.e(); //SEA.sign(act.pair.epub, act.pair, act.e);
       }
-      act.e = function(epub){
-        act.data.epub = act.pair.epub || epub; 
+      act.e = function(){
+        act.data.epub = act.pair.epub; 
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
         act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
-        SEA.sign({ek: auth, s: act.salt}, act.pair, act.g);
+        act.g(act.data.auth); //SEA.sign({ek: auth, s: act.salt}, act.pair, act.g);
       }
       act.g = function(auth){ var tmp;
         act.data.auth = act.data.auth || auth;
@@ -1063,7 +1087,7 @@
       // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
       var to = this.to, vertex = (msg.$._).put, c = 0, d;
       Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
-        // TODO: consider async/await use here...
+        // only process if SEA formatted?
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
           var tmp = data;
           data = SEA.opt.unpack(data, key, node);
