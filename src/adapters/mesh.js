@@ -20,7 +20,7 @@ function Mesh(ctx){
 			return;
 		}
 		// add hook for AXE?
-		//if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
+		if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
 		mesh.say(msg);
 	}
 
