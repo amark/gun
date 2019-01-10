@@ -31,18 +31,21 @@
       // NOTE: THE SECURITY FUNCTION HAS ALREADY VERIFIED THE DATA!!!
       // WE DO NOT NEED TO RE-VERIFY AGAIN, JUST TRANSFORM IT TO PLAINTEXT.
       var to = this.to, vertex = (msg.$._).put, c = 0, d;
-      Gun.node.is(msg.put, function(val, key, node){ c++; // for each property on the node
-        // TODO: consider async/await use here...
+      Gun.node.is(msg.put, function(val, key, node){
+        // only process if SEA formatted?
+        var tmp = Gun.obj.ify(val) || noop;
+        if(u !== tmp[':']){
+          node[key] = SEA.opt.unpack(tmp);
+          return;
+        }
+        if(!SEA.opt.check(val)){ return }
+        c++; // for each property on the node
         SEA.verify(val, false, function(data){ c--; // false just extracts the plain data.
-          var tmp = data;
-          data = SEA.opt.unpack(data, key, node);
-          node[key] = val = data; // transform to plain value.
+          node[key] = SEA.opt.unpack(data, key, node);; // transform to plain value.
           if(d && !c && (c = -1)){ to.next(msg) }
         });
       });
-      d = true;
-      if(d && !c){ to.next(msg) }
-      return;
+      if((d = true) && !c){ to.next(msg) }
     }
 
     // signature handles data output, it is a proxy to the security function.
@@ -107,55 +110,44 @@
           if(key === Gun.val.link.is(val)){ return check['pubs'+soul+key] = 0 } // and the ID must be EXACTLY equal to its property
           each.end({err: "Alias must match!"}); // that way nobody can tamper with the list of public keys.
         };
-        each.pub = function(val, key, node, soul, pub, user){ // Example: {_:#~asdf, hello:SEA{'world',fdsa}}
+        each.pub = function(val, key, node, soul, pub, user){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
           if('pub' === key){
             if(val === pub){ return (check['pub'+soul+key] = 0) } // the account MUST match `pub` property that equals the ID of the public key.
             return each.end({err: "Account must match!"});
           }
           check['user'+soul+key] = 1;
-          if(user && user.is && pub === user.is.pub){
-            //var id = Gun.text.random(3);
-            SEA.sign([soul, key, val, Gun.state.is(node, key)], (user._).sea, function(data){ var rel;
+          if(msg.I && user && user.is && pub === user.is.pub){
+            SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){ var rel;
               if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
               if(rel = Gun.val.link.is(val)){
                 (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
               }
-              node[key] = data;
+              node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
               check['user'+soul+key] = 0;
               each.end({ok: 1});
-            });
-            // TODO: Handle error!!!!
+            }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});
             return;
           }
-          SEA.verify(val, pub, function(data){ var rel, tmp;
+          SEA.verify(SEA.opt.pack(val,key,node,soul), pub, function(data){ var rel, tmp;
             data = SEA.opt.unpack(data, key, node);
             if(u === data){ // make sure the signature matches the account it claims to be on.
               return each.end({err: "Unverified data."}); // reject any updates that are signed with a mismatched account.
             }
-            if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
+            if((rel = Gun.val.link.is(data)) && pub === SEA.opt.pub(rel)){
               (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
             }
             check['user'+soul+key] = 0;
             each.end({ok: 1});
           });
         };
-        function relpub(s){
-          if(!s){ return }
-          s = s.split('~');
-          if(!s || !(s = s[1])){ return }
-          s = s.split('.');
-          if(!s || 2 > s.length){ return }
-          s = s.slice(0,2).join('.');
-          return s;
-        }
         each.any = function(val, key, node, soul, user){ var tmp, pub;
           if(!user || !user.is){
-            if(tmp = relpub(soul)){
+            if(tmp = SEA.opt.pub(soul)){
               check['any'+soul+key] = 1;
-              SEA.verify(val, pub = tmp, function(data){ var rel;
+              SEA.verify(SEA.opt.pack(val,key,node,soul), pub = tmp, function(data){ var rel;
                 data = SEA.opt.unpack(data, key, node);
                 if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
-                if((rel = Gun.val.link.is(data)) && pub === relpub(rel)){
+                if((rel = Gun.val.link.is(data)) && pub === SEA.opt.pub(rel)){
                   (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
                 }
                 check['any'+soul+key] = 0;
@@ -172,26 +164,21 @@
             //each.end({err: "Data cannot be modified."});
             return;
           }
-          if(!(tmp = relpub(soul))){
+          if(!(tmp = SEA.opt.pub(soul))){
             if(at.opt.secure){
               each.end({err: "Soul is missing public key at '" + key + "'."});
               return;
             }
-            if(val && val.slice && 'SEA{' === (val).slice(0,4)){
-              check['any'+soul+key] = 0;
-              each.end({ok: 1});
-              return;
-            }
-            //check['any'+soul+key] = 1;
-            //SEA.sign(val, user, function(data){
-             // if(u === data){ return each.end({err: 'Any signature failed.'}) }
-            //  node[key] = data;
-              check['any'+soul+key] = 0;
-              each.end({ok: 1});
-            //});
+            // TODO: Ask community if should auto-sign non user-graph data.
+            check['any'+soul+key] = 0;
+            each.end({ok: 1});
             return;
           }
-          if(!msg.I || (pub = tmp) !== (user.is||noop).pub){
+          if(!msg.I){ // only sign data put out from this instance.
+            each.any(val, key, node, soul);
+            return;
+          }
+          if((pub = tmp) !== (user.is||noop).pub){
             each.any(val, key, node, soul);
             return;
           }
@@ -203,12 +190,12 @@
             return;
           }*/
           check['any'+soul+key] = 1;
-          SEA.sign([soul, key, val, Gun.state.is(node, key)], (user._).sea, function(data){
+          SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){
             if(u === data){ return each.end({err: 'My signature fail.'}) }
-            node[key] = data;
+            node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
             check['any'+soul+key] = 0;
             each.end({ok: 1});
-          });
+          }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});
         }
         each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
           if(each.err){ return }
@@ -220,6 +207,7 @@
           if(Gun.obj.map(check, function(no){
             if(no){ return true }
           })){ return }
+          msg.user = at.user; // already been through firewall, does not need to again on out.
           to.next(msg);
         };
         Gun.obj.map(msg.put, each.node);
@@ -228,16 +216,35 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
-    SEA.opt.unpack = function(data, key, node){
-      if(u === data){ return }
-      if(data === node[key]){ return data }
-      if(data && data['#'] && rel_is(data) === rel_is(node[key])){ return data }
-      var tmp = data, soul = Gun.node.soul(node), s = Gun.state.is(node, key);
-      if(tmp && 4 === tmp.length && soul === tmp[0] && key === tmp[1] && fl(s) === fl(tmp[3])){
-        return tmp[2];
+    SEA.opt.pub = function(s){
+      if(!s){ return }
+      s = s.split('~');
+      if(!s || !(s = s[1])){ return }
+      s = s.split('.');
+      if(!s || 2 > s.length){ return }
+      s = s.slice(0,2).join('.');
+      return s;
+    }
+    SEA.opt.prep = function(d,k, n,s){ // prep for signing
+      return {'#':s,'.':k,':':SEA.opt.parse(d),'>':Gun.state.is(n, k)};
+    }
+    SEA.opt.pack = function(d,k, n,s){ // pack for verifying
+      if(SEA.opt.check(d)){ return d }
+      var meta = (Gun.obj.ify(d)||noop), sig = meta['~'];
+      return sig? {m: {'#':s,'.':k,':':meta[':'],'>':Gun.state.is(n, k)}, s: sig} : d;
+    }
+    SEA.opt.unpack = function(d, k, n){ var tmp;
+      if(u === d){ return }
+      if(d && (u !== (tmp = d[':']))){ return tmp }
+      if(!k || !n){ return }
+      if(d === n[k]){ return d }
+      if(!SEA.opt.check(n[k])){ return d }
+      var soul = Gun.node.soul(n), s = Gun.state.is(n, k);
+      if(d && 4 === d.length && soul === d[0] && k === d[1] && fl(s) === fl(d[3])){
+        return d[2];
       }
       if(s < SEA.opt.shuffle_attack){
-        return data;
+        return d;
       }
     }
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019

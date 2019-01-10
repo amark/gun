@@ -2,7 +2,7 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    var sha256hash = require('./sha256');
+    var sha = require('./sha256');
     var u;
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
@@ -10,13 +10,24 @@
       if(!(pair||opt).priv){
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
       }
-      const pub = pair.pub
-      const priv = pair.priv
-      const jwk = S.jwk(pub, priv)
-      const hash = await sha256hash(JSON.stringify(data))
-      const sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
+      if(u === data){ throw '`undefined` not allowed.' }
+      var json = S.parse(data);
+      var check = opt.check = opt.check || json;
+      if(SEA.verify && (SEA.opt.check(check) || (check && check.s && check.m))
+      && u !== await SEA.verify(check, pair)){ // don't sign if we already signed it.
+        var r = S.parse(check);
+        if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
+        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+        return r;
+      }
+      var pub = pair.pub;
+      var priv = pair.priv;
+      var jwk = S.jwk(pub, priv);
+      var hash = await sha(json);
+      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
       .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
-      const r = 'SEA'+JSON.stringify({m: data, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')});
+      var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
+      if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
