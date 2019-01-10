@@ -60,7 +60,7 @@
         // with one common superpeer (with ready failovers)
         // in case the p2p linear latency is high.
         // Or there could be plenty of other better options.
-        console.log("axe", at.opt);
+        console.log("axe");
         if(at.opt.super){
           function verify(msg, send, at) {
             var peers = Object.values(p), puts = Object.keys(msg.put), i, j, peer;
