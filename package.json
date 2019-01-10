@@ -9,6 +9,7 @@
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
     "testsea": "mocha test/sea.js",
+    "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "unbuild": "node lib/unbuild.js && uglifyjs gun.js -o gun.min.js -c -m"
