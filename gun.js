@@ -959,7 +959,6 @@
 
 		function output(msg){
 			var put, get, at = this.as, back = at.back, root = at.root, tmp;
-			if(!msg.I){ msg.I = at.$ }
 			if(!msg.$){ msg.$ = at.$ }
 			this.to.next(msg);
 			if(get = msg.get){
@@ -1215,7 +1214,6 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
-			msg.$ = at.root.$;
 			Gun.on.put(msg, at.root.$);
 		}
 		var empty = {}, u;
@@ -1312,7 +1310,7 @@
 			//else if(!cat.async && msg.put !== at.put && root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
 
 
-			//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
+			//root.stop && (root.stop.id = root.stop.id || Gun.text.random(2));
 			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
 			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
@@ -1812,7 +1810,7 @@
 
 			root.on('out', function(msg){
 				if(msg.lS){ return }
-				if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+				if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
 					if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -1888,7 +1886,7 @@
 					return; // Hmm, what if we have peers but we are disconnected?
 				}
 				//console.log("lS get", lex, data);
-				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
 				};
 				Gun.debug? setTimeout(to,1) : to();
 			});
@@ -1938,8 +1936,8 @@
 				if((tmp = msg['@'])
 				&& (tmp = ctx.dup.s[tmp])
 				&& (tmp = tmp.it)
-				&& tmp.mesh){
-					mesh.say(msg, tmp.mesh.via, 1);
+				&& tmp._){
+					mesh.say(msg, (tmp._).via, 1);
 					tmp['##'] = msg['##'];
 					return;
 				}
@@ -1971,9 +1969,9 @@
 							(tmp = dup.s)[hash] = tmp[id];
 						}
 					}
-					(msg.mesh = function(){}).via = peer;
+					(msg._ = function(){}).via = peer;
 					if((tmp = msg['><'])){
-						msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+						(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
 					}
 					if(msg.dam){
 						if(tmp = mesh.hear[msg.dam]){
@@ -1981,7 +1979,6 @@
 						}
 						return;
 					}
-          
 					ctx.on('in', msg);
 
 					return;
@@ -2012,7 +2009,7 @@
 					}
 					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 					if(!wire){ return }
-					msh = msg.mesh || empty;
+					msh = (msg._) || empty;
 					if(peer === msh.via){ return }
 					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
 					if((tmp = msg['@'])
@@ -2063,7 +2060,7 @@
 
 				mesh.raw = function(msg){
 					if(!msg){ return '' }
-					var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+					var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
 					if(tmp = msh.raw){ return tmp }
 					if(typeof msg === 'string'){ return msg }
 					if(msg['@'] && (tmp = msg.put)){
