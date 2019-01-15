@@ -31,7 +31,7 @@
 
 		Gun.state.drift = Gun.state.drift || 0;
 		setTimeout(function ping(){
-			var NTS = {}, ack = Gun.text.random(), msg = {'#': ack, nts: true, gun: ctx.gun};
+			var NTS = {}, ack = Gun.text.random(), msg = {'#': ack, nts: true};
 			NTS.start = Gun.state();
 			ask[ack] = function(at){
 				NTS.end = Gun.state();
