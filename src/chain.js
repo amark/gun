@@ -16,7 +16,6 @@ Gun.chain.chain = function(sub){
 
 function output(msg){
 	var put, get, at = this.as, back = at.back, root = at.root, tmp;
-	if(!msg.I){ msg.I = at.$ }
 	if(!msg.$){ msg.$ = at.$ }
 	this.to.next(msg);
 	if(get = msg.get){
@@ -272,7 +271,6 @@ function ack(msg, ev){
 		at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 		return;
 	}
-	msg.$ = at.root.$;
 	Gun.on.put(msg, at.root.$);
 }
 var empty = {}, u;
