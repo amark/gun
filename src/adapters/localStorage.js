@@ -36,7 +36,7 @@ Gun.on('create', function(root){
 
 	root.on('out', function(msg){
 		if(msg.lS){ return }
-		if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+		if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 			id = msg['#'];
 			Gun.graph.is(msg.put, null, map);
 			if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -112,7 +112,7 @@ Gun.on('create', function(root){
 			return; // Hmm, what if we have peers but we are disconnected?
 		}
 		//console.log("lS get", lex, data);
-		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
 	});
