@@ -14,8 +14,8 @@ function Mesh(ctx){
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
 		&& (tmp = tmp.it)
-		&& tmp.mesh){
-			mesh.say(msg, tmp.mesh.via, 1);
+		&& tmp._){
+			mesh.say(msg, (tmp._).via, 1);
 			tmp['##'] = msg['##'];
 			return;
 		}
@@ -47,9 +47,9 @@ function Mesh(ctx){
 					(tmp = dup.s)[hash] = tmp[id];
 				}
 			}
-			(msg.mesh = function(){}).via = peer;
+			(msg._ = function(){}).via = peer;
 			if((tmp = msg['><'])){
-				msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+				(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
 			}
 			if(msg.dam){
 				if(tmp = mesh.hear[msg.dam]){
@@ -57,7 +57,6 @@ function Mesh(ctx){
 				}
 				return;
 			}
-          
 			ctx.on('in', msg);
 
 			return;
@@ -88,7 +87,7 @@ function Mesh(ctx){
 			}
 			var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 			if(!wire){ return }
-			msh = msg.mesh || empty;
+			msh = (msg._) || empty;
 			if(peer === msh.via){ return }
 			if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
 			if((tmp = msg['@'])
@@ -139,7 +138,7 @@ function Mesh(ctx){
 
 		mesh.raw = function(msg){
 			if(!msg){ return '' }
-			var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+			var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
 			if(tmp = msh.raw){ return tmp }
 			if(typeof msg === 'string'){ return msg }
 			if(msg['@'] && (tmp = msg.put)){
