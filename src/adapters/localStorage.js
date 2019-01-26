@@ -36,7 +36,7 @@ Gun.on('create', function(root){
 
 	root.on('out', function(msg){
 		if(msg.lS){ return }
-		if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+		if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 			id = msg['#'];
 			Gun.graph.is(msg.put, null, map);
 			if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -84,7 +84,7 @@ Gun.on('create', function(root){
 	var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
-	
+
 	root.on('put', function(at){
 		this.to.next(at);
 		Gun.graph.is(at.put, null, map);
@@ -112,7 +112,7 @@ Gun.on('create', function(root){
 			return; // Hmm, what if we have peers but we are disconnected?
 		}
 		//console.log("lS get", lex, data);
-		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
 	});
@@ -130,7 +130,7 @@ Gun.on('create', function(root){
 		acks = {};
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
-		}catch(e){ 
+		}catch(e){
 			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}

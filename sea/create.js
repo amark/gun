@@ -45,19 +45,19 @@
         }
         // the user's public key doesn't need to be signed. But everything else needs to be signed with it! // we have now automated it! clean up these extra steps now!
         act.data = {pub: pair.pub};
-        SEA.sign(alias, pair, act.d); 
+        act.d();
       }
-      act.d = function(sig){
-        act.data.alias = alias || sig;
-        SEA.sign(act.pair.epub, act.pair, act.e);
+      act.d = function(){
+        act.data.alias = alias;
+        act.e();
       }
-      act.e = function(epub){
-        act.data.epub = act.pair.epub || epub; 
-        SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f); // to keep the private key safe, we AES encrypt it with the proof of work!
+      act.e = function(){
+        act.data.epub = act.pair.epub; 
+        SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f, {raw:1}); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
         act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
-        SEA.sign({ek: auth, s: act.salt}, act.pair, act.g);
+        act.g(act.data.auth);
       }
       act.g = function(auth){ var tmp;
         act.data.auth = act.data.auth || auth;
@@ -104,7 +104,7 @@
       }
       act.c = function(auth){
         if(u === auth){ return act.b() }
-        if(Gun.text.is(auth)){ return act.c(Gun.obj.ify(auth)) } // new format
+        if(Gun.text.is(auth)){ return act.c(Gun.obj.ify(auth)) } // in case of legacy
         SEA.work(pass, (act.auth = auth).s, act.d, act.enc); // the proof of work is evidence that we've spent some time/effort trying to log in, this slows brute force.
       }
       act.d = function(proof){
@@ -137,7 +137,7 @@
         user.is = {pub: pair.pub, epub: pair.epub, alias: alias};
         at.sea = act.pair;
         cat.ing = false;
-        if(pass && !Gun.text.is(act.data.auth)){ opt.shuffle = opt.change = pass; } // migrate UTF8 + Shuffle! Test against NAB alias test_sea_shuffle + passw0rd
+        try{if(pass && !Gun.obj.has(Gun.obj.ify(cat.root.graph['~'+pair.pub].auth), ':')){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
         opt.change? act.z() : cb(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
@@ -161,18 +161,17 @@
         SEA.work(opt.change, act.salt, act.y);
       }
       act.y = function(proof){
-        SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, proof, act.x);
+        SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, proof, act.x, {raw:1});
       }
       act.x = function(auth){
         act.w(JSON.stringify({ek: auth, s: act.salt}));
-        //SEA.sign({ek: auth, s: act.salt}, act.pair, act.w);
       }
       act.w = function(auth){
         if(opt.shuffle){ // delete in future!
+          console.log('migrate core account from UTF8 & shuffle');
           var tmp = Gun.obj.to(act.data);
           Gun.obj.del(tmp, '_');
           tmp.auth = auth;
-          console.log('migrate core account from UTF8 & shuffle', tmp);
           root.get('~'+act.pair.pub).put(tmp);
         } // end delete
         root.get('~'+act.pair.pub).get('auth').put(auth, cb);
