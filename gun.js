@@ -1289,7 +1289,7 @@
 			if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
 			if(tmp = cat.link){ return cb(tmp, as, cat), gun }
 			gun.get(function(msg, ev){
-				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && acks++ <= tmp){
+				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && ++acks < tmp){
 					return;
 				}
 				ev.rid(msg);
