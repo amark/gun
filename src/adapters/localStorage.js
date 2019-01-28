@@ -30,7 +30,7 @@ Gun.on('create', function(root){
 			});
 		});
 		setTimeout(function(){
-			root.on('out', {put: send, '#': root.ask(ack), I: root.$});
+			root.on('out', {put: send, '#': root.ask(ack)});
 		},1);
 	}
 
