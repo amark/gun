@@ -30,7 +30,7 @@
 			Gun.debug = true;
 			console.log('async?', Gun.debug);
 		}
-		mocha.run(function(a,b,c){
+		var run = mocha.run(function(a,b,c){
 			//document.body.prepend("MARK! REMEMBER TO REMOVE RETURN!");return;
 			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
 			if(yes){
@@ -48,6 +48,11 @@
 			document.getElementById('mocha-report').id = 'mocha-report2';
 			Gun.debug = false;
 			mocha.run();*/
-		})</script>
+		});
+		run.on("fail", function(test, err){
+			console.log("!!!!!!!!!!!", test, err);
+			//alert(5);
+		})
+		</script>
 	</body>
 </html>
