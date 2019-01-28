@@ -1264,6 +1264,15 @@ describe('Gun', function(){
 
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
+		if(Gun.window && location.search){
+			console.log("LOCALHOST PEER MUST BE ON!");
+			Gun.on('opt', function(root){
+				if(root.opt.test_no_peer){ return this.to.next(root) }
+				root.opt.peers = root.opt.peers || {};
+				root.opt.peers['http://localhost:8765/gun'] = {url: 'http://localhost:8765/gun'};
+				this.to.next(root);
+			});
+		}
 		var gun = Gun();
 
 		it.skip('gun chain separation', function(done){ // TODO: UNDO!
@@ -1372,7 +1381,7 @@ describe('Gun', function(){
 		});
 
 		describe('plural chains', function(){
-			this.timeout(5000);
+			this.timeout(9000);
 			it('uncached synchronous map on', function(done){
 				/*
 					Biggest challenges so far:
@@ -1549,6 +1558,7 @@ describe('Gun', function(){
 							//expect(count.Alice).to.be(1);
 							//expect(count.Bob).to.be(1);
 							//expect(count['undefined']).to.be(1);
+							if(done.c){ return } done.c = 1;
 							done();
 						},10);
 					}
@@ -3580,6 +3590,7 @@ describe('Gun', function(){
 		});
 
 		it('Soul above but not beneath', function(done){
+			this.timeout(5000);
 			var gun = Gun();
 
 			var a = gun.get('sabnb');
@@ -3663,7 +3674,7 @@ describe('Gun', function(){
 
 		it('get map should not slowdown', function(done){
 			this.timeout(5000);
-			var gun = Gun().get('g/m/no/slow');
+			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
 			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
@@ -3726,6 +3737,23 @@ describe('Gun', function(){
 			setTimeout(function(){
 				gun.get('m/s/key').put({property: 'newValue'});
 			}, 1000);
+		});
+
+		it('Deep puts with peer should work', function(done){
+			// tests in async mode now automatically connect to localhost peer.
+			//var gun = Gun('http://localhost:8765/gun');
+			var gun = Gun();
+			//var user = gun.user();
+			//user.create('alice', 'password', function(){
+				gun.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+				//user.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+					gun.get('who').get('all').once(function(data){
+						expect(data.what).to.be.ok();
+						expect(data.when).to.be.ok();
+						done();
+					});
+				});
+			//});
 		});
 		return;
 		it('Nested listener should be called', function(done){

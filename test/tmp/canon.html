@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../../gun/examples/jquery.js"></script>
+		<script async src="../../../gun/lib/monotype.js"></script>
+		<script async src="../../../gun/lib/meta.js"></script>
+	</head>
+	<body>
+		<div id="edit" contenteditable='true'>the world is a beautiful place.</div>
+		<div id="out">The world is a beautiful place.</div>
+		<div id="test">
+		<button id="render">render</button>
+			<textarea id="before"></textarea>
+			<textarea id="after"></textarea>
+			<script src="../../../gun/lib/canonize.js"></script>
+		</div>
+		<script>
+			$('#render').on('click', check);
+			$('#edit').on('keyup', check).focus();
+			function check(){
+				var a = $('#edit').html();
+				$('#before').val(a);
+				var opt = {};
+				opt.hierarchy = ['div', 'ol', 'ul', 'li', 'p', 'a', 'b', 'i', 'span', 's', 'sub', 'sup', 'u', 'br'];
+				opt.convert = {'em': 'i', 'strong': 'b', 'strike': 's', 'font': 'span'};
+				var b = require.htmlNormalize(a);
+				$('#after').val(b);
+				$('#out').html(b);
+			}
+		</script>
+		<style>
+			button { width: 100%; }
+			textarea { width: 45%; height: 20em; font-size: 18pt; }
+		</style>
+	</body>
+</html>
