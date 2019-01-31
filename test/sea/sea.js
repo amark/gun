@@ -334,6 +334,7 @@ describe('SEA', function(){
     });
 
     it('set user ref null override', function(done){
+      this.timeout(9000);
       var gun = Gun();
       var user = gun.user();
       var msg = {what: 'hello world'};
