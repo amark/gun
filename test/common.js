@@ -1265,13 +1265,14 @@ describe('Gun', function(){
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		if(Gun.window && location.search){
-			console.log("LOCALHOST PEER MUST BE ON!");
+			/*console.log("LOCALHOST PEER MUST BE ON!");
+			var peer = {url: 'http://localhost:8765/gun'};
 			Gun.on('opt', function(root){
 				if(root.opt.test_no_peer){ return this.to.next(root) }
 				root.opt.peers = root.opt.peers || {};
-				root.opt.peers['http://localhost:8765/gun'] = {url: 'http://localhost:8765/gun'};
+				root.opt.peers['http://localhost:8765/gun'] = peer;
 				this.to.next(root);
-			});
+			});*/
 		}
 		var gun = Gun();
 
@@ -3754,6 +3755,19 @@ describe('Gun', function(){
 					});
 				});
 			//});
+		});
+
+		it('Set a ref should be found', function(done){
+			var gun = Gun();
+			var msg = {what: 'hello world'};
+			//var ref = user.get('who').get('all').set(msg);
+			//user.get('who').get('said').set(ref);
+			var ref = gun.get('who').get('all').set(msg);
+			gun.get('who').get('said').set(ref);
+			gun.get('who').get('said').map().once(function(data){
+				expect(data.what).to.be.ok();
+				done();
+			})
 		});
 		return;
 		it('Nested listener should be called', function(done){

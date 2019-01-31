@@ -317,6 +317,46 @@ describe('SEA', function(){
         done();
       });
     })
+
+    it('set user ref should be found', function(done){
+      var gun = Gun();
+      var user = gun.user();
+      var msg = {what: 'hello world'};
+      user.create('zach', 'password');
+      gun.on('auth', function(){
+        var ref = user.get('who').get('all').set(msg);
+        user.get('who').get('said').set(ref);
+        user.get('who').get('said').map().once(function(data){
+          expect(data.what).to.be.ok();
+          done();
+        })
+      })
+    });
+
+    it('set user ref null override', function(done){
+      this.timeout(9000);
+      var gun = Gun();
+      var user = gun.user();
+      var msg = {what: 'hello world'};
+      user.create('xavier', 'password');
+      gun.on('auth', function(){
+        var ref = user.get('who').get('all').set(msg);
+        var tmp = ref._.dub || ref._.link;
+        setTimeout(function(){
+          user.get('who').put(1);
+          setTimeout(function(){
+            user.get('who').get('all').get(tmp).put({boom: 'ah'});
+            setTimeout(function(){
+              user.get('who').get('all').map().once(function(data){
+                expect(data).to.be.ok();
+                expect(data.what).to.not.be.ok();
+                done();
+              });
+            },9);
+          },9);
+        },9);
+      });
+    });
   });
 
 })
