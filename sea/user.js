@@ -3,9 +3,8 @@
     var Gun = SEA.Gun;
     var then = require('./then');
 
-    function User(){ 
-      this._ = {$: this}
-      Gun.call()
+    function User(root){ 
+      this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
     User.prototype.constructor = User;
@@ -20,7 +19,7 @@
       (at = (user = at.user = gun.chain(new User))._).opt = {};
       at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
-        if(!pub || !(pub = (pub._).sea) || !(pub = pub.pub)){ return id }
+        if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
         id = id + '~' + pub + '.';
         if(cb && cb.call){ cb(null, id) }
         return id;

@@ -1,11 +1,12 @@
 {
   "name": "gun",
-  "version": "0.9.9998",
+  "version": "0.9.9999991",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "main": "index.js",
   "browser": "gun.min.js",
   "scripts": {
     "start": "node examples/http.js 8765",
+    "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
     "testsea": "mocha test/sea.js",
@@ -50,16 +51,18 @@
   "dependencies": {
     "ws": "~>5.2.0"
   },
+  "optionalDependencies": {
+    "text-encoding": "^0.7.0",
+    "node-webcrypto-ossl": "^1.0.39"
+  },
   "devDependencies": {
-    "@trust/webcrypto": "^0.7.1",
     "aws-sdk": ">=2.153.0",
+    "concat-map": "^0.0.1",
     "express": ">=4.15.2",
     "ip": "^1.1.5",
-    "concat-map": "^0.0.1",
-    "mocha": ">=3.2.0",
+    "mocha": "^5.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
-    "text-encoding": "^0.6.4",
     "uglify-js": ">=2.8.22"
   }
 }
