@@ -264,11 +264,11 @@
 			|| num_is(v)){ // by "number" we mean integers or decimals.
 				return true; // simple values are valid.
 			}
-			return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+			return Val.link.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
 		Val.link = Val.rel = {_: '#'};
 		;(function(){
-			Val.rel.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+			Val.link.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 				if(v && v[rel_] && !v._ && obj_is(v)){ // must be an object.
 					var o = {};
 					obj_map(v, map, o);
@@ -287,7 +287,7 @@
 				}
 			}
 		}());
-		Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+		Val.link.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
 		Type.obj.has._ = '.';
 		var rel_ = Val.link._, u;
 		var bi_is = Type.bi.is;
@@ -473,7 +473,7 @@
 					env.map = env;
 				}
 				if(env.soul){
-					at.rel = Val.rel.ify(env.soul);
+					at.link = Val.link.ify(env.soul);
 				}
 				env.shell = (as||{}).shell;
 				env.graph = env.graph || {};
@@ -488,16 +488,16 @@
 				at.env = env;
 				at.soul = soul;
 				if(Node.ify(at.obj, map, at)){
-					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
 					if(at.obj !== env.shell){
-						env.graph[Val.rel.is(at.rel)] = at.node;
+						env.graph[Val.link.is(at.link)] = at.node;
 					}
 				}
 				return at;
 			}
 			function map(v,k,n){
 				var at = this, env = at.env, is, tmp;
-				if(Node._ === k && obj_has(v,Val.rel._)){
+				if(Node._ === k && obj_has(v,Val.link._)){
 					return n._; // TODO: Bug?
 				}
 				if(!(is = valid(v,k,n, at,env))){ return }
@@ -506,8 +506,8 @@
 					if(obj_has(v, Node._) && Node.soul(v)){ // ? for safety ?
 						at.node._ = obj_copy(v._);
 					}
-					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
-					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					at.node = Node.soul.ify(at.node, Val.link.is(at.link));
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
 				}
 				if(tmp = env.map){
 					tmp.call(env.as || {}, v,k,n, at);
@@ -526,14 +526,14 @@
 				}
 				tmp = node(env, {obj: v, path: at.path.concat(k)});
 				if(!tmp.node){ return }
-				return tmp.rel; //{'#': Node.soul(tmp.node)};
+				return tmp.link; //{'#': Node.soul(tmp.node)};
 			}
 			function soul(id){ var at = this;
-				var prev = Val.link.is(at.rel), graph = at.env.graph;
-				at.rel = at.rel || Val.rel.ify(id);
-				at.rel[Val.rel._] = id;
+				var prev = Val.link.is(at.link), graph = at.env.graph;
+				at.link = at.link || Val.link.ify(id);
+				at.link[Val.link._] = id;
 				if(at.node && at.node[Node._]){
-					at.node[Node._][Val.rel._] = id;
+					at.node[Node._][Val.link._] = id;
 				}
 				if(obj_has(graph, prev)){
 					graph[id] = graph[prev];
@@ -573,13 +573,13 @@
 			}
 			function map(v,k){ var tmp, obj;
 				if(Node._ === k){
-					if(obj_empty(v, Val.rel._)){
+					if(obj_empty(v, Val.link._)){
 						return;
 					}
 					this.obj[k] = obj_copy(v);
 					return;
 				}
-				if(!(tmp = Val.rel.is(v))){
+				if(!(tmp = Val.link.is(v))){
 					this.obj[k] = v;
 					return;
 				}
@@ -871,7 +871,7 @@
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+		var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -1133,11 +1133,11 @@
 			if(!(at = next[key])){
 				return;
 			}
-			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
+			//if(data && data[_soul] && (tmp = Gun.val.link.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
 			//	data = tmp.put;
 			//}
 			if(at.has){
-				//if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
+				//if(!(data && data[_soul] && Gun.val.link.is(data) === Gun.node.soul(at.put))){
 				if(u === at.put || !Gun.val.link.is(data)){
 					at.put = data;
 				}
@@ -1222,7 +1222,7 @@
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 		var text_rand = Gun.text.random;
-		var _soul = Gun.val.rel._, node_ = Gun.node._;
+		var _soul = Gun.val.link._, node_ = Gun.node._;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -1395,7 +1395,7 @@
 					if(!soul && Gun.val.is(msg.put)){
 						return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 					}
-					gun.put(Gun.val.rel.ify(soul), cb, as);
+					gun.put(Gun.val.link.ify(soul), cb, as);
 				}, true);
 				return gun;
 			}
@@ -1495,7 +1495,7 @@
 		function soul(id, as, msg, eve){
 			var as = as.as, cat = as.at; as = as.as;
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
