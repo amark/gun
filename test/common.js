@@ -6,7 +6,7 @@ describe('Gun', function(){
 		if(typeof global !== 'undefined'){ env = global }
 		if(typeof window !== 'undefined'){ env = window }
 		root = env.window? env.window : global;
-		env.window && root.localStorage && root.localStorage.clear();
+		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');
 		if(root.Gun){
@@ -19,6 +19,7 @@ describe('Gun', function(){
 			//require('../lib/file');
 			require('../lib/store');
 			require('../lib/rfs');
+			require('./sea/sea.js');
 		}
 	}(this));
 	//Gun.log.squelch = true;
@@ -1263,6 +1264,16 @@ describe('Gun', function(){
 
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
+		if(Gun.window && location.search){
+			/*console.log("LOCALHOST PEER MUST BE ON!");
+			var peer = {url: 'http://localhost:8765/gun'};
+			Gun.on('opt', function(root){
+				if(root.opt.test_no_peer){ return this.to.next(root) }
+				root.opt.peers = root.opt.peers || {};
+				root.opt.peers['http://localhost:8765/gun'] = peer;
+				this.to.next(root);
+			});*/
+		}
 		var gun = Gun();
 
 		it.skip('gun chain separation', function(done){ // TODO: UNDO!
@@ -1371,7 +1382,7 @@ describe('Gun', function(){
 		});
 
 		describe('plural chains', function(){
-			this.timeout(5000);
+			this.timeout(9000);
 			it('uncached synchronous map on', function(done){
 				/*
 					Biggest challenges so far:
@@ -1548,6 +1559,7 @@ describe('Gun', function(){
 							//expect(count.Alice).to.be(1);
 							//expect(count.Bob).to.be(1);
 							//expect(count['undefined']).to.be(1);
+							if(done.c){ return } done.c = 1;
 							done();
 						},10);
 					}
@@ -2835,7 +2847,7 @@ describe('Gun', function(){
 			cat.slave = bob;
 			gun.on('put', {$: gun, put: Gun.graph.ify(user, s)});
 			//console.debug.i=1;console.log("-------------");
-			gun.get(s.soul).get('bob').get('pet').get('slave').val(function(data){
+			gun.get(s.soul).get('bob').get('pet').get('slave').once(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
 					//console.log("*****************", data);return;
@@ -2879,7 +2891,7 @@ describe('Gun', function(){
 		it('empty val followed', function(done){
 			var gun = Gun();
 
-			gun.get('val/follow').val(function(data){
+			gun.get('val/follow').once(function(data){
 				//console.log("val", data);
 			}).get(function(at){
 				//console.log("?????", at);
@@ -2928,7 +2940,7 @@ describe('Gun', function(){
 			list.set(gun.get('dave').put({name: "Dave", group: "awesome", married: true}));
 
 			var check = {}, count = {};
-			list.map().val(function(data, id){
+			list.map().once(function(data, id){
 				//console.log("***************", id, data);
 				check[id] = data;
 				count[id] = (count[id] || 0) + 1;
@@ -3050,7 +3062,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var gun2 = Gun();
 				//console.log(require('fs').readFileSync('./radata/!').toString());
-				gun2.get('stef').get('address').val(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
+				gun2.get('stef').get('address').once(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
 					//console.log("******", data);
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
@@ -3059,7 +3071,7 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				});
-				gun2.get('stef').val(function(data){ //Object {_: Object, address: Object} "stef"
+				gun2.get('stef').once(function(data){ //Object {_: Object, address: Object} "stef"
 					//console.log("**************", data);
 					//return;
 					done.s = true;
@@ -3237,14 +3249,14 @@ describe('Gun', function(){
 
 			var check = {A: {}, B: {}};
 			setTimeout(function(){
-				gun.get('usersMM').map().map().val(function(data){
+				gun.get('usersMM').map().map().once(function(data){
 					//console.log('A', data);
 					check.A[data.pub] = true;
 				})
 			}, 900);
 
 			setTimeout(function(){
-				gun.get('usersMM').map().map().val(function(data){
+				gun.get('usersMM').map().map().once(function(data){
 					//console.log('B', data, check);
 					check.B[data.pub] = true;
 					if(check.A['asdf'] && check.A['fdsa'] && check.B['asdf'] && check.B['fdsa']){
@@ -3302,7 +3314,7 @@ describe('Gun', function(){
 			var app = gun.get(s.soul);
 			
 			//console.debug.i=1;console.log("===================");
-			app.get('alias').get('mark').map().val(function(alias){
+			app.get('alias').get('mark').map().once(function(alias){
 				//console.log("***", alias);
 				done.alias = alias;
 			});
@@ -3364,6 +3376,30 @@ describe('Gun', function(){
 			list.set({name: 'bob', age: 27});
 			list.set({name: 'carl', age: 29});
 			list.set({name: 'dave', age: 25});
+		});
+
+		it('once map function once', function(done){
+			var gun = Gun(), s = 'o/mf/o', u;
+			var app = gun.get(s);
+			var list = app.get('list');
+
+			var check = {};
+			gun.get('user').get('alice').put({name:'Alice', email:'alice@example.com'})
+			gun.get('user').get('bob').put({name:'Bob', email:'bob@example.com'})
+			gun.get('user').get('carl').put({name:'Carl', email:'carl@example.com'})
+
+			gun.get('user').once().map(v => {
+			  //console.log('this gets called', v);
+			  return v
+			}).once((v, k) => {
+			  //console.log('this is never called', k, v);
+			  check[k] = (check[k] || 0) + 1;
+			  if(1 === check.alice && 1 === check.bob && 1 === check.carl){
+			  	if(done.c){return}done.c=1;
+			  	done();
+			  }
+			});
+
 		});
 
 		it('val and then map', function(done){
@@ -3456,19 +3492,19 @@ describe('Gun', function(){
 		it('val should now get called if no data is found', function(done){
 			var gun = Gun();
 
-			gun.get('nv/foo').get('bar').get('baz').val(function(val, key){
+			gun.get('nv/foo').get('bar').get('baz').once(function(val, key){
 				//console.log('*******', key, val);
 				expect(val).to.be(undefined);
 				done.fbb = true;
 			});
 
-			gun.get('nv/totesnothing').val(function(val, key){
+			gun.get('nv/totesnothing').once(function(val, key){
 				//console.log('***********', key, val);
 				expect(val).to.be(undefined);
 				done.t = true;
 			});
 
-			gun.get('nv/bz').get('lul').val(function(val, key){
+			gun.get('nv/bz').get('lul').once(function(val, key){
 				//console.log('*****************', key, val);
 				expect(val).to.be(undefined);
 				done.bzl = true;
@@ -3490,7 +3526,7 @@ describe('Gun', function(){
 				data.b = 2;
 			});
 			
-			gun.get('ds/safe').val(function(data){
+			gun.get('ds/safe').once(function(data){
 				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
 				done();
@@ -3555,6 +3591,7 @@ describe('Gun', function(){
 		});
 
 		it('Soul above but not beneath', function(done){
+			this.timeout(5000);
 			var gun = Gun();
 
 			var a = gun.get('sabnb');
@@ -3564,7 +3601,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				a.get('profile').get('said').get('asdf').put('yes');
 				setTimeout(function(){
-					a.val(function(data){
+					a.once(function(data){
 						expect(data.profile).to.be.eql({'#': 'sabnbprofile'});
 						if(done.c){ return } done.c = 1;
 						done();
@@ -3638,7 +3675,7 @@ describe('Gun', function(){
 
 		it('get map should not slowdown', function(done){
 			this.timeout(5000);
-			var gun = Gun().get('g/m/no/slow');
+			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
 			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
@@ -3678,6 +3715,59 @@ describe('Gun', function(){
 			gun.get('c/p/c').get('a').put('lol', function(ack){
 				done();
 			});
+		});
+
+		it('Multiple subscribes should trigger', function(done){
+			// thanks to @ivkan for reporting and providing test.
+			var gun = Gun();
+			var check = {};
+			gun.get('m/s/key').put({property: 'value'});
+
+			gun.get('m/s/key').on(function(data, key){
+				check['a'+data.property] = 1;
+			});
+
+			gun.get('m/s/key').on(function(data, key){
+				check['b'+data.property] = 1;
+			  if(check.avalue && check.bvalue && check.anewValue && check.bnewValue){
+			  	if(done.c){ return } done.c = true;
+			  	done();
+			  }
+			});
+
+			setTimeout(function(){
+				gun.get('m/s/key').put({property: 'newValue'});
+			}, 1000);
+		});
+
+		it('Deep puts with peer should work', function(done){
+			// tests in async mode now automatically connect to localhost peer.
+			//var gun = Gun('http://localhost:8765/gun');
+			var gun = Gun();
+			//var user = gun.user();
+			//user.create('alice', 'password', function(){
+				gun.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+				//user.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+					gun.get('who').get('all').once(function(data){
+						expect(data.what).to.be.ok();
+						expect(data.when).to.be.ok();
+						done();
+					});
+				});
+			//});
+		});
+
+		it('Set a ref should be found', function(done){
+			var gun = Gun();
+			var msg = {what: 'hello world'};
+			//var ref = user.get('who').get('all').set(msg);
+			//user.get('who').get('said').set(ref);
+			var ref = gun.get('who').get('all').set(msg);
+			gun.get('who').get('said').set(ref);
+			gun.get('who').get('said').map().once(function(data){
+				expect(data.what).to.be.ok();
+				done();
+			})
 		});
 		return;
 		it('Nested listener should be called', function(done){
@@ -3737,7 +3827,7 @@ describe('Gun', function(){
 			  var chain = this.chain();
 			  var context = this;
 			  var _tags;
-			  context.val(function(obj, key){
+			  context.once(function(obj, key){
 			    if(!obj.tags){
 			      console.warn('Not tagged to anything!');
 			      context._.valid = false;
@@ -3775,7 +3865,7 @@ describe('Gun', function(){
 			gun.get('fake1')//.map()
 			      .filter(['a','b'])  // Gun.chain.filter = function(tags){ .... }
 			      .get(function(no){console.log("NO!", no)})
-			      .val(function(yes){console.log("YES!", yes)})
+			      .once(function(yes){console.log("YES!", yes)})
 		});
 
 		it.only('Check that events are called with multiple instances', function(done){
@@ -4623,7 +4713,7 @@ describe('Gun', function(){
 			var gun = Gun().put({foo:'lol', extra: 'yes'}).key('key/path/put');
 			var data = gun.get('key/path/put');
 			data.path('foo').put('epic');
-			data.val(function(val, field){
+			data.once(function(val, field){
 				expect(val.foo).to.be('epic');
 				expect(Gun.node.soul(val)).to.be('key/path/put');
 				done();
@@ -4747,7 +4837,7 @@ describe('Gun', function(){
 			var get = gun.get('shallow/path');
 			var path = get.path('one');
 			var put = path.put('good');
-			put.val(function(val, field){
+			put.once(function(val, field){
 				expect(val).to.be('good');
 				expect(field).to.be('one');
 				done();
@@ -4759,7 +4849,7 @@ describe('Gun', function(){
 			var get = gun.get('slightly/shallow/path');
 			var path = get.path('one');
 			var put = path.put({you: 'are', here: 1});
-			put.val(function(val, field){
+			put.once(function(val, field){
 				//console.log('***********', field, val);
 				expect(val.you).to.be('are');
 				expect(val.here).to.be(1);
@@ -4815,7 +4905,7 @@ describe('Gun', function(){
 			},100);
 		});
 
-		it('any any not', function(done){
+		it('get get not', function(done){
 			var s = Gun.state.map();
 			s.soul = 'a';
 			Gun.on('put', {$: gun, put: Gun.graph.ify({b: 1, c: 2}, s)});
@@ -4835,9 +4925,9 @@ describe('Gun', function(){
 					done();
 				}
 			}
-			gun.get('a').path('b').any(cb);//.err(cb).not(cb).on(cb).val(cb);
-			gun.get('a').path('c').any(cb);//.err(cb).not(cb).on(cb).val(cb);
-			gun.get('a').path('d').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('a').path('b').get(cb);//.err(cb).not(cb).on(cb).once(cb);
+			gun.get('a').path('c').get(cb);//.err(cb).not(cb).on(cb).once(cb);
+			gun.get('a').path('d').get(cb);//.err(cb).not(cb).on(cb).once(cb);
 		});
 
 		it('any not any not any not', function(done){
@@ -4855,16 +4945,16 @@ describe('Gun', function(){
 					done();
 				}
 			}
-			gun.get('x').path('b').any(cb);//.err(cb).not(cb).on(cb).val(cb);
-			gun.get('x').path('c').any(cb);//.err(cb).not(cb).on(cb).val(cb);
-			gun.get('x').path('d').any(cb);//.err(cb).not(cb).on(cb).val(cb);
+			gun.get('x').path('b').any(cb);//.err(cb).not(cb).on(cb).once(cb);
+			gun.get('x').path('c').any(cb);//.err(cb).not(cb).on(cb).once(cb);
+			gun.get('x').path('d').any(cb);//.err(cb).not(cb).on(cb).once(cb);
 		});
 
 		it('get put, put deep', function(done){
 			var gun = Gun();
 			var get = gun.get('put/deep/ish');
 			get.put({});
-			get.val(function(data){ // TODO: API CHANGE! Empty objects should react.
+			get.once(function(data){ // TODO: API CHANGE! Empty objects should react.
 				//console.log("...1", data);
 				expect(Gun.obj.empty(data, '_')).to.be.ok(); // API CHANGED,
 				//expect(Gun.val.link.is(data.very)).to.be.ok();
@@ -4879,12 +4969,12 @@ describe('Gun', function(){
 						}
 					}
 				});
-				get.val(function(data){
+				get.once(function(data){
 					//console.log("...2", data);
 					expect(Gun.val.link.is(data.very)).to.be.ok();
 				});
 				setTimeout(function(){
-					put.val(function(data){
+					put.once(function(data){
 						//console.log("...3", data);
 						expect(Gun.val.link.is(data.very)).to.be.ok();
 						done.val = true;
@@ -4892,7 +4982,7 @@ describe('Gun', function(){
 					var p = put.path('very');
 					p.put({we: 'have gone!'});
 					setTimeout(function(){
-						p.val(function(data){
+						p.once(function(data){
 							//console.log("...4", data);
 							expect(data.we).to.be('have gone!');
 							expect(Gun.val.link.is(data.deep)).to.be.ok();
@@ -4912,7 +5002,7 @@ describe('Gun', function(){
 			var get = gun.get('slightly/shallow/path/swoop');
 			var path = get.path('one.two');
 			var put = path.put({oh: 'okay'});
-			put.val(function(val, field){
+			put.once(function(val, field){
 				//console.log("****", field, val);
 				expect(val.oh).to.be('okay');
 				expect(field).to.be('two');
@@ -4926,13 +5016,13 @@ describe('Gun', function(){
 			var path = get.path('one.two');
 			var path3 = path.path('three');
 			var put = path3.put({you: 'found', the: 'bottom!'});
-			put.val(function(val, field){
+			put.once(function(val, field){
 				//console.log("********1********", field, val);
 				expect(val.you).to.be('found');
 				expect(val.the).to.be('bottom!');
 				expect(field).to.be('three');
 			});
-			gun.get('deep/path').path('one.two.three.you').put('are').val(function(val, field){
+			gun.get('deep/path').path('one.two.three.you').put('are').once(function(val, field){
 				//console.log("********2*********", field, val);return;
 				expect(val).to.be('are');
 				expect(field).to.be('you');
@@ -5052,13 +5142,13 @@ describe('Gun', function(){
 			mark.path('wife').put(amber, function(err){
 				expect(err).to.not.be.ok();
 			});
-			mark.path('wife.name').val(function(val){
+			mark.path('wife.name').once(function(val){
 				expect(val).to.be("Amber Nadal");
 			});
 		});
 
 		it('put val', function(done){
-			gun.put({hello: "world"}).val(function(val){
+			gun.put({hello: "world"}).once(function(val){
 				expect(val.hello).to.be('world');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5070,7 +5160,7 @@ describe('Gun', function(){
 		});
 
 		it('put key val', function(done){
-			gun.put({hello: "world"}).key('hello/world').val(function(val, field){
+			gun.put({hello: "world"}).key('hello/world').once(function(val, field){
 				if(done.c){ return }
 				expect(val.hello).to.be('world');
 				expect(done.c).to.not.be.ok();
@@ -5083,7 +5173,7 @@ describe('Gun', function(){
 		});
 
 		it('get val', function(done){
-			gun.get('hello/world').val(function(val, field){
+			gun.get('hello/world').once(function(val, field){
 				expect(val.hello).to.be('world');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5095,7 +5185,7 @@ describe('Gun', function(){
 		});
 
 		it('get path', function(done){
-			gun.get('hello/world').path('hello').val(function(val){
+			gun.get('hello/world').path('hello').once(function(val){
 				//console.log("**************", val);
 				expect(val).to.be('world');
 				expect(done.c).to.not.be.ok();
@@ -5108,7 +5198,7 @@ describe('Gun', function(){
 		});
 
 		it('get put path', function(done){
-			gun.get('hello/world').put({hello: 'Mark'}).path('hello').val(function(val, field){
+			gun.get('hello/world').put({hello: 'Mark'}).path('hello').once(function(val, field){
 				expect(val).to.be('Mark');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5120,7 +5210,7 @@ describe('Gun', function(){
 		});
 
 		it('get path put', function(done){
-			gun.get('hello/world').path('hello').put('World').val(function(val){
+			gun.get('hello/world').path('hello').put('World').once(function(val){
 				expect(val).to.be('World');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5148,7 +5238,7 @@ describe('Gun', function(){
 
 		it('get path empty put val', function(done){
 			var gun = Gun({init: true}).put({hello: "Mark"}).key('hello/world/not');
-			gun.get('hello/world/not').path('earth').put('mars').val(function(val){
+			gun.get('hello/world/not').path('earth').put('mars').once(function(val){
 				done.c = 1;
 			});
 			setTimeout(function(){
@@ -5161,7 +5251,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			var get = gun.get('hello/imp/world');
 			var put = get.put({planet: 'the earth'});
-			put.val(function(val){
+			put.once(function(val){
 				expect(val.planet).to.be('the earth');
 				done();
 			});
@@ -5172,7 +5262,7 @@ describe('Gun', function(){
 			var get = gun.get('hello/imp/where');
 			var path = get.path('where');
 			var put = path.put('the mars');
-			var val = put.val(function(val, field){
+			var val = put.once(function(val, field){
 				expect(field).to.be('where');
 				expect(val).to.be('the mars');
 				done();
@@ -5180,7 +5270,7 @@ describe('Gun', function(){
 		});
 
 		it('get path empty put val implicit', function(done){
-			gun.get('hello/world').path('earth').put('mars').val(function(val, field){
+			gun.get('hello/world').path('earth').put('mars').once(function(val, field){
 				expect(val).to.be('mars');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5194,7 +5284,7 @@ describe('Gun', function(){
 		it('get path val', function(done){
 			var gun = Gun({init: true}).put({hello: "Mark"}).key('hello/world/not');
 			gun.get('hello/world').path('earth').put('mars');
-			gun.get('hello/world/not').path('earth').val(function(val){
+			gun.get('hello/world/not').path('earth').once(function(val){
 				expect(val).to.be('mars');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5206,7 +5296,7 @@ describe('Gun', function(){
 		});
 
 		it('get path val implicit', function(done){
-			gun.get('hello/world').path('earth').val(function(val){
+			gun.get('hello/world').path('earth').once(function(val){
 				expect(val).to.be('mars');
 				expect(done.c).to.not.be.ok();
 				done.c = 1;
@@ -5221,7 +5311,7 @@ describe('Gun', function(){
 			it('get not kick val', function(done){
 				gun.get("some/empty/thing").not(function(key, kick){ // that if you call not first
 					this.put({now: 'exists'}).key(key); // you can put stuff
-				}).val(function(val){ // and THEN still retrieve it.
+				}).once(function(val){ // and THEN still retrieve it.
 					expect(val.now).to.be('exists');
 					done();
 				});
@@ -5233,7 +5323,7 @@ describe('Gun', function(){
 				foo.not(function(key, kick){
 					done.not = true;
 					this.put({now: 'THIS SHOULD NOT HAPPEN'}).key(key);
-				}).val(function(val){
+				}).once(function(val){
 					expect(val.now).to.be('exists');
 					expect(done.not).to.not.be.ok();
 					done();
@@ -5242,7 +5332,7 @@ describe('Gun', function(){
 		});
 
 		it('put path val sub', function(done){
-			gun.put({last: {some: 'object'}}).path('last').val(function(val){
+			gun.put({last: {some: 'object'}}).path('last').once(function(val){
 				expect(val.some).to.be('object');
 				done();
 			});
@@ -5279,11 +5369,11 @@ describe('Gun', function(){
 		});
 
 		it('get put null', function(done){
-			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
+			gun.put({last: {some: 'object'}}).path('last').once(function(val, field){
 				//console.log("**", field, val);
 				expect(field).to.be('last');
 				expect(val.some).to.be('object');
-			}).put(null).val(function(val, field){
+			}).put(null).once(function(val, field){
 				//console.log("******", field, val);
 				expect(field).to.be('last');
 				expect(val).to.be(null);
@@ -5293,11 +5383,11 @@ describe('Gun', function(){
 
 		it('Gun get put null', function(done){ // flip flop bug
 			var gun = Gun();
-			gun.put({last: {some: 'object'}}).path('last').val(function(val, field){
+			gun.put({last: {some: 'object'}}).path('last').once(function(val, field){
 				//console.log("**", field, val);
 				done.some = true;
 				expect(val.some).to.be('object');
-			}).put(null).val(function(val, field){
+			}).put(null).once(function(val, field){
 				//console.log("********", field, val);
 				expect(val).to.be(null);
 				expect(done.some).to.be.ok();
@@ -5309,7 +5399,7 @@ describe('Gun', function(){
 			var foo = gun.put({foo: 'bar'}).key('foo/bar');
 			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
 			setTimeout(function(){
-				foo.path('foo').val(function(val){ // and then the original should be able to be reused later
+				foo.path('foo').once(function(val){ // and then the original should be able to be reused later
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
@@ -5320,7 +5410,7 @@ describe('Gun', function(){
 			var foo = gun.get('foo/bar');
 			foo.path('hello.world.nowhere'); // this should become a sub-context, that doesn't alter the original
 			setTimeout(function(){
-				foo.path('foo').val(function(val){ // and then the original should be able to be reused later
+				foo.path('foo').once(function(val){ // and then the original should be able to be reused later
 					expect(val).to.be('bar'); // this should work
 					done();
 				});
@@ -5334,10 +5424,10 @@ describe('Gun', function(){
 					title: 'awesome title',
 					todos: {}
 				}).key(key);
-			}).val(function(data){
+			}).once(function(data){
 				expect(data.id).to.be('foobar');
-			//}).path('todos').val(function(todos, field){
-			}).path('todos').val(function(todos, field){
+			//}).path('todos').once(function(todos, field){
+			}).path('todos').once(function(todos, field){
 				expect(field).to.be('todos');
 				expect(todos).to.not.have.property('id');
 				done();
@@ -5353,7 +5443,7 @@ describe('Gun', function(){
 			data.b.parent = data.a;
 			gun.put(data, function(err, ok){
 				expect(err).to.not.be.ok();
-			}).val(function(val){
+			}).once(function(val){
 				setTimeout(function(){ // TODO: Is this cheating? I don't think so cause we are using things outside of the API!
 					var a = gun.back(-1)._.graph[Gun.val.link.is(val.a)];
 					var b = gun.back(-1)._.graph[Gun.val.link.is(val.b)];
@@ -5417,7 +5507,7 @@ describe('Gun', function(){
 						lol: true
 					}
 				}
-			}).path('foo.bar.lol').val(function(val){
+			}).path('foo.bar.lol').once(function(val){
 				expect(val).to.be(true);
 				done();
 			});
@@ -5430,7 +5520,7 @@ describe('Gun', function(){
 						lol: {ok: true}
 					}
 				}
-			}).path('foo.bar.lol').val(function(val){
+			}).path('foo.bar.lol').once(function(val){
 				expect(val.ok).to.be(true);
 				done();
 			});
@@ -5459,15 +5549,15 @@ describe('Gun', function(){
 			//console.debug.i=1;console.log("------------");
 			gun.put(mark, function(err, ok){
 				expect(err).to.not.be.ok();
-			}).val(function(val){
+			}).once(function(val){
 				expect(val.age).to.be(23);
 				expect(val.name).to.be("Mark Nadal");
 				expect(Gun.val.link.is(val.wife)).to.be.ok();
 				expect(Gun.val.link.is(val.pet)).to.be.ok();
-			}).path('wife.pet.name').val(function(val){
+			}).path('wife.pet.name').once(function(val){
 				//console.debug(1, "*****************", val);
 				expect(val).to.be('Hobbes');
-			}).back().path('pet.master').val(function(val){
+			}).back().path('pet.master').once(function(val){
 				//console.log("*****************", val);
 				expect(val.name).to.be("Amber Nadal");
 				expect(val.phd).to.be.ok();
@@ -5489,14 +5579,14 @@ describe('Gun', function(){
 
 		it('put partial sub merge', function(done){
 			var gun = Gun();
-			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').val(function(mark){
+			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').once(function(mark){
 				//console.log("VAL1", mark);
 				done.marksoul = Gun.node.soul(mark);
 				expect(mark.name).to.be("Mark");
 			});
 			mark.put({age: 23, wife: {age: 23}});
 			setTimeout(function(){
-				mark.put({citizen: "USA", wife: {citizen: "USA"}}).val(function(mark){
+				mark.put({citizen: "USA", wife: {citizen: "USA"}}).once(function(mark){
 					//console.log("VAL2", mark, gun);
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
@@ -5516,10 +5606,10 @@ describe('Gun', function(){
 
 		it('path path', function(done){
 			var deep = gun.put({some: {deeply: {nested: 'value'}}});
-			deep.path('some.deeply.nested').val(function(val){
+			deep.path('some.deeply.nested').once(function(val){
 				expect(val).to.be('value');
 			});
-			deep.path('some').path('deeply').path('nested').val(function(val){
+			deep.path('some').path('deeply').path('nested').once(function(val){
 				expect(val).to.be('value');
 				done();
 			});
@@ -5537,7 +5627,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			var fo = gun.put({fo: 'bar'});
 			Gun.log.ba = 1;
-			fo.put({ba: {}}).val(function(obj, field){
+			fo.put({ba: {}}).once(function(obj, field){
 				c += 1;
 				expect(c).to.be(1);
 				done();
@@ -5550,7 +5640,7 @@ describe('Gun', function(){
 		describe('random', function(){
 			var foo;
 			it('context null put node', function(done){
-				foo = gun.put({foo: 'bar'}).val(function(obj){
+				foo = gun.put({foo: 'bar'}).once(function(obj){
 					expect(obj.foo).to.be('bar');
 					done(); //setTimeout(function(){ done() },1);
 				});
@@ -5566,7 +5656,7 @@ describe('Gun', function(){
 
 			it('context node put node', function(done){
 				// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
-				foo.put({bar: {zoo: 'who'}}).val(function(obj, field){
+				foo.put({bar: {zoo: 'who'}}).once(function(obj, field){
 					//console.log("terribly terrilby unpleasant", field, obj);
 					expect(obj.foo).to.be('bar');
 					expect(Gun.val.link.is(obj.bar)).to.ok();
@@ -5579,7 +5669,7 @@ describe('Gun', function(){
 				// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 				bar = foo.path('bar');
 				expect(gleak.check()).to.not.be.ok();
-				bar.put({combo: 'double'}).val(function(obj, field){
+				bar.put({combo: 'double'}).once(function(obj, field){
 					//expect(obj.zoo).to.be('who');
 					expect(obj.combo).to.be('double');
 					done(); //setTimeout(function(){ done() },1);
@@ -5589,7 +5679,7 @@ describe('Gun', function(){
 			it('context node and field put value', function(done){
 				// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
 				var tar = foo.path('tar');
-				tar.put('zebra').val(function(val){
+				tar.put('zebra').once(function(val){
 					expect(val).to.be('zebra');
 					done(); //setTimeout(function(){ done() },1);
 				});
@@ -5597,10 +5687,10 @@ describe('Gun', function(){
 
 			it('context node and field, put node', function(done){
 				// EFFECTIVELY a TIMEOUT from the previous test. NO LONGER!
-				bar.path('combo').put({another: 'node'}).val(function(obj){
+				bar.path('combo').put({another: 'node'}).once(function(obj){
 					expect(obj.another).to.be('node');
 					// double .vals here also RELATED to the #"context no double emit" but because of a faulty .not or .init system.
-					bar.val(function(node){
+					bar.once(function(node){
 						expect(Gun.val.link.is(node.combo)).to.be.ok();
 						expect(Gun.val.link.is(node.combo)).to.be(Gun.node.soul(obj));
 						done(); //setTimeout(function(){ done() },1);
@@ -5615,10 +5705,10 @@ describe('Gun', function(){
 			var al = gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
 			var beth = gun.put({gender:'f', age:22, name:'beth'}).key('user/beth');
 
-			al.val(function(a){
+			al.once(function(a){
 				beth.put({friend: a}, function(err, ok){
 					expect(err).to.not.be.ok();
-				}).path('friend').val(function(aa){
+				}).path('friend').once(function(aa){
 					expect(Gun.node.soul(a)).to.be(Gun.node.soul(aa));
 					done();
 				});
@@ -5635,7 +5725,7 @@ describe('Gun', function(){
 			gun.put({gender:'m', age:30, name:'alfred'}).key('user/alfred');
 			gun.put({gender:'f', age:22, name:'beth'  }).key('user/beth');
 			//gun.get('user/beth').path('friend').put(gun.get('user/alfred')); // ideal format which we have a future test for.
-			gun.get('user/alfred').val(function(a){
+			gun.get('user/alfred').once(function(a){
 				//console.log("*****", a);
 				//expect(a['_']['key']).to.be.ok();
 				gun.get('user/beth').put({friend: a}, function(err, ok){ // b - friend_of -> a
@@ -5644,13 +5734,13 @@ describe('Gun', function(){
 					var c = soulnode(gun, keynode), soul = c[0];
 					expect(c.length).to.be(1);
 				});
-				gun.get('user/beth').val(function(b){
+				gun.get('user/beth').once(function(b){
 					//console.log("beth", b);
-					gun.get('user/alfred').put({friend: b}).val(function(al){ // a - friend_of -> b
+					gun.get('user/alfred').put({friend: b}).once(function(al){ // a - friend_of -> b
 						//console.log("al again", al);
-						gun.get('user/beth').put({cat: {name: "fluffy", age: 3, coat: "tabby"}}).val(function(bet){
+						gun.get('user/beth').put({cat: {name: "fluffy", age: 3, coat: "tabby"}}).once(function(bet){
 							gun.get('user/alfred').path('friend.cat').key('the/cat');
-							gun.get('the/cat').val(function(c){
+							gun.get('the/cat').once(function(c){
 								//console.log("cat!!!", c);
 								expect(c.name).to.be('fluffy');
 								expect(c.age).to.be(3);
@@ -5714,7 +5804,7 @@ describe('Gun', function(){
 			}}}), soul = Gun.text.random();
 			gun.get(soul).not(function(err, ok){
 				done.fail = true;
-			}).val(function(val){
+			}).once(function(val){
 				setTimeout(function(){
 					expect(val.a).to.be('b');
 					expect(val.c).to.be('d');
@@ -5745,7 +5835,7 @@ describe('Gun', function(){
 
 			gun.get('me', function(err, data){
 
-			}).val(function(val){
+			}).once(function(val){
 				done.count = (done.count || 0) + 1;
 				setTimeout(function(){
 					expect(val.a).to.be('b');
@@ -5773,7 +5863,7 @@ describe('Gun', function(){
 				cb(null, n);
 			}}}), soul = Gun.text.random();
 
-			gun.get(soul).path('a').val(function(val){
+			gun.get(soul).path('a').once(function(val){
 				done.count = (done.count || 0) + 1;
 				setTimeout(function(){
 					expect(val).to.be('b');
@@ -5791,7 +5881,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				gun.not(function(){
 					done.not = true;
-				}).val(function(){
+				}).once(function(){
 					expect(done.not).to.not.be.ok();
 					done();
 				}, {empty: true});
@@ -5913,7 +6003,7 @@ describe('Gun', function(){
 			});
 
 			it('instance.val', function(done){
-				Gun().val();
+				Gun().once();
 				done();
 			});
 		});
@@ -6076,7 +6166,7 @@ describe('Gun', function(){
 		it('set', function(done){
 			done.c = 0;
 			var u, gun = Gun();
-			gun.get('set').set().set().val(function(val){
+			gun.get('set').set().set().once(function(val){
 				var keynode = gun.__.graph['set'];
 				expect(Gun.node.soul.ify(keynode, '.')).to.be.ok();
 				Gun.is.node(keynode, function(rel, soul){
@@ -6102,7 +6192,7 @@ describe('Gun', function(){
 		// TODO: BUG! We need 2 more tests... without .set()... and multiple paths on the same node.
 		it('set multiple', function(done){ // kinda related to flip flop?
 			var gun = Gun().get('sets').set(), i = 0;
-			gun.val(function(val){
+			gun.once(function(val){
 				console.log("TEST 1", val);
 				expect(Gun.obj.empty(val, Gun._.meta)).to.be.ok();
 				expect(Gun.node.soul(val)).to.be('sets');
@@ -6111,7 +6201,7 @@ describe('Gun', function(){
 			});
 			gun.set(1); //.set(2).set(3).set(4); // if you set an object you'd have to do a `.back`
 			gun.map(function(val, field){
-			//gun.map().val(function(val, field){ // TODO: SEAN! DON'T LET ME FORGET!
+			//gun.map().once(function(val, field){ // TODO: SEAN! DON'T LET ME FORGET!
 				console.log("\n TEST 2+", field, val);
 				return;
 				i += 1;
@@ -6135,7 +6225,7 @@ describe('Gun', function(){
 			users.path(Gun.text.random()).put('bob');
 			users.path(Gun.text.random()).put('sam');
 			setTimeout(function(){
-				users.val(function(v){
+				users.once(function(v){
 					expect(Gun.val.link.is(v)).to.not.be.ok();
 					expect(Object.keys(v).length).to.be(3);
 					done();
@@ -6170,7 +6260,7 @@ describe('Gun', function(){
 			gun.put({a: 1, z: -1}).key('pseudo');
 			gun.put({b: 2, z: 0}).key('pseudo');
 
-			gun.get('pseudo').val(function(val){
+			gun.get('pseudo').once(function(val){
 				expect(val.a).to.be(1);
 				expect(val.b).to.be(2);
 				expect(val.z).to.be(0);
@@ -6228,14 +6318,14 @@ describe('Gun', function(){
 			var connect, gun1 = Gun({alice: true}).get('pseudo/merge').put({hello: 'world!'})/*.not(function(key){
 				this.put({hello: "world!"}).key(key);
 			})*/, gun2;
-			gun1.val(function(val){
+			gun1.once(function(val){
 				expect(val.hello).to.be('world!');
 			});
 			setTimeout(function(){
 				gun2 = Gun({bob: true}).get('pseudo/merge').put({hi: 'mars!'})/*.not(function(key){
 					this.put({hi: "mars!"}).key(key);
 				});*/
-				gun2.val(function(val){
+				gun2.once(function(val){
 					expect(val.hi).to.be('mars!');
 				});
 				setTimeout(function(){
@@ -6246,13 +6336,13 @@ describe('Gun', function(){
 					//gun1.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
 					//gun2.get('pseudo/merge', null, {force: true}); // fake a browser refersh, in real world we should auto-reconnect
 					setTimeout(function(){
-						gun1.val(function(val){
+						gun1.once(function(val){
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							done.g1 = true;
 						});
 						//return;
-						gun2.val(function(val){
+						gun2.once(function(val){
 							expect(val.hello).to.be('world!');
 							expect(val.hi).to.be('mars!');
 							expect(done.g1).to.be.ok();
@@ -6278,8 +6368,8 @@ describe('Gun', function(){
 				}}).key(key);
 			}); // this is now a list of passengers that we will map over.
 			var ctx = {n: 0, d: 0, l: 0};
-			passengers.map().val(function(passenger, id){
-				this.map().val(function(change, field){
+			passengers.map().once(function(passenger, id){
+				this.map().once(function(change, field){
 					if('name' == field){ expect(change).to.be(passenger.name); ctx.n++ }
 					if('direction' == field){ expect(change).to.be(passenger.direction); ctx.d++ }
 					if('location' == field){
@@ -6320,7 +6410,7 @@ describe('Gun', function(){
 			list.put({a: {x:1}, b: {y: 1}});
 			list.path('a').path('w').put(2);
 			var check = {};
-			list.map().val(function(v,f){
+			list.map().once(function(v,f){
 				check[f] = v;
 				console.log("*************************", f,v);
 				if(check.a && check.b){
@@ -6336,7 +6426,7 @@ describe('Gun', function(){
 			var g = Gun();
 			var list = gun.get('map/sub/val/after');
 			var check = {};
-			list.map().val(function(v,f){
+			list.map().once(function(v,f){
 				check[f] = v;
 				if(check.a && check.b){
 					setTimeout(function(){
@@ -6358,7 +6448,7 @@ describe('Gun', function(){
 			var g = Gun();
 			var list = gun.get('map/sub/val/after/to');
 			var check = {};
-			list.map().val(function(v,f){
+			list.map().once(function(v,f){
 				//console.log("*************", f,v);return;
 				check[f] = v;
 				if(check.a && check.b){
@@ -6379,7 +6469,7 @@ describe('Gun', function(){
 			var g = Gun();
 			var list = gun.get('map/simple/after');
 			var check = {};
-			list.map().val(function(v,f){
+			list.map().once(function(v,f){
 				check[f] = v;
 				if(check.a && check.b){
 					setTimeout(function(){
@@ -6398,7 +6488,7 @@ describe('Gun', function(){
 			var g = Gun();
 			var list = gun.get('map/simple/after/to');
 			var check = {};
-			list.map().val(function(v,f){
+			list.map().once(function(v,f){
 				check[f] = v;
 				if(check.a && check.b){
 					setTimeout(function(){
@@ -6455,7 +6545,7 @@ describe('Gun', function(){
 				}}).key(key);
 			}); // this is now a list of passengers that we will map over.
 			var ctx = {n: 0, d: 0, l: 0};
-			passengers.map().map().val(function(val, field){
+			passengers.map().map().once(function(val, field){
 				if('name' == field){ expect(val).to.be(!ctx.n? 'Bob' : 'Fred'); ctx.n++ }
 				if('direction' == field){ expect(val).to.be(!ctx.d? '128.2' : 'f128.2'); ctx.d++ }
 				if('location' == field){
@@ -6490,7 +6580,7 @@ describe('Gun', function(){
 				}).key('n/b/l/a/c');
 			});
 			var check = {a:{},b:{}}, F = 'a';
-			g.map().map().val(function(v,f){
+			g.map().map().once(function(v,f){
 				var c = check[F];
 				c[f] = v;
 				if(check.b && check.b.x && check.b.y){
@@ -6519,7 +6609,7 @@ describe('Gun', function(){
 				}).key('n/b/l/a');
 			});
 			var check = {};
-			g.map().map().val(function(v,f){
+			g.map().map().once(function(v,f){
 				check[f] = v;
 				if(check.x && check.y && check.w && check.u){
 					expect(check.x).to.be(1);
@@ -6539,7 +6629,7 @@ describe('Gun', function(){
 			var g = gun.get('b/l/a');
 			g.put({a: {x:1,y:1}});
 			var check = {};
-			g.map().map().val(function(v,f){
+			g.map().map().once(function(v,f){
 				check[f] = v;
 				if(check.x && check.y && check.w && check.u && check.z){
 					expect(check.x).to.be(1);
@@ -6560,7 +6650,7 @@ describe('Gun', function(){
 			var g = gun.get('b/d/l/a');
 			g.put({a: {x:1,y:1}});
 			var check = {};
-			g.map().map().val(function(v,f){
+			g.map().map().once(function(v,f){
 				check[f] = v;
 				if(check.x && check.y && check.w && check.u){
 					expect(check.x).to.be(1);
@@ -6600,7 +6690,7 @@ describe('Gun', function(){
 				}
 			});
 			var check = {};
-			g.map().map().map().map().val(function(v,f){
+			g.map().map().map().map().once(function(v,f){
 				check[f] = (check[f] || 0) + 1;
 				if(check.d === 2 && check.e === 2 && check.f === 2){
 					done();
@@ -6777,7 +6867,7 @@ describe('Gun', function(){
 					direction: '128.2'
 				}}).key(key);
 			});
-			passengers.map().path('location.lng').val(function(val, field){
+			passengers.map().path('location.lng').once(function(val, field){
 			//passengers.map().path('location.lng').on(function(val, field){
 				console.log("******", field, val);
 				expect(field).to.be('lng');
@@ -6855,9 +6945,9 @@ describe('Gun', function(){
 
 		it("put path deep val -> path val", function(done){ // Terje's bug
 			var gun = Gun();
-			gun.put({you: {have: {got: {to: {be: {kidding: "me!"}}}}}}).path('you.have.got.to.be').val(function(val, field){
+			gun.put({you: {have: {got: {to: {be: {kidding: "me!"}}}}}}).path('you.have.got.to.be').once(function(val, field){
 				expect(val.kidding).to.be('me!');
-				this.path('kidding').val(function(val){
+				this.path('kidding').once(function(val){
 					expect(val).to.be('me!');
 					done();
 				});
@@ -6871,10 +6961,10 @@ describe('Gun', function(){
 			passengers = passengers.put({randombob: {name: 'Bob', direction: {}}});
 			passengers.path('randombob.direction', function(err, ok, field){
 			}).put({lol: {just: 'kidding', dude: '!'}});
-			passengers.map().path('direction.lol').val(function(val){
-				this.path('just').val(function(val){
+			passengers.map().path('direction.lol').once(function(val){
+				this.path('just').once(function(val){
 					expect(val).to.be('kidding');
-				}).back().path('dude').val(function(val){
+				}).back().path('dude').once(function(val){
 					expect(val).to.be('!');
 					done();
 				});
@@ -7171,7 +7261,7 @@ describe('Gun', function(){
 					if(call[hash]){ return }
 					gun.__.meta($.soul).put = true;
 					call[hash] = true;
-					if(Gun.is.val(obj)){
+					if(Gun.is.once(obj)){
 						if($.from && $.at){
 							$.soul = $.from;
 							$.field = $.at;
@@ -7387,7 +7477,7 @@ describe('Gun', function(){
 				}
 			}, function(err,ok){
 				expect(done.c++).to.be(0);
-			}).val(function(p){
+			}).once(function(p){
 				done.p = Gun.node.soul(p);
 				done.m = Gun.val.link.is(p[0]);
 				expect(Gun.val.link.is(p[0])).to.be.ok();
@@ -7433,7 +7523,7 @@ describe('Gun', function(){
 			var u;
 			var gun = Gun(gopt);
 			var game = gun.get('game1/players');
-			var me = game.path('player1').val(function(val){
+			var me = game.path('player1').once(function(val){
 				if(!done.c){ done.fail = true }
 				expect(val).to.not.be(u);
 				expect(val.x).to.be(0);
@@ -7485,7 +7575,7 @@ describe('Gun', function(){
 			var u;
 			var gun = Gun(gopt).opt({init: true});
 			var game = gun.get('game4/players').init();
-			var me = game.path('player4').init().path('alias').init().put({oh: 'awesome'}).val(function(val, field){
+			var me = game.path('player4').init().path('alias').init().put({oh: 'awesome'}).once(function(val, field){
 				expect(val.oh).to.be('awesome');
 				expect(field).to.be('alias');
 				done();
@@ -7512,7 +7602,7 @@ describe('Gun', function(){
 			var chat = gun.get('example/chat/data/graph/field').not(function(key){
 				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
-			chat.map().val(function renderToDo(val, field){
+			chat.map().once(function renderToDo(val, field){
 				expect(field).to.be.ok();
 				expect(val.who).to.be.ok();
 				expect(val.when).to.be.ok();
@@ -7623,7 +7713,7 @@ describe('Gun', function(){
 			var chat = gun.get('example/chat/data/graph/field').not(function(key){
 				gun.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 			});
-			chat.map().val(function renderToDo(val, field){
+			chat.map().once(function renderToDo(val, field){
 				//console.log("ALICE", field, val);
 				expect(field).to.be.ok();
 				expect(val.who).to.be.ok();
@@ -7637,7 +7727,7 @@ describe('Gun', function(){
 					//console.log("BOB's key", key);
 					gun2.put({1: {who: 'Welcome', what: "to the chat app!", when: 1}}).key(key);
 				});
-				chat2.map().val(function renderToDo(val, field){
+				chat2.map().once(function renderToDo(val, field){
 					//console.log("BOB", field, val);
 					expect(field).to.be.ok();
 					expect(val.who).to.be.ok();
@@ -7665,7 +7755,7 @@ describe('Gun', function(){
 
 			// Test set with new object
 			var alan = users.set({name: 'alan', birth: Math.random()}).key('person/alan');
-			alan.val(function(alan) {
+			alan.once(function(alan) {
 				// Test set with node
 				dave.path('friends').set(alan);
 			});
@@ -7687,7 +7777,7 @@ describe('Gun', function(){
 			alice.path('team').put(team);
 			bob.path('team').put(team);
 
-			dave.path('friends').map().path('team.members').map().val(function(member){
+			dave.path('friends').map().path('team.members').map().once(function(member){
 				//console.log("Dave's friend is on a team that has", member.name, "on it.");
 				if('alice' === member.name){
 					done.alice = true;
@@ -7728,14 +7818,14 @@ describe('Gun', function(){
 		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
 			var gun = Gun();
 			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
-			gun.get('ctx/lol').val(function(implicit){
+			gun.get('ctx/lol').once(function(implicit){
 				done.fail = true;
 				expect(implicit).to.not.be.ok();
 			});
 			gun.get('ctx/lol').not(function(){
 				done.please = true;
 			});
-			gun.get('ctx/foo').val(function(data){
+			gun.get('ctx/foo').once(function(data){
 				expect(data.hello).to.be('world');
 				expect(done.fail).to.not.be.ok();
 				expect(done.please).to.be.ok();
@@ -7747,7 +7837,7 @@ describe('Gun', function(){
 			var gun = Gun();
 			gun.get('users/cv').set(gun.put({name: 'alice'}));
 			gun.get('users/cv').set(gun.put({name: 'bob'}));;
-			gun.get('users/cv').val().map(function(person){
+			gun.get('users/cv').once().map(function(person){
 				if(person.name === 'alice'){
 					done.alice = true;
 				}
@@ -7814,12 +7904,12 @@ describe('Gun', function(){
         });
         setTimeout(function(){
 
-	        //list.path('next').val('wat');
+	        //list.path('next').once('wat');
 
 	        //console.log("!!!!!!", gun.__.graph);
 
 	        // try to read the third item
-	        list.path('next.to').val(function () { // TODO: BUG! If this is 'next.next' as with the data, then it fails.
+	        list.path('next.to').once(function () { // TODO: BUG! If this is 'next.next' as with the data, then it fails.
 	            done();
 	        });
       	},100);
@@ -7873,7 +7963,7 @@ describe('Gun', function(){
 				BSMI.path(path).put({status:false});
 			});
 			setTimeout(function(){
-				BSMI.path(allPaths[0]).val(function(a,b,c){
+				BSMI.path(allPaths[0]).once(function(a,b,c){
 					expect(a.a).to.be(1);
 					expect(a.b).to.be(2);
 					expect(a.c).to.be(3);
@@ -7903,7 +7993,7 @@ describe('Gun', function(){
     it("Don't put on parents", function(done){ // TODO: ADD TO 0.5 BRANCH! // Another Stefdv find.
 			var test = gun.get('test');
 			test.path('try.this.at.lvl4').put({msg:'hoi'})
-			test.val(function(node,b){
+			test.once(function(node,b){
 				delete node._;
 				expect(Gun.obj.empty(node, 'try')).to.be.ok();
 				node = Gun.obj.copy(gun.__.graph[Gun.val.link.is(node.try)]);
@@ -7939,7 +8029,7 @@ describe('Gun', function(){
         var world = 0;
         player.path("id").put(id);
         player.path("world_id").put(world);
-	    }).val(function(data){
+	    }).once(function(data){
         //console.log("we have value!", data);
         expect(done.not).to.be.ok();
         expect(data).to.be('fluffy');
@@ -7963,7 +8053,7 @@ describe('Gun', function(){
 		// 3: bacon
 		// 9: `.not`
 
-		depp.path('spouse.pet.name').val().on(log);
+		depp.path('spouse.pet.name').once().on(log);
 		// 0: fluffy
 		// 1: fluff
 		*/
@@ -8004,7 +8094,7 @@ describe('Gun', function(){
 				ctx.length = i;
 			}
 			ctx.get.fake = Gun.is.node.ify(ctx.get.fake, 'big');
-			var big = peer.put(ctx.get.fake).val(function(val){
+			var big = peer.put(ctx.get.fake).once(function(val){
 				ref = val;
 				ctx.get({'#': 'big'}, function(err, graph){
 					if(Gun.obj.empty(graph)){ done() }
@@ -8015,7 +8105,7 @@ describe('Gun', function(){
 
 		it('map chain', function(done){
 			var set = gun.put({a: {here: 'you'}, b: {go: 'dear'}, c: {sir: '!'} });
-			set.map().val(function(obj, field){
+			set.map().once(function(obj, field){
 				if(obj.here){
 					done.a = obj.here;
 					expect(obj.here).to.be('you');
@@ -8044,7 +8134,7 @@ describe('Gun', function(){
 					pet: {coat: "tux", name: "Casper"}
 				}
 			});
-			set.map().path('pet').val(function(obj, field){
+			set.map().path('pet').once(function(obj, field){
 				if(obj.name === 'Hobbes'){
 					done.hobbes = obj.name;
 					expect(obj.name).to.be('Hobbes');
@@ -8107,7 +8197,7 @@ describe('Gun', function(){
 
 		it('get val', function(done){
 			this.timeout(ctx.gen * ctx.extra);
-			g().get('big').val(function(obj){
+			g().get('big').once(function(obj){
 				delete obj._;
 				expect(obj.f1).to.be(1);
 				expect(obj['f' + ctx.length]).to.be(ctx.length);
@@ -8122,7 +8212,7 @@ describe('Gun', function(){
 		it('get big map val', function(done){
 			this.timeout(ctx.gen * ctx.extra);
 			var test = {c: 0, seen: {}};
-			g().get('big').map().val(function(val, field){
+			g().get('big').map().once(function(val, field){
 				if(test.seen[field]){ return }
 				test.seen[field] = true;
 				delete val._;
@@ -8145,7 +8235,7 @@ describe('Gun', function(){
 			chat.put({random5: {who: 'mark', what: "5", when: 5}});
 			var seen = {1: false, 2: false, 3: false, 4: false, 5: false}
 			setTimeout(function(){
-				chat.map(function(m){ }).val(function(msg, field){
+				chat.map(function(m){ }).once(function(msg, field){
 					var msg = Gun.obj.copy(msg);
 					if(msg.what){
 						expect(msg.what).to.be.ok();

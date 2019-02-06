@@ -16,7 +16,6 @@ Gun.chain.chain = function(sub){
 
 function output(msg){
 	var put, get, at = this.as, back = at.back, root = at.root, tmp;
-	if(!msg.I){ msg.I = at.$ }
 	if(!msg.$){ msg.$ = at.$ }
 	this.to.next(msg);
 	if(get = msg.get){
@@ -24,7 +23,6 @@ function output(msg){
 			at.on('in', at);
 			return;
 		}*/
-		//console.log("out!", at.get, get);
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
 			msg['#'] || (msg['#'] = text_rand(9));
@@ -140,7 +138,7 @@ function input(msg){
 	//if(tmp[cat.id]){ return }
 	tmp.is = tmp.is || at.put;
 	tmp[cat.id] = at.put || true;
-	//if(root.stop){ 
+	//if(root.stop){
 		eve.to.next(msg)
 	//}
 	relate(cat, msg, at, rel);
@@ -153,7 +151,7 @@ function relate(at, msg, from, rel){
 	var tmp = (at.root.$.get(rel)._);
 	if(at.has){
 		from = tmp;
-	} else 
+	} else
 	if(from.has){
 		relate(from, msg, from, rel);
 	}
@@ -164,13 +162,12 @@ function relate(at, msg, from, rel){
 		not(at, msg);
 	}
 	tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
-	//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 	if(rel === tmp.link){
 		if(!(tmp.pass || at.pass)){
 			return;
 		}
 	}
-	if(at.pass){ 
+	if(at.pass){
 		Gun.obj.map(at.map, function(tmp){ tmp.pass = true })
 		obj_del(at, 'pass');
 	}
@@ -206,7 +203,7 @@ function map(data, key){ // Map over only the changes on every update.
 	if(tmp = via.$){
 		tmp = (chain = via.$.get(key))._;
 		if(u === tmp.put || !Gun.val.link.is(data)){
-			tmp.put = data; 
+			tmp.put = data;
 		}
 	}
 	at.on('in', {
@@ -274,7 +271,6 @@ function ack(msg, ev){
 		at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 		return;
 	}
-	msg.$ = at.root.$;
 	Gun.on.put(msg, at.root.$);
 }
 var empty = {}, u;

@@ -3,8 +3,8 @@ var config = {
 	port: 8765,
 	servers: 2,
 	browsers: 2,
-	each: 100000,
-	burst: 2,
+	each: 500,
+	burst: 50,
 	wait: 1,
 	notrad: true,
 	route: {

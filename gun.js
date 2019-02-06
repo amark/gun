@@ -1,22 +1,22 @@
 ;(function(){
 
-	/* UNBUILD */
-	var root;
-	if(typeof window !== "undefined"){ root = window }
-	if(typeof global !== "undefined"){ root = global }
-	root = root || {};
-	var console = root.console || {log: function(){}};
-	function USE(arg){
-		return arg.slice? USE[R(arg)] : function(mod, path){
-			arg(mod = {exports: {}});
-			USE[R(path)] = mod.exports;
-		}
-		function R(p){
-			return p.split('/').slice(-1).toString().replace('.js','');
-		}
-	}
-	if(typeof module !== "undefined"){ var common = module }
-	/* UNBUILD */
+  /* UNBUILD */
+  var root;
+  if(typeof window !== "undefined"){ root = window }
+  if(typeof global !== "undefined"){ root = global }
+  root = root || {};
+  var console = root.console || {log: function(){}};
+  function USE(arg, req){
+    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+      arg(mod = {exports: {}});
+      USE[R(path)] = mod.exports;
+    }
+    function R(p){
+      return p.split('/').slice(-1).toString().replace('.js','');
+    }
+  }
+  if(typeof module !== "undefined"){ var common = module }
+  /* UNBUILD */
 
 	;USE(function(module){
 		// Generic javascript utilities.
@@ -172,13 +172,13 @@
 			var u, tag = (this.tag || (this.tag = {}))[tag] ||
 			(this.tag[tag] = {tag: tag, to: onto._ = {
 				next: function(arg){ var tmp;
-					if((tmp = this.to)){ 
+					if((tmp = this.to)){
 						tmp.next(arg);
 				}}
 			}});
 			if(arg instanceof Function){
 				var be = {
-					off: onto.off || 
+					off: onto.off ||
 					(onto.off = function(){
 						if(this.next === onto._.next){ return !0 }
 						if(this === this.the.last){
@@ -261,14 +261,14 @@
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
 			if(text_is(v) // by "text" we mean strings.
 			|| bi_is(v) // by "binary" we mean boolean.
-			|| num_is(v)){ // by "number" we mean integers or decimals. 
+			|| num_is(v)){ // by "number" we mean integers or decimals.
 				return true; // simple values are valid.
 			}
-			return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+			return Val.link.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
 		Val.link = Val.rel = {_: '#'};
 		;(function(){
-			Val.rel.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+			Val.link.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 				if(v && v[rel_] && !v._ && obj_is(v)){ // must be an object.
 					var o = {};
 					obj_map(v, map, o);
@@ -287,7 +287,7 @@
 				}
 			}
 		}());
-		Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+		Val.link.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
 		Type.obj.has._ = '.';
 		var rel_ = Val.link._, u;
 		var bi_is = Type.bi.is;
@@ -384,10 +384,10 @@
 		State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
-					return; 
+					return;
 				}
 				n = Node.soul.ify(n, soul); // then make it so!
-			} 
+			}
 			var tmp = obj_as(n[N_], State._); // grab the states data.
 			if(u !== k && k !== N_){
 				if(num_is(s)){
@@ -400,7 +400,7 @@
 			return n;
 		}
 		State.to = function(from, k, to){
-			var val = from[k]; // BUGGY!
+			var val = (from||{})[k];
 			if(obj_is(val)){
 				val = obj_copy(val);
 			}
@@ -473,8 +473,9 @@
 					env.map = env;
 				}
 				if(env.soul){
-					at.rel = Val.rel.ify(env.soul);
+					at.link = Val.link.ify(env.soul);
 				}
+				env.shell = (as||{}).shell;
 				env.graph = env.graph || {};
 				env.seen = env.seen || [];
 				env.as = env.as || as;
@@ -487,14 +488,16 @@
 				at.env = env;
 				at.soul = soul;
 				if(Node.ify(at.obj, map, at)){
-					//at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
-					env.graph[Val.rel.is(at.rel)] = at.node;
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
+					if(at.obj !== env.shell){
+						env.graph[Val.link.is(at.link)] = at.node;
+					}
 				}
 				return at;
 			}
 			function map(v,k,n){
 				var at = this, env = at.env, is, tmp;
-				if(Node._ === k && obj_has(v,Val.rel._)){
+				if(Node._ === k && obj_has(v,Val.link._)){
 					return n._; // TODO: Bug?
 				}
 				if(!(is = valid(v,k,n, at,env))){ return }
@@ -503,8 +506,8 @@
 					if(obj_has(v, Node._) && Node.soul(v)){ // ? for safety ?
 						at.node._ = obj_copy(v._);
 					}
-					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
-					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					at.node = Node.soul.ify(at.node, Val.link.is(at.link));
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
 				}
 				if(tmp = env.map){
 					tmp.call(env.as || {}, v,k,n, at);
@@ -523,14 +526,14 @@
 				}
 				tmp = node(env, {obj: v, path: at.path.concat(k)});
 				if(!tmp.node){ return }
-				return tmp.rel; //{'#': Node.soul(tmp.node)};
+				return tmp.link; //{'#': Node.soul(tmp.node)};
 			}
 			function soul(id){ var at = this;
-				var prev = Val.link.is(at.rel), graph = at.env.graph;
-				at.rel = at.rel || Val.rel.ify(id);
-				at.rel[Val.rel._] = id;
+				var prev = Val.link.is(at.link), graph = at.env.graph;
+				at.link = at.link || Val.link.ify(id);
+				at.link[Val.link._] = id;
 				if(at.node && at.node[Node._]){
-					at.node[Node._][Val.rel._] = id;
+					at.node[Node._][Val.link._] = id;
 				}
 				if(obj_has(graph, prev)){
 					graph[id] = graph[prev];
@@ -570,13 +573,13 @@
 			}
 			function map(v,k){ var tmp, obj;
 				if(Node._ === k){
-					if(obj_empty(v, Val.rel._)){
+					if(obj_empty(v, Val.link._)){
 						return;
 					}
 					this.obj[k] = obj_copy(v);
 					return;
 				}
-				if(!(tmp = Val.rel.is(v))){
+				if(!(tmp = Val.link.is(v))){
 					this.obj[k] = v;
 					return;
 				}
@@ -635,7 +638,7 @@
 					dup.to = setTimeout(function(){
 						var now = time_is();
 						Type.obj.map(dup.s, function(it, id){
-							if(opt.age > (now - it.was)){ return }
+							if(it && opt.age > (now - it.was)){ return }
 							Type.obj.del(dup.s, id);
 						});
 						dup.to = null;
@@ -755,7 +758,7 @@
 				if(!at){
 					if(!(cat.opt||empty).super){
 						ctx.souls[soul] = false;
-						return; 
+						return;
 					}
 					at = (ctx.$.get(soul)._);
 				}
@@ -802,9 +805,25 @@
 			}
 
 			Gun.on.get = function(msg, gun){
-				var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
-				if(!node || !at){ return root.on('get', msg) }
+				if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
+					var graph = {};
+					Gun.obj.map(root.graph, function(node, s){
+						if(Gun.text.match(s, soul)){
+							graph[s] = Gun.obj.copy(node);
+						}
+					});
+					if(!Gun.obj.empty(graph)){
+						root.on('in', {
+							'@': msg['#'],
+							how: '*',
+							put: graph,
+							$: gun
+						});
+					}
+				} // TEMPORARY HACK FOR MARTTI, TESTING
+				if(!node){ return root.on('get', msg) }
 				if(has){
 					if(!obj_has(node, has)){ return root.on('get', msg) }
 					node = Gun.state.to(node, has);
@@ -815,7 +834,7 @@
 					node = Gun.obj.copy(node);
 				}
 				node = Gun.graph.node(node);
-				tmp = at.ack;
+				tmp = (at||empty).ack;
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
@@ -852,7 +871,7 @@
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+		var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -863,8 +882,8 @@
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
-		
-		if(typeof window !== "undefined"){ window.Gun = Gun }
+
+		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
 
@@ -940,7 +959,6 @@
 
 		function output(msg){
 			var put, get, at = this.as, back = at.back, root = at.root, tmp;
-			if(!msg.I){ msg.I = at.$ }
 			if(!msg.$){ msg.$ = at.$ }
 			this.to.next(msg);
 			if(get = msg.get){
@@ -948,7 +966,6 @@
 					at.on('in', at);
 					return;
 				}*/
-				//console.log("out!", at.get, get);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9));
@@ -1064,7 +1081,7 @@
 			//if(tmp[cat.id]){ return }
 			tmp.is = tmp.is || at.put;
 			tmp[cat.id] = at.put || true;
-			//if(root.stop){ 
+			//if(root.stop){
 				eve.to.next(msg)
 			//}
 			relate(cat, msg, at, rel);
@@ -1077,7 +1094,7 @@
 			var tmp = (at.root.$.get(rel)._);
 			if(at.has){
 				from = tmp;
-			} else 
+			} else
 			if(from.has){
 				relate(from, msg, from, rel);
 			}
@@ -1088,13 +1105,12 @@
 				not(at, msg);
 			}
 			tmp = from.id? ((at.map || (at.map = {}))[from.id] = at.map[from.id] || {at: from}) : {};
-			//console.log("REL?", at.id, at.get, rel === tmp.link, tmp.pass || at.pass);
 			if(rel === tmp.link){
 				if(!(tmp.pass || at.pass)){
 					return;
 				}
 			}
-			if(at.pass){ 
+			if(at.pass){
 				Gun.obj.map(at.map, function(tmp){ tmp.pass = true })
 				obj_del(at, 'pass');
 			}
@@ -1117,11 +1133,11 @@
 			if(!(at = next[key])){
 				return;
 			}
-			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
+			//if(data && data[_soul] && (tmp = Gun.val.link.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
 			//	data = tmp.put;
 			//}
 			if(at.has){
-				//if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
+				//if(!(data && data[_soul] && Gun.val.link.is(data) === Gun.node.soul(at.put))){
 				if(u === at.put || !Gun.val.link.is(data)){
 					at.put = data;
 				}
@@ -1130,7 +1146,7 @@
 			if(tmp = via.$){
 				tmp = (chain = via.$.get(key))._;
 				if(u === tmp.put || !Gun.val.link.is(data)){
-					tmp.put = data; 
+					tmp.put = data;
 				}
 			}
 			at.on('in', {
@@ -1144,7 +1160,10 @@
 			if(!(at.has || at.soul)){ return }
 			var tmp = at.map, root = at.root;
 			at.map = null;
-			if(at.has){ at.link = null }
+			if(at.has){
+				if(at.dub && at.root.stop){ at.dub = null }
+				at.link = null;
+			}
 			//if(!root.now || !root.now[at.id]){
 			if(!at.pass){
 				if((!msg['@']) && null === tmp){ return }
@@ -1198,13 +1217,12 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
-			msg.$ = at.root.$;
 			Gun.on.put(msg, at.root.$);
 		}
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 		var text_rand = Gun.text.random;
-		var _soul = Gun.val.rel._, node_ = Gun.node._;
+		var _soul = Gun.val.link._, node_ = Gun.node._;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -1270,13 +1288,15 @@
 			return at;
 		}
 		function soul(gun, cb, opt, as){
-			var cat = gun._, tmp;
-			if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
-			if(tmp = cat.link){ return cb(tmp, as, cat), gun }
+			var cat = gun._, acks = 0, tmp;
+			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat), gun }
 			gun.get(function(msg, ev){
+				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && ++acks < tmp){
+					return;
+				}
 				ev.rid(msg);
 				var at = ((at = msg.$) && at._) || {};
-				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put);
+				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
 				cb(tmp, as, msg, ev);
 			}, {out: {get: {'.':true}}});
 			return gun;
@@ -1292,9 +1312,9 @@
 			//else if(!cat.async && msg.put !== at.put && root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
 
 
-			//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
+			//root.stop && (root.stop.id = root.stop.id || Gun.text.random(2));
 			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
+			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 				tmp = ((msg.$$ = at.root.gun.get(tmp))._);
@@ -1302,9 +1322,10 @@
 					msg = obj_to(msg, {put: data = tmp.put});
 				}
 			}
-			if((tmp = root.mum) && at.id){
-				if(tmp[at.id]){ return }
-				if(u !== data && !rel.is(data)){ tmp[at.id] = true; }
+			if((tmp = root.mum) && at.id){ // TODO: can we delete mum entirely now?
+				var id = at.id + (eve.id || (eve.id = Gun.text.random(9)));
+				if(tmp[id]){ return }
+				if(u !== data && !rel.is(data)){ tmp[id] = true; }
 			}
 			as.use(msg, eve);
 			if(eve.stun){
@@ -1326,7 +1347,7 @@
 			//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 			return;
 		}
-		var obj = Gun.obj, obj_has = obj.has, obj_to = Gun.obj.to;
+		var obj = Gun.obj, obj_map = obj.map, obj_has = obj.has, obj_to = Gun.obj.to;
 		var num_is = Gun.num.is;
 		var rel = Gun.val.link, node_soul = Gun.node.soul, node_ = Gun.node._;
 		var empty = {}, u;
@@ -1364,7 +1385,7 @@
 					});
 					return gun;
 				}
-				as.$ = gun = root.get(as.soul);
+				as.$ = root.get(as.soul);
 				as.ref = as.$;
 				ify(as);
 				return gun;
@@ -1374,10 +1395,11 @@
 					if(!soul && Gun.val.is(msg.put)){
 						return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 					}
-					gun.put(Gun.val.rel.ify(soul), cb, as);
+					gun.put(Gun.val.link.ify(soul), cb, as);
 				}, true);
 				return gun;
 			}
+			if(at.has && (tmp = Gun.val.link.is(data))){ at.dub = tmp }
 			as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
 			if(as.ref._.soul && Gun.val.is(as.data) && at.get){
 				as.data = obj_put({}, at.get, as.data);
@@ -1473,7 +1495,7 @@
 		function soul(id, as, msg, eve){
 			var as = as.as, cat = as.at; as = as.as;
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -1519,8 +1541,8 @@
 						as.data = obj_put({}, at.get, as.data);
 					});
 				}
-				tmp = tmp || at.get;
-				at = (at.root.$.get(tmp)._);
+				tmp = tmp || at.soul || at.link || at.dub;// || at.get;
+				at = tmp? (at.root.$.get(tmp)._) : at;
 				as.soul = tmp;
 				data = as.data;
 			}
@@ -1532,7 +1554,7 @@
 					if(node_ == at.get){
 						as.soul = (at.put||empty)['#'] || at.dub;
 					}
-					as.soul = as.soul || at.soul || at.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -1638,18 +1660,19 @@
 			var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 			if(tmp = msg.$$){
 				link = tmp = (msg.$$._);
-				if(u === tmp.put){
-					return;
+				if(u !== link.put){
+					data = link.put;
 				}
-				data = tmp.put;
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
-			if(!to && (u === data || at.soul || at.link || (link && !(0 < link.ack)))){
+			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
+			|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (!to && (link||at).ack <= tmp))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 					val.call({as:opt}, msg, eve, tmp || 1);
 				}, opt.wait || 99);
 				return;
 			}
+			if(link && u === link.put && (tmp = rel.is(data))){ data = Gun.node.ify({}, tmp) }
 			eve.rid(msg);
 			opt.ok.call(gun || opt.$, data, msg.get);
 		}
@@ -1711,10 +1734,8 @@
 			gun.map().on(function(data, key, at, ev){
 				var next = (cb||noop).call(this, data, key, at, ev);
 				if(u === next){ return }
-				if(data === next || Gun.is(next)){
-					chain._.on('in', next._);
-					return;
-				}
+				if(data === next){ return chain._.on('in', at) }
+				if(Gun.is(next)){ return chain._.on('in', next._) }
 				chain._.on('in', {get: key, put: next});
 			});
 			return chain;
@@ -1739,13 +1760,12 @@
 			var gun = this, soul;
 			cb = cb || function(){};
 			opt = opt || {}; opt.item = opt.item || item;
-			if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
+			if(soul = Gun.node.soul(item)){ item = Gun.obj.put({}, soul, Gun.val.link.ify(soul)) }
 			if(!Gun.is(item)){
-				var id = gun.back('opt.uuid')();
-				if(id && Gun.obj.is(item)){
-					return gun.set(gun._.root.$.put(item, id), cb, opt);
+				if(Gun.obj.is(item)){;
+					item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || gun.back('opt.uuid')()).put(item);
 				}
-				return gun.get((Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
+				return gun.get(soul || (Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
 			}
 			item.get(function(soul, o, msg){
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
@@ -1758,10 +1778,12 @@
 	;USE(function(module){
 		if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. But it would be nice if it could somehow plugin into NodeJS compatible localStorage APIs?
 
-		var root, noop = function(){}, u;
-		if(typeof window !== 'undefined'){ root = window }
-		var store = root.localStorage || {setItem: noop, removeItem: noop, getItem: noop};
-
+		var root, noop = function(){}, store, u;
+		try{store = (Gun.window||noop).localStorage}catch(e){}
+		if(!store){
+			console.log("Warning: No localStorage exists to persist data to!");
+			store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
+		}
 		/*
 			NOTE: Both `lib/file.js` and `lib/memdisk.js` are based on this design!
 			If you update anything here, consider updating the other adapters as well.
@@ -1772,29 +1794,26 @@
 			// See the next 'opt' code below for actual saving of data.
 			var ev = this.to, opt = root.opt;
 			if(root.once){ return ev.next(root) }
-			if(false === opt.localStorage){ return ev.next(root) }
-			opt.file = opt.file || 'gun/';
-			var gap = Gun.obj.ify(store.getItem('gap/'+opt.file)) || {};
+			//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+			opt.prefix = opt.file || 'gun/';
+			var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 			var empty = Gun.obj.empty, id, to, go;
 			// add re-sync command.
 			if(!empty(gap)){
-				root.on('localStorage', function(disk){
-					this.off();
-					var send = {}
-					Gun.obj.map(gap, function(node, soul){
-						Gun.obj.map(node, function(val, key){
-							send[soul] = Gun.state.to(disk[soul], key, send[soul]);
-						});
+				var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {}, send = {};
+				Gun.obj.map(gap, function(node, soul){
+					Gun.obj.map(node, function(val, key){
+						send[soul] = Gun.state.to(disk[soul], key, send[soul]);
 					});
-					setTimeout(function(){
-						root.on('out', {put: send, '#': root.ask(ack), I: root.$});
-					},10);
 				});
+				setTimeout(function(){
+					root.on('out', {put: send, '#': root.ask(ack)});
+				},1);
 			}
 
 			root.on('out', function(msg){
 				if(msg.lS){ return }
-				if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+				if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
 					if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -1827,7 +1846,7 @@
 			var flush = function(){
 				clearTimeout(to);
 				to = false;
-				try{store.setItem('gap/'+opt.file, JSON.stringify(gap));
+				try{store.setItem('gap/'+opt.prefix, JSON.stringify(gap));
 				}catch(e){ Gun.log(err = e || "localStorage failure") }
 			}
 		});
@@ -1837,12 +1856,12 @@
 			var opt = root.opt;
 			if(root.once){ return }
 			if(false === opt.localStorage){ return }
-			opt.file = opt.file || opt.prefix || 'gun/'; // support old option name.
+			opt.prefix = opt.file || 'gun/';
 			var graph = root.graph, acks = {}, count = 0, to;
-			var disk = Gun.obj.ify(store.getItem(opt.file)) || {};
+			var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 			var lS = function(){}, u;
 			root.on('localStorage', disk); // NON-STANDARD EVENT!
-			
+
 			root.on('put', function(at){
 				this.to.next(at);
 				Gun.graph.is(at.put, null, map);
@@ -1870,7 +1889,7 @@
 					return; // Hmm, what if we have peers but we are disconnected?
 				}
 				//console.log("lS get", lex, data);
-				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
 				};
 				Gun.debug? setTimeout(to,1) : to();
 			});
@@ -1887,10 +1906,10 @@
 				var ack = acks;
 				acks = {};
 				if(data){ disk = data }
-				try{store.setItem(opt.file, JSON.stringify(disk));
-				}catch(e){ 
-					Gun.log(err = e || "localStorage failure");
-					root.on('localStorage:error', {err: err, file: opt.file, flush: disk, retry: flush});
+				try{store.setItem(opt.prefix, JSON.stringify(disk));
+				}catch(e){
+					Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
+					root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 				}
 				if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 				Gun.obj.map(ack, function(yes, id){
@@ -1909,6 +1928,10 @@
 
 		function Mesh(ctx){
 			var mesh = function(){};
+			var opt = ctx.opt || {};
+			opt.log = opt.log || console.log;
+			opt.gap = opt.gap || opt.wait || 1;
+			opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
 
 			mesh.out = function(msg){ var tmp;
 				if(this.to){ this.to.next(msg) }
@@ -1916,20 +1939,28 @@
 				if((tmp = msg['@'])
 				&& (tmp = ctx.dup.s[tmp])
 				&& (tmp = tmp.it)
-				&& tmp.mesh){
-					mesh.say(msg, tmp.mesh.via);
+				&& tmp._){
+					mesh.say(msg, (tmp._).via, 1);
 					tmp['##'] = msg['##'];
 					return;
 				}
 				// add hook for AXE?
+				//if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
 				mesh.say(msg);
 			}
+
+			ctx.on('create', function(root){
+				root.opt.pid = root.opt.pid || Type.text.random(9);
+				this.to.next(root);
+				ctx.on('out', mesh.out);
+			});
 
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
+				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				try{msg = JSON.parse(raw);
-				}catch(e){}
+				}catch(e){opt.log('DAM JSON parse error', e)}
 				if('{' === tmp){
 					if(!msg){ return }
 					if(dup.check(id = msg['#'])){ return }
@@ -1941,12 +1972,18 @@
 							(tmp = dup.s)[hash] = tmp[id];
 						}
 					}
-					(msg.mesh = function(){}).via = peer;
+					(msg._ = function(){}).via = peer;
 					if((tmp = msg['><'])){
-						msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+						(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+					}
+					if(msg.dam){
+						if(tmp = mesh.hear[msg.dam]){
+							tmp(msg, peer, ctx);
+						}
+						return;
 					}
 					ctx.on('in', msg);
-					
+
 					return;
 				} else
 				if('[' === tmp){
@@ -1961,21 +1998,21 @@
 			}
 
 			;(function(){
-				mesh.say = function(msg, peer){
+				mesh.say = function(msg, peer, o){
 					/*
 						TODO: Plenty of performance optimizations
 						that can be made just based off of ordering,
 						and reducing function calls for cached writes.
 					*/
 					if(!peer){
-						Type.obj.map(ctx.opt.peers, function(peer){
+						Type.obj.map(opt.peers, function(peer){
 							mesh.say(msg, peer);
 						});
 						return;
 					}
-					var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
+					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 					if(!wire){ return }
-					msh = msg.mesh || empty;
+					msh = (msg._) || empty;
 					if(peer === msh.via){ return }
 					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
 					if((tmp = msg['@'])
@@ -1985,31 +2022,32 @@
 							return; // TODO: this still needs to be tested in the browser!
 						}
 					}
-					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested
+					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 					if(peer.batch){
-						peer.batch.push(raw);
-						return;
+						peer.tail = (peer.tail || 0) + raw.length;
+						if(peer.tail <= opt.pack){
+							peer.batch.push(raw);
+							return;
+						}
+						flush(peer);
 					}
 					peer.batch = [];
-					setTimeout(function(){
-						var tmp = peer.batch;
-						if(!tmp){ return }
-						peer.batch = null;
-						if(!tmp.length){ return }
-						send(JSON.stringify(tmp), peer);
-					}, ctx.opt.gap || ctx.opt.wait || 1);
+					setTimeout(function(){flush(peer)}, opt.gap);
 					send(raw, peer);
 				}
-
+				function flush(peer){
+					var tmp = peer.batch;
+					if(!tmp){ return }
+					peer.batch = peer.tail = null;
+					if(!tmp.length){ return }
+					try{send(JSON.stringify(tmp), peer);
+					}catch(e){opt.log('DAM JSON stringify error', e)}
+				}
 				function send(raw, peer){
 					var wire = peer.wire;
 					try{
 						if(wire.send){
-							if(wire.readyState === wire.OPEN){
-								wire.send(raw);
-							} else {
-								(peer.queue = peer.queue || []).push(raw);
-							}
+							wire.send(raw);
 						} else
 						if(peer.say){
 							peer.say(raw);
@@ -2020,12 +2058,12 @@
 				}
 
 			}());
-			
+
 			;(function(){
 
 				mesh.raw = function(msg){
 					if(!msg){ return '' }
-					var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+					var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
 					if(tmp = msh.raw){ return tmp }
 					if(typeof msg === 'string'){ return msg }
 					if(msg['@'] && (tmp = msg.put)){
@@ -2038,12 +2076,14 @@
 						msg['#'] = hash || msg['#'];
 						if(put){ (msg = Type.obj.to(msg)).put = _ }
 					}
-					var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
+					var i = 0, to = []; Type.obj.map(opt.peers, function(p){
 						to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 					}); msg['><'] = to.join();
 					var raw = $(msg);
 					if(u !== put){
-						raw = raw.replace('"'+ _ +'"', put);
+						tmp = raw.indexOf(_, raw.indexOf('put'));
+						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
+						//raw = raw.replace('"'+ _ +'"', put); // https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}
 					if(msh){
 						msh.raw = raw;
@@ -2064,17 +2104,35 @@
 				function map(k){
 					this.to[k] = this.on[k];
 				}
-				var $ = JSON.stringify, _ = ':])([:'
+				var $ = JSON.stringify, _ = ':])([:';
 
 			}());
 
 			mesh.hi = function(peer){
-				ctx.on('hi', peer);
-				var queue = peer.queue;
-				peer.queue = [];
-				Type.obj.map(queue, function(msg){
+				var tmp = peer.wire || {};
+				if(peer.id || peer.url){
+					opt.peers[peer.url || peer.id] = peer;
+					Type.obj.del(opt.peers, tmp.id);
+				} else {
+					tmp = tmp.id = tmp.id || Type.text.random(9);
+					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
+				}
+				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+				tmp = peer.queue; peer.queue = [];
+				Type.obj.map(tmp, function(msg){
 					mesh.say(msg, peer);
 				});
+			}
+			mesh.bye = function(peer){
+				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
+				ctx.on('bye', peer);
+			}
+
+			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
+			mesh.hear['?'] = function(msg, peer){
+				if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
+				peer.id = peer.id || msg.pid;
+				mesh.hi(peer);
 			}
 
 			return mesh;
@@ -2119,18 +2177,15 @@
 			opt.WebSocket = websocket;
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
-			root.on('create', function(at){
-				this.to.next(at);
-				root.on('out', mesh.out);
-			});
 
-			opt.wire = opt.wire || open;
-			function open(peer){
-				if(!peer || !peer.url){ return }
+			var wire = opt.wire;
+			opt.wire = open;
+			function open(peer){ try{
+				if(!peer || !peer.url){ return wire && wire(peer) }
 				var url = peer.url.replace('http', 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
-					root.on('bye', peer);
+					opt.mesh.bye(peer);
 					reconnect(peer);
 				};
 				wire.onerror = function(error){
@@ -2141,15 +2196,14 @@
 					}
 				};
 				wire.onopen = function(){
-					mesh.hi(peer);
+					opt.mesh.hi(peer);
 				}
 				wire.onmessage = function(msg){
 					if(!msg){ return }
-					env.inLength = (env.inLength || 0) + (msg.data || msg).length; // TEMPORARY, NON-STANDARD, FOR DEBUG
-					mesh.hear(msg.data || msg, peer);
+					opt.mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
-			}
+			}catch(e){}}
 
 			function reconnect(peer){
 				clearTimeout(peer.defer);
