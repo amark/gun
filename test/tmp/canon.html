@@ -13,7 +13,7 @@
 		<button id="render">render</button>
 			<textarea id="before"></textarea>
 			<textarea id="after"></textarea>
-			<script src="../../../gun/lib/canonize.js"></script>
+			<script src="../../../gun/lib/normalize.js"></script>
 		</div>
 		<script>
 			$('#render').on('click', check);
@@ -24,7 +24,7 @@
 				var opt = {};
 				opt.hierarchy = ['div', 'ol', 'ul', 'li', 'p', 'a', 'b', 'i', 'span', 's', 'sub', 'sup', 'u', 'br'];
 				opt.convert = {'em': 'i', 'strong': 'b', 'strike': 's', 'font': 'span'};
-				var b = require.htmlNormalize(a);
+				var b = $.normalize(a);
 				$('#after').val(b);
 				$('#out').html(b);
 			}

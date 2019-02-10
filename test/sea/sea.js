@@ -7,6 +7,7 @@ var Gun;
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
   try{ require('fs').unlinkSync('data.json') }catch(e){}
+  try{ require('../../lib/fsrm')('radatatest') }catch(e){}
   //root.Gun = root.Gun || require('../gun');
   if(root.Gun){
     root.Gun = root.Gun;
@@ -361,4 +362,4 @@ describe('SEA', function(){
 
 })
 
-})()
+}());
