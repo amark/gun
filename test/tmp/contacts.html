@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../../gun/gun.js"></script>
+		<script src="../../../gun/examples/jquery.js"></script>
+		<script src="../../../gun/lib/radix.js"></script>
+	</head>
+	<body>
+		<button id="make">make contacts</button>
+		<input id="find" placeholder="find contacts...">
+		<ul>
+		</ul>
+		<script>
+			try{localStorage.clear()}catch(e){}
+			var gun = Gun('http://localhost:8765/gun');
+
+			$('#make').on('click', function(){
+				var all = {}, to, start;
+				$('ul').text('saving ' + names.length); start = Gun.state();
+				names.forEach(function(val, i){
+					all[++i] = true;
+					//console.log(val);
+					gun.get('names').get(val.toLowerCase()).put({
+						name: val,
+						age: Math.abs(Math.floor(Math.random() * 100 - 30))
+					}, function(ack){
+						if(ack.err){ return console.log(ack.err) }
+						delete all[i];
+						clearTimeout(to);
+						to = setTimeout(function(){
+							if(!Gun.obj.empty(all)){ return }
+							$('ul').text('in '+ (((Gun.state() - 9) - start)/1000) +' seconds.');
+						},9)
+					});
+				});
+			});
+
+			var to;
+			$('#find').on('keyup', function(){
+				clearTimeout(to);
+				to = setTimeout(function(){
+					var s = $('#find').val(), tmp;
+					if(!s){ return }
+					s = s.toLowerCase();
+					gun.get('names').get({'.': {'*': s}, '%': 1000 * 100}).once().map().once(function(data){
+						console.log("???", tmp, data);
+						if(!tmp){ tmp = $('ul').html("") }
+						if(!data){ tmp.append("Not Found."); return }
+			    	tmp.append($('<li>').append($('<b>').text(data.name)).append(': ').append($('<i>').text(data.age)));
+					});
+				}, 99);
+			})
+
+var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammamaria","Andy","Anselme","Ardeen","Armand","Ashelman","Aube","Averyl","Baker","Barger","Baten","Bee","Benia","Bernat","Bevers","Bittner","Bobbe","Bonny","Boyce","Breech","Brittaney","Bryn","Burkitt","Cadmann","Campagna","Carlee","Carver","Cavallaro","Chainey","Chaunce","Ching","Cianca","Claudina","Clyve","Colon","Cooke","Corrina","Crawley","Cullie","Dacy","Daniela","Daryn","Deedee","Denie","Devland","Dimitri","Dolphin","Dorinda","Dream","Dunham","Eachelle","Edina","Eisenstark","Elish","Elvis","Eng","Erland","Ethan","Evelyn","Fairman","Faus","Fenner","Fillander","Flip","Foskett","Fredette","Fullerton","Gamali","Gaspar","Gemina","Germana","Gilberto","Giuditta","Goer","Gotcher","Greenstein","Grosvenor","Guthrey","Haldane","Hankins","Harriette","Hayman","Heise","Hepsiba","Hewie","Hiroshi","Holtorf","Howlond","Hurless","Ieso","Ingold","Isidora","Jacoba","Janelle","Jaye","Jennee","Jillana","Johnson","Josy","Justinian","Kannan","Kast","Keeley","Kennett","Kho","Kiran","Knowles","Koser","Kroll","LaMori","Lanctot","Lasky","Laverna","Leff","Leonanie","Lewert","Lilybel","Lissak","Longerich","Lou","Ludeman","Lyman","Madai","Maia","Malvina","Marcy","Maris","Martens","Mathilda","Maye","McLain","Melamie","Meras","Micco","Millburn","Mittel","Montfort","Moth","Mutz","Nananne","Nazler","Nesta","Nicolina","Noellyn","Nuli","Ody","Olympie","Orlena","Other","Pain","Parry","Paynter","Pentheas","Pettifer","Phyllida","Plath","Posehn","Proulx","Quinlan","Raimes","Ras","Redmer","Renelle","Ricard","Rior","Rocky","Ron","Rosetta","Rubia","Ruttger","Salbu","Sandy","Saw","Scholz","Secor","September","Shanleigh","Shenan","Sholes","Sig","Sisely","Soble","Spanos","Stanwinn","Stevie","Stu","Suzanne","Tacy","Tanney","Tekla","Thackeray","Thomasin","Tilla","Tomas","Tracay","Tristis","Ty","Urana","Valdis","Vasta","Vezza","Vitoria","Wait","Warring","Weissmann","Whetstone","Williamson","Wittenburg","Wymore","Yoho","Zamir","Zimmermann"]
+		</script>
+		<style>
+			html, body {
+				font-size: 24pt;
+			}
+		</style>
+	</body>
+</html>
