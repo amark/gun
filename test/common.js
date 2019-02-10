@@ -1,5 +1,4 @@
 describe('Gun', function(){
-
 	var root;
 	(function(){
 		var env;
@@ -8,6 +7,7 @@ describe('Gun', function(){
 		root = env.window? env.window : global;
 		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
+  	try{ require('../lib/fsrm')('radatatest') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');
 		if(root.Gun){
 			root.Gun = root.Gun;
@@ -19,6 +19,7 @@ describe('Gun', function(){
 			//require('../lib/file');
 			require('../lib/store');
 			require('../lib/rfs');
+			require('./rad/rad.js');
 			require('./sea/sea.js');
 		}
 	}(this));
@@ -613,6 +614,7 @@ describe('Gun', function(){
 		});
 		describe('Gun Safety', function(){
 			/* WARNING NOTE: Internal API has significant breaking changes! */
+
 			var gun = Gun();
 			it('is',function(){
 				expect(Gun.is(gun)).to.be(true);
@@ -3048,7 +3050,7 @@ describe('Gun', function(){
 		});
 
 		it('get put get get put reload get get then get', function(done){
-			this.timeout(6000);
+			this.timeout(9000);
 			var gun = Gun();
 
 			gun.get('stef').put({name:'Stef'});
@@ -3081,7 +3083,7 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				});
-			},5000);
+			},1200);
 		});
 
 		it('get get get any parallel', function(done){
@@ -3762,9 +3764,9 @@ describe('Gun', function(){
 			var msg = {what: 'hello world'};
 			//var ref = user.get('who').get('all').set(msg);
 			//user.get('who').get('said').set(ref);
-			var ref = gun.get('who').get('all').set(msg);
-			gun.get('who').get('said').set(ref);
-			gun.get('who').get('said').map().once(function(data){
+			var ref = gun.get('s/r/who').get('all').set(msg);
+			gun.get('s/r/who').get('said').set(ref);
+			gun.get('s/r/who').get('said').map().once(function(data){
 				expect(data.what).to.be.ok();
 				done();
 			})
