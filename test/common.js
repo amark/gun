@@ -3679,12 +3679,12 @@ describe('Gun', function(){
 			this.timeout(5000);
 			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
-			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
+			var prev, diff, max = 25, total = 9, largest = -1, gone = {}, u;
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
 			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.get('history').map().on(function(time, index){
-				//console.log(">>>", index, time);
 				diff = Gun.time.is() - time;
+				//console.log(">>>", index, time, diff);
 				//return;
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
@@ -3695,6 +3695,7 @@ describe('Gun', function(){
 			var turns = 0;
 			var many = setInterval(function(){
 				if(turns > total || (diff || 0) > (max + 5)){
+					if(u === diff){ return }
 					clearTimeout(many);
 			  	expect(Gun.num.is(diff)).to.be.ok();
 			  	if(done.c){ return } done.c = 1;
