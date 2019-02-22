@@ -125,7 +125,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        rad(find, function(err, data){
+        rad(find, function(err, data, info){
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
@@ -133,7 +133,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             done();
         });
     });
- 
+
     it('read bytes', function(done){
         var all = {}, find = 'm', to;
         names.forEach(function(v){
@@ -158,6 +158,22 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   describe('RAD + GUN', function(){
     var ochunk = 1000;
     var gun = Gun({chunk: ochunk});
+ 
+    it('write same', function(done){
+        var all = {}, to, start, tmp;
+        var names = [], c = 285;
+        while(--c){ names.push('bob') }
+        names.forEach(function(v,i){
+            all[++i] = true;
+            tmp = v.toLowerCase();
+            gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
+                expect(ack.err).to.not.be.ok();
+                delete all[i];
+                if(!Gun.obj.empty(all)){ return }
+                done();
+            })
+        });
+    });
  
     it('write contacts', function(done){
         var all = {}, to, start, tmp;

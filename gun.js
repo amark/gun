@@ -1360,7 +1360,22 @@
 			// #soul.has=value>state
 			// ~who#where.where=what>when@was
 			// TODO: BUG! Put probably cannot handle plural chains!
-			var gun = this, at = (gun._), root = at.root.$, tmp;
+			var gun = this, at = (gun._), root = at.root.$, ctx = root._, tmp;
+			if(tmp = ctx.puts){
+				if(tmp > 100){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+					(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
+					clearTimeout(ctx.puto);
+					ctx.puto = setTimeout(function(){
+						var stack = ctx.stack, i = 0, tmp;
+						ctx.stack = ctx.puts = ctx.puto = null;
+						while(tmp = stack[i++]){
+							tmp[0].put(tmp[1], tmp[2], tmp[3]);
+						}
+					}, ctx.opt.wait || 1);
+					return gun;
+				}
+				++ctx.puts;
+			} else { ctx.puts = 1 }
 			as = as || {};
 			as.data = data;
 			as.via = as.$ = as.via || as.$ || gun;
