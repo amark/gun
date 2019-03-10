@@ -90,12 +90,12 @@
 // 				}, at);
 				if(at.opt.super){
 					AXE.say = function(msg, send, at) {
-						if (msg.webrtc) {
-// 							console.log('[AXE] MSG WEBRTC: ', msg.webrtc);
-							if (msg.webrtc.to) {
+						if (msg.rtc) {
+// 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
+							if (msg.rtc.to) {
 								/// Send announce to one peer only if the msg have 'to' attr
-								var peer = (at.on.opt.peers) ? at.on.opt.peers[msg.webrtc.to] : null;
-// 								if (peer) { at.on.opt.mesh.say(msg, peer); }
+								var peer = (at.on.opt.peers) ? at.on.opt.peers[msg.rtc.to] : null;
+// 								if (peer) { at.on.opt._.say(msg, peer); }
 								if (peer) { send(msg, peer); }
 								return;
 							}
@@ -106,8 +106,8 @@
 					};
 				} else {
 					AXE.say = function(msg, send, at) {
-						if (msg.webrtc) {
-// 							console.log('[AXE] MSG WEBRTC: ', msg.webrtc);
+						if (msg.rtc) {
+// 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 						}
 						if (!msg.put) { send(msg); return; }
 						verify(at.on.opt.dht, msg, send, at);
@@ -154,7 +154,7 @@
 		}
 		function input(msg){
 // 			console.log('[AXE] input: ', msg);
-			var at = this.as, to = this.to, peer = (msg.mesh||{}).via;
+			var at = this.as, to = this.to, peer = (msg._||{}).via;
 			var opt = at.opt;
 			var dht = opt.dht;
 			var get = msg.get, soul, key;
@@ -170,13 +170,13 @@
 					if (pids) {
 							var dht = {};
 							dht[soul] = pids;
-							at.opt.mesh.say({dht:dht}, opt.peers[peer.id]);
+							at.opt._.say({dht:dht}, opt.peers[peer.id]);
 					}
 				}
 			}
 			to.next(msg);
 
-			if (opt.webrtc && msg.dht) {
+			if (opt.rtc && msg.dht) {
 				Gun.obj.map(msg.dht, function(pids, soul) {
 					dht(soul, pids);
 					Gun.obj.map(pids.split(','), function(pid) {

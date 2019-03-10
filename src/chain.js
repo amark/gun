@@ -16,7 +16,6 @@ Gun.chain.chain = function(sub){
 
 function output(msg){
 	var put, get, at = this.as, back = at.back, root = at.root, tmp;
-	if(!msg.I){ msg.I = at.$ }
 	if(!msg.$){ msg.$ = at.$ }
 	this.to.next(msg);
 	if(get = msg.get){
@@ -139,7 +138,7 @@ function input(msg){
 	//if(tmp[cat.id]){ return }
 	tmp.is = tmp.is || at.put;
 	tmp[cat.id] = at.put || true;
-	//if(root.stop){ 
+	//if(root.stop){
 		eve.to.next(msg)
 	//}
 	relate(cat, msg, at, rel);
@@ -152,7 +151,7 @@ function relate(at, msg, from, rel){
 	var tmp = (at.root.$.get(rel)._);
 	if(at.has){
 		from = tmp;
-	} else 
+	} else
 	if(from.has){
 		relate(from, msg, from, rel);
 	}
@@ -204,7 +203,7 @@ function map(data, key){ // Map over only the changes on every update.
 	if(tmp = via.$){
 		tmp = (chain = via.$.get(key))._;
 		if(u === tmp.put || !Gun.val.link.is(data)){
-			tmp.put = data; 
+			tmp.put = data;
 		}
 	}
 	at.on('in', {
@@ -272,7 +271,6 @@ function ack(msg, ev){
 		at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 		return;
 	}
-	msg.$ = at.root.$;
 	Gun.on.put(msg, at.root.$);
 }
 var empty = {}, u;
