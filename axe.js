@@ -95,7 +95,7 @@
 							if (msg.rtc.to) {
 								/// Send announce to one peer only if the msg have 'to' attr
 								var peer = (at.on.opt.peers) ? at.on.opt.peers[msg.rtc.to] : null;
-// 								if (peer) { at.on.opt._.say(msg, peer); }
+// 								if (peer) { at.on.opt.mesh.say(msg, peer); }
 								if (peer) { send(msg, peer); }
 								return;
 							}
@@ -170,7 +170,7 @@
 					if (pids) {
 							var dht = {};
 							dht[soul] = pids;
-							at.opt._.say({dht:dht}, opt.peers[peer.id]);
+							at.opt.mesh.say({dht:dht}, opt.peers[peer.id]);
 					}
 				}
 			}
