@@ -172,13 +172,13 @@
 			var u, tag = (this.tag || (this.tag = {}))[tag] ||
 			(this.tag[tag] = {tag: tag, to: onto._ = {
 				next: function(arg){ var tmp;
-					if((tmp = this.to)){ 
+					if((tmp = this.to)){
 						tmp.next(arg);
 				}}
 			}});
 			if(arg instanceof Function){
 				var be = {
-					off: onto.off || 
+					off: onto.off ||
 					(onto.off = function(){
 						if(this.next === onto._.next){ return !0 }
 						if(this === this.the.last){
@@ -261,14 +261,14 @@
 			if(v === Infinity){ return false } // we want this to be, but JSON does not support it, sad face.
 			if(text_is(v) // by "text" we mean strings.
 			|| bi_is(v) // by "binary" we mean boolean.
-			|| num_is(v)){ // by "number" we mean integers or decimals. 
+			|| num_is(v)){ // by "number" we mean integers or decimals.
 				return true; // simple values are valid.
 			}
-			return Val.rel.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
+			return Val.link.is(v) || false; // is the value a soul relation? Then it is valid and return it. If not, everything else remaining is an invalid data type. Custom extensions can be built on top of these primitives to support other types.
 		}
 		Val.link = Val.rel = {_: '#'};
 		;(function(){
-			Val.rel.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
+			Val.link.is = function(v){ // this defines whether an object is a soul relation or not, they look like this: {'#': 'UUID'}
 				if(v && v[rel_] && !v._ && obj_is(v)){ // must be an object.
 					var o = {};
 					obj_map(v, map, o);
@@ -287,7 +287,7 @@
 				}
 			}
 		}());
-		Val.rel.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
+		Val.link.ify = function(t){ return obj_put({}, rel_, t) } // convert a soul into a relation and return it.
 		Type.obj.has._ = '.';
 		var rel_ = Val.link._, u;
 		var bi_is = Type.bi.is;
@@ -384,10 +384,10 @@
 		State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 			if(!n || !n[N_]){ // reject if it is not node-like.
 				if(!soul){ // unless they passed a soul
-					return; 
+					return;
 				}
 				n = Node.soul.ify(n, soul); // then make it so!
-			} 
+			}
 			var tmp = obj_as(n[N_], State._); // grab the states data.
 			if(u !== k && k !== N_){
 				if(num_is(s)){
@@ -473,7 +473,7 @@
 					env.map = env;
 				}
 				if(env.soul){
-					at.rel = Val.rel.ify(env.soul);
+					at.link = Val.link.ify(env.soul);
 				}
 				env.shell = (as||{}).shell;
 				env.graph = env.graph || {};
@@ -488,16 +488,16 @@
 				at.env = env;
 				at.soul = soul;
 				if(Node.ify(at.obj, map, at)){
-					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
 					if(at.obj !== env.shell){
-						env.graph[Val.rel.is(at.rel)] = at.node;
+						env.graph[Val.link.is(at.link)] = at.node;
 					}
 				}
 				return at;
 			}
 			function map(v,k,n){
 				var at = this, env = at.env, is, tmp;
-				if(Node._ === k && obj_has(v,Val.rel._)){
+				if(Node._ === k && obj_has(v,Val.link._)){
 					return n._; // TODO: Bug?
 				}
 				if(!(is = valid(v,k,n, at,env))){ return }
@@ -506,8 +506,8 @@
 					if(obj_has(v, Node._) && Node.soul(v)){ // ? for safety ?
 						at.node._ = obj_copy(v._);
 					}
-					at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
-					at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+					at.node = Node.soul.ify(at.node, Val.link.is(at.link));
+					at.link = at.link || Val.link.ify(Node.soul(at.node));
 				}
 				if(tmp = env.map){
 					tmp.call(env.as || {}, v,k,n, at);
@@ -526,14 +526,14 @@
 				}
 				tmp = node(env, {obj: v, path: at.path.concat(k)});
 				if(!tmp.node){ return }
-				return tmp.rel; //{'#': Node.soul(tmp.node)};
+				return tmp.link; //{'#': Node.soul(tmp.node)};
 			}
 			function soul(id){ var at = this;
-				var prev = Val.link.is(at.rel), graph = at.env.graph;
-				at.rel = at.rel || Val.rel.ify(id);
-				at.rel[Val.rel._] = id;
+				var prev = Val.link.is(at.link), graph = at.env.graph;
+				at.link = at.link || Val.link.ify(id);
+				at.link[Val.link._] = id;
 				if(at.node && at.node[Node._]){
-					at.node[Node._][Val.rel._] = id;
+					at.node[Node._][Val.link._] = id;
 				}
 				if(obj_has(graph, prev)){
 					graph[id] = graph[prev];
@@ -573,13 +573,13 @@
 			}
 			function map(v,k){ var tmp, obj;
 				if(Node._ === k){
-					if(obj_empty(v, Val.rel._)){
+					if(obj_empty(v, Val.link._)){
 						return;
 					}
 					this.obj[k] = obj_copy(v);
 					return;
 				}
-				if(!(tmp = Val.rel.is(v))){
+				if(!(tmp = Val.link.is(v))){
 					this.obj[k] = v;
 					return;
 				}
@@ -758,7 +758,7 @@
 				if(!at){
 					if(!(cat.opt||empty).super){
 						ctx.souls[soul] = false;
-						return; 
+						return;
 					}
 					at = (ctx.$.get(soul)._);
 				}
@@ -871,7 +871,7 @@
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
 		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+		var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 		var empty = {}, u;
 
 		console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -882,7 +882,7 @@
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 		;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
-		
+
 		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 		module.exports = Gun;
@@ -959,7 +959,6 @@
 
 		function output(msg){
 			var put, get, at = this.as, back = at.back, root = at.root, tmp;
-			if(!msg.I){ msg.I = at.$ }
 			if(!msg.$){ msg.$ = at.$ }
 			this.to.next(msg);
 			if(get = msg.get){
@@ -1082,7 +1081,7 @@
 			//if(tmp[cat.id]){ return }
 			tmp.is = tmp.is || at.put;
 			tmp[cat.id] = at.put || true;
-			//if(root.stop){ 
+			//if(root.stop){
 				eve.to.next(msg)
 			//}
 			relate(cat, msg, at, rel);
@@ -1095,7 +1094,7 @@
 			var tmp = (at.root.$.get(rel)._);
 			if(at.has){
 				from = tmp;
-			} else 
+			} else
 			if(from.has){
 				relate(from, msg, from, rel);
 			}
@@ -1134,11 +1133,11 @@
 			if(!(at = next[key])){
 				return;
 			}
-			//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
+			//if(data && data[_soul] && (tmp = Gun.val.link.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
 			//	data = tmp.put;
 			//}
 			if(at.has){
-				//if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
+				//if(!(data && data[_soul] && Gun.val.link.is(data) === Gun.node.soul(at.put))){
 				if(u === at.put || !Gun.val.link.is(data)){
 					at.put = data;
 				}
@@ -1147,7 +1146,7 @@
 			if(tmp = via.$){
 				tmp = (chain = via.$.get(key))._;
 				if(u === tmp.put || !Gun.val.link.is(data)){
-					tmp.put = data; 
+					tmp.put = data;
 				}
 			}
 			at.on('in', {
@@ -1161,7 +1160,10 @@
 			if(!(at.has || at.soul)){ return }
 			var tmp = at.map, root = at.root;
 			at.map = null;
-			if(at.has){ at.link = null }
+			if(at.has){
+				if(at.dub && at.root.stop){ at.dub = null }
+				at.link = null;
+			}
 			//if(!root.now || !root.now[at.id]){
 			if(!at.pass){
 				if((!msg['@']) && null === tmp){ return }
@@ -1215,13 +1217,12 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
-			msg.$ = at.root.$;
 			Gun.on.put(msg, at.root.$);
 		}
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 		var text_rand = Gun.text.random;
-		var _soul = Gun.val.rel._, node_ = Gun.node._;
+		var _soul = Gun.val.link._, node_ = Gun.node._;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -1288,10 +1289,9 @@
 		}
 		function soul(gun, cb, opt, as){
 			var cat = gun._, acks = 0, tmp;
-			if(tmp = cat.soul){ return cb(tmp, as, cat), gun }
-			if(tmp = cat.link){ return cb(tmp, as, cat), gun }
+			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat), gun }
 			gun.get(function(msg, ev){
-				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && acks++ <= tmp){
+				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && ++acks < tmp){
 					return;
 				}
 				ev.rid(msg);
@@ -1312,9 +1312,9 @@
 			//else if(!cat.async && msg.put !== at.put && root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
 
 
-			//root.stop && (root.stop.ID = root.stop.ID || Gun.text.random(2));
+			//root.stop && (root.stop.id = root.stop.id || Gun.text.random(2));
 			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }	
+			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
 				tmp = ((msg.$$ = at.root.gun.get(tmp))._);
@@ -1385,7 +1385,7 @@
 					});
 					return gun;
 				}
-				as.$ = gun = root.get(as.soul);
+				as.$ = root.get(as.soul);
 				as.ref = as.$;
 				ify(as);
 				return gun;
@@ -1395,10 +1395,11 @@
 					if(!soul && Gun.val.is(msg.put)){
 						return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 					}
-					gun.put(Gun.val.rel.ify(soul), cb, as);
+					gun.put(Gun.val.link.ify(soul), cb, as);
 				}, true);
 				return gun;
 			}
+			if(at.has && (tmp = Gun.val.link.is(data))){ at.dub = tmp }
 			as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
 			if(as.ref._.soul && Gun.val.is(as.data) && at.get){
 				as.data = obj_put({}, at.get, as.data);
@@ -1494,7 +1495,7 @@
 		function soul(id, as, msg, eve){
 			var as = as.as, cat = as.at; as = as.as;
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -1540,8 +1541,8 @@
 						as.data = obj_put({}, at.get, as.data);
 					});
 				}
-				tmp = tmp || at.get;
-				at = (at.root.$.get(tmp)._);
+				tmp = tmp || at.soul || at.link || at.dub;// || at.get;
+				at = tmp? (at.root.$.get(tmp)._) : at;
 				as.soul = tmp;
 				data = as.data;
 			}
@@ -1553,7 +1554,7 @@
 					if(node_ == at.get){
 						as.soul = (at.put||empty)['#'] || at.dub;
 					}
-					as.soul = as.soul || at.soul || at.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -1759,13 +1760,12 @@
 			var gun = this, soul;
 			cb = cb || function(){};
 			opt = opt || {}; opt.item = opt.item || item;
-			if(soul = Gun.node.soul(item)){ return gun.set(gun.back(-1).get(soul), cb, opt) }
+			if(soul = Gun.node.soul(item)){ item = Gun.obj.put({}, soul, Gun.val.link.ify(soul)) }
 			if(!Gun.is(item)){
-				var id = gun.back('opt.uuid')();
-				if(id && Gun.obj.is(item)){
-					return gun.set(gun._.root.$.put(item, id), cb, opt);
+				if(Gun.obj.is(item)){;
+					item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || gun.back('opt.uuid')()).put(item);
 				}
-				return gun.get((Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
+				return gun.get(soul || (Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
 			}
 			item.get(function(soul, o, msg){
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
@@ -1807,13 +1807,13 @@
 					});
 				});
 				setTimeout(function(){
-					root.on('out', {put: send, '#': root.ask(ack), I: root.$});
+					root.on('out', {put: send, '#': root.ask(ack)});
 				},1);
 			}
 
 			root.on('out', function(msg){
 				if(msg.lS){ return }
-				if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+				if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
 					if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -1861,7 +1861,7 @@
 			var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 			var lS = function(){}, u;
 			root.on('localStorage', disk); // NON-STANDARD EVENT!
-			
+
 			root.on('put', function(at){
 				this.to.next(at);
 				Gun.graph.is(at.put, null, map);
@@ -1889,7 +1889,7 @@
 					return; // Hmm, what if we have peers but we are disconnected?
 				}
 				//console.log("lS get", lex, data);
-				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
 				};
 				Gun.debug? setTimeout(to,1) : to();
 			});
@@ -1907,7 +1907,7 @@
 				acks = {};
 				if(data){ disk = data }
 				try{store.setItem(opt.prefix, JSON.stringify(disk));
-				}catch(e){ 
+				}catch(e){
 					Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
 					root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 				}
@@ -1940,8 +1940,8 @@
 				if((tmp = msg['@'])
 				&& (tmp = ctx.dup.s[tmp])
 				&& (tmp = tmp.it)
-				&& tmp.mesh){
-					mesh.say(msg, tmp.mesh.via, 1);
+				&& tmp._){
+					mesh.say(msg, (tmp._).via, 1);
 					tmp['##'] = msg['##'];
 					return;
 				}
@@ -1973,9 +1973,9 @@
 							(tmp = dup.s)[hash] = tmp[id];
 						}
 					}
-					(msg.mesh = function(){}).via = peer;
+					(msg._ = function(){}).via = peer;
 					if((tmp = msg['><'])){
-						msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+						(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
 					}
 					if(msg.dam){
 						if(tmp = mesh.hear[msg.dam]){
@@ -1984,7 +1984,7 @@
 						return;
 					}
 					ctx.on('in', msg);
-					
+
 					return;
 				} else
 				if('[' === tmp){
@@ -2013,7 +2013,7 @@
 					}
 					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 					if(!wire){ return }
-					msh = msg.mesh || empty;
+					msh = (msg._) || empty;
 					if(peer === msh.via){ return }
 					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
 					if((tmp = msg['@'])
@@ -2064,7 +2064,7 @@
 
 				mesh.raw = function(msg){
 					if(!msg){ return '' }
-					var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+					var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
 					if(tmp = msh.raw){ return tmp }
 					if(typeof msg === 'string'){ return msg }
 					if(msg['@'] && (tmp = msg.put)){
