@@ -5,6 +5,9 @@
 		<script src="../../../gun/gun.js"></script>
 		<script src="../../../gun/examples/jquery.js"></script>
 		<script src="../../../gun/lib/radix.js"></script>
+		<script src="../../../gun/lib/radisk.js"></script>
+		<script src="../../../gun/lib/store.js"></script>
+		<script src="../../../gun/lib/rindexed.js"></script>
 	</head>
 	<body>
 		<button id="make">make contacts</button>
@@ -13,7 +16,8 @@
 		</ul>
 		<script>
 			try{localStorage.clear()}catch(e){}
-			var gun = Gun('http://localhost:8765/gun');
+			//var gun = Gun('http://localhost:8765/gun');
+			var gun = Gun({localStorage: false});
 
 			$('#make').on('click', function(){
 				var all = {}, to, start, cbs = 0;

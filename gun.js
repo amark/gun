@@ -1361,7 +1361,7 @@
 			// ~who#where.where=what>when@was
 			// TODO: BUG! Put probably cannot handle plural chains!
 			var gun = this, at = (gun._), root = at.root.$, ctx = root._, tmp;
-			if(tmp = ctx.puts){
+			/*if(tmp = ctx.puts){
 				if(tmp > 100){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
 					(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
 					clearTimeout(ctx.puto);
@@ -1375,7 +1375,7 @@
 					return gun;
 				}
 				++ctx.puts;
-			} else { ctx.puts = 1 }
+			} else { ctx.puts = 1 }*/
 			as = as || {};
 			as.data = data;
 			as.via = as.$ = as.via || as.$ || gun;
@@ -1470,7 +1470,9 @@
 					if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 					if(!as.ack){ return }
 					as.ack(ack, this);
+					// --C;
 				}, as.opt);
+				//C++;
 				// NOW is a hack to get synchronous replies to correctly call.
 				// and STOP is a hack to get async behavior to correctly call.
 				// neither of these are ideal, need to be fixed without hacks,
@@ -1485,6 +1487,7 @@
 			}, as);
 			if(as.res){ as.res() }
 		} function no(v,k){ if(v){ return true } }
+		//console.debug(999,1); var C = 0; setInterval(function(){ try{ debugg.innerHTML = C }catch(e){console.log(e)} }, 500);
 
 		function map(v,k,n, at){ var as = this;
 			var is = Gun.is(v);
@@ -1673,6 +1676,7 @@
 		}
 
 		function val(msg, eve, to){
+			if(!msg.$){ eve.off(); return }
 			var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 			if(tmp = msg.$$){
 				link = tmp = (msg.$$._);
