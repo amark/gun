@@ -13,8 +13,8 @@
 <button onclick="read()">read</button>
 <input id="wait" placeholder="wait" type="number">
 <input id="burst" placeholder="burst" type="number">
+<div id='debugs'></div>
 <div id='debug'></div>
-<div id='debugg'></div>
 
 <script>
 Gun.TESTING = true;
@@ -32,7 +32,7 @@ burst.onchange = function(){ spam.burst = this.value }
 function spam(){
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 1; spam.burst = 250; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 1; spam.burst = 100; spam.c = 0; spam.s = (+new Date);
-	spam.max = 1000000; spam.left = spam.max; spam.wait = 50; spam.burst = 1; spam.c = 0; spam.s = (+new Date);
+	spam.max = 1000000; spam.left = spam.max; spam.wait = 1; spam.burst = 250; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100; spam.left = spam.max; spam.wait = 1; spam.burst = 1; spam.c = 0; spam.s = (+new Date);
 	var to = setInterval(function(){ var b = spam.burst;
 		if(spam.c >= spam.max){ clearTimeout(to); return; }
@@ -56,7 +56,7 @@ function spam(){
 		if(spam.end){ spam.end = true }
 		var t = (+new Date) - spam.s, tmp, sec;
 		var status = 'saved\n'+ (tmp = (spam.max - spam.left)) +' in '+ (sec = (t/1000)) +' seconds\n'+ Math.round(tmp / sec) +' per second';
-		debug.innerText = status; 
+		debugs.innerText = status; 
 	}, 500);
 }
 </script>

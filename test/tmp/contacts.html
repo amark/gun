@@ -14,8 +14,10 @@
 		<input id="find" placeholder="find contacts...">
 		<ul>
 		</ul>
+		<div id='debug'></div>
 		<script>
-			try{localStorage.clear()}catch(e){}
+			try{localStorage.clear()}catch(e){};
+			indexedDB.deleteDatabase('radata');
 			//var gun = Gun('http://localhost:8765/gun');
 			var gun = Gun({localStorage: false});
 
@@ -40,6 +42,7 @@
 						},9)
 					});
 				});
+				console.log("end forEach:", (+new Date) - start);
 			});
 
 			var to;
