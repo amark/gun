@@ -1,12 +1,10 @@
-@import url(https://fonts.googleapis.com/css?family=Oxygen);
-
 html, body {
 	margin: 0;
 	padding: 0;
 	font-family: 'Oxygen', 'Trebuchet MS', arial;
 	position: relative;
-  background: black;
-  color: white;
+  b-ackground: black;
+  c-olor: white;
 }
 
 body {
@@ -41,6 +39,10 @@ input, textarea {
 
 ul, li {
   list-style: none;
+}
+
+[contenteditable=true]:empty:before {
+  content: attr(placeholder);
 }
 
 .model, .none { display: none }
@@ -106,6 +108,10 @@ ul, li {
 
 .loud {
   font-size: 150%;
+}
+.shout {
+  font-size: 36pt;
+  font-size: 6.5vmax;
 }
 .jot {
   border-bottom: 1px dashed #95B2CA;
