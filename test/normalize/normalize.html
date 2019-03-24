@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="../../../gun/examples/jquery.js"></script>
+		<script async src="../../../gun/lib/monotype.js"></script>
+		<script async src="../../../gun/lib/meta.js"></script>
+	</head>
+	<body>
+		<div id="edit" contenteditable='true'>the world is a beautiful place.</div>
+		<div id="out">The world is a beautiful place.</div>
+		<div id="test">
+		<button id="render">render</button>
+			<textarea id="before"></textarea>
+			<textarea id="after"></textarea>
+			<script src="../../../gun/lib/normalize.js"></script>
+		</div>
+		<script>
+			$('#render').on('click', check);
+			$('#edit').on('keyup', check).focus();
+			function check(){
+				var a = $('#edit').html();
+				$('#before').val(a);
+				var opt = {};
+				opt.hierarchy = ['div', 'ol', 'ul', 'li', 'p', 'a', 'b', 'i', 'span', 's', 'sub', 'sup', 'u', 'br'];
+				opt.convert = {'em': 'i', 'strong': 'b', 'strike': 's', 'font': 'span'};
+				var b = $.normalize(a);
+				$('#after').val(b);
+				$('#out').html(b);
+			}
+		</script>
+		<script>
+			var $xss = $('<div id="xss">').appendTo('body');
+			$.each([
+  			'javascript:',
+  			'JaVaScRiPt:',
+  			'java script:',
+  			'java\nscript:',
+  			'java\tscript:',
+  			'java\0script:',
+  			'jav&#x09;ascript:',
+  			'jav&#x0A;ascript:',
+  			'jav&#x0D;ascript:',
+  			' &#14;  javascript:',
+  			'&#106;avascript:',
+  			'&#0000106avascript:',
+  			'&#x6A;avascript:',
+  			'\u006Aavascript:',
+  			'&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74:',
+  			'&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x0003A;',
+  			'&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;:',
+  			'&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;',
+  			'&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116:',
+  			'&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058'
+  		], function(i,v){
+  			//console.log(v);
+  			var s = "<div><a href='"+v+"alert(1)'>xss</a></div>";
+  			var html = $.normalize(s);
+  			if(html.match(/href/ig)){ alert('xss') }
+  			$xss.append(html);
+  			console.log(html);
+  		});
+		  // url("javascript: // and all permutations
+		  // stylesheets can apparently have XSS?
+		</script>
+		<style>
+			button { width: 100%; }
+			textarea { width: 45%; height: 20em; font-size: 18pt; }
+		</style>
+	</body>
+</html>

@@ -40,10 +40,11 @@ Gun.chain.put = function(data, cb, as){
 			if(!soul && Gun.val.is(msg.put)){
 				return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 			}
-			gun.put(Gun.val.rel.ify(soul), cb, as);
+			gun.put(Gun.val.link.ify(soul), cb, as);
 		}, true);
 		return gun;
 	}
+	if(at.has && (tmp = Gun.val.link.is(data))){ at.dub = tmp }
 	as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
 	if(as.ref._.soul && Gun.val.is(as.data) && at.get){
 		as.data = obj_put({}, at.get, as.data);
@@ -139,7 +140,7 @@ function map(v,k,n, at){ var as = this;
 function soul(id, as, msg, eve){
 	var as = as.as, cat = as.at; as = as.as;
 	var at = ((msg || {}).$ || {})._ || {};
-	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 	if(eve){ eve.stun = true }
 	if(!id){ // polyfill async uuid for SEA
 		at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -198,7 +199,7 @@ function any(soul, as, msg, eve){
 			if(node_ == at.get){
 				as.soul = (at.put||empty)['#'] || at.dub;
 			}
-			as.soul = as.soul || at.soul || at.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+			as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 		}
 		if(!as.soul){ // polyfill async uuid for SEA
 			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback

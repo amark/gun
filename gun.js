@@ -807,25 +807,9 @@
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
-				if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
-					var graph = {};
-					Gun.obj.map(root.graph, function(node, s){
-						if(Gun.text.match(s, soul)){
-							graph[s] = Gun.obj.copy(node);
-						}
-					});
-					if(!Gun.obj.empty(graph)){
-						root.on('in', {
-							'@': msg['#'],
-							how: '*',
-							put: graph,
-							$: gun
-						});
-					}
-				} // TEMPORARY HACK FOR MARTTI, TESTING
 				if(!node){ return root.on('get', msg) }
 				if(has){
-					if(!obj_has(node, has)){ return root.on('get', msg) }
+					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
 					node = Gun.state.to(node, has);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
@@ -966,6 +950,7 @@
 					at.on('in', at);
 					return;
 				}*/
+				if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9));
@@ -988,6 +973,17 @@
 							get: back.get
 						});
 						if(tmp){ return }
+					} else
+					if('string' != typeof get){
+						var put = {}, meta = (back.put||{})._;
+						Gun.obj.map(back.put, function(v,k){
+							if(!Gun.text.match(k, get)){ return }
+							put[k] = v;
+						})
+						if(!Gun.obj.empty(put)){
+							put._ = meta;
+							back.on('in', {$: back.$, put: put, get: back.get})
+						}
 					}
 					root.ask(ack, msg);
 					return root.on('in', msg);
@@ -1087,7 +1083,6 @@
 			relate(cat, msg, at, rel);
 			echo(cat, msg, eve);
 		}
-		var C = 0;
 
 		function relate(at, msg, from, rel){
 			if(!rel || node_ === at.get){ return }
@@ -1203,7 +1198,7 @@
 		function ack(msg, ev){
 			var as = this.as, get = as.get || empty, at = as.$._, tmp = (msg.put||empty)[get['#']];
 			if(at.ack){ at.ack = (at.ack + 1) || 1; }
-			if(!msg.put || (get['.'] && !obj_has(tmp, at.get))){
+			if(!msg.put || ('string' == typeof get['.'] && !obj_has(tmp, at.get))){
 				if(at.put !== u){ return }
 				at.on('in', {
 					get: at.get,
@@ -1259,12 +1254,18 @@
 			} else
 			if(tmp = rel.is(key)){
 				return this.get(tmp, cb, as);
+			} else
+			if(obj.is(key)){
+				gun = this;
+				if(tmp = ((tmp = key['#'])||empty)['='] || tmp){ gun = gun.get(tmp) }
+				gun._.lex = key;
+				return gun;
 			} else {
 				(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 				if(cb){ cb.call(as, as._.err) }
 				return as;
 			}
-			if(tmp = cat.stun){ // TODO: Refactor?
+			if(tmp = this._.stun){ // TODO: Refactor?
 				gun._.stun = gun._.stun || tmp;
 			}
 			if(cb && cb instanceof Function){
@@ -1359,7 +1360,18 @@
 			// #soul.has=value>state
 			// ~who#where.where=what>when@was
 			// TODO: BUG! Put probably cannot handle plural chains!
-			var gun = this, at = (gun._), root = at.root.$, tmp;
+			var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
+			if(!ctx.puta){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+				(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
+				if(ctx.puto){ return }
+				ctx.puto = setTimeout(function drain(){
+					var d = ctx.stack.splice(0,M), i = 0, at; ctx.puta = true;
+					while(at = d[i++]){ at[0].put(at[1], at[2], at[3]) } delete ctx.puta;
+					if(ctx.stack.length){ return ctx.puto = setTimeout(drain, 0) }
+					ctx.stack = ctx.puts = ctx.puto = null;
+				}, 0);
+				return gun;
+			} ++ctx.puts } else { ctx.puts = 1 } }
 			as = as || {};
 			as.data = data;
 			as.via = as.$ = as.via || as.$ || gun;
@@ -1454,7 +1466,9 @@
 					if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 					if(!as.ack){ return }
 					as.ack(ack, this);
+					//--C;
 				}, as.opt);
+				//C++;
 				// NOW is a hack to get synchronous replies to correctly call.
 				// and STOP is a hack to get async behavior to correctly call.
 				// neither of these are ideal, need to be fixed without hacks,
@@ -1469,6 +1483,7 @@
 			}, as);
 			if(as.res){ as.res() }
 		} function no(v,k){ if(v){ return true } }
+		//console.debug(999,1); var C = 0; setInterval(function(){ try{ debug.innerHTML = C }catch(e){console.log(e)} }, 500);
 
 		function map(v,k,n, at){ var as = this;
 			var is = Gun.is(v);
@@ -1657,6 +1672,7 @@
 		}
 
 		function val(msg, eve, to){
+			if(!msg.$){ eve.off(); return }
 			var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 			if(tmp = msg.$$){
 				link = tmp = (msg.$$._);
@@ -1748,8 +1764,9 @@
 		}
 		function each(v,k){
 			if(n_ === k){ return }
-			var msg = this.msg, gun = msg.$, at = this.at, tmp = (gun.get(k)._);
-			(tmp.echo || (tmp.echo = {}))[at.id] = tmp.echo[at.id] || at;
+			var msg = this.msg, gun = msg.$, at = gun._, cat = this.at, tmp = at.lex;
+			if(tmp && !Gun.text.match(k, tmp['.'] || tmp['#'] || tmp)){ return } // TODO: Ugly hack!
+			((tmp = gun.get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
 		}
 		var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	})(USE, './map');
