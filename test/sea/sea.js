@@ -297,12 +297,15 @@ describe('SEA', function(){
     })
 
     it('refresh login', function(done){
-      gun = Gun();
-      user = gun.user();
-      user.auth('carl', 'test123', function(ack){
-        expect(ack.err).to.not.be.ok();
-        done()
-      })
+      this.timeout(9000);
+      setTimeout(function(){
+        gun = Gun();
+        user = gun.user();
+        user.auth('carl', 'test123', function(ack){
+          expect(ack.err).to.not.be.ok();
+          done()
+        })
+      }, 800);
     })
 
     it('gun put JSON', function(done){
