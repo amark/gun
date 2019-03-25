@@ -4,7 +4,18 @@ Gun.chain.put = function(data, cb, as){
 	// #soul.has=value>state
 	// ~who#where.where=what>when@was
 	// TODO: BUG! Put probably cannot handle plural chains!
-	var gun = this, at = (gun._), root = at.root.$, tmp;
+	var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
+	if(!ctx.puta){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+		(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
+		if(ctx.puto){ return }
+		ctx.puto = setTimeout(function drain(){
+			var d = ctx.stack.splice(0,M), i = 0, at; ctx.puta = true;
+			while(at = d[i++]){ at[0].put(at[1], at[2], at[3]) } delete ctx.puta;
+			if(ctx.stack.length){ return ctx.puto = setTimeout(drain, 0) }
+			ctx.stack = ctx.puts = ctx.puto = null;
+		}, 0);
+		return gun;
+	} ++ctx.puts } else { ctx.puts = 1 } }
 	as = as || {};
 	as.data = data;
 	as.via = as.$ = as.via || as.$ || gun;
@@ -99,7 +110,9 @@ function batch(){ var as = this;
 			if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
 			if(!as.ack){ return }
 			as.ack(ack, this);
+			//--C;
 		}, as.opt);
+		//C++;
 		// NOW is a hack to get synchronous replies to correctly call.
 		// and STOP is a hack to get async behavior to correctly call.
 		// neither of these are ideal, need to be fixed without hacks,
@@ -114,6 +127,7 @@ function batch(){ var as = this;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,k){ if(v){ return true } }
+//console.debug(999,1); var C = 0; setInterval(function(){ try{ debug.innerHTML = C }catch(e){console.log(e)} }, 500);
 
 function map(v,k,n, at){ var as = this;
 	var is = Gun.is(v);
