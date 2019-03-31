@@ -1,13 +1,7 @@
 html, body {
 	margin: 0;
 	padding: 0;
-	font-family: 'Oxygen', 'Trebuchet MS', arial;
 	position: relative;
-  b-ackground: black;
-  c-olor: white;
-}
-
-body {
 	font-size: 18pt;
 }
 
