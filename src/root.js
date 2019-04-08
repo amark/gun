@@ -153,25 +153,9 @@ Gun.dup = require('./dup');
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
-		if(obj_has(soul, '*')){ // TEMPORARY HACK FOR MARTTI, TESTING
-			var graph = {};
-			Gun.obj.map(root.graph, function(node, s){
-				if(Gun.text.match(s, soul)){
-					graph[s] = Gun.obj.copy(node);
-				}
-			});
-			if(!Gun.obj.empty(graph)){
-				root.on('in', {
-					'@': msg['#'],
-					how: '*',
-					put: graph,
-					$: gun
-				});
-			}
-		} // TEMPORARY HACK FOR MARTTI, TESTING
 		if(!node){ return root.on('get', msg) }
 		if(has){
-			if(!obj_has(node, has)){ return root.on('get', msg) }
+			if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
 			node = Gun.state.to(node, has);
 			// If we have a key in-memory, do we really need to fetch?
 			// Maybe... in case the in-memory key we have is a local write
@@ -217,7 +201,7 @@ Gun.dup = require('./dup');
 var list_is = Gun.list.is;
 var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
