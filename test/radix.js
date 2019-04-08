@@ -10,7 +10,7 @@ describe('Radix', function(){
 		rad('ablah', 'cool');
 		rad('node/circle.bob', 'awesome');
 
-		expect(rad('asdf.')).to.be.eql({pub: {'\u001e': 'yum'}});
+		expect(rad('asdf.')).to.be.eql({pub: {'': 'yum'}});
 		expect(rad('nv/foo.bar')).to.be(undefined);
   });
 });
