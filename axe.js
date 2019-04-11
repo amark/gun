@@ -181,7 +181,8 @@
 					dht(soul, pids);
 					Gun.obj.map(pids.split(','), function(pid) {
 						/// TODO: here we can put an algorithm of who must connect?
-						if (!pid || pid in opt.peers || pid === opt.pid) { return; }
+						if (!pid || pid in opt.peers || pid === opt.pid || opt.announce[pid]) { return; }
+							opt.announce[pid] = true; /// To try only one connection to the same peer.
 							opt.announce(pid);
 					});
 				});
