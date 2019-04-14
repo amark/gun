@@ -48,7 +48,7 @@ Gun.chain.put = function(data, cb, as){
 	}
 	if(Gun.is(data)){
 		data.get(function(soul, o, msg){
-			if(!soul && Gun.val.is(msg.put)){
+			if(!soul){
 				return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 			}
 			gun.put(Gun.val.link.ify(soul), cb, as);
