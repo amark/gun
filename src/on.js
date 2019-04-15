@@ -75,6 +75,7 @@ Gun.chain.once = function(cb, opt){
 }
 
 function val(msg, eve, to){
+	if(!msg.$){ eve.off(); return }
 	var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 	if(tmp = msg.$$){
 		link = tmp = (msg.$$._);
