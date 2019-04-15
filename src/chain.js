@@ -23,6 +23,7 @@ function output(msg){
 			at.on('in', at);
 			return;
 		}*/
+		if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
 			msg['#'] || (msg['#'] = text_rand(9));
@@ -45,6 +46,17 @@ function output(msg){
 					get: back.get
 				});
 				if(tmp){ return }
+			} else
+			if('string' != typeof get){
+				var put = {}, meta = (back.put||{})._;
+				Gun.obj.map(back.put, function(v,k){
+					if(!Gun.text.match(k, get)){ return }
+					put[k] = v;
+				})
+				if(!Gun.obj.empty(put)){
+					put._ = meta;
+					back.on('in', {$: back.$, put: put, get: back.get})
+				}
 			}
 			root.ask(ack, msg);
 			return root.on('in', msg);
@@ -144,7 +156,6 @@ function input(msg){
 	relate(cat, msg, at, rel);
 	echo(cat, msg, eve);
 }
-var C = 0;
 
 function relate(at, msg, from, rel){
 	if(!rel || node_ === at.get){ return }
@@ -190,11 +201,11 @@ function map(data, key){ // Map over only the changes on every update.
 	if(!(at = next[key])){
 		return;
 	}
-	//if(data && data[_soul] && (tmp = Gun.val.rel.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
+	//if(data && data[_soul] && (tmp = Gun.val.link.is(data)) && (tmp = (cat.root.$.get(tmp)._)) && obj_has(tmp, 'put')){
 	//	data = tmp.put;
 	//}
 	if(at.has){
-		//if(!(data && data[_soul] && Gun.val.rel.is(data) === Gun.node.soul(at.put))){
+		//if(!(data && data[_soul] && Gun.val.link.is(data) === Gun.node.soul(at.put))){
 		if(u === at.put || !Gun.val.link.is(data)){
 			at.put = data;
 		}
@@ -217,7 +228,10 @@ function not(at, msg){
 	if(!(at.has || at.soul)){ return }
 	var tmp = at.map, root = at.root;
 	at.map = null;
-	if(at.has){ at.link = null }
+	if(at.has){
+		if(at.dub && at.root.stop){ at.dub = null }
+		at.link = null;
+	}
 	//if(!root.now || !root.now[at.id]){
 	if(!at.pass){
 		if((!msg['@']) && null === tmp){ return }
@@ -257,7 +271,7 @@ function ask(at, soul){
 function ack(msg, ev){
 	var as = this.as, get = as.get || empty, at = as.$._, tmp = (msg.put||empty)[get['#']];
 	if(at.ack){ at.ack = (at.ack + 1) || 1; }
-	if(!msg.put || (get['.'] && !obj_has(tmp, at.get))){
+	if(!msg.put || ('string' == typeof get['.'] && !obj_has(tmp, at.get))){
 		if(at.put !== u){ return }
 		at.on('in', {
 			get: at.get,
@@ -276,5 +290,5 @@ function ack(msg, ev){
 var empty = {}, u;
 var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
 var text_rand = Gun.text.random;
-var _soul = Gun.val.rel._, node_ = Gun.node._;
+var _soul = Gun.val.link._, node_ = Gun.node._;
 	
