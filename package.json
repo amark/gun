@@ -50,7 +50,7 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "ws": "~>5.2.0"
+    "ws": "~>6.2.1"
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
