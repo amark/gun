@@ -34,9 +34,8 @@ function Mesh(ctx){
 		if(!raw){ return }
 		var dup = ctx.dup, id, hash, msg, tmp = raw[0];
 		if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
-		try{msg = JSON.parse(raw);
-		}catch(e){opt.log('DAM JSON parse error', e)}
 		if('{' === tmp){
+			try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
 			if(dup.check(id = msg['#'])){ return }
 			dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed.
@@ -62,6 +61,7 @@ function Mesh(ctx){
 			return;
 		} else
 		if('[' === tmp){
+			try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
 			var i = 0, m;
 			while(m = msg[i++]){
@@ -121,11 +121,12 @@ function Mesh(ctx){
 		function send(raw, peer){
 			var wire = peer.wire;
 			try{
-				if(wire.send){
-					wire.send(raw);
-				} else
 				if(peer.say){
 					peer.say(raw);
+				} else
+				if(wire.send){
+					if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
+					wire.send(raw);
 				}
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
