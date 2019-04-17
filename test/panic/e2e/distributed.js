@@ -22,17 +22,17 @@ describe('PANIC!', function(){
 
 	panic.server(server);
 	gun.wsp(server);
-	server.listen(8080);
+	server.listen(8765);
 
 	var clients = panic.clients;
 
 	var wd = require('selenium-webdriver');
 	var ff1 = new wd.Builder()
 		.forBrowser('firefox').build()
-		.get('http://localhost:8080/panic.html');
+		.get('http://localhost:8765/panic.html');
 	var ff2 = new wd.Builder()
 		.forBrowser('firefox').build()
-		.get('http://localhost:8080/panic.html');
+		.get('http://localhost:8765/panic.html');
 
 	function min(n, done, list){
 		list = list || clients;

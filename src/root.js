@@ -1,12 +1,12 @@
 
 
 function Gun(o){
-	if(o instanceof Gun){ return (this._ = {gun: this}).gun }
+	if(o instanceof Gun){ return (this._ = {gun: this, $: this}).$ }
 	if(!(this instanceof Gun)){ return new Gun(o) }
-	return Gun.create(this._ = {gun: this, opt: o});
+	return Gun.create(this._ = {gun: this, $: this, opt: o});
 }
 
-Gun.is = function(gun){ return (gun instanceof Gun) }
+Gun.is = function($){ return ($ instanceof Gun) || ($ && $._ && ($ === $._.$)) || false }
 
 Gun.version = 0.9;
 
@@ -31,46 +31,51 @@ Gun.dup = require('./dup');
 		at.on = at.on || Gun.on;
 		at.ask = at.ask || Gun.ask;
 		at.dup = at.dup || Gun.dup();
-		var gun = at.gun.opt(at.opt);
+		var gun = at.$.opt(at.opt);
 		if(!at.once){
 			at.on('in', root, at);
-			at.on('out', root, at);
+			at.on('out', root, {at: at, out: root});
+			Gun.on('create', at);
+			at.on('create', at);
 		}
 		at.once = 1;
 		return gun;
 	}
 	function root(msg){
-		//console.log("add to.next(at)"); // TODO: MISSING FEATURE!!!
-		var ev = this, at = ev.as, gun = at.gun, dup, tmp;
-		//if(!msg.gun){ msg.gun = at.gun }
+		//add to.next(at); // TODO: MISSING FEATURE!!!
+		var ev = this, as = ev.as, at = as.at || as, gun = at.$, dup, tmp;
 		if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
-		if((dup = at.dup).check(tmp)){ return }
+		if((dup = at.dup).check(tmp)){
+			if(as.out === msg.out){
+				msg.out = u;
+				ev.to.next(msg);
+			}
+			return;
+		}
 		dup.track(tmp);
-		//msg = obj_to(msg);//, {gun: at.gun}); // can we delete this now?
 		if(!at.ask(msg['@'], msg)){
 			if(msg.get){
-				Gun.on.get(msg, gun);
-				//at.on('get', get(msg));
+				Gun.on.get(msg, gun); //at.on('get', get(msg));
 			}
 			if(msg.put){
-				Gun.on.put(msg, gun);
-				//at.on('put', put(msg));
+				Gun.on.put(msg, gun); //at.on('put', put(msg));
 			}
 		}
-		at.on('out', msg);
+		ev.to.next(msg);
+		if(!as.out){
+			msg.out = root;
+			at.on('out', msg);
+		}
 	}
 }());
 
 ;(function(){
 	Gun.on.put = function(msg, gun){
-		var at = gun._, ctx = {gun: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@']};
+		var at = gun._, ctx = {$: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@'], cat: at, stop: {}};
 		if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
-		if(!ctx.async){ 
-			at.stop = {}; // temporary fix till a better solution?
-			obj_map(ctx.map, map, ctx)
-		}
+		if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 		if(u !== ctx.defer){
 			setTimeout(function(){
 				Gun.on.put(msg, gun);
@@ -95,31 +100,33 @@ Gun.dup = require('./dup');
 		ctx.souls[soul] = true;
 	}
 	function merge(node, soul){
-		var ctx = this, cat = ctx.gun._, at = (cat.next || empty)[soul];
+		var ctx = this, cat = ctx.$._, at = (cat.next || empty)[soul];
 		if(!at){
-			ctx.souls[soul] = false;
-			return 
+			if(!(cat.opt||empty).super){
+				ctx.souls[soul] = false;
+				return;
+			}
+			at = (ctx.$.get(soul)._);
 		}
 		var msg = ctx.map[soul] = {
 			put: node,
 			get: soul,
-			gun: at.gun
+			$: at.$
 		}, as = {ctx: ctx, msg: msg};
 		ctx.async = !!cat.tag.node;
 		if(ctx.ack){ msg['@'] = ctx.ack }
 		obj_map(node, each, as);
 		if(!ctx.async){ return }
 		if(!ctx.and){
-			// If it is async, we only need to setup on listener per context (ctx)
+			// If it is async, we only need to setup one listener per context (ctx)
 			cat.on('node', function(m){
 				this.to.next(m); // make sure to call other context's listeners.
 				if(m !== ctx.map[m.get]){ return } // filter out events not from this context!
 				ctx.souls[m.get] = false; // set our many-async flag
-				obj_map(m.put, aeach, m); // merge into view
+				obj_map(m.put, patch, m); // merge into view
 				if(obj_map(ctx.souls, function(v){ if(v){ return v } })){ return } // if flag still outstanding, keep waiting.
 				if(ctx.c){ return } ctx.c = 1; // failsafe for only being called once per context.
 				this.off();
-				cat.stop = {}; // temporary fix till a better solution?
 				obj_map(ctx.map, map, ctx); // all done, trigger chains.
 			});
 		}
@@ -127,27 +134,28 @@ Gun.dup = require('./dup');
 		cat.on('node', msg); // each node on the current context's graph needs to be emitted though.
 	}
 	function each(val, key){
-		var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.gun._), tmp;
+		var ctx = this.ctx, graph = ctx.graph, msg = this.msg, soul = msg.get, node = msg.put, at = (msg.$._), tmp;
 		graph[soul] = Gun.state.to(node, key, graph[soul]);
 		if(ctx.async){ return }
 		at.put = Gun.state.to(node, key, at.put);
 	}
-	function aeach(val, key){
-		var msg = this, node = msg.put, at = (msg.gun._);
+	function patch(val, key){
+		var msg = this, node = msg.put, at = (msg.$._);
 		at.put = Gun.state.to(node, key, at.put);
 	}
 	function map(msg, soul){
-		if(!msg.gun){ return }
-		//console.log('map ->', soul, msg.put);
-		(msg.gun._).on('in', msg);
+		if(!msg.$){ return }
+		this.cat.stop = this.stop; // temporary fix till a better solution?
+		(msg.$._).on('in', msg);
+		this.cat.stop = null; // temporary fix till a better solution?
 	}
 
 	Gun.on.get = function(msg, gun){
-		var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
-		if(!node || !at){ return root.on('get', msg) }
+		if(!node){ return root.on('get', msg) }
 		if(has){
-			if(!obj_has(node, has)){ return root.on('get', msg) }
+			if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
 			node = Gun.state.to(node, has);
 			// If we have a key in-memory, do we really need to fetch?
 			// Maybe... in case the in-memory key we have is a local write
@@ -156,16 +164,14 @@ Gun.dup = require('./dup');
 			node = Gun.obj.copy(node);
 		}
 		node = Gun.graph.node(node);
-		//tmp = at.ack;
+		tmp = (at||empty).ack;
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
 			put: node,
-			gun: gun
+			$: gun
 		});
-		//if(0 < tmp){
-		//	return;
-		//}
+		//if(0 < tmp){ return }
 		root.on('get', msg);
 	}
 }());
@@ -195,7 +201,7 @@ Gun.dup = require('./dup');
 var list_is = Gun.list.is;
 var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.rel.is;
+var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -207,7 +213,7 @@ Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 ;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 
-if(typeof window !== "undefined"){ window.Gun = Gun }
+if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 module.exports = Gun;
 
@@ -216,10 +222,8 @@ module.exports = Gun;
 	if(ctx.once){ return }
 	ctx.on('node', function(msg){
 		var to = this.to;
-		//console.log(">>>", msg.put);
 		//Gun.node.is(msg.put, function(v,k){ msg.put[k] = v + v });
 		setTimeout(function(){
-			//console.log("<<<<<", msg.put);
 			to.next(msg);
 		},1);
 	});

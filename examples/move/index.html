@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--
+      HELP WANTED!
+      Build decentralized Open Source Uber/Lyft!
+      Need people with experience on:
+       - Leaflet API, zoom and tile coordinates for subscribing to surrounding area.
+       - Creating cute little driving icons that animate with heading/direction.
+    -->
+    <title>Move by Neon ERA</title>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+		<meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.0.3/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.0.3/dist/leaflet.js"></script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <a id="share" class="hide"><div class="stick button">Request Ride</div></a>
+    <div id="link" class="hide">
+      <p>Copy and Paste this URL to your friends to share your location:</p>
+      <center>
+        <p id="follow">Location sharing not available!</p>
+      </center>
+      <p><b>Note</b>: Location may not sync when your device's screen is off or the tab is out of focus. You'd need to install this as an app for that to work.</p>
+      <center>
+        <a id="close"><div class="button">Close</div></a>
+      </center>
+    </div>
+    <textarea style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 5em;" id="debug"></textarea>
+    <style>
+      html, body, #map {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Arial;
+        font-size: 16pt;
+        z-index: 1;
+      }
+      .stick {
+        position: absolute;
+        bottom: 1em;
+        right: 1em;
+      }
+      .button {
+        display: inline-block;
+        padding: 1em;
+        opacity: .5;
+        background: blue;
+        color: white;
+        z-index: 7;
+        transition: .25s all;
+      }
+      .button:hover {
+        opacity: 1;
+      }
+      .hide {
+        display: none;
+      }
+      #link {
+        position: absolute;
+        padding: 1em;
+        top: 2em;
+        left: 2em;
+        right: 2em;
+        bottom: 2em;
+        background: white;
+        overflow: scroll;
+        z-index: 9;
+      }
+      #follow {
+        background: #EEE;
+        padding: .5em;
+        word-wrap: break-word;
+      }
+    </style>
+    <script src="/jquery.js"></script>
+    <script src="/gun.js"></script>
+    <script>
+      function Where(opt, cb){
+        // a small wrapper around Leaflet for map tracking.
+        var where = {};
+        where.opt = opt || {};
+        where.opt.zoom = where.opt.zoom || {};
+        where.opt.err = where.opt.err || function(){};
+
+        where.map = L.map('map', { zoom: where.opt.zoom.level });
+
+        where.opt.tile = where.opt.tile || L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          maxZoom: where.opt.zoom.max,
+          minZoom: where.opt.zoom.min,
+          detectRetina: true,
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        });
+        where.map.addLayer(where.opt.tile);
+
+        L.GridLayer.DebugCoords = L.GridLayer.extend({
+            createTile: function (coords) {
+                var tile = document.createElement('div');
+                tile.innerHTML = [coords.z, coords.x, coords.y].join(', ');
+                tile.style.outline = '1px solid black';
+                return tile;
+            }
+        });
+        L.gridLayer.debugCoords = function(opts) {
+            return new L.GridLayer.DebugCoords(opts);
+        };
+        where.map.addLayer( L.gridLayer.debugCoords() );
+
+        where.opt.zoom.ing = where.opt.zoom.ing || function(){
+          where.opt.zoom.level = where.map.getZoom();
+        }
+        where.map.on('zoomstart', where.opt.zoom.ing, where.opt.err);
+        where.map.on('zoomend', where.opt.zoom.ing, where.opt.err);
+        where.map.on('zoomlevelschange', where.opt.zoom.ing, where.opt.err);
+
+        where.update = function(latlng){
+          if((+new Date) - where.update.last < 400){
+            clearTimeout(where.update.to);
+            where.update.to = setTimeout(function(){
+              where.update(latlng);
+            });
+            return;
+          }
+          var z = 12;
+          var x = lng2tile(latlng.lng, z);
+          var y = lat2tile(latlng.lat, z);
+          console.log(x, y); //
+          where.map.setView(latlng, where.opt.zoom.level, {animate: true});
+          where.marker = where.marker || L.marker().setLatLng(latlng).addTo(where.map);
+          where.marker.setLatLng(latlng).update();
+          where.update.last = (+new Date);
+        }
+
+        if(where.opt.track){
+          where.map.on('locationfound', function(pos){
+            where.update(pos.latlng);
+            where.opt.track(pos);
+          });
+
+          where.map.locate({
+            setView: true,
+            zoom: where.opt.zoom.level,
+            watch: where.opt.continuous || true,
+            timeout: where.opt.timeout || 10000,
+            maximumAge: where.opt.maximumAge || 0,
+            enableHighAccuracy: where.opt.enableHighAccuracy || false
+          });
+        }
+
+        function lng2tile(lng,z) { return (Math.floor((lng+180)/360*Math.pow(2,z))) }
+        function lat2tile(lat,z)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,z))) }
+
+        return where;
+      }
+    </script>
+    <script>
+      ;(function(){
+        // the actual GPS tracking app!
+        var gun = Gun(location.origin + '/gun');
+        var gps = {};
+        gps.opt = {
+          continuous: true, // get location just once uses `getCurrentPosition()` while continuously uses `watchPosition()`
+          enableHighAccuracy: true, // HighAccuracy uses more resources, https://developer.mozilla.org/en-US/docs/Web/API/PositionOptions
+          timeout: 5000, // have this long to get data before erring.
+          maximumAge: 0, // set to 0 to actually track.
+          zoom: {max: 18, level: 13, min: 12}
+        }
+        function start(){
+          gps.follow = (window.location.hash || '').slice(1);
+          if(gps.follow){
+            gps.where = gps.where || Where(gps.opt);
+            gps.ref = gun.get('gps/' + gps.follow);
+            gps.ref.on(function(latlng){
+              //$('#debug').value = 'track ' + JSON.stringify(latlng);
+              gps.where.update(latlng);
+            });
+            $('#share').addClass("hide");
+          } else {
+            document.cookie = 'gps=' + (gps.track = (document.cookie.match(/gps\=(.*?)(\&|$|\;)/i)||[])[1] || Gun.text.random(5)); // trick with cookies!
+            gps.ref = gun.get('gps/' + gps.track);
+            gps.opt.track = function(pos){
+              pos = pos.latlng;
+              if(gps.follow
+              || Gun.time.is() - gps.when < 1000
+              || gps.last && gps.last.lat == pos.lat && gps.last.lng == pos.lng){
+                return; // throttle!
+              }
+              gps.when = Gun.time.is();
+              gps.ref.put(gps.last = pos);
+              //$('#debug').value = JSON.stringify(gps.last);
+            }
+            gps.where = gps.where || Where(gps.opt);
+            $('#follow').text(("where.gunDB.io/" || (location.origin + location.pathname)) + '#' + gps.track);
+            $('#share').removeClass("hide");
+            $('#share').on('click', function(){
+              $('#link').toggleClass("hide");
+            });
+            $('#close').on('click', function(){
+              $('#link').toggleClass("hide");
+            });
+          }
+        }
+        start();
+        window.onhashchange = start;
+      }());
+    </script>
+  </body>
+</html>

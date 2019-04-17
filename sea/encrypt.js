@@ -2,29 +2,38 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    var aescbckey = require('./aescbc');
+    var aeskey = require('./aeskey');
+    var u;
 
-    SEA.encrypt = async (data, pair, cb) => { try {
-      const key = pair.epriv || pair;
-      const msg = JSON.stringify(data)
-      const rand = {s: shim.random(8), iv: shim.random(16)};
-      const ct = await aescbckey(key, rand.s)
-      .then((aes) => shim.subtle.encrypt({ // Keeping the AES key scope as private as possible...
-        name: 'AES-CBC', iv: new Uint8Array(rand.iv)
-      }, aes, new shim.TextEncoder().encode(msg)))
-      const r = 'SEA'+JSON.stringify({
-        ct: shim.Buffer.from(ct, 'binary').toString('utf8'),
-        iv: rand.iv.toString('utf8'),
-        s: rand.s.toString('utf8')
-      });
+    SEA.encrypt = SEA.encrypt || (async (data, pair, cb, opt) => { try {
+      opt = opt || {};
+      var key = (pair||opt).epriv || pair;
+      if(u === data){ throw '`undefined` not allowed.' }
+      if(!key){
+        pair = await SEA.I(null, {what: data, how: 'encrypt', why: opt.why});
+        key = pair.epriv || pair;
+      }
+      var msg = (typeof data == 'string')? data : JSON.stringify(data);
+      var rand = {s: shim.random(8), iv: shim.random(16)};
+      var ct = await aeskey(key, rand.s, opt).then((aes) => (/*shim.ossl ||*/ shim.subtle).encrypt({ // Keeping the AES key scope as private as possible...
+        name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
+      }, aes, new shim.TextEncoder().encode(msg)));
+      var r = {
+        ct: shim.Buffer.from(ct, 'binary').toString(opt.encode || 'base64'),
+        iv: rand.iv.toString(opt.encode || 'base64'),
+        s: rand.s.toString(opt.encode || 'base64')
+      }
+      if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
-      if(cb){ cb(r) }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
+      console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.encrypt;
   

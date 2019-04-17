@@ -1,6 +1,6 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 1,
 	browsers: 2,
 	each: 250,
@@ -172,7 +172,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 					var no;
 					Gun.node.is(at.put.users, function(val, key){
 						Gun.SEA.read(val, false, function(val){
-							if('alias/'+key === Gun.val.rel.is(val)){ return }
+							if('alias/'+key === Gun.val.link.is(val)){ return }
 							no = true;
 						})
 						if(no){ return no }

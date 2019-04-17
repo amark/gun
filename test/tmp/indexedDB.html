@@ -1,0 +1,17 @@
+<h1>RindexedDB</h1>
+
+<script src="../../gun.js"></script>
+<script src="../../lib/radix.js"></script>
+<script src="../../lib/radisk.js"></script>
+<script src="../../lib/store.js"></script>
+<script src="../../lib/rindexed.js"></script>
+
+<script>
+localStorage.clear();
+
+var opt = {};
+
+opt.store = RindexedDB(opt);
+
+var gun = Gun(opt);
+</script>
