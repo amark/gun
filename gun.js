@@ -1941,6 +1941,7 @@
 	})(USE, './adapters/localStorage');
 
 	;USE(function(module){
+		var Gun = USE('../index');
 		var Type = USE('../type');
 
 		function Mesh(ctx){
@@ -1962,7 +1963,7 @@
 					return;
 				}
 				// add hook for AXE?
-				//if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
+				if (Gun.AXE) { Gun.AXE.say(msg, mesh.say, this); return; }
 				mesh.say(msg);
 			}
 
@@ -2135,24 +2136,30 @@
 					tmp = tmp.id = tmp.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
-				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
-				tmp = peer.queue; peer.queue = [];
-				Type.obj.map(tmp, function(msg){
-					mesh.say(msg, peer);
-				});
+				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer); }
+				// tmp = peer.queue; peer.queue = [];
+				// Type.obj.map(tmp, function(msg){
+				// 	mesh.say(msg, peer);
+				// });
 			}
 			mesh.bye = function(peer){
 				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 				ctx.on('bye', peer);
 			}
-
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
-				if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
+				if(!msg.pid){
+// 					return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+					var tmp = peer.queue; peer.queue = [];
+					Type.obj.map(tmp, function(msg){
+						mesh.say(msg, peer);
+					});
+					return;
+				}
 				peer.id = peer.id || msg.pid;
 				mesh.hi(peer);
 			}
-
 			return mesh;
 		}
 
