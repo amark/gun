@@ -10,7 +10,7 @@ Node.soul.ify = function(n, o){ // put a soul on an object.
 	n._[soul_] = o.soul || n._[soul_] || text_random(); // put the soul on it.
 	return n;
 }
-Node.soul._ = Val.rel._;
+Node.soul._ = Val.link._;
 ;(function(){
 	Node.is = function(n, cb, as){ var s; // checks to see if an object is a valid node.
 		if(!obj_is(n)){ return false } // must be an object.

@@ -3,9 +3,8 @@ branches:
   except:
     - debug
 node_js:
-  - 4.0
-  - 4.2
-  - 5.0
-  - 6.8
-  - 7.9
-  - 8.6
+  - 8
+  - 10
+cache:
+  directories:
+    - node_modules

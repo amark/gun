@@ -1,4 +1,4 @@
-FROM alpine:edge
+FROM alpine:latest
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
@@ -22,4 +22,5 @@ RUN apk update && apk upgrade \
   && npm install \
   && apk del .build-dependencies && rm -rf /var/cache/* /tmp/npm*
 EXPOSE 8080
+EXPOSE 8765
 CMD ["npm","start"]

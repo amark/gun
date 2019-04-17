@@ -1,0 +1,140 @@
+<html><body>
+<style>
+  html, body {
+    background: rgb(245, 245, 245);
+    margin: 0;
+    padding: 0;
+  }
+  div {
+    position: relative;
+    overflow: hidden;
+  }
+  #top {
+    background: #283e4a;
+    height: 52px;
+    width: 100%;
+  }
+  .box {
+    border-radius: 3px;
+    box-shadow: 0px 0px 3px #777;
+    background: white;
+    max-width: 36em;
+    margin: 0 auto;
+    min-height: 10em;
+    margin-bottom: 0.5em;
+  }
+  .color {
+    background: #2977b5;
+    height: 7em;
+    width: 100%;
+  }
+  .pad {
+    margin: 1em;
+  }
+  .none { display: none; }
+  input {
+    font-size: 1em;
+    margin: 0.1em;
+  }
+</style>
+<div id="top">
+  <center>
+    <input id="search" placeholder="search by pub or DID">
+  </center>
+</div>
+
+<div class="box">
+  <div class="color"></div>
+  <div class="pad">
+    <form id="sign">
+      <h1>Login</h1>
+      <input id="alias" placeholder="username">
+      <input id="pass" type="password" placeholder="passphrase">
+      <input id="in" type="submit" value="sign in">
+      <input id="up" type="button" value="sign up">
+    </form>
+
+
+    <form id="profile" class="none">
+      <h1>Profile</h1>
+      <p>Data is privately encrypted by default. "+" to grant access, "x" to revoke access.</p>
+      <input id="name" placeholder="name"> <button>+</button><br/>
+      <input id="born" placeholder="born"> <button>+</button><br/>
+      <input id="edu" placeholder="education"> <button>+</button><br/>
+      <input id="skills" placeholder="skills"> <button>+</button><br/>
+    </form>
+  </div>
+</div>
+
+<div class="box"><div class="pad">
+  Public Key: <input id="pub">
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+
+<script>
+//var gun = Gun();
+var gun = Gun('http://localhost:8080/gun');
+var user = gun.user();
+var LI = {};
+
+user.recall({sessionStorage: true});
+
+$('#up').on('click', function(e){
+	user.create($('#alias').val(), $('#pass').val());
+});
+
+$('#sign').on('submit', function(e){
+	e.preventDefault();
+	user.auth($('#alias').val(), $('#pass').val());
+});
+
+gun.on('auth', function(){
+  $('#sign').hide();
+	$('#profile').show();
+  var pub = user.pair().pub;
+  $('#pub').val(pub);
+  return;
+  $("#search").val(pub).trigger('blur');
+});
+
+$('#profile input').on('keyup', function(e){
+  if(!user.is){ return }
+  var id = LI.busy = $(this).attr('id');
+  user.get('profile').get(id).secret($(this).val());
+}).on('blur', function(){ LI.busy = false })
+
+$('#profile button').on('click', async function(e){
+  e.preventDefault();
+	if(!user.is){ return }
+  var b = $(this);
+  var id = b.prev().attr('id');
+  var pub = prompt("What is the Public Key or DID you want to give read access to?");
+  var to = gun.user(pub);
+  var who = await to.get('alias').then();
+  if(!confirm("You want to give access to " + who + "?")){ return }
+  user.get('profile').get(id).grant(to);
+});
+
+$('#search').on('blur', function(e){
+  var s = LI.search = $(this).val();
+  var find = gun.user(s);
+  find.get('profile').on(function(data, key, at, ev){
+    if(s !== LI.search){
+      ev.off();
+      return;
+    }
+    Gun.node.is(data, async function(v, k){
+      if(k === LI.busy){ return }
+      var key = await find.get('trust').get(user.pair().pub).get(k+'profile').then();
+      var mix = await Gun.SEA.secret(await find.get('epub').then(), user.pair());
+      key = await Gun.SEA.decrypt(key, mix);
+      var val = await Gun.SEA.decrypt(v, key);
+      $('#'+k).val(val || v);
+    });
+  });
+});
+</script>
+</body></html>
