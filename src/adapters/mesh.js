@@ -1,4 +1,4 @@
-
+var Gun = require('../index');
 var Type = require('../type');
 
 function Mesh(ctx){
@@ -20,7 +20,7 @@ function Mesh(ctx){
 			return;
 		}
 		// add hook for AXE?
-		//if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
+		if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
 		mesh.say(msg);
 	}
 
@@ -205,7 +205,9 @@ function Mesh(ctx){
 
 	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 	mesh.hear['?'] = function(msg, peer){
-		if(!msg.pid){ return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer) }
+		if(!msg.pid){
+			return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+		}
 		peer.id = peer.id || msg.pid;
 		mesh.hi(peer);
 	}
