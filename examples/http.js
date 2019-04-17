@@ -16,6 +16,6 @@
 		config.server = require('http').createServer(Gun.serve(__dirname));
 	}
 
-	var gun = Gun({web: config.server.listen(config.port) });
+	var gun = Gun({web: config.server.listen(config.port)});
 	console.log('Relay peer started on port ' + config.port + ' with /gun');
 }());

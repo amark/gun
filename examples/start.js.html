@@ -1,0 +1,17 @@
+/*<!DOCTYPE html>
+<html>
+<head></head>
+<body></body>
+<script>// */
+;(function(){try{
+	if(typeof window == "undefined"){ return }
+	var url = location.hash.slice(1);
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(e){
+		if(4 != xhr.readyState){ return }
+		document.write(xhr.responseText);
+	};
+	xhr.open('GET', url, true);
+	xhr.send(null);
+}catch(e){document.write(''+e)}}());
+//</script></html>
