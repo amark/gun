@@ -2067,7 +2067,7 @@
 							peer.say(raw);
 						} else
 						if(wire.send){
-							if(wire.readyState && 1 != wire.readyState){ return }
+							if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
 							wire.send(raw);
 						}
 					}catch(e){
