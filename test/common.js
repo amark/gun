@@ -186,13 +186,13 @@ describe('Gun', function(){
 			it('match',function(){
 				expect(Gun.text.match("user/mark", 'user/mark')).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
 				expect(Gun.text.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o'})).to.be.ok();
-				expect(Gun.text.match("user/amber/nadal", {'*': 'user/', '>': 'j', '<': 'o'})).to.not.be.ok();
-				expect(Gun.text.match("user/amber/nadal", {'*': 'user/', '>': 'a', '<': 'c'})).to.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'a', '<': 'c'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
+				expect(Gun.text.match("user/amber/nadal", {'>': 'user/j', '<': 'user/o'})).to.not.be.ok();
+				expect(Gun.text.match("user/amber/nadal", {'>': 'user/a', '<': 'user/c'})).to.be.ok();
+				expect(Gun.text.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
+				return; // below is OLD bloat, still available in lib/match.js
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o', '?': 'm/n'})).to.be.ok();
 				expect(Gun.text.match("user/amber/cazzell", {'*': 'user/', '?': 'm/n'})).to.not.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '-': 'mad'})).to.be.ok();
@@ -208,6 +208,7 @@ describe('Gun', function(){
 				expect(Gun.text.match("user/mark/rachel/timothy/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.not.be.ok();
 				expect(Gun.text.match("photo/kitten.jpg", {'*': 'photo/', '!': '.jpg'})).to.be.ok();
 				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '!': '.jpg'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 			});
 		});
 		describe('List', function(){

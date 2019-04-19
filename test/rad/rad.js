@@ -6,6 +6,7 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
+  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   try{ require('fs').unlinkSync('data.json') }catch(e){}
   try{ require('../../lib/fsrm')('radatatest') }catch(e){}
   //root.Gun = root.Gun || require('../gun');
@@ -138,7 +139,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         })
     });
  
-    it('read contacts start', function(done){
+    it('read contacts start end', function(done){
         var opt = {};
         opt.start = 'Warring'.toLowerCase();
         opt.end = 'Zamir'.toLowerCase();
