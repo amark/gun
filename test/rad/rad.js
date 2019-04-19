@@ -73,6 +73,42 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         expect(Gun.obj.empty(all)).to.be.ok();
         done();
     });
+ 
+    it('radix read start end', function(done){
+        var all = {}, start = 'Warring'.toLowerCase(), end = 'Zamir'.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            all[v] = v;
+            //rad(v, i)
+        });
+        expect(Gun.obj.empty(all)).to.not.be.ok();
+        Radix.map(radix, function(v,k, a,b){
+            //if(!all[k]){ throw "out of range!" }
+            delete all[k];
+        }, {start: start, end: end});
+        expect(Gun.obj.empty(all)).to.be.ok();
+        done();
+    });
+ 
+    it('radix read start- end+', function(done){
+        var all = {}, start = 'Warrinf'.toLowerCase(), end = 'Zamis'.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            all[v] = v;
+            //rad(v, i)
+        });
+        expect(Gun.obj.empty(all)).to.not.be.ok();
+        Radix.map(radix, function(v,k, a,b){
+            //if(!all[k]){ throw "out of range!" }
+            delete all[k];
+        }, {start: start, end: end});
+        expect(Gun.obj.empty(all)).to.be.ok();
+        done();
+    });
   });
 
   describe('Radisk', function(){
@@ -100,6 +136,27 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 done();
             })
         })
+    });
+ 
+    it('read contacts start', function(done){
+        var opt = {};
+        opt.start = 'Warring'.toLowerCase();
+        opt.end = 'Zamir'.toLowerCase();
+        var all = {}, find = '';
+        names.forEach(function(v){
+            v = v.toLowerCase();
+            if(v < opt.start){ return }
+            if(opt.end < v){ return }
+            if(v.indexOf(find) == 0){ all[v] = true }
+        });
+        rad(find, function(err, data){
+            Radix.map(data, function(v,k){
+                //console.log(find+k, v);
+                delete all[find+k];
+            });
+            if(!Gun.obj.empty(all)){ return }
+            done();
+        }, opt);
     });
  
     it('read contacts', function(done){
