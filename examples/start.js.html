@@ -9,7 +9,12 @@
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function(e){
 		if(4 != xhr.readyState){ return }
-		document.write(xhr.responseText);
+		var d = document, doc = d.createElement("html");
+		doc.innerHTML = xhr.responseText;
+		var head = doc.getElementsByTagName('head')[0] || doc.appendChild(d.createElement('head'));
+		var base = doc.getElementsByTagName('base')[0] || head.appendChild(d.createElement('base'));
+		base.href = url;
+		document.write(doc.outerHTML);
 	};
 	xhr.open('GET', url, true);
 	xhr.send(null);
