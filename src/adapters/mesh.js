@@ -20,7 +20,7 @@ function Mesh(ctx){
 			return;
 		}
 		// add hook for AXE?
-		if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
+		if (Gun.AXE) { Gun.AXE.say(msg, mesh.say, this); return; }
 		mesh.say(msg);
 	}
 
@@ -125,7 +125,8 @@ function Mesh(ctx){
 					peer.say(raw);
 				} else
 				if(wire.send){
-					if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
+					if(wire.readyState && 1 != wire.readyState && wire instanceof opt.WebSocket){ throw "socket not ready yet!" }
+					// if(wire.readyState && 'open' != wire.readyState && wire instanceof RTCDataChannel){ throw "rtc not ready yet!" }
 					wire.send(raw);
 				}
 			}catch(e){
@@ -193,26 +194,30 @@ function Mesh(ctx){
 			tmp = tmp.id = tmp.id || Type.text.random(9);
 			mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 		}
-		if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
-		tmp = peer.queue; peer.queue = [];
-		Type.obj.map(tmp, function(msg){
-			mesh.say(msg, peer);
-		});
+		if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer); }
+		// tmp = peer.queue; peer.queue = [];
+		// Type.obj.map(tmp, function(msg){
+		// 	mesh.say(msg, peer);
+		// });
 	}
 	mesh.bye = function(peer){
 		Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 		ctx.on('bye', peer);
 	}
-
 	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 	mesh.hear['?'] = function(msg, peer){
 		if(!msg.pid){
-			return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			//return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			var tmp = peer.queue; peer.queue = [];
+			Type.obj.map(tmp, function(msg){
+				mesh.say(msg, peer);
+			});
+			return;
 		}
 		peer.id = peer.id || msg.pid;
 		mesh.hi(peer);
 	}
-
 	return mesh;
 }
 
@@ -232,5 +237,3 @@ Mesh.hash = function(s){ // via SO
 	  Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 
 	  try{ module.exports = Mesh }catch(e){}
-
-	
