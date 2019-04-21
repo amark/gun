@@ -2062,7 +2062,8 @@
 							peer.say(raw);
 						} else
 						if(wire.send){
-							if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
+							if(wire.readyState && 1 != wire.readyState && wire instanceof opt.WebSocket){ throw "socket not ready yet!" }
+							// if(wire.readyState && 'open' != wire.readyState && wire instanceof RTCDataChannel){ throw "rtc not ready yet!" }
 							wire.send(raw);
 						}
 					}catch(e){
