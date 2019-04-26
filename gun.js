@@ -2129,11 +2129,12 @@
 					tmp = tmp.id = tmp.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
-				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer); }
-				// tmp = peer.queue; peer.queue = [];
-				// Type.obj.map(tmp, function(msg){
-				// 	mesh.say(msg, peer);
-				// });
+				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+				// @rogowski I need this here by default for now to fix go1dfish's bug
+				tmp = peer.queue; peer.queue = [];
+				Type.obj.map(tmp, function(msg){
+					mesh.say(msg, peer);
+				});
 			}
 			mesh.bye = function(peer){
 				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
@@ -2142,12 +2143,12 @@
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
 				if(!msg.pid){
-// 					return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
-					var tmp = peer.queue; peer.queue = [];
-					Type.obj.map(tmp, function(msg){
-						mesh.say(msg, peer);
-					});
+					// @rogowski I want to re-enable this AXE logic with some fix/merge later.
+					// var tmp = peer.queue; peer.queue = [];
+					// Type.obj.map(tmp, function(msg){
+					//	mesh.say(msg, peer);
+					// });
 					return;
 				}
 				peer.id = peer.id || msg.pid;
