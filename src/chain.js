@@ -37,7 +37,7 @@ function output(msg){
 				if(tmp){ return }
 				msg.$ = back.$;
 			} else
-			if(obj_has(back.put, get)){
+			if(obj_has(back.put, get)){ // TODO: support #LEX !
 				put = (back.$.get(get)._);
 				if(!(tmp = put.ack)){ put.ack = -1 }
 				back.on('in', {
@@ -257,14 +257,16 @@ function not(at, msg){
 	});
 }
 function ask(at, soul){
-	var tmp = (at.root.$.get(soul)._);
-	if(at.ack){
-		tmp.on('out', {get: {'#': soul}});
+	var tmp = (at.root.$.get(soul)._), lex = at.lex;
+	if(at.ack || lex){
+		(lex = lex||{})['#'] = soul;
+		tmp.on('out', {get: lex});
 		if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 	}
 	tmp = at.ask; Gun.obj.del(at, 'ask');
 	obj_map(tmp || at.next, function(neat, key){
-		neat.on('out', {get: {'#': soul, '.': key}});
+		var lex = neat.lex || {}; lex['#'] = soul; lex['.'] = lex['.'] || key;
+		neat.on('out', {get: lex});
 	});
 	Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 }

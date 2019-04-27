@@ -49,7 +49,7 @@ function Mesh(ctx){
 			}
 			(msg._ = function(){}).via = peer;
 			if((tmp = msg['><'])){
-				(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+				(msg._).to = Type.obj.map(tmp.split(','), tomap);
 			}
 			if(msg.dam){
 				if(tmp = mesh.hear[msg.dam]){
@@ -72,6 +72,7 @@ function Mesh(ctx){
 			return;
 		}
 	}
+	var tomap = function(k,i,m){m(k,true)};
 
 	;(function(){
 		mesh.say = function(msg, peer, o){

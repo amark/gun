@@ -29,10 +29,10 @@ Type.text.match = function(t, o){ var tmp, u;
 	if(t.slice(0, (tmp||'').length) === tmp){ return true }
 	if(u !== o['*']){ return false }
 	if(u !== o['>'] && u !== o['<']){
-		return (t > o['>'] && t < o['<'])? true : false;
+		return (t >= o['>'] && t <= o['<'])? true : false;
 	}
-	if(u !== o['>'] && t > o['>']){ return true }
-	if(u !== o['<'] && t < o['<']){ return true }
+	if(u !== o['>'] && t >= o['>']){ return true }
+	if(u !== o['<'] && t <= o['<']){ return true }
 	return false;
 }
 Type.list = {is: function(l){ return (l instanceof Array) }}
