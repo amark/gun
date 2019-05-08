@@ -1,3 +1,4 @@
+
 var Gun = require('../index');
 var Type = require('../type');
 
@@ -20,7 +21,7 @@ function Mesh(ctx){
 			return;
 		}
 		// add hook for AXE?
-		if (Gun.AXE && opt && opt.super) { Gun.AXE.say(msg, mesh.say, this); return; } // rogowski
+		if (Gun.AXE) { Gun.AXE.say(msg, mesh.say, this); return; }
 		mesh.say(msg);
 	}
 
@@ -48,7 +49,7 @@ function Mesh(ctx){
 			}
 			(msg._ = function(){}).via = peer;
 			if((tmp = msg['><'])){
-				(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+				(msg._).to = Type.obj.map(tmp.split(','), tomap);
 			}
 			if(msg.dam){
 				if(tmp = mesh.hear[msg.dam]){
@@ -71,6 +72,7 @@ function Mesh(ctx){
 			return;
 		}
 	}
+	var tomap = function(k,i,m){m(k,true)};
 
 	;(function(){
 		mesh.say = function(msg, peer, o){
@@ -125,7 +127,6 @@ function Mesh(ctx){
 					peer.say(raw);
 				} else
 				if(wire.send){
-					if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
 					wire.send(raw);
 				}
 			}catch(e){
@@ -194,6 +195,7 @@ function Mesh(ctx){
 			mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 		}
 		if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+		// @rogowski I need this here by default for now to fix go1dfish's bug
 		tmp = peer.queue; peer.queue = [];
 		Type.obj.map(tmp, function(msg){
 			mesh.say(msg, peer);
@@ -203,16 +205,20 @@ function Mesh(ctx){
 		Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 		ctx.on('bye', peer);
 	}
-
 	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 	mesh.hear['?'] = function(msg, peer){
 		if(!msg.pid){
-			return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			// @rogowski I want to re-enable this AXE logic with some fix/merge later.
+			// var tmp = peer.queue; peer.queue = [];
+			// Type.obj.map(tmp, function(msg){
+			//	mesh.say(msg, peer);
+			// });
+			return;
 		}
 		peer.id = peer.id || msg.pid;
 		mesh.hi(peer);
 	}
-
 	return mesh;
 }
 
