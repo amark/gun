@@ -6,6 +6,8 @@ describe('Gun', function(){
 		if(typeof window !== 'undefined'){ env = window }
 		root = env.window? env.window : global;
 		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
+		try{ localStorage.clear() }catch(e){}
+		try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
   	try{ require('../lib/fsrm')('radatatest') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');

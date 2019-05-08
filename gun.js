@@ -49,10 +49,10 @@
 			if(t.slice(0, (tmp||'').length) === tmp){ return true }
 			if(u !== o['*']){ return false }
 			if(u !== o['>'] && u !== o['<']){
-				return (t > o['>'] && t < o['<'])? true : false;
+				return (t >= o['>'] && t <= o['<'])? true : false;
 			}
-			if(u !== o['>'] && t > o['>']){ return true }
-			if(u !== o['<'] && t < o['<']){ return true }
+			if(u !== o['>'] && t >= o['>']){ return true }
+			if(u !== o['<'] && t <= o['<']){ return true }
 			return false;
 		}
 		Type.list = {is: function(l){ return (l instanceof Array) }}
@@ -958,7 +958,7 @@
 						if(tmp){ return }
 						msg.$ = back.$;
 					} else
-					if(obj_has(back.put, get)){
+					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						put = (back.$.get(get)._);
 						if(!(tmp = put.ack)){ put.ack = -1 }
 						back.on('in', {
@@ -1178,14 +1178,16 @@
 			});
 		}
 		function ask(at, soul){
-			var tmp = (at.root.$.get(soul)._);
-			if(at.ack){
-				tmp.on('out', {get: {'#': soul}});
+			var tmp = (at.root.$.get(soul)._), lex = at.lex;
+			if(at.ack || lex){
+				(lex = lex||{})['#'] = soul;
+				tmp.on('out', {get: lex});
 				if(!at.ask){ return } // TODO: PERFORMANCE? More elegant way?
 			}
 			tmp = at.ask; Gun.obj.del(at, 'ask');
 			obj_map(tmp || at.next, function(neat, key){
-				neat.on('out', {get: {'#': soul, '.': key}});
+				var lex = neat.lex || {}; lex['#'] = soul; lex['.'] = lex['.'] || key;
+				neat.on('out', {get: lex});
 			});
 			Gun.obj.del(at, 'ask'); // TODO: PERFORMANCE? More elegant way?
 		}
@@ -1985,7 +1987,7 @@
 					}
 					(msg._ = function(){}).via = peer;
 					if((tmp = msg['><'])){
-						(msg._).to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+						(msg._).to = Type.obj.map(tmp.split(','), tomap);
 					}
 					if(msg.dam){
 						if(tmp = mesh.hear[msg.dam]){
@@ -2008,6 +2010,7 @@
 					return;
 				}
 			}
+			var tomap = function(k,i,m){m(k,true)};
 
 			;(function(){
 				mesh.say = function(msg, peer, o){
@@ -2062,7 +2065,6 @@
 							peer.say(raw);
 						} else
 						if(wire.send){
-							if(wire.readyState && 1 != wire.readyState){ throw "socket not ready yet!" }
 							wire.send(raw);
 						}
 					}catch(e){
@@ -2130,11 +2132,12 @@
 					tmp = tmp.id = tmp.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
-				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer); }
-				// tmp = peer.queue; peer.queue = [];
-				// Type.obj.map(tmp, function(msg){
-				// 	mesh.say(msg, peer);
-				// });
+				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+				// @rogowski I need this here by default for now to fix go1dfish's bug
+				tmp = peer.queue; peer.queue = [];
+				Type.obj.map(tmp, function(msg){
+					mesh.say(msg, peer);
+				});
 			}
 			mesh.bye = function(peer){
 				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
@@ -2143,12 +2146,12 @@
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
 				if(!msg.pid){
-// 					return mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
-					var tmp = peer.queue; peer.queue = [];
-					Type.obj.map(tmp, function(msg){
-						mesh.say(msg, peer);
-					});
+					// @rogowski I want to re-enable this AXE logic with some fix/merge later.
+					// var tmp = peer.queue; peer.queue = [];
+					// Type.obj.map(tmp, function(msg){
+					//	mesh.say(msg, peer);
+					// });
 					return;
 				}
 				peer.id = peer.id || msg.pid;

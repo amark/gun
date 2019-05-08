@@ -7,13 +7,12 @@ var Gun;
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
   try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
-  try{ require('fs').unlinkSync('data.json') }catch(e){}
-  try{ require('../../lib/fsrm')('radatatest') }catch(e){}
-  //root.Gun = root.Gun || require('../gun');
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
   } else {
+    try{ require('fs').unlinkSync('data.json') }catch(e){}
+    try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
     //require('../lib/file');
@@ -31,6 +30,7 @@ Gun = root.Gun
 if(Gun.window && !Gun.window.RindexedDB){ return }
  
 var opt = {};
+opt.file = 'radatatest';
 var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
 opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
 opt.chunk = 1000;
@@ -110,6 +110,20 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         expect(Gun.obj.empty(all)).to.be.ok();
         done();
     });
+
+    it('radix reverse', function(done){
+        var r = Radix(), tmp;
+        r('alice', 1);r('bob', 2);r('carl', 3);r('dave', 4);
+        Radix.map(r, function(v,k, a,b){
+            tmp = v;
+        }, {reverse: 1});
+        expect(tmp).to.be(1);
+        Radix.map(r, function(v,k, a,b){
+            tmp = v;
+        });
+        expect(tmp).to.be(4);
+        done();
+    });
   });
 
   describe('Radisk', function(){
@@ -138,6 +152,25 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             })
         })
     });
+
+    /*it('read contacts reverse', function(done){
+        var opt = {};
+        opt.reverse = true;
+        opt.end = 'nothing';
+        opt.start = 'marcy';
+        var first, last;
+        rad('', function(err, data){
+            console.log("???", err, data);
+            return;
+            Radix.map(data, function(v,k){
+                console.log(k, v);
+                //delete all[find+k];
+            });
+            //if(!Gun.obj.empty(all)){ return }
+            //done();
+        }, opt);
+    });
+    console.log("UNDO THIS RETURN!!!");return;*/
  
     it('read contacts start end', function(done){
         var opt = {};
