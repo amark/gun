@@ -14,7 +14,7 @@
         key = pair.epriv || pair;
       }
       var msg = (typeof data == 'string')? data : JSON.stringify(data);
-      var rand = {s: shim.random(8), iv: shim.random(16)};
+      var rand = {s: shim.random(9), iv: shim.random(15)}; // consider making this 9 and 15 or 18 or 12 to reduce == padding.
       var ct = await aeskey(key, rand.s, opt).then((aes) => (/*shim.ossl ||*/ shim.subtle).encrypt({ // Keeping the AES key scope as private as possible...
         name: opt.name || 'AES-GCM', iv: new Uint8Array(rand.iv)
       }, aes, new shim.TextEncoder().encode(msg)));
