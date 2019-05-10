@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+<style>
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	html, body {
+		font-family: "Oxygen", sans-serif;
+	}
+	.ct-chart * {
+		overflow: visible;
+	}
+</style>
+<input id="url" class="center" placeholder="enter peer stats source url">
+<div class="leak" style="padding: 0 2em;">
+	<div class="leak ct-chart ct-perfect-fourth" style="height: 20em;"></div>
+</div>
+<p id="peers" class="shout center">0</p>
+<script src="./jquery.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+<script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<script>
+var stats = {slide: [0,0,0,0,0], peers: [0,0,0,0,0]};
+setInterval(function(){
+	stats.show();
+}, 1000 * 15);
+stats.show = function(){ $.getJSON(url.value||(location.origin+'/gun/stats.radata'), function(data){ console.log(data)
+	var mb = data.memory.heapTotal / 1024 / 1024;
+	stats.slide.push(mb); stats.slide = stats.slide.slice(1);
+	$(peers).text(data.peers.count);
+	var data = {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.slide]
+	};
+
+	// Create a new line chart object where as first parameter we pass in a selector
+	// that is resolving to our chart container element. The Second parameter
+	// is the actual data object.
+	new Chartist.Line('.ct-chart', data);
+}) }
+stats.show();
+</script>
+</body>
+</html>

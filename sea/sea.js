@@ -48,7 +48,7 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require('./gun', 1);
+    var Gun = (SEA.window||{}).Gun || require((typeof common == "undefined"?'.':'')+'./gun', 1);
     Gun.SEA = SEA;
     SEA.GUN = SEA.Gun = Gun;
 
