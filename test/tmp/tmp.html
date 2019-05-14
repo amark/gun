@@ -18,8 +18,9 @@
 var db = Gun({faith: true});
 
 setTimeout(function(){
-	console.log(db.get(window.SOUL)._.put);
-	return;
+	//return;
+	//console.log(db.get(window.SOUL)._.put);
+	//return;
 	db.get(window.SOUL).once(function(data){
 		console.log('oye!', data);
 	})
@@ -27,8 +28,8 @@ setTimeout(function(){
 
 function test(result, dedupId){ setTimeout(function(){
 	if (result) {
-		var foo = function(){}; foo.faith = true;
-	  db.on('in').to.next({
+		var foo = function(){}; foo.faith = false;
+	  db.on('in', {
 	    '@': dedupId,
 	    from: 'local',
 	    put: { [Gun.node.soul(result)]: result },
@@ -44,7 +45,7 @@ test(window.foo = {"_":{"#": window.SOUL = "nab/things/1d0f60a50f65b95dd91036836
 	"author":"{\":\":\"go1dfish\",\"~\":\"ovwCbuQeYp5rRABi9bTNKcEeeFXEiozWG28aRCl+MjOMNeqOxDEKIsnsgYgJmmSXvNhe/MpuL3376nL0vTN6qA==\"}",
 	"authorId":"{\":\":\"JG43ynRxqjy1-AemyMUoz14UqKM6cnh7zSPy_EAPgts.RCZ5dY7iRaIW_B7cDBlBsDNKwn2QCtbbA1uQ6iL8ENw\",\"~\":\"ekhiqU7UP1M8nHxBFv8QItNBIstP6zuQBtutk6sqMBNaN/2U9BAjb7Vjsogj23kphEMHeCSgO7AqaOE3cOZiyg==\"}",
 	"timestamp":"{\":\":1557772735666,\"~\":\"Z2AiDehqJKrbRlXXUllkwWjOEn5//HnjjTMdgNz2j8K/Bw5XPK1g0huVQsfWdKOKfr9XU7Y5sY2N526V13O4XA==\"}","kind":"{\":\":\"submission\",\"~\":\"KwjYOjPnpZH85VVOHZAxLm2Ntd/0p3o74sLEGtTf7grBCKb0pzDo7yERjWIaTEiQJ2IFEtu43V/vzhZMTvuvUQ==\"}"})
-db.get(window.SOUL);
+//db.get(window.SOUL);
 </script>
 </body>
 </html>
