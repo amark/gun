@@ -1113,6 +1113,10 @@
       }
       var ctx = this.as;
       (msg._||(msg._=function(){})).user = ctx.user;
+      if(ctx.opt.faith && msg._.faith){ // you probably shouldn't have faith in this!
+        this.to.next(msg);
+        return;
+      }
       security.call(this, msg);
     }
 

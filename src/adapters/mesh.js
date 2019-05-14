@@ -188,10 +188,10 @@ function Mesh(ctx){
 	mesh.hi = function(peer){
 		var tmp = peer.wire || {};
 		if(peer.id || peer.url){
+			Type.obj.del(opt.peers, tmp.pid);
 			opt.peers[peer.url || peer.id] = peer;
-			Type.obj.del(opt.peers, tmp.id);
 		} else {
-			tmp = tmp.id = tmp.id || Type.text.random(9);
+			tmp = peer.id = peer.id || Type.text.random(9);
 			mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 		}
 		if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
@@ -216,7 +216,9 @@ function Mesh(ctx){
 			// });
 			return;
 		}
-		peer.id = peer.id || msg.pid;
+		if(!peer.wire){ return }
+		if(peer.wire.pid){ return } // they already set their ID!
+		peer.id = peer.wire.pid = msg.pid;
 		mesh.hi(peer);
 	}
 	return mesh;
