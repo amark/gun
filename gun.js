@@ -2013,16 +2013,16 @@
 			var tomap = function(k,i,m){m(k,true)};
 
 			;(function(){
+				var message;
+				function each(peer){ mesh.say(message, peer) }
 				mesh.say = function(msg, peer, o){
 					/*
 						TODO: Plenty of performance optimizations
 						that can be made just based off of ordering,
 						and reducing function calls for cached writes.
 					*/
-					if(!peer){
-						Type.obj.map(opt.peers, function(peer){
-							mesh.say(msg, peer);
-						});
+					if(!peer){ message = msg;
+						Type.obj.map(opt.peers, each);
 						return;
 					}
 					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
@@ -2126,10 +2126,9 @@
 			mesh.hi = function(peer){
 				var tmp = peer.wire || {};
 				if(peer.id || peer.url){
-					Type.obj.del(opt.peers, tmp.pid);
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = peer.id || Type.text.random(9);
+					tmp = peer.id = tmp.pid = peer.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
 				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
@@ -2155,8 +2154,10 @@
 					return;
 				}
 				if(!peer.wire){ return }
-				if(peer.wire.pid){ return } // they already set their ID!
-				peer.id = peer.wire.pid = msg.pid;
+				if(!peer.wire.pid){ return } // only run code below if wire.pid exists
+				Type.obj.del(opt.peers, peer.wire.pid || peer.id);
+				delete peer.wire.pid;
+				peer.id = msg.pid;
 				mesh.hi(peer);
 			}
 			return mesh;
