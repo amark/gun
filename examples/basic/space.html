@@ -1,0 +1,50 @@
+<h1>Search</h1>
+
+<form id="ask">
+  <input id="search" placeholder="search..." autocomplete="off">
+</form>
+
+<div id="answer"></div>
+<ul></ul>
+
+<small>Note: No data is indexed by default, you need to add some!</small>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../sea.js"></script>
+<script src="../../lib/space.js"></script>
+
+<script>
+var gun = Gun();
+var ask = {};
+
+$('#search').on('keyup', function(e){
+	ask.now = (this.value||'').toLowerCase().replace(/[\W_]+/g,"");
+  if(ask.last === ask.now){ return }
+  ask.last = ask.now;
+  clearTimeout(ask.to);
+  ask.to = setTimeout(search, 20);
+});
+
+function search(){
+  var key = ask.now;
+  gun.get('Q').space(key, function(ack){
+    if(!ack || key !== ask.now){ return }
+    UI(ack)
+  });
+}
+
+function UI(ack){
+  $('#answer').text(ack.data || '');
+  var $ul = $('ul').empty(), tree = ack.tree;
+  Gun.obj.map(tree, function(v,k){
+    $('<li>').text(k +' - ' + v).appendTo($ul);
+  });
+};
+
+function load(DATA){
+  Gun.obj.map(DATA, function(v,k){
+    gun.get('Q').space(k, v); 
+  });
+}
+</script>

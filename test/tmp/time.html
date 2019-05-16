@@ -1,0 +1,72 @@
+<h1>Infinite Stream of Tweets/Chats:</h1>
+
+<ul></ul>
+<div id="latest">while in scroll, latest tweet should show here</div>
+Scroll:
+<button id="up">UP</button>
+<button id="down">DOWN</button>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../lib/time.js"></script>
+
+<script>$(function(){
+
+var gun = Gun();
+window.app = {};
+
+app.newsfeed = gun.get('some').get('news').get('feed'); // this would be a timegraph
+
+app.modifier = app.newsfeed.time();
+
+var low = -5, top = 0;
+app.modifier.range(low, top);
+
+app.modifier.on(function(range){
+  $('ul').empty(); // bad in theory, but proves out this type of "range" object.
+  range.forEach(UI);
+});
+
+$('#up').on('click', function(){
+  alert('not working...');
+  app.modifier.range(--low, --top);
+});
+$('#down').on('click', function(){
+  alert('not working...');
+  app.modifier.range(++low, ++top);
+});
+
+function UI(say, id){
+  var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
+  $(li).text(say);
+};
+
+})</script>
+
+<script>
+/* FAKE CODE TO GENERATE FAKE TESTS */
+/* SHOULD BE REPLACED WITH YOUR OWN */
+/* BUT USING THE SAM TYPE OF TEST!! */
+/* THIS IS BAD CODE!!!!!! */
+/* IT MEMORY LEAKS INFINITELY */
+/* JUST FAKING IT TILL API MAKES IT! */
+/* ACTUAL CODE SHOULD USE GUN NOT INFINITE */
+/* GROWING LOCAL CACHE, GUN ALREADY CACHES */
+var i = 0, tweet = "this tweet says ", bad = {leak: []};
+setInterval(function(){
+  app.newsfeed.set(tweet + (++i));
+}, 1000);
+Gun.chain.time = function(){
+  var chain = this.map(function(item){
+    bad.leak.push(item); // bad bad bad bad
+    return bad.leak.slice(0 - bad.num); // should traverse GUN not slice a memory leak
+  });
+  return chain;
+}
+Gun.chain.range = function(low, top){
+  bad.low = low;
+  bad.top = top;
+  bad.num = top - low;
+  return this;
+}
+</script>
