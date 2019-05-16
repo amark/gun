@@ -1972,10 +1972,11 @@
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var dup = ctx.dup, id, hash, msg, tmp = raw[0];
-				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
+				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) } 
 				if('{' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
+					mesh.hear.d += raw.length; ++mesh.hear.c; // STATS!
 					if(dup.check(id = msg['#'])){ return }
 					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed.
 					if((tmp = msg['@']) && msg.put){
@@ -2010,6 +2011,7 @@
 					return;
 				}
 			}
+			mesh.hear.c = mesh.hear.d = 0;
 			var tomap = function(k,i,m){m(k,true)};
 
 			;(function(){
@@ -2067,10 +2069,12 @@
 						if(wire.send){
 							wire.send(raw);
 						}
+						mesh.say.d += raw.length; ++mesh.say.c; // STATS!
 					}catch(e){
 						(peer.queue = peer.queue || []).push(raw);
 					}
 				}
+				mesh.say.c = mesh.say.d = 0;
 
 			}());
 
