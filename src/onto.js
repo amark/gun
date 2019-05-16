@@ -5,13 +5,13 @@ module.exports = function onto(tag, arg, as){
 	var u, tag = (this.tag || (this.tag = {}))[tag] ||
 	(this.tag[tag] = {tag: tag, to: onto._ = {
 		next: function(arg){ var tmp;
-			if((tmp = this.to)){ 
+			if((tmp = this.to)){
 				tmp.next(arg);
 		}}
 	}});
 	if(arg instanceof Function){
 		var be = {
-			off: onto.off || 
+			off: onto.off ||
 			(onto.off = function(){
 				if(this.next === onto._.next){ return !0 }
 				if(this === this.the.last){

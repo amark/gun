@@ -95,7 +95,7 @@
 					</form>
 					<div>
 						<ul name="said">
-							<li name="#" class="sit sort shade rim"><div name="what" class="rim sit"></div></li>
+							<li name="#" class="sit sort shade rim"><div name="what" class="rim"></div></li>
 						</ul>
 					</div>
 				</div>
@@ -153,7 +153,7 @@
 			// for how to build a simplified version
 			// of this example: https://scrimba.com/c/c2gBgt4
 			var gun = Gun(location.origin+'/gun');
-			var app = gun.get('example/contacts/6');
+			var app = gun.get('example/contacts/7');
 			var user = gun.user();
 			var c = window.c = {};
 			(function(){
@@ -169,7 +169,7 @@
 					Gun.node.is(at.put.users, function(val, key){
 						Gun.SEA.verify(val, false, function(val){
 						//Gun.SEA.read(val, false, function(val){
-							if('alias/'+key === Gun.val.rel.is(val)){ return }
+							if('~@'+key === Gun.val.link.is(val)){ return }
 							no = true;
 						})
 						if(no){ return no }
@@ -207,7 +207,7 @@
 						if(!ack.wait){ but.removeClass('pulse') }
 						if(ack.err){ c.tell(ack.err); return }
 						if(ack.pub){
-							gun.get('users').get(data.alias).put(gun.get('alias/'+data.alias));
+							gun.get('users').get(data.alias).put(gun.get('~@'+data.alias));
 						}
 						session(data);
 						user.auth(data.alias, data.pass);
@@ -276,7 +276,7 @@
 				if(!user.is){ return as.route('sign') }
 				var pub = location.hash.split('/').slice(-1)[0];
 				(pub === user._.pub? $('#say').show() : $('#say').hide());
-				as('#person', window.PUB = gun.get('pub/'+pub));
+				as('#person', window.PUB = gun.get('~'+pub));
 			});
 
 

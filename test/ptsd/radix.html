@@ -1,0 +1,38 @@
+<html>
+<head>
+	<title>PTSD</title>
+	<meta name="Description" content="JavaScript benchmarking utility">
+	<link rel="stylesheet" href="stool.css">
+</head>
+<body>
+	<div id="inject"></div>
+	<h1>PTSD</h1>
+	<section>
+		<h3>Setup code</h3>
+		<textarea rows="6" id="common" class="common input" placeholder="Common Code"></textarea>
+		<textarea id='log'>logs</textarea>
+	</section>
+	<section>
+		<h3>Test cases</h3>
+		<table id="suite">
+			<tr>
+				<th class="th-remove"></th>
+				<th class="th-case">Case</th>
+				<th class="th-result">Result</th>
+			</tr>
+		</table>
+		<a href="#" id="add">+ Add test case</a>
+	</section>
+	<button id="run">Run!</button>
+	<button id="abort">Abort</button>
+	<button id="share">Share</button>
+	<a id="share-result"></a>
+	<script src="../../examples/jquery.js"></script>
+	<script src="benchmark.js"></script>
+	<script src="ptsd.js"></script>
+	<script src="../../gun.js"></script>
+	<script src="../../lib/radix.js"></script>
+	<script src="../../lib/radisk.js"></script>
+	<script src="radix.js"></script>
+</body>
+</html>

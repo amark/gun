@@ -3,7 +3,7 @@
 ;(function(){
 	//localStorage.clear();
 	
-	var gun = window.gun = Gun('http://localhost:8080/gun');
+	var gun = window.gun = Gun('http://localhost:8765/gun');
 	var user = window.user = gun.get('pub/alice');
 	return;
 	user.put({pub: 'alice'}, write);

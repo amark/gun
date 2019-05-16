@@ -126,6 +126,7 @@
 			}
 
 			chat.map().val(function(msg, id){
+				if(!msg){ return }
 				var ul = $('ul');
 				var last = sort(msg.when, ul.children('li').last());
 

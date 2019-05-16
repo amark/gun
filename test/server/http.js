@@ -10,6 +10,6 @@ var gun = Gun({
 
 var server = http.createServer(function(req, res){});
 gun.wsp(server);
-server.listen(8080);
+server.listen(8765);
 
-console.log('Server started on port ' + 8080 + ' with /gun');
+console.log('Server started on port ' + 8765 + ' with /gun');

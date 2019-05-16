@@ -8,6 +8,8 @@
 # an installer that will automatically do it for you.
 
 #debian/ubuntu
+su -
+apt-get install sudo -y
 sudo apt-get update -y
 sudo apt-get install curl git git-core -y
 #fedora/openSUSE
@@ -24,4 +26,4 @@ npm install gun
 # to run the gun examples:
 cd ./node_modules/gun
 npm install .
-sudo /usr/local/bin/node ./examples/http.js 80 # change `80` to `8080` for development purposes.
+sudo /usr/local/bin/node ./examples/http.js 80 # change `80` to `8765` for development purposes.
