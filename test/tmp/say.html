@@ -1,0 +1,75 @@
+<script src="../examples/jquery.js"></script>
+<script src="../gun.js"></script>
+<script src="../lib/cryptomodules.js"></script>
+<script src="../sea.js"></script>
+<script>
+;(function(){
+	localStorage.clear();sessionStorage.clear();
+	
+	var gun = window.gun = Gun();
+	var user = gun.user();
+
+	gun.on('secure', function(at){
+		/* enforce some rules about shared app level data */
+		if(!at.put || !at.put.users){ return }
+		var no;
+		Gun.node.is(at.put.users, function(val, key){
+			Gun.SEA.read(val, false, function(val){
+				if('alias/'+key === Gun.val.link.is(val)){ return }
+				no = true;
+			})
+			if(no){ return no }
+		});
+		if(no){ return }
+		this.to.next(at);
+	});
+
+	user.create('alice', 'unsafepassword', login);
+
+	function login(ack){
+		console.log("login...");
+		window.pub = ack.pub;
+		gun.get('users').get('alice').put(gun.get('alias/alice'));
+		user.auth('alice', 'unsafepassword', sub);
+	}
+
+	function sub(){
+		console.log("subscribe...");
+		gun.get('users').map().map()
+			.get('who').get('said').map().on(function(msg){
+				if(!check[msg.num]){ console.log(msg.num); return } check[msg.num] = false;
+				console.log("!!!!!!!", msg.num ,"!!!!!!!");
+				$("<div>").css({border: '1px solid black'}).text(msg.what).appendTo('body');
+		});
+		//window.user = gun.get('pub/'+window.pub);
+		write();
+	}
+
+	function write(data){
+		console.log("write...");
+		var said = window.said = user.get('who').get('said');
+		window.ID = 'alice';
+
+		function run(i){
+			said.set({
+				what: i + " Hello world! ~ " + pub.slice(0,3),
+				num: i,
+				who: pub,
+				id: ID,
+			});
+		}
+
+		window.check = {};
+		var i = 0, m = 9, to = setInterval(function frame(){
+			if(m <= i){
+				clearTimeout(to);
+				return;
+			}
+			i++;
+			check[i] = true;
+			run(i);
+		}, 1);
+	}
+
+}());
+</script>

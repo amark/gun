@@ -1,0 +1,87 @@
+<h1>PM</h1>
+
+<form id="sign">
+  <input id="alias" placeholder="username">
+  <input id="pass" type="password" placeholder="passphrase">
+  <input id="in" type="submit" value="sign in">
+  <input id="up" type="button" value="sign up">
+</form>
+
+<ul id="chats"></ul>
+
+<form id="talk" style="display: none;">
+    To: <input id="to" placeholder="public key"> <b id="who"></b><br/>
+    <input id="what" placeholder="private message">
+    <input id="send" type="submit" value="send">
+    <p>Your public key:<br/><i id="pub"></i></p>
+</form>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../sea.js"></script>
+
+<script>
+/*
+  This is an early preview of a simple private messaging app.
+  Every possible UI/UX feature is left out, meaning you have
+  to manually copy&paste the public keys to send messages.
+
+  Note: This example app does not hide who you are talking to.
+  It does not hide when or the frequency of who you talk to.
+  Only the messages themselves are private between people.
+
+  This app does not order the messages, a real app would.
+*/
+//var gun = Gun();
+var gun = Gun('http://localhost:8080/gun');
+var user = gun.user();
+
+$('#up').on('click', function(){
+  user.create($('#alias').val(), $('#pass').val(), login);
+});
+
+$('#sign').on('submit', login);
+function login(){
+  user.auth($('#alias').val(), $('#pass').val());
+  return false;
+};
+
+gun.on('auth', async function(){
+  $('#sign').hide();
+	$('#talk').show();
+  var pub = user.pair().pub;
+	$('#pub').text(pub);
+});
+
+$('#to').on('blur', async function(){
+  if(!user.is){ return } // need to log in!
+  var pub = ($('#to').val()||'').trim();
+  if(!pub){ return }
+  var to = gun.user(pub);
+  var who = await to.then() || {};
+  $('#who').text(who.alias || "User not found.");
+  if(!who.alias){ return }
+  UI.dec = await Gun.SEA.secret(who.epub, user.pair());
+  user.get('chat').get(pub).map().once(UI);
+  to.get('chat').get(user.pair().pub).map().once(UI);
+});
+
+$('#talk').on('submit', async function(e){
+  e.preventDefault();
+  if(!user.is){ return } // need to log in!
+  var what = $('#what').val();
+  if(!what){ return }
+  var pub = ($('#to').val()||'').trim();
+  var who = await gun.user(pub).then();
+  var sec = await Gun.SEA.secret(who.epub, user.pair());
+  var enc = await Gun.SEA.encrypt(what, sec);
+  user.get('chat').get(pub).set(enc);
+  $('#what').val("");
+});
+
+async function UI(say, id){
+  say = await Gun.SEA.decrypt(say, UI.dec);
+  var li = $('#' + id).get(0) || $('<li>').attr('id', id).appendTo('ul');
+  $(li).text(say);
+};
+</script>

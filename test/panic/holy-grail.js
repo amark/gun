@@ -1,6 +1,6 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 2,
 	browsers: 2,
 	route: {
@@ -55,7 +55,7 @@ describe("The Holy Grail Test!", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
+			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -181,7 +181,7 @@ describe("The Holy Grail Test!", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
+			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});

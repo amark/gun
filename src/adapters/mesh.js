@@ -1,32 +1,44 @@
 
+var Gun = require('../index');
 var Type = require('../type');
 
 function Mesh(ctx){
 	var mesh = function(){};
+	var opt = ctx.opt || {};
+	opt.log = opt.log || console.log;
+	opt.gap = opt.gap || opt.wait || 1;
+	opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
 
 	mesh.out = function(msg){ var tmp;
-		//console.log("count:", msg['#'], msg);
 		if(this.to){ this.to.next(msg) }
 		//if(mesh.last != msg['#']){ return mesh.last = msg['#'], this.to.next(msg) }
 		if((tmp = msg['@'])
 		&& (tmp = ctx.dup.s[tmp])
 		&& (tmp = tmp.it)
-		&& tmp.mesh){
-			mesh.say(msg, tmp.mesh.via);
+		&& tmp._){
+			mesh.say(msg, (tmp._).via, 1);
 			tmp['##'] = msg['##'];
 			return;
 		}
 		// add hook for AXE?
+		if (Gun.AXE) { Gun.AXE.say(msg, mesh.say, this); return; }
 		mesh.say(msg);
 	}
+
+	ctx.on('create', function(root){
+		root.opt.pid = root.opt.pid || Type.text.random(9);
+		this.to.next(root);
+		ctx.on('out', mesh.out);
+	});
 
 	mesh.hear = function(raw, peer){
 		if(!raw){ return }
 		var dup = ctx.dup, id, hash, msg, tmp = raw[0];
-		try{msg = JSON.parse(raw);
-		}catch(e){}
+		if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) } 
 		if('{' === tmp){
+			try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
+			mesh.hear.d += raw.length; ++mesh.hear.c; // STATS!
 			if(dup.check(id = msg['#'])){ return }
 			dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed.
 			if((tmp = msg['@']) && msg.put){
@@ -36,15 +48,22 @@ function Mesh(ctx){
 					(tmp = dup.s)[hash] = tmp[id];
 				}
 			}
-			(msg.mesh = function(){}).via = peer;
+			(msg._ = function(){}).via = peer;
 			if((tmp = msg['><'])){
-				msg.mesh.to = Type.obj.map(tmp.split(','), function(k,i,m){m(k,true)});
+				(msg._).to = Type.obj.map(tmp.split(','), tomap);
+			}
+			if(msg.dam){
+				if(tmp = mesh.hear[msg.dam]){
+					tmp(msg, peer, ctx);
+				}
+				return;
 			}
 			ctx.on('in', msg);
-			
+
 			return;
 		} else
 		if('[' === tmp){
+			try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
 			var i = 0, m;
 			while(m = msg[i++]){
@@ -54,23 +73,25 @@ function Mesh(ctx){
 			return;
 		}
 	}
+	mesh.hear.c = mesh.hear.d = 0;
+	var tomap = function(k,i,m){m(k,true)};
 
 	;(function(){
-		mesh.say = function(msg, peer){
+		var message;
+		function each(peer){ mesh.say(message, peer) }
+		mesh.say = function(msg, peer, o){
 			/*
 				TODO: Plenty of performance optimizations
 				that can be made just based off of ordering,
 				and reducing function calls for cached writes.
 			*/
-			if(!peer){
-				Type.obj.map(ctx.opt.peers, function(peer){
-					mesh.say(msg, peer);
-				});
+			if(!peer){ message = msg;
+				Type.obj.map(opt.peers, each);
 				return;
 			}
-			var tmp, wire = peer.wire || ((ctx.opt.wire) && ctx.opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
+			var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
 			if(!wire){ return }
-			msh = msg.mesh || empty;
+			msh = (msg._) || empty;
 			if(peer === msh.via){ return }
 			if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
 			if((tmp = msg['@'])
@@ -80,49 +101,50 @@ function Mesh(ctx){
 					return; // TODO: this still needs to be tested in the browser!
 				}
 			}
-			if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id])){ return } // TODO: still needs to be tested
-			//console.log('out', JSON.parse(raw));	
+			if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 			if(peer.batch){
-				peer.batch.push(raw);
-				return;
+				peer.tail = (peer.tail || 0) + raw.length;
+				if(peer.tail <= opt.pack){
+					peer.batch.push(raw);
+					return;
+				}
+				flush(peer);
 			}
 			peer.batch = [];
-			setTimeout(function(){
-				var tmp = peer.batch;
-				if(!tmp){ return }
-				peer.batch = null;
-				if(!tmp.length){ return }
-				send(JSON.stringify(tmp), peer);
-			}, ctx.opt.gap || ctx.opt.wait || 1);
+			setTimeout(function(){flush(peer)}, opt.gap);
 			send(raw, peer);
 		}
-
+		function flush(peer){
+			var tmp = peer.batch;
+			if(!tmp){ return }
+			peer.batch = peer.tail = null;
+			if(!tmp.length){ return }
+			try{send(JSON.stringify(tmp), peer);
+			}catch(e){opt.log('DAM JSON stringify error', e)}
+		}
 		function send(raw, peer){
 			var wire = peer.wire;
 			try{
-				if(wire.send){
-					if(wire.readyState === wire.OPEN){
-						//console.log("send:", raw);
-						wire.send(raw);
-					} else {
-						(peer.queue = peer.queue || []).push(raw);
-					}
-				} else
 				if(peer.say){
 					peer.say(raw);
+				} else
+				if(wire.send){
+					wire.send(raw);
 				}
+				mesh.say.d += raw.length; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
 			}
 		}
+		mesh.say.c = mesh.say.d = 0;
 
 	}());
-	
+
 	;(function(){
 
 		mesh.raw = function(msg){
 			if(!msg){ return '' }
-			var dup = ctx.dup, msh = msg.mesh || {}, put, hash, tmp;
+			var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
 			if(tmp = msh.raw){ return tmp }
 			if(typeof msg === 'string'){ return msg }
 			if(msg['@'] && (tmp = msg.put)){
@@ -135,12 +157,14 @@ function Mesh(ctx){
 				msg['#'] = hash || msg['#'];
 				if(put){ (msg = Type.obj.to(msg)).put = _ }
 			}
-			var i = 0, to = []; Type.obj.map(ctx.opt.peers, function(p){
+			var i = 0, to = []; Type.obj.map(opt.peers, function(p){
 				to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 			}); msg['><'] = to.join();
 			var raw = $(msg);
 			if(u !== put){
-				raw = raw.replace('"'+ _ +'"', put);
+				tmp = raw.indexOf(_, raw.indexOf('put'));
+				raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
+				//raw = raw.replace('"'+ _ +'"', put); // https://github.com/amark/gun/wiki/@$$ Heisenbug
 			}
 			if(msh){
 				msh.raw = raw;
@@ -161,19 +185,47 @@ function Mesh(ctx){
 		function map(k){
 			this.to[k] = this.on[k];
 		}
-		var $ = JSON.stringify, _ = ':])([:'
+		var $ = JSON.stringify, _ = ':])([:';
 
 	}());
 
 	mesh.hi = function(peer){
-		ctx.on('hi', peer);
-		var queue = peer.queue;
-		peer.queue = [];
-		Type.obj.map(queue, function(msg){
+		var tmp = peer.wire || {};
+		if(peer.id || peer.url){
+			opt.peers[peer.url || peer.id] = peer;
+		} else {
+			tmp = peer.id = tmp.pid = peer.id || Type.text.random(9);
+			mesh.say({dam: '?'}, opt.peers[tmp] = peer);
+		}
+		if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
+		// @rogowski I need this here by default for now to fix go1dfish's bug
+		tmp = peer.queue; peer.queue = [];
+		Type.obj.map(tmp, function(msg){
 			mesh.say(msg, peer);
 		});
 	}
-
+	mesh.bye = function(peer){
+		Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
+		ctx.on('bye', peer);
+	}
+	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
+	mesh.hear['?'] = function(msg, peer){
+		if(!msg.pid){
+			mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+			// @rogowski I want to re-enable this AXE logic with some fix/merge later.
+			// var tmp = peer.queue; peer.queue = [];
+			// Type.obj.map(tmp, function(msg){
+			//	mesh.say(msg, peer);
+			// });
+			return;
+		}
+		if(!peer.wire){ return }
+		if(!peer.wire.pid){ return } // only run code below if wire.pid exists
+		Type.obj.del(opt.peers, peer.wire.pid || peer.id);
+		delete peer.wire.pid;
+		peer.id = msg.pid;
+		mesh.hi(peer);
+	}
 	return mesh;
 }
 
