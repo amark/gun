@@ -2061,6 +2061,7 @@
 					}catch(e){opt.log('DAM JSON stringify error', e)}
 				}
 				function send(raw, peer){
+					return; // STOP SENDING DATA FOR TESTING PEER TEMPORARILY, DELETE THIS AFTER.
 					var wire = peer.wire;
 					try{
 						if(peer.say){
