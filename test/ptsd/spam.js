@@ -24,7 +24,7 @@ var t;
 }
 }());
 
-var gun = Gun({localStorage: false, peers: 'http://localhost:8080/gun'});
+var gun = Gun({localStorage: false, peers: 'http://localhost:8765/gun'});
 var g = gun.get('test');
 var room = Gun.text.random(100);
 var pub = Gun.text.random(1000);

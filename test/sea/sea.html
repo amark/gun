@@ -1,6 +1,6 @@
-<script src="../gun.js"></script>
-<script src="../lib/cryptomodules.js"></script>
-<script src="../sea.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../lib/cryptomodules.js"></script>
+<script src="../../sea.js"></script>
 <script>
 ;(function(){
 	localStorage.clear();
@@ -12,7 +12,17 @@
 
 	function login(ack){
 		console.log("login...");
-		user.auth('alice', 'unsafepassword', write);
+		user.auth('alice', 'unsafepassword', keys);
+	}
+
+	function keys(data){
+		console.log("keys...");
+		const keys = user.pair();
+		console.log(keys);
+		Gun.SEA.keyid(keys.pub).then(function (keyid) {
+			console.log("Public key KeyID (PGPv4): " + keyid);
+			write(keys);
+		});
 	}
 
 	function write(data){

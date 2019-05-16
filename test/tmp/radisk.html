@@ -1,0 +1,49 @@
+<h1>Radisk</h1>
+
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../lib/radix.js"></script>
+<script src="../../lib/radisk.js"></script>
+<script src="../../lib/store.js"></script>
+
+<button onclick="var i = 0; window.TO = setInterval(function(){ gun.get(Gun.text.random(3)).put({a: ++i}) }, 0);">start</button>
+<button onclick="clearTimeout(window.TO);">end</button>
+<br/><br/>
+<button onclick="gun.get('a').put({b: Gun.text.random(900)});setTimeout(function(){gun.get('x').put({y: Gun.text.random(900)});},1000);">write</button>
+<button id='read' onclick="console.debug.i=1;gun.get('a').once(d => console.log(1, d));gun.get('x').once(d => console.log(2, d));">read</button>
+
+<script>
+//localStorage.clear();
+
+function Store(opt){
+  opt = opt || {};
+  opt.file = String(opt.file || 'radata');
+  var storage = window.storage = localStorage;//{};
+  var store = function Store(){}, u;
+  store.put = function(file, data, cb){
+    //console.log("put", file, data);
+    setTimeout(function(){
+      storage[file] = data;
+      cb(null, 1);
+    }, 25);
+  };
+  store.get = function(file, cb){
+    //console.log("get", file);
+    setTimeout(function(){
+      var tmp = storage[file] || u;
+      cb(null, tmp);
+    }, 10);
+  };
+  store.list = function(cb, match){
+    //console.log('list');
+    setTimeout(function(){
+      Gun.obj.map(Object.keys(storage), cb) || cb();
+    }, 5);
+  };
+  return store;
+}
+
+var gun = Gun({localStorage: false, store: Store(), chunk: 1024, batch: 100});
+
+//setTimeout(function(){ $('#read').trigger('click') });
+</script>

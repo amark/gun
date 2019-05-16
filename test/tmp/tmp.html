@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="../../examples/style.css">
+</head>
+<body>
+<style>
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	html, body {
+		font-family: "Oxygen", sans-serif;
+	}
+</style>
+<script src="../../examples/jquery.js"></script>
+<script src="../../gun.js"></script>
+<script src="../../sea.js"></script>
+<script>
+var db = Gun({faith: true});
+
+setTimeout(function(){
+	//return;
+	//console.log(db.get(window.SOUL)._.put);
+	//return;
+	db.get(window.SOUL).once(function(data){
+		console.log('oye!', data);
+	})
+}, 1000);
+
+function test(result, dedupId){ setTimeout(function(){
+	if (result) {
+		var foo = function(){}; foo.faith = false;
+	  db.on('in', {
+	    '@': dedupId,
+	    from: 'local',
+	    put: { [Gun.node.soul(result)]: result },
+	    err: null,
+	    _: foo
+	  })
+	}
+},100) }
+test(window.foo = {"_":{"#": window.SOUL = "nab/things/1d0f60a50f65b95dd91036836904c3bcbe916300/data~JG43ynRxqjy1-AemyMUoz14UqKM6cnh7zSPy_EAPgts.RCZ5dY7iRaIW_B7cDBlBsDNKwn2QCtbbA1uQ6iL8ENw.",">":{"title":1557772735675,"body":1557772735675,"topic":1557772735675,"url":1557772735675,"author":1557772735675,"authorId":1557772735675,"timestamp":1557772735675,"kind":1557772735675}},
+	"title":"{\":\":\"'I can't breathe': Officer faces CCRB trial in Eric Garner death\",\"~\":\"6mbgWoNB/zYMpttniBxEE8myvfm9aDKNLflSL1PiURknSZDMAGPG9LxZo0xcsfC24ZTDpmz/Z2PTkk3TpH8jjQ==\"}",
+	"body":"{\":\":\"\",\"~\":\"ivq/8T4ILsGTo7ME5GlcCNeU2uh4RAcLAn+k2J0+3dm+0nFs/uxN6jg5zBxPD3Qf+qs853haH1uM0032k2pKdg==\"}","topic":"{\":\":\"politics\",\"~\":\"X1Z/Wn3qIdaw6vfE22BlgKhXpIYQCavyYNAw9FkxQQanikQSjCmzqrKlDgpvBOYXob9RRXgruGOaWdLqkEvz5A==\"}",
+	"url":"{\":\":\"https://www.aljazeera.com/news/2019/05/breathe-officer-faces-ccrb-trial-eric-garner-death-190513163733279.html\",\"~\":\"g2pdJuGuwCgFyqEJX1Co/sUyG4h8t8lsFa5ON0MC8R7Y3zqKauNhFzcwVpP/QyM1lYr1duoZ7YE5PurDKRVuXw==\"}",
+	"author":"{\":\":\"go1dfish\",\"~\":\"ovwCbuQeYp5rRABi9bTNKcEeeFXEiozWG28aRCl+MjOMNeqOxDEKIsnsgYgJmmSXvNhe/MpuL3376nL0vTN6qA==\"}",
+	"authorId":"{\":\":\"JG43ynRxqjy1-AemyMUoz14UqKM6cnh7zSPy_EAPgts.RCZ5dY7iRaIW_B7cDBlBsDNKwn2QCtbbA1uQ6iL8ENw\",\"~\":\"ekhiqU7UP1M8nHxBFv8QItNBIstP6zuQBtutk6sqMBNaN/2U9BAjb7Vjsogj23kphEMHeCSgO7AqaOE3cOZiyg==\"}",
+	"timestamp":"{\":\":1557772735666,\"~\":\"Z2AiDehqJKrbRlXXUllkwWjOEn5//HnjjTMdgNz2j8K/Bw5XPK1g0huVQsfWdKOKfr9XU7Y5sY2N526V13O4XA==\"}","kind":"{\":\":\"submission\",\"~\":\"KwjYOjPnpZH85VVOHZAxLm2Ntd/0p3o74sLEGtTf7grBCKb0pzDo7yERjWIaTEiQJ2IFEtu43V/vzhZMTvuvUQ==\"}"})
+//db.get(window.SOUL);
+</script>
+</body>
+</html>

@@ -1,11 +1,12 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 2,
 	browsers: 2,
-	each: 12000,
-	burst: 1000,
+	each: 500,
+	burst: 50,
 	wait: 1,
+	notrad: true,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -62,7 +63,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server, localStorage: false});
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, localStorage: env.config.notrad});
 				server.listen(port, function(){
 					test.done();
 				});
@@ -96,7 +97,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 		});
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
-				Gun.state.drift = Math.random() * 10000;	
+				//Gun.state.drift = Math.random() * 10000;	
 				localStorage.clear();
 				var env = test.props;
 				test.async();

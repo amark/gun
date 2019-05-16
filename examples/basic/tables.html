@@ -1,0 +1,130 @@
+<h1>Tables</h1>
+
+<form id="sign">
+  <input id="alias" placeholder="username">
+  <input id="pass" type="password" placeholder="passphrase">
+  <input id="in" type="submit" value="sign in">
+  <input id="up" type="button" value="sign up">
+</form>
+
+<button id="tadd">+ table</button>
+<ul></ul><br/>
+
+<div id="table"></div>
+<button id="radd">+ row</button>
+<button id="cadd">+ col</button>
+
+<style>
+div {
+  position: relative;
+  overflow: hidden;
+}
+.cell {
+  width: 5em;
+  height: 5em;
+  border: 1px solid black;
+  float: left;
+}
+.item {
+  float: left;
+  min-width: 5em;
+}
+</style>
+<div class="model" style="display: none;">
+  <div class="item"></div>
+  <div class="cell"></div>
+  <div class="row"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/lib/open.js"></script>
+
+<script>
+//var gun = Gun(['http://localhost:8080/gun']);
+var gun = Gun();
+var user = gun.user();
+
+$('#up').on('click', function(e){
+	user.create($('#alias').val(), $('#pass').val());
+});
+
+$('#sign').on('submit', function(e){
+	e.preventDefault();
+	user.auth($('#alias').val(), $('#pass').val());
+});
+
+user.recall({sessionStorage: true});
+
+gun.on('auth', function(){
+	$('#sign').hide();
+	user.get('tables').map().once(list);
+});
+
+$('#tadd').on('click', function(e){
+  if(!user.is){ return alert("login first") }
+  var cell = user.get('cells').set({what: "Edit me!", sort: 1});
+  var row = user.get('rows').set({sort: 1});
+  row.get('cells').set(cell);
+  var name = prompt("What do you want to call this table?")
+  var table = user.get('tables').set({name: name});
+  table.get('rows').set(row);
+  choose(table);
+});
+
+$(document).on('click', '.item', function(){
+  choose($(this).data('$'));
+});
+
+function choose(table){
+  choose.table = table;
+  table.open(render);
+}
+
+function render(data){
+  console.log(data);
+  $('#table').empty(); // BAD! Write DOM-diffing!
+  Gun.obj.map(data.rows, function(row, id){
+    var $r = grab(id, '.model .row', '#table');
+    Gun.obj.map(row.cells, function(cell, id){
+      var $c = grab(id, '.model .cell', $r);
+      $c.text(cell.what);
+    });
+  });
+}
+
+$(document).on('click', '.cell', function(e){
+  var id = $(this).data('id'), ref = gun.get(id);
+  var what = prompt("What should be in this cell?");
+  ref.get('what').put(what);
+});
+
+$('#radd').on('click', function(){
+  if(!user.is){ return alert("login first") }
+  choose.table.get('rows').set();
+
+  var cell = user.get('cells').set({what: "Edit me!", sort: 1});
+  var row = user.get('rows').set({sort: 1});
+  row.get('cells').set(cell);
+  choose.table.get('rows').set(row);
+});
+
+$('#cadd').on('click', function(){
+  if(!user.is){ return alert("login first") }
+  choose.table.get('rows').map().once(function(){
+    var cell = user.get('cells').set({what: "Edit me!", sort: 1});
+    this.get('cells').set(cell);
+  });
+});
+
+function grab(id, $model, $to){
+  var did = btoa(id).replace(/[\+\-\=\.]/ig,'');
+  return $('#' + did).get(0) || $($model).clone(true, true).attr('id', did).appendTo($to).data('id', id);
+};
+
+function list(table, id, $model, $to){
+  var li = grab(id, '.model .item', 'ul');
+  $(li).text(table.name).data('$', this);
+};
+</script>

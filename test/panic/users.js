@@ -1,6 +1,6 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 2,
 	browsers: 2,
 	route: {
