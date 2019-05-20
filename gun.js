@@ -2017,21 +2017,14 @@
 			;(function(){
 				var message;
 				function each(peer){ mesh.say(message, peer) }
-				mesh.say = function(msg, peer, o){
+				mesh.say = function(msg, peer, o){ var tmp;
 					/*
 						TODO: Plenty of performance optimizations
 						that can be made just based off of ordering,
 						and reducing function calls for cached writes.
 					*/
-					if(!peer){ message = msg;
-						Type.obj.map(opt.peers, each);
-						return;
-					}
-					var tmp, wire = peer.wire || ((opt.wire) && opt.wire(peer)), msh, raw;// || open(peer, ctx); // TODO: Reopen!
-					if(!wire){ return }
-					msh = (msg._) || empty;
-					if(peer === msh.via){ return }
-					if(!(raw = msh.raw)){ raw = mesh.raw(msg) }
+					var meta = (msg._) || empty, raw;
+					if(!(raw = meta.raw)){ raw = mesh.raw(msg) }
 					if((tmp = msg['@'])
 					&& (tmp = ctx.dup.s[tmp])
 					&& (tmp = tmp.it)){
@@ -2039,7 +2032,14 @@
 							return; // TODO: this still needs to be tested in the browser!
 						}
 					}
-					if((tmp = msh.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
+					if(!peer){ message = msg;
+						Type.obj.map(opt.peers, each);
+						return;
+					}
+					var wire = peer.wire || ((opt.wire) && opt.wire(peer));// || open(peer, ctx); // TODO: Reopen!
+					if(!wire){ return }
+					if(peer === meta.via){ return }
+					if((tmp = meta.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 					if(peer.batch){
 						peer.tail = (peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
@@ -2082,8 +2082,8 @@
 
 				mesh.raw = function(msg){
 					if(!msg){ return '' }
-					var dup = ctx.dup, msh = (msg._) || {}, put, hash, tmp;
-					if(tmp = msh.raw){ return tmp }
+					var dup = ctx.dup, meta = (msg._) || {}, put, hash, tmp;
+					if(tmp = meta.raw){ return tmp }
 					if(typeof msg === 'string'){ return msg }
 					if(msg['@'] && (tmp = msg.put)){
 						if(!(hash = msg['##'])){
@@ -2095,17 +2095,19 @@
 						msg['#'] = hash || msg['#'];
 						if(put){ (msg = Type.obj.to(msg)).put = _ }
 					}
-					var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-						to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
-					}); msg['><'] = to.join();
+					if(!msg.dam){
+						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
+							to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
+						}); msg['><'] = to.join();
+					}
 					var raw = $(msg);
 					if(u !== put){
 						tmp = raw.indexOf(_, raw.indexOf('put'));
 						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
 						//raw = raw.replace('"'+ _ +'"', put); // https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}
-					if(msh){
-						msh.raw = raw;
+					if(meta){
+						meta.raw = raw;
 					}
 					return raw;
 				}
@@ -2135,6 +2137,7 @@
 					tmp = peer.id = tmp.pid = peer.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
+				peer.met = peer.met || +(new Date);
 				if(!tmp.hied){ ctx.on(tmp.hied = 'hi', peer) }
 				// @rogowski I need this here by default for now to fix go1dfish's bug
 				tmp = peer.queue; peer.queue = [];
@@ -2145,6 +2148,8 @@
 			mesh.bye = function(peer){
 				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 				ctx.on('bye', peer);
+				var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
+				mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
 			}
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
