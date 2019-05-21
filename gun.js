@@ -2038,7 +2038,7 @@
 					var wire = peer.wire || ((opt.wire) && opt.wire(peer));// || open(peer, ctx); // TODO: Reopen!
 					if(!wire){ return }
 					if(peer === meta.via){ return }
-					if((tmp = meta.to) && (tmp[peer.url] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
+					if((tmp = meta.to) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) && !o){ return } // TODO: still needs to be tested
 					if(peer.batch){
 						peer.tail = (peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
@@ -2096,7 +2096,7 @@
 					}
 					if(!msg.dam){
 						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-							to.push(p.url || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
+							to.push(p.url || p.pid || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later!
 						}); msg['><'] = to.join();
 					}
 					var raw = $(msg);
@@ -2133,7 +2133,7 @@
 				if(peer.id || peer.url){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = tmp.pid = peer.id || Type.text.random(9);
+					tmp = peer.id = peer.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
 				}
 				peer.met = peer.met || +(new Date);
@@ -2161,12 +2161,8 @@
 					// });
 					return;
 				}
-				if(!peer.wire){ return }
-				if(!peer.wire.pid){ return } // only run code below if wire.pid exists
-				Type.obj.del(opt.peers, peer.wire.pid || peer.id);
-				delete peer.wire.pid;
-				peer.id = msg.pid;
-				mesh.hi(peer);
+				if(peer.pid){ return }
+				peer.pid = msg.pid;
 			}
 			return mesh;
 		}
