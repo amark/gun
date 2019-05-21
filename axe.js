@@ -19,20 +19,13 @@
 	/* UNBUILD */
 
 	;USE(function(module){
-		if(typeof window !== "undefined"){ module.window = window }
-		var tmp = module.window || module;
+    if(typeof window !== "undefined"){ module.window = window }
+    var tmp = module.window || module;
 		var AXE = tmp.AXE || function(){};
 
-		if(AXE.window = module.window){ try{
-			AXE.window.AXE = AXE;
-			tmp = document.createEvent('CustomEvent');
-			tmp.initCustomEvent('extension', false, false, {type: "AXE"});
-			(window.dispatchEvent || window.fireEvent)(tmp);
-			window.postMessage({type: "AXE"}, '*');
-		} catch(e){} }
-
-		try{ if(typeof common !== "undefined"){ common.exports = AXE } }catch(e){}
-		module.exports = AXE;
+    if(AXE.window = module.window){ AXE.window.AXE = AXE }
+    try{ if(typeof common !== "undefined"){ common.exports = AXE } }catch(e){}
+    module.exports = AXE;
 	})(USE, './root');
   
 	;USE(function(module){
@@ -42,6 +35,7 @@
 		Gun.on('opt', function(at){
 			if(!at.axe){
 				at.axe = {};
+				var opt = at.opt;
 				var peers = at.opt.peers, tmp;
 				// 1. If any remembered peers or from last cache or extension
 				// 2. Fallback to use hard coded peers from dApp
@@ -59,9 +53,10 @@
 				// with one common superpeer (with ready failovers)
 				// in case the p2p linear latency is high.
 				// Or there could be plenty of other better options.
+				var mesh = opt.mesh = opt.mesh || Gun.Mesh(at);
 				console.log("axe");
 
-				function verify(dht, msg, send, at) {
+				function verify(dht, msg) {
 					var puts = Object.keys(msg.put);
 					var soul = puts[0]; /// TODO: verify all souls in puts. Copy the msg only with subscribed souls?
 					var subs = dht(soul);
@@ -72,11 +67,11 @@
 						if (pid in peers) {
 							tmp.push(pid);
 // 							console.log('[AXE] SEND TO >>>>> ', pid, msg.put.bob || msg.put);
-							send(msg, peers[pid]);
+							mesh.say(msg, peers[pid]);
 						}
 					});
 					/// Only connected peers in the tmp array.
-					if (at.on.opt.super) {
+					if (opt.super) {
 						dht(soul, tmp.join(','));
 					}
 				}
@@ -89,33 +84,32 @@
 // 					console.log('[AXE] out:', msg, a);
 // 				}, at);
 				if(at.opt.super){
-					AXE.say = function(msg, send, at) {
+					mesh.route = function(msg) {
 						if (msg.rtc) {
 // 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 							if (msg.rtc.to) {
 								/// Send announce to one peer only if the msg have 'to' attr
-								var peer = (at.on.opt.peers) ? at.on.opt.peers[msg.rtc.to] : null;
-// 								if (peer) { at.on.opt.mesh.say(msg, peer); }
-								if (peer) { send(msg, peer); }
+								var peer = (peers) ? peers[msg.rtc.to] : null;
+								if (peer) { mesh.say(msg, peer); }
 								return;
 							}
 						}
-						if (!msg.put) { send(msg); return; }
+						if (!msg.put) { mesh.say(msg); return; }
 						//console.log('AXE HOOK!! ', msg);
-						verify(at.on.opt.dht, msg, send, at);
+						verify(opt.dht, msg);
 					};
 				} else {
-					AXE.say = function(msg, send, at) {
+					mesh.route = function(msg) {
 						if (msg.rtc) {
 // 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 						}
-						if (!msg.put) { send(msg); return; }
-						verify(at.on.opt.dht, msg, send, at);
+						if (!msg.put) { mesh.say(msg); return; }
+						verify(opt.dht, msg);
 						/// Always send to superpeers?
-						Gun.obj.map(at.on.opt.peers, function(peer) {
+						Gun.obj.map(peers, function(peer) {
 							if (peer.url) {
 // 								console.log('SEND TO SUPERPEER', msg);
-								send(msg, peer);
+								mesh.say(msg, peer);
 							}
 						});
 					};
@@ -141,6 +135,7 @@
 			}
 			this.to.next(at); // make sure to call the "next" middleware adapter.
 		});
+
 		function joindht(dht, soul, pids) {
 			if (!pids || !soul || !dht) { return; }
 			var subs = dht(soul);
