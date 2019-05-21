@@ -1958,8 +1958,7 @@
 					tmp['##'] = msg['##'];
 					return;
 				}
-				// add hook for AXE?
-				if (Gun.AXE) { Gun.AXE.say(msg, mesh.say, this); return; }
+				if(mesh.route){ mesh.route(msg); return }
 				mesh.say(msg);
 			}
 
