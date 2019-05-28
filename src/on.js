@@ -101,6 +101,7 @@ Gun.chain.off = function(){
 	var gun = this, at = gun._, tmp;
 	var cat = at.back;
 	if(!cat){ return }
+	at.ack = 0; // so can resubscribe.
 	if(tmp = cat.next){
 		if(tmp[at.get]){
 			obj_del(tmp, at.get);

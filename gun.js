@@ -1821,13 +1821,14 @@
 					});
 				});
 				setTimeout(function(){
+					// TODO: Holy Grail dangling by this thread! If gap / offline resync doesn't trigger, it doesn't work. Ouch, and this is a localStorage specific adapter. :(
 					root.on('out', {put: send, '#': root.ask(ack)});
 				},1);
 			}
 
 			root.on('out', function(msg){
 				if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
-				if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
+				if(Gun.is(msg.$) && msg.put && !msg['@']){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
 					if(!to){ to = setTimeout(flush, opt.wait || 1) }

@@ -107,11 +107,11 @@ function batch(){ var as = this;
 		var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 			cat.root.on('ack', ack);
 			if(ack.err){ Gun.log(ack) }
-			if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
+			if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 			if(!as.ack){ return }
 			as.ack(ack, this);
 			//--C;
-		}, as.opt);
+		}, as.opt), acks = 0;
 		//C++;
 		// NOW is a hack to get synchronous replies to correctly call.
 		// and STOP is a hack to get async behavior to correctly call.
