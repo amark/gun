@@ -19,20 +19,13 @@
 	/* UNBUILD */
 
 	;USE(function(module){
-		if(typeof window !== "undefined"){ module.window = window }
-		var tmp = module.window || module;
+    if(typeof window !== "undefined"){ module.window = window }
+    var tmp = module.window || module;
 		var AXE = tmp.AXE || function(){};
 
-		if(AXE.window = module.window){ try{
-			AXE.window.AXE = AXE;
-			tmp = document.createEvent('CustomEvent');
-			tmp.initCustomEvent('extension', false, false, {type: "AXE"});
-			(window.dispatchEvent || window.fireEvent)(tmp);
-			window.postMessage({type: "AXE"}, '*');
-		} catch(e){} }
-
-		try{ if(typeof common !== "undefined"){ common.exports = AXE } }catch(e){}
-		module.exports = AXE;
+    if(AXE.window = module.window){ AXE.window.AXE = AXE }
+    try{ if(typeof common !== "undefined"){ common.exports = AXE } }catch(e){}
+    module.exports = AXE;
 	})(USE, './root');
   
 	;USE(function(module){
@@ -41,8 +34,8 @@
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
 		Gun.on('opt', function(at){
 			if(!at.axe){
-				at.axe = {};
-				var peers = at.opt.peers, tmp;
+				var axe = at.axe = {}, tmp;
+				var opt = at.opt, peers = opt.peers;
 				// 1. If any remembered peers or from last cache or extension
 				// 2. Fallback to use hard coded peers from dApp
 				// 3. Or any offered peers.
@@ -59,9 +52,10 @@
 				// with one common superpeer (with ready failovers)
 				// in case the p2p linear latency is high.
 				// Or there could be plenty of other better options.
-				console.log("axe");
+				var mesh = opt.mesh = opt.mesh || Gun.Mesh(at);
+				console.log("AXE enabled.");
 
-				function verify(dht, msg, send, at) {
+				function verify(dht, msg) {
 					var puts = Object.keys(msg.put);
 					var soul = puts[0]; /// TODO: verify all souls in puts. Copy the msg only with subscribed souls?
 					var subs = dht(soul);
@@ -72,11 +66,11 @@
 						if (pid in peers) {
 							tmp.push(pid);
 // 							console.log('[AXE] SEND TO >>>>> ', pid, msg.put.bob || msg.put);
-							send(msg, peers[pid]);
+							mesh.say(msg, peers[pid]);
 						}
 					});
 					/// Only connected peers in the tmp array.
-					if (at.on.opt.super) {
+					if (opt.super) {
 						dht(soul, tmp.join(','));
 					}
 				}
@@ -88,38 +82,118 @@
 // 					this.to.next(msg);
 // 					console.log('[AXE] out:', msg, a);
 // 				}, at);
+
+
+				function input(msg){
+					var to = this.to, peer = (msg._||{}).via;
+					var dht = opt.dht;
+					var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
+					var get = msg.get, hash, tmp;
+					if(get && opt.super && peer){
+						hash = Gun.obj.hash(get); // USE RAD INSTEAD!
+						(routes[hash] || (routes[hash] = {}))[peer.id] = peer;
+						(peer.routes || (peer.routes = {}))[hash] = routes[hash];
+						
+
+						/*if(soul = get['#']){ // SWITCH BACK TO USING DHT!
+							if(key = get['.']){
+
+							} else {
+
+							}
+							if (!peer.id) {console.log('[*** WARN] no peer.id %s', soul);}
+							var pids = joindht(dht, soul, peer.id);
+							if (pids) {
+									var dht = {};
+									dht[soul] = pids;
+									mesh.say({dht:dht}, opt.peers[peer.id]);
+							}
+						}*/
+					}
+					if((tmp = msg['@']) && (tmp = at.dup.s[tmp]) && (tmp = tmp.it)){
+						(tmp = (tmp._||ok)).ack = (tmp.ack || 0) + 1;
+					}
+					to.next(msg);
+
+					if (opt.rtc && msg.dht) {
+						Gun.obj.map(msg.dht, function(pids, soul) {
+							dht(soul, pids);
+							Gun.obj.map(pids.split(','), function(pid) {
+								/// TODO: here we can put an algorithm of who must connect?
+								if (!pid || pid in opt.peers || pid === opt.pid || opt.announce[pid]) { return; }
+									opt.announce[pid] = true; /// To try only one connection to the same peer.
+									opt.announce(pid);
+							});
+						});
+					}
+				}
+
 				if(at.opt.super){
-					AXE.say = function(msg, send, at) {
+					var rotate = 0;
+					mesh.way = function(msg) {
 						if (msg.rtc) {
 // 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 							if (msg.rtc.to) {
 								/// Send announce to one peer only if the msg have 'to' attr
-								var peer = (at.on.opt.peers) ? at.on.opt.peers[msg.rtc.to] : null;
-// 								if (peer) { at.on.opt.mesh.say(msg, peer); }
-								if (peer) { send(msg, peer); }
+								var peer = (peers) ? peers[msg.rtc.to] : null;
+								if (peer) { mesh.say(msg, peer); }
 								return;
 							}
 						}
-						if (!msg.put) { send(msg); return; }
+						if(msg.get){
+							var hash = Gun.obj.hash(msg.get);
+							var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
+							var peers = routes[hash];
+							function chat(peers, old){ // what about optimizing for directed peers?
+								if(!peers){ return chat(opt.peers) }
+								var ids = Object.keys(peers); // TODO: BUG! THIS IS BAD PERFORMANCE!!!!
+								var meta = (msg._||yes);
+								clearTimeout(meta.lack);
+								var id, peer, c = 1; // opt. ?redundancy?
+								while((id = ids[meta.turn || 0]) && c--){ // TODO: This hits peers in order, not necessarily best for load balancing. And what about optimizing for directed peers?
+									peer = peers[id];
+									meta.turn = (meta.turn || 0) + 1;
+									if((old && old[id]) || false === mesh.say(msg, peer)){ ++c }
+								}
+								//console.log("AXE:", Gun.obj.copy(msg), meta.turn, c, ids, opt.peers === peers);
+								if(0 < c){
+									if(peers === opt.peers){ return } // prevent infinite lack loop.
+									return meta.turn = 0, chat(opt.peers, peers) 
+								}
+								var hash = msg['##'], ack = meta.ack;
+								meta.lack = setTimeout(function(){
+									if(ack && hash && hash === msg['##']){ return }
+									if(meta.turn >= (axe.turns || 3)){ return } // variable for later! Also consider ACK based turn limit.
+									//console.log(msg['#'], "CONTINUE:", ack, hash, msg['##']);
+									chat(peers, old); // keep asking for data if there is mismatching hashes.
+								}, 25);
+							}
+							return chat(peers);
+						}
+						// TODO: PUTs need to only go to subs!
+						mesh.say(msg, opt.peers); return; // TODO: DISABLE THIS!!! USE DHT!
+
+
+						if (!msg.put) { mesh.say(msg); return; }
 						//console.log('AXE HOOK!! ', msg);
-						verify(at.on.opt.dht, msg, send, at);
+						verify(opt.dht, msg);
 					};
 				} else {
-					AXE.say = function(msg, send, at) {
+					mesh.route = function(msg) {
 						if (msg.rtc) {
 // 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 						}
-						if (!msg.put) { send(msg); return; }
-						verify(at.on.opt.dht, msg, send, at);
+						if (!msg.put) { mesh.say(msg); return; }
+						verify(opt.dht, msg);
 						/// Always send to superpeers?
-						Gun.obj.map(at.on.opt.peers, function(peer) {
+						Gun.obj.map(peers, function(peer) {
 							if (peer.url) {
 // 								console.log('SEND TO SUPERPEER', msg);
-								send(msg, peer);
+								mesh.say(msg, peer);
 							}
 						});
 					};
-					var connections = 0;
+					/*var connections = 0; // THIS HAS BEEN MOVED TO CORE NOW!
 					at.on('hi', function(opt) {
 						this.to.next(opt);
 						//console.log('AXE PEER [HI]', new Date(), opt);
@@ -136,11 +210,20 @@
 							}
 						//location.reload();
 						}, 500);
-					}, at);
+					}, at);*/
 				}
+				at.on('bye', function(peer){ this.to.next(peer);
+					Gun.obj.map(peer.routes, function(route, hash){
+						delete route[peer.id];
+						if(Gun.obj.empty(route)){
+							delete axe.routes[hash];
+						}
+					});
+				});
 			}
 			this.to.next(at); // make sure to call the "next" middleware adapter.
 		});
+
 		function joindht(dht, soul, pids) {
 			if (!pids || !soul || !dht) { return; }
 			var subs = dht(soul);
@@ -152,42 +235,9 @@
 			dht(soul, tmp);
 			return tmp;
 		}
-		function input(msg){
-// 			console.log('[AXE] input: ', msg);
-			var at = this.as, to = this.to, peer = (msg._||{}).via;
-			var opt = at.opt;
-			var dht = opt.dht;
-			var get = msg.get, soul, key;
-			if(peer && get){
-				if(soul = get['#']){
-					if(key = get['.']){
 
-					} else {
+		var empty = {}, yes = true, u;
 
-					}
-					if (!peer.id) {console.log('[*** WARN] no peer.id %s', soul);}
-					var pids = joindht(dht, soul, peer.id);
-					if (pids) {
-							var dht = {};
-							dht[soul] = pids;
-							at.opt.mesh.say({dht:dht}, opt.peers[peer.id]);
-					}
-				}
-			}
-			to.next(msg);
-
-			if (opt.rtc && msg.dht) {
-				Gun.obj.map(msg.dht, function(pids, soul) {
-					dht(soul, pids);
-					Gun.obj.map(pids.split(','), function(pid) {
-						/// TODO: here we can put an algorithm of who must connect?
-						if (!pid || pid in opt.peers || pid === opt.pid || opt.announce[pid]) { return; }
-							opt.announce[pid] = true; /// To try only one connection to the same peer.
-							opt.announce(pid);
-					});
-				});
-			}
-		}
 		module.exports = AXE;
 	})(USE, './axe');
 }());

@@ -185,7 +185,7 @@ Gun.dup = require('./dup');
 		if(text_is(tmp)){ tmp = [tmp] }
 		if(list_is(tmp)){
 			tmp = obj_map(tmp, function(url, i, map){
-				map(url, {url: url});
+				i = {}; i.id = i.url = url; map(url, i);
 			});
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);

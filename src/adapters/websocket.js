@@ -19,8 +19,8 @@ Gun.on('opt', function(root){
 
 	var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
 
-	var wire = opt.wire;
-	opt.wire = open;
+	var wire = mesh.wire || opt.wire;
+	mesh.wire = opt.wire = open;
 	function open(peer){ try{
 		if(!peer || !peer.url){ return wire && wire(peer) }
 		var url = peer.url.replace('http', 'ws');
