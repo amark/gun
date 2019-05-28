@@ -1168,7 +1168,7 @@
 				if(u === tmp && u !== at.put){ return true }
 				neat.put = u;
 				if(neat.ack){
-					neat.ack = -1;
+					neat.ack = -1; // TODO: BUG? Should this be 0?
 				}
 				neat.on('in', {
 					get: key,
@@ -1694,6 +1694,7 @@
 			var gun = this, at = gun._, tmp;
 			var cat = at.back;
 			if(!cat){ return }
+			at.ack = 0; // so can resubscribe.
 			if(tmp = cat.next){
 				if(tmp[at.get]){
 					obj_del(tmp, at.get);
@@ -1825,7 +1826,7 @@
 			}
 
 			root.on('out', function(msg){
-				if(msg.lS){ return }
+				if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
 				if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
@@ -1898,11 +1899,9 @@
 				if(data && has){
 					data = Gun.state.to(data, has);
 				}
-				if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
-					return; // Hmm, what if we have peers but we are disconnected?
-				}
+				//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
 				//console.log("lS get", lex, data);
-				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
+				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
 				};
 				Gun.debug? setTimeout(to,1) : to();
 			});
@@ -1951,17 +1950,26 @@
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var msg, id, hash, tmp = raw[0];
-				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) } 
-				if('{' === tmp){
-					try{msg = JSON.parse(raw);
+				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
+				if('{' != raw[2]){ mesh.hear.d += raw.length||0; ++mesh.hear.c; } // STATS! // ugh, stupid double JSON encoding
+				if('[' === tmp){
+					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
+					if(!msg){ return }
+					var i = 0, m;
+					while(m = msg[i++]){
+						mesh.hear(m, peer);
+					}
+					return;
+				}
+				if('{' === tmp || (Type.obj.is(raw) && (msg = raw))){
+					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					mesh.hear.d += raw.length; ++mesh.hear.c; // STATS!
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(dup.check(id)){ return }
 					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
-					if(hash && (tmp = msg['@'])){
+					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
 						dup.track(tmp+hash, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					}
@@ -1974,15 +1982,6 @@
 						return;
 					}
 					root.on('in', msg);
-					return;
-				} else
-				if('[' === tmp){
-					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
-					if(!msg){ return }
-					var i = 0, m;
-					while(m = msg[i++]){
-						mesh.hear(m, peer);
-					}
 					return;
 				}
 			}
@@ -2054,7 +2053,7 @@
 				if(wire.send){
 					wire.send(raw);
 				}
-				mesh.say.d += raw.length; ++mesh.say.c; // STATS!
+				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
 			}}
@@ -2068,7 +2067,7 @@
 					if(!msg.dam){
 						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
 							to.push(p.url || p.pid || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids.
-						}); msg['><'] = to.join();
+						}); if(i > 1){ msg['><'] = to.join() }
 					}
 					var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
 					/*if(u !== put){
@@ -2127,19 +2126,18 @@
 				root.on('out', mesh.say);
 			});
 
-			if(!opt.super){
-				var gets = {};
-				root.on('bye', function(peer, tmp){
-					if(!(tmp = peer.url)){ return } gets[tmp] = true;
-					setTimeout(function(){ delete gets[tmp] },opt.lack || 9000)
-				});
-				root.on('hi', function(peer, tmp){
-					if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
-					Type.obj.map(root.graph, function(node, soul){ tmp = {}; tmp[soul] = node;
-						mesh.say({'##': Type.obj.hash(tmp), get: {'#': soul}}, peer);
-					})
-				});
-			}
+			var gets = {};
+			root.on('bye', function(peer, tmp){ this.to.next(peer);
+				if(!(tmp = peer.url)){ return } gets[tmp] = true;
+				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
+			});
+			root.on('hi', function(peer, tmp){ this.to.next(peer);
+				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
+				Type.obj.map(root.next, function(node, soul){
+					tmp = {}; tmp[soul] = root.graph[soul];
+					mesh.say({'##': Type.obj.hash(tmp), get: {'#': soul}}, peer);
+				})
+			});
 
 			return mesh;
 		}

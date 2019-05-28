@@ -110,6 +110,9 @@
 							}
 						}*/
 					}
+					if((tmp = msg['@']) && (tmp = at.dup.s[tmp]) && (tmp = tmp.it)){
+						(tmp = (tmp._||ok)).ack = (tmp.ack || 0) + 1;
+					}
 					to.next(msg);
 
 					if (opt.rtc && msg.dht) {
@@ -141,17 +144,33 @@
 							var hash = Gun.obj.hash(msg.get);
 							var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 							var peers = routes[hash];
-							if(!peers){ return mesh.say(msg, opt.peers) }
-							var ids = Object.keys(peers); // TODO: BUG! THIS IS BAD PERFORMANCE!!!!
-							var meta = (msg._||yes);
-							var id, peer, c = 1; // opt. ?redundancy?
-							//console.log("AXE:", msg.get, ids);
-							while(c-- && (id = ids[(meta.turn = (meta.turn || 0) + 1) - 1])){ // TODO: This has many flaws to it!
-								peer = peers[id];
-								if(false === mesh.say(msg, peer)){ ++c }
+							function chat(peers, old){ // what about optimizing for directed peers?
+								if(!peers){ return chat(opt.peers) }
+								var ids = Object.keys(peers); // TODO: BUG! THIS IS BAD PERFORMANCE!!!!
+								var meta = (msg._||yes);
+								clearTimeout(meta.lack);
+								var id, peer, c = 1; // opt. ?redundancy?
+								while((id = ids[meta.turn || 0]) && c--){ // TODO: This hits peers in order, not necessarily best for load balancing. And what about optimizing for directed peers?
+									peer = peers[id];
+									meta.turn = (meta.turn || 0) + 1;
+									if((old && old[id]) || false === mesh.say(msg, peer)){ ++c }
+								}
+								//console.log("AXE:", Gun.obj.copy(msg), meta.turn, c, ids, opt.peers === peers);
+								if(0 < c){
+									if(peers === opt.peers){ return } // prevent infinite lack loop.
+									return meta.turn = 0, chat(opt.peers, peers) 
+								}
+								var hash = msg['##'], ack = meta.ack;
+								meta.lack = setTimeout(function(){
+									if(ack && hash && hash === msg['##']){ return }
+									if(meta.turn >= (axe.turns || 3)){ return } // variable for later! Also consider ACK based turn limit.
+									//console.log(msg['#'], "CONTINUE:", ack, hash, msg['##']);
+									chat(peers, old); // keep asking for data if there is mismatching hashes.
+								}, 25);
 							}
-							return;
+							return chat(peers);
 						}
+						// TODO: PUTs need to only go to subs!
 						mesh.say(msg, opt.peers); return; // TODO: DISABLE THIS!!! USE DHT!
 
 
@@ -193,6 +212,14 @@
 						}, 500);
 					}, at);*/
 				}
+				at.on('bye', function(peer){ this.to.next(peer);
+					Gun.obj.map(peer.routes, function(route, hash){
+						delete route[peer.id];
+						if(Gun.obj.empty(route)){
+							delete axe.routes[hash];
+						}
+					});
+				});
 			}
 			this.to.next(at); // make sure to call the "next" middleware adapter.
 		});
