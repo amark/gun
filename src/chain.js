@@ -247,7 +247,7 @@ function not(at, msg){
 		if(u === tmp && u !== at.put){ return true }
 		neat.put = u;
 		if(neat.ack){
-			neat.ack = -1;
+			neat.ack = -1; // TODO: BUG? Should this be 0?
 		}
 		neat.on('in', {
 			get: key,

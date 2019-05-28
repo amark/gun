@@ -169,7 +169,7 @@ describe("The Holy Grail AXE Test!", function(){
 		})
 	});
 
-	it("Jhon Read what Bob say to Alice: Hi Alice!", function(){
+	it("John Read what Bob say to Alice: Hi Alice!", function(){
 		return john.run(function(test){
 			test.async();
 			console.log("I AM JOHN");
