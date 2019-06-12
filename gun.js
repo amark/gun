@@ -2230,12 +2230,16 @@
 				return wire;
 			}catch(e){}}
 
+			var wait = 2 * 1000;
 			function reconnect(peer){
 				clearTimeout(peer.defer);
-				peer.defer = setTimeout(function(){
+				if(doc && peer.retry <= 0){ return } peer.retry = (peer.retry || opt.retry || 60) - 1;
+				peer.defer = setTimeout(function to(){
+					if(doc && doc.hidden){ return setTimeout(to,wait) }
 					open(peer);
-				}, 2 * 1000);
+				}, wait);
 			}
+			var doc = 'undefined' !== typeof document && document;
 		});
 		var noop = function(){};
 	})(USE, './adapters/websocket');
