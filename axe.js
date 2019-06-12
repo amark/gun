@@ -59,13 +59,11 @@
 					var puts = Object.keys(msg.put);
 					var soul = puts[0]; /// TODO: verify all souls in puts. Copy the msg only with subscribed souls?
 					var subs = dht(soul);
-// 					console.log('[AXE] VERIFY soul: %s, subs: %s, Peers: %s, msg: ', soul, subs, Object.keys(peers), msg);
 					if (!subs) { return; }
 					var tmp = [];
 					Gun.obj.map(subs.split(','), function(pid) {
 						if (pid in peers) {
 							tmp.push(pid);
-// 							console.log('[AXE] SEND TO >>>>> ', pid, msg.put.bob || msg.put);
 							mesh.say(msg, peers[pid]);
 						}
 					});
@@ -74,26 +72,24 @@
 						dht(soul, tmp.join(','));
 					}
 				}
+				function route(get){ var tmp;
+					if(!get){ return }
+					if('string' != typeof (tmp = get['#'])){ return }
+					return tmp;
+				}
 
 				var Rad = (Gun.window||{}).Radix || USE('./lib/radix', 1);
 				at.opt.dht = Rad();
-				at.on('in', input/*USE('./lib/super', 1)*/, at);
-// 				at.on('out', function(msg, a) {
-// 					this.to.next(msg);
-// 					console.log('[AXE] out:', msg, a);
-// 				}, at);
-
-
-				function input(msg){
+				at.on('in', function input(msg){
 					var to = this.to, peer = (msg._||{}).via;
 					var dht = opt.dht;
 					var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 					var get = msg.get, hash, tmp;
-					if(get && opt.super && peer){
-						hash = Gun.obj.hash(get); // USE RAD INSTEAD!
+					//if(get && opt.super && peer){
+					if(get && opt.super && peer && (tmp = route(get))){
+						hash = tmp; //Gun.obj.hash(get); // USE RAD INSTEAD!
 						(routes[hash] || (routes[hash] = {}))[peer.id] = peer;
 						(peer.routes || (peer.routes = {}))[hash] = routes[hash];
-						
 
 						/*if(soul = get['#']){ // SWITCH BACK TO USING DHT!
 							if(key = get['.']){
@@ -111,7 +107,7 @@
 						}*/
 					}
 					if((tmp = msg['@']) && (tmp = at.dup.s[tmp]) && (tmp = tmp.it)){
-						(tmp = (tmp._||ok)).ack = (tmp.ack || 0) + 1;
+						(tmp = (tmp._||ok)).ack = (tmp.ack || 0) + 1; // count remote ACKs to GET.
 					}
 					to.next(msg);
 
@@ -126,13 +122,12 @@
 							});
 						});
 					}
-				}
+				});
 
 				if(at.opt.super){
 					var rotate = 0;
 					mesh.way = function(msg) {
 						if (msg.rtc) {
-// 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 							if (msg.rtc.to) {
 								/// Send announce to one peer only if the msg have 'to' attr
 								var peer = (peers) ? peers[msg.rtc.to] : null;
@@ -140,8 +135,8 @@
 								return;
 							}
 						}
-						if(msg.get){
-							var hash = Gun.obj.hash(msg.get);
+						if(msg.get && (tmp = route(msg.get))){
+							var hash = tmp; //Gun.obj.hash(msg.get);
 							var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 							var peers = routes[hash];
 							function chat(peers, old){ // what about optimizing for directed peers?
@@ -171,6 +166,18 @@
 							return chat(peers);
 						}
 						// TODO: PUTs need to only go to subs!
+						if(msg.put){
+							var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
+							var peers = {};
+							Gun.obj.map(msg.put, function(node, soul){
+								var hash = soul; //Gun.obj.hash({'#': soul});
+								var to = routes[hash];
+								if(!to){ return }
+								Gun.obj.to(to, peers);
+							});
+							mesh.say(msg, peers);
+							return;
+						}
 						mesh.say(msg, opt.peers); return; // TODO: DISABLE THIS!!! USE DHT!
 
 
@@ -181,14 +188,12 @@
 				} else {
 					mesh.route = function(msg) {
 						if (msg.rtc) {
-// 							console.log('[AXE] MSG WEBRTC: ', msg.rtc);
 						}
 						if (!msg.put) { mesh.say(msg); return; }
 						verify(opt.dht, msg);
 						/// Always send to superpeers?
 						Gun.obj.map(peers, function(peer) {
 							if (peer.url) {
-// 								console.log('SEND TO SUPERPEER', msg);
 								mesh.say(msg, peer);
 							}
 						});
