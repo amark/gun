@@ -174,7 +174,7 @@
 						return chat(peers);
 					}
 					// TODO: PUTs need to only go to subs!
-					if(false && msg.put){ // false for temporary test
+					if(msg.put){
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
 						Gun.obj.map(msg.put, function(node, soul){
