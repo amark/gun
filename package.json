@@ -59,8 +59,6 @@
   },
   "devDependencies": {
     "aws-sdk": ">=2.153.0",
-    "concat-map": "^0.0.1",
-    "express": ">=4.15.2",
     "ip": "^1.1.5",
     "mocha": "^5.2.0",
     "panic-manager": "^1.2.0",
