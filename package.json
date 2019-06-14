@@ -55,7 +55,7 @@
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
-    "node-webcrypto-ossl": "^1.0.43"
+    "node-webcrypto-ossl": "^1.0.47"
   },
   "devDependencies": {
     "aws-sdk": ">=2.153.0",
