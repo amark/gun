@@ -40,6 +40,12 @@
 </div>
 
 <div class="center leak" style="padding: 0 2em;">
+	<div class="unit col leak ct-radc ct-chart tall" style="width: 49%;"></div>
+	<div class="unit col leak ct-radt ct-chart tall" style="width: 49%;"></div>
+</div>
+<div class="center"><span id="rerr"></span></div>
+
+<div class="center leak" style="padding: 0 2em;">
 	<div class="leak ct-cpu ct-chart ct-perfect-fourth tall"></div>
 </div>
 
@@ -47,7 +53,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
 <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
 <script>
-var stats = {slide: [0,0,0,0,0], din: [0,0,0,0,0], dout: [0,0,0,0,0], dind: [0,0,0,0,0], doutd: [0,0,0,0,0]};
+var stats = {slide: [0,0,0,0,0], din: [0,0,0,0,0], dout: [0,0,0,0,0], dind: [0,0,0,0,0], doutd: [0,0,0,0,0], rgetc: [0,0,0,0,0], rputc: [0,0,0,0,0]};
 setInterval(function(){
 	stats.show();
 }, 1000 * 15);
@@ -93,6 +99,34 @@ stats.show = function(){ $.getJSON(url.value||(location.origin+'/gun/stats.radat
 	}, {fullWidth: true, axisY: {
     labelInterpolationFnc: function(v) { return v+'MB' }
   }});
+
+	try{ $('#rerr').text(data.rad.put.err || data.rad.get.err) }catch(e){}
+
+	try{
+	stats.rgetc.push(data.rad.get.count); stats.rgetc = stats.rgetc.slice(1);
+	stats.rputc.push(data.rad.put.count); stats.rputc = stats.rputc.slice(1);
+	new Chartist.Line('.ct-radc', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.rputc, stats.rgetc]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'io' }
+  }});
+	}catch(e){}
+
+	try{
+	stats.radgt = Object.values(data.rad.get.time).map(function(n){ return n/1000 });
+	stats.radpt = Object.values(data.rad.put.time).map(function(n){ return n/1000 });
+	new Chartist.Line('.ct-radt', {
+	  // A labels array that can contain any sort of values
+	  //labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.radpt, stats.radgt]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'sec' }
+  }});
+	}catch(e){}
 
 	new Chartist.Line('.ct-cpu', {
 	  // A labels array that can contain any sort of values
