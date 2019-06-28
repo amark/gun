@@ -57,7 +57,9 @@ var stats = {slide: [0,0,0,0,0], din: [0,0,0,0,0], dout: [0,0,0,0,0], dind: [0,0
 setInterval(function(){
 	stats.show();
 }, 1000 * 15);
-stats.show = function(){ $.getJSON(url.value||(location.origin+'/gun/stats.radata'), function(data){ console.log(data);
+stats.show = async function(data){ //$.getJSON(url.value||(location.origin+'/gun/stats.radata'), function(data){ console.log(data);
+	data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+	console.log(data);
 	$('#peers').text(data.peers.count);
 	$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
 	$('#nodes').text(data.node.count);
@@ -136,7 +138,8 @@ stats.show = function(){ $.getJSON(url.value||(location.origin+'/gun/stats.radat
 	}, {fullWidth: true, low: 0, axisY: {
     labelInterpolationFnc: function(v) { return v+'cpu' }
   }});
-}) }
+//})
+}
 stats.show();
 </script>
 </body>
