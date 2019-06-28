@@ -143,6 +143,7 @@
 							return;
 						}
 					}
+					if(msg.get){ mesh.say(msg, axe.up) } // always send gets up!
 					if(msg.get && (tmp = route(msg.get))){
 						var hash = tmp; //Gun.obj.hash(msg.get);
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
@@ -225,7 +226,14 @@
 					}, 500);
 				}, at);*/
 			}
+			axe.up = {};
+			at.on('hi', function(peer){
+				this.to.next(peer);
+				if(!peer.url){ return }
+				axe.up[peer.id] = peer;
+			})
 			at.on('bye', function(peer){ this.to.next(peer);
+				if(peer.url){ delete axe.up[peer.id] }
 				Gun.obj.map(peer.routes, function(route, hash){
 					delete route[peer.id];
 					if(Gun.obj.empty(route)){
