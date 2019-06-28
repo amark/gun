@@ -59,7 +59,7 @@
 				if(many && ui.is('.sort')){
 					var up = ui.closest("[name='#']");
 					var tmp = as.sort(data, up.parent().children().last());
-					up.insertAfter(tmp);
+					tmp? up.insertAfter(tmp) : up.prependTo(up.parent());
 				}
 				if(as.lock === gui){ return }
 				(ui[0] && u === ui[0].value)? ui.text(data) : ui.val(data);
@@ -80,12 +80,7 @@
 			}, wait || 200);
 		}
 	}
-	as.sort = function sort(id, li){
-		var num = parseFloat(id);
-		var id = $(li).find('.sort').text() || -Infinity;
-		var at = num >= parseFloat(id);
-		return at ? li : sort(id, li.prev());
-	}
+	as.sort = function sort(num, li){ return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity)? li : sort(num, li.prev()) }
 	$(document).on('keyup', 'input, textarea, [contenteditable]', as.wait(function(){
 		var el = $(this);
 		var data = (el[0] && u === el[0].value)? el.text() : el.val();

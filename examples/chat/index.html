@@ -150,12 +150,7 @@
 					.animate({scrollTop: ul.height()});
 			});
 
-			function sort(id, li){
-				var num = parseFloat(id);
-				var id = $(li).find('.sort').text() || -Infinity;
-				var at = num >= parseFloat(id);
-				return at ? li : sort(id, li.prev());
-			}
+			function sort(num, li){ return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity)? li : sort(num, li.prev()) }
 		</script>
 	</body>
 </html>

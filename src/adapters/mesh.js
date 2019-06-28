@@ -80,6 +80,7 @@ function Mesh(root){
 				return;
 			}
 			if(!peer.wire && mesh.wire){ mesh.wire(peer) }
+			if(id === peer.last){ return } peer.last = id;  // was it just sent?
 			if(peer === meta.via){ return false }
 			if((tmp = meta.to) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 			if(peer.batch){

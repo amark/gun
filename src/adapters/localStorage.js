@@ -130,7 +130,7 @@ Gun.on('create', function(root){
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
 		}catch(e){
-			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
+			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.

@@ -1,10 +1,9 @@
 <p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
-[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 
 **GUN** is an _ecosystem_  of tools that let you <u>build tomorrow's dApps, today</u>.
 
@@ -12,7 +11,7 @@ Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36
 
 <table>
 <tr>
-<a href=""><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
 <a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
 <a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
 <a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
@@ -20,8 +19,9 @@ Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36
 <a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
 </tr>
 </table>
+<center><a href="https://youtu.be/1ASrmQ-CwX4"><img src="https://gun.eco/see/ar.gif" title="AR"/></a></center>
 
-The ecosystem is one nice stack of technologies that looks like this:
+The ecosystem is one nice stack of technologies that looks like this: (names -> use case)
 
 <div><img width="48%" src="https://gun.eco/see/stack.png"/>
 <img width="48%" align="right" src="https://gun.eco/see/layers.png"/></div>
