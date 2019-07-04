@@ -208,6 +208,8 @@ To quickly spin up a Gun test server for your development team, utilize either [
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun)
 
+ > Heroku deletes your data every 15 minutes, one way to fix this is by adding [cheap storage](https://gun.eco/docs/Using-Amazon-S3-for-Storage).
+
 Or:
 
 ```bash
