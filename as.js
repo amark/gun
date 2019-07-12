@@ -226,6 +226,6 @@
 		gun.user().auth(a,b, cb,o);
 	}
 	gun.on('auth', function(ack){
-		console.log("Your namespace is", ack.soul);
+		console.log("Your namespace is publicly available at", ack.soul);
 	})
 });

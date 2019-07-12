@@ -115,8 +115,9 @@
 				} t.r = t.r || [];
 				t.r.push(k);
 			};
-			var keys = Object.keys;
-			Type.obj.map = function(l, c, _){
+			var keys = Object.keys, map;
+			Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
+			Type.obj.map = map = function(l, c, _){
 				var u, i = 0, x, r, ll, lle, f = fn_is(c);
 				t.r = null;
 				if(keys && obj_is(l)){
@@ -839,7 +840,10 @@
 					at.opt.peers = obj_to(tmp, at.opt.peers);
 				}
 				at.opt.peers = at.opt.peers || {};
-				obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
+				obj_map(opt, function each(v,k){
+					if(!obj_has(this, k) || text.is(v) || obj.empty(v)){ this[k] = v ; return }
+					obj_map(v, each, this[k]);
+				}, at.opt);
 				Gun.on('opt', at);
 				at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 				return gun;
@@ -1288,7 +1292,7 @@
 			var cat = gun._, acks = 0, tmp;
 			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat), gun }
 			gun.get(function(msg, ev){
-				if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && ++acks < tmp){
+				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
 					return;
 				}
 				ev.rid(msg);
@@ -1678,7 +1682,7 @@
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
 			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
-			|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (!to && (link||at).ack <= tmp))){
+			|| (u === data && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 					val.call({as:opt}, msg, eve, tmp || 1);
 				}, opt.wait || 99);
@@ -2101,7 +2105,6 @@
 				});
 			}
 			mesh.bye = function(peer){
-				Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 				root.on('bye', peer);
 				var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 				mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
@@ -2126,6 +2129,14 @@
 				root.opt.pid = root.opt.pid || Type.text.random(9);
 				this.to.next(root);
 				root.on('out', mesh.say);
+			});
+
+			root.on('bye', function(peer, tmp){
+				peer = opt.peers[peer.id || peer] || peer; 
+				this.to.next(peer);
+				peer.bye? peer.bye() : (tmp = peer.wire) && tmp.close && tmp.close();
+				Type.obj.del(opt.peers, peer.id);
+				peer.wire = null;
 			});
 
 			var gets = {};
@@ -2177,7 +2188,6 @@
 		}());
 
 	  var empty = {}, ok = true, u;
-	  Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 
 	  try{ module.exports = Mesh }catch(e){}
 
@@ -2215,11 +2225,7 @@
 					reconnect(peer);
 				};
 				wire.onerror = function(error){
-					reconnect(peer); // placement?
-					if(!error){ return }
-					if(error.code === 'ECONNREFUSED'){
-						//reconnect(peer, as);
-					}
+					reconnect(peer);
 				};
 				wire.onopen = function(){
 					opt.mesh.hi(peer);

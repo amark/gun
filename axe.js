@@ -42,7 +42,7 @@
 			if(at.axe){ return }
 			var opt = at.opt, peers = opt.peers;
 			if(false === opt.axe){ return }
-			if(false === process.env.NO_AXE){ return }
+			if((typeof process !== "undefined") && 'false' === ''+(process.env||{}).AXE){ return }
 			var axe = at.axe = {}, tmp;
 			// 1. If any remembered peers or from last cache or extension
 			// 2. Fallback to use hard coded peers from dApp
@@ -131,6 +131,31 @@
 					});
 				}
 			});
+
+			//try{console.log(req.connection.remoteAddress)}catch(e){};
+			mesh.hear['opt'] = function(msg, peer){
+				if(msg.ok){ return opt.log(msg) }
+				var tmp = msg.opt;
+				if(!tmp){ return }
+				tmp = tmp.peers;
+				if(!tmp || !Gun.text.is(tmp)){ return }
+				if(axe.up[tmp] || 6 <= Object.keys(axe.up).length){ return }
+				var o = {peers: tmp};
+				at.$.opt(o);
+				o = peers[tmp];
+				if(!o){ return }
+				o.retry = 9;
+				mesh.wire(o);
+				if(peer){ mesh.say({dam: 'opt', ok: 1, '@': msg['#']}, peer) }
+			}
+			setInterval(function(tmp){
+				if(!(tmp = at.stats && at.stats.stay)){ return }
+				(tmp.axe = tmp.axe || {}).up = Object.keys(axe.up||{});
+			},1000 * 60)
+			setTimeout(function(tmp){
+				if(!(tmp = at.stats && at.stats.stay)){ return }
+				Gun.obj.map((tmp.axe||{}).up, function(url){ mesh.hear.opt({opt: {peers: url}}) })
+			},1000);
 
 			if(at.opt.super){
 				var rotate = 0;
