@@ -221,7 +221,7 @@
 		});
 		function send(raw){
 			if(!raw){ return }
-			if(raw.indexOf('webrtc') >= 0){
+			if(raw.indexOf('rtc') >= 0){
 				if(!this._send){ return }
 				return this._send(raw);
 			}
