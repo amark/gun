@@ -163,7 +163,6 @@ function Mesh(root){
 		});
 	}
 	mesh.bye = function(peer){
-		Type.obj.del(opt.peers, peer.id); // assume if peer.url then reconnect
 		root.on('bye', peer);
 		var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 		mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
@@ -188,6 +187,14 @@ function Mesh(root){
 		root.opt.pid = root.opt.pid || Type.text.random(9);
 		this.to.next(root);
 		root.on('out', mesh.say);
+	});
+
+	root.on('bye', function(peer, tmp){
+		peer = opt.peers[peer.id || peer] || peer; 
+		this.to.next(peer);
+		peer.bye? peer.bye() : (tmp = peer.wire) && tmp.close && tmp.close();
+		Type.obj.del(opt.peers, peer.id);
+		peer.wire = null;
 	});
 
 	var gets = {};
@@ -239,7 +246,6 @@ function Mesh(root){
 }());
 
 	  var empty = {}, ok = true, u;
-	  Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 
 	  try{ module.exports = Mesh }catch(e){}
 

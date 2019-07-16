@@ -95,8 +95,9 @@ Type.obj.copy = function(o){ // because http://web.archive.org/web/2014032822402
 		} t.r = t.r || [];
 		t.r.push(k);
 	};
-	var keys = Object.keys;
-	Type.obj.map = function(l, c, _){
+	var keys = Object.keys, map;
+	Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
+	Type.obj.map = map = function(l, c, _){
 		var u, i = 0, x, r, ll, lle, f = fn_is(c);
 		t.r = null;
 		if(keys && obj_is(l)){

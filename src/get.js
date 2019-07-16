@@ -70,7 +70,7 @@ function soul(gun, cb, opt, as){
 	var cat = gun._, acks = 0, tmp;
 	if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat), gun }
 	gun.get(function(msg, ev){
-		if(u === msg.put && (tmp = (obj_map(cat.root.opt.peers, function(v,k,t){t(k)})||[]).length) && ++acks < tmp){
+		if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
 			return;
 		}
 		ev.rid(msg);

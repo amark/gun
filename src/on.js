@@ -84,8 +84,10 @@ function val(msg, eve, to){
 		}
 	}
 	if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
+	eve.ack = (eve.ack||0)+1;
+	if(!to && u === data && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
 	if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
-	|| (u === data && (tmp = (obj_map(at.root.opt.peers, function(v,k,t){t(k)})||[]).length) && (!to && (link||at).ack <= tmp))){
+	|| (u === data && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
 		tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 			val.call({as:opt}, msg, eve, tmp || 1);
 		}, opt.wait || 99);
