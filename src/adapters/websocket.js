@@ -30,11 +30,7 @@ Gun.on('opt', function(root){
 			reconnect(peer);
 		};
 		wire.onerror = function(error){
-			reconnect(peer); // placement?
-			if(!error){ return }
-			if(error.code === 'ECONNREFUSED'){
-				//reconnect(peer, as);
-			}
+			reconnect(peer);
 		};
 		wire.onopen = function(){
 			opt.mesh.hi(peer);
