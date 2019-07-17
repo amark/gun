@@ -140,7 +140,7 @@
 				tmp = tmp.peers;
 				if(!tmp || !Gun.text.is(tmp)){ return }
 				if(axe.up[tmp] || 6 <= Object.keys(axe.up).length){ return }
-				var o = {peers: tmp};
+				var o = tmp; //{peers: tmp};
 				at.$.opt(o);
 				o = peers[tmp];
 				if(!o){ return }
