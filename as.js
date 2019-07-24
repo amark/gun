@@ -209,7 +209,7 @@
 ;$(function(){
 	$('.page').not(':first').hide();
 	$.as.route(location.hash.slice(1));
-	$(JOY.start = JOY.start || function(){ $.as(document, gun, null, opt) });
+	$(JOY.start = JOY.start || function(){ $.as(document, gun, null, JOY.opt) });
 
 	if($('body').attr('peers')){ (console.warn || console.log)('Warning: Please upgrade <body peers=""> to https://github.com/eraeco/joydb#peers !') }
 
@@ -225,7 +225,7 @@
 		gun.user().auth(a,b, cb,o);
 	}
 
-	var opt = window.CONFIG || {}, peers;
+	var opt = joy.opt = window.CONFIG || {}, peers;
 	$('link[type=peer]').each(function(){ (peers || (peers = [])).push($(this).attr('href')) });
 	!window.gun && (opt.peers = opt.peers || peers || (function(){
 		(console.warn || console.log)('Warning: No peer provided, defaulting to DEMO peer. Do not run in production, or your data will be regularly wiped, reset, or deleted. For more info, check https://github.com/eraeco/joydb#peers !');
