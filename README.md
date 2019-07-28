@@ -190,7 +190,7 @@ var Gun = require('gun/gun');
 
 If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
 
-`npm install @trust/crypto text-encoding node-webcrypto-ossl --save`
+`npm install text-encoding node-webcrypto-ossl --save`
 
 You will need to require it too (it will be automatically added to the Gun object):
 
