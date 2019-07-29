@@ -843,6 +843,7 @@
 				at.opt.peers = at.opt.peers || {};
 				obj_map(opt, function each(v,k){
 					if(!obj_has(this, k) || text.is(v) || obj.empty(v)){ this[k] = v ; return }
+					if(v && v.constructor !== Object){ return }
 					obj_map(v, each, this[k]);
 				}, at.opt);
 				Gun.on('opt', at);
