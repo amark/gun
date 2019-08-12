@@ -7,8 +7,7 @@
 	root = root || {};
 	var console = root.console || {log: function(){}};
 	function USE(arg, req){
-		var _require = require.context('./src', true, /./);
-		return req? _require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+		return req? require.context('./src', true, /[^unbuild]+\.js$/)(arg) : arg.slice? USE[R(arg)] : function(mod, path){
 			arg(mod = {exports: {}});
 			USE[R(path)] = mod.exports;
 		}
