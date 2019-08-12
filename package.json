@@ -14,7 +14,8 @@
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "minify": "uglifyjs gun.js -o gun.min.js -c -m",
-    "unbuild": "node lib/unbuild.js & npm run minify"
+    "unbuild": "node lib/unbuild.js & npm run minify",
+    "webpack": "node lib/unbuild.js es_module & npm run minify"
   },
   "repository": {
     "type": "git",
@@ -54,13 +55,14 @@
     "ws": "~>7.1.0"
   },
   "optionalDependencies": {
-    "text-encoding": "^0.7.0",
+    "emailjs": "^2.2.0",
     "node-webcrypto-ossl": "^1.0.47",
-    "emailjs": "^2.2.0"
+    "text-encoding": "^0.7.0"
   },
   "devDependencies": {
     "aws-sdk": ">=2.153.0",
     "ip": "^1.1.5",
+    "lodash": "^4.17.15",
     "mocha": "^5.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
