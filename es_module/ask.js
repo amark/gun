@@ -1,6 +1,6 @@
 
 // request / response module, for asking and acking messages.
-require('./onto'); // depends upon onto!
+import './onto'; // depends upon onto!
 export default function ask(cb, as){
 	if(!this.on){ return }
 	if(!(cb instanceof Function)){

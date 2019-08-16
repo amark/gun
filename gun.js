@@ -1,22 +1,22 @@
 ;(function(){
 
-  /* UNBUILD */
-  var root;
-  if(typeof window !== "undefined"){ root = window }
-  if(typeof global !== "undefined"){ root = global }
-  root = root || {};
-  var console = root.console || {log: function(){}};
-  function USE(arg, req){
-    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
-      arg(mod = {exports: {}});
-      USE[R(path)] = mod.exports;
-    }
-    function R(p){
-      return p.split('/').slice(-1).toString().replace('.js','');
-    }
-  }
-  if(typeof module !== "undefined"){ var common = module }
-  /* UNBUILD */
+	/* UNBUILD */
+	var root;
+	if(typeof window !== "undefined"){ root = window }
+	if(typeof global !== "undefined"){ root = global }
+	root = root || {};
+	var console = root.console || {log: function(){}};
+	function USE(arg, req){
+		return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+			arg(mod = {exports: {}});
+			USE[R(path)] = mod.exports;
+		};
+		function R(p){
+			return p.split('/').slice(-1).toString().replace('.js','');
+		}
+	}
+	if(typeof module !== "undefined"){ var common = module }
+	/* UNBUILD */
 
 	;USE(function(module){
 		// Generic javascript utilities.
@@ -649,6 +649,16 @@
 
 	;USE(function(module){
 
+		var Type = USE('./type');
+		var HAM = USE('./HAM');
+		var val = USE('./val');
+		var node = USE('./node');
+		var state = USE('./state');
+		var graph = USE('./graph');
+		var on = USE('./onto');
+		var ask = USE('./ask');
+		var dup = USE('./dup');
+
 		function Gun(o){
 			if(o instanceof Gun){ return (this._ = {gun: this, $: this}).$ }
 			if(!(this instanceof Gun)){ return new Gun(o) }
@@ -662,16 +672,15 @@
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
 
-		var Type = USE('./type');
 		Type.obj.to(Type, Gun);
-		Gun.HAM = USE('./HAM');
-		Gun.val = USE('./val');
-		Gun.node = USE('./node');
-		Gun.state = USE('./state');
-		Gun.graph = USE('./graph');
-		Gun.on = USE('./onto');
-		Gun.ask = USE('./ask');
-		Gun.dup = USE('./dup');
+		Gun.HAM = HAM;
+		Gun.val = val;
+		Gun.node = node;
+		Gun.state = state;
+		Gun.graph = graph;
+		Gun.on = on;
+		Gun.ask = ask;
+		Gun.dup = dup;
 
 		;(function(){
 			Gun.create = function(at){
@@ -2198,7 +2207,8 @@
 
 	;USE(function(module){
 		var Gun = USE('../index');
-		Gun.Mesh = USE('./mesh');
+		var Mesh = USE('./mesh');
+		Gun.Mesh = Mesh;
 
 		Gun.on('opt', function(root){
 			this.to.next(root);

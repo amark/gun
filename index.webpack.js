@@ -1,0 +1,1 @@
+module.exports = require('./es_module/index');

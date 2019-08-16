@@ -1,6 +1,7 @@
 
 import Gun from '../index';
-Gun.Mesh = require('./mesh');
+import Mesh from './mesh';
+Gun.Mesh = Mesh;
 
 Gun.on('opt', function(root){
 	this.to.next(root);

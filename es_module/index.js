@@ -1,8 +1,8 @@
 
 import Gun from './root';
-require('./chain');
-require('./back');
-require('./put');
-require('./get');
+import './chain';
+import './back';
+import './put';
+import './get';
 export default Gun;
 	

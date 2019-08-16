@@ -1,5 +1,15 @@
 
 
+import Type from './type';
+import HAM from './HAM';
+import val from './val';
+import node from './node';
+import state from './state';
+import graph from './graph';
+import on from './onto';
+import ask from './ask';
+import dup from './dup';
+
 function Gun(o){
 	if(o instanceof Gun){ return (this._ = {gun: this, $: this}).$ }
 	if(!(this instanceof Gun)){ return new Gun(o) }
@@ -13,16 +23,15 @@ Gun.version = 0.9;
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
 
-import Type from './type';
 Type.obj.to(Type, Gun);
-Gun.HAM = require('./HAM');
-Gun.val = require('./val');
-Gun.node = require('./node');
-Gun.state = require('./state');
-Gun.graph = require('./graph');
-Gun.on = require('./onto');
-Gun.ask = require('./ask');
-Gun.dup = require('./dup');
+Gun.HAM = HAM;
+Gun.val = val;
+Gun.node = node;
+Gun.state = state;
+Gun.graph = graph;
+Gun.on = on;
+Gun.ask = ask;
+Gun.dup = dup;
 
 ;(function(){
 	Gun.create = function(at){
