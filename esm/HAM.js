@@ -42,5 +42,7 @@ if(typeof JSON === 'undefined'){
 	);
 }
 var Lexical = JSON.stringify, undefined;
+
+
 export default HAM;
 	

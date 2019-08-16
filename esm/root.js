@@ -229,6 +229,8 @@ Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel f
 
 if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
+
+
 export default Gun;
 
 /*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES

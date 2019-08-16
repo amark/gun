@@ -40,5 +40,7 @@ var bi_is = Type.bi.is;
 var num_is = Type.num.is;
 var text_is = Type.text.is;
 var obj = Type.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
+
+
 export default Val;
 	

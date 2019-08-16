@@ -157,6 +157,8 @@
 		var fn_is = Type.fn.is;
 		var list_is = Type.list.is;
 		var obj = Type.obj, obj_is = obj.is, obj_has = obj.has, obj_map = obj.map;
+
+
 		module.exports = Type;
 	})(USE, './type');
 
@@ -244,6 +246,8 @@
 			);
 		}
 		var Lexical = JSON.stringify, undefined;
+
+
 		module.exports = HAM;
 	})(USE, './HAM');
 
@@ -289,6 +293,8 @@
 		var num_is = Type.num.is;
 		var text_is = Type.text.is;
 		var obj = Type.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map;
+
+
 		module.exports = Val;
 	})(USE, './val');
 
@@ -348,6 +354,8 @@
 		var text = Type.text, text_random = text.random;
 		var soul_ = Node.soul._;
 		var u;
+
+
 		module.exports = Node;
 	})(USE, './node');
 
@@ -432,6 +440,8 @@
 		var num = Type.num, num_is = num.is;
 		var fn = Type.fn, fn_is = fn.is;
 		var N_ = Node._, u;
+
+
 		module.exports = State;
 	})(USE, './state');
 
@@ -588,6 +598,8 @@
 		var fn_is = Type.fn.is;
 		var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_has = obj.has, obj_empty = obj.empty, obj_put = obj.put, obj_map = obj.map, obj_copy = obj.copy;
 		var u;
+
+
 		module.exports = Graph;
 	})(USE, './graph');
 
@@ -644,6 +656,8 @@
 			return dup;
 		}
 		var time_is = Type.time.is;
+
+
 		module.exports = Dup;
 	})(USE, './dup');
 
@@ -878,6 +892,8 @@
 
 		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
+
+
 		module.exports = Gun;
 
 		/*Gun.on('opt', function(ctx){ // FOR TESTING PURPOSES
@@ -1602,11 +1618,14 @@
 		USE('./back');
 		USE('./put');
 		USE('./get');
+		USE('./on');
+
 		module.exports = Gun;
 	})(USE, './index');
 
 	;USE(function(module){
-		var Gun = USE('./index');
+		var Gun = USE('./root');
+
 		Gun.chain.on = function(tag, arg, eas, as){
 			var gun = this, at = gun._, tmp, act, off;
 			if(typeof tag === 'string'){
@@ -2201,7 +2220,8 @@
 
 	  var empty = {}, ok = true, u;
 
-	  try{ module.exports = Mesh }catch(e){}
+
+	  module.exports = Mesh;
 
 	})(USE, './adapters/mesh');
 

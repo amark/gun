@@ -54,5 +54,7 @@ var obj = Type.obj, obj_is = obj.is, obj_del = obj.del, obj_map = obj.map;
 var text = Type.text, text_random = text.random;
 var soul_ = Node.soul._;
 var u;
+
+
 export default Node;
 	

@@ -1,5 +1,6 @@
 
-import Gun from './index';
+import Gun from './root';
+
 Gun.chain.on = function(tag, arg, eas, as){
 	var gun = this, at = gun._, tmp, act, off;
 	if(typeof tag === 'string'){

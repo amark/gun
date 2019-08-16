@@ -27,5 +27,7 @@ function Dup(opt){
 	return dup;
 }
 var time_is = Type.time.is;
+
+
 export default Dup;
 	

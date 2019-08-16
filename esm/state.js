@@ -79,5 +79,7 @@ var obj = Type.obj, obj_as = obj.as, obj_has = obj.has, obj_is = obj.is, obj_map
 var num = Type.num, num_is = num.is;
 var fn = Type.fn, fn_is = fn.is;
 var N_ = Node._, u;
+
+
 export default State;
 	

@@ -137,5 +137,7 @@ Type.time.is = function(t){ return t? t instanceof Date : (+new Date().getTime()
 var fn_is = Type.fn.is;
 var list_is = Type.list.is;
 var obj = Type.obj, obj_is = obj.is, obj_has = obj.has, obj_map = obj.map;
+
+
 export default Type;
 	

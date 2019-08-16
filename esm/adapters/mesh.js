@@ -247,6 +247,7 @@ function Mesh(root){
 
 	  var empty = {}, ok = true, u;
 
-	  try{ export default Mesh }catch(e){}
+
+	  export default Mesh;
 
 	
