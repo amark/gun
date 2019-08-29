@@ -14,10 +14,8 @@ Gun.chain.map = function(cb, opt, t){
 	gun.map().on(function(data, key, at, ev){
 		var next = (cb||noop).call(this, data, key, at, ev);
 		if(u === next){ return }
-		if(data === next || Gun.is(next)){
-			chain._.on('in', next._);
-			return;
-		}
+		if(data === next){ return chain._.on('in', at) }
+		if(Gun.is(next)){ return chain._.on('in', next._) }
 		chain._.on('in', {get: key, put: next});
 	});
 	return chain;
@@ -30,8 +28,9 @@ function map(msg){
 }
 function each(v,k){
 	if(n_ === k){ return }
-	var msg = this.msg, gun = msg.$, at = this.at, tmp = (gun.get(k)._);
-	(tmp.echo || (tmp.echo = {}))[at.id] = tmp.echo[at.id] || at;
+	var msg = this.msg, gun = msg.$, at = gun._, cat = this.at, tmp = at.lex;
+	if(tmp && !Gun.text.match(k, tmp['.'] || tmp['#'] || tmp)){ return } // review?
+	((tmp = gun.get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
 }
 var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	

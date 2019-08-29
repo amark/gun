@@ -1,6 +1,6 @@
 var config = {
 	IP: require('ip').address(),
-	port: 8080,
+	port: 8765,
 	servers: 2,
 	browsers: 2,
 	route: {
@@ -50,12 +50,14 @@ describe("The Holy Grail Test!", function(){
 			test.async();
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
 			try{ require('fs').unlinkSync((env.i+1)+'data') }catch(e){}
+			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
+			try{ require('gun/lib/fsrm')((env.i+1)+'data') }catch(e){}
 			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
+			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});
@@ -104,7 +106,8 @@ describe("The Holy Grail Test!", function(){
 		return server.run(function(test){
 			console.log(3);
 			var env = test.props;
-			try{ require('fs').unlinkSync(env.i+'data'); }catch(e){}
+			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
+			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 			process.exit(0);
 		}, {i: 1, config: config})
 	});
@@ -176,12 +179,13 @@ describe("The Holy Grail Test!", function(){
 			var env = test.props;
 			test.async();
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
+			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server, localStorage: false});
+			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});

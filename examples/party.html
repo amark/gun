@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Party by Neon ERA</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" type="text/css" href="./style.css">
+		<link href="https://fonts.googleapis.com/css?family=Raleway:100" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Caveat" rel="stylesheet">
+		<style>
+			.write {
+				font-family: 'Caveat', sans-serif;
+			}
+			.shout {
+				font-size: 36pt;
+				font-size: 6.5vmax;
+			}
+			.edit {
+				border-bottom: 1px dashed white;
+				cursor: pointer;
+			}
+			.back {
+				position: absolute;
+				top: 0.5%;
+				left: 0.5em;
+				width: 2em;
+				height: 2em;
+				z-index: 99999;
+			}
+		</style>
+		<script src="./jquery.js"></script>
+		<script src="../../gun/gun.js"></script>
+		<script src="../../gun/sea.js"></script>
+		<script src="../../gun/as.js"></script>
+		<script src="../../gun/nts.js"></script>
+		<script src="../../gun/lib/time.js"></script>
+		<script src="../../gun/lib/upload.js"></script>
+		<script>
+			;(() => {
+				function S(){};
+				window.S = S;
+				try{localStorage.clear();//sessionStorage.clear();
+				}catch(e){}
+				S.gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
+				//S.gun = Gun('http://localhost:8765/gun');
+				//S.gun = Gun();
+				S.app = S.gun.get('examples/social/2');
+				S.user = S.gun.user();
+				S.tell = (what, n) => {
+					var e = $('#tell').find('p');
+					e.addClass('notify').text(what);
+					clearTimeout(S.tell.to);
+					S.tell.to = setTimeout(() => { e.removeClass('notify') }, n || 2500);
+					return what;
+				}
+				this.S = S;
+			})();
+		</script>
+	</head>
+	<body class="whitet black">
+
+		<div id="hi" class="hue page">
+			<style>
+				#hi input {
+					padding: 0.4em 0.8em;
+					font-size: 1.5em;
+					margin-left: 2%;
+					margin-bottom: 2%;
+				}
+				#hi .faces img {
+					w-idth: 5%;
+					width: 3em;
+					width: 7vh;
+				}
+				#hi .ton {
+					border-radius: 1em;
+					font-size: 150%;
+					font-size: 2.25vmax;
+					margin: 0 0.5em 0 0.5em;
+					background: transparent;
+					border: 1px solid white;
+					color: white;
+					font-family: 'Raleway', sans-serif;
+				}
+				#hi .ton:hover {
+					background: white;
+					color: black;
+				}
+			</style>
+			<div class="loud write shout rim">Join the Private Party!</div>
+			<div id="faces" class="flush faces">
+				<div class="right" style="max-width: 30em;">
+					<a href="chrome://extensions" target="_blank"><button class="ton">Install Now</button></a>
+					<a href="#"><button class="ton">How It Works</button></a>
+					<!-- input id="halias" class="write jot sap" placeholder="username">
+					<input id="hpass" type="password" class="write jot sap" placeholder="passphrase" -->
+					<script>
+						$.as.route.page('hi', () => {
+							$('#hpass').on('focus', () => {
+								var alias = $("#halias").val();
+								if(!alias){ return }
+								$('#alias').val(alias);
+								$.as.route('sign');
+								$('#pass').focus();
+							});
+							setTimeout(() => { 
+								$('#halias').focus();
+								window.faces('#faces', 100);
+								window.faces('#faces2', 40);
+							},1);
+						});
+						if(!location.hash){
+							$.as.route('hi');
+						}
+					</script>
+				</div>
+			</div>
+			<script>
+				;(window.faces = function faces(id, lim, i){
+					//return
+					if(!$('#hi').is(':visible')){ return }
+					if(!id){ return }
+					if(!faces.on){ faces.on = id }
+					if(faces.on != id){
+						faces.was = faces.was || {};
+						if(faces.was[id]){ return }
+						(faces.next = faces.next || []).push([faces.was[id] = id, lim]);
+						return;
+					}
+					if(i >= (lim || 100)){
+						faces.on = null;
+						var tmp = faces.next && faces.next.shift();
+						tmp && faces(tmp[0], tmp[1]);
+						return;
+					}
+					$.ajax({
+					  url: 'https://randomuser.me/api/',
+					  dataType: 'json',
+					  success: (data) => {
+					    faces(id, lim || 100, (i || 0) + 1);
+					    if(!data || !data.results){ return }
+					    var tmp = data.results[0];
+					 		if(!tmp || !(tmp = tmp.picture)){ return }
+					  	tmp = tmp.thumbnail;
+					  	if(!tmp || faces[tmp]){ return }
+					  	faces[tmp] = true;
+					  	tmp = $('<img>').attr('src', tmp).fadeIn().appendTo(id || '#faces');
+					  	
+					  	tmp = tmp.offset(); 
+					  	var r = Math.random() * 30;
+					  	window.fun && window.fun({x: tmp.left - r, y: tmp.top - $(window).scrollTop() - r});
+					  }
+					});
+					return faces;
+				});
+			</script>
+			<div class="pad ditch">
+				<p class="loud"><i>Your friend has invited you to add a privacy extension to your browser:</i></p>
+				<p> - Decrypts your friends' messages across any site!</p>
+				<p> - Stops tech monopolies from selling your private data to advertisers.</p>
+				<p> - Gives you ownership and control over all your data online.</p>
+				<p> - Creates a searchable history of your posts, friends, and more!</p>
+			</div>
+			<div id="faces2" class="flush faces"></div>
+			<div class="pad ditch">
+				<p class="loud"><i>Express your thoughts & connect with the world around you!</i></p>
+				<p> - Discover new relationships.</p>
+				<p> - Keep up with friends and news in realtime.</p>
+				<p> - Watch fun videos and photos from people who share.</p>
+				<p> - But this time, you own it: fully decentralized.</p>
+			</div>
+			<div class="pad ditch" style="margin-top: 1em;">
+				<p><span class="loud write shout">Welcome,</span><!-- span class="write loud">, you are currently connected to <b id="peers" class="huet4">2</b> peers. <b>Why not try to sign up or log in?</b></span --></p>
+				<p> - Your identity is created here, by you. Not on a server.</p>
+				<p> - It uses secure <a href="https://gun.eco/docs/Cartoon-Cryptography">cryptographic</a> methods to protect you.</p>
+				<p> - Only you have access to it, meaning even we cannot reset your password!</p>
+				<p> - For added security, you can freely <a href="https://github.com/amark/gun">download</a> and run it on your own computer.</p>
+			</div>
+			<div class="black">
+				<div class="pad huet">
+					<div class="write center">Crafted with <span class="redt">♥</span> by <span class="loud">era</span>.</div> 
+				</div>
+			</div>
+		</div>
+
+		<div id="sign" class="hue page">
+			<style>
+				#sign input, button {
+					margin: 0.2em 0;
+					padding: 0.5em 1em;
+				}
+				#sign .sign {
+					font-size: 30pt;
+				}
+				#sign .pow {
+					margin: 0em 0;
+					padding: 0em 1em;
+					background: transparent;
+					border-bottom: none;
+					text-align: center;
+					font-size: 5vmax;
+					color: white;
+				}
+				#sign .act {
+					padding: 0.7em 1em;
+					width: 5em;
+				}
+				#sign .tos {
+					font-size: 10pt;
+				}
+			</style>
+			<form id="inup" class="pad center">
+				<div class="shout write">Welcome,</div>
+				<div class="mid row col">
+					<input id="alias" class="write sign jot sap" placeholder="username">
+				</div>
+				<div class="mid row col">
+					<input id="pass" class="write sign jot sap" type="password" placeholder="passphrase">
+				</div>
+				<div class="mid row col go">
+					<input id="in" type="submit" class="huet sap act symbol" value="sign in">
+  				<input id="up" type="button" class="huet sap act symbol" value="or up">
+				</div>
+				<span class="tos">By logging in or up, you agree to the <a href="https://github.com/amark/gun/blob/master/LICENSE.md" class="tos" target="_blank">Terms of Service</a>.</span>
+				<p class="tos"><a href="#forgot">Forgot password?</a></p>
+			</form>
+			<script>
+				;(() => {
+					S.route = location.hash.slice(1);
+					$('#up').on('click', (e) => {
+						var form = check();
+						if(!form){ return }
+						$("#up").addClass('pulse');
+						S.user.create(form.alias, form.pass, (ack) => {
+							if(!ack.wait){ $("#up").removeClass('pulse') }
+							if(ack.err){ return S.tell(ack.err) }
+							check.up = true;
+							S.user.auth(form.alias, form.pass);
+						});
+					});
+					$('#inup').on('submit', (e) => {
+						var form = check();
+						if(!form){ return }
+						$("#in").addClass('pulse');
+						S.user.auth(form.alias, form.pass, (ack) => {
+							if(!ack.wait){ $("#in").removeClass('pulse') }
+							if(ack.err){ return S.tell(ack.err) }
+						});
+					});
+					$('#pass').on('focus', () => {
+						$('#alias').addClass('pow');
+					});
+					$('#alias').on('focus', () => {
+						$('#alias').removeClass('pow');
+					});
+					$.as.route.page('sign', () => {
+						if(!$('#alias').val()){
+							setTimeout(() => { $('#alias').focus() },1);
+						}
+					});
+					var check = () => {
+						var form = {alias: ($('#alias').val()||'').toLowerCase(), pass: $("#pass").val()||''};
+						if(6 > form.alias.length){
+							S.tell("Your username needs to be longer than 5 letters.");
+							return;
+						}
+						if(9 > form.pass.length){ 
+							S.tell("Your passphrase needs to be longer than 9 letters.");
+							return;
+						}
+						return form;
+					}
+					S.gun.on('auth', (ack) => {
+						if('hi' === S.route){ S.route = '' }
+						if('sign' === S.route){ S.route = '' }
+						if(check.up){ S.route = 'settings' }
+						$.as.route(S.route = S.route || 'draft');
+					});
+					S.user.recall({sessionStorage: 1});
+				})();	
+			</script>
+		</div>
+
+		<div id="forgot" class="hue3 page">
+			<style>
+				#forgot .fill {
+					padding: 0.5em;
+				}
+			</style>
+			<a href="#sign" class="act back">&larr;</a>
+			<div class="pad">
+				<p class="shout write">Forgot Password</p>
+				<form>
+					<ul class="rim">
+						<li><input class="alias fill sap jot" placeholder="username"></li>				
+						<li>
+							<p>What was your first pet's name, the type of animal they were, and your favorite quirk about them? <span class="pet let"></span> <span class="pet length"></span>
+							<input class="pet fill sap jot" placeholder='"Bubbles was a goldfish, he played dead a lot." or "Fluffy is a cat, but she eats vegetables."'></p>
+						</li>
+						<li>
+							<p>Where was your first kiss? Describe what they looked like. <span class="kiss let"></span> <span class="kiss length"></span>
+							<input class="kiss fill sap jot" placeholder='"I kissed Alice in a tree, she was a redhead." or "Bob kissed me at the movies, he had green eyes."'></p>
+						</li>
+						<li class="loud write help"></li>
+						<li class="center rim sit"><input type="submit" class="fill huet3 sap act symbol" value="go" style="width: 4em;"></li>
+					</ul>
+				</form>
+				<script>
+					$.as.route.page('forgot', () => {
+						var _ = $('#forgot'), alias;
+						$('.alias',_).on('blur', () => {
+							alias = $('.alias',_).val();
+							if(!alias){ return }
+							$('.pet.length',_).val('');
+							$('.kiss.length',_).val('');
+							S.gun.get('alias/'+alias).once().map()
+								.get('settings').once(add);
+						}).focus();
+						var add = (set) => {
+							if(!set){ return }
+							var tmp;
+							(tmp = $('.pet.length',_)).text(tmp.text() +' '+ set.pet);
+							(tmp = $('.kiss.length',_)).text(tmp.text() +' '+ set.kiss);
+						}
+						$('.jot.pet',_).on('keyup', function(){ $('.pet.let',_).text(this.value.length + ' /') });
+						$('.jot.kiss',_).on('keyup', function(){ $('.kiss.let',_).text(this.value.length + ' /') });
+						$('form',_).on('submit', () => {
+							alias = alias || $('.alias',_).val();
+							if(!alias){ return S.tell("You need a username.") }
+							$('.act',_).addClass('pulse');
+							S.gun.get('alias/' + alias)
+								.once().map()
+								.get('settings')
+								.get('recover')
+								.once(recover);
+						});
+						var recover = async (data) => {
+							$('.act',_).removeClass('pulse');
+							var pet = $('.jot.pet',_).val();
+							var kiss = $('.jot.kiss',_).val();
+							var hint;
+							try{ hint = await Gun.SEA.decrypt(data, await Gun.SEA.work(pet, kiss));
+							}catch(e){}
+							if(!hint){ return S.tell("Nope. Try again!") }
+							$('.write.help',_).text(hint);
+						}
+					});
+				</script>
+			</div>
+		</div>
+		
+		<div id="settings" class="hue2 page">
+			<style>
+				#settings .fill {
+					padding: 0.5em;
+				}
+				#facedrop img {
+					vertical-align: middle;
+					border-radius: 100%;
+				}
+			</style>
+			<a href="#draft" class="act back">&larr;</a>
+			<div class="pad">
+				<p class="shout write">Settings</p>
+				<p>Your username is <i name="alias"></i>.</p>
+				<p id="facedrop">
+					Drop in a new profile photo: <img class="none">
+				</p>
+				<form id="recovery">
+					<p><b>Because no server can reset your password, you must fill out a "forgot password" recovery form.</b>
+					We recommend you use simple, grammatically correct, memorable sentences for your answers.
+					Keep each sentence less than 50 letters so that it will be easy for you to reconstruct -
+					the length of your reply will be stored as a hint to help.</p>
+					<ol class="rim">
+						<li>
+							<p>What was your first pet's name, the type of animal they were, and your favorite quirk about them? <span class="pet"></span>
+							<input id="pet" class="fill sap jot" placeholder='"Bubbles was a goldfish, he played dead a lot." or "Fluffy is a cat, but she eats vegetables."'></p>
+						</li>
+						<li>
+							<p>Where was your first kiss? Describe what they looked like. <span class="kiss"></span>
+							<input id="kiss" class="fill sap jot" placeholder='"I kissed Alice in a tree, she was a redhead." or "Bob kissed me at the movies, he had green eyes."'></p>
+						</li>
+						<li>
+							<p>The reminder of what your password is:</p>
+							<input id="pw-reminder" type="password" class="fill sap jot" placeholder='"Hint: Usual password + name of this app!"'></p>
+						</li>
+						<li class="center rim sit">
+							<input type="submit" class="fill huet2 sap act symbol" value="set" style="width: 4em;">
+						</li>
+					</ol>
+				</form>
+				<form id="reset">
+					<style>
+						#settings .thin {
+							max-width: 15em;
+							margin-right: 0.1em;
+							margin-bottom: 0.1em;
+						}
+					</style>
+					<p>We recommend you use a memorable and grammatically correct sentence as your passphrase.
+					Then write it down on paper and store it some place safe that will be easy for you to find. Here are some tips:</p>
+					<ul class="rim">
+						<li> - What gives you purpose and meaning in your life?</li>
+						<li> - Say something nice about an important person in your life.</li>
+						<li> - If you could work on your hobby full time, what goals would you have?</li>
+						<li> - Try to combine all of them into a rhyme, or something funny that makes you laugh.</li>
+						<li class="center rim">
+							<input id="oldpass" type="password" class="center thin fill sap jot" placeholder="old passphrase">
+							<input id="newpass" type="password" class="center thin fill sap jot" placeholder="new passphrase">
+							<input id="oldnew" type="submit" class="fill huet2 sap act symbol" value="change" style="width: 5em;"></li>
+						<li> - <i>Ex, "Uncle Ben taught me to fight for what is right, I might have a spider bite."</i></li>
+						<li> - <i>Ex, "I am quite better than the Dark Knight, despite any Kryptonite."</i></li>
+						<li> - <i>Ex, "Give me a cause for these claws, I have no paws and no laws."</i></li>
+						<li> - <i>Ex, "My suite is made of red supplements, with hidden jet compartments."</i></li>
+					</ul>
+				</form>
+				<p>You are currently connected to <i>2</i> peers.</p>
+				
+			</div>
+			<script>
+				$.as.route.page('settings', () => {
+					if(!S.user.is){ return $.as.route('hi') }
+					$.as('#settings', S.user);
+					
+					;(() => {
+						$('#pet').on('keyup', function(){ $('.pet').text(this.value.length + ' letters.') });
+						$('#kiss').on('keyup', function(){ $('.kiss').text(this.value.length + ' letters.') });
+						
+						S.user.get('settings').get('pet').on(function(l){ $('#pet').val(Gun.text.random(l, '*')) });
+						S.user.get('settings').get('kiss').on(function(l){ $('#kiss').val(Gun.text.random(l, '*')) });
+						
+						$('#recovery').on('submit', async (e) => {
+							var pet = $('#pet').val();
+							var kiss = $('#kiss').val();
+							var reminder = $('#pw-reminder').val(); // NOTE: THIS IS TEMPORARY!
+							if(!pet){ return S.tell("Please fill out the pet question!") }
+							if(!kiss){ return S.tell("Please fill out the first kiss question!") }
+							if(!reminder){ return S.tell("You need a password reminder.") } // NOTE: THIS IS TEMPORARY!
+							if(1+pet.indexOf('*') || 1+kiss.indexOf('*')){ return S.tell("Your answer should not have '*' in it.") }
+							$('#recovery .act').addClass('pulse');
+							var recover = await Gun.SEA.encrypt(reminder, await Gun.SEA.work(pet, kiss));
+							// NOTE: We are currently doing this manually, in the future we want to
+							// just automatically log the user back in based off the security questions
+							// rather than only giving them a "reminder" of what theirold  password is.
+							S.user.get('settings').put({
+								recover: recover,
+								pet: pet.length,
+								kiss: kiss.length
+							}, (ack) => {
+								$('#recovery .act').removeClass('pulse');
+								S.tell(ack.err || "Saved!");
+								$('#pw-reminder').val(''); // NOTE: THIS IS TEMPORARY!
+							});
+						});
+					})();
+					
+					
+					;(() => {
+						$('#reset').on('submit', (e) => {
+							var old = $('#oldpass').val();
+							var pass = $('#newpass').val() || '';
+							if(9 > pass.length){ return S.tell("Your passphrase needs to be longer than 9 letters.") }
+							if(!S.user.is){ return S.tell("You need to be logged in to do that.") }
+							$('#oldnew').addClass('pulse');
+							S.user.auth(S.user.is.alias, old, (ack) => {
+								$('#oldnew').removeClass('pulse');
+								S.tell(ack.err || "Saved!");
+								$('#oldpass, #newpass').val('');
+							}, {change: pass});
+						});
+					})();
+
+					;(async () => {
+						$('#settings').upload(function resize(e, up){
+							if(e.err){ return }
+							$('#settings').addClass('pulse');
+							if(up){ return up.shrink(e, resize, 64) }
+							$('#settings').removeClass('pulse');
+							$("#facedrop img").attr('src', e.base64).removeClass('none');
+							S.user.get('who').get('face').get('small').put(e.base64);
+						});
+						var img = await S.user.get('who').get('face').get('small').then();
+						if(img){ $('#facedrop img').attr('src', img).removeClass('none') }
+					})();
+				});
+			</script>
+		</div>
+		
+		<div id="out" class="hue page">
+			<script>
+				$.as.route.page('out', () => {
+					S.user.leave();
+					setTimeout(() => $.as.route('hi'), 1);
+				});
+			</script>
+		</div>
+
+		<div id="draft" class="hue page">
+			<style>
+				.draft {
+
+				}
+				#speak {
+					overflow: visible;
+					margin-bottom: 2em;
+				}
+	      #speak .draft:empty:not(:focus):before{
+	        content:attr(data-text);
+	      }
+				#speak input {
+					position: absolute;
+					bottom: -1.4em;
+					right: -2%;
+					width: auto;
+					color: white;
+					padding: 0.3em 1em;
+					background: transparent;
+					border: 1px solid white;
+					border-radius: 1em;
+					transition: all 0.2s ease-in;
+				}
+				#speak input:hover {
+					background: white;
+					color: #33cc33;
+				}
+				#draft ul .face {
+					float: left;
+					border-radius: 100%;
+					vertical-align: middle;
+					height: 1.5em;
+					margin-right: 2%;
+				}
+				#draft ul, #draft li {
+					overflow: visible;
+				}
+				#draft .what {
+				}
+				#draft .spoke {
+				}
+			</style>
+			<p class="pad">Welcome!</p>
+			<!--
+				People:
+				- stare
+				- scroll
+				- tap
+				- type
+				- talk
+				- take
+			-->
+			<form id="speak" class="mid row col">
+				<div id="d0" class="draft spoke gap tint sap editable" contenteditable="true" style="min-height: 1em;" data-text="Express yourself..."></div>
+				<input type="submit" class="sap hide" value="speak!">
+			</form>
+			<ul class="mid row col">
+			</ul>
+			<div class="model">
+				<li class="spoke tint sap gully">
+					<div class="gap"><span class="sort none"></span><img class="face act none"><b class="name"></b><div class="what"></div></div>
+				</li>
+			</div>
+			<div style="height: 10%;"></div>
+			<script>
+				$.as.route.page('draft', () => {
+					if(!S.user.is){ return $.as.route('hi') }
+					$('#speak').on('keyup', (e) => {
+						var say = $('#speak .draft').text();
+						if(!say){
+							$('#speak input').addClass('hide');
+							return;
+						}
+						$('#speak input').removeClass('hide');
+					});
+					window.user = S.user;
+					$('#speak').on('submit', (e) => {
+						var say = $('#speak .draft').text(); //.text(); // NO NO NO NO NO
+						if(!say){ return }
+						console.log('save!', say);
+						var ref = S.user.get('who').get('all').set({what: say, when: Gun.state()});
+						//ref.get('by').put(S.user.get('who'));
+						//S.user.get('who').get('said').time(ref);
+						S.user.get('who').get('said').set(ref);
+						//S.gun.get('@').time(ref);
+						$('#speak .draft').text('');
+					});
+					//S.gun.get('@').time(async (data, key, time) => {
+					S.user.get('who').get('said').map().once(async (data, key, time) => {
+						//var ref = S.gun.get(data), tmp;
+						//var said = await ref.then();
+						key = key.replace(/[^A-Za-z]/ig,'');
+						var tmp, said = data, time = said.when;
+						var $li = $($('#'+key)[0] || $('#draft .model .spoke').clone(true,true).attr('id', key)[(tmp = $.as.sort(time, $('#draft ul').children('li').first()))[0]?'insertBefore':'appendTo'](tmp[0] || '#draft ul'));
+						tmp = said.what;
+						if(tmp && tmp.ct){
+							tmp = JSON.stringify(tmp);
+							setTimeout(async function(){
+								tmp = await SEA.decrypt(said.what, S.user._.sea);
+								$li.find('.what').text(tmp);
+							}, 750);
+						}
+						$li.find('.what').text(tmp); // NORMALIAZE!!!
+						var by = S.user.get('who');// ref.get('by');
+						by.get('face').get('small').on(data => {
+							$li.find('.face').attr('src', data).removeClass('none');
+						});
+						by.get('name').on(data => {
+							data && $li.find('b').text(data);
+						});
+						$li.find('.sort').text(time);
+						var time = new Date(time);
+						$li.find('i').text(time.toDateString() + ', ' + time.toLocaleTimeString());
+						return;
+						var who = ref.get('by');
+						var face = await who.get('face').get('small').then();
+						if(face){
+							$li.find('.face').attr('src', face).removeClass('none');
+						}
+					});
+					$(document).on('click', '#speak .act.face', (eve) => {
+						
+					});
+				});
+			</script>
+		</div>
+
+		<div id="contacts" class="hue2 page">
+			<style>
+				#contacts ul .face {
+					float: left;
+					border-radius: 100%;
+					vertical-align: middle;
+					height: 2.5em;
+					margin-right: 5%;
+				}
+				#contacts ul, #contacts li {
+					overflow: visible;
+				}
+				#contacts .who {
+					display: inline-block;
+					margin-right: 2%;
+					min-width: 250px;
+					width: 15em;
+					text-align: left;
+					padding: 2%;
+					vertical-align: middle;
+				}
+				#contacts .what {
+				}
+				#contacts .spoke {
+				}
+			</style>
+			<p class="pad">Contacts</p>
+			<ul class="mid row col center">
+			</ul>
+			<div class="model">
+				<li class="who tint sap gully">
+					<div class="gap">
+						<span class="sort none"></span>
+						<img class="face act none" crossOrigin="Anonymous">
+						<big class="name"></big><br/>
+						<i class="alias"></i><br/>
+						<small>FB ID:</small> <span class="fbid"></span>
+					</div>
+				</li>
+			</div>
+			<div style="height: 10%;"></div>
+			<script>
+				$.as.route.page('contacts', () => {
+					if(!S.user.is){ return $.as.route('sign') }
+					//S.gun.get('@').time(async (data, key, time) => {
+
+					// TODO: BUG!! switch from `on` to `once` to get Martti's {_} empty object bug.
+					var $ul = $('#contacts ul');
+					S.user.get('old').get('fb').map().on(async function(data){
+						console.log('contact:', data);
+						var key = data.fbid, tmp;
+						if(!key){ return }
+						var $li = $($('#fbid'+key)[0] || $('#contacts .model .who').clone(true,true).attr('id', 'fbid'+key)[(tmp = $.as.sort(data.name||1, $ul.children('li').first()))[0]?'insertBefore':'appendTo'](tmp[0] || $ul));
+
+						$li.find('.name').text(data.name);
+						$li.find('.alias').text(data.alias);
+						$li.find('.fbid').text(data.fbid);
+						tmp = $li.find('img').attr('src', data.face || data.tmp);
+						if(!data.face){
+							var ref = this;
+							$.fn.upload.shrink(data.tmp, function(b64){
+								ref.get('face').put(b64);
+							}, 100); 
+						}
+						$('html, body').stop(true, true).animate({scrollTop: $ul.height()});
+					});
+					function img2b64(img, cb){
+						var c = document.createElement('canvas');
+						var ctx = c.getContext("2d");
+						ctx.drawImage(img, 10, 10);
+						cb(c.toDataURL());
+					}
+				});
+			</script>
+		</div>
+
+		<div id="tell" class="center">
+			<style>
+				#tell {
+					position: fixed;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 0;
+					overflow: visible;
+				}
+				#tell p {
+					top: -2em;
+					width: 50%;
+					border: solid #222 0.2em;
+					border-top: none;
+					padding: 1%;
+					opacity: 0;
+					visibility: hidden;
+					transition: visibility 2s, all 1s ease-in;
+				}
+				#tell .notify {
+					top: 0em;
+					opacity: 0.8;
+					visibility: visible;
+					transition: visibility 0s, all 0.25s ease-out;
+				}
+			</style>
+			<p class="mid black">Hello world!</p>
+		</div>
+		<!-- textarea id='debug' class="no-ne" style="position: fixed; bottom: 0; left: 0; width: 25%; height: 30%"></textarea -->
+		
+		<script>
+			$.as.route.page('person', () => {
+				if(!user.is){ return $.as.route('hi') }
+				var pub = location.hash.split('/').slice(-1)[0];
+				(pub === user._.pub? $('#say').show() : $('#say').hide());
+				as('#person', window.PUB = gun.get('pub/'+pub));
+			});
+
+			$(document).upload(function resize(e, up){
+				if(e.err){ return }
+				var m = $($("#d"+e.id)[0] || $('#d0').clone(true,true).attr('id', 'd'+e.id).css('backgroundImage', '').appendTo('#draft')).addClass('pulse');
+				if(up){ return up.shrink(e, resize, 1000) }
+				//console.log(e.id, e.base64);
+				m.removeClass('pulse').css({
+					backgroundImage: 'url(' + e.base64 + ')',
+					backgroundRepeat: 'no-repeat',
+					backgroundPosition: 'center',
+					backgroundSize: 'cover'
+				});
+			});
+		</script>
+		<script async src="../../gun/lib/fun.js"></script>
+		<script async src="../../gun/lib/normalize.js"></script>
+		<script async src="../../gun/lib/monotype.js"></script>
+		<script async src="../../gun/lib/meta.js"></script>
+	</body>
+</html>

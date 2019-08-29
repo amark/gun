@@ -17,14 +17,28 @@
 		<script src="./expect.js"></script>
 		<script></script>
 		<script src="../gun.js"></script>
+		<!-- script
+			src="https://cdn.jsdelivr.net/npm/gun/sea.js">
+		</script -->
+		<script 
+			src="../sea.js">
+		</script>
+		
+		<script src="../lib/radix.js"></script>
+		<script src="../lib/radisk.js"></script>
+		<script src="../lib/store.js"></script>
+		<script src="../lib/rindexed.js"></script>
+
+		<script src="./rad/rad.js"></script>
+		<script src="./sea/sea.js"></script>
 		<script src="./common.js"></script>
 		<script>
 		if(location.search){
 			Gun.debug = true;
 			console.log('async?', Gun.debug);
 		}
-		mocha.run(function(a,b,c){
-			return;
+		var run = mocha.run(function(a,b,c){
+			//document.body.prepend("MARK! REMEMBER TO REMOVE RETURN!");return;
 			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
 			if(yes){
 				if(location.search){
@@ -41,6 +55,11 @@
 			document.getElementById('mocha-report').id = 'mocha-report2';
 			Gun.debug = false;
 			mocha.run();*/
-		})</script>
+		});
+		run.on("fail", function(test, err){
+			console.log("!!!!!!!!!!!", test, err);
+			//alert(5);
+		})
+		</script>
 	</body>
 </html>

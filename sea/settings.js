@@ -1,39 +1,37 @@
 
-    const Buffer = require('./buffer')
-    const settings = {}
-    // Encryption parameters
-    const pbkdf2 = { hash: 'SHA-256', iter: 100000, ks: 64 }
+    var SEA = require('./root');
+    var Buffer = require('./buffer');
+    var s = {};
+    s.pbkdf2 = {hash: 'SHA-256', iter: 100000, ks: 64};
+    s.ecdsa = {
+      pair: {name: 'ECDSA', namedCurve: 'P-256'},
+      sign: {name: 'ECDSA', hash: {name: 'SHA-256'}}
+    };
+    s.ecdh = {name: 'ECDH', namedCurve: 'P-256'};
 
-    const ecdsaSignProps = { name: 'ECDSA', hash: { name: 'SHA-256' } }
-    const ecdsaKeyProps = { name: 'ECDSA', namedCurve: 'P-256' }
-    const ecdhKeyProps = { name: 'ECDH', namedCurve: 'P-256' }
-
-    const _initial_authsettings = {
-      validity: 12 * 60 * 60, // internally in seconds : 12 hours
-      hook: (props) => props  // { iat, exp, alias, remember }
-      // or return new Promise((resolve, reject) => resolve(props)
-    }
-    // These are used to persist user's authentication "session"
-    const authsettings = Object.assign({}, _initial_authsettings)
     // This creates Web Cryptography API compliant JWK for sign/verify purposes
-    const keysToEcdsaJwk = (pub, d) => {  // d === priv
-      //const [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
-      const [ x, y ] = pub.split('.') // new
-      var jwk = { kty: "EC", crv: "P-256", x: x, y: y, ext: true }
+    s.jwk = function(pub, d){  // d === priv
+      pub = pub.split('.');
+      var x = pub[0], y = pub[1];
+      var jwk = {kty: "EC", crv: "P-256", x: x, y: y, ext: true};
       jwk.key_ops = d ? ['sign'] : ['verify'];
       if(d){ jwk.d = d }
       return jwk;
+    };
+    s.recall = {
+      validity: 12 * 60 * 60, // internally in seconds : 12 hours
+      hook: function(props){ return props } // { iat, exp, alias, remember } // or return new Promise((resolve, reject) => resolve(props)
+    };
+
+    s.check = function(t){ return (typeof t == 'string') && ('SEA{' === t.slice(0,4)) }
+    s.parse = function p(t){ try {
+      var yes = (typeof t == 'string');
+      if(yes && 'SEA{' === t.slice(0,4)){ t = t.slice(3) }
+      return yes ? JSON.parse(t) : t;
+      } catch (e) {}
+      return t;
     }
 
-    Object.assign(settings, {
-      pbkdf2: pbkdf2,
-      ecdsa: {
-        pair: ecdsaKeyProps,
-        sign: ecdsaSignProps
-      },
-      ecdh: ecdhKeyProps,
-      jwk: keysToEcdsaJwk,
-      recall: authsettings
-    })
-    module.exports = settings
+    SEA.opt = s;
+    module.exports = s
   

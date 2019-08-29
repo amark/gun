@@ -104,7 +104,7 @@ Gun.dup = require('./dup');
 		if(!at){
 			if(!(cat.opt||empty).super){
 				ctx.souls[soul] = false;
-				return; 
+				return;
 			}
 			at = (ctx.$.get(soul)._);
 		}
@@ -151,11 +151,11 @@ Gun.dup = require('./dup');
 	}
 
 	Gun.on.get = function(msg, gun){
-		var root = gun._, soul = msg.get[_soul], node = root.graph[soul], has = msg.get[_has], tmp;
+		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
-		if(!node || !at){ return root.on('get', msg) }
+		if(!node){ return root.on('get', msg) }
 		if(has){
-			if(!obj_has(node, has)){ return root.on('get', msg) }
+			if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
 			node = Gun.state.to(node, has);
 			// If we have a key in-memory, do we really need to fetch?
 			// Maybe... in case the in-memory key we have is a local write
@@ -164,7 +164,7 @@ Gun.dup = require('./dup');
 			node = Gun.obj.copy(node);
 		}
 		node = Gun.graph.node(node);
-		tmp = at.ack;
+		tmp = (at||empty).ack;
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
@@ -185,13 +185,16 @@ Gun.dup = require('./dup');
 		if(text_is(tmp)){ tmp = [tmp] }
 		if(list_is(tmp)){
 			tmp = obj_map(tmp, function(url, i, map){
-				map(url, {url: url});
+				i = {}; i.id = i.url = url; map(url, i);
 			});
 			if(!obj_is(at.opt.peers)){ at.opt.peers = {}}
 			at.opt.peers = obj_to(tmp, at.opt.peers);
 		}
 		at.opt.peers = at.opt.peers || {};
-		obj_to(opt, at.opt); // copies options on to `at.opt` only if not already taken.
+		obj_map(opt, function each(v,k){
+			if(!obj_has(this, k) || text.is(v) || obj.empty(v)){ this[k] = v ; return }
+			obj_map(v, each, this[k]);
+		}, at.opt);
 		Gun.on('opt', at);
 		at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 		return gun;
@@ -201,7 +204,7 @@ Gun.dup = require('./dup');
 var list_is = Gun.list.is;
 var text = Gun.text, text_is = text.is, text_rand = text.random;
 var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-var state_lex = Gun.state.lex, _soul = Gun.val.rel._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 var empty = {}, u;
 
 console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
@@ -213,7 +216,7 @@ Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, feel free to ask for help on https://gitter.im/amark/gun and ask StackOverflow questions tagged with 'gun'!");
 ;"Please do not remove these messages unless you are paying for a monthly sponsorship, thanks!";
 
-if(typeof window !== "undefined"){ window.Gun = Gun }
+if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof common !== "undefined"){ common.exports = Gun } }catch(e){}
 module.exports = Gun;
 

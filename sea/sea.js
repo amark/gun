@@ -1,43 +1,18 @@
 
-    // Old Code...
-    const __gky10 = require('./shim')
-    const crypto = __gky10.crypto
-    const subtle = __gky10.subtle
-    const ossl = __gky10.ossl
-    const TextEncoder = __gky10.TextEncoder
-    const TextDecoder = __gky10.TextDecoder
-    const getRandomBytes = __gky10.random
-    const EasyIndexedDB = require('./indexed')
-    const Buffer = require('./buffer')
-    var settings = require('./settings');
-    const __gky11 = require('./settings')
-    const pbKdf2 = __gky11.pbkdf2
-    const ecdsaKeyProps = __gky11.ecdsa.pair
-    const ecdsaSignProps = __gky11.ecdsa.sign
-    const ecdhKeyProps = __gky11.ecdh
-    const keysToEcdsaJwk = __gky11.jwk
-    const sha1hash = require('./sha1')
-    const sha256hash = require('./sha256')
-    const recallCryptoKey = require('./remember')
-    const parseProps = require('./parse')
-
+    var shim = require('./shim');
     // Practical examples about usage found from ./test/common.js
-    const SEA = require('./root');
+    var SEA = require('./root');
     SEA.work = require('./work');
     SEA.sign = require('./sign');
     SEA.verify = require('./verify');
     SEA.encrypt = require('./encrypt');
     SEA.decrypt = require('./decrypt');
 
-    SEA.random = getRandomBytes;
-
-    // This is easy way to use IndexedDB, all methods are Promises
-    // Note: Not all SEA interfaces have to support this.
-    SEA.EasyIndexedDB = EasyIndexedDB;
+    SEA.random = SEA.random || shim.random;
 
     // This is Buffer used in SEA and usable from Gun/SEA application also.
     // For documentation see https://nodejs.org/api/buffer.html
-    SEA.Buffer = Buffer;
+    SEA.Buffer = SEA.Buffer || require('./buffer');
 
     // These SEA functions support now ony Promises or
     // async/await (compatible) code, use those like Promises.
@@ -45,11 +20,11 @@
     // Creates a wrapper library around Web Crypto API
     // for various AES, ECDSA, PBKDF2 functions we called above.
     // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
-    SEA.keyid = async (pub) => {
+    SEA.keyid = SEA.keyid || (async (pub) => {
       try {
         // base64('base64(x):base64(y)') => Buffer(xy)
         const pb = Buffer.concat(
-          Buffer.from(pub, 'base64').toString('utf8').split(':')
+          pub.replace(/-/g, '+').replace(/_/g, '/').split('.')
           .map((t) => Buffer.from(t, 'base64'))
         )
         // id is PGPv4 compliant raw key
@@ -63,7 +38,7 @@
         console.log(e)
         throw e
       }
-    }
+    });
     // all done!
     // Obviously it is missing MANY necessary features. This is only an alpha release.
     // Please experiment with it, audit what I've done so far, and complain about what needs to be added.
@@ -73,9 +48,9 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require('./gun');
+    var Gun = (SEA.window||{}).Gun || require((typeof common == "undefined"?'.':'')+'./gun', 1);
     Gun.SEA = SEA;
-    SEA.Gun = Gun;
+    SEA.GUN = SEA.Gun = Gun;
 
     module.exports = SEA
   
