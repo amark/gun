@@ -31,8 +31,9 @@ var Graph = {};
 			env.map = env;
 		}
 		if(env.soul){
-			at.rel = Val.rel.ify(env.soul);
+			at.link = Val.link.ify(env.soul);
 		}
+		env.shell = (as||{}).shell;
 		env.graph = env.graph || {};
 		env.seen = env.seen || [];
 		env.as = env.as || as;
@@ -45,14 +46,16 @@ var Graph = {};
 		at.env = env;
 		at.soul = soul;
 		if(Node.ify(at.obj, map, at)){
-			//at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
-			env.graph[Val.rel.is(at.rel)] = at.node;
+			at.link = at.link || Val.link.ify(Node.soul(at.node));
+			if(at.obj !== env.shell){
+				env.graph[Val.link.is(at.link)] = at.node;
+			}
 		}
 		return at;
 	}
 	function map(v,k,n){
 		var at = this, env = at.env, is, tmp;
-		if(Node._ === k && obj_has(v,Val.rel._)){
+		if(Node._ === k && obj_has(v,Val.link._)){
 			return n._; // TODO: Bug?
 		}
 		if(!(is = valid(v,k,n, at,env))){ return }
@@ -61,8 +64,8 @@ var Graph = {};
 			if(obj_has(v, Node._) && Node.soul(v)){ // ? for safety ?
 				at.node._ = obj_copy(v._);
 			}
-			at.node = Node.soul.ify(at.node, Val.rel.is(at.rel));
-			at.rel = at.rel || Val.rel.ify(Node.soul(at.node));
+			at.node = Node.soul.ify(at.node, Val.link.is(at.link));
+			at.link = at.link || Val.link.ify(Node.soul(at.node));
 		}
 		if(tmp = env.map){
 			tmp.call(env.as || {}, v,k,n, at);
@@ -81,14 +84,14 @@ var Graph = {};
 		}
 		tmp = node(env, {obj: v, path: at.path.concat(k)});
 		if(!tmp.node){ return }
-		return tmp.rel; //{'#': Node.soul(tmp.node)};
+		return tmp.link; //{'#': Node.soul(tmp.node)};
 	}
 	function soul(id){ var at = this;
-		var prev = Val.link.is(at.rel), graph = at.env.graph;
-		at.rel = at.rel || Val.rel.ify(id);
-		at.rel[Val.rel._] = id;
+		var prev = Val.link.is(at.link), graph = at.env.graph;
+		at.link = at.link || Val.link.ify(id);
+		at.link[Val.link._] = id;
 		if(at.node && at.node[Node._]){
-			at.node[Node._][Val.rel._] = id;
+			at.node[Node._][Val.link._] = id;
 		}
 		if(obj_has(graph, prev)){
 			graph[id] = graph[prev];
@@ -128,13 +131,13 @@ Graph.node = function(node){
 	}
 	function map(v,k){ var tmp, obj;
 		if(Node._ === k){
-			if(obj_empty(v, Val.rel._)){
+			if(obj_empty(v, Val.link._)){
 				return;
 			}
 			this.obj[k] = obj_copy(v);
 			return;
 		}
-		if(!(tmp = Val.rel.is(v))){
+		if(!(tmp = Val.link.is(v))){
 			this.obj[k] = v;
 			return;
 		}

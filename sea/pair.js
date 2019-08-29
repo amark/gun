@@ -2,22 +2,32 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    var Buff = (typeof Buffer !== 'undefined')? Buffer : shim.Buffer;
+
+    SEA.name = SEA.name || (async (cb, opt) => { try {
+      if(cb){ try{ cb() }catch(e){console.log(e)} }
+      return;
+    } catch(e) {
+      console.log(e);
+      SEA.err = e;
+      if(SEA.throw){ throw e }
+      if(cb){ cb() }
+      return;
+    }});
 
     //SEA.pair = async (data, proof, cb) => { try {
-    SEA.pair = async (cb) => { try {
+    SEA.pair = SEA.pair || (async (cb, opt) => { try {
 
-      const ecdhSubtle = shim.ossl || shim.subtle
+      var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
       var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
-        const key = {};
+        var key = {};
         key.priv = (await shim.subtle.exportKey('jwk', keys.privateKey)).d;
-        const pub = await shim.subtle.exportKey('jwk', keys.publicKey)
+        var pub = await shim.subtle.exportKey('jwk', keys.publicKey);
         //const pub = Buff.from([ x, y ].join(':')).toString('base64') // old
-        key.pub = pub.x+'.'+pub.y // new
+        key.pub = pub.x+'.'+pub.y; // new
         // x and y are already base64
         // pub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
@@ -32,11 +42,11 @@
       var dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
-        const key = {};
+        var key = {};
         key.epriv = (await ecdhSubtle.exportKey('jwk', keys.privateKey)).d;
-        const pub = await ecdhSubtle.exportKey('jwk', keys.publicKey)
+        var pub = await ecdhSubtle.exportKey('jwk', keys.publicKey);
         //const epub = Buff.from([ ex, ey ].join(':')).toString('base64') // old
-        key.epub = pub.x+'.'+pub.y // new
+        key.epub = pub.x+'.'+pub.y; // new
         // ex and ey are already base64
         // epub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
         // but split on a non-base64 letter.
@@ -48,14 +58,16 @@
         else { throw e }
       } dh = dh || {};
 
-      const r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
-      if(cb){ cb(r) }
+      var r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
+      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
+      console.log(e);
       SEA.err = e;
+      if(SEA.throw){ throw e }
       if(cb){ cb() }
       return;
-    }}
+    }});
 
     module.exports = SEA.pair;
   

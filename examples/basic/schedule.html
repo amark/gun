@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+  <link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+</head>
+<body>
+<h1><button id="left">&larr;</button> <span id="date"></span> Schedule <button id="right">&rarr;</button></h1>
+
+<form id="add">
+  <style>input[type="number"]{ width: 4em; }</style>
+  <input id="what" placeholder="What?">
+  <input id="where" placeholder="Where?">
+  <input type="number" id="hour"><script>hour.value = new Date().getHours() % 12 || 12</script> :
+  <input type="number" id="min" value="0">
+  <select id="ampm">
+    <option value="">am</option>
+    <option value="1">pm</option>
+    <script>ampm.children[new Date().getHours() < 12? 0 : 1].selected='selected'</script>
+  </select>
+  <input id="id" type="hidden">
+  <input id="go" type="submit" value="add">
+  <div id="err"></div>
+</form>
+
+<style>
+  .none { display: none; }
+  p, ul, li { list-style-type: none; margin: 0; padding: 0; }
+</style>
+
+<ul></ul>
+
+<div class="model none">
+  <li>
+    <b class="when"></b>
+    <span class="what"></span>
+    <u class="where"></u>
+    <span class="sort none">0</span>
+    <button class="edit"><</button>
+  </li>
+</div>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/nts.js"></script>
+<script src="../../../gun/lib/webrtc.js"></script>
+
+<script>
+var name = 'schedule/' + location.hash.slice(1);
+var gun = Gun(location.origin + '/gun');
+//var gun = Gun('http://localhost:8765/gun');
+//var gun = Gun();
+
+$('#add').on('submit', function(event){
+  event.preventDefault();
+  event = {};
+  if(!schedule.on){ return err.innerText = "No date!" }
+  event.when = new Date(schedule.on.getFullYear(), schedule.on.getMonth(), schedule.on.getDate(), hour.value % 12 + (ampm.value? 12 : 0), min.value).getTime();
+  if(!(event.what = what.value)){ return err.innerText = "No description!" }
+  if(!(event.where = where.value)){ return err.innerText = "No location!" }
+  var day = gun.get(name+now(event.when));
+  day.get(id.value || Gun.text.random(9)).put(event);
+  what.value = where.value = id.value = err.innerText = '';
+  go.value = 'add';
+  schedule(event.when);
+});
+
+function schedule(ms){
+  var day = new Date(ms);
+  if(schedule.on && schedule.on.toLocaleDateString() === day.toLocaleDateString()){ return } schedule.on = day;
+  $('#date').text(day.getFullYear()+' '+ day.toString().split(' ')[1] +' '+day.getDate());
+  day = gun.get(name+now(ms));
+  $('ul').empty();
+  day.map().on(UI);
+}
+schedule(+new Date());
+
+$('#left').on('click', function(){ schedule(+new Date(schedule.on.getFullYear(), schedule.on.getMonth(), schedule.on.getDate() - 1)) });
+$('#right').on('click', function(){ schedule(+new Date(schedule.on.getFullYear(), schedule.on.getMonth(), schedule.on.getDate() + 1)) });
+
+function UI(event, id){
+  if(!event){ return }
+  var when = new Date(event.when);
+  if(schedule.on && when.toLocaleDateString() !== schedule.on.toLocaleDateString()){ return }
+  var ul = $('ul')
+  var li = $("#cal-" + id)[0]; // grab if exists
+  if(!li){
+    li = $('.model li').clone(true) // else create it
+      .attr('id', 'cal-' + id);
+  } 
+  li = (UI.last = sort(event.when, ul.children('li').last())[0])? $(li).insertAfter(UI.last) : $(li).prependTo(ul);
+  li.find('.what').text(event.what);
+  li.find('.where').text(event.where);
+  li.find('.sort').text(event.when);
+  li.find('.edit').val(id);
+
+  var time = when.toLocaleTimeString();
+  li.find('.when').text(time.split(':').slice(0,2).join(':') + time.slice(-2));
+};
+
+$(document).on('click', '.edit', function(){
+  go.value = 'update';
+  id.value = this.value;
+  what.value = $(this).parent().find('.what').text();
+  where.value = $(this).parent().find('.where').text();
+  var when = new Date(parseFloat($(this).parent().find('.sort').text()));
+  hour.value = when.getHours() % 12 || 12;
+  min.value = when.getMinutes();
+  ampm.value = when.getHours() < 12? '' : 1;
+  what.focus();
+});
+
+function now(t){
+  return new Date(t || Gun.state()).toLocaleDateString().split('/').reverse().join('/')
+}
+
+function sort(num, li){ return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity)? li : sort(num, li.prev()) }
+</script>
+</body>
+</html>

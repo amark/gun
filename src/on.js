@@ -75,21 +75,25 @@ Gun.chain.once = function(cb, opt){
 }
 
 function val(msg, eve, to){
+	if(!msg.$){ eve.off(); return }
 	var opt = this.as, cat = opt.at, gun = msg.$, at = gun._, data = at.put || msg.put, link, tmp;
 	if(tmp = msg.$$){
 		link = tmp = (msg.$$._);
-		if(u === tmp.put){
-			return;
+		if(u !== link.put){
+			data = link.put;
 		}
-		data = tmp.put;
 	}
 	if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
-	if(!to && (at.soul || at.link || (link && !(0 < link.ack)))){
+	eve.ack = (eve.ack||0)+1;
+	if(!to && u === data && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
+	if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
+	|| (u === data && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
 		tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 			val.call({as:opt}, msg, eve, tmp || 1);
 		}, opt.wait || 99);
 		return;
 	}
+	if(link && u === link.put && (tmp = rel.is(data))){ data = Gun.node.ify({}, tmp) }
 	eve.rid(msg);
 	opt.ok.call(gun || opt.$, data, msg.get);
 }
@@ -99,6 +103,7 @@ Gun.chain.off = function(){
 	var gun = this, at = gun._, tmp;
 	var cat = at.back;
 	if(!cat){ return }
+	at.ack = 0; // so can resubscribe.
 	if(tmp = cat.next){
 		if(tmp[at.get]){
 			obj_del(tmp, at.get);

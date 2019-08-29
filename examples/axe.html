@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+  <title>Testing AXE</title>
+</head>
+
+<body>
+<h3 id="pid"></h3>
+  <script src="../gun.js"></script>
+  <script src="../gun/axe.js"></script>
+  <script src="../gun/lib/radix.js"></script>
+  <script src="../gun/lib/webrtc.js"></script>
+  <!-- <script src="../sea.js"></script> -->
+  <script>
+  var pid = location.hash.slice(1);
+
+  var opt = ({
+    peers: [`${location.origin}/gun`]
+  });
+
+  if (pid) { opt.pid = pid; }
+
+  Gun.on('opt', function(ctx) {
+    this.to.next(ctx);
+    ctx.on('hi', function(opt) {
+//       console.log('HI!! PEER', new Date(), opt.pid);
+        setTimeout(function() {
+            document.getElementById('pid').innerHTML = gun._.opt.pid;
+        });
+    });
+//     if (pid) {
+//     ctx.on('out', function(msg) {
+//       msg.pid = pid;
+//       this.to.next(msg);
+//     });
+//     }
+  });
+
+  var gun = Gun(opt);
+  //var user = gun.user();
+  </script>
+</body>
+</html>

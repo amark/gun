@@ -26,10 +26,10 @@ State.lex = function(){ return State().toString(36).replace('.','') }
 State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 	if(!n || !n[N_]){ // reject if it is not node-like.
 		if(!soul){ // unless they passed a soul
-			return; 
+			return;
 		}
 		n = Node.soul.ify(n, soul); // then make it so!
-	} 
+	}
 	var tmp = obj_as(n[N_], State._); // grab the states data.
 	if(u !== k && k !== N_){
 		if(num_is(s)){
@@ -42,7 +42,7 @@ State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 	return n;
 }
 State.to = function(from, k, to){
-	var val = from[k]; // BUGGY!
+	var val = (from||{})[k];
 	if(obj_is(val)){
 		val = obj_copy(val);
 	}

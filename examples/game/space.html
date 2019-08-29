@@ -7,13 +7,15 @@
 			<div class="laser"></div>
 		</div>
 	</div>
+	<p id="debug" style="position: fixed; bottom: 0px; color: white; height: 1em;"></p>
 	<script src="../jquery.js"></script>
-	<script src="/gun.js"></script>
-	<script src="/gun/nts.js"></script>
+	<script src="../../../gun/gun.js"></script>
+	<script src="../../../gun/nts.js"></script>
+	<script src="../../../gun/lib/webrtc.js"></script>
 	<script>
 		// Thanks to https://github.com/dmcinnes/HTML5-Asteroids
 		//var gun = Gun();
-		var gun = Gun(location.origin+'/gun'); 
+		var gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
 		var game = {gun: gun.get('example/game/space'), area: {}, ships: {}};
 		game.keys = {38: 'up', 37: 'left', 39: 'right', 40: 'down', 32: 'space'};
 		$(document).on('keydown', function(e){
@@ -178,6 +180,7 @@
 		game.start = function(){
 			game.now = Gun.state();
 			game.resize();
+			game.ship();
 			game.gun.get('players').map().on(function(data, id){
 				data = Gun.obj.copy(data);
 				data.x = data.x * game.area.x;
@@ -185,7 +188,6 @@
 				data.id = data.id || id;
 				game.ship(data);
 			});
-			game.ship();
 			var frame = game.frame, ships = game.ships;
 			var last = game.now, now, diff, delta;
 			setInterval(game.sync, 99);
@@ -203,6 +205,27 @@
 		$(function(){
 			game.start();
 		});
+
+		// test WebRTC
+		gun.on('hi', function(peer){
+			console.log("hi!", peer);
+			if(peer.url){ return }
+			Gun.obj.map(gun.back('opt.peers'), function(peer){
+				if(!peer.url || !peer.wire){ return }
+				peer.wire._send = peer.wire.send;
+				peer.wire.send = send;
+				var tmp = 'GOBBLE GOBBLE: Not sending any non-WebRTC messages to ' + peer.url;
+				console.log(tmp);
+				$('#debug').text(tmp);
+			});
+		});
+		function send(raw){
+			if(!raw){ return }
+			if(raw.indexOf('rtc') >= 0){
+				if(!this._send){ return }
+				return this._send(raw);
+			}
+		}
 	</script>
 	<style>
 		html, body {
