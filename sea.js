@@ -3,6 +3,10 @@
   /* UNBUILD */
   var root;
   if(typeof window !== "undefined"){ root = window }
+  if (typeof btoa === "undefined") {
+    global.btoa = require("btoa");
+    global.atob = require("atob");
+  }
   if(typeof global !== "undefined"){ root = global }
   root = root || {};
   var console = root.console || {log: function(){}};
@@ -158,6 +162,9 @@
 
     if(SEA.window){
       api.crypto = window.crypto || window.msCrypto;
+      if(!api.crypto) {
+        api.crypto = require('isomorphic-webcrypto');
+      }
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
@@ -174,8 +181,10 @@
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
-        const WebCrypto = USE('node-webcrypto-ossl', 1);
-        api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+        // const WebCrypto = USE('node-webcrypto-ossl', 1);
+        // api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+        const isocrypto = require('isomorphic-webcrypto');
+        api.ossl = api.subtle = isocrypto.subtle
       //}catch(e){
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
       //}
