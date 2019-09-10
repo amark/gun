@@ -127,7 +127,6 @@ function batch(){ var as = this;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,k){ if(v){ return true } }
-//console.debug(999,1); var C = 0; setInterval(function(){ try{ debug.innerHTML = C }catch(e){console.log(e)} }, 500);
 
 function map(v,k,n, at){ var as = this;
 	var is = Gun.is(v);
@@ -157,7 +156,7 @@ function soul(id, as, msg, eve){
 	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 	if(eve){ eve.stun = true }
 	if(!id){ // polyfill async uuid for SEA
-		at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+		as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 			if(err){ return Gun.log(err) } // TODO: Handle error.
 			solve(at, at.dub = at.dub || id, cat, as);
 		});

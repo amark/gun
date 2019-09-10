@@ -113,15 +113,22 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     it('radix reverse', function(done){
         var r = Radix(), tmp;
-        r('alice', 1);r('bob', 2);r('carl', 3);r('dave', 4);
+        r('alice', 1);r('bob', 2);r('carl', 3);r('carlo',4);
+        r('dave', 5);r('zach',6);r('zachary',7);
+        var by = ['alice','bob','carl','carlo','dave','zach','zachary'];
+        Gun.obj.map(by, function(k,i){
+            r(k,i);
+        });
         Radix.map(r, function(v,k, a,b){
+            expect(by.pop()).to.be(k);
             tmp = v;
         }, {reverse: 1});
         expect(tmp).to.be(1);
+        expect(by.length).to.be(0);
         Radix.map(r, function(v,k, a,b){
             tmp = v;
         });
-        expect(tmp).to.be(4);
+        expect(tmp).to.be(7);
         done();
     });
   });

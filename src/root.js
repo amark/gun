@@ -153,6 +153,7 @@ Gun.dup = require('./dup');
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
+		// queue concurrent GETs?
 		if(!node){ return root.on('get', msg) }
 		if(has){
 			if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
@@ -193,6 +194,7 @@ Gun.dup = require('./dup');
 		at.opt.peers = at.opt.peers || {};
 		obj_map(opt, function each(v,k){
 			if(!obj_has(this, k) || text.is(v) || obj.empty(v)){ this[k] = v ; return }
+			if(v && v.constructor !== Object && !list_is(v)){ return }
 			obj_map(v, each, this[k]);
 		}, at.opt);
 		Gun.on('opt', at);
