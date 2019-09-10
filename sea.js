@@ -170,17 +170,19 @@
       }
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
-      api.TextDecoder = window.TextDecoder;
+      api.TextDecoder = window.TextDecoder;      
       api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+    }
+    if(!api.TextDecoder)
+    {
+      const { TextEncoder, TextDecoder } = require('text-encoding')
+      api.TextDecoder = TextDecoder
+      api.TextEncoder = TextEncoder
     }
     if(!api.crypto){try{
       var crypto = USE('crypto', 1);
-      const { TextEncoder, TextDecoder } = USE('text-encoding', 1)
       Object.assign(api, {
         crypto,
-        //subtle,
-        TextEncoder,
-        TextDecoder,
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
