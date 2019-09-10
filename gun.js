@@ -1235,7 +1235,7 @@
 				gun = gun.$;
 			} else
 			if(key instanceof Function){
-				if(true === cb){ return soul(this, key, cb, as) }
+				if(true === cb){ return soul(this, key, cb, as), this }
 				gun = this;
 				var at = gun._, root = at.root, tmp = root.now, ev;
 				as = cb || {};
@@ -1292,15 +1292,22 @@
 		}
 		function soul(gun, cb, opt, as){
 			var cat = gun._, acks = 0, tmp;
-			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat), gun }
-			gun.get(function(msg, ev){
+			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat) }
+			if(cat.jam){ return cat.jam.push([cb, as]) }
+			cat.jam = [[cb,as]];
+			gun.get(function(msg, eve){
 				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
 					return;
 				}
-				ev.rid(msg);
+				eve.rid(msg);
 				var at = ((at = msg.$) && at._) || {};
-				tmp = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
-				cb(tmp, as, msg, ev);
+				tmp = cat.jam; Gun.obj.del(cat, 'jam');
+				Gun.obj.map(tmp, function(as, cb){
+					cb = as[0]; as = as[1];
+					if(!cb){ return }
+					var id = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
+					cb(id, as, msg, eve);
+				});
 			}, {out: {get: {'.':true}}});
 			return gun;
 		}
@@ -1361,9 +1368,9 @@
 		Gun.chain.put = function(data, cb, as){
 			// #soul.has=value>state
 			// ~who#where.where=what>when@was
-			// TODO: BUG! Put probably cannot handle plural chains!
+			// TODO: BUG! Put probably cannot handle plural chains! `!as` is quickfix test.
 			var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
-			if(!ctx.puta){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+			/*if(!ctx.puta && !as){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
 				(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
 				if(ctx.puto){ return }
 				ctx.puto = setTimeout(function drain(){
@@ -1373,7 +1380,7 @@
 					ctx.stack = ctx.puts = ctx.puto = null;
 				}, 0);
 				return gun;
-			} ++ctx.puts } else { ctx.puts = 1 } }
+			} ++ctx.puts } else { ctx.puts = 1 } }*/
 			as = as || {};
 			as.data = data;
 			as.via = as.$ = as.via || as.$ || gun;
@@ -1496,6 +1503,7 @@
 					ref = ref.get(path[i]);
 				}
 				if(is){ ref = v }
+				//if(as.not){ (ref._).dub = Gun.text.random() } // This might optimize stuff? Maybe not needed anymore. Make sure it doesn't introduce bugs.
 				var id = (ref._).dub;
 				if(id || (id = Gun.node.soul(at.obj))){
 					ref.back(-1).get(id);
@@ -1556,6 +1564,7 @@
 						if(at.link || at.soul){ return at.link || at.soul }
 						as.data = obj_put({}, at.get, as.data);
 					});
+					as.not = true; // maybe consider this?
 				}
 				tmp = tmp || at.soul || at.link || at.dub;// || at.get;
 				at = tmp? (at.root.$.get(tmp)._) : at;
@@ -1815,7 +1824,7 @@
 			// See the next 'opt' code below for actual saving of data.
 			var ev = this.to, opt = root.opt;
 			if(root.once){ return ev.next(root) }
-			//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+			if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless! // actually, this doesn't help, per @go1dfish 's observation. Disabling for now, will need better solution later.
 			opt.prefix = opt.file || 'gun/';
 			var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 			var empty = Gun.obj.empty, id, to, go;
