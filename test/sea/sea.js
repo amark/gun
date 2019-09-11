@@ -37,7 +37,12 @@ describe('SEA', function(){
   var gun;
   var pub;
   describe('Utility', function(){
-
+    it('generates aeskey from jwk', function(done) {
+      SEA.aeskey('x','x').then(k => {
+        expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')
+        done()
+      })
+    })
     it('quickstart', function(done){
       SEA.pair(function(pair){
       SEA.encrypt('hello self', pair, function(enc){

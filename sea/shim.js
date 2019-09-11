@@ -6,24 +6,31 @@
 
     if(SEA.window){
       api.crypto = window.crypto || window.msCrypto;
+      if(!api.crypto) {
+        api.crypto = require('isomorphic-webcrypto');
+      }
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
-      api.TextDecoder = window.TextDecoder;
+      api.TextDecoder = window.TextDecoder;      
       api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+    }
+    if(!api.TextDecoder)
+    {
+      const { TextEncoder, TextDecoder } = require('text-encoding')
+      api.TextDecoder = TextDecoder
+      api.TextEncoder = TextEncoder
     }
     if(!api.crypto){try{
       var crypto = require('crypto', 1);
-      const { TextEncoder, TextDecoder } = require('text-encoding', 1)
       Object.assign(api, {
         crypto,
-        //subtle,
-        TextEncoder,
-        TextDecoder,
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
-        const WebCrypto = require('node-webcrypto-ossl', 1);
-        api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+        // const WebCrypto = require('node-webcrypto-ossl', 1);
+        // api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+        const isocrypto = require('isomorphic-webcrypto');
+        api.ossl = api.subtle = isocrypto.subtle
       //}catch(e){
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
       //}
