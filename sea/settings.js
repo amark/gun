@@ -18,6 +18,13 @@
       if(d){ jwk.d = d }
       return jwk;
     };
+    
+    s.keyTojwk = function(keyBytes) {
+      var jwkKeyString = keyBytes.toString('base64')
+      jwkKeyString = jwkKeyString.replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
+      jwkKeyString = { kty: "oct", k: jwkKeyString, ext: false, alg: "A256GCM"};
+      return jwkKeyString
+    }
     s.recall = {
       validity: 12 * 60 * 60, // internally in seconds : 12 hours
       hook: function(props){ return props } // { iat, exp, alias, remember } // or return new Promise((resolve, reject) => resolve(props)
