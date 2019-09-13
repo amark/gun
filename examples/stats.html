@@ -1,0 +1,146 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+<style>
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	html, body {
+		font-family: "Oxygen", sans-serif;
+	}
+	svg, .ct-chart * {
+		overflow: visible;
+	}
+	.ct-series-a .ct-line,
+	.ct-series-a .ct-point {
+	  str-oke: blue !important;
+	}
+
+	.ct-series-b .ct-line,
+	.ct-series-b .ct-point {
+	  stroke: green !important;
+	}
+
+	.tall { height: 10em; }
+</style>
+
+<input id="url" class="center none" placeholder="enter peer stats source url">
+
+<div class="center"><span class="shout" id="peers">0</span> peers <span class="shout" id="time">0</span> min <span class="shout" id="nodes">0</span> nodes <span class="shout" id="hours">0</span> hours</div>
+
+<div class="leak" style="padding: 0 2em;">
+	<div class="leak ct-mem ct-chart ct-perfect-fourth tall"></div>
+</div>
+
+<div class="center leak" style="padding: 0 2em;">
+	<div class="unit col leak ct-damc ct-chart tall" style="width: 49%;"></div>
+	<div class="unit col leak ct-damd ct-chart tall" style="width: 49%;"></div>
+</div>
+
+<div class="center leak" style="padding: 0 2em;">
+	<div class="unit col leak ct-radc ct-chart tall" style="width: 49%;"></div>
+	<div class="unit col leak ct-radt ct-chart tall" style="width: 49%;"></div>
+</div>
+<div class="center"><span id="rerr"></span></div>
+
+<div class="center leak" style="padding: 0 2em;">
+	<div class="leak ct-cpu ct-chart ct-perfect-fourth tall"></div>
+</div>
+
+<script src="./jquery.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+<script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<script>
+var stats = {slide: [0,0,0,0,0], din: [0,0,0,0,0], dout: [0,0,0,0,0], dind: [0,0,0,0,0], doutd: [0,0,0,0,0], rgetc: [0,0,0,0,0], rputc: [0,0,0,0,0]};
+setInterval(function(){
+	stats.show();
+}, 1000 * 15);
+stats.show = async function(data){ //$.getJSON(url.value||(location.origin+'/gun/stats.radata'), function(data){ console.log(data);
+	data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+	console.log(data);
+	$('#peers').text(data.peers.count);
+	$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
+	$('#nodes').text(data.node.count);
+	$('#hours').text((data.up.time / 60 / 60).toFixed(0));
+
+	$('#dinc').text(data.dam.in.count);
+	$('#dind').text((data.dam.in.done / 1024 / 1024).toFixed(1));
+	$('#doutc').text(data.dam.out.count);
+	$('#doutd').text((data.dam.out.done / 1024 / 1024).toFixed(1));
+
+	stats.slide.push(data.memory.heapTotal / 1024 / 1024); stats.slide = stats.slide.slice(1);
+	new Chartist.Line('.ct-mem', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.slide]
+	}, {fullWidth: true, low: 0, axisY: {
+    labelInterpolationFnc: function(v) { return v+'MB' }
+  }});
+
+	stats.din.push(data.dam['in'].count); stats.din = stats.din.slice(1);
+	stats.dout.push(data.dam.out.count); stats.dout = stats.dout.slice(1);
+	new Chartist.Line('.ct-damc', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.dout, stats.din]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'msgs' }
+  }});
+
+	stats.dind.push(data.dam['in'].done / 1024 / 1024); stats.dind = stats.dind.slice(1);
+	stats.doutd.push(data.dam.out.done / 1024 / 1024); stats.doutd = stats.doutd.slice(1);
+	new Chartist.Line('.ct-damd', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.doutd, stats.dind]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'MB' }
+  }});
+
+	try{ $('#rerr').text(data.rad.put.err || data.rad.get.err) }catch(e){}
+
+	try{
+	stats.rgetc.push(data.rad.get.count); stats.rgetc = stats.rgetc.slice(1);
+	stats.rputc.push(data.rad.put.count); stats.rputc = stats.rputc.slice(1);
+	new Chartist.Line('.ct-radc', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.rputc, stats.rgetc]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'io' }
+  }});
+	}catch(e){}
+
+	try{
+	stats.radgt = Object.values(data.rad.get.time).map(function(n){ return n/1000 });
+	stats.radpt = Object.values(data.rad.put.time).map(function(n){ return n/1000 });
+	new Chartist.Line('.ct-radt', {
+	  // A labels array that can contain any sort of values
+	  //labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.radpt, stats.radgt]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'sec' }
+  }});
+	}catch(e){}
+
+	new Chartist.Line('.ct-cpu', {
+	  // A labels array that can contain any sort of values
+	  labels: ['-15min', '-5min', '1min'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [data.cpu.loadavg.reverse()]
+	}, {fullWidth: true, low: 0, axisY: {
+    labelInterpolationFnc: function(v) { return v+'cpu' }
+  }});
+//})
+}
+stats.show();
+</script>
+</body>
+</html>

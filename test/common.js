@@ -1,5 +1,4 @@
 describe('Gun', function(){
-
 	var root;
 	(function(){
 		var env;
@@ -7,7 +6,10 @@ describe('Gun', function(){
 		if(typeof window !== 'undefined'){ env = window }
 		root = env.window? env.window : global;
 		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
+		try{ localStorage.clear() }catch(e){}
+		try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
+  	try{ require('../lib/fsrm')('radatatest') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');
 		if(root.Gun){
 			root.Gun = root.Gun;
@@ -19,6 +21,7 @@ describe('Gun', function(){
 			//require('../lib/file');
 			require('../lib/store');
 			require('../lib/rfs');
+			require('./rad/rad.js');
 			require('./sea/sea.js');
 		}
 	}(this));
@@ -185,13 +188,13 @@ describe('Gun', function(){
 			it('match',function(){
 				expect(Gun.text.match("user/mark", 'user/mark')).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
 				expect(Gun.text.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o'})).to.be.ok();
-				expect(Gun.text.match("user/amber/nadal", {'*': 'user/', '>': 'j', '<': 'o'})).to.not.be.ok();
-				expect(Gun.text.match("user/amber/nadal", {'*': 'user/', '>': 'a', '<': 'c'})).to.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'a', '<': 'c'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
+				expect(Gun.text.match("user/amber/nadal", {'>': 'user/j', '<': 'user/o'})).to.not.be.ok();
+				expect(Gun.text.match("user/amber/nadal", {'>': 'user/a', '<': 'user/c'})).to.be.ok();
+				expect(Gun.text.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
+				return; // below is OLD bloat, still available in lib/match.js
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o', '?': 'm/n'})).to.be.ok();
 				expect(Gun.text.match("user/amber/cazzell", {'*': 'user/', '?': 'm/n'})).to.not.be.ok();
 				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '-': 'mad'})).to.be.ok();
@@ -207,6 +210,7 @@ describe('Gun', function(){
 				expect(Gun.text.match("user/mark/rachel/timothy/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.not.be.ok();
 				expect(Gun.text.match("photo/kitten.jpg", {'*': 'photo/', '!': '.jpg'})).to.be.ok();
 				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '!': '.jpg'})).to.not.be.ok();
+				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 			});
 		});
 		describe('List', function(){
@@ -613,6 +617,7 @@ describe('Gun', function(){
 		});
 		describe('Gun Safety', function(){
 			/* WARNING NOTE: Internal API has significant breaking changes! */
+
 			var gun = Gun();
 			it('is',function(){
 				expect(Gun.is(gun)).to.be(true);
@@ -1264,6 +1269,16 @@ describe('Gun', function(){
 
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
+		if(Gun.window && location.search){
+			/*console.log("LOCALHOST PEER MUST BE ON!");
+			var peer = {url: 'http://localhost:8765/gun'};
+			Gun.on('opt', function(root){
+				if(root.opt.test_no_peer){ return this.to.next(root) }
+				root.opt.peers = root.opt.peers || {};
+				root.opt.peers['http://localhost:8765/gun'] = peer;
+				this.to.next(root);
+			});*/
+		}
 		var gun = Gun();
 
 		it.skip('gun chain separation', function(done){ // TODO: UNDO!
@@ -1372,7 +1387,7 @@ describe('Gun', function(){
 		});
 
 		describe('plural chains', function(){
-			this.timeout(5000);
+			this.timeout(9000);
 			it('uncached synchronous map on', function(done){
 				/*
 					Biggest challenges so far:
@@ -1549,6 +1564,7 @@ describe('Gun', function(){
 							//expect(count.Alice).to.be(1);
 							//expect(count.Bob).to.be(1);
 							//expect(count['undefined']).to.be(1);
+							if(done.c){ return } done.c = 1;
 							done();
 						},10);
 					}
@@ -3037,7 +3053,7 @@ describe('Gun', function(){
 		});
 
 		it('get put get get put reload get get then get', function(done){
-			this.timeout(6000);
+			this.timeout(9000);
 			var gun = Gun();
 
 			gun.get('stef').put({name:'Stef'});
@@ -3070,7 +3086,7 @@ describe('Gun', function(){
 					if(done.c){ return } done.c = 1;
 					done();
 				});
-			},5000);
+			},1200);
 		});
 
 		it('get get get any parallel', function(done){
@@ -3580,6 +3596,7 @@ describe('Gun', function(){
 		});
 
 		it('Soul above but not beneath', function(done){
+			this.timeout(5000);
 			var gun = Gun();
 
 			var a = gun.get('sabnb');
@@ -3663,24 +3680,24 @@ describe('Gun', function(){
 
 		it('get map should not slowdown', function(done){
 			this.timeout(5000);
-			var gun = Gun().get('g/m/no/slow');
+			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
-			var prev, diff, max = 25, total = 9, largest = -1, gone = {};
+			var prev, diff, max = 25, total = 9, largest = -1, gone = {}, u;
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
 			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.get('history').map().on(function(time, index){
-				//console.log(">>>", index, time);
 				diff = Gun.time.is() - time;
+				//console.log(">>>", index, time, diff);
 				//return;
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;
-			  //console.log(diff, '<', max);
 			  expect(diff > max).to.not.be.ok();
 			});
 			var turns = 0;
 			var many = setInterval(function(){
 				if(turns > total || (diff || 0) > (max + 5)){
+					if(u === diff){ return }
 					clearTimeout(many);
 			  	expect(Gun.num.is(diff)).to.be.ok();
 			  	if(done.c){ return } done.c = 1;
@@ -3726,6 +3743,36 @@ describe('Gun', function(){
 			setTimeout(function(){
 				gun.get('m/s/key').put({property: 'newValue'});
 			}, 1000);
+		});
+
+		it('Deep puts with peer should work', function(done){
+			// tests in async mode now automatically connect to localhost peer.
+			//var gun = Gun('http://localhost:8765/gun');
+			var gun = Gun();
+			//var user = gun.user();
+			//user.create('alice', 'password', function(){
+				gun.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+				//user.get('who').get('all').put({what: "hello world!", when: Gun.state()}, function(ack){
+					gun.get('who').get('all').once(function(data){
+						expect(data.what).to.be.ok();
+						expect(data.when).to.be.ok();
+						done();
+					});
+				});
+			//});
+		});
+
+		it('Set a ref should be found', function(done){
+			var gun = Gun();
+			var msg = {what: 'hello world'};
+			//var ref = user.get('who').get('all').set(msg);
+			//user.get('who').get('said').set(ref);
+			var ref = gun.get('s/r/who').get('all').set(msg);
+			gun.get('s/r/who').get('said').set(ref);
+			gun.get('s/r/who').get('said').map().once(function(data){
+				expect(data.what).to.be.ok();
+				done();
+			})
 		});
 		return;
 		it('Nested listener should be called', function(done){

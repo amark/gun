@@ -50,11 +50,11 @@
 
     // signature handles data output, it is a proxy to the security function.
     function signature(msg){
-      if(msg.user){
+      if((msg._||noop).user){
         return this.to.next(msg);
       }
       var ctx = this.as;
-      msg.user = ctx.user;
+      (msg._||(msg._=function(){})).user = ctx.user;
       security.call(this, msg);
     }
 
@@ -63,6 +63,10 @@
     // This is broken down into some pretty clear edge cases, let's go over them:
     function security(msg){
       var at = this.as, sea = at.sea, to = this.to;
+      if(at.opt.faith && (msg._||noop).faith){ // you probably shouldn't have faith in this!
+        this.to.next(msg); // why do we allow skipping security? I'm very scared about it actually.
+        return; // but so that way storage adapters that already verified something can get performance boost. This was a community requested feature. If anybody finds an exploit with it, please report immediately. It should only be exploitable if you have XSS control anyways, which if you do, you can bypass security regardless of this.
+      }
       if(msg.get){
         // if there is a request to read data from us, then...
         var soul = msg.get['#'];
@@ -95,9 +99,9 @@
             each.pubs(val, key, node, soul); return;
           }
           if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
-            each.pub(val, key, node, soul, tmp, msg.user); return;
+            each.pub(val, key, node, soul, tmp, (msg._||noop).user); return;
           }
-          each.any(val, key, node, soul, msg.user); return;
+          each.any(val, key, node, soul, (msg._||noop).user); return;
           return each.end({err: "No other data allowed!"});
         };
         each.alias = function(val, key, node, soul){ // Example: {_:#~@, ~@alice: {#~@alice}}
@@ -116,7 +120,7 @@
             return each.end({err: "Account must match!"});
           }
           check['user'+soul+key] = 1;
-          if(msg.I && user && user.is && pub === user.is.pub){
+          if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
             SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){ var rel;
               if(u === data){ return each.end({err: SEA.err || 'Pub signature fail.'}) }
               if(rel = Gun.val.link.is(val)){
@@ -141,20 +145,12 @@
           });
         };
         each.any = function(val, key, node, soul, user){ var tmp, pub;
-          if(!user || !user.is){
-            if(tmp = SEA.opt.pub(soul)){
-              check['any'+soul+key] = 1;
-              SEA.verify(SEA.opt.pack(val,key,node,soul), pub = tmp, function(data){ var rel;
-                data = SEA.opt.unpack(data, key, node);
-                if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
-                if((rel = Gun.val.link.is(data)) && pub === SEA.opt.pub(rel)){
-                  (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
-                }
-                check['any'+soul+key] = 0;
-                each.end({ok: 1});
-              });
+          if(!(pub = SEA.opt.pub(soul))){
+            if(at.opt.secure){
+              each.end({err: "Soul is missing public key at '" + key + "'."});
               return;
             }
+            // TODO: Ask community if should auto-sign non user-graph data.
             check['any'+soul+key] = 1;
             at.on('secure', function(msg){ this.off();
               check['any'+soul+key] = 0;
@@ -164,38 +160,33 @@
             //each.end({err: "Data cannot be modified."});
             return;
           }
-          if(!(tmp = SEA.opt.pub(soul))){
-            if(at.opt.secure){
-              each.end({err: "Soul is missing public key at '" + key + "'."});
+          if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
+            /*var other = Gun.obj.map(at.sea.own[soul], function(v, p){
+              if((user.is||{}).pub !== p){ return p }
+            });
+            if(other){
+              each.any(val, key, node, soul);
               return;
-            }
-            // TODO: Ask community if should auto-sign non user-graph data.
-            check['any'+soul+key] = 0;
-            each.end({ok: 1});
+            }*/
+            check['any'+soul+key] = 1;
+            SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){
+              if(u === data){ return each.end({err: 'My signature fail.'}) }
+              node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+              check['any'+soul+key] = 0;
+              each.end({ok: 1});
+            }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});
             return;
           }
-          if(!msg.I){ // only sign data put out from this instance.
-            each.any(val, key, node, soul);
-            return;
-          }
-          if((pub = tmp) !== (user.is||noop).pub){
-            each.any(val, key, node, soul);
-            return;
-          }
-          /*var other = Gun.obj.map(at.sea.own[soul], function(v, p){
-            if((user.is||{}).pub !== p){ return p }
-          });
-          if(other){
-            each.any(val, key, node, soul);
-            return;
-          }*/
           check['any'+soul+key] = 1;
-          SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){
-            if(u === data){ return each.end({err: 'My signature fail.'}) }
-            node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          SEA.verify(SEA.opt.pack(val,key,node,soul), pub, function(data){ var rel;
+            data = SEA.opt.unpack(data, key, node);
+            if(u === data){ return each.end({err: "Mismatched owner on '" + key + "'."}) } // thanks @rogowski !
+            if((rel = Gun.val.link.is(data)) && pub === SEA.opt.pub(rel)){
+              (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = true;
+            }
             check['any'+soul+key] = 0;
             each.end({ok: 1});
-          }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});
+          });
         }
         each.end = function(ctx){ // TODO: Can't you just switch this to each.end = cb?
           if(each.err){ return }
@@ -207,7 +198,7 @@
           if(Gun.obj.map(check, function(no){
             if(no){ return true }
           })){ return }
-          msg.user = at.user; // already been through firewall, does not need to again on out.
+          (msg._||{}).user = at.user || security; // already been through firewall, does not need to again on out.
           to.next(msg);
         };
         Gun.obj.map(msg.put, each.node);
@@ -248,7 +239,7 @@
       }
     }
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
-    var noop = {}, u;
+    var noop = function(){}, u;
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     var rel_is = Gun.val.rel.is;
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
