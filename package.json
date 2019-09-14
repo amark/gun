@@ -51,22 +51,22 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "buffer": "^5.4.2",
-    "ws": "~>7.1.0"
+    "buffer": "^5.4.3",
+    "ws": "^7.1.2"
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
-    "isomorphic-webcrypto": "^2.x",
+    "isomorphic-webcrypto": "^2.3.2",
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
     "emailjs": "^2.2.0"
   },
   "devDependencies": {
-    "aws-sdk": ">=2.153.0",
+    "aws-sdk": "^2.528.0",
     "ip": "^1.1.5",
     "mocha": "^5.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
-    "uglify-js": ">=2.8.22"
+    "uglify-js": "^3.6.0"
   }
 }
