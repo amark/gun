@@ -312,7 +312,6 @@
 
     //SEA.pair = async (data, proof, cb) => { try {
     SEA.pair = SEA.pair || (async (cb, opt) => { try {
-      console.log('SHIM', shim)
       var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
       var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
