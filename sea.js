@@ -64,11 +64,6 @@
           (_, i) => String.fromCharCode(this[ i + start])
         ).join('')
       }
-
-      function btoa(b) {
-        return new Buffer(b).toString('base64');
-    };
- 
       if (enc === 'base64') {
         return btoa(this)
       }
@@ -96,9 +91,6 @@
         }
         const input = arguments[0]
         let buf
-        function atob(a) {
-          return new Buffer(a, 'base64').toString('binary');
-      };
         if (typeof input === 'string') {
           const enc = arguments[1] || 'utf8'
           if (enc === 'hex') {
@@ -182,7 +174,7 @@
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
-        const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
+        const WebCrypto = USE('node-webcrypto-ossl', 1);
         api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
       //}catch(e){
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
@@ -312,6 +304,7 @@
 
     //SEA.pair = async (data, proof, cb) => { try {
     SEA.pair = SEA.pair || (async (cb, opt) => { try {
+
       var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
       var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
