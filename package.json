@@ -54,14 +54,14 @@
     "ws": "~>7.1.0"
   },
   "optionalDependencies": {
-    "text-encoding": "^0.7.0",
-    "node-webcrypto-ossl": "^1.0.47",
-    "emailjs": "^2.2.0"
+    "@peculiar/webcrypto": "^1.0.19",
+    "emailjs": "^2.2.0",
+    "text-encoding": "^0.7.0"
   },
   "devDependencies": {
     "aws-sdk": ">=2.153.0",
     "ip": "^1.1.5",
-    "mocha": "^5.2.0",
+    "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
     "uglify-js": ">=2.8.22"
