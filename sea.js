@@ -17,6 +17,13 @@
   }
   if(typeof module !== "undefined"){ var common = module }
   /* UNBUILD */
+  function atob(a) {
+    return new Buffer(a, 'base64').toString('binary');
+  };
+
+  function btoa(b) {
+    return new Buffer(b).toString('base64');
+  };
 
   ;USE(function(module){
     // Security, Encryption, and Authorization: SEA.js
@@ -174,7 +181,7 @@
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
-        const WebCrypto = USE('node-webcrypto-ossl', 1);
+        const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
         api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
       //}catch(e){
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
