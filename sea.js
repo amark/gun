@@ -93,7 +93,7 @@
     Object.assign(SafeBuffer, {
       // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
       from() {
-        if (!Object.keys(arguments).length) {
+        if (!Object.keys(arguments).length || arguments[0]==null) {
           throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
         }
         const input = arguments[0]
@@ -205,7 +205,7 @@
     var SEA = USE('./root');
     var Buffer = USE('./buffer');
     var s = {};
-    s.pbkdf2 = {hash: 'SHA-256', iter: 100000, ks: 64};
+    s.pbkdf2 = {hash: {name : 'SHA-256'}, iter: 100000, ks: 64};
     s.ecdsa = {
       pair: {name: 'ECDSA', namedCurve: 'P-256'},
       sign: {name: 'ECDSA', hash: {name: 'SHA-256'}}
@@ -616,9 +616,11 @@
       var pubKeyData = keysToEcdhJwk(pub);
       var props = Object.assign(S.ecdh, { public: await ecdhSubtle.importKey(...pubKeyData, true, []) });
       var privKeyData = keysToEcdhJwk(epub, epriv);
-      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey']).then(async (privKey) => {
+      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        var derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
+        var derivedBits = await ecdhSubtle.deriveBits(props,privKey,256);
+        derivedBits = new Uint8Array(derivedBits);
+        const derivedKey = await ecdhSubtle.importKey("raw",derivedBits,{ name: "AES-GCM", length: 256 },true,["encrypt", "decrypt"]);
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
