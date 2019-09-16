@@ -17,13 +17,6 @@
   }
   if(typeof module !== "undefined"){ var common = module }
   /* UNBUILD */
-  function atob(a) {
-    return new Buffer(a, 'base64').toString('binary');
-  };
-
-  function btoa(b) {
-    return new Buffer(b).toString('base64');
-  };
 
   ;USE(function(module){
     // Security, Encryption, and Authorization: SEA.js
@@ -54,6 +47,15 @@
   })(USE, './https');
 
   ;USE(function(module){
+    if(typeof global !== "undefined"){
+      var g = global;
+      g.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
+      g.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
+    }
+  })(USE, './base64');
+
+  ;USE(function(module){
+    USE('./base64');
     // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
     function SeaArray() {}
     Object.assign(SeaArray, { from: Array.from })
@@ -79,6 +81,7 @@
   })(USE, './array');
 
   ;USE(function(module){
+    USE('./base64');
     // This is Buffer implementation used in SEA. Functionality is mostly
     // compatible with NodeJS 'safe-buffer' and is used for encoding conversions
     // between binary and 'hex' | 'utf8' | 'base64'
