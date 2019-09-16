@@ -1,8 +1,5 @@
 var root;
 var Gun;
-function atob(a) {
-  return new Buffer(a, 'base64').toString('binary');
-};
 (function(){
   var env;
   if(typeof global !== 'undefined'){ env = global }
