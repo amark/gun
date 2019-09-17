@@ -8,6 +8,8 @@
 # an installer that will automatically do it for you.
 
 #debian/ubuntu
+su -
+apt-get install sudo -y
 sudo apt-get update -y
 sudo apt-get install curl git git-core -y
 #fedora/openSUSE

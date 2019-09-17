@@ -19,8 +19,8 @@ Gun.on('opt', function(root){
 
 	var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
 
-	var wire = opt.wire;
-	opt.wire = open;
+	var wire = mesh.wire || opt.wire;
+	mesh.wire = opt.wire = open;
 	function open(peer){ try{
 		if(!peer || !peer.url){ return wire && wire(peer) }
 		var url = peer.url.replace('http', 'ws');
@@ -30,11 +30,7 @@ Gun.on('opt', function(root){
 			reconnect(peer);
 		};
 		wire.onerror = function(error){
-			reconnect(peer); // placement?
-			if(!error){ return }
-			if(error.code === 'ECONNREFUSED'){
-				//reconnect(peer, as);
-			}
+			reconnect(peer);
 		};
 		wire.onopen = function(){
 			opt.mesh.hi(peer);
@@ -46,12 +42,16 @@ Gun.on('opt', function(root){
 		return wire;
 	}catch(e){}}
 
+	var wait = 2 * 1000;
 	function reconnect(peer){
 		clearTimeout(peer.defer);
-		peer.defer = setTimeout(function(){
+		if(doc && peer.retry <= 0){ return } peer.retry = (peer.retry || opt.retry || 60) - 1;
+		peer.defer = setTimeout(function to(){
+			if(doc && doc.hidden){ return setTimeout(to,wait) }
 			open(peer);
-		}, 2 * 1000);
+		}, wait);
 	}
+	var doc = 'undefined' !== typeof document && document;
 });
 var noop = function(){};
 	

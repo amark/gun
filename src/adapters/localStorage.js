@@ -30,13 +30,14 @@ Gun.on('create', function(root){
 			});
 		});
 		setTimeout(function(){
+			// TODO: Holy Grail dangling by this thread! If gap / offline resync doesn't trigger, it doesn't work. Ouch, and this is a localStorage specific adapter. :(
 			root.on('out', {put: send, '#': root.ask(ack)});
 		},1);
 	}
 
 	root.on('out', function(msg){
-		if(msg.lS){ return }
-		if(Gun.is(msg.$) && msg.put && !msg['@'] && !empty(opt.peers)){
+		if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
+		if(Gun.is(msg.$) && msg.put && !msg['@']){
 			id = msg['#'];
 			Gun.graph.is(msg.put, null, map);
 			if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -108,11 +109,9 @@ Gun.on('create', function(root){
 		if(data && has){
 			data = Gun.state.to(data, has);
 		}
-		if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
-			return; // Hmm, what if we have peers but we are disconnected?
-		}
+		//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
 		//console.log("lS get", lex, data);
-		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$ || root.$});
+		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
 	});
@@ -131,7 +130,7 @@ Gun.on('create', function(root){
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
 		}catch(e){
-			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
+			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
