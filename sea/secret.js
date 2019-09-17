@@ -15,9 +15,11 @@
       var pubKeyData = keysToEcdhJwk(pub);
       var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },S.ecdh); // Thanks to @sirpy !
       var privKeyData = keysToEcdhJwk(epub, epriv);
-      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey']).then(async (privKey) => {
+      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        var derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
+        var derivedBits = await ecdhSubtle.deriveBits(props,privKey,256);
+        derivedBits = new Uint8Array(derivedBits);
+        const derivedKey = await ecdhSubtle.importKey("raw",derivedBits,{ name: "AES-GCM", length: 256 },true,["encrypt", "decrypt"]);
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
