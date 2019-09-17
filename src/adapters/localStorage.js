@@ -17,7 +17,7 @@ Gun.on('create', function(root){
 	// See the next 'opt' code below for actual saving of data.
 	var ev = this.to, opt = root.opt;
 	if(root.once){ return ev.next(root) }
-	//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+	if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless! // actually, this doesn't help, per @go1dfish 's observation. Disabling for now, will need better solution later.
 	opt.prefix = opt.file || 'gun/';
 	var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 	var empty = Gun.obj.empty, id, to, go;
