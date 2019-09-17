@@ -46,6 +46,10 @@
 <div class="center"><span id="rerr"></span></div>
 
 <div class="center leak" style="padding: 0 2em;">
+	<div class="leak ct-daml ct-chart tall"></div>
+</div>
+
+<div class="center leak" style="padding: 0 2em;">
 	<div class="leak ct-cpu ct-chart ct-perfect-fourth tall"></div>
 </div>
 
@@ -127,6 +131,18 @@ stats.show = async function(data){ //$.getJSON(url.value||(location.origin+'/gun
 	  series: [stats.radpt, stats.radgt]
 	}, {fullWidth: true, axisY: {
     labelInterpolationFnc: function(v) { return v+'sec' }
+  }});
+	}catch(e){}
+
+	try{
+	stats.daml = Object.values(data.dam['in'].long).map(function(n){ return n });
+	new Chartist.Line('.ct-daml', {
+	  // A labels array that can contain any sort of values
+	  //labels: ['-1min', '-45s', '-30s', '-15s', '0'],
+	  // Our series array that contains series objects or in this case series data arrays
+	  series: [stats.daml]
+	}, {fullWidth: true, axisY: {
+    labelInterpolationFnc: function(v) { return v+'ms' }
   }});
 	}catch(e){}
 

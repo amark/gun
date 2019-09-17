@@ -135,7 +135,7 @@ ul, li {
 .red { background: #ea3224; }
 .green { background: #33cc33; }
 .blue { background: #4D79D8; }
-.yellow { background: #f2b919; }
+.yellow { background: #d3a438; }
 .black { background: black; }
 .white { background: white; }
 
@@ -145,7 +145,7 @@ ul, li {
 .redt { color: #ea3224; }
 .greent { color: #33cc33; }
 .bluet { color: #4D79D8; }
-.yellowt { color: #f2b919; }
+.yellowt { color: #d3a438; }
 .blackt { color: black; }
 .whitet { color: white; }
 
@@ -156,13 +156,13 @@ ul, li {
 } @keyframes hue {
   0%   {background-color: #4D79D8;}
   25%  {background-color: #33cc33;}
-  50%  {background-color: #f2b919;}
+  50%  {background-color: #d3a438;}
   75%  {background-color: #ea3224;}
   100% {background-color: #4D79D8;}
 } @-webkit-keyframes hue {
   0%   {background-color: #4D79D8;}
   25%  {background-color: #33cc33;}
-  50%  {background-color: #f2b919;}
+  50%  {background-color: #d3a438;}
   75%  {background-color: #ea3224;}
   100% {background-color: #4D79D8;}
 }
@@ -174,13 +174,13 @@ ul, li {
 } @keyframes huet {
   0%   {color: #4D79D8;}
   25%  {color: #33cc33;}
-  50%  {color: #f2b919;}
+  50%  {color: #d3a438;}
   75%  {color: #ea3224;}
   100% {color: #4D79D8;}
 } @-webkit-keyframes huet {
   0%   {color: #4D79D8;}
   25%  {color: #33cc33;}
-  50%  {color: #f2b919;}
+  50%  {color: #d3a438;}
   75%  {color: #ea3224;}
   100% {color: #4D79D8;}
 }
@@ -193,13 +193,13 @@ ul, li {
   0%	 {background-color: #ea3224;}
   25%  {background-color: #4D79D8;}
   50%  {background-color: #33cc33;}
-  75%  {background-color: #f2b919;}
+  75%  {background-color: #d3a438;}
   100% {background-color: #ea3224;}
 } @-webkit-keyframes hue2 {
   0%	 {background-color: #ea3224;}
   25%  {background-color: #4D79D8;}
   50%  {background-color: #33cc33;}
-  75%  {background-color: #f2b919;}
+  75%  {background-color: #d3a438;}
   100% {background-color: #ea3224;}
 }
 
@@ -211,13 +211,13 @@ ul, li {
   0%	 {color: #ea3224;}
   25%  {color: #4D79D8;}
   50%  {color: #33cc33;}
-  75%  {color: #f2b919;}
+  75%  {color: #d3a438;}
   100% {color: #ea3224;}
 } @-webkit-keyframes huet2 {
   0%	 {color: #ea3224;}
   25%  {color: #4D79D8;}
   50%  {color: #33cc33;}
-  75%  {color: #f2b919;}
+  75%  {color: #d3a438;}
   100% {color: #ea3224;}
 }
 
@@ -227,13 +227,13 @@ ul, li {
   animation: hue3 900s infinite;
 } @keyframes hue3 {
   0%	 {background-color: #33cc33;}
-  25%  {background-color: #f2b919;}
+  25%  {background-color: #d3a438;}
   50%  {background-color: #ea3224;}
   75%  {background-color: #4D79D8;}
   100% {background-color: #33cc33;}
 } @-webkit-keyframes hue3 {
   0%	 {background-color: #33cc33;}
-  25%  {background-color: #f2b919;}
+  25%  {background-color: #d3a438;}
   50%  {background-color: #ea3224;}
   75%  {background-color: #4D79D8;}
   100% {background-color: #33cc33;}
@@ -245,52 +245,52 @@ ul, li {
   animation: huet3 900s infinite;
 } @keyframes huet3 {
   0%	 {color: #33cc33;}
-  25%  {color: #f2b919;}
+  25%  {color: #d3a438;}
   50%  {color: #ea3224;}
   75%  {color: #4D79D8;}
   100% {color: #33cc33;}
 } @-webkit-keyframes huet3 {
   0%	 {color: #33cc33;}
-  25%  {color: #f2b919;}
+  25%  {color: #d3a438;}
   50%  {color: #ea3224;}
   75%  {color: #4D79D8;}
   100% {color: #33cc33;}
 }
 
 .hue4 {
-  background: #f2b919;
+  background: #d3a438;
   -webkit-animation: hue4 900s infinite;
   animation: hue4 900s infinite;
 } @keyframes hue4 {
-  0%   {background-color: #f2b919;}
+  0%   {background-color: #d3a438;}
   25%  {background-color: #ea3224;}
   50%  {background-color: #4D79D8;}
   75%	 {background-color: #33cc33;}
-  100% {background-color: #f2b919;}
+  100% {background-color: #d3a438;}
 } @-webkit-keyframes hue4 {
-  0%   {background-color: #f2b919;}
+  0%   {background-color: #d3a438;}
   25%  {background-color: #ea3224;}
   50%  {background-color: #4D79D8;}
   75%	 {background-color: #33cc33;}
-  100% {background-color: #f2b919;}
+  100% {background-color: #d3a438;}
 }
 
 .huet4 {
-  color: #f2b919;
+  color: #d3a438;
   -webkit-animation: huet4 900s infinite;
   animation: huet4 900s infinite;
 } @keyframes huet4 {
-  0%   {color: #f2b919;}
+  0%   {color: #d3a438;}
   25%  {color: #ea3224;}
   50%  {color: #4D79D8;}
   75%	 {color: #33cc33;}
-  100% {color: #f2b919;}
+  100% {color: #d3a438;}
 } @-webkit-keyframes huet4 {
-  0%   {color: #f2b919;}
+  0%   {color: #d3a438;}
   25%  {color: #ea3224;}
   50%  {color: #4D79D8;}
   75%	 {color: #33cc33;}
-  100% {color: #f2b919;}
+  100% {color: #d3a438;}
 }
 
 .pulse {

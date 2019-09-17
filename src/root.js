@@ -153,6 +153,7 @@ Gun.dup = require('./dup');
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 		var next = root.next || (root.next = {}), at = next[soul];
+		// queue concurrent GETs?
 		if(!node){ return root.on('get', msg) }
 		if(has){
 			if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
@@ -193,6 +194,7 @@ Gun.dup = require('./dup');
 		at.opt.peers = at.opt.peers || {};
 		obj_map(opt, function each(v,k){
 			if(!obj_has(this, k) || text.is(v) || obj.empty(v)){ this[k] = v ; return }
+			if(v && v.constructor !== Object && !list_is(v)){ return }
 			obj_map(v, each, this[k]);
 		}, at.opt);
 		Gun.on('opt', at);
@@ -207,7 +209,7 @@ var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map 
 var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
 var empty = {}, u;
 
-console.debug = function(i, s){ return (console.debug.i && i === console.debug.i && console.debug.i++) && (console.log.apply(console, arguments) || s) };
+console.only = function(i, s){ return (console.only.i && i === console.only.i && console.only.i++) && (console.log.apply(console, arguments) || s) };
 
 Gun.log = function(){ return (!Gun.log.off && console.log.apply(console, arguments)), [].slice.call(arguments).join(' ') }
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) }

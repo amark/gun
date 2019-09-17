@@ -22,7 +22,7 @@
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });
       //try{
-        const WebCrypto = require('node-webcrypto-ossl', 1);
+        const { Crypto: WebCrypto } = require('@peculiar/webcrypto', 1);
         api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
       //}catch(e){
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
