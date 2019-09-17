@@ -1973,9 +1973,11 @@
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
 					var i = 0, m;
+					var S = +new Date; // STATS!
 					while(m = msg[i++]){
 						mesh.hear(m, peer);
 					}
+					(mesh.hear.long || (mesh.hear.long = [])).push(+new Date - S);
 					return;
 				}
 				if('{' === tmp || (Type.obj.is(raw) && (msg = raw))){
