@@ -6,10 +6,6 @@
   if(typeof Buffer === "undefined") {
     global.Buffer = require("buffer").Buffer
   }
-  if (typeof btoa === "undefined") {
-    global.btoa = require("btoa");
-    global.atob = require("atob");
-  }
   if(typeof global !== "undefined"){ root = global }
   root = root || {};
   var console = root.console || {log: function(){}};
