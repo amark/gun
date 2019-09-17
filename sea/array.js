@@ -1,4 +1,5 @@
 
+    require('./base64');
     // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
     function SeaArray() {}
     Object.assign(SeaArray, { from: Array.from })
