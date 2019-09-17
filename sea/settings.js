@@ -2,7 +2,7 @@
     var SEA = require('./root');
     var Buffer = require('./buffer');
     var s = {};
-    s.pbkdf2 = {hash: 'SHA-256', iter: 100000, ks: 64};
+    s.pbkdf2 = {hash: {name : 'SHA-256'}, iter: 100000, ks: 64};
     s.ecdsa = {
       pair: {name: 'ECDSA', namedCurve: 'P-256'},
       sign: {name: 'ECDSA', hash: {name: 'SHA-256'}}
