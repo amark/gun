@@ -1954,6 +1954,7 @@
 
 	;USE(function(module){
 		var Type = USE('../type');
+		var puff = (typeof setImmediate !== "undefined")? setImmediate : setTimeout;
 
 		function Mesh(root){
 			var mesh = function(){};
@@ -1972,10 +1973,16 @@
 				if('[' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					var i = 0, m;
-					while(m = msg[i++]){
-						mesh.hear(m, peer);
-					}
+					(function go(){
+						var S = +new Date; // STATS!
+						var m, c = 100; // hardcoded for now?
+						while(c-- && (m = msg.shift())){
+							mesh.hear(m, peer);
+						}
+						(mesh.hear.long || (mesh.hear.long = [])).push(+new Date - S);
+						if(!msg.length){ return }
+						puff(go, 0);
+					}());
 					return;
 				}
 				if('{' === tmp || (Type.obj.is(raw) && (msg = raw))){
