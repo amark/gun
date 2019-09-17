@@ -28,8 +28,9 @@ function map(msg){
 }
 function each(v,k){
 	if(n_ === k){ return }
-	var msg = this.msg, gun = msg.$, at = this.at, tmp = (gun.get(k)._);
-	(tmp.echo || (tmp.echo = {}))[at.id] = tmp.echo[at.id] || at;
+	var msg = this.msg, gun = msg.$, at = gun._, cat = this.at, tmp = at.lex;
+	if(tmp && !Gun.text.match(k, tmp['.'] || tmp['#'] || tmp)){ return } // review?
+	((tmp = gun.get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
 }
 var obj_map = Gun.obj.map, noop = function(){}, event = {stun: noop, off: noop}, n_ = Gun.node._, u;
 	

@@ -4,7 +4,18 @@ Gun.chain.put = function(data, cb, as){
 	// #soul.has=value>state
 	// ~who#where.where=what>when@was
 	// TODO: BUG! Put probably cannot handle plural chains!
-	var gun = this, at = (gun._), root = at.root.$, tmp;
+	var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
+	if(!ctx.puta){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+		(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
+		if(ctx.puto){ return }
+		ctx.puto = setTimeout(function drain(){
+			var d = ctx.stack.splice(0,M), i = 0, at; ctx.puta = true;
+			while(at = d[i++]){ at[0].put(at[1], at[2], at[3]) } delete ctx.puta;
+			if(ctx.stack.length){ return ctx.puto = setTimeout(drain, 0) }
+			ctx.stack = ctx.puts = ctx.puto = null;
+		}, 0);
+		return gun;
+	} ++ctx.puts } else { ctx.puts = 1 } }
 	as = as || {};
 	as.data = data;
 	as.via = as.$ = as.via || as.$ || gun;
@@ -37,13 +48,14 @@ Gun.chain.put = function(data, cb, as){
 	}
 	if(Gun.is(data)){
 		data.get(function(soul, o, msg){
-			if(!soul && Gun.val.is(msg.put)){
+			if(!soul){
 				return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 			}
-			gun.put(Gun.val.rel.ify(soul), cb, as);
+			gun.put(Gun.val.link.ify(soul), cb, as);
 		}, true);
 		return gun;
 	}
+	if(at.has && (tmp = Gun.val.link.is(data))){ at.dub = tmp }
 	as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
 	if(as.ref._.soul && Gun.val.is(as.data) && at.get){
 		as.data = obj_put({}, at.get, as.data);
@@ -95,10 +107,12 @@ function batch(){ var as = this;
 		var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 			cat.root.on('ack', ack);
 			if(ack.err){ Gun.log(ack) }
-			if(!ack.lack){ this.off() } // One response is good enough for us currently. Later we may want to adjust this.
+			if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 			if(!as.ack){ return }
 			as.ack(ack, this);
-		}, as.opt);
+			//--C;
+		}, as.opt), acks = 0;
+		//C++;
 		// NOW is a hack to get synchronous replies to correctly call.
 		// and STOP is a hack to get async behavior to correctly call.
 		// neither of these are ideal, need to be fixed without hacks,
@@ -139,10 +153,10 @@ function map(v,k,n, at){ var as = this;
 function soul(id, as, msg, eve){
 	var as = as.as, cat = as.at; as = as.as;
 	var at = ((msg || {}).$ || {})._ || {};
-	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.rel.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 	if(eve){ eve.stun = true }
 	if(!id){ // polyfill async uuid for SEA
-		at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+		as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 			if(err){ return Gun.log(err) } // TODO: Handle error.
 			solve(at, at.dub = at.dub || id, cat, as);
 		});
@@ -198,7 +212,7 @@ function any(soul, as, msg, eve){
 			if(node_ == at.get){
 				as.soul = (at.put||empty)['#'] || at.dub;
 			}
-			as.soul = as.soul || at.soul || at.soul || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+			as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 		}
 		if(!as.soul){ // polyfill async uuid for SEA
 			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback

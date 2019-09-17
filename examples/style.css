@@ -1,38 +1,26 @@
-@import url(https://fonts.googleapis.com/css?family=Oxygen);
-
 html, body {
 	margin: 0;
 	padding: 0;
-	font-family: 'Oxygen', 'Trebuchet MS', arial;
 	position: relative;
-  background: black;
-  color: white;
+  line-height: 1.5;
+  font-size: 18pt;
 }
 
-body {
-	font-size: 18pt;
-}
-
-div, ul, ol, li, p, span, form, button, input, textarea {
+div, ul, ol, li, p, span, form, button, input, textarea, img {
   margin: 0;
   padding: 0;
   position: relative;
-  overflow: hidden;
-  font-size: 1em;
-  line-height: 1.5em;
+  vertical-align: inherit;
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   box-sizing: border-box;
 }
 
-button, input, textarea {
-  background: white;
-  border: none;
-  color: black;
-}
-
-a {
-  color: white;
+a, button, input, textarea {
+  background: inherit;
+  border: inherit;
+  color: inherit;
+  text-decoration: inherit;
 }
 
 input, textarea {
@@ -43,6 +31,10 @@ ul, li {
   list-style: none;
 }
 
+[contenteditable=true]:empty:before {
+  content: attr(placeholder);
+}
+
 .model, .none { display: none }
 .hide { 
   opacity: 0;
@@ -50,48 +42,75 @@ ul, li {
   transition: all 2s;
 }
 
-.page {
+.full, .page {
   width: 100%;
   min-height: 100vh;
 }
 
+.max {
+  max-width: 48em;
+}
+.min {
+  min-width: 12em;
+}
 .pad {
-  margin: 5% auto;
-  min-width: 250px;
   width: 95%;
-  max-width: 50em;
+  margin: 5% auto;
+  max-width: 48em;
+  min-width: 12em;
 }
 
 .right {
   float: right;
+  text-align: right;
 }
 .left {
   float: left;
+  text-align: left;
 }
 .center {
   text-align: center;
+  vertical-align: middle;
+  margin-left: auto;
+  margin-right: auto;
 }
 .mid { 
   margin-left: auto;
   margin-right: auto; 
 }
-.flush {
-  line-height: 0em;
+.top {
+  vertical-align: top;
+}
+.low {
+  vertical-align: bottom;
 }
 
-.rim {
-  margin: 2%;
-}
-.gap {
-  padding: 3%;
-}
-.gully {
-  margin-bottom: 1%;
-}
-
+.rim { margin: 2%; }
+.gap { padding: 3%; }
+.stack { line-height: 0; }
+.crack { margin-bottom: 1%; }
 .sit { margin-bottom: 0; }
+
 .row { width: 100%; }
-.col { max-width: 33em; }
+.col {
+  max-width: 24em;
+  min-width: 12em;
+}
+
+.focus {
+  margin-left: auto;
+  margin-right: auto;
+  float: none;
+  clear: both;
+}
+.unit, .symbol {
+  display: inline-block;
+  vertical-align: inherit;
+}
+
+.leak { overflow: visible; }
+.hold { overflow: hidden; }
+
 .act {
   display: block;
   font-weight: normal;
@@ -100,102 +119,68 @@ ul, li {
   transition: all 0.3s;
   cursor: pointer;
 }
-.symbol {
-  display: inline-block;
-}
+
+.sap { border-radius: 0.1em; }
+.jot { border-bottom: 1px dashed #95B2CA; }
 
 .loud {
   font-size: 150%;
 }
-.jot {
-  border-bottom: 1px dashed #95B2CA;
-}
-.sap {
-  border-radius: 0.1em;
+.shout {
+  font-size: 36pt;
+  font-size: 6.5vmax;
 }
 
 
-.red {
-	background: #ea3224;
-}
-.green {
-	background: #33cc33;
-}
-.blue {
-	background: #4D79D8;
-}
-.yellow {
-	background: #f2b919;
-}
-.black {
-	background: black;
-}
-.white {
-	background: white;
-}
+.red { background: #ea3224; }
+.green { background: #33cc33; }
+.blue { background: #4D79D8; }
+.yellow { background: #d3a438; }
+.black { background: black; }
+.white { background: white; }
 
-.shade {
-  background: rgba(0%, 0%, 0%, 0.1);
-}
-.tint {
-  background: rgba(100%, 100%, 100%, 0.1);
-}
+.shade { background: rgba(0%, 0%, 0%, 0.1); }
+.tint { background: rgba(100%, 100%, 100%, 0.1); }
 
-.redt {
-	color: #ea3224;
-}
-.greent {
-	color: #33cc33;
-}
-.bluet {
-	color: #4D79D8;
-}
-.yellowt {
-	color: #f2b919;
-}
-.blackt {
-	color: black;
-}
-.whitet {
-	color: white;
-}
+.redt { color: #ea3224; }
+.greent { color: #33cc33; }
+.bluet { color: #4D79D8; }
+.yellowt { color: #d3a438; }
+.blackt { color: black; }
+.whitet { color: white; }
 
 .hue {
   background: #4D79D8;
   -webkit-animation: hue 900s infinite;
   animation: hue 900s infinite;
-}
-
-@keyframes hue {
+} @keyframes hue {
   0%   {background-color: #4D79D8;}
   25%  {background-color: #33cc33;}
-  50%  {background-color: #f2b919;}
+  50%  {background-color: #d3a438;}
   75%  {background-color: #ea3224;}
   100% {background-color: #4D79D8;}
 } @-webkit-keyframes hue {
   0%   {background-color: #4D79D8;}
   25%  {background-color: #33cc33;}
-  50%  {background-color: #f2b919;}
+  50%  {background-color: #d3a438;}
   75%  {background-color: #ea3224;}
   100% {background-color: #4D79D8;}
 }
 
 .huet {
-	color: #4D79D8;
+  color: #4D79D8;
   -webkit-animation: huet 900s infinite;
   animation: huet 900s infinite;
-}
-
-@keyframes huet {
+} @keyframes huet {
   0%   {color: #4D79D8;}
   25%  {color: #33cc33;}
-  50%  {color: #f2b919;}
+  50%  {color: #d3a438;}
   75%  {color: #ea3224;}
   100% {color: #4D79D8;}
 } @-webkit-keyframes huet {
   0%   {color: #4D79D8;}
   25%  {color: #33cc33;}
-  50%  {color: #f2b919;}
+  50%  {color: #d3a438;}
   75%  {color: #ea3224;}
   100% {color: #4D79D8;}
 }
@@ -204,19 +189,17 @@ ul, li {
   background: #ea3224;
   -webkit-animation: hue2 900s infinite;
   animation: hue2 900s infinite;
-}
-
-@keyframes hue2 {
+} @keyframes hue2 {
   0%	 {background-color: #ea3224;}
   25%  {background-color: #4D79D8;}
   50%  {background-color: #33cc33;}
-  75%  {background-color: #f2b919;}
+  75%  {background-color: #d3a438;}
   100% {background-color: #ea3224;}
 } @-webkit-keyframes hue2 {
   0%	 {background-color: #ea3224;}
   25%  {background-color: #4D79D8;}
   50%  {background-color: #33cc33;}
-  75%  {background-color: #f2b919;}
+  75%  {background-color: #d3a438;}
   100% {background-color: #ea3224;}
 }
 
@@ -224,19 +207,17 @@ ul, li {
   color: #ea3224;
   -webkit-animation: huet2 900s infinite;
   animation: huet2 900s infinite;
-}
-
-@keyframes huet2 {
+} @keyframes huet2 {
   0%	 {color: #ea3224;}
   25%  {color: #4D79D8;}
   50%  {color: #33cc33;}
-  75%  {color: #f2b919;}
+  75%  {color: #d3a438;}
   100% {color: #ea3224;}
 } @-webkit-keyframes huet2 {
   0%	 {color: #ea3224;}
   25%  {color: #4D79D8;}
   50%  {color: #33cc33;}
-  75%  {color: #f2b919;}
+  75%  {color: #d3a438;}
   100% {color: #ea3224;}
 }
 
@@ -244,17 +225,15 @@ ul, li {
   background: #33cc33;
   -webkit-animation: hue3 900s infinite;
   animation: hue3 900s infinite;
-}
-
-@keyframes hue3 {
+} @keyframes hue3 {
   0%	 {background-color: #33cc33;}
-  25%  {background-color: #f2b919;}
+  25%  {background-color: #d3a438;}
   50%  {background-color: #ea3224;}
   75%  {background-color: #4D79D8;}
   100% {background-color: #33cc33;}
 } @-webkit-keyframes hue3 {
   0%	 {background-color: #33cc33;}
-  25%  {background-color: #f2b919;}
+  25%  {background-color: #d3a438;}
   50%  {background-color: #ea3224;}
   75%  {background-color: #4D79D8;}
   100% {background-color: #33cc33;}
@@ -264,73 +243,63 @@ ul, li {
   color: #33cc33;
   -webkit-animation: huet3 900s infinite;
   animation: huet3 900s infinite;
-}
-
-@keyframes huet3 {
+} @keyframes huet3 {
   0%	 {color: #33cc33;}
-  25%  {color: #f2b919;}
+  25%  {color: #d3a438;}
   50%  {color: #ea3224;}
   75%  {color: #4D79D8;}
   100% {color: #33cc33;}
 } @-webkit-keyframes huet3 {
   0%	 {color: #33cc33;}
-  25%  {color: #f2b919;}
+  25%  {color: #d3a438;}
   50%  {color: #ea3224;}
   75%  {color: #4D79D8;}
   100% {color: #33cc33;}
 }
 
 .hue4 {
-  background: #f2b919;
+  background: #d3a438;
   -webkit-animation: hue4 900s infinite;
   animation: hue4 900s infinite;
-}
-
-@keyframes hue4 {
-  0%   {background-color: #f2b919;}
+} @keyframes hue4 {
+  0%   {background-color: #d3a438;}
   25%  {background-color: #ea3224;}
   50%  {background-color: #4D79D8;}
   75%	 {background-color: #33cc33;}
-  100% {background-color: #f2b919;}
+  100% {background-color: #d3a438;}
 } @-webkit-keyframes hue4 {
-  0%   {background-color: #f2b919;}
+  0%   {background-color: #d3a438;}
   25%  {background-color: #ea3224;}
   50%  {background-color: #4D79D8;}
   75%	 {background-color: #33cc33;}
-  100% {background-color: #f2b919;}
+  100% {background-color: #d3a438;}
 }
 
 .huet4 {
-  color: #f2b919;
+  color: #d3a438;
   -webkit-animation: huet4 900s infinite;
   animation: huet4 900s infinite;
-}
-
-@keyframes huet4 {
-  0%   {color: #f2b919;}
+} @keyframes huet4 {
+  0%   {color: #d3a438;}
   25%  {color: #ea3224;}
   50%  {color: #4D79D8;}
   75%	 {color: #33cc33;}
-  100% {color: #f2b919;}
+  100% {color: #d3a438;}
 } @-webkit-keyframes huet4 {
-  0%   {color: #f2b919;}
+  0%   {color: #d3a438;}
   25%  {color: #ea3224;}
   50%  {color: #4D79D8;}
   75%	 {color: #33cc33;}
-  100% {color: #f2b919;}
+  100% {color: #d3a438;}
 }
 
 .pulse {
   animation: pulse 2s infinite;
-}
-
-@keyframes pulse
-{
+} @keyframes pulse {
   0% {opacity: 1;}
   50% {opacity: 0.5;}
   100% {opacity: 1;}
 }
-
 
 .joy {
   width: 100px;
@@ -341,12 +310,18 @@ ul, li {
   pointer-events: none;
   z-index: 999999999;
   animation: joy 1s steps(28);
+} @keyframes joy {
+  0% {background-position: 0 0;}
+  100% {background-position: -2800px 0;}
 }
-@keyframes joy {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: -2800px 0;
-  }
+
+.visually-hidden {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
 }

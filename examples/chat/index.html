@@ -1,161 +1,213 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Converse</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
-		<link rel="stylesheet" type="text/css" href="/style.css">
-		<link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
-		<style>
-			#converse {
-				font-size: 16pt;
-			}
-			#converse .box {
-				margin-bottom: 0.2em;
-				padding: 1em;
-				border-radius: 0.1em;
-			}
-			#converse b:after {
-				content: " ";
-			}
-			#converse li .when {
-				position: absolute;
-				top: 0;
-				right: -2em;
-				padding: 0.5em 1em;
-				background: rgba(100%,100%,100%,0.9);
-				opacity: 0;
-			}
-			#converse li:hover .when {
-				opacity: 1;
-				right: 0em;
-			}
-			.poiret {
-				font-family: 'Poiret One', sans-serif;
-			}
-			.large {
-				font-size: 200%;
-			}
-			#converse .what, #converse .who {
-				cursor: text;
-				outline: none;
-				display: inline;
-				min-width: 1em;
-				padding-left: 1px;
-			}
-			[contentEditable=true]:empty:not(:focus):before{
-				content:attr(data-text)
-			}
 
-			#title {
-				margin-bottom: 0.5em;
-			}
+<head>
+  <title>Converse</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+  <style>
+    .chat__heading {
+      position: fixed;
+      text-align: center;
+      z-index: 1;
+      width: 100%;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
 
-			.say {
-				margin: 0 0 0.4em 0.4em;
-				padding: 0.2em 0.5em;
-			}
+    .chat__form-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: 10px 20px;
+      position: fixed;
+      z-index: 1;
+      bottom: 0;
+    }
 
-			 #name-input {
-				 margin-top: 0.5em;
-				 margin-right: 0.5em;
-			 }
+    .chat__form {
+      display: flex;
+      justify-content: center;
+      height: 50px;
+      background-color: white;
+      border: 2px solid white;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 5px;
+    }
 
-			 #message-input {
-				 margin-top: 0.5em;
-			 }
-		</style>
-  </head>
-	<body>
-		<div id="converse" class="hue2 page">
-			<div class="pad">
-				<div id='title' class="poiret large rubric whitet">Have a Conversation...</div>
-				<div>
-					<ul>
-						<li class="none"></li>
-					</ul>
+    .chat__name-input {
+      flex: 1;
+      padding: 10px;
+    }
 
-					<form class="white huet2 box">
-						<div>
-							<div class="say hue2 right whitet box act">say</div>
-							<b id="name-input" class="jot left who" contenteditable="true" data-text="Name"></b>
-							<p id="message-input" class="jot left what" contenteditable="true" data-text="Write a message..."></p>
-						</div>
-					</form>
+    .chat__message-input {
+      flex: 5;
+      padding: 10px;
+    }
 
-					<div class="model">
-						<li class="white huet2 box">
-							<b class="who"></b>
-							<p class="what"></p>
-							<span class="sort none">0</span>
-							<div class="when"></div>
-						</li>
-					</div>
-				</div>
-			</div>
-		</div>
+    .chat__submit {
+      padding: 10px;
+      color: white;
+      border-radius: 5px;
+    }
 
-		<script src="/jquery.js"></script>
-		<script src="/gun.js"></script>
-		<script src="/gun/nts.js"></script>
-		<script>
-			var gun = Gun(location.origin + '/gun');
-			var chat = gun.get('converse/' + location.hash.slice(1));
+    .chat__submit:hover::after {
+      background-color: rgba(0,0,0,0.2);
+    }
 
-			$("form .say").on('click', submit);
-			$("form .what").on('keydown', enter);
-			function enter(e){
-				if(e.which !== 13){ return }
-				submit(e);
-			}
-			function submit(e){
-				e.preventDefault();
+    .chat__submit:focus::after {
+      background-color: rgba(0,0,0,0.2);
+    }
 
-				var msg = {when: Gun.time.is()};
+    .chat__submit::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+      background-color: rgba(0,0,0,0);
+    }
 
-				msg.who = $('form .who').text();
-				if(!msg.who){
-					msg.who = 'user' + Gun.text.random(3);
-					$('form .who').text(msg.who);
-				}
+    .chat__message-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      overflow-y: auto;
+      padding: 60px 20px;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      min-height: 100vh;
+    }
 
-				msg.what = $('form .what').text();
-				if(!msg.what){ return }
+    .chat__message {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      width: 100%;
+      position: relative;
+      max-width: 900px;
+    }
 
-				chat.set(msg);
-				$('form .what').text('');
-			}
+    .chat__name {
+      margin-right: 20px;
+    }
 
-			chat.map().val(function(msg, id){
-				if(!msg){ return }
-				var ul = $('ul');
-				var last = sort(msg.when, ul.children('li').last());
+    .chat__when {
+      position: absolute;
+      top: 0;
+      right: 2em;
+      padding: 10px;
+      background: rgba(100%, 100%, 100%, 0.9);
+      opacity: 0;
+      border-radius: 5px;
+    }
 
-				var li = $("#msg-" + id)[0]; // grab if exists
-				if(!li){
-					li = $('.model li').clone(true) // else create it
-						.attr('id', 'msg-' + id)
-						.insertAfter(last);
-				}
+    .chat__message:hover .chat__when {
+      opacity: 1;
+      right: 0em;
+    }
 
-				// bind the message data into the UI
-				li = $(li);
-				li.find('.who').text(msg.who);
-				li.find('.what').text(msg.what);
-				li.find('.sort').text(msg.when);
+    @media (max-width: 567px) {
+      .chat__heading {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
 
-				var time = new Date(msg.when);
-				li.find('.when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
+<body>
+  <div class="chat hue2 page">
+    <h2 id='title' class="chat__heading hue2 whitet">Have a Conversation...</h2>
+    <ul class="chat__message-list">
+      <li class="none"></li>
+    </ul>
 
-				$('html, body').stop(true, true)
-					.animate({scrollTop: ul.height()});
-			});
+    <div class="chat__form-container hue2">
+      <form class="chat__form">
+        <label for="name-input" class="visually-hidden">Name</label>
+        <input id="name-input" class="chat__name-input" placeholder="Name"></input>
+        <label for="message-input" class="visually-hidden">Message</label>
+        <input id="message-input" class="chat__message-input" placeholder="Write a message..."></input>
+        <button class="chat__submit say hue2">say</button>
+      </form>
+    </div>
 
-			function sort(id, li){
-				var num = parseFloat(id);
-				var id = $(li).find('.sort').text() || -Infinity;
-				var at = num >= parseFloat(id);
-				return at ? li : sort(id, li.prev());
-			}
-		</script>
-	</body>
+    <div class="model">
+      <li class="chat__message white huet2 box">
+        <b class="chat__name"></b>
+        <p class="chat__message-text"></p>
+        <span class="sort none">0</span>
+        <div class="chat__when"></div>
+      </li>
+    </div>
+  </div>
+
+  <script src="/jquery.js"></script>
+  <script src="/gun.js"></script>
+  <script src="/gun/nts.js"></script>
+  <script>
+    var gun = Gun(location.origin + '/gun');
+    var chat = gun.get('converse/' + location.hash.slice(1));
+
+    $(".chat__submit").on('click', submit);
+    $(".chat_form").on('keydown', enter);
+    function enter(e) {
+      if (e.which !== 13) { return }
+      submit(e);
+    }
+    function submit(e) {
+      e.preventDefault();
+
+      var msg = { when: Gun.time.is() };
+
+      msg.who = $('.chat__name-input').val();
+      if (!msg.who) {
+        msg.who = 'user' + Gun.text.random(3);
+        $('.chat__name-input').val(msg.who);
+      }
+
+      msg.what = $('.chat__message-input').val();
+      if (!msg.what) { return }
+
+      chat.set(msg);
+      $('.chat__message-input').val('').focus();
+    }
+
+    chat.map().val(function (msg, id) {
+      if (!msg) { return }
+      var messageList = $('.chat__message-list');
+      var last = sort(msg.when, messageList.children('li').last());
+
+      var li = $("#msg-" + id)[0]; // grab if exists
+      if (!li) {
+        li = $('.model li').clone(true) // else create it
+          .attr('id', 'msg-' + id)
+          .insertAfter(last);
+      }
+
+      // bind the message data into the UI
+      li = $(li);
+      li.find('.chat__name').text(msg.who);
+      li.find('.chat__message-text').text(msg.what);
+      li.find('.sort').text(msg.when);
+
+      var time = new Date(msg.when);
+      li.find('.chat__when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
+
+      $('html, body').stop(true, true)
+        .animate({ scrollTop: messageList.height() });
+    });
+
+    function sort(num, li) { return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity) ? li : sort(num, li.prev()) }
+  </script>
+</body>
+
 </html>

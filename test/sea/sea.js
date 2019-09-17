@@ -6,23 +6,23 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
-  try{ require('fs').unlinkSync('data.json') }catch(e){}
-  //root.Gun = root.Gun || require('../gun');
+  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
   } else {
+    try{ require('fs').unlinkSync('data.json') }catch(e){}
+    try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
     //require('../lib/file');
-    require('../lib/store');
-    require('../lib/rfs');
+    require('../../lib/store');
+    require('../../lib/rfs');
   }
 
-  if(root.Gun.SEA){
-    //Gun = root.Gun = root.Gun;
-  } else {
-    var expect = global.expect = require("../expect");
+  try{ var expect = global.expect = require("../expect") }catch(e){}
+
+  if(!root.Gun.SEA){
     require('../../sea.js');
   }
 }(this));
@@ -296,12 +296,15 @@ describe('SEA', function(){
     })
 
     it('refresh login', function(done){
-      gun = Gun();
-      user = gun.user();
-      user.auth('carl', 'test123', function(ack){
-        expect(ack.err).to.not.be.ok();
-        done()
-      })
+      this.timeout(9000);
+      setTimeout(function(){
+        gun = Gun();
+        user = gun.user();
+        user.auth('carl', 'test123', function(ack){
+          expect(ack.err).to.not.be.ok();
+          done()
+        })
+      }, 800);
     })
 
     it('gun put JSON', function(done){
@@ -361,4 +364,4 @@ describe('SEA', function(){
 
 })
 
-})()
+}());
