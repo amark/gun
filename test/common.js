@@ -3692,7 +3692,6 @@ describe('Gun', function(){
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;
-			  //console.log(diff, '<', max);
 			  expect(diff > max).to.not.be.ok();
 			});
 			var turns = 0;

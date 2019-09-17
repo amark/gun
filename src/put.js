@@ -3,9 +3,9 @@ var Gun = require('./root');
 Gun.chain.put = function(data, cb, as){
 	// #soul.has=value>state
 	// ~who#where.where=what>when@was
-	// TODO: BUG! Put probably cannot handle plural chains!
+	// TODO: BUG! Put probably cannot handle plural chains! `!as` is quickfix test.
 	var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
-	if(!ctx.puta){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
+	/*if(!ctx.puta && !as){ if(tmp = ctx.puts){ if(tmp > M){ // without this, when synchronous, writes to a 'not found' pile up, when 'not found' resolves it recursively calls `put` which incrementally resolves each write. Stack overflow limits can be as low as 10K, so this limit is hardcoded to 1% of 10K.
 		(ctx.stack || (ctx.stack = [])).push([gun, data, cb, as]);
 		if(ctx.puto){ return }
 		ctx.puto = setTimeout(function drain(){
@@ -15,7 +15,7 @@ Gun.chain.put = function(data, cb, as){
 			ctx.stack = ctx.puts = ctx.puto = null;
 		}, 0);
 		return gun;
-	} ++ctx.puts } else { ctx.puts = 1 } }
+	} ++ctx.puts } else { ctx.puts = 1 } }*/
 	as = as || {};
 	as.data = data;
 	as.via = as.$ = as.via || as.$ || gun;
@@ -127,7 +127,6 @@ function batch(){ var as = this;
 	}, as);
 	if(as.res){ as.res() }
 } function no(v,k){ if(v){ return true } }
-//console.debug(999,1); var C = 0; setInterval(function(){ try{ debug.innerHTML = C }catch(e){console.log(e)} }, 500);
 
 function map(v,k,n, at){ var as = this;
 	var is = Gun.is(v);
@@ -139,6 +138,7 @@ function map(v,k,n, at){ var as = this;
 			ref = ref.get(path[i]);
 		}
 		if(is){ ref = v }
+		//if(as.not){ (ref._).dub = Gun.text.random() } // This might optimize stuff? Maybe not needed anymore. Make sure it doesn't introduce bugs.
 		var id = (ref._).dub;
 		if(id || (id = Gun.node.soul(at.obj))){
 			ref.back(-1).get(id);
@@ -157,7 +157,7 @@ function soul(id, as, msg, eve){
 	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
 	if(eve){ eve.stun = true }
 	if(!id){ // polyfill async uuid for SEA
-		at.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
+		as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
 			if(err){ return Gun.log(err) } // TODO: Handle error.
 			solve(at, at.dub = at.dub || id, cat, as);
 		});
@@ -199,6 +199,7 @@ function any(soul, as, msg, eve){
 				if(at.link || at.soul){ return at.link || at.soul }
 				as.data = obj_put({}, at.get, as.data);
 			});
+			as.not = true; // maybe consider this?
 		}
 		tmp = tmp || at.soul || at.link || at.dub;// || at.get;
 		at = tmp? (at.root.$.get(tmp)._) : at;
