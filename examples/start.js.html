@@ -1,0 +1,22 @@
+/*<!DOCTYPE html>
+<html>
+<head></head>
+<body></body>
+<script>// */
+;(function(){try{
+	if(typeof window == "undefined"){ return }
+	var url = location.hash.slice(1);
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(e){
+		if(4 != xhr.readyState){ return }
+		var d = document, doc = d.createElement("html");
+		doc.innerHTML = xhr.responseText;
+		var head = doc.getElementsByTagName('head')[0] || doc.appendChild(d.createElement('head'));
+		var base = doc.getElementsByTagName('base')[0] || head.appendChild(d.createElement('base'));
+		base.href = url;
+		document.write(doc.outerHTML);
+	};
+	xhr.open('GET', url, true);
+	xhr.send(null);
+}catch(e){document.write(''+e)}}());
+//</script></html>

@@ -1,18 +1,19 @@
 <p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![npm](https://img.shields.io/npm/dm/gun.svg)](https://www.npmjs.com/package/gun)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
-[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 
-**GUN** is an _ecosystem_  of tools that let you <u>build tomorrow's dApps, today</u>.
+**GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and encrypted applications.
+
+Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
 
 Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>
-<a href=""><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
 <a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
 <a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
 <a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
@@ -20,8 +21,9 @@ Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36
 <a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
 </tr>
 </table>
+<center><a href="https://youtu.be/1ASrmQ-CwX4"><img src="https://gun.eco/see/ar.gif" title="AR"/></a></center>
 
-The ecosystem is one nice stack of technologies that looks like this:
+The ecosystem is one nice stack of technologies that looks like this: (names -> use case)
 
 <div><img width="48%" src="https://gun.eco/see/stack.png"/>
 <img width="48%" align="right" src="https://gun.eco/see/layers.png"/></div>
@@ -167,7 +169,7 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
 
 This would not be possible without **community contributors**, big shout out to:
 
-**[ajmeyghani](https://github.com/ajmeyghani) ([Learn GUN Basics with Diagrams](https://medium.com/@ajmeyghani/gundb-a-graph-database-in-javascript-3860a08d873c))**; **[anywhichway](https://github.com/anywhichway) ([Block Storage](https://github.com/anywhichway/gun-block))**; **[beebase](https://github.com/beebase) ([Quasar](https://github.com/beebase/gun-vuex-quasar))**; **[BrockAtkinson](https://github.com/BrockAtkinson) ([brunch config](https://github.com/BrockAtkinson/brunch-gun))**; **[Brysgo](https://github.com/brysgo) ([GraphQL](https://github.com/brysgo/graphql-gun))**; **[d3x0r](https://github.com/d3x0r) ([SQLite](https://github.com/d3x0r/gun-db))**; **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; **[hillct](https://github.com/hillct) (Docker)**; **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[JuniperChicago](https://github.com/JuniperChicago) ([cycle.js bindings](https://github.com/JuniperChicago/cycle-gun))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; **[kristianmandrup](https://github.com/kristianmandrup) ([edge](https://github.com/kristianmandrup/gun-edge))**; **[Lightnet](https://github.com/Lightnet)** ([Awesome Vue User Examples](https://glitch.com/edit/#!/jsvuegunui?path=README.md:1:0) & [User Kitchen Sink Playground](https://gdb-auth-vue-node.glitch.me/)); **[lmangani](https://github.com/lmangani) ([Cytoscape Visualizer](https://github.com/lmangani/gun-scape), [Cassandra](https://github.com/lmangani/gun-cassandra), [Fastify](https://github.com/lmangani/fastify-gundb), [LetsEncrypt](https://github.com/lmangani/polyGun-letsencrypt))**; **[mhelander](https://github.com/mhelander) ([SEA](https://github.com/amark/gun/blob/master/sea.js))**; [omarzion](https://github.com/omarzion) ([Sticky Note App](https://github.com/omarzion/stickies)); [PsychoLlama](https://github.com/PsychoLlama) ([LevelDB](https://github.com/PsychoLlama/gun-level)); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; **[rogowski](https://github.com/rogowski) (AXE)**; [sbeleidy](https://github.com/sbeleidy); **[sbiaudet](https://github.com/sbiaudet) ([C# Port](https://github.com/sbiaudet/cs-gun))**; **[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; **[Shadyzpop](https://github.com/Shadyzpop) ([React Native example](https://github.com/amark/gun/tree/master/examples/react-native))**; **[sjones6](https://github.com/sjones6) ([Flint](https://github.com/sjones6/gun-flint))**; **[Stefdv](https://github.com/stefdv) (Polymer/web components)**; **[zrrrzzt](https://github.com/zrrrzzt) ([JWT Auth](https://gist.github.com/zrrrzzt/6f88dc3cedee4ee18588236756d2cfce))**; **[xmonader](https://github.com/xmonader) ([Python Port](https://github.com/xmonader/pygundb))**; **[88dev](https://github.com/88dev) ([Database Viewer](https://github.com/88dev/gun-show))**;
+**[ajmeyghani](https://github.com/ajmeyghani) ([Learn GUN Basics with Diagrams](https://medium.com/@ajmeyghani/gundb-a-graph-database-in-javascript-3860a08d873c))**; **[anywhichway](https://github.com/anywhichway) ([Block Storage](https://github.com/anywhichway/gun-block))**; **[beebase](https://github.com/beebase) ([Quasar](https://github.com/beebase/gun-vuex-quasar))**; **[BrockAtkinson](https://github.com/BrockAtkinson) ([brunch config](https://github.com/BrockAtkinson/brunch-gun))**; **[Brysgo](https://github.com/brysgo) ([GraphQL](https://github.com/brysgo/graphql-gun))**; **[d3x0r](https://github.com/d3x0r) ([SQLite](https://github.com/d3x0r/gun-db))**; **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; **[hillct](https://github.com/hillct) (Docker)**; **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[JuniperChicago](https://github.com/JuniperChicago) ([cycle.js bindings](https://github.com/JuniperChicago/cycle-gun))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; **[kristianmandrup](https://github.com/kristianmandrup) ([edge](https://github.com/kristianmandrup/gun-edge))**; **[Lightnet](https://github.com/Lightnet)** ([Awesome Vue User Examples](https://glitch.com/edit/#!/jsvuegunui?path=README.md:1:0) & [User Kitchen Sink Playground](https://gdb-auth-vue-node.glitch.me/)); **[lmangani](https://github.com/lmangani) ([Cytoscape Visualizer](https://github.com/lmangani/gun-scape), [Cassandra](https://github.com/lmangani/gun-cassandra), [Fastify](https://github.com/lmangani/fastify-gundb), [LetsEncrypt](https://github.com/lmangani/polyGun-letsencrypt))**; **[mhelander](https://github.com/mhelander) ([SEA](https://github.com/amark/gun/blob/master/sea.js))**; [omarzion](https://github.com/omarzion) ([Sticky Note App](https://github.com/omarzion/stickies)); [PsychoLlama](https://github.com/PsychoLlama) ([LevelDB](https://github.com/PsychoLlama/gun-level)); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; **[rogowski](https://github.com/rogowski) (AXE)**; [sbeleidy](https://github.com/sbeleidy); **[sbiaudet](https://github.com/sbiaudet) ([C# Port](https://github.com/sbiaudet/cs-gun))**; **[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; **[Shadyzpop](https://github.com/Shadyzpop) ([React Native example](https://github.com/amark/gun/tree/master/examples/react-native))**; **[sjones6](https://github.com/sjones6) ([Flint](https://github.com/sjones6/gun-flint))**; **[Stefdv](https://github.com/stefdv) (Polymer/web components)**; **[zrrrzzt](https://github.com/zrrrzzt) ([JWT Auth](https://gist.github.com/zrrrzzt/6f88dc3cedee4ee18588236756d2cfce))**; **[xmonader](https://github.com/xmonader) ([Python Port](https://github.com/xmonader/pygundb))**; 
 
 I am missing many others, apologies, will be adding them soon!
 
@@ -190,7 +192,7 @@ var Gun = require('gun/gun');
 
 If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
 
-`npm install @trust/crypto text-encoding node-webcrypto-ossl --save`
+`npm install text-encoding node-webcrypto-ossl --save`
 
 You will need to require it too (it will be automatically added to the Gun object):
 
@@ -207,6 +209,8 @@ To quickly spin up a Gun test server for your development team, utilize either [
 ### [Heroku](https://www.heroku.com/)
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun)
+
+ > Heroku deletes your data every 15 minutes, one way to fix this is by adding [cheap storage](https://gun.eco/docs/Using-Amazon-S3-for-Storage).
 
 Or:
 

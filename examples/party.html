@@ -4,7 +4,7 @@
 		<title>Party by Neon ERA</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="./style.css">
-		<link href="https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic" rel="stylesheet" type="text/css">
+		<link href="https://fonts.googleapis.com/css?family=Raleway:100" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Caveat" rel="stylesheet">
 		<style>
 			.write {
@@ -38,10 +38,12 @@
 			;(() => {
 				function S(){};
 				window.S = S;
+				try{localStorage.clear();//sessionStorage.clear();
+				}catch(e){}
 				S.gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
 				//S.gun = Gun('http://localhost:8765/gun');
 				//S.gun = Gun();
-				S.app = S.gun.get('examples/social/1');
+				S.app = S.gun.get('examples/social/2');
 				S.user = S.gun.user();
 				S.tell = (what, n) => {
 					var e = $('#tell').find('p');
@@ -67,13 +69,30 @@
 				#hi .faces img {
 					w-idth: 5%;
 					width: 3em;
+					width: 7vh;
+				}
+				#hi .ton {
+					border-radius: 1em;
+					font-size: 150%;
+					font-size: 2.25vmax;
+					margin: 0 0.5em 0 0.5em;
+					background: transparent;
+					border: 1px solid white;
+					color: white;
+					font-family: 'Raleway', sans-serif;
+				}
+				#hi .ton:hover {
+					background: white;
+					color: black;
 				}
 			</style>
-			<div class="loud write shout rim">Party by NEON ERA.</div>
+			<div class="loud write shout rim">Join the Private Party!</div>
 			<div id="faces" class="flush faces">
-				<div class="right" style="max-width: 20em;">
-					<input id="halias" class="write jot sap" placeholder="username">
-					<input id="hpass" type="password" class="write jot sap" placeholder="passphrase">
+				<div class="right" style="max-width: 30em;">
+					<a href="chrome://extensions" target="_blank"><button class="ton">Install Now</button></a>
+					<a href="#"><button class="ton">How It Works</button></a>
+					<!-- input id="halias" class="write jot sap" placeholder="username">
+					<input id="hpass" type="password" class="write jot sap" placeholder="passphrase" -->
 					<script>
 						$.as.route.page('hi', () => {
 							$('#hpass').on('focus', () => {
@@ -135,18 +154,24 @@
 				});
 			</script>
 			<div class="pad ditch">
+				<p class="loud"><i>Your friend has invited you to add a privacy extension to your browser:</i></p>
+				<p> - Decrypts your friends' messages across any site!</p>
+				<p> - Stops tech monopolies from selling your private data to advertisers.</p>
+				<p> - Gives you ownership and control over all your data online.</p>
+				<p> - Creates a searchable history of your posts, friends, and more!</p>
+			</div>
+			<div id="faces2" class="flush faces"></div>
+			<div class="pad ditch">
 				<p class="loud"><i>Express your thoughts & connect with the world around you!</i></p>
 				<p> - Discover new relationships.</p>
 				<p> - Keep up with friends and news in realtime.</p>
 				<p> - Watch fun videos and photos from people who share.</p>
 				<p> - But this time, you own it: fully decentralized.</p>
 			</div>
-			<div id="faces2" class="flush faces">
-			</div>
 			<div class="pad ditch" style="margin-top: 1em;">
-				<p><span class="loud write shout">Welcome</span><span class="write loud">, you are currently connected to <b id="peers" class="huet4">2</b> peers. <b>Why not try to sign up or log in?</b></span></p>
+				<p><span class="loud write shout">Welcome,</span><!-- span class="write loud">, you are currently connected to <b id="peers" class="huet4">2</b> peers. <b>Why not try to sign up or log in?</b></span --></p>
 				<p> - Your identity is created here, by you. Not on a server.</p>
-				<p> - It uses secure <a href="https://gun.eco/explainers/data/security.html">cryptographic</a> methods to protect you.</p>
+				<p> - It uses secure <a href="https://gun.eco/docs/Cartoon-Cryptography">cryptographic</a> methods to protect you.</p>
 				<p> - Only you have access to it, meaning even we cannot reset your password!</p>
 				<p> - For added security, you can freely <a href="https://github.com/amark/gun">download</a> and run it on your own computer.</p>
 			</div>
@@ -530,7 +555,7 @@
 			</ul>
 			<div class="model">
 				<li class="spoke tint sap gully">
-					<div class="gap"><span class="sort none"></span><img class="face act none"><b class="name"></b><span class="what"></span></div>
+					<div class="gap"><span class="sort none"></span><img class="face act none"><b class="name"></b><div class="what"></div></div>
 				</li>
 			</div>
 			<div style="height: 10%;"></div>
@@ -547,23 +572,33 @@
 					});
 					window.user = S.user;
 					$('#speak').on('submit', (e) => {
-						/*var say = normalize($('#speak .draft'));
-						console.log(1, say.html());
-						return;*/
-						var say = $('#speak .draft').text();
+						var say = $('#speak .draft').text(); //.text(); // NO NO NO NO NO
 						if(!say){ return }
-						var ref = S.user.get('who').get('all').set({what: say});
-						ref.get('by').put(S.user.get('who'));
-						S.user.get('who').get('said').time(ref);
-						S.gun.get('@').time(ref);
+						console.log('save!', say);
+						var ref = S.user.get('who').get('all').set({what: say, when: Gun.state()});
+						//ref.get('by').put(S.user.get('who'));
+						//S.user.get('who').get('said').time(ref);
+						S.user.get('who').get('said').set(ref);
+						//S.gun.get('@').time(ref);
 						$('#speak .draft').text('');
 					});
-					S.gun.get('@').time(async (data, key, time) => {
-						var ref = S.gun.get(data), tmp;
-						var said = await ref.then();
+					//S.gun.get('@').time(async (data, key, time) => {
+					S.user.get('who').get('said').map().once(async (data, key, time) => {
+						//var ref = S.gun.get(data), tmp;
+						//var said = await ref.then();
+						key = key.replace(/[^A-Za-z]/ig,'');
+						var tmp, said = data, time = said.when;
 						var $li = $($('#'+key)[0] || $('#draft .model .spoke').clone(true,true).attr('id', key)[(tmp = $.as.sort(time, $('#draft ul').children('li').first()))[0]?'insertBefore':'appendTo'](tmp[0] || '#draft ul'));
-						$li.find('.what').text(said.what);
-						var by = ref.get('by');
+						tmp = said.what;
+						if(tmp && tmp.ct){
+							tmp = JSON.stringify(tmp);
+							setTimeout(async function(){
+								tmp = await SEA.decrypt(said.what, S.user._.sea);
+								$li.find('.what').text(tmp);
+							}, 750);
+						}
+						$li.find('.what').text(tmp); // NORMALIAZE!!!
+						var by = S.user.get('who');// ref.get('by');
 						by.get('face').get('small').on(data => {
 							$li.find('.face').attr('src', data).removeClass('none');
 						});
@@ -579,7 +614,7 @@
 						if(face){
 							$li.find('.face').attr('src', face).removeClass('none');
 						}
-					}, 10);
+					});
 					$(document).on('click', '#speak .act.face', (eve) => {
 						
 					});
@@ -587,61 +622,80 @@
 			</script>
 		</div>
 
-		<div id="create" class="white center act">
+		<div id="contacts" class="hue2 page">
 			<style>
-				#create {
-					position: fixed;
-					bottom: 2em;
-					right: 2em;
-					font-size: 1em;
-					font-family: Tahoma, arial;
-					border-radius: 1em;
-					z-index: 99999;
-					width: 2em;
-					height: 2em;
-					opacity: 0.8;
+				#contacts ul .face {
+					float: left;
+					border-radius: 100%;
+					vertical-align: middle;
+					height: 2.5em;
+					margin-right: 5%;
+				}
+				#contacts ul, #contacts li {
 					overflow: visible;
-					transition: all 0.2s ease-in;
 				}
-				#create:hover {
-					opacity: 1;
-				}
-				#create span {
-					line-height: 2em; 
-				}
-				#create .menu {
-					display: none;
-					height: 10em;
-					width: 10em;
-					bottom: 0em;
-					right: 0em;
-					overflow: visible;
-					position: absolute;
-					border-bottom-right-radius: 1em;
+				#contacts .who {
+					display: inline-block;
+					margin-right: 2%;
+					min-width: 250px;
+					width: 15em;
 					text-align: left;
+					padding: 2%;
+					vertical-align: middle;
 				}
-				#create:hover .menu {
-					display: block;
+				#contacts .what {
 				}
-				#create li {
-					padding: 0.3em 0.5em;
-				}
-				#create a {
-					color: black;
-				}
-				#create a:hover {
-					color: #4D79D8;
+				#contacts .spoke {
 				}
 			</style>
-			<span class="huet act">+</span>
-			<div class="white sap menu" style="width: 7em;">
-				<ul class="left blackt gap">
-						<a href="#out" class="act"><li>Sign Out</li></a>
-						<a href="#settings" class="act"><li>Settings</li></a>
-						<li>Profile</li>
-						<li>Help</li>
-				</ul>
+			<p class="pad">Contacts</p>
+			<ul class="mid row col center">
+			</ul>
+			<div class="model">
+				<li class="who tint sap gully">
+					<div class="gap">
+						<span class="sort none"></span>
+						<img class="face act none" crossOrigin="Anonymous">
+						<big class="name"></big><br/>
+						<i class="alias"></i><br/>
+						<small>FB ID:</small> <span class="fbid"></span>
+					</div>
+				</li>
 			</div>
+			<div style="height: 10%;"></div>
+			<script>
+				$.as.route.page('contacts', () => {
+					if(!S.user.is){ return $.as.route('sign') }
+					//S.gun.get('@').time(async (data, key, time) => {
+
+					// TODO: BUG!! switch from `on` to `once` to get Martti's {_} empty object bug.
+					var $ul = $('#contacts ul');
+					S.user.get('old').get('fb').map().on(async function(data){
+						console.log('contact:', data);
+						var key = data.fbid, tmp;
+						if(!key){ return }
+						var $li = $($('#fbid'+key)[0] || $('#contacts .model .who').clone(true,true).attr('id', 'fbid'+key)[(tmp = $.as.sort(data.name||1, $ul.children('li').first()))[0]?'insertBefore':'appendTo'](tmp[0] || $ul));
+
+						$li.find('.name').text(data.name);
+						$li.find('.alias').text(data.alias);
+						$li.find('.fbid').text(data.fbid);
+						tmp = $li.find('img').attr('src', data.face || data.tmp);
+						if(!data.face){
+							var ref = this;
+							$.fn.upload.shrink(data.tmp, function(b64){
+								ref.get('face').put(b64);
+							}, 100); 
+						}
+						$('html, body').stop(true, true).animate({scrollTop: $ul.height()});
+					});
+					function img2b64(img, cb){
+						var c = document.createElement('canvas');
+						var ctx = c.getContext("2d");
+						ctx.drawImage(img, 10, 10);
+						cb(c.toDataURL());
+					}
+				});
+			</script>
 		</div>
 
 		<div id="tell" class="center">
@@ -673,6 +727,7 @@
 			</style>
 			<p class="mid black">Hello world!</p>
 		</div>
+		<!-- textarea id='debug' class="no-ne" style="position: fixed; bottom: 0; left: 0; width: 25%; height: 30%"></textarea -->
 		
 		<script>
 			$.as.route.page('person', () => {
@@ -686,7 +741,7 @@
 				if(e.err){ return }
 				var m = $($("#d"+e.id)[0] || $('#d0').clone(true,true).attr('id', 'd'+e.id).css('backgroundImage', '').appendTo('#draft')).addClass('pulse');
 				if(up){ return up.shrink(e, resize, 1000) }
-				console.log(e.id, e.base64);
+				//console.log(e.id, e.base64);
 				m.removeClass('pulse').css({
 					backgroundImage: 'url(' + e.base64 + ')',
 					backgroundRepeat: 'no-repeat',
@@ -697,5 +752,7 @@
 		</script>
 		<script async src="../../gun/lib/fun.js"></script>
 		<script async src="../../gun/lib/normalize.js"></script>
+		<script async src="../../gun/lib/monotype.js"></script>
+		<script async src="../../gun/lib/meta.js"></script>
 	</body>
 </html>

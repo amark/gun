@@ -1,83 +1,151 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Think</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
-		<link rel="stylesheet" type="text/css" href="/style.css">
-  </head>
-	<body>
-		<div id="think" class="hue page">
-			<link href='https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic' rel='stylesheet' type='text/css'>
-			<style>
-				#think {
-					font-size: 24pt;
-					font-size: 6vmin;
-					font-family: 'Alegreya Sans', sans-serif;
-					color: white;
-				}
-				#think li {
-					width: 90%;
-					margin-top: 0.3em;
-					border-bottom: 1px dashed white;
-				}
-				#think .add {
-					width: 1em;
-					height: 1em;
-					line-height: 1em;
-					padding: 0.5em;
-					font-family: Tahoma, arial;
-					text-align: center;
-					border-radius: 50%;
-				}
-				#think ul, #think li {
-					list-style-type: circle;
-					margin-left: 0.5em;
-				}
-			</style>
-			<div class="pad whitet" style="width: 75%;">
-				<div style="margin-top: 2%;">
-					<div class="rubric left center">Add a Thought...</div>
-					<a href="#" class="right huet white act add">+</a>
-				</div>
-				<ul>
-				</ul>
-			</div>
-			
-			<script src="/jquery.js"></script>
-			<script src="/gun.js"></script>
-			<script src="/gun/nts.js"></script>
-			<script>			
-				// Check out the interactive tutorial
-				// for how to build a simplified version
-				// of this example: https://scrimba.com/c/cW2Vsa
-				var gun = Gun(location.origin+'/gun');
-				var think = gun.get('think/' + location.hash.slice(1));
-				var typing, throttle;
-				$('.add').on('click', function(){
-					$('<li>').attr('contenteditable', true).prependTo('ul');
-				});
-				$(document).on('keyup', "[contenteditable=true]", function(){
-					var li = $(this), id = li.attr('id');
-					if(!id){
-						li.attr('id', id = Gun.text.random());
-					}
-					typing = id;
-					clearTimeout(throttle);
-					throttle = setTimeout(function(){
-						think.get(id).put(li.text());
-						typing = false;
-					},10);
-				});
-				think.map().on(function(thought, id){
-					var li = $('#'+id)[0] || $('<li>').attr('id', id).attr('contenteditable', true).prependTo('ul');
-					if(thought){
-						if(id === typing){ return }
-						$(li).text(thought);
-					} else {
-						$(li).hide();
-					}
-				});
-			</script>
-		</div>
-	</div>
+
+<head>
+  <title>Think</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link href='https://fonts.googleapis.com/css?family=Alegreya+Sans:300italic' rel='stylesheet' type='text/css'>
+  <style>
+    .thought {
+      font-family: 'Alegreya Sans', sans-serif;
+    }
+
+    .thought__heading {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 0;
+      color: white;
+    }
+
+    .thought__form-container {
+      position: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 20px;
+      top: 0;
+      z-index: 1;
+    }
+
+    .thought__item {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .thought__input {
+      flex: 1;
+      font-family: 'Alegreya Sans', sans-serif;
+      font-size: 25px;
+      font-weight: 500;
+      padding: 15px;
+      width: 100%;
+      margin-bottom: 10px;
+      background-color: white;
+      border-radius: 5px;
+    }
+
+    .thought__add {
+      width: 30px;
+      height: 30px;
+      font-family: Tahoma, arial;
+      text-align: center;
+      border-radius: 50%;
+      background-color: white;
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    .thought__add:hover::after {
+      background-color: rgba(0,0,0,0.2);
+    }
+
+    .thought__add:focus::after {
+      background-color: rgba(0,0,0,0.2);
+    }
+
+    .thought__add::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+      background-color: rgba(0,0,0,0);
+    }
+
+    .thought__list {
+      list-style-type: circle;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      overflow-y: auto;
+      padding: 90px 20px;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      min-height: 100vh;
+    }
+
+    @media (max-width: 567px) {
+      .thought__heading {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="thought hue page">
+    <div class="thought__form-container hue">
+      <h2 id='title' class="thought__heading hue">Add a thought...</h2>
+      <button class="thought__add say huet">
+        <span aria-hidden="true">+</span>
+        <span class="visually-hidden">Add thought</span>
+      </button>
+    </div>
+    <ul class="thought__list">
+    </ul>
+  </div>
+
+  <script src="/jquery.js"></script>
+  <script src="/gun.js"></script>
+  <script src="/gun/nts.js"></script>
+  <script>
+    // Check out the interactive tutorial
+    // for how to build a simplified version
+    // of this example: https://scrimba.com/c/cW2Vsa
+    var gun = Gun(location.origin + '/gun');
+    var think = gun.get('think/' + location.hash.slice(1));
+    var thoughtItemStr = function(id) { return '<li class="thought__item"><label class="visually-hidden" for="' + id + '">Thought</label><input id="' + id + '" class="thought__input huet"><li/>'}
+    var typing, throttle;
+    $('.thought__add').on('click', function () {
+      $(thoughtItemStr('')).prependTo('.thought__list').find('.thought__input').focus();
+    });
+    $(document).on('keyup', '.thought__input', function () {
+      var input = $(this), id = input.attr('id');
+      if (!id) {
+        input.attr('id', id = Gun.text.random());
+      }
+      typing = id;
+      clearTimeout(throttle);
+      throttle = setTimeout(function () {
+        think.get(id).put(input.val());
+        typing = false;
+      }, 10);
+    });
+    think.map().on(function (thought, id) {
+      var li = $('#' + id).parent()[0] || $(thoughtItemStr(id)).prependTo('.thought__list');
+      if (thought) {
+        if (id === typing) { return }
+        $(li).find('.thought__input').val(thought);
+      } else {
+        $(li).hide();
+      }
+    });
+  </script>
+  </div>
 </body>

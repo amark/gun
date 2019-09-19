@@ -17,7 +17,7 @@ Gun.on('create', function(root){
 	// See the next 'opt' code below for actual saving of data.
 	var ev = this.to, opt = root.opt;
 	if(root.once){ return ev.next(root) }
-	//if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless!
+	if(false === opt.localStorage){ return ev.next(root) } // we want offline resynce queue regardless! // actually, this doesn't help, per @go1dfish 's observation. Disabling for now, will need better solution later.
 	opt.prefix = opt.file || 'gun/';
 	var gap = Gun.obj.ify(store.getItem('gap/'+opt.prefix)) || {};
 	var empty = Gun.obj.empty, id, to, go;
@@ -30,13 +30,14 @@ Gun.on('create', function(root){
 			});
 		});
 		setTimeout(function(){
-			root.on('out', {put: send, '#': root.ask(ack), I: root.$});
+			// TODO: Holy Grail dangling by this thread! If gap / offline resync doesn't trigger, it doesn't work. Ouch, and this is a localStorage specific adapter. :(
+			root.on('out', {put: send, '#': root.ask(ack)});
 		},1);
 	}
 
 	root.on('out', function(msg){
-		if(msg.lS){ return }
-		if(msg.I && msg.put && !msg['@'] && !empty(opt.peers)){
+		if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
+		if(Gun.is(msg.$) && msg.put && !msg['@']){
 			id = msg['#'];
 			Gun.graph.is(msg.put, null, map);
 			if(!to){ to = setTimeout(flush, opt.wait || 1) }
@@ -84,7 +85,7 @@ Gun.on('create', function(root){
 	var disk = Gun.obj.ify(store.getItem(opt.prefix)) || {};
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
-	
+
 	root.on('put', function(at){
 		this.to.next(at);
 		Gun.graph.is(at.put, null, map);
@@ -108,11 +109,9 @@ Gun.on('create', function(root){
 		if(data && has){
 			data = Gun.state.to(data, has);
 		}
-		if(!data && !Gun.obj.empty(opt.peers)){ // if data not found, don't ack if there are peers.
-			return; // Hmm, what if we have peers but we are disconnected?
-		}
+		//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
 		//console.log("lS get", lex, data);
-		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.I});
+		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
 	});
@@ -130,8 +129,8 @@ Gun.on('create', function(root){
 		acks = {};
 		if(data){ disk = data }
 		try{store.setItem(opt.prefix, JSON.stringify(disk));
-		}catch(e){ 
-			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, temporary example at https://github.com/amark/gun/blob/master/test/tmp/indexedDB.html .");
+		}catch(e){
+			Gun.log(err = (e || "localStorage failure") + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 			root.on('localStorage:error', {err: err, file: opt.prefix, flush: disk, retry: flush});
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.

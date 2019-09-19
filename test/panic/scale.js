@@ -4,7 +4,7 @@ var config = {
 	servers: 1,
 	browsers: 2,
 	each: 2500,
-	burst: 25, // do not go below 1!
+	burst: 1, // do not go below 1!
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
