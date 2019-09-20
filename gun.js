@@ -1972,12 +1972,14 @@
 				if('[' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
+					console.log('hear batch length of', msg.length);
 					(function go(){
 						var S = +new Date; // STATS!
 						var m, c = 100; // hardcoded for now?
 						while(c-- && (m = msg.shift())){
 							mesh.hear(m, peer);
 						}
+						console.log(+new Date - S, 'hear batch');
 						(mesh.hear.long || (mesh.hear.long = [])).push(+new Date - S);
 						if(!msg.length){ return }
 						puff(go, 0);
@@ -1988,6 +1990,7 @@
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
+					if(msg.DBG_s){ console.log(+new Date - msg.DBG_s, 'to hear') }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(dup.check(id)){ return }
 					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
@@ -2004,7 +2007,9 @@
 						}
 						return;
 					}
+					var S = +new Date;
 					root.on('in', msg);
+					!msg.nts && console.log(+new Date - S, 'msg', msg['#']);
 					return;
 				}
 			}
