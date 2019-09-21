@@ -176,29 +176,23 @@
       }
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
-      api.TextDecoder = window.TextDecoder;      
-      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+      api.TextDecoder = window.TextDecoder;
+      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))));
     }
     if(!api.TextDecoder)
     {
-      const { TextEncoder, TextDecoder } = require('text-encoding')
-      api.TextDecoder = TextDecoder
-      api.TextEncoder = TextEncoder
+      const { TextEncoder, TextDecoder } = require('text-encoding');
+      api.TextDecoder = TextDecoder;
+      api.TextEncoder = TextEncoder;
     }
     if(!api.crypto){try{
       var crypto = USE('crypto', 1);
       Object.assign(api, {
         crypto,
         random: (len) => Buffer.from(crypto.randomBytes(len))
-      });
-      //try{
-        // const WebCrypto = USE('node-webcrypto-ossl', 1);
-        // api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
-        const isocrypto = require('isomorphic-webcrypto');
-        api.ossl = api.subtle = isocrypto.subtle
-      //}catch(e){
-        //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
-      //}
+      });      
+      const isocrypto = require('isomorphic-webcrypto');
+      api.ossl = api.subtle = isocrypto.subtle;
     }catch(e){
       console.log("node-webcrypto-ossl and text-encoding may not be included by default, please add it to your package.json!");
       OSSL_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
@@ -228,12 +222,12 @@
       return jwk;
     };
     
-    s.keyTojwk = function(keyBytes) {
-      var jwkKeyString = keyBytes.toString('base64')
-      jwkKeyString = jwkKeyString.replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
-      jwkKeyString = { kty: "oct", k: jwkKeyString, ext: false, alg: "A256GCM"};
-      return jwkKeyString
+    s.keyToJwk = function(keyBytes) {
+      const keyB64 = keyBytes.toString('base64');
+      const k = keyB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
+      return { kty: 'oct', k: k, ext: false, alg: 'A256GCM' };
     }
+
     s.recall = {
       validity: 12 * 60 * 60, // internally in seconds : 12 hours
       hook: function(props){ return props } // { iat, exp, alias, remember } // or return new Promise((resolve, reject) => resolve(props)
@@ -517,8 +511,9 @@
       var opt = opt || {};
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      const jwkHash = S.keyTojwk(hash)
-      return await shim.subtle.importKey('jwk', jwkHash, {name:'AES-GCM'}, false, ['encrypt', 'decrypt'])
+      
+      const jwkKey = S.keyToJwk(hash)      
+      return await shim.subtle.importKey('jwk', jwkKey, {name:'AES-GCM'}, false, ['encrypt', 'decrypt'])
     }
     module.exports = importGen;
   })(USE, './aeskey');
@@ -624,9 +619,9 @@
       var privKeyData = keysToEcdhJwk(epub, epriv);
       var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        var derivedBits = await ecdhSubtle.deriveBits(props,privKey,256);
-        derivedBits = new Uint8Array(derivedBits);
-        const derivedKey = await ecdhSubtle.importKey("raw",derivedBits,{ name: "AES-GCM", length: 256 },true,["encrypt", "decrypt"]);
+        var derivedBits = await ecdhSubtle.deriveBits(props, privKey, 256);
+        var rawBits = new Uint8Array(derivedBits);
+        var derivedKey = await ecdhSubtle.importKey('raw', rawBits,{ name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
