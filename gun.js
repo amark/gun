@@ -2027,7 +2027,7 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S = +new Date; // msg.DBG_s = msg.DBG_s || +new Date;
+					var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -2262,7 +2262,6 @@
 				wire.onerror = function(error){
 					reconnect(peer);
 				};
-				// it can take a while to open a socket, maybe no longer lazy load for perf reasons?
 				wire.onopen = function(){
 					opt.mesh.hi(peer);
 				}
@@ -2272,6 +2271,8 @@
 				};
 				return wire;
 			}catch(e){}}
+
+			setTimeout(function(){ root.on('out', {dam:'hi'}) },1); // it can take a while to open a socket, so maybe no longer lazy load for perf reasons?
 
 			var wait = 2 * 1000;
 			function reconnect(peer){
