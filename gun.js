@@ -1994,8 +1994,8 @@
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					if(msg.DBG_s){ console.log(+new Date - msg.DBG_s, 'to hear') }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
+					if(msg.DBG_s){ console.log(+new Date - msg.DBG_s, 'to hear', id) }
 					if(dup.check(id)){ return }
 					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -2027,7 +2027,7 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S = +new Date;
+					var S = +new Date; // msg.DBG_s = msg.DBG_s || +new Date;
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -2262,6 +2262,7 @@
 				wire.onerror = function(error){
 					reconnect(peer);
 				};
+				// it can take a while to open a socket, maybe no longer lazy load for perf reasons?
 				wire.onopen = function(){
 					opt.mesh.hi(peer);
 				}
