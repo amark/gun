@@ -190,12 +190,13 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             if(opt.end < v){ return }
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        rad(find, function(err, data){
+        rad(find, function(err, data, o){
             Radix.map(data, function(v,k){
                 //console.log(find+k, v);
                 delete all[find+k];
             });
             if(!Gun.obj.empty(all)){ return }
+            if(!data){ return } // in case there is "more" that returned empty
             done();
         }, opt);
     });
