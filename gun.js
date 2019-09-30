@@ -811,20 +811,20 @@
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
 				} else {
-					var S = +new Date;
+					//var S = +new Date;
 					node = Gun.obj.copy(node);
-					console.log(+new Date - S, 'copy node');
+					//console.log(+new Date - S, 'copy node');
 				}
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
-				var S = +new Date;
+				//var S = +new Date;
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
 					put: node,
 					$: gun
 				});
-				console.log(+new Date - S, 'root got send');
+				//console.log(+new Date - S, 'root got send');
 				//if(0 < tmp){ return }
 				root.on('get', msg);
 			}
@@ -1976,14 +1976,14 @@
 				if('[' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					console.log('hear batch length of', msg.length);
+					//console.log('hear batch length of', msg.length);
 					(function go(){
 						var S = +new Date; // STATS!
 						var m, c = 100; // hardcoded for now?
 						while(c-- && (m = msg.shift())){
 							mesh.hear(m, peer);
 						}
-						console.log(+new Date - S, 'hear batch');
+						//console.log(+new Date - S, 'hear batch');
 						(mesh.hear.long || (mesh.hear.long = [])).push(+new Date - S);
 						if(!msg.length){ return }
 						puff(go, 0);
@@ -2011,9 +2011,9 @@
 						}
 						return;
 					}
-					var S = +new Date;
+					//var S = +new Date;
 					root.on('in', msg);
-					!msg.nts && console.log(+new Date - S, 'msg', msg['#']);
+					//!msg.nts && console.log(+new Date - S, 'msg', msg['#']);
 					return;
 				}
 			}
@@ -2027,7 +2027,7 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
+					//var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -2041,15 +2041,15 @@
 							}
 						}
 					}
-					console.log(+new Date - S, 'mesh say prep');
+					//console.log(+new Date - S, 'mesh say prep');
 					dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
-						var S = +new Date;
+						//var S = +new Date;
 						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						console.log(+new Date - S, 'mesh say loop');
+						//console.log(+new Date - S, 'mesh say loop');
 						return;
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -2073,10 +2073,10 @@
 					peer.batch = peer.tail = null;
 					if(!tmp){ return }
 					if(!tmp.length){ return } // if(3 > tmp.length){ return } // TODO: ^
-					var S = +new Date;
+					//var S = +new Date;
 					try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 					}catch(e){return opt.log('DAM JSON stringify error', e)}
-					console.log(+new Date - S, 'mesh flush', tmp.length);
+					//console.log(+new Date - S, 'mesh flush', tmp.length);
 					if(!tmp){ return }
 					send(tmp, peer);
 				}
@@ -2086,14 +2086,14 @@
 			// for now - find better place later.
 			function send(raw, peer){ try{
 				var wire = peer.wire;
-				var S = +new Date;
+				//var S = +new Date;
 				if(peer.say){
 					peer.say(raw);
 				} else
 				if(wire.send){
 					wire.send(raw);
 				}
-				console.log(+new Date - S, 'wire send', raw.length);
+				//console.log(+new Date - S, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
