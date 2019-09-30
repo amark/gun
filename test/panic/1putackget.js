@@ -116,12 +116,13 @@ describe("Put ACK", function(){
 			}, {acks: c});
 			
 			function wire(){
+				ref.hear = ref.hear || [];
 				var hear = ref._.root.opt.mesh.hear;
 				ref._.root.opt.mesh.hear = function(raw, peer){
 					var msg = Gun.obj.ify(raw);
 					console.log('hear:', msg);
 					hear(raw, peer);
-					(ref.hear || (ref.hear = [])).push(msg);
+					ref.hear.push(msg);
 				}
 				var say = ref._.root.opt.mesh.say;
 				ref._.root.opt.mesh.say = function(raw, peer){
@@ -150,12 +151,13 @@ describe("Put ACK", function(){
 			console.log("I AM DAVE");
 			test.async();
 			var c = 0, to;
+			ref.hear = ref.hear || [];
 			var hear = ref._.root.opt.mesh.hear;
 			ref._.root.opt.mesh.hear = function(raw, peer){
 				var msg = Gun.obj.ify(raw);
 				console.log('hear:', msg);
 				hear(raw, peer);
-				(ref.hear || (ref.hear = [])).push(msg);
+				ref.hear.push(msg);
 
 				if(msg.put){ ++c }
 			}
