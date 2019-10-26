@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<style>
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	@font-face {
+		font-family: 'neon';
+		src: url("neontubes2.woff");
+	}
+	body {
+		background-color: rgb(25,25,25);
+		font-family: 'neon';
+		color: rgb(69,100,8) !important;
+		font-size: 44px;
+		text-shadow: 1px 1px 5px rgb(22,100,8);
+	}
+
+  .label {
+    font-size: 22px;
+  }
+
+  .input {
+    width: 250px;
+    height: 30px;
+    padding:10px;
+    margin: 5px;
+    background-color: rgb(50,50,50);
+    color: rgb(250,50,50);
+  }
+
+</style>
+
+<input id="url" class="input" placeholder="enter peer stats source url">
+<br>
+<span class="label">Overview</span> <br>
+<canvas id="overview" width="800" height="100"></canvas>
+<br>
+<span class="label">Overview</span> <br>
+<canvas id="overview" width="800" height="100"></canvas>
+
+
+<script src="./jquery.js"></script>
+<script src="./smoothie.js" charset="utf-8"></script>
+<script>
+
+  var fetchData = async function() {
+
+    var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+    console.log('data',data.all);
+    //fetch keys in all
+    var keys = Object.keys(data.all);
+    //for each key assign the corresponding line
+    for(var key of keys) {
+
+      var line;
+      switch (key) {
+        case "rad mem":
+          line = line1;
+          break;
+        case "get call":
+          line = line2;
+          break;
+        case "read disk":
+          line = line3;
+          break;
+        case "rad parsed JSON":
+          line = line4;
+          break;
+        case "rad read lex":
+          line = line5;
+          break;
+        case "rad read in, ack":
+          line = line6;
+          break;
+        case "got":
+          line = line7;
+          break;
+        case "got prep":
+          line = line8;
+          break;
+        case "put loop":
+          line = line9;
+          break;
+        case "rad read acked":
+          line = line10;
+          break;
+        case "say prep":
+          line = line11;
+          break;
+        case "wire send":
+          line = line12;
+          break;
+        case "say loop":
+          line = line13;
+          break;
+        case "msg":
+          line = line14;
+          break;
+        case "in hear batch":
+          line = line15;
+          break;
+        case "batch heard":
+          line = line16;
+          break;
+        case "rad stringified JSON":
+          line = line17;
+          break;
+        case "wrote disk":
+          line = line18;
+          break;
+        case "say stringify":
+          line = line19;
+          break;
+
+      }
+      // get the arrays inside the props
+      var arr = data.all[key];
+      //for each array append the data to the line
+      for(var index in arr) {
+        line.append(arr[index][0],arr[index][1]);
+      }
+
+    }
+
+  }
+
+  //intialize smoothieCharts
+
+  var overview = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+  });
+
+  overview.streamTo(document.getElementById("overview"), 15 * 1000);
+  /*
+  var rad = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+  });*/
+
+
+
+  // Data initialization.
+  var line1 = new TimeSeries();
+  var line2 = new TimeSeries();
+  var line3 = new TimeSeries();
+  var line4 = new TimeSeries();
+  var line5 = new TimeSeries();
+  var line6 = new TimeSeries();
+  var line7 = new TimeSeries();
+  var line8 = new TimeSeries();
+  var line9 = new TimeSeries();
+  var line10 = new TimeSeries();
+  var line11 = new TimeSeries();
+  var line12 = new TimeSeries();
+  var line13 = new TimeSeries();
+  var line14 = new TimeSeries();
+  var line15 = new TimeSeries();
+  var line16 = new TimeSeries();
+  var line17 = new TimeSeries();
+  var line18 = new TimeSeries();
+  var line19 = new TimeSeries();
+
+  // Add a random value to each line every second
+  setInterval(fetchData, 1000 * 15);
+
+  // Add to SmoothieChart
+  overview.addTimeSeries(line1,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line2,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line3,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line4,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line5,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line6,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line7,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line8,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line9,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line10,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line11,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line12,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line13,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line14,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line15,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line16,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+  overview.addTimeSeries(line17,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line18,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });
+  overview.addTimeSeries(line19,{ strokeStyle:'rgb(255, 0, 255)', lineWidth:3 });
+
+  /*rad.addTimeSeries(line5,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:3 });*/
+
+  fetchData();
+
+</script>
+</body>
+</html>
