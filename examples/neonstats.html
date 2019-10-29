@@ -6,17 +6,13 @@
 </head>
 <body>
 <style>
-	@import url('https://fonts.googleapis.com/css?family=Oxygen');
-	@font-face {
-		font-family: 'neon';
-		src: url("neontubes2.woff");
-	}
+
 	body {
+		font-family: helvetica;
 		background-color: rgb(25,25,25);
-		font-family: 'neon';
-		color: rgb(69,100,8) !important;
+		color: rgb(80,135,25) !important;
 		font-size: 44px;
-		text-shadow: 1px 1px 5px rgb(22,100,8);
+		text-shadow: 1px 1px 20px rgb(80,150,25);
 	}
 
   .label {
@@ -36,16 +32,16 @@
 
 <input id="url" class="input" placeholder="enter peer stats source url">
 <br>
-<span class="label">Overview</span> <br>
+<span class="label">OVERVIEW</span> <br>
 <canvas id="overview" width="800" height="200"></canvas>
 <br>
-<span class="label">Time Items</span> <br>
+<span class="label">TIME ITEMS</span> <br>
 <canvas id="timed" width="800" height="200"></canvas>
 <br>
-<span class="label">Memory Items</span> <br>
+<span class="label">MEMORY ITEMS</span> <br>
 <canvas id="memed" width="800" height="200"></canvas>
 <br>
-<span class="label">QTY Items</span> <br>
+<span class="label">QTY ITEMS</span> <br>
 <canvas id="qtyd" width="800" height="200"></canvas>
 
 
