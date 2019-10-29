@@ -1,0 +1,164 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<style>
+
+	body {
+		font-family: helvetica;
+		background-color: rgb(25,25,25);
+		color: rgb(80,135,25) !important;
+		font-size: 44px;
+		text-shadow: 1px 1px 20px rgb(80,150,25);
+	}
+
+  .label {
+    font-size: 22px;
+  }
+
+  .input {
+    width: 250px;
+    height: 30px;
+    padding:10px;
+    margin: 5px;
+    background-color: rgb(50,50,50);
+    color: rgb(250,50,50);
+  }
+
+</style>
+
+<input id="url" class="input" placeholder="enter peer stats source url">
+<br>
+<span class="label">OVERVIEW</span> <br>
+<canvas id="overview" width="800" height="200"></canvas>
+<br>
+<span class="label">TIME ITEMS</span> <br>
+<canvas id="timed" width="800" height="200"></canvas>
+<br>
+<span class="label">MEMORY ITEMS</span> <br>
+<canvas id="memed" width="800" height="200"></canvas>
+<br>
+<span class="label">QTY ITEMS</span> <br>
+<canvas id="qtyd" width="800" height="200"></canvas>
+
+
+<script src="./jquery.js"></script>
+<script src="./smoothie.js" charset="utf-8"></script>
+<script>
+
+  var fetchData = async function() {
+    // fetch the data from server
+    var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+    // test data
+    /*var writes = [];
+    var write = [];
+    write.push(Date.now());
+    write.push(Math.random()*8);
+    writes.push(write);
+    var write = [];
+    write.push(Date.now());
+    write.push(Math.random()*8);
+    writes.push(write);
+    var mems = [];
+    var mem = [Date.now(), Math.random()*100];
+    mems.push(mem);
+    var data = {
+      "all":
+      {
+        "ms rad write": writes,
+        "mb rad mem": mems,
+      }
+    }*/
+    // log for user to look at
+    console.log('data',data.all);
+    //fetch keys in all, these may be dynamically changing
+    var keys = Object.keys(data.all);
+
+    //for each key, check if we already have created a time series, if not, create it and add it
+    // to the chart corredsponding to the unit of measure
+    for(var key of keys) {
+      // if we have already created, get data and append it.
+      if(datalines.has(key)){
+        var line = datalines.get(key);
+      // and if not
+      } else {
+        console.log('creating new series for ', key);
+        // create a new Series for this key
+        var line = new TimeSeries();
+        // add it into the map
+        datalines.set(key, line);
+        // add it into overview
+        overview.addTimeSeries(line,{ strokeStyle:'rgb('+Math.random()*255+', '+Math.random()*255+','+Math.random()*255+')', lineWidth:3 });
+        // check first two characters of key to determine other charts to add this in
+        // tbd later
+      }
+      // get data and append to line
+      // get the arrays inside the key
+      var arr = data.all[key];
+      //for each array append the data to the line
+      for(var index in arr) {
+        // append data [timestamp], [data]
+        line.append(arr[index][0],arr[index][1]);
+      }
+    }
+  }
+
+  var datalines = new Map();
+
+  //intialize smoothieCharts
+
+  var overview = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+    minValue: -0.2,
+  });
+
+  overview.streamTo(document.getElementById("overview"), 15 * 1000);
+
+  var timed = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+    minValue: 0,
+  });
+
+  timed.streamTo(document.getElementById("timed"), 15 * 1000);
+
+  var memed = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+    minValue: -1,
+  });
+
+  memed.streamTo(document.getElementById("memed"), 15 * 1000);
+
+  var qtyd = new SmoothieChart({
+    tooltip: true,
+  	grid: { strokeStyle:'rgb(69, 100, 8)', fillStyle:'rgb(20, 20, 20)',
+            lineWidth: 1, millisPerLine: 1000, verticalSections: 6,},
+    labels: { fillStyle:'rgb(100, 100, 100)' },
+    timestampFormatter:SmoothieChart.timeFormatter,
+    minValue: 0,
+  });
+
+  qtyd.streamTo(document.getElementById("qtyd"), 15 * 1000);
+
+  // Add a random value to each line every second
+  setInterval(fetchData, 15 * 1000);
+
+  fetchData();
+
+</script>
+</body>
+</html>
