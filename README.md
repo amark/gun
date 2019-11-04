@@ -115,7 +115,8 @@ Thanks to:<br/>
 <a href="http://github.com/alanmimms">Alan Mimms</a>,
 <a href="https://github.com/dfreire">Dário Freire</a>,
 <a href="http://github.com/velua">John Williamson</a>,
-<a href="http://github.com/finwo">Robin Bron</a>
+<a href="http://github.com/finwo">Robin Bron</a>,
+<a href="http://github.com/ElieMakhoul">Elie Makhoul</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
@@ -231,6 +232,13 @@ now --npm amark/gun
 ```
 
 Then visit the URL in the output of the 'now --npm' step, in your browser.
+
+### [Unebo](https://unubo.app/)
+
+Fork this GUN repo (Unebo only deploys from your own GitHub repo's).  
+Add a Node.js app, select your GUN fork, set `npm start` start as the command and deploy.
+
+Then visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
 
