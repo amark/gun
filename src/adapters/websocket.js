@@ -42,6 +42,8 @@ Gun.on('opt', function(root){
 		return wire;
 	}catch(e){}}
 
+	setTimeout(function(){ root.on('out', {dam:'hi'}) },1); // it can take a while to open a socket, so maybe no longer lazy load for perf reasons?
+
 	var wait = 2 * 1000;
 	function reconnect(peer){
 		clearTimeout(peer.defer);
