@@ -11,4 +11,3 @@ yarn.lock
 .esm-cache
 .sessionStorage
 .localStorage
-lib/meta
