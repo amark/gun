@@ -134,9 +134,6 @@ describe('SEA', function(){
       SEA.encrypt(null, pair, function(s){
       SEA.decrypt(s, pair, function(v){
       expect(null).to.be(v);
-      SEA.encrypt('4e2', pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect('4e2').to.be(v);
       SEA.encrypt(true, pair, function(s){
       SEA.decrypt(s, pair, function(v){
       expect(true).to.be(v);
@@ -174,7 +171,15 @@ describe('SEA', function(){
       SEA.decrypt(s, pair, function(v){
       expect({a:1}).to.eql(v);
       done();
-      });});});});});});});});});});});});});});});});});});});});});});});});});});});});});
+      });});});});});});});});});});});});});});});});});});});});});});});});});});})
+    })
+    
+    it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
+      SEA.encrypt('4e2', pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(400).to.be(v);
+      done();
+      });});
     })
     
     it('legacy', function(done){ (async function(){
