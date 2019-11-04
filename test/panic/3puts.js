@@ -9,8 +9,9 @@ they prove desired end goals for behavior at scale.
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 2,
+	servers: 1,
 	browsers: 2,
+	puts: 1000,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -38,10 +39,9 @@ manager.start({
 
 var servers = clients.filter('Node.js');
 var bob = servers.pluck(1);
-var carl = servers.excluding(bob).pluck(1);
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
-var dave = browsers.excluding(alice).pluck(1);
+var carl = browsers.excluding(alice).pluck(1);
 
 describe("Put ACK", function(){
 	//this.timeout(5 * 60 * 1000);
@@ -94,90 +94,27 @@ describe("Put ACK", function(){
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
-				window.ref = gun.get('a');
+				window.ref = gun.get('test');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
 
-	it("Put", function(){
+	it("Puts", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
 			test.async();
-			var c = test.props.acks, acks = {};
-			c = c < 2? 2 : c;
-			ref.put({hello: 'world'}, function(ack){
-				//console.log("acks:", ack, c);
-				acks[ack['#']] = 1;
-				if(Object.keys(acks).length == c){
-					wire();
-					return test.done();
-				}
-			}, {acks: c});
-			
-			function wire(){
-				ref.hear = ref.hear || [];
-				var hear = ref._.root.opt.mesh.hear;
-				ref._.root.opt.mesh.hear = function(raw, peer){
-					var msg = Gun.obj.ify(raw);
-					console.log('hear:', msg);
-					hear(raw, peer);
-					ref.hear.push(msg);
-				}
-				var say = ref._.root.opt.mesh.say;
-				ref._.root.opt.mesh.say = function(raw, peer){
-					var yes = say(raw, peer);
-					if(yes === false){ return }
-					console.log("say:", msg, yes);
-					(ref.say || (ref.say = [])).push(Gun.obj.ify(msg));
-				}
+			var i = test.props.puts, d = 0;
+			while(i--){ go(i) }
+			function go(i){
+				ref.get(i).put({hello: 'world'}, function(ack){
+					if(ack.err){ put_failed }
+					if(++d !== test.props.puts){ return }
+					console.log("all success", d);
+					test.done();
+				});
 			}
-		}, {acks: config.servers});
-	});
-
-	it("Get", function(){
-		/*
-			Here is the recursive rule for GET, keep replying while hashes mismatch.
-			1. Receive a GET message.
-			2. If it has a hash, and if you have a thing matching the GET, then see if the hashes are the same, if they are then don't ACK, don't relay, end.
-			3. If you would have the thing but do not, then ACK that YOU have nothing.
-			4. If you have a thing matching the GET or an ACK for the GET's message, add the hash to the GET message, and ACK with the thing or ideally the remaining difference.
-			5. Pick ?3? OTHER peers preferably by priority that they have got the thing, send them the GET, plus all "up" peers.
-			6. If no ACKs you are done, end.
-			7. If you get ACKs back to the GET with things and different hashes, optionally merge into the thing you have GOT and update the hash.
-			8. Go to 4.
-		*/
-		return dave.run(function(test){
-			console.log("I AM DAVE");
-			test.async();
-			var c = 0, to;
-			ref.hear = ref.hear || [];
-			var hear = ref._.root.opt.mesh.hear;
-			ref._.root.opt.mesh.hear = function(raw, peer){
-				var msg = Gun.obj.ify(raw);
-				console.log('hear:', msg);
-				hear(raw, peer);
-				ref.hear.push(msg);
-
-				if(msg.put){ ++c }
-			}
-			ref.get(function(ack){
-				if(!ack.put || ack.put.hello !== 'world'){ return }
-				if(c > 1){ too_many_acks }
-
-				clearTimeout(to);
-				to = setTimeout(test.done, 1000);
-			});
-		}, {acks: config.servers});
-	});
-
-	it("DAM", function(){
-		return alice.run(function(test){
-			test.async();
-			if(ref.say){ said_too_much }
-			if(ref.hear.length > 1){ heard_to_much }
-			test.done()
-		}, {acks: config.servers});
+		}, {puts: config.puts});
 	});
 
 	it("All finished!", function(done){
