@@ -71,19 +71,18 @@ function soul(gun, cb, opt, as){
 	if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat) }
 	if(cat.jam){ return cat.jam.push([cb, as]) }
 	cat.jam = [[cb,as]];
-	gun.get(function(msg, eve){
+	gun.get(function go(msg, eve){
 		if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
 			return;
 		}
 		eve.rid(msg);
-		var at = ((at = msg.$) && at._) || {};
-		tmp = cat.jam; Gun.obj.del(cat, 'jam');
-		Gun.obj.map(tmp, function(as, cb){
-			cb = as[0]; as = as[1];
-			if(!cb){ return }
-			var id = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub;
-			cb(id, as, msg, eve);
-		});
+		var at = ((at = msg.$) && at._) || {}, i = 0, as;
+		tmp = cat.jam; delete cat.jam; // tmp = cat.jam.splice(0, 100);
+		//if(tmp.length){ process.nextTick(function(){ go(msg, eve) }) }
+		while(as = tmp[i++]){ //Gun.obj.map(tmp, function(as, cb){
+			var cb = as[0], id; as = as[1];
+			cb && cb(id = at.link || at.soul || rel.is(msg.put) || node_soul(msg.put) || at.dub, as, msg, eve);
+		} //);
 	}, {out: {get: {'.':true}}});
 	return gun;
 }

@@ -94,7 +94,7 @@ function val(msg, eve, to){
 		return;
 	}
 	if(link && u === link.put && (tmp = rel.is(data))){ data = Gun.node.ify({}, tmp) }
-	eve.rid(msg);
+	eve.rid? eve.rid(msg) : eve.off();
 	opt.ok.call(gun || opt.$, data, msg.get);
 }
 
