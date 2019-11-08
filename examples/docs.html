@@ -27,11 +27,13 @@
 <div class="hold full hue2">
 	<div id="page" class="max focus gap" style="padding-top: 9%;">
 		<p class="loud crack">Docs</p>
-		<p id="p1">The contemporary tendency in our society is to base our distribution on scarcity, which has vanished, and to compress our abundance into the overfed mouths of the middle and upper classes until they gag with superfluity. If democracy is to have breadth of meaning, it is necessary to adjust this inequity. It is not only moral, but it is also intelligent. We are wasting and degrading human life by clinging to archaic thinking.</p>
+		<p>The contemporary tendency in our society is to base our distribution on scarcity, which has vanished, and to compress our abundance into the overfed mouths of the middle and upper classes until they gag with superfluity. If democracy is to have breadth of meaning, it is necessary to adjust this inequity. It is not only moral, but it is also intelligent. We are wasting and degrading human life by clinging to archaic thinking.</p>
 	</div>
 </div>
 <script src="../../gun/gun.js"></script>
+<script src="../../gun/lib/monotype.js"></script>
 <script src="../../gun/lib/meta.js"></script>
+<script src="../../gun/lib/normalize.js"></script>
 <script>
 var gun = Gun('https://guntest.herokuapp.com/gun');
 
@@ -40,25 +42,49 @@ var gun = Gun('https://guntest.herokuapp.com/gun');
 	var S = +new Date;
 	gun.get('test/gun/docs/'+file).get('what').once(function(data){
 		console.log(+new Date - S, 'ms load');
-		$('#p1').text(data);
+		$('#page').html($.normalize(data));
 	});
 })();
 
+document.execCommand('defaultParagraphSeparator', false, 'p');
 meta.edit({
 	name: "Edit",
 	combo: ['E'],
-	on: function(eve){
-		console.log("TRIGGERED!!!!");
-		meta.tap.on.attr('contenteditable', 'true');
+	use: function(eve){
+		console.log('on');
+	}, on: function(eve){
+		meta.flip(false);
+		console.log('use');
+		console.log("TRIGGERED!!!!???");
+		//meta.tap.on.attr('contenteditable', 'true');
+		$('#page').attr('contenteditable', 'true');
+		$(document).on('keyup.tmp', '[contenteditable]', function(eve){
+			if(eve.which != 13){ return true }
+			console.log(eve.which, $(this).text());
+			return false;
+		}).on('keyup.tmp', '[contenteditable]', function(eve){
+			return;
+			var p = $(window.getSelection().anchorNode).closest('p');
+			var r = monotype(p);
+			var html = p.html() || '';
+			var safe = $.normalize(html);
+			console.log("BEFORE:", html);
+			console.log("AFTER:", safe);
+			p.html(safe);
+			r.restore()
+		});
 	},
-	up: function(){}
+	up: function(){
+		console.log("UP");
+		$('[contenteditable=true]').off('.tmp');
+	}
 });
 meta.edit({
 	name: "Save",
 	combo: ['S'], fake: -1,
 	on: function(eve){
 		meta.tap.on.attr('contenteditable', 'false');
-		var what = $('#p1').text();
+		var what = $.normalize($('#page').html());
 		var file = (location.hash||'').slice(1);
 		gun.get('test/gun/docs/'+file).put({what: what});
 	},
