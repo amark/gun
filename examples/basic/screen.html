@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+
 <video id="video" width="100%"></video>
 <center>
   <button id="record">Record</button>
@@ -8,7 +10,7 @@
 <script src="../../../gun/gun.js"></script>
 
 <script>
-var gun = Gun();
+var gun = Gun(location.origin + '/gun');
 var record = {recorder: null, recording: false};
 
 $('#record').on('click', ()=>{
