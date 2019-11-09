@@ -1,0 +1,20 @@
+<textarea style="width: 100%; height: 100%;" placeholder="paste here!"></textarea>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+
+<script>
+//var gun = Gun(location.origin + '/gun'), to;
+var gun = Gun('https://gunjs.herokuapp.com/gun'), to;
+
+var paste = gun.get('test').get('paste').on(function(data){
+  $('textarea').val(data);
+})
+
+$('textarea').on('input change blur keyup mouseup touchend', function(){
+  clearTimeout(to); // debounce
+  to = setTimeout(function(){
+    paste.put($('textarea').val());
+  }, 100);
+})
+</script>

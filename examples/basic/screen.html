@@ -34,8 +34,8 @@ record.save = function(data){
   record.file.readAsDataURL(data); 
   record.file.onloadend = function(){
     var b64 = record.file.result;
-    b64 = "data:video/webm" + b64.substr(b64.indexOf(';'));
-    gun.get('screen').get('test').put(b64);
+    b64 = "data:video/webm" + b64.slice(b64.indexOf(';'));
+    gun.get('test').get('screen').put(b64);
   }
 }
 
@@ -48,7 +48,7 @@ $('#play').on('click', ()=>{
   }
   $('#play').text("Stop");
   record.playing = true;
-  gun.get('screen').get('test').once((data)=>{
+  gun.get('test').get('screen').once((data)=>{
     if(!data){ return }
     $('#video').get(0).src = data;
     $('#video').get(0).play()
