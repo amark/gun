@@ -116,7 +116,8 @@ Thanks to:<br/>
 <a href="https://github.com/dfreire">Dário Freire</a>,
 <a href="http://github.com/velua">John Williamson</a>,
 <a href="http://github.com/finwo">Robin Bron</a>,
-<a href="http://github.com/ElieMakhoul">Elie Makhoul</a>
+<a href="http://github.com/ElieMakhoul">Elie Makhoul</a>,
+<a href="http://github.com/mikestaub">Mike Staub</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
@@ -193,7 +194,7 @@ var Gun = require('gun/gun');
 
 If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
 
-`npm install text-encoding node-webcrypto-ossl --save`
+`npm install text-encoding @peculiar/webcrypto --save`
 
 You will need to require it too (it will be automatically added to the Gun object):
 
