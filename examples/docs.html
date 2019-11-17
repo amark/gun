@@ -46,6 +46,8 @@ var gun = Gun('https://guntest.herokuapp.com/gun');
 	});
 })();
 
+$("<textarea id='debug'>").css({position: 'fixed', height: '5em', width: '100%', bottom: 0, left: 0, 'font-size': '18pt'}).appendTo('body')
+
 document.execCommand('defaultParagraphSeparator', false, 'p');
 meta.edit({
 	name: "Edit",
@@ -53,36 +55,65 @@ meta.edit({
 	use: function(eve){
 		console.log('on');
 	}, on: function(eve){
+		var edit = this;
 		meta.flip(false);
-		console.log('use');
-		console.log("TRIGGERED!!!!???");
-		//meta.tap.on.attr('contenteditable', 'true');
-		$('#page').attr('contenteditable', 'true');
-		$(document).on('keyup.tmp', '[contenteditable]', function(eve){
-			if(eve.which != 13){ return true }
-			console.log(eve.which, $(this).text());
-			return false;
+		var doc = $('#page').attr('contenteditable', 'true');
+		if(!doc.text()){
+			doc.html('<p class="loud crack"></p>');
+			edit.select(doc.children().first().get(0));
+		}
+		$(document).on('keydown.tmp', '[contenteditable]', function(eve){
+			if(eve.which != 13){ return }
+			eve.preventDefault();
+			var r = window.getSelection().getRangeAt(0);
+			var c = r.commonAncestorContainer;
+      r.deleteContents();
+      c.splitText(r.startOffset);
+      var p = $(c).parent(), n = $("<"+p.get(0).tagName+">"), f;
+      p.contents().each(function(){
+      	if(this === c){ return f = true }
+      	if(!f){ return }
+      	n.append(this);
+      });
+      p.after(n);
+      edit.select(n.get(0));
 		}).on('keyup.tmp', '[contenteditable]', function(eve){
-			return;
+			$('#debug').val(doc.html());
 			var p = $(window.getSelection().anchorNode).closest('p');
 			var r = monotype(p);
 			var html = p.html() || '';
 			var safe = $.normalize(html);
-			console.log("BEFORE:", html);
-			console.log("AFTER:", safe);
 			p.html(safe);
-			r.restore()
+			r.restore();
 		});
 	},
 	up: function(){
 		console.log("UP");
 		$('[contenteditable=true]').off('.tmp');
+	},
+	select: function(p){
+		var s = window.getSelection(),
+		r = document.createRange();
+		if(p.innerHTML){
+      r.setStart(p, 0);
+			r.collapse(true);
+			s.removeAllRanges();
+			s.addRange(r);
+			return;
+		}
+		p.innerHTML = '\u00a0';
+		r.selectNodeContents(p);
+		s.removeAllRanges();
+		s.addRange(r);
+		document.execCommand('delete', false, null);
 	}
 });
+
 meta.edit({
 	name: "Save",
 	combo: ['S'], fake: -1,
 	on: function(eve){
+		return;
 		meta.tap.on.attr('contenteditable', 'false');
 		var what = $.normalize($('#page').html());
 		var file = (location.hash||'').slice(1);
