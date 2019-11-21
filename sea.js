@@ -3,9 +3,7 @@
   /* UNBUILD */
   var root;
   if(typeof window !== "undefined"){ root = window }
-  if(typeof Buffer === "undefined") {
-    global.Buffer = require("buffer").Buffer
-  }
+  
   if(typeof global !== "undefined"){ root = global }
   root = root || {};
   var console = root.console || {log: function(){}};
@@ -50,10 +48,12 @@
   })(USE, './https');
 
   ;USE(function(module){
-    if(typeof global !== "undefined"){
-      var g = global;
-      g.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
-      g.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
+    if(typeof Buffer === "undefined") {
+      root.Buffer = require("buffer").Buffer
+    }
+    if(typeof btoa !== "undefined"){
+      root.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
+      root.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
     }
   })(USE, './base64');
 
