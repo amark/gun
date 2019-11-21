@@ -25,10 +25,7 @@
 </style>
 
 <div class="hold full hue2">
-	<div id="page" class="max focus gap" style="padding-top: 9%;">
-		<p class="loud crack">Docs</p>
-		<p>The contemporary tendency in our society is to base our distribution on scarcity, which has vanished, and to compress our abundance into the overfed mouths of the middle and upper classes until they gag with superfluity. If democracy is to have breadth of meaning, it is necessary to adjust this inequity. It is not only moral, but it is also intelligent. We are wasting and degrading human life by clinging to archaic thinking.</p>
-	</div>
+	<div id="page" class="max focus gap" style="padding-top: 9%;"></div>
 </div>
 <script src="../../gun/gun.js"></script>
 <script src="../../gun/lib/monotype.js"></script>
@@ -40,6 +37,20 @@ var gun = Gun('https://guntest.herokuapp.com/gun');
 ;(window.onhashchange = function(){
 	var file = (location.hash||'').slice(1);
 	var S = +new Date;
+	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
+		if(window.LOCK){ return }
+		var p = $('#page').children().get(i);
+		if(!p){
+			$('#page').append('<p>');
+			setTimeout(function(){ render(data, i) },0);
+			return;
+		}
+		var r = monotype(p);
+		var safe = $.normalize(data);
+		p.outerHTML = safe;
+		r.restore();
+	});
+	return;
 	gun.get('test/gun/docs/'+file).get('what').once(function(data){
 		console.log(+new Date - S, 'ms load');
 		$('#page').html($.normalize(data));
@@ -77,6 +88,11 @@ meta.edit({
       });
       p.after(n);
       edit.select(n.get(0));
+      // make sure we re-save & sync each changed paragraph.
+      edit.save(p);
+      p.nextAll().each(function(){
+      	edit.save(this);
+      });
 		}).on('keyup.tmp', '[contenteditable]', function(eve){
 			$('#debug').val(doc.html());
 			var p = $(window.getSelection().anchorNode).closest('p');
@@ -85,11 +101,21 @@ meta.edit({
 			var safe = $.normalize(html);
 			p.html(safe);
 			r.restore();
+			edit.save(p);
 		});
 	},
 	up: function(){
 		console.log("UP");
 		$('[contenteditable=true]').off('.tmp');
+	},
+	save: function(p){
+		p = $(p);
+		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
+		var file = (location.hash||'').slice(1);
+		var data = p.get(0).outerHTML;
+		window.LOCK = true;
+		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
+		window.LOCK = false;
 	},
 	select: function(p){
 		var s = window.getSelection(),

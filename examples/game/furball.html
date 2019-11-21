@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- always start with these two lines to set a clean baseline for different devices -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="../style.css">
+<!-- link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/gun/examples/style.css" -->
+<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+
+<title>Furball</title>
+</head>
+<body class="black whitet">
+<style>
+	/*
+		Choose white text on a black background so you can add color in.
+		Pick your favorite font and choose a font size.
+	*/
+	@import url('https://fonts.googleapis.com/css?family=Mali');
+	html, body {
+		font-family: "Mali", sans-serif;
+	}
+
+	.huef {
+	  background: #4D79D8;
+	  -webkit-animation: huef 9s infinite;
+	  animation: huef 9s infinite;
+	} @keyframes huef {
+	  0%   {background-color: #4D79D8;}
+	  25%  {background-color: #33cc33;}
+	  50%  {background-color: #f2b919;}
+	  75%  {background-color: #ea3224;}
+	  100% {background-color: #4D79D8;}
+	} @-webkit-keyframes huef {
+	  0%   {background-color: #4D79D8;}
+	  25%  {background-color: #33cc33;}
+	  50%  {background-color: #f2b919;}
+	  75%  {background-color: #ea3224;}
+	  100% {background-color: #4D79D8;}
+	}
+
+	button, input {
+		padding: 1em;
+		background: transparent;
+		border: 1px solid white;
+		border-radius: 1.5em;
+		color: white;
+		margin: 0.5em;
+		margin-bottom: 0;
+		cursor: pointer;
+	}
+	button:hover, input:hover {
+		background: white;
+		color: black;
+		transform: scale(1.1);
+	}
+
+	.air { padding-top: 9%; }
+	.yak button { font-size: 80%; }
+
+	.wag {
+	  -webkit-animation: wag 3s infinite;
+	  animation: wag 3s infinite;
+	} @keyframes wag {
+	  0%   {transform: rotate(0deg);}
+	  50%  {transform: rotate(-1deg);}
+	  100% {transform: rotate(0deg);}
+	}
+
+	@keyframes print {
+	  0% { overflow: hidden; height: 0vh; }
+	  99% { overflow: hidden; height: 100vh; }
+	  100% { overflow: visible; height: auto; }
+	}
+	input {
+		outline: none;
+	}
+	</style>
+</style>
+
+<!-- for educational sites, consider starting with a nice full screen welcome message -->
+<div class="home hold full huef center air">
+	<div class="focus row">
+		<p><i>Neon ERA presents</i></p>
+		<p class="shout wag">Furball Forces</p>
+		<!-- just like in real life, say who you are and give a concise reason why you add value to someone's life and then make a call to action, if they want to learn more they can always scroll to learn more -->
+		<div>
+			<!-- a class="unit hold" href="#fullscreen"><button>WATCH TRAILER</button></a -->
+			<a class="unit yak" href="#choose"><button>PLAY GAME</button></a>
+		</div>
+	</div>
+	<div class="focus center row leak">
+		<!-- just like in real life, looking pretty attracts attention, so show off and look glamorous! -->
+		<img class="unit blink" src="file:///Users/mark/Downloads/supercatdog.png" style="min-width: 10em; width: 80%;">
+	</div>
+	<script>location.hash = ''</script>
+	<script src="https://cdn.jsdelivr.net/npm/gun/lib/fun.js"></script>
+	<script>;(function(){
+		// OPTIONAL MUSIC:
+		$('.home button').on('click', function(){
+			if(window.screen.height > window.screen.width){ return }
+			$('body').append("<div id='audio' onclick='$(this).remove();'><iframe width='0' height='0' src='https://www.youtube-nocookie.com/embed/LLPoZGX0qZk?autoplay=1' frameborder='0'></iframe></div>");
+		})
+	}());
+	</script>
+	<style>#audio { padding: 0.5em; position: fixed; bottom: 0; left: 0; } #audio:before { content: '\25BA'; } #audio:hover:before { content: '\25FC'; }</style>
+</div>
+
+<div id="choose" class="hold full hue4 center air">
+	<div class="focus row">
+		<p class="shout wag fur">Choose Team:</p>
+		<div>
+			<a class="unit yak" href="#automecha"><button style="background: white; color: black;">#AutoMecha</button></a>
+			<a class="unit yak" href="#cyberninjas"><button style="background: black; color: white; border-color: black;">#CyberNinjas</button></a>
+		</div>
+	</div>
+	<div class="focus center row leak">
+		<img class="unit blink" src="file:///Users/mark/Downloads/supercatdog.png" style="transform: scaleX(-1); filter: invert(1); min-width: 10em; width: 80%;">
+	</div>
+</div>
+
+<div id="cyberninjas" class="hold full black">
+	<style>
+	#cyberninjas:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Episode 1: Waking</p>
+		<p>"How long until they're online?"</p>
+		<p>"We're copying the soul files, almost done."</p>
+		<p>"Monsters are on the bridge, we do not have time!"</p>
+		<p>"The new body is printing now, it'll be able to outrun them all, just hold on."</p>
+		<p>"It won't know where to run! We're risking ruining the whole resistance, I need to talk to it now."</p>
+		<p>"95% done." The voice behind the glass turns to the soul in the body, "My cub, can you hear me?"</p>
+		<p>...</p>
+		<a class="unit yak" href="#cyberninjas2"><button>Reply "Yes, Mom?"</button></a>
+	</div>
+	<script>
+	;(function(){
+		$('#cyberninjas a').on('click', function(){
+			$('#hud .life').removeClass('down');
+		});
+	}());
+	</script>
+</div>
+
+<div id="cyberninjas2" class="hold full red">
+	<style>
+	#cyberninjas2:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	
+	#hud {
+		opacity: 0.4;
+		font-family: 'Audiowide', cursive;
+		z-index: 999999999999;
+		transition: all 3s;
+	}
+	#hud .life {
+		position: fixed;
+		left: 50%;
+		bottom: 0px;
+		padding: 0.25em 1em 0.1em;
+		border-radius: 0.5em 0.5em 0 0;
+		transform: translateX(-50%);
+		background: black;
+		text-shadow: 0em -0.125em 0.75em white;
+	}
+	#hud .score {
+		position: fixed;
+		left: 50%;
+		top: 0px;
+		padding: 0.1em 1em 0.25em;
+		border-radius: 0 0 0.5em 0.5em;
+		transform: translateX(-50%);
+		background: black;
+		text-shadow: 0em 0.1em 0.75em white;
+	}
+	#hud .down {
+		bottom: -2em !important;
+	}
+	#hud .up {
+		top: -2em !important;
+	}
+	</style>
+	<div id="hud">
+		<div class="score shade up">
+			SCORE: <span id="hudscore">0</span>%
+		</div>
+		<div class="life shade down">
+			LIFE: <span id="hudlife">50</span>%
+		</div>
+	</div>
+	<div class="story pad">
+		<p>A fire explodes in the room behind the glass as an AutoMecha blows the door open.</p>
+		<p>The floor shakes and the bed crashes through the wall, flying out of the building.</p>
+		<p class="center">"Mom!!!"</p>
+		<p>There is a total free fall from 10 levels up, water down below.</p>
+		<p>...</p>
+		<a class="unit yak" href="#cyberninjas3"><button>Dive or Die</button></a>
+	</div>
+	<script>
+	;(function(){
+		$('#cyberninjas2 a').on('click', function(){
+			$('#hudlife').text($('#hudlife').data().is = 50);
+		});
+	}());
+	</script>
+</div>
+
+<div id="cyberninjas3" class="hold full blue">
+	<style>
+	@import url('https://fonts.googleapis.com/css?family=Audiowide');
+
+	#cyberninjas3:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p>The water splashes, swelling and swirling all around.</p>
+		<p>...</p>
+		<p class="center">Rapidly tap to swim up to air:</p>
+		<a class="unit yak"><button>Swim</button></a>
+	</div>
+	<script>
+	;(function(){
+		var go, life = $('#hudlife').data();
+		$('#cyberninjas3 a').on('click', function(){
+			$('#hudlife').text(life.is += 5);
+			if(100 <= life.is){
+				location.hash = 'cyberninjas4';
+				clearInterval(go);
+				go = false;
+				return;
+			}
+			if(go){ return }
+			go = setInterval(function(){
+				if(0 >= life.is){
+					location.hash = 'cyberninjas2';
+					$('#hudlife').text(life.is = 50);
+					clearInterval(go);
+					go = false;
+					return;
+				}
+				$('#hudlife').text(life.is -= 5);
+			}, 1000); // 1 second
+		});
+	}());
+	</script>
+</div>
+
+<div id="cyberninjas4" class="hold full black">
+	<style>
+	#cyberninjas4:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Episode 2: Who Am I?</p>
+		<p>"Grab on!" A voice calls out from the darkness.</p>
+		<p>A life vest hits the water and floats within arm's distance.</p>
+		<p>The shivering body is pulled up onto the boat.</p>
+		<p>"Wow, you're heavier than you look. Are you OK? What's your name?"</p>
+		<p>...</p>
+		<p class="center">Write your reply & hit enter:</p>
+		<form class="center">
+			<input class="loud" style="width: 60%;">
+		</form>
+	</div>
+	<script>
+	;(function(){
+		$('form').on('submit', function(eve){ eve.preventDefault() });
+		$('#cyberninjas4').on('submit', function(){
+			var name = $(this).find('input').val();
+			if(!name.length){ return }
+			$('.story-name').text(' '+(window.NAME = name));
+			$('#hud .score').removeClass('up');
+			location.hash = 'cyberninjas5';
+		})
+	}());
+	</script>
+</div>
+
+<div id="cyberninjas5" class="hold full green">
+	<style>
+	#cyberninjas5:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p>"Well<span class="story-name"></span>, it's a miracle you did not die in the building explosion or from that fall."</p>
+		<p>"What is going on? What happened?"</p>
+		<p>"You can't remember? Your brain must be knocked up pretty hard."</p>
+		<p>"No, I was mid copy into this body and now my memories are glitching."</p>
+		<p>"Woah, you're one of those pro elite AREION revolutionaries? All flesh & blood! Dense, too. I would've assumed they were stealing AutoMecha tech for that instead."</p>
+		<p>"I was about to be told vital data for the resistance, but then they blew up the build--"</p>
+		<p>...</p>
+		<p>"Hey, what's the matter?"</p>
+		<p>"My mom. She was in there. I need to go back. Please, help me and tell me everything you know."</p>
+		<p>"I'm so sorry. I can only get so close with the boat, you're gonna have to jump over a lot of broken bits. You ready?"</p>
+		<p>...</p>
+		<a class="unit yak" href="#cyberninjas6"><button>GO!</button></a>
+	</div>
+</div>
+
+<div id="cyberninjas6" class="hold full green">
+	<style>
+	#cyberninjas6:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p class="center">... to be continued ...</p>
+		<div id="player" style="position: fixed; width: 1em; height: 1em; background: white; left: 50%; top: 50%; border-radius: 100%;"></div>
+		<!-- jumping game ? like offline dinosaur ? -->
+	</div>
+	<script src="../../../gun/lib/meta.js"></script>
+	<script>
+	;(function(){
+		var p = $('#player');
+		p.x = 50;
+		p.y = 50;
+		meta.edit({
+			name: "Up",
+			combo: ["W"],
+			on: function(){
+				console.log("up");
+				this.to = this.to || setInterval(this.on, 100);
+				$("html, body").stop().animate({ scrollTop: $(window).scrollTop()-100 }, 100);
+				p.css({top: --p.y +'%'});
+			},
+			use: function(){},
+			up: function(){ clearTimeout(this.to); this.to = 0 }
+		});
+		meta.edit({
+			name: "Left",
+			combo: ["A"],
+			on: function(){ 
+				console.log("left");
+				this.to = this.to || setInterval(this.on, 100);
+				p.css({left: --p.x +'%'});
+			},
+			use: function(){},
+			up: function(){ clearTimeout(this.to); this.to = 0 }
+		});
+		meta.edit({
+			name: "Down",
+			combo: ["S"],
+			on: function on(){
+				console.log("down");
+				this.to = this.to || setInterval(this.on, 100);
+				$("html, body").stop().animate({ scrollTop: $(window).scrollTop()+100 }, 100);
+				p.css({top: ++p.y +'%'});
+			},
+			use: function(){},
+			up: function(){ clearTimeout(this.to); this.to = 0 }
+		});
+		meta.edit({
+			name: "Right",
+			combo: ["D"],
+			on: function(){
+				console.log("right");
+				this.to = this.to || setInterval(this.on, 100);
+				p.css({left: ++p.x +'%'});
+			},
+			use: function(){},
+			up: function(){ clearTimeout(this.to); this.to = 0 }
+		});
+		meta.edit({
+			name: "Jump",
+			combo: [32],
+			on: function(){ console.log("jump") },
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Crouch",
+			combo: [16],
+			on: function(){ console.log("crouch") },
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Use",
+			combo: ["E"],
+			on: function(){ console.log("use") },
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Fire",
+			combo: ["F"],
+			on: function(){ console.log("fire") },
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Switch",
+			combo: [9],
+			on: function(){ console.log("Switch") },
+			use: function(){},
+			up: function(){}
+		});
+		window.requestAnimationFrame = window.requestAnimationFrame || setTimeout;
+		window.requestAnimationFrame(function frame(){
+			window.requestAnimationFrame(frame, 16);
+
+		}, 16);
+	}());
+	</script>
+</div>
+
+<div id="automecha" class="hold full white blackt">
+	<style>
+	#automecha:target .story {
+	  animation: print 3s steps(50, end);
+	}
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Episode 1: Training</p>
+		<p>...</p>
+	</div>
+</div>
+
+
+<div class="hold black center">
+	<div class="pad">
+		<div class="left">
+			<p class="loud">For <i>You</i>,</p>
+			<p>Crafted with love, <span class="redt">♥</span> by ERA.</p>
+		</div>
+	</div>
+	<div>
+		<img src="https://era.eco/media/world.png" class="row">
+	</div>
+</div>
+
+</body>
+</html>
