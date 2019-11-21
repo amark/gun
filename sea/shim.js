@@ -6,9 +6,6 @@
 
     if(SEA.window){
       api.crypto = window.crypto || window.msCrypto || require('isomorphic-webcrypto');
-      if(!api.crypto) {
-        api.crypto = require('isomorphic-webcrypto');
-      }
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
