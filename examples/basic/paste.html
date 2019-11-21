@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<style>html, body, textarea { width: 100%; height: 100%; padding: 0; margin: 0; }</style>
+<textarea placeholder="paste here!"></textarea>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+
+<script>
+var gun = Gun(location.origin + '/gun');
+
+var to, paste = gun.get('test').get('paste').on(function(data){
+  $('textarea').val(data);
+})
+
+$('textarea').on('input change blur keyup mouseup touchend', function(){
+  clearTimeout(to); // debounce
+  to = setTimeout(function(){
+    paste.put($('textarea').val());
+  }, 100);
+})
+</script>

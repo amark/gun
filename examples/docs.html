@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- always start with these two lines to set a clean baseline for different devices -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="jquery.js"></script>
+
+<title>Docs</title>
+</head>
+<body class="black whitet">
+<style>
+	/*
+		Choose white text on a black background so you can add color in.
+		Pick your favorite font and choose a font size.
+	*/
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	html, body {
+		font-family: "Oxygen", sans-serif;
+	}
+
+	[contenteditable]:focus {
+		outline: none;
+	}
+</style>
+
+<div class="hold full hue2">
+	<div id="page" class="max focus gap" style="padding-top: 9%;"></div>
+</div>
+<script src="../../gun/gun.js"></script>
+<script src="../../gun/lib/monotype.js"></script>
+<script src="../../gun/lib/meta.js"></script>
+<script src="../../gun/lib/normalize.js"></script>
+<script>
+var gun = Gun('https://guntest.herokuapp.com/gun');
+
+;(window.onhashchange = function(){
+	var file = (location.hash||'').slice(1);
+	var S = +new Date;
+	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
+		if(window.LOCK){ return }
+		var p = $('#page').children().get(i);
+		if(!p){
+			$('#page').append('<p>');
+			setTimeout(function(){ render(data, i) },0);
+			return;
+		}
+		var r = monotype(p);
+		var safe = $.normalize(data);
+		p.outerHTML = safe;
+		r.restore();
+	});
+	return;
+	gun.get('test/gun/docs/'+file).get('what').once(function(data){
+		console.log(+new Date - S, 'ms load');
+		$('#page').html($.normalize(data));
+	});
+})();
+
+$("<textarea id='debug'>").css({position: 'fixed', height: '5em', width: '100%', bottom: 0, left: 0, 'font-size': '18pt'}).appendTo('body')
+
+document.execCommand('defaultParagraphSeparator', false, 'p');
+meta.edit({
+	name: "Edit",
+	combo: ['E'],
+	use: function(eve){
+		console.log('on');
+	}, on: function(eve){
+		var edit = this;
+		meta.flip(false);
+		var doc = $('#page').attr('contenteditable', 'true');
+		if(!doc.text()){
+			doc.html('<p class="loud crack"></p>');
+			edit.select(doc.children().first().get(0));
+		}
+		$(document).on('keydown.tmp', '[contenteditable]', function(eve){
+			if(eve.which != 13){ return }
+			eve.preventDefault();
+			var r = window.getSelection().getRangeAt(0);
+			var c = r.commonAncestorContainer;
+      r.deleteContents();
+      c.splitText(r.startOffset);
+      var p = $(c).parent(), n = $("<"+p.get(0).tagName+">"), f;
+      p.contents().each(function(){
+      	if(this === c){ return f = true }
+      	if(!f){ return }
+      	n.append(this);
+      });
+      p.after(n);
+      edit.select(n.get(0));
+      // make sure we re-save & sync each changed paragraph.
+      edit.save(p);
+      p.nextAll().each(function(){
+      	edit.save(this);
+      });
+		}).on('keyup.tmp', '[contenteditable]', function(eve){
+			$('#debug').val(doc.html());
+			var p = $(window.getSelection().anchorNode).closest('p');
+			var r = monotype(p);
+			var html = p.html() || '';
+			var safe = $.normalize(html);
+			p.html(safe);
+			r.restore();
+			edit.save(p);
+		});
+	},
+	up: function(){
+		console.log("UP");
+		$('[contenteditable=true]').off('.tmp');
+	},
+	save: function(p){
+		p = $(p);
+		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
+		var file = (location.hash||'').slice(1);
+		var data = p.get(0).outerHTML;
+		window.LOCK = true;
+		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
+		window.LOCK = false;
+	},
+	select: function(p){
+		var s = window.getSelection(),
+		r = document.createRange();
+		if(p.innerHTML){
+      r.setStart(p, 0);
+			r.collapse(true);
+			s.removeAllRanges();
+			s.addRange(r);
+			return;
+		}
+		p.innerHTML = '\u00a0';
+		r.selectNodeContents(p);
+		s.removeAllRanges();
+		s.addRange(r);
+		document.execCommand('delete', false, null);
+	}
+});
+
+meta.edit({
+	name: "Save",
+	combo: ['S'], fake: -1,
+	on: function(eve){
+		return;
+		meta.tap.on.attr('contenteditable', 'false');
+		var what = $.normalize($('#page').html());
+		var file = (location.hash||'').slice(1);
+		gun.get('test/gun/docs/'+file).put({what: what});
+	},
+	up: function(){}
+});
+</script>
+</body>
+</html>
