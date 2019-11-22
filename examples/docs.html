@@ -31,6 +31,7 @@
 <script src="../../gun/lib/monotype.js"></script>
 <script src="../../gun/lib/meta.js"></script>
 <script src="../../gun/lib/normalize.js"></script>
+<script async src="../../gun/lib/fun.js"></script>
 <script>
 var gun = Gun('https://guntest.herokuapp.com/gun');
 
@@ -50,14 +51,7 @@ var gun = Gun('https://guntest.herokuapp.com/gun');
 		p.outerHTML = safe;
 		r.restore();
 	});
-	return;
-	gun.get('test/gun/docs/'+file).get('what').once(function(data){
-		console.log(+new Date - S, 'ms load');
-		$('#page').html($.normalize(data));
-	});
 })();
-
-$("<textarea id='debug'>").css({position: 'fixed', height: '5em', width: '100%', bottom: 0, left: 0, 'font-size': '18pt'}).appendTo('body')
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 meta.edit({
@@ -67,12 +61,12 @@ meta.edit({
 		console.log('on');
 	}, on: function(eve){
 		var edit = this;
-		meta.flip(false);
+		setTimeout(function(){ meta.flip(false) },1);
 		var doc = $('#page').attr('contenteditable', 'true');
 		if(!doc.text()){
 			doc.html('<p class="loud crack"></p>');
-			edit.select(doc.children().first().get(0));
 		}
+		edit.select(doc.children().first().get(0));
 		$(document).on('keydown.tmp', '[contenteditable]', function(eve){
 			if(eve.which != 13){ return }
 			eve.preventDefault();
@@ -135,18 +129,47 @@ meta.edit({
 	}
 });
 
-meta.edit({
-	name: "Save",
-	combo: ['S'], fake: -1,
-	on: function(eve){
-		return;
-		meta.tap.on.attr('contenteditable', 'false');
-		var what = $.normalize($('#page').html());
-		var file = (location.hash||'').slice(1);
-		gun.get('test/gun/docs/'+file).put({what: what});
-	},
-	up: function(){}
-});
+;(function(){
+
+	meta.edit({name: "Layout", combo: ['E','L']});
+
+	meta.edit({name: "Fill", combo: ['E','L','F'],
+		use: function(eve){},
+		on: function(eve){
+			var on = meta.tap();
+			meta.ask('Color name, code, or URL?', function(color){
+				on.css('background', color);
+			});
+		},
+		up: function(eve){}
+	});
+
+	meta.edit({name: "Add", combo: ['E','L','A']});
+	meta.edit({name: "Row", combo: ['E','L','A', 'R'],
+    on: function(eve){
+			meta.tap().append('<div style="min-height: 9em; padding: 2%;">');
+    }
+	});
+	meta.edit({name: "Columns", combo: ['E','L','A','C'],
+    on: function(eve){
+			var on = meta.tap().addClass('center'), tmp, c;
+			var html = '<div class="unit col" style="min-height: 9em; padding: 2%;"></div>';
+			if(!on.children('.col').length){ html += html }
+			c = (tmp = on.append(html).children('.col')).length;
+			tmp.each(function(){
+	    	$(this).css('width', (100/c)+'%');
+			})
+    }
+	});
+	meta.edit({name: "Text", combo: ['A','T'],
+    on: function(eve){
+    	var tag = $('<p>text</p>');
+			meta.tap().append(tag);
+			tag.focus();
+    }
+	});
+
+}());
 </script>
 </body>
 </html>
