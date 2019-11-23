@@ -2,13 +2,45 @@
 This is the first in a series of basic networking correctness tests.
 Each test itself might be dumb and simple, but built up together,
 they prove desired end goals for behavior at scale.
+
+Alice: [Bob]
+Bob: [Carl]
+Carl: [Bob]
+Dave: [Carl]
+
+Ed: [?]
+
+100,000 browsers
+1 relay peer
+
+50,000 browsers on Bob
+50,000 browsers on Carl
+
+//var gun = Gun(['https://gunjs.herokuapp.com/gun', 'https://guntest.herokuapp.com/gun']);
+
+pretend we have 3TB of data.
+300K browsers.
+
+suppose we have 3 nodejs peers that are shards
+
+var superpeer1 = Gun(AXE({shard: 'a~m'}));
+var superpeer2 = Gun(AXE({shard: 'n~r'}));
+var superpeer3 = Gun(AXE({shard: 's~z'}));
+
+300K browsers join a popular app and they have to do this
+via the browser, so they all go to superpeer1.com
+then 2/3 of them should get sharded to superpeer2 & superpeer3
+
+..s1--s2--s3
+./....|....\.
+b1....b2....b3
 */
 
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 2,
-	browsers: 2,
+	servers: 3,
+	browsers: 3,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -35,11 +67,15 @@ manager.start({
 });
 
 var servers = clients.filter('Node.js');
-var bob = servers.pluck(1);
-var carl = servers.excluding(bob).pluck(1);
+var s1 = servers.pluck(1);
+var s2 = servers.excluding(s1).pluck(1);
+var s3 = servers.excluding([s1,s2]).pluck(1);
+
 var browsers = clients.excluding(servers);
-var alice = browsers.pluck(1);
-var dave = browsers.excluding(alice).pluck(1);
+var b1 = browsers.pluck(1);
+var b2 = servers.excluding(b1).pluck(1);
+var b3 = servers.excluding([b1,b2]).pluck(1);
+
 
 describe("Put ACK", function(){
 	//this.timeout(5 * 60 * 1000);
@@ -71,6 +107,7 @@ describe("Put ACK", function(){
 				}
 				console.log(port, " connect to ", peers);
 				var gun = Gun({file: env.i+'data', peers: peers, web: server});
+				global.gun = gun;
 				server.listen(port, function(){
 					test.done();
 				});
@@ -85,13 +122,14 @@ describe("Put ACK", function(){
 	});
 
 	it("Browsers initialized gun!", function(){
-		var tests = [], i = 1;
-		browsers.each(function(client, id){
-			tests.push(client.run(function(test){
+		var tests = [], i = 0;
+		browsers.each(function(browser, id){
+			tests.push(browser.run(function(test){
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
+				console.log("connected to who superpeer(s)?", gun._.opt.peers);
 				window.gun = gun;
 				window.ref = gun.get('test');
 			}, {i: i += 1, config: config})); 
@@ -99,19 +137,40 @@ describe("Put ACK", function(){
 		return Promise.all(tests);
 	});
 
+	return;
+	return;
+	return;
+	return;
+	return;
+	return;
+	return;
+	return;
+
 	it("Alice", function(){
 		return alice.run(function(test){
+			test.async();
 			console.log("I AM ALICE");
-			//test.async();
 			console.log(gun._.opt.peers);
+			gun.get('not-dave').put({hello: 'world'}, function(ack){
+				if(ack.err){
+					alice_start_did_not_save;
+				}
+				test.done();
+			});
 		});
 	});
 
 	it("Dave", function(){
 		return dave.run(function(test){
 			console.log("I AM DAVE");
-			//test.async();
 			console.log(gun._.opt.peers);
+		});
+	});
+
+	it("Carl", function(){
+		return carl.run(function(test){
+			console.log("I AM CARL");
+			console.log(global.gun);
 		});
 	});
 
