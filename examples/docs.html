@@ -32,12 +32,17 @@
 <script src="../../gun/lib/meta.js"></script>
 <script src="../../gun/lib/normalize.js"></script>
 <script async src="../../gun/lib/fun.js"></script>
+
+<script async src="../../gun/lib/music.js"></script>
+<!-- script async src="https://edide.io/music.lib"></script -->
+
 <script>
-var gun = Gun('https://guntest.herokuapp.com/gun');
+var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']);
 
 ;(window.onhashchange = function(){
 	var file = (location.hash||'').slice(1);
 	var S = +new Date;
+	$('#page').empty();
 	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
 		if(window.LOCK){ return }
 		var p = $('#page').children().get(i);
@@ -60,6 +65,7 @@ meta.edit({
 	use: function(eve){
 		console.log('on');
 	}, on: function(eve){
+		if($(eve.target).closest('p').length){ return }
 		var edit = this;
 		setTimeout(function(){ meta.flip(false) },1);
 		var doc = $('#page').attr('contenteditable', 'true');
@@ -71,10 +77,10 @@ meta.edit({
 			if(eve.which != 13){ return }
 			eve.preventDefault();
 			var r = window.getSelection().getRangeAt(0);
-			var c = r.commonAncestorContainer;
+			var c = r.commonAncestorContainer, p;
       r.deleteContents();
-      c.splitText(r.startOffset);
-      var p = $(c).parent(), n = $("<"+p.get(0).tagName+">"), f;
+      var p = c.splitText? $(c.splitText(r.startOffset)).parent() : $(c);
+      var n = $("<"+p.get(0).tagName+">"), f;
       p.contents().each(function(){
       	if(this === c){ return f = true }
       	if(!f){ return }
@@ -131,9 +137,9 @@ meta.edit({
 
 ;(function(){
 
-	meta.edit({name: "Layout", combo: ['E','L']});
+	meta.edit({name: "Layout", combo: ['L']});
 
-	meta.edit({name: "Fill", combo: ['E','L','F'],
+	meta.edit({name: "Fill", combo: ['L','F'],
 		use: function(eve){},
 		on: function(eve){
 			var on = meta.tap();
@@ -144,13 +150,13 @@ meta.edit({
 		up: function(eve){}
 	});
 
-	meta.edit({name: "Add", combo: ['E','L','A']});
-	meta.edit({name: "Row", combo: ['E','L','A', 'R'],
+	meta.edit({name: "Add", combo: ['L','A']});
+	meta.edit({name: "Row", combo: ['L','A', 'R'],
     on: function(eve){
 			meta.tap().append('<div style="min-height: 9em; padding: 2%;">');
     }
 	});
-	meta.edit({name: "Columns", combo: ['E','L','A','C'],
+	meta.edit({name: "Columns", combo: ['L','A','C'],
     on: function(eve){
 			var on = meta.tap().addClass('center'), tmp, c;
 			var html = '<div class="unit col" style="min-height: 9em; padding: 2%;"></div>';
@@ -161,12 +167,65 @@ meta.edit({
 			})
     }
 	});
-	meta.edit({name: "Text", combo: ['A','T'],
+	meta.edit({name: "Text", combo: ['L','A','T'],
     on: function(eve){
     	var tag = $('<p>text</p>');
 			meta.tap().append(tag);
 			tag.focus();
     }
+	});
+
+}());
+
+;(function(){
+	var song = {};
+	// TODO:
+	// 1. Manually OR automatically load music.js API, dependencies, and modules. - FINE for now
+	// 2. only export music API, not meta, not dom, not mouselock system, not UI/html, etc. better module isolation and export.
+	// 3. `var wave = Wave('a').play()` // also on `Music.now`
+	// defaults... instrument: pure tones, volume curve: |\_ , speed curve: 0.5
+	// 4. `wave.blur(0.5).itch(0.5);`
+	// 5. wave.long(2); // how long in seconds each note plays, optionally: wave.pace(60) is bpm
+	// 6. wave.loud(0.5); // 0% to 100% volume loudness of device output.
+	// 7. wave.vary(0.5); // slows down or speeds up wiggle per harmonic
+	// 8:
+	// wave structure, does ToneJS allow us to change the sine wave smoothness/type continuously or is it a pre-fixed type?
+	// wave structure: /\/\/, |_|, /|/, \|\| do some research with ToneJS whether these are dynamic or fixed
+	// wave.itch(); // changes the shape of the wiggle from smooth sine to square or triangle
+	// wave.blur(220hz); // blur may not apply/work on pure notes other than filtering them.
+
+	meta.edit({name: "Music", combo: ['M']});
+
+	meta.edit({name: "Play", combo: ['M','P'],
+    on: function(eve){
+    	// TODO: We still need to add to meta API ability to change name.
+    	if(song.play){
+				music.stop();
+				song.play = false;
+				return;
+    	}
+    	song.play = true;
+    	music.stop();
+    	setTimeout(function(){
+				song.now = music.play($('#page').text());
+    	},250);
+    }
+	});
+
+	meta.edit({name: "Blur", combo: ['M','B'],
+    on: function(eve){
+			$(document).on('mousemove.tmp', function(eve){
+				var x = eve.pageX;
+				song.now.blur(x);
+			});
+    },
+    up: function(){
+    	$(document).off('.tmp');
+  	}
+	});
+
+	$(document).on('keydown', function(eve){
+		music.play(String.fromCharCode(eve.which));
 	});
 
 }());

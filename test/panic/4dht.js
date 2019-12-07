@@ -31,6 +31,12 @@ var superpeer3 = Gun(AXE({shard: 's~z'}));
 via the browser, so they all go to superpeer1.com
 then 2/3 of them should get sharded to superpeer2 & superpeer3
 
+first all connect to:
+..s1-----s2--s3
+./\.\.
+b1.b2.b3
+
+then be load balanced to:
 ..s1--s2--s3
 ./....|....\.
 b1....b2....b3
@@ -101,12 +107,12 @@ describe("Put ACK", function(){
 				var peers = [], i = env.config.servers;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
-					if(port != tmp){ // ignore ourselves
+					//if(port != tmp){ // ignore ourselves
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
-					}
+					//}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server});
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 1});
 				global.gun = gun;
 				server.listen(port, function(){
 					test.done();
@@ -129,6 +135,15 @@ describe("Put ACK", function(){
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
+
+				// SOME NEXT TEST HERE LOL
+				var mesh = gun.back('opt.mesh');
+				mesh.hear['mob'] = function(msg, peer){
+					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
+					console.log("we got a message!", msg);
+					try{ peer.wire.close(); }catch(e){ console.log("err:", e) }
+				}
+
 				console.log("connected to who superpeer(s)?", gun._.opt.peers);
 				window.gun = gun;
 				window.ref = gun.get('test');
@@ -137,41 +152,16 @@ describe("Put ACK", function(){
 		return Promise.all(tests);
 	});
 
-	return;
-	return;
-	return;
-	return;
-	return;
-	return;
-	return;
-	return;
+	it("Got Load Balanced to Different Peer", function(){
+		var tests = [], i = 0;
+		browsers.each(function(browser, id){
+			tests.push(browser.run(function(test){
 
-	it("Alice", function(){
-		return alice.run(function(test){
-			test.async();
-			console.log("I AM ALICE");
-			console.log(gun._.opt.peers);
-			gun.get('not-dave').put({hello: 'world'}, function(ack){
-				if(ack.err){
-					alice_start_did_not_save;
-				}
-				test.done();
-			});
-		});
-	});
+				console.log("...");
 
-	it("Dave", function(){
-		return dave.run(function(test){
-			console.log("I AM DAVE");
-			console.log(gun._.opt.peers);
+			}, {i: i += 1, config: config})); 
 		});
-	});
-
-	it("Carl", function(){
-		return carl.run(function(test){
-			console.log("I AM CARL");
-			console.log(global.gun);
-		});
+		return Promise.all(tests);
 	});
 
 	it("All finished!", function(done){
