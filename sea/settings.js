@@ -2,7 +2,7 @@
     var SEA = require('./root');
     var Buffer = require('./buffer');
     var s = {};
-    s.pbkdf2 = {hash: 'SHA-256', iter: 100000, ks: 64};
+    s.pbkdf2 = {hash: {name : 'SHA-256'}, iter: 100000, ks: 64};
     s.ecdsa = {
       pair: {name: 'ECDSA', namedCurve: 'P-256'},
       sign: {name: 'ECDSA', hash: {name: 'SHA-256'}}
@@ -18,6 +18,13 @@
       if(d){ jwk.d = d }
       return jwk;
     };
+    
+    s.keyToJwk = function(keyBytes) {
+      const keyB64 = keyBytes.toString('base64');
+      const k = keyB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
+      return { kty: 'oct', k: k, ext: false, alg: 'A256GCM' };
+    }
+
     s.recall = {
       validity: 12 * 60 * 60, // internally in seconds : 12 hours
       hook: function(props){ return props } // { iat, exp, alias, remember } // or return new Promise((resolve, reject) => resolve(props)
