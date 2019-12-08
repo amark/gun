@@ -19,15 +19,14 @@ function Mesh(root){
 		if('[' === tmp){
 			try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
-			//console.log('hear batch length of', msg.length);
+			LOG && opt.log(msg.length, 'in hear batch');
 			(function go(){
-				var S = +new Date; // STATS!
+				var S; LOG && (S = +new Date); // STATS!
 				var m, c = 100; // hardcoded for now?
 				while(c-- && (m = msg.shift())){
 					mesh.hear(m, peer);
 				}
-				//console.log(+new Date - S, 'hear batch');
-				(mesh.hear.long || (mesh.hear.long = [])).push(+new Date - S);
+				LOG && opt.log(+new Date - S, 'batch heard');
 				if(!msg.length){ return }
 				puff(go, 0);
 			}());
@@ -38,7 +37,7 @@ function Mesh(root){
 			}catch(e){return opt.log('DAM JSON parse error', e)}
 			if(!msg){ return }
 			if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
-			if(msg.DBG_s){ console.log(+new Date - msg.DBG_s, 'to hear', id) }
+			if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 			if(dup.check(id)){ return }
 			dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 			if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -54,9 +53,9 @@ function Mesh(root){
 				}
 				return;
 			}
-			//var S = +new Date;
+			var S; LOG && (S = +new Date);
 			root.on('in', msg);
-			//!msg.nts && console.log(+new Date - S, 'msg', msg['#']);
+			LOG && !msg.nts && opt.log(+new Date - S, 'msg', msg['#']);
 			return;
 		}
 	}
@@ -70,7 +69,7 @@ function Mesh(root){
 			if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 			if(!msg){ return false }
 			var id, hash, tmp, raw;
-			//var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
+			var S; LOG && (S = +new Date); //msg.DBG_s = msg.DBG_s || +new Date;
 			var meta = msg._||(msg._=function(){});
 			if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 			if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -84,15 +83,15 @@ function Mesh(root){
 					}
 				}
 			}
-			//console.log(+new Date - S, 'mesh say prep');
+			LOG && opt.log(+new Date - S, 'say prep');
 			dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
 			if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
 			if(!peer && mesh.way){ return mesh.way(msg) }
 			if(!peer || !peer.id){ message = msg;
 				if(!Type.obj.is(peer || opt.peers)){ return false }
-				//var S = +new Date;
+				var S; LOG && (S = +new Date);
 				Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-				//console.log(+new Date - S, 'mesh say loop');
+				LOG && opt.log(+new Date - S, 'say loop');
 				return;
 			}
 			if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -116,10 +115,10 @@ function Mesh(root){
 			peer.batch = peer.tail = null;
 			if(!tmp){ return }
 			if(!tmp.length){ return } // if(3 > tmp.length){ return } // TODO: ^
-			//var S = +new Date;
+			var S; LOG && (S = +new Date);
 			try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 			}catch(e){return opt.log('DAM JSON stringify error', e)}
-			//console.log(+new Date - S, 'mesh flush', tmp.length);
+			LOG && opt.log(+new Date - S, 'say stringify', tmp.length);
 			if(!tmp){ return }
 			send(tmp, peer);
 		}
@@ -129,14 +128,14 @@ function Mesh(root){
 	// for now - find better place later.
 	function send(raw, peer){ try{
 		var wire = peer.wire;
-		//var S = +new Date;
+		var S; LOG && (S = +new Date);
 		if(peer.say){
 			peer.say(raw);
 		} else
 		if(wire.send){
 			wire.send(raw);
 		}
-		//console.log(+new Date - S, 'wire send', raw.length);
+		LOG && opt.log(+new Date - S, 'wire send', raw.length);
 		mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 	}catch(e){
 		(peer.queue = peer.queue || []).push(raw);
@@ -186,6 +185,7 @@ function Mesh(root){
 		root.on('bye', peer);
 		var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 		mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
+		LOG = console.LOG; // dirty place to cheaply update LOG settings over time.
 	}
 	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 	mesh.hear['?'] = function(msg, peer){
@@ -266,6 +266,7 @@ function Mesh(root){
 }());
 
 	  var empty = {}, ok = true, u;
+var LOG = console.LOG;
 
 	  try{ module.exports = Mesh }catch(e){}
 

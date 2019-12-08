@@ -964,6 +964,7 @@
     }
     // If authenticated user wants to delete his/her account, let's support it!
     User.prototype.delete = async function(alias, pass, cb){
+      console.log("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
       var gun = this, root = gun.back(-1), user = gun.back('user');
       try {
         user.auth(alias, pass, function(ack){
@@ -1005,6 +1006,7 @@
       return gun;
     }
     User.prototype.alive = async function(){
+      console.log("user.alive() IS DEPRECATED!!!");
       const gunRoot = this.back(-1)
       try {
         // All is good. Should we do something more with actual recalled data?
@@ -1024,25 +1026,32 @@
           console.log(ctx, ev)
         })
       }
+      user.get('trust').get(path).put(theirPubkey);
+
+      // do a lookup on this gun chain directly (that gets bob's copy of the data)
+      // do a lookup on the metadata trust table for this path (that gets all the pubkeys allowed to write on this path)
+      // do a lookup on each of those pubKeys ON the path (to get the collab data "layers")
+      // THEN you perform Jachen's mix operation
+      // and return the result of that to...
     }
     User.prototype.grant = function(to, cb){
       console.log("`.grant` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
-      var gun = this, user = gun.back(-1).user(), pair = user.pair(), path = '';
+      var gun = this, user = gun.back(-1).user(), pair = user._.sea, path = '';
       gun.back(function(at){ if(at.is){ return } path += (at.get||'') });
       (async function(){
-      var enc, sec = await user.get('trust').get(pair.pub).get(path).then();
+      var enc, sec = await user.get('grant').get(pair.pub).get(path).then();
       sec = await SEA.decrypt(sec, pair);
       if(!sec){
         sec = SEA.random(16).toString();
         enc = await SEA.encrypt(sec, pair);
-        user.get('trust').get(pair.pub).get(path).put(enc);
+        user.get('grant').get(pair.pub).get(path).put(enc);
       }
       var pub = to.get('pub').then();
       var epub = to.get('epub').then();
       pub = await pub; epub = await epub;
       var dh = await SEA.secret(epub, pair);
       enc = await SEA.encrypt(sec, dh);
-      user.get('trust').get(pub).get(path).put(enc, cb);
+      user.get('grant').get(pub).get(path).put(enc, cb);
       }());
       return gun;
     }
