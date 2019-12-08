@@ -162,20 +162,16 @@ Gun.dup = require('./dup');
 			// Maybe... in case the in-memory key we have is a local write
 			// we still need to trigger a pull/merge from peers.
 		} else {
-			//var S = +new Date;
 			node = Gun.obj.copy(node);
-			//console.log(+new Date - S, 'copy node');
 		}
 		node = Gun.graph.node(node);
 		tmp = (at||empty).ack;
-		//var S = +new Date;
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
 			put: node,
 			$: gun
 		});
-		//console.log(+new Date - S, 'root got send');
 		//if(0 < tmp){ return }
 		root.on('get', msg);
 	}

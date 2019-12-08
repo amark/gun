@@ -4,7 +4,7 @@ if(typeof Gun === 'undefined'){ return } // TODO: localStorage is Browser only. 
 var root, noop = function(){}, store, u;
 try{store = (Gun.window||noop).localStorage}catch(e){}
 if(!store){
-	console.log("Warning: No localStorage exists to persist data to!");
+	Gun.log("Warning: No localStorage exists to persist data to!");
 	store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 }
 /*
@@ -110,7 +110,6 @@ Gun.on('create', function(root){
 			data = Gun.state.to(data, has);
 		}
 		//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
-		//console.log("lS get", lex, data);
 		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
