@@ -190,8 +190,8 @@
         //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
       //}
     }catch(e){
-      console.log("node-webcrypto-ossl and text-encoding may not be included by default, please add it to your package.json!");
-      OSSL_WEBCRYPTO_OR_TEXT_ENCODING_NOT_INSTALLED;
+      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
+      TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
     }}
 
     module.exports = api

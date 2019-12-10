@@ -42,7 +42,7 @@ var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']
 ;(window.onhashchange = function(){
 	var file = (location.hash||'').slice(1);
 	var S = +new Date;
-	$('#page').empty();
+	$('#page').empty().attr('contenteditable', 'false');
 	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
 		if(window.LOCK){ return }
 		var p = $('#page').children().get(i);
@@ -68,11 +68,7 @@ meta.edit({
 		if($(eve.target).closest('p').length){ return }
 		var edit = this;
 		setTimeout(function(){ meta.flip(false) },1);
-		var doc = $('#page').attr('contenteditable', 'true');
-		if(!doc.text()){
-			doc.html('<p class="loud crack"></p>');
-		}
-		edit.select(doc.children().first().get(0));
+		edit.init();
 		$(document).on('keydown.tmp', '[contenteditable]', function(eve){
 			if(eve.which != 13){ return }
 			eve.preventDefault();
@@ -94,10 +90,13 @@ meta.edit({
       	edit.save(this);
       });
 		}).on('keyup.tmp', '[contenteditable]', function(eve){
-			$('#debug').val(doc.html());
+			//$('#debug').val(doc.html());
 			var p = $(window.getSelection().anchorNode).closest('p');
 			var r = monotype(p);
 			var html = p.html() || '';
+			if(!html && !p.prev().length && !p.next().length && !$('#page').html()){
+				edit.init();
+			}
 			var safe = $.normalize(html);
 			p.html(safe);
 			r.restore();
@@ -108,11 +107,19 @@ meta.edit({
 		console.log("UP");
 		$('[contenteditable=true]').off('.tmp');
 	},
+	init: function(){
+		var edit = this;
+		var doc = $('#page').attr('contenteditable', 'true');
+		if(!doc.text()){
+			doc.html('<p class="loud crack"></p>');
+		}
+		edit.select(doc.children().first().get(0));
+	},
 	save: function(p){
 		p = $(p);
 		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
 		var file = (location.hash||'').slice(1);
-		var data = p.get(0).outerHTML;
+		var data = (p.get(0)||{}).outerHTML||'';
 		window.LOCK = true;
 		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
 		window.LOCK = false;
