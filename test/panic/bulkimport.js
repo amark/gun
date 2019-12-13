@@ -2,51 +2,16 @@
 This is the first in a series of basic networking correctness tests.
 Each test itself might be dumb and simple, but built up together,
 they prove desired end goals for behavior at scale.
-
-Alice: [Bob]
-Bob: [Carl]
-Carl: [Bob]
-Dave: [Carl]
-
-Ed: [?]
-
-100,000 browsers
-1 relay peer
-
-50,000 browsers on Bob
-50,000 browsers on Carl
-
-//var gun = Gun(['https://gunjs.herokuapp.com/gun', 'https://guntest.herokuapp.com/gun']);
-
-pretend we have 3TB of data.
-300K browsers.
-
-suppose we have 3 nodejs peers that are shards
-
-var superpeer1 = Gun(AXE({shard: 'a~m'}));
-var superpeer2 = Gun(AXE({shard: 'n~r'}));
-var superpeer3 = Gun(AXE({shard: 's~z'}));
-
-300K browsers join a popular app and they have to do this
-via the browser, so they all go to superpeer1.com
-then 2/3 of them should get sharded to superpeer2 & superpeer3
-
-first all connect to:
-..s1-----s2--s3
-./\.\.
-b1.b2.b3
-
-then be load balanced to:
-..s1--s2--s3
-./....|....\.
-b1....b2....b3
+1. (this file) Is a browser write is confirmed as save by multiple peers even if by daisy chain.
+2. 
 */
 
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 3,
-	browsers: 3,
+	servers: 1,
+	browsers: 2,
+	puts: 1000,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -73,15 +38,10 @@ manager.start({
 });
 
 var servers = clients.filter('Node.js');
-var s1 = servers.pluck(1);
-var s2 = servers.excluding(s1).pluck(1);
-var s3 = servers.excluding([s1,s2]).pluck(1);
-
+var bob = servers.pluck(1);
 var browsers = clients.excluding(servers);
-var b1 = browsers.pluck(1);
-var b2 = servers.excluding(b1).pluck(1);
-var b3 = servers.excluding([b1,b2]).pluck(1);
-
+var alice = browsers.pluck(1);
+var carl = browsers.excluding(alice).pluck(1);
 
 describe("Put ACK", function(){
 	//this.timeout(5 * 60 * 1000);
@@ -107,13 +67,12 @@ describe("Put ACK", function(){
 				var peers = [], i = env.config.servers;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
-					//if(port != tmp){ // ignore ourselves
+					if(port != tmp){ // ignore ourselves
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
-					//}
+					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 1});
-				global.gun = gun;
+				var gun = Gun({file: env.i+'data', peers: peers, web: server});
 				server.listen(port, function(){
 					test.done();
 				});
@@ -129,47 +88,40 @@ describe("Put ACK", function(){
 
 	it("Browsers initialized gun!", function(){
 		var tests = [], i = 0;
-		browsers.each(function(browser, id){
-			tests.push(browser.run(function(test){
+		browsers.each(function(client, id){
+			tests.push(client.run(function(test){
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
-
-				// SOME NEXT TEST HERE LOL
-				var mesh = gun.back('opt.mesh');
-				mesh.hear['mob'] = function(msg, peer){
-					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
-					console.log("we got a message!", msg);
-					try{ peer.wire.close(); }catch(e){ console.log("err:", e) }
-				}
-
-				console.log("connected to who superpeer(s)?", gun._.opt.peers);
-				window.gun = gun;
 				window.ref = gun.get('test');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
 
-	it("Got Load Balanced to Different Peer", function(){
-		var tests = [], i = 0;
-		browsers.each(function(browser, id){
-			tests.push(browser.run(function(test){
-
-				console.log("...");
-
-			}, {i: i += 1, config: config})); 
-		});
-		return Promise.all(tests);
+	it("Puts", function(){
+		return alice.run(function(test){
+			console.log("I AM ALICE");
+			test.async();
+			var i = test.props.puts, d = 0;
+			while(i--){ go(i) }
+			function go(i){
+				ref.get(i).put({hello: 'world'}, function(ack){
+					if(ack.err){ put_failed }
+					if(++d !== test.props.puts){ return }
+					console.log("all success", d);
+					test.done();
+				});
+			}
+		}, {puts: config.puts});
 	});
 
 	it("All finished!", function(done){
 		console.log("Done! Cleaning things up...");
 		setTimeout(function(){
 			done();
-		//},1000);
-		},1000 * 60);
+		},1000);
 	});
 
 	after("Everything shut down.", function(){
