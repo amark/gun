@@ -288,7 +288,7 @@
 				var count = Object.keys(opt.peers).length;
 				if(opt.mob >= count){ return }  // TODO: Make dynamic based on RAM/CPU also. Or possibly even weird stuff like opt.mob / axe.up length?
 				mesh.say({dam: 'mob', mob: count, peers: Object.keys(axe.up)}, peer);
-				setTimeout(function(){ mesh.bye(peer) }, 9); // something with better perf?
+				//setTimeout(function(){ mesh.bye(peer) }, 9); // something with better perf? // UNCOMMENT WHEN WE ACTIVATE THIS FEATURE
 			});
 			at.on('bye', function(peer){
 				this.to.next(peer);
