@@ -2123,6 +2123,7 @@
 				} else {
 					tmp = peer.id = peer.id || Type.text.random(9);
 					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
+					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
 				peer.met = peer.met || +(new Date);
 				if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
@@ -2142,6 +2143,7 @@
 			mesh.hear['?'] = function(msg, peer){
 				if(!msg.pid){
 					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 					// @rogowski I want to re-enable this AXE logic with some fix/merge later.
 					/* var tmp = peer.queue; peer.queue = [];
 					Type.obj.map(tmp, function(msg){
