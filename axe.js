@@ -293,6 +293,27 @@
 			at.on('bye', function(peer){
 				this.to.next(peer);
 			});
+
+			at.on('hi', function(peer){
+				this.to.next(peer);
+				// this code handles disconnecting from self & duplicates
+				setTimeout(function(){ // must wait
+					if(peer.pid !== opt.pid){
+						// this extra logic checks for duplicate connections between 2 peers.
+						if(!Gun.obj.map(axe.up, function(p){
+							if(peer.pid === p.pid && peer !== p){
+								return yes = true;
+							}
+						})){ return }
+					}
+					mesh.say({dam: '-'}, peer);
+					delete at.dup.s[peer.last];
+				}, Math.random() * 100);
+			});
+			mesh.hear['-'] = function(msg, peer){
+				mesh.bye(peer);
+				peer.url = '';
+			}
 		}
 
 		function joindht(dht, soul, pids) {
