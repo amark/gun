@@ -7,6 +7,10 @@
 
 **GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and encrypted applications.
 
+## WARNING
+GUN is not vetted for, nor promised to be, fit for use in a production environment. GUN is pre-1.0 and should evaluated for merchantability per your operating requirements.
+
+### People Using GUN
 Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
 
 Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
