@@ -360,8 +360,27 @@ describe('SEA', function(){
         },9);
       });
     });
-  });
 
+    it('User\'s nodes must be signed when on user scope!', function(done) {
+      /// https://github.com/amark/gun/issues/850
+      /// https://github.com/amark/gun/issues/616
+      this.timeout(9000);
+      var gun = Gun();
+      var user = gun.user();
+      user.auth('xavier', 'password');
+      gun.on('auth', function(){
+        user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
+          var notsigned = [];
+          Gun.obj.map(gun._.graph, function(v,k) {
+            if (k[0]==='~' || k.indexOf('~', 1)!==-1) { return; } /// ignore '~pubkey' and '~@alias'
+            notsigned.push(k);
+          });
+          expect(notsigned.length).to.be(0); /// all souls must have to be suffixed with the user's pubkey.
+          done();
+        });
+      });
+    });
+  });
 })
 
 }());
