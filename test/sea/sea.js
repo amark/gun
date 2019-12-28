@@ -257,6 +257,16 @@ describe('SEA', function(){
       expect(dup).to.not.be.eql(sig);
       done();
     }())})
+
+    it('SEA - String changed to Number after encrypt/decrypt', function(done) {
+      /// https://github.com/amark/gun/issues/804
+      SEA.encrypt('4e2', 'asdf', function(enc) {
+        SEA.decrypt(enc, 'asdf', function(dec) { // 400, numeric
+          expect(enc===dec).to.be(true);
+          done();
+        });
+      });
+    });
   });
 
   describe('User', function(){
