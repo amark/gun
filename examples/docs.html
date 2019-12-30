@@ -33,7 +33,7 @@
 <script src="../../gun/lib/normalize.js"></script>
 <script async src="../../gun/lib/fun.js"></script>
 
-<script async src="../../gun/lib/music.js"></script>
+<script async src="../../gun/lib/wave.js"></script>
 <!-- script async src="https://edide.io/music.lib"></script -->
 
 <script>
@@ -214,7 +214,7 @@ meta.edit({
     	song.play = true;
     	music.stop();
     	setTimeout(function(){
-				song.now = music.play($('#page').text());
+				song.now = wave($('#page').text()).play();
     	},250);
     }
 	});
@@ -223,7 +223,7 @@ meta.edit({
     on: function(eve){
 			$(document).on('mousemove.tmp', function(eve){
 				var x = eve.pageX;
-				song.now.blur(x);
+				song.now.loud(x/$('body').innerWidth());
 			});
     },
     up: function(){
