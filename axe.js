@@ -287,7 +287,9 @@
 				if(peer.url){ return } // I am assuming that if we are wanting to make an outbound connection to them, that we don't ever want to drop them unless our actual config settings change.
 				var count = Object.keys(opt.peers).length;
 				if(opt.mob >= count){ return }  // TODO: Make dynamic based on RAM/CPU also. Or possibly even weird stuff like opt.mob / axe.up length?
-				mesh.say({dam: 'mob', mob: count, peers: Object.keys(axe.up)}, peer);
+				var peers = Object.keys(axe.up);
+				if(!peers.length){ return }
+				mesh.say({dam: 'mob', mob: count, peers: peers}, peer);
 				//setTimeout(function(){ mesh.bye(peer) }, 9); // something with better perf? // UNCOMMENT WHEN WE ACTIVATE THIS FEATURE
 			});
 			at.on('bye', function(peer){

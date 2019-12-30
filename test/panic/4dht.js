@@ -112,7 +112,7 @@ describe("Put ACK", function(){
 					//}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 1});
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 4});
 				global.gun = gun;
 				server.listen(port, function(){
 					test.done();
@@ -136,12 +136,18 @@ describe("Put ACK", function(){
 				var env = test.props;
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
 
-				// SOME NEXT TEST HERE LOL
 				var mesh = gun.back('opt.mesh');
 				mesh.hear['mob'] = function(msg, peer){
 					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
-					console.log("we got a message!", msg);
-					try{ peer.wire.close(); }catch(e){ console.log("err:", e) }
+					if(!msg.peers){ return }
+					var one = msg.peers[Math.floor(Math.random()*msg.peers.length)];
+					console.log("CONNECT TO THIS PEER:", one);
+					gun.opt(one);
+					mesh.bye(peer);
+
+					if(test.c){ return }
+					test.c = 1;
+					test.done();
 				}
 
 				console.log("connected to who superpeer(s)?", gun._.opt.peers);
@@ -157,7 +163,7 @@ describe("Put ACK", function(){
 		browsers.each(function(browser, id){
 			tests.push(browser.run(function(test){
 
-				console.log("...");
+				console.log("...", gun._.opt.peers);
 
 			}, {i: i += 1, config: config})); 
 		});
