@@ -287,12 +287,35 @@
 				if(peer.url){ return } // I am assuming that if we are wanting to make an outbound connection to them, that we don't ever want to drop them unless our actual config settings change.
 				var count = Object.keys(opt.peers).length;
 				if(opt.mob >= count){ return }  // TODO: Make dynamic based on RAM/CPU also. Or possibly even weird stuff like opt.mob / axe.up length?
-				mesh.say({dam: 'mob', mob: count, peers: Object.keys(axe.up)}, peer);
+				var peers = Object.keys(axe.up);
+				if(!peers.length){ return }
+				mesh.say({dam: 'mob', mob: count, peers: peers}, peer);
 				//setTimeout(function(){ mesh.bye(peer) }, 9); // something with better perf? // UNCOMMENT WHEN WE ACTIVATE THIS FEATURE
 			});
 			at.on('bye', function(peer){
 				this.to.next(peer);
 			});
+
+			at.on('hi', function(peer){
+				this.to.next(peer);
+				// this code handles disconnecting from self & duplicates
+				setTimeout(function(){ // must wait
+					if(peer.pid !== opt.pid){
+						// this extra logic checks for duplicate connections between 2 peers.
+						if(!Gun.obj.map(axe.up, function(p){
+							if(peer.pid === p.pid && peer !== p){
+								return yes = true;
+							}
+						})){ return }
+					}
+					mesh.say({dam: '-'}, peer);
+					delete at.dup.s[peer.last];
+				}, Math.random() * 100);
+			});
+			mesh.hear['-'] = function(msg, peer){
+				mesh.bye(peer);
+				peer.url = '';
+			}
 		}
 
 		function joindht(dht, soul, pids) {
