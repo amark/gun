@@ -8,7 +8,7 @@
 **GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and encrypted applications.
 
 ## WARNING
-GUN is not vetted for, nor promised to be, fit for use in a production environment. GUN is pre-1.0 and should evaluated for merchantability per your operating requirements.
+GUN is not vetted for, nor promised to be, fit for use in a production environment. GUN is pre-1.0 and should be evaluated for merchantability per your operating requirements.
 
 ### People Using GUN
 Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
