@@ -3774,6 +3774,24 @@ describe('Gun', function(){
 				done();
 			})
 		});
+
+		/*describe('talk to live server tests', function(){
+			this.timeout(1000 * 9);
+			it.only('Second once on undefined should call', function(done){ // this test is passing when it fails by hand?
+				var gun = Gun('https://gunjs.herokuapp.com/gun');
+				gun.get('~@O8H2BJa4pNfecWamWN7efd888Pg1@hackernoon').once(function(data){
+					console.log(1, data);
+					expect(data).to.not.be.ok();
+					setTimeout(function(){
+						gun.get('~@O8H2BJa4pNfecWamWN7efd888Pg1@hackernoon').once(function(data){
+							console.log(2, data);
+							expect(data).to.not.be.ok();
+							done();
+						});
+					}, 3000);
+				});
+			});
+		});*/
 		return;
 		it('Nested listener should be called', function(done){
 			

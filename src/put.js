@@ -177,7 +177,7 @@ function any(soul, as, msg, eve){
 	as = as.as;
 	if(!msg.$ || !msg.$._){ return } // TODO: Handle
 	if(msg.err){ // TODO: Handle
-		console.log("Please report this as an issue! Put.any.err");
+		Gun.log("Please report this as an issue! Put.any.err");
 		return;
 	}
 	var at = (msg.$._), data = at.put, opt = as.opt||{}, root, tmp;
@@ -186,7 +186,7 @@ function any(soul, as, msg, eve){
 	if(as.ref !== as.$){
 		tmp = (as.$._).get || at.get;
 		if(!tmp){ // TODO: Handle
-			console.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
+			Gun.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
 			return;
 		}
 		as.data = obj_put({}, tmp, as.data);

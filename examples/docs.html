@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- always start with these two lines to set a clean baseline for different devices -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="jquery.js"></script>
+
+<title>Docs</title>
+</head>
+<body class="black whitet">
+<style>
+	/*
+		Choose white text on a black background so you can add color in.
+		Pick your favorite font and choose a font size.
+	*/
+	@import url('https://fonts.googleapis.com/css?family=Oxygen');
+	html, body {
+		font-family: "Oxygen", sans-serif;
+	}
+
+	[contenteditable]:focus {
+		outline: none;
+	}
+</style>
+
+<div class="hold full hue2">
+	<div id="page" class="max focus gap" style="padding-top: 9%;"></div>
+</div>
+<script src="../../gun/gun.js"></script>
+<script src="../../gun/lib/monotype.js"></script>
+<script src="../../gun/lib/meta.js"></script>
+<script src="../../gun/lib/normalize.js"></script>
+<script async src="../../gun/lib/fun.js"></script>
+
+<script async src="../../gun/lib/wave.js"></script>
+<!-- script async src="https://edide.io/music.lib"></script -->
+
+<script>
+var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']);
+
+;(window.onhashchange = function(){
+	var file = (location.hash||'').slice(1);
+	var S = +new Date;
+	$('#page').empty().attr('contenteditable', 'false');
+	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
+		if(window.LOCK){ return }
+		var p = $('#page').children().get(i);
+		if(!p){
+			$('#page').append('<p>');
+			setTimeout(function(){ render(data, i) },0);
+			return;
+		}
+		var r = monotype(p);
+		var safe = $.normalize(data);
+		p.outerHTML = safe;
+		r.restore();
+	});
+})();
+
+document.execCommand('defaultParagraphSeparator', false, 'p');
+meta.edit({
+	name: "Edit",
+	combo: ['E'],
+	use: function(eve){
+		console.log('on');
+	}, on: function(eve){
+		if($(eve.target).closest('p').length){ return }
+		var edit = this;
+		setTimeout(function(){ meta.flip(false) },1);
+		edit.init();
+		$(document).on('keydown.tmp', '[contenteditable]', function(eve){
+			if(eve.which != 13){ return }
+			eve.preventDefault();
+			var r = window.getSelection().getRangeAt(0);
+			var c = r.commonAncestorContainer, p;
+      r.deleteContents();
+      var p = c.splitText? $(c.splitText(r.startOffset)).parent() : $(c);
+      var n = $("<"+p.get(0).tagName+">"), f;
+      p.contents().each(function(){
+      	if(this === c){ return f = true }
+      	if(!f){ return }
+      	n.append(this);
+      });
+      p.after(n);
+      edit.select(n.get(0));
+      // make sure we re-save & sync each changed paragraph.
+      edit.save(p);
+      p.nextAll().each(function(){
+      	edit.save(this);
+      });
+		}).on('keyup.tmp', '[contenteditable]', function(eve){
+			//$('#debug').val(doc.html());
+			var p = $(window.getSelection().anchorNode).closest('p');
+			var r = monotype(p);
+			var html = p.html() || '';
+			if(!html && !p.prev().length && !p.next().length && !$('#page').html()){
+				edit.init();
+			}
+			var safe = $.normalize(html);
+			p.html(safe);
+			r.restore();
+			edit.save(p);
+		});
+	},
+	up: function(){
+		console.log("UP");
+		$('[contenteditable=true]').off('.tmp');
+	},
+	init: function(){
+		var edit = this;
+		var doc = $('#page').attr('contenteditable', 'true');
+		if(!doc.text()){
+			doc.html('<p class="loud crack"></p>');
+		}
+		edit.select(doc.children().first().get(0));
+	},
+	save: function(p){
+		p = $(p);
+		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
+		var file = (location.hash||'').slice(1);
+		var data = (p.get(0)||{}).outerHTML||'';
+		window.LOCK = true;
+		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
+		window.LOCK = false;
+	},
+	select: function(p){
+		var s = window.getSelection(),
+		r = document.createRange();
+		if(p.innerHTML){
+      r.setStart(p, 0);
+			r.collapse(true);
+			s.removeAllRanges();
+			s.addRange(r);
+			return;
+		}
+		p.innerHTML = '\u00a0';
+		r.selectNodeContents(p);
+		s.removeAllRanges();
+		s.addRange(r);
+		document.execCommand('delete', false, null);
+	}
+});
+
+;(function(){
+
+	meta.edit({name: "Layout", combo: ['L']});
+
+	meta.edit({name: "Fill", combo: ['L','F'],
+		use: function(eve){},
+		on: function(eve){
+			var on = meta.tap();
+			meta.ask('Color name, code, or URL?', function(color){
+				on.css('background', color);
+			});
+		},
+		up: function(eve){}
+	});
+
+	meta.edit({name: "Add", combo: ['L','A']});
+	meta.edit({name: "Row", combo: ['L','A', 'R'],
+    on: function(eve){
+			meta.tap().append('<div style="min-height: 9em; padding: 2%;">');
+    }
+	});
+	meta.edit({name: "Columns", combo: ['L','A','C'],
+    on: function(eve){
+			var on = meta.tap().addClass('center'), tmp, c;
+			var html = '<div class="unit col" style="min-height: 9em; padding: 2%;"></div>';
+			if(!on.children('.col').length){ html += html }
+			c = (tmp = on.append(html).children('.col')).length;
+			tmp.each(function(){
+	    	$(this).css('width', (100/c)+'%');
+			})
+    }
+	});
+	meta.edit({name: "Text", combo: ['L','A','T'],
+    on: function(eve){
+    	var tag = $('<p>text</p>');
+			meta.tap().append(tag);
+			tag.focus();
+    }
+	});
+
+}());
+
+;(function(){
+	var song = {};
+	// TODO:
+	// 1. Manually OR automatically load music.js API, dependencies, and modules. - FINE for now
+	// 2. only export music API, not meta, not dom, not mouselock system, not UI/html, etc. better module isolation and export.
+	// 3. `var wave = Wave('a').play()` // also on `Music.now`
+	// defaults... instrument: pure tones, volume curve: |\_ , speed curve: 0.5
+	// 4. `wave.blur(0.5).itch(0.5);`
+	// 5. wave.long(2); // how long in seconds each note plays, optionally: wave.pace(60) is bpm
+	// 6. wave.loud(0.5); // 0% to 100% volume loudness of device output.
+	// 7. wave.vary(0.5); // slows down or speeds up wiggle per harmonic
+	// 8:
+	// wave structure, does ToneJS allow us to change the sine wave smoothness/type continuously or is it a pre-fixed type?
+	// wave structure: /\/\/, |_|, /|/, \|\| do some research with ToneJS whether these are dynamic or fixed
+	// wave.itch(); // changes the shape of the wiggle from smooth sine to square or triangle
+	// wave.blur(220hz); // blur may not apply/work on pure notes other than filtering them.
+
+	meta.edit({name: "Music", combo: ['M']});
+
+	meta.edit({name: "Play", combo: ['M','P'],
+    on: function(eve){
+    	// TODO: We still need to add to meta API ability to change name.
+    	if(song.play){
+				music.stop();
+				song.play = false;
+				return;
+    	}
+    	song.play = true;
+    	music.stop();
+    	setTimeout(function(){
+				song.now = wave($('#page').text()).play();
+    	},250);
+    }
+	});
+
+	meta.edit({name: "Blur", combo: ['M','B'],
+    on: function(eve){
+			$(document).on('mousemove.tmp', function(eve){
+				var x = eve.pageX;
+				song.now.loud(x/$('body').innerWidth());
+			});
+    },
+    up: function(){
+    	$(document).off('.tmp');
+  	}
+	});
+
+	$(document).on('keydown', function(eve){
+		music.play(String.fromCharCode(eve.which));
+	});
+
+}());
+</script>
+</body>
+</html>
