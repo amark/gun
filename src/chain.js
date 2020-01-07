@@ -34,7 +34,7 @@ function output(msg){
 				if(obj_has(back, 'put')){
 					back.on('in', back);
 				}
-				if(tmp){ return }
+				if(tmp && u !== back.put){ return } //if(tmp){ return }
 				msg.$ = back.$;
 			} else
 			if(obj_has(back.put, get)){ // TODO: support #LEX !
@@ -247,7 +247,7 @@ function not(at, msg){
 		if(u === tmp && u !== at.put){ return true }
 		neat.put = u;
 		if(neat.ack){
-			neat.ack = -1; // TODO: BUG? Should this be 0?
+			neat.ack = -1; // Shouldn't this be reset to 0? If we do that, SEA test `set user ref should be found` fails, odd.
 		}
 		neat.on('in', {
 			get: key,
