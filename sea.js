@@ -170,7 +170,7 @@
     var o = {};
 
     if(SEA.window){
-      api.crypto = window.crypto || window.msCrypto || require('isomorphic-webcrypto');
+      api.crypto = navigator && navigator.product === 'ReactNative' ? require('isomorphic-webcrypto') : window.crypto || window.msCrypto || require('isomorphic-webcrypto');
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
