@@ -13,7 +13,7 @@
       var epriv = pair.epriv;
       var ecdhSubtle = shim.ossl || shim.subtle;
       var pubKeyData = keysToEcdhJwk(pub);
-      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },{name: 'ECDH', namedCurve: 'P-256'};); // Thanks to @sirpy !
+      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },{name: 'ECDH', namedCurve: 'P-256'}); // Thanks to @sirpy !
       var privKeyData = keysToEcdhJwk(epub, epriv);
       var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
@@ -44,7 +44,7 @@
           jwk,
           { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
         ), // ??? refactor
-        {name: 'ECDH', namedCurve: 'P-256'};
+        {name: 'ECDH', namedCurve: 'P-256'}
       ]
     }
 
