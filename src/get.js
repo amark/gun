@@ -89,7 +89,6 @@ function soul(gun, cb, opt, as){
 function use(msg){
 	var eve = this, as = eve.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put || at.put, tmp;
 	if((tmp = root.now) && eve !== tmp[as.now]){ return eve.to.next(msg) }
-	//console.log("USE:", cat.id, cat.soul, cat.has, cat.get, msg, root.mum);
 	//if(at.async && msg.root){ return }
 	//if(at.async === 1 && cat.async !== true){ return }
 	//if(root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
