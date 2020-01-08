@@ -11,13 +11,10 @@
 <body>
   <div class="chat">
     <section class="sidebar">
-      <div class="user-info">
-        Your public key:
-        <div class="user-name"></div>
-      </div>
+      <div class="user-info"></div>
       <div class="chat-list">
-        <div class="chat-item">
-          <input type="button" value="+ New chat">
+        <div class="chat-item new">
+          New chat
         </div>
       </div>
     </section>
@@ -25,10 +22,9 @@
     <section class="main">
      <div class="online-user-list"></div>
       <div class="message-list">Select or create chat to start messaging</div>
-      <div class="typing-indicator">typing-indicator</div>
       <div class="message-form">
-        <form>
-          <input id="newMsg" type="text" placeholder="Type a message">
+        <form autocomplete="off">
+          <input id="new-msg" type="text" placeholder="Type a message">
           <button>send</button>
         </form>
       </div>
@@ -56,93 +52,62 @@
         })
       }
     });
-    var key;
+    var key, myIdenticon;
     keyPromise.then(k => {
       key = k;
       gun.user().auth(key);
-      $(".user-name").text(key.pub);
+      myIdenticon = $(new irisLib.Attribute({type:'keyID', value: key.pub}).identicon({width:40}));
+      $(".user-info").append(myIdenticon);
       irisLib.Chat.getChats(gun, key, chatReceived);
+      irisLib.Chat.setOnline(gun, true);
     });
 
     function chatReceived(pub) {
       if (!pub || Object.prototype.hasOwnProperty.call(chats, pub)) {
         return;
       }
-      console.log(pub);
-      var el = $('<div class="chat-item">' + pub.slice(0, 8) + '...</div>');
+      var el = $('<div class="chat-item"><span class="latest"></span></div>');
+      chats[pub] = new irisLib.Chat({gun, key, participants: pub, onMessage: (msg, info) => {
+        chats[pub].messages = chats[pub].messages || [];
+        msg.selfAuthored = info.selfAuthored;
+        chats[pub].messages[msg.time] = msg;
+        msg.time = new Date(msg.time);
+        if (!chats[pub].latest || msg.time > chats[pub].latest.time) {
+          chats[pub].latest = msg;
+          var text = msg.text.length > 30 ? msg.text.slice(0,30) + '...' : msg.text;
+          el.find('.latest').text(text);
+        }
+      }});
+      chats[pub].identicon = $(new irisLib.Attribute({type: 'keyID', value: pub}).identicon({width:40}));
+      el.prepend(chats[pub].identicon);
       el.click(() => {
-        $(".online-user-list").text(pub);
+        $(".message-form form").submit(event => {
+          event.preventDefault();
+          chats[pub].send($('#new-msg').val());
+          console.log($('#new-msg').val());
+          $('#new-msg').val('');
+        });
+        $(".online-user-list").empty();
+        $(".online-user-list").append(chats[pub].identicon.clone());
         $(".message-list").empty();
         var msgs = Object.values(chats[pub].messages);
         msgs.forEach(msg => {
           var name = msg.selfAuthored ? 'you: ' : 'them: ';
           var el = $(
           '<div class="msg"><div class="text">' + msg.text + '</div><div class="time">' +
-            msg.time + '</div></div>'
+            formatDate(msg.time) + '</div></div>'
           );
           el.toggleClass('our', msg.selfAuthored ? true : false);
-          $(".message-list").append(el);
+          $(".message-list").append(el); // TODO: jquery insertAfter element with smaller timestamp
         });
       });
       $(".chat-list").append(el);
-      chats[pub] = new irisLib.Chat({gun, key, participants: pub, onMessage: (msg, info) => {
-        chats[pub].messages = chats[pub].messages || [];
-        msg.selfAuthored = info.selfAuthored;
-        chats[pub].messages[msg.time] = msg;
-        console.log(msg);
-      }});
     }
 
-    $(".chat__submit").on('click', submit);
-    $(".chat_form").on('keydown', enter);
-    function enter(e) {
-      if (e.which !== 13) { return }
-      submit(e);
+    function formatDate(date) {
+      var s = date.toISOString().split('T');
+      return s[0] + ' ' + s[1].slice(0,5);
     }
-    function submit(e) {
-      e.preventDefault();
-
-      var msg = { when: Gun.time.is() };
-
-      msg.who = $('.chat__name-input').val();
-      if (!msg.who) {
-        msg.who = 'user' + Gun.text.random(3);
-        $('.chat__name-input').val(msg.who);
-      }
-
-      msg.what = $('.chat__message-input').val();
-      if (!msg.what) { return }
-
-      chat.set(msg);
-      $('.chat__message-input').val('').focus();
-    }
-
-    chat.map().val(function (msg, id) {
-      if (!msg) { return }
-      var messageList = $('.chat__message-list');
-      var last = sort(msg.when, messageList.children('li').last());
-
-      var li = $("#msg-" + id)[0]; // grab if exists
-      if (!li) {
-        li = $('.model li').clone(true) // else create it
-          .attr('id', 'msg-' + id)
-          .insertAfter(last);
-      }
-
-      // bind the message data into the UI
-      li = $(li);
-      li.find('.chat__name').text(msg.who);
-      li.find('.chat__message-text').text(msg.what);
-      li.find('.sort').text(msg.when);
-
-      var time = new Date(msg.when);
-      li.find('.chat__when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
-
-      $('html, body').stop(true, true)
-        .animate({ scrollTop: messageList.height() });
-    });
-
-    function sort(num, li) { return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity) ? li : sort(num, li.prev()) }
   </script>
 </body>
 
