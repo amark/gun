@@ -619,7 +619,7 @@
 		var Type = USE('./type');
 		function Dup(opt){
 			var dup = {s:{}};
-			opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
+			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 60 * 2};
 			dup.check = function(id){ var tmp;
 				if(!(tmp = dup.s[id])){ return false }
 				if(tmp.pass){ return tmp.pass = false }
@@ -2037,6 +2037,7 @@
 					//LOG && opt.log(S, +new Date - S, 'say prep');
 					dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
+					if(!peer && msg['@']){ return false } // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
@@ -2100,7 +2101,7 @@
 					if(typeof msg === 'string'){ return msg }
 					if(!msg.dam){
 						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-							to.push(p.url || p.pid || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids.
+							to.push(p.url || p.pid || p.id); if(++i > 3){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids. // REDUCED THIS TO 3 for temporary relay peer performance, towers still should list neighbors.
 						}); if(i > 1){ msg['><'] = to.join() }
 					}
 					var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
