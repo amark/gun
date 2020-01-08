@@ -636,7 +636,6 @@
 							if(it && opt.age > (now - it.was)){ return }
 							Type.obj.del(dup.s, id);
 						});
-						console.log("DUP CLEANUP", +new Date - now); // DELETE THIS!!
 						dup.to = null;
 					}, opt.age + 9);
 				}
