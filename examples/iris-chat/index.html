@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Iris Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+  <link rel="stylesheet" type="text/css" href="./style.css">
+  <link rel="shortcut icon" href="./favicon.ico">
+</head>
+
+<body>
+  <div class="chat">
+    <section class="sidebar">
+      <div class="user-info">
+        Your public key:
+        <div class="user-name"></div>
+      </div>
+      <div class="chat-list">
+        <div class="chat-item">
+          <input type="button" value="+ New chat">
+        </div>
+      </div>
+    </section>
+
+    <section class="main">
+     <div class="online-user-list"></div>
+      <div class="message-list">Select or create chat to start messaging</div>
+      <div class="typing-indicator">typing-indicator</div>
+      <div class="message-form">
+        <form>
+          <input id="newMsg" type="text" placeholder="Type a message">
+          <button>send</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="/jquery.js"></script>
+  <script src="/gun.js"></script>
+  <script src="/gun/sea.js"></script>
+  <script src="/gun/nts.js"></script>
+  <script src="./irisLib.js"></script>
+  <script>
+    var gun = Gun([location.origin + '/gun', 'https://gun-us.herokuapp.com/gun']);
+    var chat = gun.get('converse/' + location.hash.slice(1));
+    var chats = {};
+
+    var keyPromise = new Promise(resolve => {
+      var pair = localStorage.getItem('chatKeyPair');
+      if (pair) {
+        resolve(JSON.parse(pair));
+      } else {
+        Gun.SEA.pair(pair => {
+          localStorage.setItem('chatKeyPair', JSON.stringify(pair));
+          resolve(pair);
+        })
+      }
+    });
+    var key;
+    keyPromise.then(k => {
+      key = k;
+      gun.user().auth(key);
+      $(".user-name").text(key.pub);
+      irisLib.Chat.getChats(gun, key, chatReceived);
+    });
+
+    function chatReceived(pub) {
+      if (!pub || Object.prototype.hasOwnProperty.call(chats, pub)) {
+        return;
+      }
+      console.log(pub);
+      var el = $('<div class="chat-item">' + pub.slice(0, 8) + '...</div>');
+      el.click(() => {
+        $(".online-user-list").text(pub);
+        $(".message-list").empty();
+        var msgs = Object.values(chats[pub].messages);
+        msgs.forEach(msg => {
+          var name = msg.selfAuthored ? 'you: ' : 'them: ';
+          var el = $(
+          '<div class="msg"><div class="text">' + msg.text + '</div><div class="time">' +
+            msg.time + '</div></div>'
+          );
+          el.toggleClass('our', msg.selfAuthored ? true : false);
+          $(".message-list").append(el);
+        });
+      });
+      $(".chat-list").append(el);
+      chats[pub] = new irisLib.Chat({gun, key, participants: pub, onMessage: (msg, info) => {
+        chats[pub].messages = chats[pub].messages || [];
+        msg.selfAuthored = info.selfAuthored;
+        chats[pub].messages[msg.time] = msg;
+        console.log(msg);
+      }});
+    }
+
+    $(".chat__submit").on('click', submit);
+    $(".chat_form").on('keydown', enter);
+    function enter(e) {
+      if (e.which !== 13) { return }
+      submit(e);
+    }
+    function submit(e) {
+      e.preventDefault();
+
+      var msg = { when: Gun.time.is() };
+
+      msg.who = $('.chat__name-input').val();
+      if (!msg.who) {
+        msg.who = 'user' + Gun.text.random(3);
+        $('.chat__name-input').val(msg.who);
+      }
+
+      msg.what = $('.chat__message-input').val();
+      if (!msg.what) { return }
+
+      chat.set(msg);
+      $('.chat__message-input').val('').focus();
+    }
+
+    chat.map().val(function (msg, id) {
+      if (!msg) { return }
+      var messageList = $('.chat__message-list');
+      var last = sort(msg.when, messageList.children('li').last());
+
+      var li = $("#msg-" + id)[0]; // grab if exists
+      if (!li) {
+        li = $('.model li').clone(true) // else create it
+          .attr('id', 'msg-' + id)
+          .insertAfter(last);
+      }
+
+      // bind the message data into the UI
+      li = $(li);
+      li.find('.chat__name').text(msg.who);
+      li.find('.chat__message-text').text(msg.what);
+      li.find('.sort').text(msg.when);
+
+      var time = new Date(msg.when);
+      li.find('.chat__when').text(time.toDateString() + ', ' + time.toLocaleTimeString());
+
+      $('html, body').stop(true, true)
+        .animate({ scrollTop: messageList.height() });
+    });
+
+    function sort(num, li) { return parseFloat(num) >= parseFloat($(li).find('.sort').text() || -Infinity) ? li : sort(num, li.prev()) }
+  </script>
+</body>
+
+</html>

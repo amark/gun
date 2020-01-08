@@ -1,0 +1,121 @@
+body {
+  font-size: 15px;
+  color: #262626;
+  font-family: "SF Pro Text", "SF Pro Icons", system, -apple-system, system-ui, system-ui, "Helvetica Neue", Helvetica, "Lucida Grande", sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+.chat {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background-color: white;
+}
+
+.sidebar {
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 10em;
+  border-right: 1px solid #dfdfdf;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 10 0 10em;
+}
+
+/*----- Main------- */
+
+.online-user-list {
+  flex:1;
+  background-color: #efefef;
+  max-height:50px;
+  padding: 10px;
+  font-size: 12px;
+}
+
+.message-list {
+  flex:1;
+  overflow-y: scroll;
+  padding: 10px;
+  background-color: #e5ddd5;
+}
+
+.msg {
+  background-color: #ffffff;
+  margin: 0 40px 10px 0;
+  padding: 10px;
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.msg.our {
+  text-align: right;
+  background-color: #d7f7c5;
+  border-radius: 10px 0px 10px 10px;
+  margin: 0 0px 10px 40px;
+}
+
+.msg .time {
+  text-align: right;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.typing-indicator {
+  flex:1;
+  max-height:30px;
+  background-color: #ccc;
+  padding: 10px;
+}
+
+.message-form {
+  flex:1;
+  flex-direction: row;
+  max-height:70px;
+  background-color: #efefef;
+  padding: 10px;
+}
+
+.message-form input {
+  flex: 5;
+  width: auto;
+}
+
+.message-form button {
+  flex: 1;
+}
+
+/*----- Sidebar------- */
+
+.user-info {
+    flex:1;
+    max-height:50px;
+    overflow-y: hidden;
+    overflow-x: wrap;
+    padding: 10px;
+    background-color: #efefef;
+}
+
+.user-name {
+  font-size: 12px;
+}
+
+.chat-list{
+  flex:1;
+  overflow-y: scroll;
+}
+
+.chat-item {
+  padding: 20px 10px;
+  overflow-x: hidden;
+  border-bottom: 1px solid #efefef;
+  cursor: pointer;
+}
+
+.chat-item:hover {
+  background: #f3f3f3;
+}
