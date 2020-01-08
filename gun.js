@@ -2034,7 +2034,7 @@
 							}
 						}
 					}
-					LOG && opt.log(S, +new Date - S, 'say prep');
+					//LOG && opt.log(S, +new Date - S, 'say prep');
 					dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
 					if(!peer && mesh.way){ return mesh.way(msg) }
@@ -2069,7 +2069,7 @@
 					var S; LOG && (S = +new Date);
 					try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 					}catch(e){return opt.log('DAM JSON stringify error', e)}
-					LOG && opt.log(S, +new Date - S, 'say stringify', tmp.length);
+					//LOG && opt.log(S, +new Date - S, 'say stringify', tmp.length);
 					if(!tmp){ return }
 					send(tmp, peer);
 				}
@@ -2086,7 +2086,7 @@
 				if(wire.send){
 					wire.send(raw);
 				}
-				LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
+				//LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
