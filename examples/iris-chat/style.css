@@ -10,10 +10,10 @@ body {
 
 input, button {
   padding: 15px;
-  border-radius: 50px;
   outline: none;
   border: 0;
   font-size: 15px;
+  border-radius: 50px;
 }
 
 input {
@@ -24,7 +24,7 @@ button {
   background: #ddd;
 }
 
-button:hover {
+button:hover, button:active, button:focus {
   background: #ccc;
   cursor: pointer;
 }
@@ -61,7 +61,6 @@ button:hover {
   background-color: #efefef;
   max-height:60px;
   padding: 10px 15px;
-  font-size: 12px;
 }
 
 .message-list {
@@ -76,7 +75,7 @@ button:hover {
   margin: 0 90px 15px 0;
   padding: 8px 10px;
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
-  border-radius: 15px;
+  border-radius: 0px 15px 15px 15px;
 }
 
 .msg.our {
@@ -144,14 +143,23 @@ button:hover {
   color: rgba(0, 0, 0, 0.45);
 }
 
+.chat-item.active {
+  background: #eaeaea;
+}
+
 .chat-item:hover {
   background: #f3f3f3;
 }
 
 .chat-item.new {
   background-color: #9ee8ff;
+  padding: 22px 15px;
 }
 
 .chat-item.new:hover {
   background-color: #99e1f7;
+}
+
+#new-chat input {
+  width: 200px;
 }
