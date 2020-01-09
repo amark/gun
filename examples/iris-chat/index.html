@@ -20,7 +20,7 @@
     </section>
 
     <section class="main">
-      <div class="online-user-list">New chat</div>
+      <div class="online-user-list"></div>
       <div class="message-list" id="message-list" style="display: none"></div>
       <div class="message-list" id="new-chat">
         <p><input id="paste-chat-link" type="text" placeholder="Paste someone's chat link"></p>
@@ -85,12 +85,17 @@
       showChat(pub);
     });
 
-    $('.chat-item.new').click(() => {
+    $('.chat-item.new').click(showNewChat);
+
+    function showNewChat() {
+      $(".message-form").hide();
       $('#message-list').hide();
       $('#new-chat').show();
       $(".online-user-list").empty();
       $(".online-user-list").text('New chat');
-    });
+    }
+
+    showNewChat();
 
     $('.copy-chat-link').click(event => {
       copyToClipboard('https://chat.iris.to/?chatWith=' + key.pub);
@@ -115,16 +120,20 @@
       $("#message-list").empty();
       $("#message-list").show();
       $("#new-chat").hide();
+      $(".message-form").show();
       $(".message-form form").off('submit');
       $(".message-form form").on('submit', event => {
         event.preventDefault();
-        chats[pub].send($('#new-msg').val());
+        var text = $('#new-msg').val();
+        if (!text.length) { return; }
+        chats[pub].send(text);
         $('#new-msg').val('');
       });
       $(".online-user-list").empty();
       $(".online-user-list").append(chats[pub].identicon.clone());
       var msgs = Object.values(chats[pub].messages);
       msgs.forEach(addMessage);
+      $('#message-list').scrollTop($('#message-list')[0].scrollHeight - $('#message-list')[0].clientHeight);
     }
 
     function addMessage(msg) {
@@ -133,7 +142,11 @@
         formatDate(msg.time) + '</div></div>'
       );
       msgEl.toggleClass('our', msg.selfAuthored ? true : false);
+      msgEl.data('time', msg.time);
       $("#message-list").append(msgEl); // TODO: jquery insertAfter element with smaller timestamp
+      var sorted = $(".msg").sort((a, b) => $(a).data('time') - $(b).data('time')); // TODO: more efficient sort
+      $("#message-list").append(sorted);
+      $('#message-list').scrollTop($('#message-list')[0].scrollHeight - $('#message-list')[0].clientHeight);
     }
 
     function addChat(pub) {
