@@ -7,6 +7,7 @@
     SEA.verify = require('./verify');
     SEA.encrypt = require('./encrypt');
     SEA.decrypt = require('./decrypt');
+    SEA.aeskey = require('./aeskey');
 
     SEA.random = SEA.random || shim.random;
 

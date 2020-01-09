@@ -24,8 +24,8 @@
       var priv = pair.priv;
       var jwk = S.jwk(pub, priv);
       var hash = await sha(json);
-      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
-      .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
+      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
+      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
