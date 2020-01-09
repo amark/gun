@@ -37,7 +37,12 @@ describe('SEA', function(){
   var gun;
   var pub;
   describe('Utility', function(){
-
+    it('generates aeskey from jwk', function(done) {
+      SEA.aeskey('x','x').then(k => {
+        expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')
+        done()
+      })
+    })
     it('quickstart', function(done){
       SEA.pair(function(pair){
       SEA.encrypt('hello self', pair, function(enc){
@@ -123,50 +128,15 @@ describe('SEA', function(){
       });});});});});});});});});});});});});});});});});});});});});});});});});});});
     })
 
-    it('atypes', function(done){
+    
+    it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
       var pair, s, v;
       SEA.pair(function(pair){
-      SEA.encrypt(null, pair, function(s){
+      SEA.encrypt('4e2', pair, function(s){
       SEA.decrypt(s, pair, function(v){
-      expect(null).to.be(v);
-      SEA.encrypt(true, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(true).to.be(v);
-      SEA.encrypt(false, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(false).to.be(v);
-      SEA.encrypt(0, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(0).to.be(v);
-      SEA.encrypt(1, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(1).to.be(v);
-      SEA.encrypt(1.01, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(1.01).to.be(v);
-      SEA.encrypt('', pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect('').to.be(v);
-      SEA.encrypt('a', pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect('a').to.be(v);
-      SEA.encrypt([], pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect([]).to.eql(v);
-      SEA.encrypt([1], pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect([1]).to.eql(v);
-      SEA.encrypt({}, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect({}).to.eql(v);
-      SEA.encrypt({a:1}, pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect({a:1}).to.eql(v);
-      SEA.encrypt(JSON.stringify({a:1}), pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect({a:1}).to.eql(v);
+      expect(400).to.be(v);
       done();
-      });});});});});});});});});});});});});});});});});});});});});});});});});});});
+      });});});
     })
     
     it('legacy', function(done){ (async function(){
