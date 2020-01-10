@@ -691,6 +691,7 @@
 				return gun;
 			}
 			function root(msg){
+				console.only(4, +new Date - console.S, msg['@']); console.S = +new Date;
 				//add to.next(at); // TODO: MISSING FEATURE!!!
 				var ev = this, as = ev.as, at = as.at || as, gun = at.$, dup, tmp;
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
@@ -701,19 +702,24 @@
 					}
 					return;
 				}
+				console.only(5, msg['@']);
 				dup.track(tmp);
 				if(!at.ask(msg['@'], msg)){
 					if(msg.get){
 						Gun.on.get(msg, gun); //at.on('get', get(msg));
 					}
 					if(msg.put){
+						console.only(6, msg['@']); var S = console.S = +new Date;
 						Gun.on.put(msg, gun); //at.on('put', put(msg));
+						console.only(7, msg['@'], '??', +new Date - console.S, 'total', +new Date - S); console.S = +new Date;
 					}
 				}
 				ev.to.next(msg);
+				console.only(8, msg['@'], +new Date - console.S); console.S = +new Date;
 				if(!as.out){
 					msg.out = root;
 					at.on('out', msg);
+					console.only(12, msg['@'], +new Date - console.S); console.S = +new Date;
 				}
 			}
 		}());
@@ -721,10 +727,14 @@
 		;(function(){
 			Gun.on.put = function(msg, gun){
 				var at = gun._, ctx = {$: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@'], cat: at, stop: {}};
+				if(!Gun.obj.map(msg.put, perf, ctx)){ return } // HNPERF: performance test, not core code, do not port.
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
+				console.only(7, ctx.ack, 'after graph check', +new Date - console.S, 'WHAT?', Object.keys(ctx.diff||{}).length, Object.keys(ctx.put||{}).length, Object.keys(ctx.souls||{}).length); console.S = +new Date;
 				if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
+				console.only(8, msg['@'], 'after merge', +new Date - console.S, ctx.async); console.S = +new Date;
 				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
+				console.only(9, msg['@'], 'after map', +new Date - console.S); console.S = +new Date;
 				if(u !== ctx.defer){
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
@@ -798,12 +808,14 @@
 				(msg.$._).on('in', msg);
 				this.cat.stop = null; // temporary fix till a better solution?
 			}
+			function perf(node, soul){ if(node !== this.graph[soul]){ return true } } // HNPERF: do not port!
 
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
 				if(!node){ return root.on('get', msg) }
+				console.only(2, 'GET', soul, Object.keys(node||{}).length); console.S = +new Date;
 				if(has){
 					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
 					node = Gun.state.to(node, has);
@@ -811,19 +823,24 @@
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
 				} else {
-					node = Gun.obj.copy(node);
+					node = Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				}
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
+				console.only(3, 'GET..a', soul, +new Date - console.S); var S = console.S = +new Date; // VVVVVVVVVVVVVVVVVVVVV SLOWEST CODE SO FAR
+				// SECURITY IS TAKING 0.6 ~ 1sec
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
 					put: node,
-					$: gun
+					$: gun,
+					_: faith // HNPERF: see disclaimer below
 				});
+				console.only(15, 'GET....b<<', soul, +new Date - S, +new Date - console.S); console.S = +new Date;
 				//if(0 < tmp){ return }
 				root.on('get', msg);
 			}
+			function faith(){}; faith.faith = true; // HNPERF: This should probably be off, but we're testing performance improvements, please audit.
 		}());
 
 		;(function(){
@@ -2005,6 +2022,8 @@
 						return;
 					}
 					var S; LOG && (S = +new Date);
+					console.only(); if(msg.get){ console.only.i=1}
+					console.only(1, msg.get); console.S = +new Date;
 					root.on('in', msg);
 					LOG && !msg.nts && opt.log(S, +new Date - S, 'msg', msg['#']);
 					return;
@@ -2024,8 +2043,10 @@
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
+					console.only(9, msg['@'], +new Date - console.S); console.S = +new Date;
 					if(!(raw = meta.raw)){
 						raw = meta.raw = mesh.raw(msg);
+						console.only(10, msg['@'], +new Date - console.S); console.S = +new Date;
 						if(hash && (tmp = msg['@'])){
 							dup.track(tmp+hash).it = msg;
 							if(tmp = (dup.s[tmp]||ok).it){
@@ -2060,6 +2081,7 @@
 					}
 					peer.batch = []; // peer.batch = '['; // TODO: Prevent double JSON!
 					setTimeout(function(){flush(peer)}, opt.gap);
+					console.only(11, msg['@'], '>>', +new Date - console.S); console.S = +new Date;
 					send(raw, peer);
 				}
 				function flush(peer){
@@ -2070,7 +2092,7 @@
 					var S; LOG && (S = +new Date);
 					try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 					}catch(e){return opt.log('DAM JSON stringify error', e)}
-					//LOG && opt.log(S, +new Date - S, 'say stringify', tmp.length);
+					LOG && opt.log(S, +new Date - S, 'say stringify', tmp.length);
 					if(!tmp){ return }
 					send(tmp, peer);
 				}
@@ -2087,7 +2109,7 @@
 				if(wire.send){
 					wire.send(raw);
 				}
-				//LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
+				LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);

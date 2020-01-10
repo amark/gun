@@ -128,8 +128,53 @@ describe('SEA', function(){
       });});});});});});});});});});});});});});});});});});});});});});});});});});});
     })
 
+    it('atypes', function(done){
+      var pair, s, v;
+      SEA.pair(function(pair){
+      SEA.encrypt(null, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(null).to.be(v);
+      SEA.encrypt(true, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(true).to.be(v);
+      SEA.encrypt(false, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(false).to.be(v);
+      SEA.encrypt(0, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(0).to.be(v);
+      SEA.encrypt(1, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(1).to.be(v);
+      SEA.encrypt(1.01, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(1.01).to.be(v);
+      SEA.encrypt('', pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect('').to.be(v);
+      SEA.encrypt('a', pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect('a').to.be(v);
+      SEA.encrypt([], pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect([]).to.eql(v);
+      SEA.encrypt([1], pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect([1]).to.eql(v);
+      SEA.encrypt({}, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect({}).to.eql(v);
+      SEA.encrypt({a:1}, pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect({a:1}).to.eql(v);
+      SEA.encrypt(JSON.stringify({a:1}), pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect({a:1}).to.eql(v);
+      done();
+      });});});});});});});});});});});});});});});});});});});});});});});});});});});
+    })
     
-    it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
+    /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
       var pair, s, v;
       SEA.pair(function(pair){
       SEA.encrypt('4e2', pair, function(s){
@@ -137,7 +182,7 @@ describe('SEA', function(){
       expect(400).to.be(v);
       done();
       });});});
-    })
+    })*/
     
     it('legacy', function(done){ (async function(){
       var pw = 'test123';
