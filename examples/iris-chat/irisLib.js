@@ -11413,13 +11413,64 @@
 	    }
 	    var sheet = document.createElement('style');
 	    sheet.id = elementId;
-	    sheet.innerHTML = '\n      .iris-identicon * {\n        box-sizing: border-box;\n      }\n\n      .iris-identicon {\n        vertical-align: middle;\n        margin: auto;\n        border-radius: 50%;\n        text-align: center;\n        display: inline-block;\n        position: relative;\n        margin: auto;\n        max-width: 100%;\n      }\n\n      .iris-distance {\n        z-index: 2;\n        position: absolute;\n        left:0%;\n        top:2px;\n        width: 100%;\n        text-align: right;\n        color: #fff;\n        text-shadow: 0 0 1px #000;\n        font-size: 75%;\n        line-height: 75%;\n        font-weight: bold;\n      }\n\n      .iris-pie {\n        border-radius: 50%;\n        position: absolute;\n        top: 0;\n        left: 0;\n        box-shadow: 0px 0px 0px 0px #82FF84;\n        padding-bottom: 100%;\n        max-width: 100%;\n        -webkit-transition: all 0.2s ease-in-out;\n        -moz-transition: all 0.2s ease-in-out;\n        transition: all 0.2s ease-in-out;\n      }\n\n      .iris-card {\n        padding: 10px;\n        background-color: #f7f7f7;\n        color: #777;\n        border: 1px solid #ddd;\n        display: flex;\n        flex-direction: row;\n        overflow: hidden;\n      }\n\n      .iris-card a {\n        -webkit-transition: color 150ms;\n        transition: color 150ms;\n        text-decoration: none;\n        color: #337ab7;\n      }\n\n      .iris-card a:hover, .iris-card a:active {\n        text-decoration: underline;\n        color: #23527c;\n      }\n\n      .iris-pos {\n        color: #3c763d;\n      }\n\n      .iris-neg {\n        color: #a94442;\n      }\n\n      .iris-identicon img {\n        position: absolute;\n        top: 0;\n        left: 0;\n        max-width: 100%;\n        border-radius: 50%;\n        border-color: transparent;\n        border-style: solid;\n      }';
+	    sheet.innerHTML = '\n      .iris-identicon * {\n        box-sizing: border-box;\n      }\n\n      .iris-identicon {\n        vertical-align: middle;\n        border-radius: 50%;\n        text-align: center;\n        display: inline-block;\n        position: relative;\n        max-width: 100%;\n      }\n\n      .iris-distance {\n        z-index: 2;\n        position: absolute;\n        left:0%;\n        top:2px;\n        width: 100%;\n        text-align: right;\n        color: #fff;\n        text-shadow: 0 0 1px #000;\n        font-size: 75%;\n        line-height: 75%;\n        font-weight: bold;\n      }\n\n      .iris-pie {\n        border-radius: 50%;\n        position: absolute;\n        top: 0;\n        left: 0;\n        box-shadow: 0px 0px 0px 0px #82FF84;\n        padding-bottom: 100%;\n        max-width: 100%;\n        -webkit-transition: all 0.2s ease-in-out;\n        -moz-transition: all 0.2s ease-in-out;\n        transition: all 0.2s ease-in-out;\n      }\n\n      .iris-card {\n        padding: 10px;\n        background-color: #f7f7f7;\n        color: #777;\n        border: 1px solid #ddd;\n        display: flex;\n        flex-direction: row;\n        overflow: hidden;\n      }\n\n      .iris-card a {\n        -webkit-transition: color 150ms;\n        transition: color 150ms;\n        text-decoration: none;\n        color: #337ab7;\n      }\n\n      .iris-card a:hover, .iris-card a:active {\n        text-decoration: underline;\n        color: #23527c;\n      }\n\n      .iris-pos {\n        color: #3c763d;\n      }\n\n      .iris-neg {\n        color: #a94442;\n      }\n\n      .iris-identicon img {\n        position: absolute;\n        top: 0;\n        left: 0;\n        max-width: 100%;\n        border-radius: 50%;\n        border-color: transparent;\n        border-style: solid;\n      }';
 	    document.body.appendChild(sheet);
 	  },
 
 
 	  isNode: isNode$2
 	};
+
+	// 19.1.2.1 Object.assign(target, source, ...)
+
+
+
+
+
+
+	var $assign = Object.assign;
+
+	// should work with symbols and should have deterministic property order (V8 bug)
+	var _objectAssign = !$assign || _fails(function () {
+	  var A = {};
+	  var B = {};
+	  // eslint-disable-next-line no-undef
+	  var S = Symbol();
+	  var K = 'abcdefghijklmnopqrst';
+	  A[S] = 7;
+	  K.split('').forEach(function (k) { B[k] = k; });
+	  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
+	}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+	  var T = _toObject(target);
+	  var aLen = arguments.length;
+	  var index = 1;
+	  var getSymbols = _objectGops.f;
+	  var isEnum = _objectPie.f;
+	  while (aLen > index) {
+	    var S = _iobject(arguments[index++]);
+	    var keys = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S);
+	    var length = keys.length;
+	    var j = 0;
+	    var key;
+	    while (length > j) {
+	      key = keys[j++];
+	      if (!_descriptors || isEnum.call(S, key)) T[key] = S[key];
+	    }
+	  } return T;
+	} : $assign;
+
+	// 19.1.3.1 Object.assign(target, source)
+
+
+	_export(_export.S + _export.F, 'Object', { assign: _objectAssign });
+
+	var assign = _core.Object.assign;
+
+	var assign$1 = createCommonjsModule(function (module) {
+	module.exports = { "default": assign, __esModule: true };
+	});
+
+	var _Object$assign = unwrapExports(assign$1);
 
 	var pnglib = createCommonjsModule(function (module) {
 	/**
@@ -11995,8 +12046,12 @@
 
 
 	  Attribute.prototype.identicon = function identicon$$1() {
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { width: 50 };
+	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
+	    options = _Object$assign({
+	      width: 50,
+	      showType: true
+	    }, options);
 	    util$1.injectCss(); // some other way that is not called on each identicon generation?
 
 	    var div = document.createElement('div');
@@ -12012,11 +12067,13 @@
 	    var identicon$$1 = new identicon(hash, { width: options.width, format: 'svg' });
 	    img.src = 'data:image/svg+xml;base64,' + identicon$$1.toString();
 
-	    var name = document.createElement('span');
-	    name.className = 'iris-distance';
-	    name.style.fontSize = options.width > 50 ? options.width / 4 + 'px' : '10px';
-	    name.textContent = this.type.slice(0, 5);
-	    div.appendChild(name);
+	    if (options.showType) {
+	      var name = document.createElement('span');
+	      name.className = 'iris-distance';
+	      name.style.fontSize = options.width > 50 ? options.width / 4 + 'px' : '10px';
+	      name.textContent = this.type.slice(0, 5);
+	      div.appendChild(name);
+	    }
 
 	    div.appendChild(img);
 
@@ -12761,57 +12818,6 @@
 	  return Message;
 	}();
 
-	// 19.1.2.1 Object.assign(target, source, ...)
-
-
-
-
-
-
-	var $assign = Object.assign;
-
-	// should work with symbols and should have deterministic property order (V8 bug)
-	var _objectAssign = !$assign || _fails(function () {
-	  var A = {};
-	  var B = {};
-	  // eslint-disable-next-line no-undef
-	  var S = Symbol();
-	  var K = 'abcdefghijklmnopqrst';
-	  A[S] = 7;
-	  K.split('').forEach(function (k) { B[k] = k; });
-	  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
-	}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-	  var T = _toObject(target);
-	  var aLen = arguments.length;
-	  var index = 1;
-	  var getSymbols = _objectGops.f;
-	  var isEnum = _objectPie.f;
-	  while (aLen > index) {
-	    var S = _iobject(arguments[index++]);
-	    var keys = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S);
-	    var length = keys.length;
-	    var j = 0;
-	    var key;
-	    while (length > j) {
-	      key = keys[j++];
-	      if (!_descriptors || isEnum.call(S, key)) T[key] = S[key];
-	    }
-	  } return T;
-	} : $assign;
-
-	// 19.1.3.1 Object.assign(target, source)
-
-
-	_export(_export.S + _export.F, 'Object', { assign: _objectAssign });
-
-	var assign = _core.Object.assign;
-
-	var assign$1 = createCommonjsModule(function (module) {
-	module.exports = { "default": assign, __esModule: true };
-	});
-
-	var _Object$assign = unwrapExports(assign$1);
-
 	/**
 	* An Iris Contact, such as person, organization or group. More abstractly speaking: an Identity.
 	*
@@ -12900,6 +12906,7 @@
 
 	  /**
 	  * Get sent Messages
+	  * @param {Object} index
 	  * @param {Object} options
 	  */
 
@@ -12910,6 +12917,7 @@
 
 	  /**
 	  * Get received Messages
+	  * @param {Object} index
 	  * @param {Object} options
 	  */
 
@@ -13258,6 +13266,9 @@
 	* Messages are encrypted and chat ids obfuscated, but it is possible to guess
 	* who are communicating with each other by looking at Gun timestamps and subscriptions.
 	*
+	* options.onMessage callback is not guaranteed to receive messages ordered by timestamp.
+	* You should sort them in the presentation layer.
+	*
 	* @param {Object} options {key, gun, onMessage, participants}
 	* @example https://github.com/irislib/iris-lib/blob/master/__tests__/chat.js
 	*/
@@ -13553,6 +13564,24 @@
 	        }, 10000);
 	      }
 	    });
+	  };
+
+	  /**
+	  * In order to receive messages from others, this method must be called for newly created
+	  * users that have not started a chat with an existing user yet.
+	  *
+	  * It saves the user's key.epub (public key for encryption) into their gun user space,
+	  * so others can find it and write encrypted messages to them.
+	  *
+	  * If you start a chat with an existing user, key.epub is saved automatically and you don't need
+	  * to call this method.
+	  */
+
+
+	  Chat.initUser = function initUser(gun, key) {
+	    var user = gun.user();
+	    user.auth(key);
+	    user.put({ epub: key.epub });
 	  };
 
 	  return Chat;

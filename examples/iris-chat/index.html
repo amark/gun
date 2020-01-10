@@ -3,6 +3,7 @@
 
 <head>
   <title>Iris Chat</title>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
   <link rel="stylesheet" type="text/css" href="./style.css">
   <link rel="shortcut icon" href="./favicon.ico">
@@ -14,22 +15,51 @@
       <div class="user-info"></div>
       <div class="chat-list">
         <div class="chat-item new">
-          New chat
+          Start new chat
         </div>
       </div>
     </section>
 
     <section class="main">
-      <div class="online-user-list"></div>
-      <div class="message-list" id="message-list" style="display: none"></div>
-      <div class="message-list" id="new-chat">
-        <p><input id="paste-chat-link" type="text" placeholder="Paste someone's chat link"></p>
+      <div id="topbar"></div>
+      <div class="main-view" id="message-list" style="display: none"></div>
+      <div id="not-seen-by-them" style="display: none">
+        <p>The other person hasn't seen this chat yet. Give them your chat link through some other channel:</p>
         <p><button class="copy-chat-link">Copy your chat link</button></p>
       </div>
-      <div class="message-form">
+      <div class="main-view" id="new-chat">
+        <p><input id="paste-chat-link" type="text" placeholder="Paste someone's chat link"></p>
+        <p><button class="copy-chat-link">Copy your chat link</button></p>
+        <p>Give your chat link to someone you want to chat with!</p>
+      </div>
+      <div class="main-view" id="settings" style="display: none">
+        <h3>Profile</h3>
+        <p>
+          Your name:
+        </p>
+        <p>
+          <input id="settings-name" placeholder="Your name">
+        </p>
+        <h3>Account</h3>
+        <p>
+          <button>Log out</button>
+        </p>
+        <p>
+          <button>Switch account</button>
+        </p>
+        <h3>Private key</h3>
+        <p>
+          Private key is used to log in to your account. Keep your private key safe!
+        </p>
+        <p>
+          <button id="download-private-key">Download private key</button>
+          <button id="copy-private-key">Copy private key</button>
+        </p>
+      </div>
+      <div class="message-form" style="display:none">
         <form autocomplete="off">
           <input id="new-msg" type="text" placeholder="Type a message">
-          <button>Send</button>
+          <button>▶</button>
         </form>
       </div>
     </section>
@@ -40,186 +70,7 @@
   <script src="/gun/sea.js"></script>
   <script src="/gun/nts.js"></script>
   <script src="./irisLib.js"></script>
-  <script>
-    var gun = Gun([location.origin + '/gun', 'https://gun-us.herokuapp.com/gun']);
-    var chat = gun.get('converse/' + location.hash.slice(1));
-    var chats = {};
-    var activeChat;
-
-    var getKey = new Promise(resolve => {
-      var pair = localStorage.getItem('chatKeyPair');
-      if (pair) {
-        resolve(JSON.parse(pair));
-      } else {
-        Gun.SEA.pair(pair => {
-          localStorage.setItem('chatKeyPair', JSON.stringify(pair));
-          resolve(pair);
-        })
-      }
-    });
-    var key, myIdenticon;
-    getKey.then(k => {
-      key = k;
-      gun.user().auth(key);
-      myIdenticon = $(new irisLib.Attribute({type:'keyID', value: key.pub}).identicon({width:40}));
-      $(".user-info").append(myIdenticon);
-      irisLib.Chat.getChats(gun, key, addChat);
-      irisLib.Chat.setOnline(gun, true);
-      var chatWith = getUrlParameter('chatWith');
-      if (chatWith) {
-        addChat(chatWith);
-        showChat(pub);
-      }
-    });
-
-    $('#paste-chat-link').on('keyup paste', event => {
-      var val = $(event.target).val();
-      if (val.length < 30 || val.indexOf('chatWith') === -1) {
-        return;
-      }
-      var s = val.split('?');
-      if (s.length !== 2) { return; }
-      $(event.target).val('');
-      var pub = getUrlParameter('chatWith', s[1]);
-      addChat(pub);
-      showChat(pub);
-    });
-
-    $('.chat-item.new').click(showNewChat);
-
-    function showNewChat() {
-      $(".message-form").hide();
-      $('#message-list').hide();
-      $('#new-chat').show();
-      $(".online-user-list").empty();
-      $(".online-user-list").text('New chat');
-    }
-
-    showNewChat();
-
-    $('.copy-chat-link').click(event => {
-      copyToClipboard('https://chat.iris.to/?chatWith=' + key.pub);
-      var t = $(event.target);
-      var originalText = t.text();
-      var originalWidth = t.width();
-      t.width(originalWidth);
-      t.text('Copied');
-      setTimeout(() => {
-        t.text(originalText);
-        t.css('width', '');
-      }, 2000);
-    });
-
-    function showChat(pub) {
-      if (!pub || !Object.prototype.hasOwnProperty.call(chats, pub)) {
-        return;
-      }
-      activeChat = pub;
-      $(".chat-item").toggleClass('active', false);
-      $('.chat-item[data-pub="' + pub +'"]').toggleClass('active', true);
-      $("#message-list").empty();
-      $("#message-list").show();
-      $("#new-chat").hide();
-      $(".message-form").show();
-      $(".message-form form").off('submit');
-      $(".message-form form").on('submit', event => {
-        event.preventDefault();
-        var text = $('#new-msg').val();
-        if (!text.length) { return; }
-        chats[pub].send(text);
-        $('#new-msg').val('');
-      });
-      $(".online-user-list").empty();
-      $(".online-user-list").append(chats[pub].identicon.clone());
-      var msgs = Object.values(chats[pub].messages);
-      msgs.forEach(addMessage);
-      $('#message-list').scrollTop($('#message-list')[0].scrollHeight - $('#message-list')[0].clientHeight);
-    }
-
-    function addMessage(msg) {
-      var msgEl = $(
-      '<div class="msg"><div class="text">' + msg.text + '</div><div class="time">' +
-        formatDate(msg.time) + '</div></div>'
-      );
-      msgEl.toggleClass('our', msg.selfAuthored ? true : false);
-      msgEl.data('time', msg.time);
-      $("#message-list").append(msgEl); // TODO: jquery insertAfter element with smaller timestamp
-      var sorted = $(".msg").sort((a, b) => $(a).data('time') - $(b).data('time')); // TODO: more efficient sort
-      $("#message-list").append(sorted);
-      $('#message-list').scrollTop($('#message-list')[0].scrollHeight - $('#message-list')[0].clientHeight);
-    }
-
-    function addChat(pub) {
-      if (!pub || Object.prototype.hasOwnProperty.call(chats, pub)) {
-        return;
-      }
-      var el = $('<div class="chat-item"><span class="latest"></span></div>');
-      el.attr('data-pub', pub);
-      chats[pub] = new irisLib.Chat({gun, key, participants: pub, onMessage: (msg, info) => {
-        chats[pub].messages = chats[pub].messages || [];
-        msg.selfAuthored = info.selfAuthored;
-        chats[pub].messages[msg.time] = msg;
-        msg.time = new Date(msg.time);
-        if (!chats[pub].latest || msg.time > chats[pub].latest.time) {
-          chats[pub].latest = msg;
-          var text = msg.text.length > 30 ? msg.text.slice(0,30) + '...' : msg.text;
-          el.find('.latest').text(text);
-        }
-        if (activeChat === pub) {
-          addMessage(msg);
-        }
-      }});
-      chats[pub].identicon = $(new irisLib.Attribute({type: 'keyID', value: pub}).identicon({width:40}));
-      el.prepend(chats[pub].identicon);
-      el.click(() => showChat(pub));
-      $(".chat-list").append(el);
-    }
-
-    /* Helpers */
-
-    function formatDate(date) {
-      var s = date.toISOString().split('T');
-      return s[0] + ' ' + s[1].slice(0,5);
-    }
-
-    function copyToClipboard(text) {
-        if (window.clipboardData && window.clipboardData.setData) {
-            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-            return clipboardData.setData("Text", text);
-        }
-        else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-            var textarea = document.createElement("textarea");
-            textarea.textContent = text;
-            textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                return document.execCommand("copy");  // Security exception may be thrown by some browsers.
-            }
-            catch (ex) {
-                console.warn("Copy to clipboard failed.", ex);
-                return false;
-            }
-            finally {
-                document.body.removeChild(textarea);
-            }
-        }
-    }
-
-    function getUrlParameter(sParam, sParams) {
-        var sPageURL = sParams || window.location.search.substring(1),
-            sURLVariables = sPageURL.split('&'),
-            sParameterName,
-            i;
-
-        for (i = 0; i < sURLVariables.length; i++) {
-            sParameterName = sURLVariables[i].split('=');
-            if (sParameterName[0] === sParam) {
-                return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
-            }
-        }
-    };
-  </script>
+  <script src="./script.js"></script>
 </body>
 
 </html>

@@ -22,15 +22,19 @@ input {
 
 button {
   background: #ddd;
+  cursor: pointer;
 }
 
 button:hover, button:active, button:focus {
   background: #ccc;
-  cursor: pointer;
 }
 
 .iris-identicon {
   margin-right: 15px !important;
+}
+
+.user-info .iris-identicon {
+  cursor: pointer;
 }
 
 .chat {
@@ -56,14 +60,20 @@ button:hover, button:active, button:focus {
 
 /*----- Main------- */
 
-.online-user-list {
+#topbar {
   flex:1;
   background-color: #efefef;
   max-height:60px;
   padding: 10px 15px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
 }
 
-.message-list {
+#topbar .name {
+  margin-right: 15px;
+  display: none;
+}
+
+.main-view {
   flex:1;
   overflow-y: scroll;
   padding: 10px 15px;
@@ -72,16 +82,43 @@ button:hover, button:active, button:focus {
 
 .msg {
   background-color: #ffffff;
-  margin: 0 90px 15px 0;
+  margin-bottom: 5px;
   padding: 8px 10px;
+  border-radius: 15px;
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.msg .seen {
+  color: #4fc3f7;
+  display: none;
+  user-select: none;
+}
+
+.msg.their {
+  margin-right: 90px;
+}
+
+.msg.their + .msg.our {
+  margin-top: 15px;
+  border-radius: 15px 0px 15px 15px;
+}
+
+.msg.their:first-of-type {
+  border-radius: 0px 15px 15px 15px;
+}
+
+.msg.our:first-of-type {
+  border-radius: 15px 0px 15px 15px;
+}
+
+.msg.our + .msg.their {
+  margin-top: 15px;
   border-radius: 0px 15px 15px 15px;
 }
 
 .msg.our {
   background-color: #d7f7c5;
-  border-radius: 15px 0px 15px 15px;
-  margin: 0 0px 15px 90px;
+  margin-left: 90px;
 }
 
 .msg .time {
@@ -107,8 +144,12 @@ button:hover, button:active, button:focus {
   width: auto;
 }
 
-.message-form button {
+.message-form button, .message-form button:hover, .message-form button:active, .message-form button:focus {
   flex: none;
+  color: #999;
+  background-color: transparent;
+  font-size: 30px;
+  padding: 5px;
 }
 
 /*----- Sidebar------- */
@@ -138,12 +179,12 @@ button:hover, button:active, button:focus {
   cursor: pointer;
 }
 
-.chat-item .latest {
+small {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: #777;
 }
 
-.chat-item.active {
+.chat-item.active, .chat-item.active:hover {
   background: #eaeaea;
 }
 
@@ -152,14 +193,22 @@ button:hover, button:active, button:focus {
 }
 
 .chat-item.new {
-  background-color: #9ee8ff;
   padding: 22px 15px;
-}
-
-.chat-item.new:hover {
-  background-color: #99e1f7;
 }
 
 #new-chat input {
   width: 200px;
+}
+
+#not-seen-by-them {
+  padding: 10px 15px;
+  background-color: #9ee8ff;
+}
+
+#not-seen-by-them button {
+  background: #fff;
+}
+
+#not-seen-by-them button:hover, #not-seen-by-them button:active, #not-seen-by-them button:focus {
+  background: #eee;
 }
