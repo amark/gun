@@ -822,7 +822,7 @@
 					how: 'mem',
 					put: node,
 					$: gun,
-					_: faith // HNPERF: see disclaimer below
+					_: function(){} // HNPERF: see disclaimer below
 				});
 				//if(0 < tmp){ return }
 				root.on('get', msg);
