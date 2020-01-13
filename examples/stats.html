@@ -53,6 +53,10 @@
 		$('#hours').text((data.up.time / 60 / 60).toFixed(0));
 
 		Stats('memory').line.append(+new Date, data.memory.heapTotal / 1024 / 1024);
+    try{ Stats('dam # in').line.append(+new Date, data.dam.in.count); }catch(e){}
+    try{ Stats('dam in MB').line.append(+new Date, data.dam.in.done / 1024 / 1024); }catch(e){}
+    try{ Stats('dam # out').line.append(+new Date, data.dam.out.count); }catch(e){}
+    try{ Stats('dam out MB').line.append(+new Date, data.dam.out.done / 1024 / 1024); }catch(e){}
 
     console.log('data',data);
     //fetch keys in all, these may be dynamically changing

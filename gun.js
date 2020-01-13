@@ -961,7 +961,7 @@
 						if(obj_has(back, 'put')){
 							back.on('in', back);
 						}
-						if(tmp){ return }
+						if(tmp && u !== back.put){ return } //if(tmp){ return }
 						msg.$ = back.$;
 					} else
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
@@ -1174,7 +1174,7 @@
 				if(u === tmp && u !== at.put){ return true }
 				neat.put = u;
 				if(neat.ack){
-					neat.ack = -1; // TODO: BUG? Should this be 0?
+					neat.ack = -1; // Shouldn't this be reset to 0? If we do that, SEA test `set user ref should be found` fails, odd.
 				}
 				neat.on('in', {
 					get: key,
@@ -2122,7 +2122,8 @@
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
 					tmp = peer.id = peer.id || Type.text.random(9);
-					mesh.say({dam: '?'}, opt.peers[tmp] = peer);
+					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
+					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
 				peer.met = peer.met || +(new Date);
 				if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
@@ -2140,18 +2141,12 @@
 			}
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
-				if(!msg.pid){
-					mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
-					// @rogowski I want to re-enable this AXE logic with some fix/merge later.
-					/* var tmp = peer.queue; peer.queue = [];
-					Type.obj.map(tmp, function(msg){
-						mesh.say(msg, peer);
-					}); */
-					// @rogowski 2: I think with my PID fix we can delete this and use the original. 
-					return;
+				if(msg.pid){
+					if(!peer.pid){ peer.pid = msg.pid }
+					if(msg['@']){ return }
 				}
-				if(peer.pid){ return }
-				peer.pid = msg.pid;
+				mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
+				delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 			}
 
 			root.on('create', function(root){
