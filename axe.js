@@ -60,6 +60,20 @@
 			// with one common superpeer (with ready failovers)
 			// in case the p2p linear latency is high.
 			// Or there could be plenty of other better options.
+
+			/*
+				AXE should have a couple of threshold items...
+				let's pretend there is a variable max peers connected
+				mob = 10000
+				if we get more peers than that...
+				we should start sending those peers a remote command
+				that they should connect to this or that other peer
+				and then once they (or before they do?) drop them from us.
+				sake of the test... gonna set that peer number to 1.
+				The mob threshold might be determined by other factors,
+				like how much RAM or CPU stress we have.
+			*/
+			opt.mob = opt.mob || Infinity;
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(at);
 			console.log("AXE enabled.");
 
@@ -256,7 +270,7 @@
 				this.to.next(peer);
 				if(!peer.url){ return }
 				axe.up[peer.id] = peer;
-			})
+			});
 			at.on('bye', function(peer){ this.to.next(peer);
 				if(peer.url){ delete axe.up[peer.id] }
 				Gun.obj.map(peer.routes, function(route, hash){
@@ -266,6 +280,42 @@
 					}
 				});
 			});
+
+			// handle rebalancing a mob of peers:
+			at.on('hi', function(peer){
+				this.to.next(peer);
+				if(peer.url){ return } // I am assuming that if we are wanting to make an outbound connection to them, that we don't ever want to drop them unless our actual config settings change.
+				var count = Object.keys(opt.peers).length;
+				if(opt.mob >= count){ return }  // TODO: Make dynamic based on RAM/CPU also. Or possibly even weird stuff like opt.mob / axe.up length?
+				var peers = Object.keys(axe.up);
+				if(!peers.length){ return }
+				mesh.say({dam: 'mob', mob: count, peers: peers}, peer);
+				//setTimeout(function(){ mesh.bye(peer) }, 9); // something with better perf? // UNCOMMENT WHEN WE ACTIVATE THIS FEATURE
+			});
+			at.on('bye', function(peer){
+				this.to.next(peer);
+			});
+
+			at.on('hi', function(peer){
+				this.to.next(peer);
+				// this code handles disconnecting from self & duplicates
+				setTimeout(function(){ // must wait
+					if(peer.pid !== opt.pid){
+						// this extra logic checks for duplicate connections between 2 peers.
+						if(!Gun.obj.map(axe.up, function(p){
+							if(peer.pid === p.pid && peer !== p){
+								return yes = true;
+							}
+						})){ return }
+					}
+					mesh.say({dam: '-'}, peer);
+					delete at.dup.s[peer.last];
+				}, Math.random() * 100);
+			});
+			mesh.hear['-'] = function(msg, peer){
+				mesh.bye(peer);
+				peer.url = '';
+			}
 		}
 
 		function joindht(dht, soul, pids) {
