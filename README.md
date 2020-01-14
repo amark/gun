@@ -117,7 +117,8 @@ Thanks to:<br/>
 <a href="http://github.com/velua">John Williamson</a>,
 <a href="http://github.com/finwo">Robin Bron</a>,
 <a href="http://github.com/ElieMakhoul">Elie Makhoul</a>,
-<a href="http://github.com/mikestaub">Mike Staub</a>
+<a href="http://github.com/mikestaub">Mike Staub</a>,
+<a href="http://github.com/bmatusiak">Bradley Matusiak</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
