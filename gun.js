@@ -817,17 +817,17 @@
 				}
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
+				var faith = function(){}; faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
 					put: node,
 					$: gun,
-					_: function(){} // HNPERF: see disclaimer below
+					_: faith
 				});
 				//if(0 < tmp){ return }
 				root.on('get', msg);
 			}
-			function faith(){}; faith.faith = true; // HNPERF: This should probably be off, but we're testing performance improvements, please audit.
 		}());
 
 		;(function(){
@@ -1966,6 +1966,7 @@
 
 			var dup = root.dup;
 
+			// TODO: somewhere in here caused a out-of-memory crash! How? It is inbound!
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var msg, id, hash, tmp = raw[0];
@@ -2008,9 +2009,9 @@
 						}
 						return;
 					}
-					var S; LOG && (S = +new Date);
+					var S, ST; LOG && (S = +new Date);
 					root.on('in', msg);
-					LOG && !msg.nts && opt.log(S, +new Date - S, 'msg', msg['#']);
+					LOG && !msg.nts && (ST = +new Date - S) > 9 && opt.log(S, ST, 'msg', msg['#']);
 					return;
 				}
 			}
@@ -2045,9 +2046,9 @@
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
-						var S; LOG && (S = +new Date);
+						//var S; LOG && (S = +new Date);
 						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						LOG && opt.log(S, +new Date - S, 'say loop');
+						//LOG && opt.log(S, +new Date - S, 'say loop');
 						return;
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -2084,20 +2085,21 @@
 			// for now - find better place later.
 			function send(raw, peer){ try{
 				var wire = peer.wire;
-				var S; LOG && (S = +new Date);
+				var S, ST; LOG && (S = +new Date);
 				if(peer.say){
 					peer.say(raw);
 				} else
 				if(wire.send){
 					wire.send(raw);
 				}
-				LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
+				LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
 			}}
 
 			;(function(){
+				// TODO: this caused a out-of-memory crash!
 				mesh.raw = function(msg){ // TODO: Clean this up / delete it / move logic out!
 					if(!msg){ return '' }
 					var meta = (msg._) || {}, put, hash, tmp;
