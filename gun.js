@@ -619,7 +619,7 @@
 		var Type = USE('./type');
 		function Dup(opt){
 			var dup = {s:{}};
-			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 60 * 2};
+			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 9 * 3};
 			dup.check = function(id){ var tmp;
 				if(!(tmp = dup.s[id])){ return false }
 				if(tmp.pass){ return tmp.pass = false }
@@ -629,17 +629,16 @@
 				var it = dup.s[id] || (dup.s[id] = {});
 				it.was = time_is();
 				if(pass){ it.pass = true }
-				if(!dup.to){
-					dup.to = setTimeout(function(){
-						var now = time_is();
-						Type.obj.map(dup.s, function(it, id){
-							if(it && opt.age > (now - it.was)){ return }
-							Type.obj.del(dup.s, id);
-						});
-						dup.to = null;
-					}, opt.age + 9);
-				}
+				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
 				return it;
+			}
+			dup.drop = function(age){
+				var now = time_is();
+				Type.obj.map(dup.s, function(it, id){
+					if(it && (age || opt.age) > (now - it.was)){ return }
+					Type.obj.del(dup.s, id);
+				});
+				dup.to = null;
 			}
 			return dup;
 		}
@@ -702,7 +701,8 @@
 					return;
 				}
 				dup.track(tmp);
-				if(!at.ask(msg['@'], msg)){
+				if(tmp = msg['@']){ dup.track(tmp) } // HNPERF: Bump original request's liveliness.
+				if(!at.ask(tmp, msg)){
 					if(msg.get){
 						Gun.on.get(msg, gun); //at.on('get', get(msg));
 					}
@@ -1995,11 +1995,11 @@
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 					if(dup.check(id)){ return }
-					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+					dup.track(id, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
-						dup.track(tmp+hash, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+						dup.track(tmp+hash, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					}
 					(msg._ = function(){}).via = peer;
 					if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
@@ -2030,9 +2030,9 @@
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(!(raw = meta.raw)){
-						raw = meta.raw = mesh.raw(msg);
+						raw = mesh.raw(msg);
 						if(hash && (tmp = msg['@'])){
-							dup.track(tmp+hash).it = msg;
+							dup.track(tmp+hash).it = it(msg);
 							if(tmp = (dup.s[tmp]||ok).it){
 								if(hash === tmp['##']){ return false }
 								tmp['##'] = hash;
@@ -2040,7 +2040,7 @@
 						}
 					}
 					//LOG && opt.log(S, +new Date - S, 'say prep');
-					dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
+					dup.track(id).it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
 					if(!peer && msg['@']){ return false } // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
@@ -2116,7 +2116,7 @@
 						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
 						//raw = raw.replace('"'+ _ +'"', put); // NEVER USE THIS! ALSO NEVER DELETE IT TO NOT MAKE SAME MISTAKE! https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}*/
-					if(meta){ meta.raw = raw }
+					if(meta && (raw||'').length < (1000 * 100)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
 					return raw;
 				}
 				var $ = JSON.stringify, _ = ':])([:';
@@ -2217,6 +2217,8 @@
 				this.to[k] = this.on[k];
 			}
 		}());
+
+		function it(msg){ return {_: msg._, '##': msg['##']} } // HNPERF: Only need some meta data, not full reference (took up too much memory).
 
 	  var empty = {}, ok = true, u;
 		var LOG = console.LOG;
