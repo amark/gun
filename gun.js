@@ -2019,6 +2019,7 @@
 			mesh.hear.c = mesh.hear.d = 0;
 
 			;(function(){
+				var SMIA = 0;
 				var message;
 				function each(peer){ mesh.say(message, peer) }
 				mesh.say = function(msg, peer){
@@ -2042,7 +2043,10 @@
 					//LOG && opt.log(S, +new Date - S, 'say prep');
 					dup.track(id).it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
-					if(!peer && msg['@']){ return false } // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
+					if(!peer && msg['@']){
+						LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
+						return false;
+					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
@@ -2218,7 +2222,7 @@
 			}
 		}());
 
-		function it(msg){ return {_: msg._, '##': msg['##']} } // HNPERF: Only need some meta data, not full reference (took up too much memory).
+		function it(msg){ return msg || {_: msg._, '##': msg['##']} } // HNPERF: Only need some meta data, not full reference (took up too much memory). // HNPERF: Garrrgh! We add meta data to msg over time, copying the object happens to early.
 
 	  var empty = {}, ok = true, u;
 		var LOG = console.LOG;
