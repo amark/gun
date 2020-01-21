@@ -659,7 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
-    SEA.aeskey = USE('./aeskey');
+    SEA.opt.aeskey = USE('./aeskey'); // not official!
 
     SEA.random = SEA.random || shim.random;
 

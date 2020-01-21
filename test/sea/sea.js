@@ -38,7 +38,9 @@ describe('SEA', function(){
   var pub;
   describe('Utility', function(){
     it('generates aeskey from jwk', function(done) {
-      SEA.aeskey('x','x').then(k => {
+      console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
+      SEA.opt.aeskey('x','x').then(k => {
+        //console.log("DATA", k.data);
         expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')
         done()
       })
