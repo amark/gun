@@ -1,5 +1,4 @@
 ;(function(){
-	crash; return;
 	var cluster = require('cluster');
 	if(cluster.isMaster){
 	  return cluster.fork() && cluster.on('exit', function(){ cluster.fork() });
