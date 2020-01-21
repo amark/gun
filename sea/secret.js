@@ -13,11 +13,13 @@
       var epriv = pair.epriv;
       var ecdhSubtle = shim.ossl || shim.subtle;
       var pubKeyData = keysToEcdhJwk(pub);
-      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },S.ecdh); // Thanks to @sirpy !
+      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },{name: 'ECDH', namedCurve: 'P-256'}); // Thanks to @sirpy !
       var privKeyData = keysToEcdhJwk(epub, epriv);
-      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey']).then(async (privKey) => {
+      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        var derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
+        var derivedBits = await ecdhSubtle.deriveBits(props, privKey, 256);
+        var rawBits = new Uint8Array(derivedBits);
+        var derivedKey = await ecdhSubtle.importKey('raw', rawBits,{ name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
@@ -42,7 +44,7 @@
           jwk,
           { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
         ), // ??? refactor
-        S.ecdh
+        {name: 'ECDH', namedCurve: 'P-256'}
       ]
     }
 
