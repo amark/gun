@@ -14,7 +14,7 @@
     Object.assign(SafeBuffer, {
       // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
       from() {
-        if (!Object.keys(arguments).length) {
+        if (!Object.keys(arguments).length || arguments[0]==null) {
           throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
         }
         const input = arguments[0]
