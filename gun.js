@@ -727,13 +727,15 @@
 				obj_map(ctx.put, merge, ctx);
 				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 				if(u !== ctx.defer){
+					var to = ctx.defer - ctx.machine;
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
-					}, ctx.defer - ctx.machine);
+					}, to > MD? MD : to ); // setTimeout Max Defer 32bit :(
 				}
 				if(!ctx.diff){ return }
 				at.on('put', obj_to(msg, {put: ctx.diff}));
 			};
+			var MD = 2147483647;
 			function verify(val, key, node, soul){ var ctx = this;
 				var state = Gun.state.is(node, key), tmp;
 				if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }

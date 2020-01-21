@@ -1,7 +1,7 @@
 ;(function(){
 	var cluster = require('cluster');
 	if(cluster.isMaster){
-	  return cluster.fork() && cluster.on('exit', function(){ console.log(">>> EXITED <<<"); cluster.fork() });
+	  return cluster.fork() && cluster.on('exit', function(){ cluster.fork() });
 	}
 
 	var fs = require('fs');
