@@ -619,7 +619,7 @@
 		var Type = USE('./type');
 		function Dup(opt){
 			var dup = {s:{}};
-			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 60 * 2};
+			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 9 * 3};
 			dup.check = function(id){ var tmp;
 				if(!(tmp = dup.s[id])){ return false }
 				if(tmp.pass){ return tmp.pass = false }
