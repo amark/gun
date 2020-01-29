@@ -83,12 +83,13 @@
   	}
 		// create a new Series for this key
 		// add it into the map
-		chart = Stats[key] = new SmoothieChart({responsive: true, minValue: 0, grid:{strokeStyle:'rgba(100%,100%,100%,0.2)'},labels:{fontSize:20}});
+		chart = Stats[key] = new SmoothieChart({millisPerPixel:500, limitFPS: 16, responsive: true, minValue: 0, grid:{strokeStyle:'rgba(100%,100%,100%,0.2)'},labels:{fontSize:20}, grid: {verticalSections: 0, millisPerLine: 15000 * 4 /*, strokeStyle:'rgb(125, 0, 0)'*/}});
 		chart.line = new TimeSeries();
 		chart.addTimeSeries(chart.line,{ strokeStyle:'rgb('+Math.random()*255+', '+Math.random()*255+','+Math.random()*255+')', lineWidth:5 });
 		chart.canvas = $('.model').find('.chart').clone(true).appendTo('.charts');
 		chart.canvas.find('span').text(key);
 		chart.streamTo(chart.canvas.find('canvas').get(0), 15 * 1000);
+    chart.line.append(0, 0);
 		// check first two characters of key to determine other charts to add this in
 		// tbd later
 		return chart;
