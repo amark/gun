@@ -1977,14 +1977,12 @@
 				if('[' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					LOG && opt.log(+new Date, msg.length, 'in hear batch');
-					(function go(){
-						var S; LOG && (S = +new Date); // STATS!
+					LOG && opt.log(+new Date, msg.length, '# on hear batch');
+					(function go(){ // stats on single msg is 99% spike of batch stats.
 						var m, c = 100; // hardcoded for now?
 						while(c-- && (m = msg.shift())){
 							mesh.hear(m, peer);
 						}
-						LOG && opt.log(S, +new Date - S, 'batch heard');
 						if(!msg.length){ return }
 						puff(go, 0);
 					}());
@@ -2013,7 +2011,7 @@
 					}
 					var S, ST; LOG && (S = +new Date);
 					root.on('in', msg);
-					LOG && !msg.nts && (ST = +new Date - S) > 9 && opt.log(S, ST, 'msg', msg['#']);
+					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					return;
 				}
 			}

@@ -119,7 +119,7 @@
     // for how to build a simplified version
     // of this example: https://scrimba.com/c/cW2Vsa
     var gun = Gun(location.origin + '/gun');
-    var think = gun.get('think/' + location.hash.slice(1));
+    var think = gun.get('think1/' + location.hash.slice(1));
     var thoughtItemStr = function(id) { return '<li class="thought__item"><label class="visually-hidden" for="' + id + '">Thought</label><input id="' + id + '" class="thought__input huet"><li/>'}
     var typing, throttle;
     $('.thought__add').on('click', function () {

@@ -32,6 +32,7 @@
 
 		var AXE = USE('./root'), Gun = (AXE.window||{}).Gun || USE('./gun', 1);
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
+    var LOG = console.LOG;
 
 		Gun.on('opt', function(at){
 			start(at);
@@ -78,6 +79,7 @@
 			console.log("AXE enabled.");
 
 			function verify(dht, msg) {
+				var S = (+new Date);
 				var puts = Object.keys(msg.put);
 				var soul = puts[0]; /// TODO: verify all souls in puts. Copy the msg only with subscribed souls?
 				var subs = dht(soul);
@@ -93,6 +95,7 @@
 				if (opt.super) {
 					dht(soul, tmp.join(','));
 				}
+				LOG && Gun.log(S, +new Date - S, 'axe verify');
 			}
 			function route(get){ var tmp;
 				if(!get){ return }
@@ -163,6 +166,7 @@
 				if(peer){ mesh.say({dam: 'opt', ok: 1, '@': msg['#']}, peer) }
 			}
 			setInterval(function(tmp){
+        LOG = console.LOG; // for stats, occasionally update cache.
 				if(!(tmp = at.stats && at.stats.stay)){ return }
 				(tmp.axe = tmp.axe || {}).up = Object.keys(axe.up||{});
 			},1000 * 60)
@@ -189,6 +193,7 @@
 						var peers = routes[hash];
 						function chat(peers, old){ // what about optimizing for directed peers?
 							if(!peers){ return chat(opt.peers) }
+							var S = (+new Date); // STATS!
 							var ids = Object.keys(peers); // TODO: BUG! THIS IS BAD PERFORMANCE!!!!
 							var meta = (msg._||yes);
 							clearTimeout(meta.lack);
@@ -198,6 +203,7 @@
 								meta.turn = (meta.turn || 0) + 1;
 								if((old && old[id]) || false === mesh.say(msg, peer)){ ++c }
 							}
+	            LOG && Gun.log(S, +new Date - S, 'axe chat');
 							//console.log("AXE:", Gun.obj.copy(msg), meta.turn, c, ids, opt.peers === peers);
 							if(0 < c){
 								if(peers === opt.peers){ return } // prevent infinite lack loop.
@@ -215,6 +221,7 @@
 					}
 					// TODO: PUTs need to only go to subs!
 					if(msg.put){
+						var S = (+new Date); // STATS!
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
 						Gun.obj.map(msg.put, function(node, soul){
@@ -223,6 +230,7 @@
 							if(!to){ return }
 							Gun.obj.to(to, peers);
 						});
+						LOG && Gun.log(S, +new Date - S, 'axe put');
 						mesh.say(msg, peers);
 						return;
 					}
