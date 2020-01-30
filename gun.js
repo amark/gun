@@ -2017,6 +2017,7 @@
 			}
 			var tomap = function(k,i,m){m(k,true)};
 			mesh.hear.c = mesh.hear.d = 0;
+			var noop = function(){};
 
 			;(function(){
 				var SMIA = 0;
@@ -2076,10 +2077,10 @@
 					peer.batch = peer.tail = null;
 					if(!tmp){ return }
 					if(!tmp.length){ return } // if(3 > tmp.length){ return } // TODO: ^
-					var S; LOG && (S = +new Date);
+					var S, ST; LOG && (S = +new Date);
 					try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 					}catch(e){return opt.log('DAM JSON stringify error', e)}
-					LOG && opt.log(S, +new Date - S, 'say stringify', tmp.length);
+					LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'say stringify', tmp.length);
 					if(!tmp){ return }
 					send(tmp, peer);
 				}

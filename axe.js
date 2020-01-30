@@ -32,7 +32,7 @@
 
 		var AXE = USE('./root'), Gun = (AXE.window||{}).Gun || USE('./gun', 1);
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
-    var LOG = console.LOG;
+    var LOG = console.LOG, ST = 0;
 
 		Gun.on('opt', function(at){
 			start(at);
@@ -203,7 +203,7 @@
 								meta.turn = (meta.turn || 0) + 1;
 								if((old && old[id]) || false === mesh.say(msg, peer)){ ++c }
 							}
-	            LOG && Gun.log(S, +new Date - S, 'axe chat');
+	            LOG && (ST = +new Date - S) > 9 && Gun.log(S, ST, 'axe chat');
 							//console.log("AXE:", Gun.obj.copy(msg), meta.turn, c, ids, opt.peers === peers);
 							if(0 < c){
 								if(peers === opt.peers){ return } // prevent infinite lack loop.
@@ -230,7 +230,7 @@
 							if(!to){ return }
 							Gun.obj.to(to, peers);
 						});
-						LOG && Gun.log(S, +new Date - S, 'axe put');
+						LOG && (ST = +new Date - S) > 9 && Gun.log(S, ST, 'axe put');
 						mesh.say(msg, peers);
 						return;
 					}
