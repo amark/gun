@@ -94,6 +94,16 @@
 		// tbd later
 		return chart;
   }
+/*
+  Notes to Self about Debugging:
+  1. Read Disks can spike up to 1min, I suspect other operations are blocking it from resolving as fast as it otherwise would.
+  2. JSON parsing/stringifying sometimes way slower than other times, why?
+  3. Looks like RAD lex read is not optimized.
+  4. got prep + got emit = non-RAD problems, compare against read disk & got differentials (should be same).
+  5. Radix map/place ops could be slow?
+  6. SINGLE MESSAGE PROCESS TIME occasionally is huge, should get emailed.
+  7. Watch out for get/put loops times, maybe indicating (5) issues?
+*/
 </script>
 </body>
 </html>
