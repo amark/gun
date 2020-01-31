@@ -819,7 +819,7 @@
 				}
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
-				var faith = function(){}; faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
+				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
@@ -1963,7 +1963,7 @@
 			var mesh = function(){};
 			var opt = root.opt || {};
 			opt.log = opt.log || console.log;
-			opt.gap = opt.gap || opt.wait || 1;
+			opt.gap = opt.gap || opt.wait || 0;
 			opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
 
 			var dup = root.dup;
@@ -2009,9 +2009,9 @@
 						}
 						return;
 					}
-					var S, ST; LOG && (S = +new Date);
+					var S, ST; LOG && (S = +new Date); console.STAT = {};
 					root.on('in', msg);
-					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
+					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					return;
 				}
 			}
