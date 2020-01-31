@@ -2069,7 +2069,11 @@
 						flush(peer);
 					}
 					peer.batch = []; // peer.batch = '['; // TODO: Prevent double JSON!
-					setTimeout(function(){flush(peer)}, opt.gap);
+					var S, ST; LOG && (S = +new Date);
+					setTimeout(function(){
+						LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, '1ms TO');
+						flush(peer)
+					}, opt.gap);
 					send(raw, peer);
 				}
 				function flush(peer){
