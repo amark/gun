@@ -1957,7 +1957,7 @@
 
 	;USE(function(module){
 		var Type = USE('../type');
-		var puff = (typeof setImmediate !== "undefined")? setImmediate : setTimeout;
+		var puff = setTimeout; //(typeof setImmediate !== "undefined")? setImmediate : setTimeout;
 
 		function Mesh(root){
 			var mesh = function(){};
@@ -1976,15 +1976,18 @@
 				if('{' != raw[2]){ mesh.hear.d += raw.length||0; ++mesh.hear.c; } // STATS! // ugh, stupid double JSON encoding
 				if('[' === tmp){
 					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
+					raw = '';
 					if(!msg){ return }
 					LOG && opt.log(+new Date, msg.length, '# on hear batch');
 					(function go(){ // stats on single msg is 99% spike of batch stats.
-						var m, c = 100; // hardcoded for now?
-						while(c-- && (m = msg.shift())){
+						var m, i = 0, c = 100; // hardcoded for now?
+						while(c-- && (m = msg[i++])){
 							mesh.hear(m, peer);
 						}
+						msg = msg.slice(i);
+						// TODO: consider triggering peer flush to response times speedier!
 						if(!msg.length){ return }
-						puff(go, 0);
+						puff(go, 1);
 					}());
 					return;
 				}
@@ -1995,14 +1998,15 @@
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 					if(dup.check(id)){ return }
-					dup.track(id, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
-					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
+					dup.track(id, true); //.it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
 						dup.track(tmp+hash, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					}
-					(msg._ = function(){}).via = peer;
 					if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
+					*/ // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
+					(msg._ = function(){}).via = peer;
 					if(msg.dam){
 						if(tmp = mesh.hear[msg.dam]){
 							tmp(msg, peer, root);
@@ -2010,7 +2014,8 @@
 						return;
 					}
 					var S, ST; LOG && (S = +new Date); console.STAT = {};
-					root.on('in', msg);
+					//root.on('in', msg);
+					root.on('in2', msg);
 					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					return;
 				}
