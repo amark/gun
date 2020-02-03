@@ -1,8 +1,8 @@
 ;(function(){
-	var cluster = require('cluster');
+	/*var cluster = require('cluster');
 	if(cluster.isMaster){
 	  return cluster.fork() && cluster.on('exit', function(){ cluster.fork() });
-	}
+	}*/
 
 	var fs = require('fs');
 	var config = { port: process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 8765 };

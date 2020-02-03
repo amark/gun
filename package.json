@@ -68,6 +68,7 @@
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
+    "0x": "^4.9.1",
     "uglify-js": "^3.6.0"
   }
 }
