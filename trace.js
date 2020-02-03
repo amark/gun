@@ -8,18 +8,18 @@
 		start();
 		setTimeout(function(){try{
 		var zip = require("child_process");
-		zip.execSync('zip -r flame *', {cwd: './flame'});
-		require('./lib/fsrm')('./flame');
+		zip.execSync('zip -r flametracedata.zip flamedata/');
+		require('./lib/fsrm')('./flamedata');
 		require('./lib/email').send({
 			text: "zip attached",
 			from: "mark@gun.eco",
 			to: "mark@gun.eco",
 			subject: "TRACE GUN",
-			attachment:[{path:"./flame.zip", type:"application/zip", name:"flame.zip"}]
+			attachment:[{path: __dirname+"/flametracedata.zip", type:"application/zip", name:"flametracedata.zip"}]
 		}, function(err){
 			err && console.log("@@@@@@@@@@ EMAIL ERROR @@@@@@@@@@", err);
 		})
 		}catch(err){ console.log("@@@@@@@@@@ TRACE ERROR @@@@@@@@@", err) }},5000);
 	}
-	require('0x')({argv: ['./examples/http.js'], outputDir: 'flame', workingDir: __dirname, onProcessExit: go});
+	require('0x')({argv: ['./examples/http.js'], outputDir: 'flamedata', workingDir: __dirname, onProcessExit: go});
 }());
