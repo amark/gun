@@ -43,8 +43,19 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
  
 //console.log("HYPER TEST");var z = 10000; while(--z){ names.push(Gun.text.random(7)) }this.timeout(9000);
 
-  describe('Radix', function(){
+  describe.only('Radix', function(){
     var radix = Radix();
+
+    it('unit', function(){
+        var rad = Radix();
+        rad('asdf.pub', 'yum');
+        rad('ablah', 'cool');
+        rad('node/circle.bob', 'awesome');
+
+        expect(rad('asdf.')).to.be.eql({pub: {'': 'yum'}});
+        expect(rad('nv/foo.bar')).to.be(undefined);
+    });
+
     it('radix write read', function(done){
         var all = {};
         names.forEach(function(v,i){

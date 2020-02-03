@@ -38,7 +38,7 @@
 			console.log('async?', Gun.debug);
 		}
 		var run = mocha.run(function(a,b,c){
-			//document.body.prepend("MARK! REMEMBER TO REMOVE RETURN!");return;
+			document.body.prepend("MARK! REMEMBER TO REMOVE RETURN!");return;
 			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
 			if(yes){
 				if(location.search){
