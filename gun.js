@@ -359,7 +359,7 @@
 			/*if(perf){
 				t = start + perf.now(); // Danger: Accuracy decays significantly over time, even if precise.
 			} else {*/
-				t = time();
+				t = +new Date;
 			//}
 			if(last < t){
 				return N = 0, last = t + State.drift;
@@ -368,10 +368,10 @@
 		}
 		var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the future, on machines that are D times faster than 2016AD machines, you will want to increase D by another several orders of magnitude so the processing speed never out paces the decimal resolution (increasing an integer effects the state accuracy).
 		var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
-		State._ = '>';
+		var S_ = State._ = '>';
 		State.drift = 0;
 		State.is = function(n, k, o){ // convenience function to get the state on a key on a node and return it.
-			var tmp = (k && n && n[N_] && n[N_][State._]) || o;
+			var tmp = (k && n && n[N_] && n[N_][S_]) || o;
 			if(!tmp){ return }
 			return num_is(tmp = tmp[k])? tmp : -Infinity;
 		}
@@ -383,7 +383,7 @@
 				}
 				n = Node.soul.ify(n, soul); // then make it so!
 			}
-			var tmp = obj_as(n[N_], State._); // grab the states data.
+			var tmp = obj_as(n[N_], S_); // grab the states data.
 			if(u !== k && k !== N_){
 				if(num_is(s)){
 					tmp[k] = s; // add the valid state.
@@ -618,40 +618,37 @@
 	;USE(function(module){
 		var Type = USE('./type');
 		function Dup(opt){
-			var dup = {s:{}};
+			var dup = {s:{}}, s = dup.s;
 			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 9 * 3};
-			dup.check = function(id){ var tmp;
-				if(!(tmp = dup.s[id])){ return false }
-				if(tmp.pass){ return tmp.pass = false }
+			dup.check = function(id){
+				if(!s[id]){ return false }
 				return dup.track(id);
 			}
-			dup.track = function(id, pass){
-				var it = dup.s[id] || (dup.s[id] = {});
-				it.was = time_is();
-				if(pass){ it.pass = true }
+			dup.track = function(id){
+				var it = s[id] || (s[id] = {});
+				it.was = +new Date;
 				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
 				return it;
 			}
 			dup.drop = function(age){
-				var now = time_is();
-				Type.obj.map(dup.s, function(it, id){
+				var now = +new Date;
+				Type.obj.map(s, function(it, id){
 					if(it && (age || opt.age) > (now - it.was)){ return }
-					Type.obj.del(dup.s, id);
+					delete s[id];
 				});
 				dup.to = null;
 			}
 			return dup;
 		}
-		var time_is = Type.time.is;
 		module.exports = Dup;
 	})(USE, './dup');
 
 	;USE(function(module){
 
 		function Gun(o){
-			if(o instanceof Gun){ return (this._ = {gun: this, $: this}).$ }
+			if(o instanceof Gun){ return (this._ = {$: this}).$ }
 			if(!(this instanceof Gun)){ return new Gun(o) }
-			return Gun.create(this._ = {gun: this, $: this, opt: o});
+			return Gun.create(this._ = {$: this, opt: o});
 		}
 
 		Gun.is = function($){ return ($ instanceof Gun) || ($ && $._ && ($ === $._.$)) || false }
@@ -682,7 +679,9 @@
 				var gun = at.$.opt(at.opt);
 				if(!at.once){
 					at.on('in', root, at);
+					at.on('in2', root2, at);
 					at.on('out', root, {at: at, out: root});
+					at.on('put2', cache, at);
 					Gun.on('create', at);
 					at.on('create', at);
 				}
@@ -716,7 +715,88 @@
 					at.on('out', msg);
 				}
 			}
+			function root2(msg){
+				if(!msg){ return }
+				var eve = this, as = eve.as, at = as.at || as, gun = at.$, dup = at.dup, tmp;
+				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
+				if(dup.check(tmp)){ return } dup.track(tmp);
+				tmp = msg._; msg._ = ('function' == typeof msg._)? msg._ : function(){};
+				if(msg.get){ Gun.on.get(msg, gun) }
+				if(msg.put){ PUT(msg, gun) }
+				eve.to.next(msg);
+			}
 		}());
+
+		;(function(){
+			Gun.on.put2 = function(msg, gun){
+				var ctx = msg._, root = ctx.root = gun._, id = msg['#'];
+				var ack = ctx.ack = function(put){ put = put || {};
+					if(ack.err = ack.err || (put||{}).err){
+						if(ack.s){ root.on('in', {'@': id, err: Gun.log(ack.err)}) }
+						return ack.s = u;
+					}
+					var soul = put['#'], key = put['.'], val = put[':'], state = put['>'], tmp;
+					if((tmp = ack.s||{})[soul+key]){
+						delete tmp[soul+key];
+						root.on('put2', {put: put});
+					}
+					if(!obj_empty(ack.s)){ return } // keep waiting
+					console.log("I'm all done!!!");
+				}
+				ack.err = obj_map(msg.put, nodes, msg);
+				msg = ctx = u;
+				if(ack.err){ return ack() }
+			}
+			function nodes(node, soul){
+				if(!node){ return ERR+cut(soul)+"no node." }
+				var ctx = this._, tmp;
+				if(!(tmp = node._)){ return ERR+cut(soul)+"no meta." }
+				ctx.node = node;
+				if(soul !== tmp[_soul]){ return ERR+cut(soul)+"soul not same." }
+				ctx.soul = soul;
+				if(!(ctx.states = tmp[state_])){ return ERR+cut(soul)+"no state." }
+				return obj_map(node, souls, this);
+			}
+			function souls(val, key){
+				if(node_ === key){ return }
+				var ctx = this._, node = ctx.node, soul = ctx.soul, state = ctx.states[key];
+				if(u === state){ return ERR+cut(key)+"on"+cut(soul)+"no state." }
+				if(!val_is(val)){ return ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val) }
+				ham(ctx.root.graph, soul, key, val, state, ctx.ack); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
+			}
+			function ham(graph, soul, key, val, state, ack){
+				(ack.s || (ack.s = {}))[soul+key] = 1;
+				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
+				var machine = State(), is = HAM(machine, state, was, val, known), u;
+				if(!is.incoming){
+					if(is.defer){
+						var to = is.defer - machine;
+						setTimeout(function(){
+							ham(graph, soul, key, val, state, cb);
+						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
+						return;
+					}
+					if(ack){ ack({'#': soul, '.': key}) }
+					return;
+				}
+				if(ack){ ack({'#': soul, '.': key, ':': val, '>': state}) }
+			}
+			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
+			var ERR = "Error: Invalid graph!";
+		}());
+		var PUT = Gun.on.put2;
+		var HAM = Gun.HAM, MD = 2147483647, State = Gun.state;
+		function cache(msg){
+			var eve = this, root = eve.as, graph = root.graph;
+			var put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'];
+			graph[soul] = state_ify(graph[soul], key, state, val, soul);
+			// trigger chains // trigger after all individual values cached?
+			if(eve.to.last === eve.to.next){
+				console.log("THE END, reply back");
+				return;
+			}
+			eve.to.next(msg);
+		}
 
 		;(function(){
 			Gun.on.put = function(msg, gun){
@@ -735,7 +815,6 @@
 				if(!ctx.diff){ return }
 				at.on('put', obj_to(msg, {put: ctx.diff}));
 			};
-			var MD = 2147483647;
 			function verify(val, key, node, soul){ var ctx = this;
 				var state = Gun.state.is(node, key), tmp;
 				if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
@@ -860,8 +939,8 @@
 
 		var list_is = Gun.list.is;
 		var text = Gun.text, text_is = text.is, text_rand = text.random;
-		var obj = Gun.obj, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
-		var state_lex = Gun.state.lex, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, rel_is = Gun.val.link.is;
+		var obj = Gun.obj, obj_empty = obj.empty, obj_is = obj.is, obj_has = obj.has, obj_to = obj.to, obj_map = obj.map, obj_copy = obj.copy;
+		var state_lex = Gun.state.lex, state_ify = Gun.state.ify, state_is = Gun.state.is, _soul = Gun.val.link._, _has = '.', node_ = Gun.node._, val_is = Gun.val.is, rel_is = Gun.val.link.is, state_ = Gun.state._;
 		var empty = {}, u;
 
 		console.only = function(i, s){ return (console.only.i && i === console.only.i && console.only.i++) && (console.log.apply(console, arguments) || s) };
@@ -1331,7 +1410,7 @@
 			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 			if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
-				tmp = ((msg.$$ = at.root.gun.get(tmp))._);
+				tmp = ((msg.$$ = at.root.$.get(tmp))._);
 				if(u !== tmp.put){
 					msg = obj_to(msg, {put: data = tmp.put});
 				}
@@ -1995,10 +2074,9 @@
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
+					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', msg['#']) }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
-					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 					if(dup.check(id)){ return }
-					dup.track(id, true); //.it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
@@ -2011,11 +2089,13 @@
 						if(tmp = mesh.hear[msg.dam]){
 							tmp(msg, peer, root);
 						}
+						dup.track(id);
 						return;
 					}
 					var S, ST; LOG && (S = +new Date); console.STAT = {};
 					//root.on('in', msg);
 					root.on('in2', msg);
+					dup.track(id);
 					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					return;
 				}
