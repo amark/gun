@@ -1,6 +1,6 @@
-import { ChainReference } from './chain';
-import { ConstructorOptions } from './options';
-export interface Constructor {
+import { IGunChainReference } from './chain';
+import { IGunConstructorOptions } from './options';
+export interface IGunStatic {
     /**
      * @description
      * no parameters creates a local datastore using the default persistence layer, either localStorage or Radisk.
@@ -9,17 +9,17 @@ export interface Constructor {
      *
      * or you can pass in an array of URLs to sync with multiple peers.
      */
-    <DataType = any>(options?: string | string[] | ConstructorOptions): ChainReference<DataType, any, 'pre_root'>;
-    new <DataType = any>(options?: string | string[] | ConstructorOptions): ChainReference<DataType, any, 'pre_root'>;
+    <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
+    new <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
     node: {
         /** Returns true if data is a gun node, otherwise false. */
-        is(anything: any): anything is ChainReference;
+        is(anything: any): anything is IGunChainReference;
         /**
          * Returns data's gun ID (instead of manually grabbing its metadata i.e. data["_"]["#"], which is faster but could change in the future)
          *
          * Returns undefined if data is not correct gun data.
          */
-        soul(data: ChainReference): string;
+        soul(data: IGunChainReference): string;
         /** Returns a "gun-ified" variant of the json input by injecting a new gun ID into the metadata field. */
         ify(json: any): any;
     };

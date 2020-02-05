@@ -3,7 +3,7 @@
  * Their project README will likely list the exposed options
  * https://github.com/amark/gun/wiki/Modules
  */
-export declare type ConstructorOptions = Partial<{
+export interface IGunConstructorOptions extends Partial<{
     /** Undocumented but mentioned. Write data to a JSON. */
     file: string;
     /** Undocumented but mentioned. Create a websocket server */
@@ -15,7 +15,7 @@ export declare type ConstructorOptions = Partial<{
         bucket: any;
     };
     /** the URLs are properties, and the value is an empty object. */
-    peers: Record<string, {}>;
+    peers: string[] | Record<string, {}>;
     /** default: true, creates and persists local (nodejs) data using Radisk. */
     radisk: boolean;
     /** default: true, persists local (browser) data to localStorage. */
@@ -27,4 +27,5 @@ export declare type ConstructorOptions = Partial<{
      * @see https://github.com/amark/gun/wiki/Modules
      */
     [key: string]: any;
-}>;
+}> {
+}
