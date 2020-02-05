@@ -3,6 +3,7 @@
   /* UNBUILD */
   var root;
   if(typeof window !== "undefined"){ root = window }
+  
   if(typeof global !== "undefined"){ root = global }
   root = root || {};
   var console = root.console || {log: function(){}};
@@ -47,10 +48,12 @@
   })(USE, './https');
 
   ;USE(function(module){
-    if(typeof global !== "undefined"){
-      var g = global;
-      g.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
-      g.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
+    if(typeof btoa === "undefined"){
+      if(typeof Buffer === "undefined") {
+        root.Buffer = require("buffer").Buffer
+      }
+      root.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
+      root.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
     }
   })(USE, './base64');
 
@@ -96,7 +99,7 @@
     Object.assign(SafeBuffer, {
       // (data, enc) where typeof data === 'string' then enc === 'utf8'|'hex'|'base64'
       from() {
-        if (!Object.keys(arguments).length) {
+        if (!Object.keys(arguments).length || arguments[0]==null) {
           throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
         }
         const input = arguments[0]
@@ -167,28 +170,26 @@
     var o = {};
 
     if(SEA.window){
-      api.crypto = window.crypto || window.msCrypto;
+      api.crypto = navigator && navigator.product === 'ReactNative' ? require('isomorphic-webcrypto') : window.crypto || window.msCrypto || require('isomorphic-webcrypto');
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
-      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))))
+      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))));
+    }
+    if(!api.TextDecoder)
+    {
+      const { TextEncoder, TextDecoder } = require('text-encoding');
+      api.TextDecoder = TextDecoder;
+      api.TextEncoder = TextEncoder;
     }
     if(!api.crypto){try{
       var crypto = USE('crypto', 1);
-      const { TextEncoder, TextDecoder } = USE('text-encoding', 1)
       Object.assign(api, {
         crypto,
-        //subtle,
-        TextEncoder,
-        TextDecoder,
         random: (len) => Buffer.from(crypto.randomBytes(len))
-      });
-      //try{
-        const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
-        api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
-      //}catch(e){
-        //console.log("node-webcrypto-ossl is optionally needed for ECDH, please install if needed.");
-      //}
+      });      
+      const isocrypto = require('isomorphic-webcrypto');
+      api.ossl = api.subtle = isocrypto.subtle;
     }catch(e){
       console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
       TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
@@ -201,7 +202,7 @@
     var SEA = USE('./root');
     var Buffer = USE('./buffer');
     var s = {};
-    s.pbkdf2 = {hash: 'SHA-256', iter: 100000, ks: 64};
+    s.pbkdf2 = {hash: {name : 'SHA-256'}, iter: 100000, ks: 64};
     s.ecdsa = {
       pair: {name: 'ECDSA', namedCurve: 'P-256'},
       sign: {name: 'ECDSA', hash: {name: 'SHA-256'}}
@@ -217,6 +218,13 @@
       if(d){ jwk.d = d }
       return jwk;
     };
+    
+    s.keyToJwk = function(keyBytes) {
+      const keyB64 = keyBytes.toString('base64');
+      const k = keyB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
+      return { kty: 'oct', k: k, ext: false, alg: 'A256GCM' };
+    }
+
     s.recall = {
       validity: 12 * 60 * 60, // internally in seconds : 12 hours
       hook: function(props){ return props } // { iat, exp, alias, remember } // or return new Promise((resolve, reject) => resolve(props)
@@ -317,7 +325,7 @@
 
       var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
-      var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      var sa = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
@@ -337,7 +345,7 @@
       // Next: ECDH keys for encryption/decryption...
 
       try{
-      var dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      var dh = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         var key = {};
@@ -396,8 +404,8 @@
       var priv = pair.priv;
       var jwk = S.jwk(pub, priv);
       var hash = await sha(json);
-      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
-      .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
+      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
+      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
@@ -431,12 +439,12 @@
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       var pub = pair.pub || pair;
-      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify']);
+      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
       var hash = await sha(json.m);
       var buf, sig, check, tmp; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
         sig = new Uint8Array(buf);
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash));
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash));
         if(!check){ throw "Signature did not match." }
       }catch(e){
         if(SEA.opt.fallback){
@@ -462,7 +470,7 @@
     var keyForPair = SEA.opt.slow_leak = pair => {
       if (knownKeys[pair]) return knownKeys[pair];
       var jwk = S.jwk(pair);
-      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, S.ecdsa.pair, false, ["verify"]);
+      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ["verify"]);
       return knownKeys[pair];
     };
 
@@ -474,12 +482,12 @@
       var buf; var sig; var check; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
         sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }catch(e){
         buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
         sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }
       var r = check? S.parse(json.m) : u;
@@ -492,6 +500,7 @@
 
   ;USE(function(module){
     var shim = USE('./shim');
+    var S = USE('./settings');
     var sha256hash = USE('./sha256');
 
     const importGen = async (key, salt, opt) => {
@@ -499,7 +508,9 @@
       var opt = opt || {};
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      return await shim.subtle.importKey('raw', new Uint8Array(hash), opt.name || 'AES-GCM', false, ['encrypt', 'decrypt'])
+      
+      const jwkKey = S.keyToJwk(hash)      
+      return await shim.subtle.importKey('jwk', jwkKey, {name:'AES-GCM'}, false, ['encrypt', 'decrypt'])
     }
     module.exports = importGen;
   })(USE, './aeskey');
@@ -563,7 +574,7 @@
         bufiv = shim.Buffer.from(json.iv, opt.encode || 'base64');
         bufct = shim.Buffer.from(json.ct, opt.encode || 'base64');
         var ct = await aeskey(key, buf, opt).then((aes) => (/*shim.ossl ||*/ shim.subtle).decrypt({  // Keeping aesKey scope as private as possible...
-          name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv)
+          name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv), tagLength: 128
         }, aes, new Uint8Array(bufct)));
       }catch(e){
         if('utf8' === opt.encode){ throw "Could not decrypt" }
@@ -601,11 +612,13 @@
       var epriv = pair.epriv;
       var ecdhSubtle = shim.ossl || shim.subtle;
       var pubKeyData = keysToEcdhJwk(pub);
-      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },S.ecdh); // Thanks to @sirpy !
+      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },{name: 'ECDH', namedCurve: 'P-256'}); // Thanks to @sirpy !
       var privKeyData = keysToEcdhJwk(epub, epriv);
-      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveKey']).then(async (privKey) => {
+      var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
-        var derivedKey = await ecdhSubtle.deriveKey(props, privKey, { name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
+        var derivedBits = await ecdhSubtle.deriveBits(props, privKey, 256);
+        var rawBits = new Uint8Array(derivedBits);
+        var derivedKey = await ecdhSubtle.importKey('raw', rawBits,{ name: 'AES-GCM', length: 256 }, true, [ 'encrypt', 'decrypt' ]);
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
@@ -630,7 +643,7 @@
           jwk,
           { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
         ), // ??? refactor
-        S.ecdh
+        {name: 'ECDH', namedCurve: 'P-256'}
       ]
     }
 
@@ -646,6 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
+    SEA.opt.aeskey = USE('./aeskey'); // not official!
 
     SEA.random = SEA.random || shim.random;
 

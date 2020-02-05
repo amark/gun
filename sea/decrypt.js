@@ -17,7 +17,7 @@
         bufiv = shim.Buffer.from(json.iv, opt.encode || 'base64');
         bufct = shim.Buffer.from(json.ct, opt.encode || 'base64');
         var ct = await aeskey(key, buf, opt).then((aes) => (/*shim.ossl ||*/ shim.subtle).decrypt({  // Keeping aesKey scope as private as possible...
-          name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv)
+          name: opt.name || 'AES-GCM', iv: new Uint8Array(bufiv), tagLength: 128
         }, aes, new Uint8Array(bufct)));
       }catch(e){
         if('utf8' === opt.encode){ throw "Could not decrypt" }
