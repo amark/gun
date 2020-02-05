@@ -275,13 +275,13 @@
         cb = salt;
         salt = u;
       }
-      salt = salt || shim.random(9);
       data = (typeof data == 'string')? data : JSON.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
+      salt = salt || shim.random(9);
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({
         name: opt.name || 'PBKDF2',
@@ -1090,8 +1090,8 @@
   })(USE, './create');
 
   ;USE(function(module){
-    const SEA = USE('./sea')
-    const Gun = SEA.Gun;
+    var SEA = USE('./sea')
+    var Gun = SEA.Gun;
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
@@ -1101,6 +1101,7 @@
         at.on('in', security, at); // now listen to all input data, acting as a firewall.
         at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
         at.on('node', each, at);
+        at.on('put2', check, at);
       }
       this.to.next(at); // make sure to call the "next" middleware adapter.
     });
@@ -1149,6 +1150,102 @@
       security.call(this, msg);
     }
 
+    var u;
+    function check(msg){
+      var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      //console.log("security check", msg);
+      var no = function(why){ at.on('in', {'@': id, err: why}) }
+      if('#' === soul){ // special case for content addressing immutable hashed data.
+        check.hash(eve, msg, val, key, soul, at, no); return;
+      } 
+      if('~@' === soul){  // special case for shared system data, the list of aliases.
+        check.alias(eve, msg, val, key, soul, at, no); return;
+      }
+      if('~@' === soul.slice(0,2)){ // special case for shared system data, the list of public keys for an alias.
+        check.pubs(eve, msg, val, key, soul, at, no); return;
+      }
+      if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
+        check.pub(eve, msg, val, key, soul, at, no, (msg._||noop).user, tmp); return;
+      }
+      check.any(eve, msg, val, key, soul, at, no, (msg._||noop).user); return;
+      eve.to.next(msg); // not handled
+    }
+    check.hash = function(eve, msg, val, key, soul, at, no){
+      SEA.work(val, null, function(data){
+        if(data === key){ return eve.to.next(msg) }
+        no("Data hash not same as hash!");
+      }, {name: 'SHA-256'});
+    }
+    check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
+      if(!val){ return no("Data must exist!") } // data MUST exist
+      if('~@'+key === link_is(val)){ return eve.to.next(msg) } // in fact, it must be EXACTLY equal to itself
+      no("Alias not same!"); // if it isn't, reject.
+    };
+    check.pubs = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
+      if(!val){ return no("Alias must exist!") } // data MUST exist
+      if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
+      no("Alias not same!"); // that way nobody can tamper with the list of public keys.
+    };
+    check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
+      if('pub' === key){
+        if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
+        return no("Account not same!");
+      }
+      check['user'+soul+key] = 1;
+      if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
+        SEA.sign(msg.put, (user._).sea, function(data){ var rel;
+          if(u === data){ return no(SEA.err || 'Signature fail.') }
+          if(rel = link_is(val)){ (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1 }
+          console.log("WHAT HAPPENS HERE?", data.m, SEA.opt.unpack(data.m), key, soul);
+          msg.put[':'] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          //node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          eve.to.next(msg);
+        }, {check: msg.put, raw: 1});
+        return;
+      }
+      SEA.verify(msg.put, pub, function(data){ var rel, tmp;
+        console.log("WHAT VERIFIES HERE?", data, SEA.opt.unpack(data, key), key, soul);
+        data = SEA.opt.unpack(data, key);
+        if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
+        if((rel = link_is(data)) && pub === SEA.opt.pub(rel)){
+          (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1;
+        }
+        eve.to.next(msg);
+      });
+    };
+    check.any = function(eve, msg, val, key, soul, at, no, user){ var tmp, pub;
+      if(!(pub = SEA.opt.pub(soul))){
+        if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
+        // TODO: Ask community if should auto-sign non user-graph data.
+        at.on('secure', function(msg){ this.off();
+          if(!at.opt.secure){ return eve.to.next(msg) }
+          no("Data cannot be changed.");
+        }).on.on('secure', msg);
+        return;
+      }
+      // TODO: DEDUP WITH check.pub ???
+      if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
+        SEA.sign(mgs.put, (user._).sea, function(data){
+          if(u === data){ return no('User signature fail.') }
+          console.log("WHAT HAPPENS HERE??", data.m, SEA.opt.unpack(data.m), key, soul);
+          msg.put[':'] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          //node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          eve.to.next(msg);
+        }, {check: msg.put, raw: 1});
+        return;
+      }
+      SEA.verify(msg.put, pub, function(data){ var rel;
+        console.log("WHAT VERIFIES HERE?", data, SEA.opt.unpack(data, key), key, soul);
+        data = SEA.opt.unpack(data, key);
+        if(u === data){ return no("Not owner on '" + key + "'.") } // thanks @rogowski !
+        if((rel = link_is(data)) && pub === SEA.opt.pub(rel)){
+          (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1;
+        }
+        eve.to.next(msg);
+      });
+    }
+    var link_is = Gun.val.link.is;
+
     // okay! The security function handles all the heavy lifting.
     // It needs to deal read and write of input and output of system data, account/public key data, and regular data.
     // This is broken down into some pretty clear edge cases, let's go over them:
@@ -1174,6 +1271,11 @@
         }
       }
       if(msg.put){
+        /*
+          NOTICE: THIS IS OLD AND GETTING DEPRECATED.
+          ANY SECURITY CHANGES SHOULD HAPPEN ABOVE FIRST
+          THEN PORTED TO HERE.
+        */
         // potentially parallel async operations!!!
         var check = {}, each = {}, u;
         each.node = function(node, soul){
@@ -1260,9 +1362,11 @@
               return;
             }*/
             check['any'+soul+key] = 1;
+            console.log(val, key, node, soul, '...', SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul));
             SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){
               if(u === data){ return each.end({err: 'My signature fail.'}) }
               node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+              console.log(key, node[key], '...', data);
               check['any'+soul+key] = 0;
               each.end({ok: 1});
             }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});

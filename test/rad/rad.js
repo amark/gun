@@ -50,10 +50,13 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         var rad = Radix();
         rad('asdf.pub', 'yum');
         rad('ablah', 'cool');
+        rad('ab', {yes: 1});
         rad('node/circle.bob', 'awesome');
 
-        expect(rad('asdf.')).to.be.eql({pub: {'': 'yum'}});
+        expect(Gun.obj.copy(rad('asdf.'))).to.be.eql({pub: {'': 'yum'}});
         expect(rad('nv/foo.bar')).to.be(undefined);
+        expect(rad('ab')).to.eql({yes: 1});
+        expect(Gun.obj.copy(rad())).to.be.eql({"a":{"sdf.pub":{"":"yum"},"b":{"lah":{"":"cool"},"":{"yes":1}}},"node/circle.bob":{"":"awesome"}});
     });
 
     it('radix write read', function(done){
@@ -119,6 +122,16 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[k];
         }, {start: start, end: end});
         expect(Gun.obj.empty(all)).to.be.ok();
+        done();
+    });
+ 
+    it('radix reverse item', function(done){
+        var opt = {reverse: 1, end: 'iesogon'};
+        Radix.map(radix, function(v,k, a,b){
+            expect(k).to.be('ieso');
+            expect(v).to.be(96);
+            return true;
+        }, opt);
         done();
     });
 

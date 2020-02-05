@@ -120,7 +120,7 @@
       var w = 2;
       function go(i){
         var S = +new Date;
-        var ref = gun.get(Gun.text.random(12)).put({data: Math.random()}, function(ack){
+        var ref = gun.get(Gun.text.random(12)).put({data: Math.random(), ah: Math.random()}, function(ack){
           console.log((+new Date - S)/1000, ack.err, ack.ok);
           ref.off();
         });
