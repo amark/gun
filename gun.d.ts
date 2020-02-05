@@ -1,3 +1,3 @@
-import { Constructor } from './types/static';
-declare const cons: Constructor;
-export = cons;
+import { IGunStatic } from './types/static';
+declare const Gun: IGunStatic;
+export = Gun;
