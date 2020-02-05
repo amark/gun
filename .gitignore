@@ -11,3 +11,6 @@ yarn.lock
 .esm-cache
 .sessionStorage
 .localStorage
+/types/*.ts
+!/types/*.d.ts
+/gun.ts
