@@ -1,5 +1,6 @@
 import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable } from './types';
 import { IGunConstructorOptions } from './options';
+import { ITSResolvable } from 'ts-type';
 export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey = any, IsTop extends 'pre_root' | 'root' | false = false> {
     /**
      * Save data into gun, syncing it with your connected peers.
@@ -134,18 +135,24 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/then.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>`!
      */
-    then?<TResult1 = ArrayAsRecord<DataType>>(onfulfilled?: (value: TResult1) => TResult1 | PromiseLike<TResult1>): Promise<TResult1>;
+    then?<R, TResult1 = ArrayAsRecord<DataType>>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
+    then?<TResult1 = ArrayAsRecord<DataType>>(): Promise<TResult1>;
     /**
      * Returns a promise for you to use.
      *
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/then.js')` or
      *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>`!
      */
+    promise?<R, TResult1 = {
+        put: ArrayAsRecord<DataType>;
+        key: ReferenceKey;
+        gun: IGunChainReference<DataType, ReferenceKey>;
+    }>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
     promise?<TResult1 = {
         put: ArrayAsRecord<DataType>;
         key: ReferenceKey;
         gun: IGunChainReference<DataType, ReferenceKey>;
-    }>(onfulfilled?: (value: TResult1) => TResult1 | PromiseLike<TResult1>): Promise<TResult1>;
+    }>(): Promise<TResult1>;
     /**
      * bye lets you change data after that browser peer disconnects.
      * This is useful for games and status messages,
