@@ -2094,7 +2094,7 @@
 					//root.on('in', msg);
 					root.on('in2', msg);
 					dup_track(id);
-					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
+					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)) }
 					return;
 				}
 			}
