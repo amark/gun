@@ -13,9 +13,14 @@ export interface IGunStatic {
      */
     <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
     new <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
-    node: IGunStaticNode;
+    readonly node: IGunStaticNode;
     /** @see https://gun.eco/docs/SEA */
-    SEA: IGunStaticSEA;
-    version: string;
+    readonly SEA: IGunStaticSEA;
+    readonly version: string;
     readonly chain: IGunChainReference;
+    readonly log: {
+        (...argv: any[]): void;
+        once(...argv: any[]): void;
+        off: boolean;
+    };
 }
