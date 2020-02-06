@@ -21,4 +21,17 @@ export declare type AckCallback = (ack: {
     err: undefined;
     ok: string;
 }) => void;
-export declare type CryptoKeyPair = Record<'pub' | 'priv' | 'epub' | 'epriv', string>;
+export declare type IGunCryptoKeyPair = Record<'pub' | 'priv' | 'epub' | 'epriv', string>;
+export interface IGunRecordNodeRawBase {
+    '#': string;
+}
+export interface IGunRecordNodeRawExtra<DataType> extends IGunRecordNodeRawBase {
+    '>': Record<keyof DataType, number>;
+}
+export interface IGunRecordNodeRaw<DataType> {
+    '_': IGunRecordNodeRawExtra<DataType>;
+}
+export declare type IGunRecordNode<DataType> = {
+    [K in keyof DataType]: IGunRecordNodeRawBase;
+} & IGunRecordNodeRaw<DataType>;
+export declare type IGunRecordData<DataType> = DataType & IGunRecordNodeRaw<DataType>;

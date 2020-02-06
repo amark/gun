@@ -1,4 +1,4 @@
-import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable } from './types';
+import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable, IGunCryptoKeyPair } from './types';
 import { IGunConstructorOptions } from './options';
 import { ITSResolvable } from 'ts-type';
 export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey = any, IsTop extends 'pre_root' | 'root' | false = false> {
@@ -217,7 +217,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
             epub: string;
             pub: string;
         };
-        sea: CryptoKeyPair;
+        sea: IGunCryptoKeyPair;
         soul: string;
     } | {
         err: string;
@@ -225,7 +225,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     /**
      * Returns the key pair in the form of an object as below.
      */
-    pair(): CryptoKeyPair;
+    pair(): IGunCryptoKeyPair;
     /**
      * Log out currently authenticated user. Parameters are unused in the current implementation.
      * @param opt unused in current implementation.
