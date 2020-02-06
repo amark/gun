@@ -1165,9 +1165,9 @@
         check.pubs(eve, msg, val, key, soul, at, no); return;
       }
       if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
-        check.pub(eve, msg, val, key, soul, at, no, (msg._||noop).user, tmp); return;
+        check.pub(eve, msg, val, key, soul, at, no, (msg._||'').user, tmp); return;
       }
-      check.any(eve, msg, val, key, soul, at, no, (msg._||noop).user); return;
+      check.any(eve, msg, val, key, soul, at, no, (msg._||'').user); return;
       eve.to.next(msg); // not handled
     }
     check.hash = function(eve, msg, val, key, soul, at, no){

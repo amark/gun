@@ -622,9 +622,9 @@
 			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 9 * 3};
 			dup.check = function(id){
 				if(!s[id]){ return false }
-				return dup.track(id);
+				return dt(id);
 			}
-			dup.track = function(id){
+			var dt = dup.track = function(id){
 				var it = s[id] || (s[id] = {});
 				it.was = +new Date;
 				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
@@ -720,7 +720,7 @@
 				var eve = this, as = eve.as, at = as.at || as, gun = at.$, dup = at.dup, tmp;
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
 				if(dup.check(tmp)){ return } dup.track(tmp);
-				tmp = msg._; msg._ = ('function' == typeof msg._)? msg._ : function(){};
+				tmp = msg._; msg._ = ('function' == typeof tmp)? tmp : function(){};
 				if(msg.get){ Gun.on.get(msg, gun) }
 				if(msg.put){ PUT(msg, gun) }
 				eve.to.next(msg);
@@ -730,22 +730,22 @@
 		;(function(){
 			Gun.on.put2 = function(msg, gun){
 				var ctx = msg._, root = ctx.root = gun._, id = msg['#'];
-				var ack = ctx.ack = function(put){ put = put || {};
-					if(ack.err = ack.err || (put||{}).err){
+				var ack = ctx.ack = function(soul, key, val, state){
+					if(ack.err){
 						if(ack.s){ root.on('in', {'@': id, err: Gun.log(ack.err)}) }
 						return ack.s = u;
 					}
-					var soul = put['#'], key = put['.'], val = put[':'], state = put['>'], tmp;
-					if((tmp = ack.s||{})[soul+key]){
-						delete tmp[soul+key];
-						root.on('put2', {put: put});
+					var acks, tmp;
+					if((acks = ack.s||'')[tmp = soul+key]){
+						delete acks[tmp];
+						root.on('put2', {put: {'#': soul, '.': key, ':': val, '>': state}});
 					}
-					if(!obj_empty(ack.s)){ return } // keep waiting
+					if(!obj_empty(acks)){ return } // keep waiting
 					console.log("I'm all done!!!");
 				}
 				ack.err = obj_map(msg.put, nodes, msg);
 				msg = ctx = u;
-				if(ack.err){ return ack() }
+				if(ack.err){ ack(); return }
 			}
 			function nodes(node, soul){
 				if(!node){ return ERR+cut(soul)+"no node." }
@@ -759,13 +759,13 @@
 			}
 			function souls(val, key){
 				if(node_ === key){ return }
-				var ctx = this._, node = ctx.node, soul = ctx.soul, state = ctx.states[key];
+				var ctx = this._, soul = ctx.soul, state = ctx.states[key], tmp;
 				if(u === state){ return ERR+cut(key)+"on"+cut(soul)+"no state." }
 				if(!val_is(val)){ return ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val) }
-				ham(ctx.root.graph, soul, key, val, state, ctx.ack); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
+				((tmp = ctx.ack).s || (tmp.s = {}))[soul+key] = 1;
+				ham(ctx.root.graph, soul, key, val, state, tmp); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
 			}
 			function ham(graph, soul, key, val, state, ack){
-				(ack.s || (ack.s = {}))[soul+key] = 1;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var machine = State(), is = HAM(machine, state, was, val, known), u;
 				if(!is.incoming){
@@ -776,10 +776,10 @@
 						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
 						return;
 					}
-					if(ack){ ack({'#': soul, '.': key}) }
+					if(ack){ ack(soul, key) }
 					return;
 				}
-				if(ack){ ack({'#': soul, '.': key, ':': val, '>': state}) }
+				if(ack){ ack(soul, key, val, state) }
 			}
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 			var ERR = "Error: Invalid graph!";
@@ -2045,7 +2045,7 @@
 			opt.gap = opt.gap || opt.wait || 0;
 			opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
 
-			var dup = root.dup;
+			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
 			// TODO: somewhere in here caused a out-of-memory crash! How? It is inbound!
 			mesh.hear = function(raw, peer){
@@ -2054,29 +2054,27 @@
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if('{' != raw[2]){ mesh.hear.d += raw.length||0; ++mesh.hear.c; } // STATS! // ugh, stupid double JSON encoding
 				if('[' === tmp){
-					try{msg = JSON.parse(raw);}catch(e){opt.log('DAM JSON parse error', e)}
+					try{msg = JSON.parse(raw)}catch(e){opt.log('DAM JSON parse error', e)}
 					raw = '';
 					if(!msg){ return }
 					LOG && opt.log(+new Date, msg.length, '# on hear batch');
 					(function go(){ // stats on single msg is 99% spike of batch stats.
 						var m, i = 0, c = 100; // hardcoded for now?
-						while(c-- && (m = msg[i++])){
-							mesh.hear(m, peer);
-						}
-						msg = msg.slice(i);
+						while(c-- && (m = msg[i++])){ mesh.hear(m, peer) }
+						msg = msg.slice(i); // slicing after is faster than shifting during.
 						// TODO: consider triggering peer flush to response times speedier!
 						if(!msg.length){ return }
 						puff(go, 1);
 					}());
 					return;
 				}
-				if('{' === tmp || (Type.obj.is(raw) && (msg = raw))){
+				if('{' === tmp || (obj_is(raw) && (msg = raw))){
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
 					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', msg['#']) }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
-					if(dup.check(id)){ return }
+					if(dup_check(id)){ return }
 					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
@@ -2085,17 +2083,17 @@
 					if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
 					*/ // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
 					(msg._ = function(){}).via = peer;
-					if(msg.dam){
-						if(tmp = mesh.hear[msg.dam]){
+					if(tmp = msg.dam){
+						if(tmp = mesh.hear[tmp]){
 							tmp(msg, peer, root);
 						}
-						dup.track(id);
+						dup_track(id);
 						return;
 					}
 					var S, ST; LOG && (S = +new Date); console.STAT = {};
 					//root.on('in', msg);
 					root.on('in2', msg);
-					dup.track(id);
+					dup_track(id);
 					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					return;
 				}
@@ -2316,6 +2314,7 @@
 
 	  var empty = {}, ok = true, u;
 		var LOG = console.LOG;
+		var obj_is = Type.obj.is, obj_map = Type.obj.map;
 
 	  try{ module.exports = Mesh }catch(e){}
 
