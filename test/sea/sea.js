@@ -171,21 +171,49 @@ describe('SEA', function(){
       expect({a:1}).to.eql(v);
       SEA.encrypt(JSON.stringify({a:1}), pair, function(s){
       SEA.decrypt(s, pair, function(v){
-      expect({a:1}).to.eql(v);
+      expect(JSON.stringify({a:1})).to.eql(v);
       done();
       });});});});});});});});});});});});});});});});});});});});});});});});});});});
     })
-    
-    /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
-      var pair, s, v;
-      SEA.pair(function(pair){
-      SEA.encrypt('4e2', pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(400).to.be(v);
-      done();
-      });});});
-    })*/
-    
+
+    it('Keep the data type.', function(done) {
+      this.timeout(9000);
+      var gun = Gun();
+      var user = gun.user();
+      user.create('mario', 'password');
+      gun.on('auth', function(){
+        var pubref = gun.get('Keep the data type').get('value').put(null);
+        var ref = user.get('test').get('data').put(null, function() {
+        /// For user nodes
+        ref.once(function(v) { expect(v).to.eql(null);
+
+        ref.put(400, function() {
+        ref.once(function(v) { expect(v).to.eql(400);
+
+        ref.put('null', function() {
+        ref.once(function(v) { expect(v).to.eql('null');
+
+        ref.put('4e2', function() {
+        ref.once(function(v) { expect(v).to.eql('4e2');
+
+        /// For pub nodes
+        pubref.put(400, function() {
+        pubref.once(function(v) { expect(v).to.eql(400);
+
+        pubref.put('null', function() {
+        pubref.once(function(v) { expect(v).to.eql('null');
+
+        pubref.put('4e2', function() {
+        pubref.once(function(v) { expect(v).to.eql('4e2');
+
+        //ref.put('SEA{}', function() {
+        //ref.once(function(v) { expect(v).to.eql('SEA{}');
+        //gun.get('keepdata').get('seaempty').put('SEA{}', function(ack) { console.log('ACKKK: ', ack);
+        //gun.get('keepdata').get('seaempty').once(function(v) { expect(v).to.eql('SEA{}'); console.log('ONCE %s: ', typeof v, v);
+        done();});});});});});});});});});});});});});});//});});});});
+      });
+    });
+
     it('legacy', function(done){ (async function(){
       var pw = 'test123';
       // https://cdn.jsdelivr.net/npm/gun@0.9.99999/sea.js !
@@ -274,16 +302,6 @@ describe('SEA', function(){
       expect(dup).to.not.be.eql(sig);
       done();
     }())})
-
-    it('SEA - String changed to Number after encrypt/decrypt', function(done) {
-      /// https://github.com/amark/gun/issues/804
-      SEA.encrypt('4e2', 'asdf', function(enc) {
-        SEA.decrypt(enc, 'asdf', function(dec) { // 400, numeric
-          expect(enc===dec).to.be(true);
-          done();
-        });
-      });
-    });
   });
 
   describe('User', function(){
