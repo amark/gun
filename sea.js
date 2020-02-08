@@ -1151,10 +1151,11 @@
     }
 
     var u;
-    function check(msg){
+    function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
       var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
       //console.log("security check", msg);
-      var no = function(why){ at.on('in', {'@': id, err: why}) }
+      //var no = function(why){ at.on('in', {'@': id, err: why}) }
+      var no = function(why){ msg.ack(why) }
       if('#' === soul){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
       } 
@@ -1167,7 +1168,7 @@
       if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
         check.pub(eve, msg, val, key, soul, at, no, (msg._||'').user, tmp); return;
       }
-      check.any(eve, msg, val, key, soul, at, no, (msg._||'').user); return;
+      check.any(eve, msg, val, key, soul, at, no, (msg._||'noop').user); return;
       eve.to.next(msg); // not handled
     }
     check.hash = function(eve, msg, val, key, soul, at, no){
@@ -1191,7 +1192,6 @@
         if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!");
       }
-      check['user'+soul+key] = 1;
       if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
         SEA.sign(msg.put, (user._).sea, function(data){ var rel;
           if(u === data){ return no(SEA.err || 'Signature fail.') }

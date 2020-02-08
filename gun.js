@@ -596,9 +596,9 @@
 		USE('./onto'); // depends upon onto!
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
-			if(!(cb instanceof Function)){
+			if(!('function' == typeof cb)){
 				if(!cb || !as){ return }
-				var id = cb['#'] || cb, tmp = (this.tag||empty)[id];
+				var id = cb['#'] || cb, tmp = (this.tag||'')[id];
 				if(!tmp){ return }
 				tmp = this.on(id, as);
 				clearTimeout(tmp.err);
@@ -653,7 +653,7 @@
 
 		Gun.is = function($){ return ($ instanceof Gun) || ($ && $._ && ($ === $._.$)) || false }
 
-		Gun.version = 0.9;
+		Gun.version = 0.2020;
 
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
@@ -680,8 +680,8 @@
 				if(!at.once){
 					at.on('in', root, at);
 					at.on('in2', root2, at);
+					at.on('put2', map, at);
 					at.on('out', root, {at: at, out: root});
-					at.on('put2', cache, at);
 					Gun.on('create', at);
 					at.on('create', at);
 				}
@@ -689,6 +689,7 @@
 				return gun;
 			}
 			function root(msg){
+				if(msg.out === root2){ this.to.next(msg); return }
 				//add to.next(at); // TODO: MISSING FEATURE!!!
 				var ev = this, as = ev.as, at = as.at || as, gun = at.$, dup, tmp;
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
@@ -722,81 +723,92 @@
 				if(dup.check(tmp)){ return } dup.track(tmp);
 				tmp = msg._; msg._ = ('function' == typeof tmp)? tmp : function(){};
 				if(msg.get){ Gun.on.get(msg, gun) }
-				if(msg.put){ PUT(msg, gun) }
+				if(msg.put){ put(msg, gun) }
 				eve.to.next(msg);
+				msg.out = root2; at.on('out', msg); // EXPERIMENTAL!
 			}
-		}());
-
-		;(function(){
-			Gun.on.put2 = function(msg, gun){
-				var ctx = msg._, root = ctx.root = gun._, id = msg['#'];
-				var ack = ctx.ack = function(soul, key, val, state){
-					if(ack.err){
-						if(ack.s){ root.on('in', {'@': id, err: Gun.log(ack.err)}) }
-						return ack.s = u;
+			function put(msg, gun){
+				var ctx = msg._, root = ctx.root = gun._, put = msg.put, id = msg['#'], mid = 1;
+				if(put['#']){ root.on('put2', msg); return }
+				var all = ctx.all = function(err, ok){
+					if(!id){ return }
+					if(all.err = all.err || err){
+						root.on('in', {'@': id, err: Gun.log(all.err)});
+						return id = u;
 					}
-					var acks, tmp;
-					if((acks = ack.s||'')[tmp = soul+key]){
-						delete acks[tmp];
-						root.on('put2', {put: {'#': soul, '.': key, ':': val, '>': state}});
-					}
-					if(!obj_empty(acks)){ return } // keep waiting
-					console.log("I'm all done!!!");
-				}
-				ack.err = obj_map(msg.put, nodes, msg);
-				msg = ctx = u;
-				if(ack.err){ ack(); return }
+					if(mid){ return }
+					if(!obj_empty(all.s)){ return } // keep waiting
+					root.on('in', {'@': id, ok: ok || 1});
+					id = u;
+				};
+				all.err = obj_map(put, valid, msg);
+				ctx.node = ctx.state = u;
+				mid = msg = ctx = u;
+				all();
 			}
-			function nodes(node, soul){
+			function valid(node, soul){
 				if(!node){ return ERR+cut(soul)+"no node." }
 				var ctx = this._, tmp;
+					(ctx.root.opt||'').super && ctx.root.$.get(soul); // I think we need super for now, but since we are rewriting, should consider getting rid of it.
 				if(!(tmp = node._)){ return ERR+cut(soul)+"no meta." }
 				ctx.node = node;
 				if(soul !== tmp[_soul]){ return ERR+cut(soul)+"soul not same." }
 				ctx.soul = soul;
 				if(!(ctx.states = tmp[state_])){ return ERR+cut(soul)+"no state." }
-				return obj_map(node, souls, this);
+				return obj_map(node, mix, this);
 			}
-			function souls(val, key){
+			function mix(val, key){
 				if(node_ === key){ return }
 				var ctx = this._, soul = ctx.soul, state = ctx.states[key], tmp;
 				if(u === state){ return ERR+cut(key)+"on"+cut(soul)+"no state." }
 				if(!val_is(val)){ return ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val) }
-				((tmp = ctx.ack).s || (tmp.s = {}))[soul+key] = 1;
-				ham(ctx.root.graph, soul, key, val, state, tmp); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
+				ham(val, key, soul, state, ctx); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
 			}
-			function ham(graph, soul, key, val, state, ack){
+			function ham(val, key, soul, state, ctx){
+				var root = ctx.root, graph = root.graph, id = soul+key, all = ctx.all, alls;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var machine = State(), is = HAM(machine, state, was, val, known), u;
+				(alls = all.s || (all.s = {}))[id] = 1;
 				if(!is.incoming){
 					if(is.defer){
 						var to = is.defer - machine;
 						setTimeout(function(){
-							ham(graph, soul, key, val, state, cb);
+							ham(val, key, soul, state, ctx);
 						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
 						return;
 					}
-					if(ack){ ack(soul, key) }
+					delete alls[id];
+					all(u, -1);
 					return;
 				}
-				if(ack){ ack(soul, key, val, state) }
+				root.on('put2', {put: {'#': soul, '.': key, ':': val, '>': state}, ack: function(err, ok){
+					delete alls[id];
+					all(err, ok);
+				}});
 			}
-			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
+			function map(msg){
+      	var eve = this, root = eve.as, graph = root.graph, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+				graph[soul] = state_ify(graph[soul], key, state, val, soul);
+				debounce(root, soul, key,val, state); // TODO: This should NOT be how the API works, this should be done at an extension layer, but hacky solution to migrate with old code for now.
+				eve.to.next(msg);
+			}
+			function debounce(root, soul, key,val, state){ var tmp;
+				if(!(tmp = root.next[soul]) || !tmp.$){ return }
+				tmp.change = state_ify(tmp.change, key, state, val, soul);
+				tmp.put = state_ify(tmp.put, key, state, val, soul);
+				if(tmp.wait){ return }
+				tmp.wait = setTimeout(function(){
+					var change = tmp.change; tmp.change = tmp.wait = null;
+					root.stop = this.stop; // temporary fix till a better solution?
+					tmp.on('in', {$: tmp.$, get: soul, put: change});
+					root.stop = null; // temporary fix till a better solution?
+				},0);
+
+			}
 			var ERR = "Error: Invalid graph!";
+			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
+			var HAM = Gun.HAM, MD = 2147483647, State = Gun.state;
 		}());
-		var PUT = Gun.on.put2;
-		var HAM = Gun.HAM, MD = 2147483647, State = Gun.state;
-		function cache(msg){
-			var eve = this, root = eve.as, graph = root.graph;
-			var put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'];
-			graph[soul] = state_ify(graph[soul], key, state, val, soul);
-			// trigger chains // trigger after all individual values cached?
-			if(eve.to.last === eve.to.next){
-				console.log("THE END, reply back");
-				return;
-			}
-			eve.to.next(msg);
-		}
 
 		;(function(){
 			Gun.on.put = function(msg, gun){
@@ -901,8 +913,8 @@
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				root.on('in', {
 					'@': msg['#'],
-					how: 'mem',
 					put: node,
+					ram: 1,
 					$: gun,
 					_: faith
 				});
@@ -1926,7 +1938,7 @@
 			}
 
 			root.on('out', function(msg){
-				if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
+				if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs. // THIS IS BLOCKING BROWSERS REPLYING TO REQUESTS, NO??? CHANGE THIS SOON!! UNDER CONTROLLED CIRCUMSTANCES!! Or maybe in-memory already doe sit?
 				if(Gun.is(msg.$) && msg.put && !msg['@']){
 					id = msg['#'];
 					Gun.graph.is(msg.put, null, map);
@@ -2000,7 +2012,7 @@
 					data = Gun.state.to(data, has);
 				}
 				//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
-				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
+				root.on('in', {'@': msg['#'], put: Gun.graph.node(data), lS:1});// || root.$});
 				};
 				Gun.debug? setTimeout(to,1) : to();
 			});
@@ -2062,7 +2074,7 @@
 						var m, i = 0, c = 100; // hardcoded for now?
 						while(c-- && (m = msg[i++])){ mesh.hear(m, peer) }
 						msg = msg.slice(i); // slicing after is faster than shifting during.
-						// TODO: consider triggering peer flush to response times speedier!
+						flush(peer); // TODO: consider triggering peer flush to response times speedier!
 						if(!msg.length){ return }
 						puff(go, 1);
 					}());
@@ -2074,7 +2086,7 @@
 					if(!msg){ return }
 					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', msg['#']) }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
-					if(dup_check(id)){ return }
+					if(tmp = dup_check(id)){ return }
 					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
@@ -2082,7 +2094,7 @@
 					}
 					if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
 					*/ // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
-					(msg._ = function(){}).via = peer;
+					(msg._ = function(){}).via = mesh.leap = peer;
 					if(tmp = msg.dam){
 						if(tmp = mesh.hear[tmp]){
 							tmp(msg, peer, root);
@@ -2091,9 +2103,9 @@
 						return;
 					}
 					var S, ST; LOG && (S = +new Date); console.STAT = {};
-					//root.on('in', msg);
-					root.on('in2', msg);
-					dup_track(id);
+					msg.put? root.on('in2', msg) : root.on('in', msg); // come on, pretty epic live upgrade path for tens of millions of users, no? Oh boy, this is a TEMPORARY hack, make sure future versions are stable. // REMEMBER!!! When you "finish" this, check all adapters, especially RAD, SEA, AXE, UDP & others!!!
+					dup_track(id).via = peer;
+					mesh.leap = null; // warning! mesh.leap could be buggy.
 					if(LOG && !msg.nts && (ST = +new Date - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)) }
 					return;
 				}
@@ -2113,20 +2125,20 @@
 					var S; LOG && (S = +new Date); //msg.DBG_s = msg.DBG_s || +new Date;
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
-					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
+					//if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(!(raw = meta.raw)){
 						raw = mesh.raw(msg);
-						if(hash && (tmp = msg['@'])){
+						/*if(hash && (tmp = msg['@'])){
 							dup.track(tmp+hash).it = it(msg);
 							if(tmp = (dup.s[tmp]||ok).it){
 								if(hash === tmp['##']){ return false }
 								tmp['##'] = hash;
 							}
-						}
+						}*/
 					}
 					//LOG && opt.log(S, +new Date - S, 'say prep');
-					dup.track(id).it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
-					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
+					dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
+					if(!peer){ peer = ((tmp = dup.s[msg['@']]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && msg['@']){
 						LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
 						return false;
@@ -2141,39 +2153,42 @@
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
 					if(id === peer.last){ return } peer.last = id;  // was it just sent?
-					if(peer === meta.via){ return false }
+					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.to) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 					if(peer.batch){
 						peer.tail = (tmp = peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
-							peer.batch.push(raw); // peer.batch += (tmp?'':',')+raw; // TODO: Prevent double JSON! // FOR v1.0 !?
+							//peer.batch.push(raw);
+							peer.batch += (tmp?',':'')+raw; // TODO: Prevent double JSON! // FOR v1.0 !?
 							return;
 						}
 						flush(peer);
 					}
-					peer.batch = []; // peer.batch = '['; // TODO: Prevent double JSON!
+					//peer.batch = [];
+					peer.batch = '['; // TODO: Prevent double JSON!
 					var S, ST; LOG && (S = +new Date);
 					setTimeout(function(){
 						LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, '1ms TO');
-						flush(peer)
+						flush(peer);
 					}, opt.gap);
 					send(raw, peer);
 				}
-				function flush(peer){
-					var tmp = peer.batch; // var tmp = peer.batch + ']'; // TODO: Prevent double JSON!
-					peer.batch = peer.tail = null;
-					if(!tmp){ return }
-					if(!tmp.length){ return } // if(3 > tmp.length){ return } // TODO: ^
-					var S, ST; LOG && (S = +new Date);
-					try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
-					}catch(e){return opt.log('DAM JSON stringify error', e)}
-					LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'say stringify', tmp.length);
-					if(!tmp){ return }
-					send(tmp, peer);
-				}
 				mesh.say.c = mesh.say.d = 0;
 			}());
-			
+
+			function flush(peer){
+				var tmp = peer.batch, t = 'string' == typeof tmp, l;
+				if(t){ tmp += ']' }// TODO: Prevent double JSON!
+				peer.batch = peer.tail = null;
+				if(!tmp){ return }
+				if(t? 3 > tmp.length : !tmp.length){ return } // TODO: ^
+				var S, ST; LOG && (S = +new Date);
+				if(!t){try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
+				}catch(e){return opt.log('DAM JSON stringify error', e)}}
+				LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'say stringify', tmp.length);
+				if(!tmp){ return }
+				send(tmp, peer);
+			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
 				var wire = peer.wire;
@@ -2196,12 +2211,12 @@
 					if(!msg){ return '' }
 					var meta = (msg._) || {}, put, hash, tmp;
 					if(tmp = meta.raw){ return tmp }
-					if(typeof msg === 'string'){ return msg }
-					if(!msg.dam){
+					if('string' == typeof msg){ return msg }
+					/*if(!msg.dam){ // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
 						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
 							to.push(p.url || p.pid || p.id); if(++i > 3){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids. // REDUCED THIS TO 3 for temporary relay peer performance, towers still should list neighbors.
 						}); if(i > 1){ msg['><'] = to.join() }
-					}
+					}*/  // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
 					var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
 					/*if(u !== put){
 						tmp = raw.indexOf(_, raw.indexOf('put'));
