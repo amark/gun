@@ -102,11 +102,14 @@
 				if('string' != typeof (tmp = get['#'])){ return }
 				return tmp;
 			}
+			// TODO: AXE NEEDS TO BE CHECKED FOR NEW CODE SYSTEM!!!!!!!!!!
 
 			var Rad = (Gun.window||{}).Radix || USE('./lib/radix', 1);
 			at.opt.dht = Rad();
-			at.on('in', function input(msg){
-				var to = this.to, peer = (msg._||{}).via;
+			at.on('in', input);
+			at.on('in2', input);
+			function input(msg){
+				var to = this.to, peer = (msg._||'').via || mesh.leap; // warning! mesh.leap could be buggy!
 				var dht = opt.dht;
 				var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 				var get = msg.get, hash, tmp;
@@ -131,8 +134,8 @@
 						}
 					}*/
 				}
-				if((tmp = msg['@']) && (tmp = at.dup.s[tmp]) && (tmp = tmp.it)){
-					(tmp = (tmp._||{})).ack = (tmp.ack || 0) + 1; // count remote ACKs to GET.
+				if((tmp = msg['@']) && (tmp = at.dup.s[tmp])){
+					tmp.ack = (tmp.ack || 0) + 1; // count remote ACKs to GET.
 				}
 				to.next(msg);
 
@@ -147,7 +150,7 @@
 						});
 					});
 				}
-			});
+			};
 
 			//try{console.log(req.connection.remoteAddress)}catch(e){};
 			mesh.hear['opt'] = function(msg, peer){
@@ -209,7 +212,7 @@
 								if(peers === opt.peers){ return } // prevent infinite lack loop.
 								return meta.turn = 0, chat(opt.peers, peers) 
 							}
-							var hash = msg['##'], ack = meta.ack;
+							var hash = msg['##'], ack = meta.ack || at.dup.s[msg['#']];
 							meta.lack = setTimeout(function(){
 								if(ack && hash && hash === msg['##']){ return }
 								if(meta.turn >= (axe.turns || 3)){ return } // variable for later! Also consider ACK based turn limit.
@@ -254,24 +257,6 @@
 						}
 					});
 				};
-				/*var connections = 0; // THIS HAS BEEN MOVED TO CORE NOW!
-				at.on('hi', function(opt) {
-					this.to.next(opt);
-					//console.log('AXE PEER [HI]', new Date(), opt);
-					connections++;
-					/// The first connection don't need to resubscribe the nodes.
-					if (connections === 1) { return; }
-					/// Resubscribe all nodes.
-					setTimeout(function() {
-						var souls = Object.keys(at.graph);
-						for (var i=0; i < souls.length; ++i) {
-							//at.gun.get(souls[i]).off();
-							at.next[souls[i]].ack = 0;
-							at.gun.get(souls[i]).once(function(){});
-						}
-					//location.reload();
-					}, 500);
-				}, at);*/
 			}
 			axe.up = {};
 			at.on('hi', function(peer){

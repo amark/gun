@@ -1,1 +1,1 @@
-web: node --inspect trace.js
+web: node --prof trace.js
