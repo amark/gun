@@ -38,7 +38,9 @@ describe('SEA', function(){
   var pub;
   describe('Utility', function(){
     it('generates aeskey from jwk', function(done) {
-      SEA.aeskey('x','x').then(k => {
+      console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
+      SEA.opt.aeskey('x','x').then(k => {
+        //console.log("DATA", k.data);
         expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')
         done()
       })
@@ -138,6 +140,16 @@ describe('SEA', function(){
       done();
       });});});
     })
+    
+    /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
+      var pair, s, v;
+      SEA.pair(function(pair){
+      SEA.encrypt('4e2', pair, function(s){
+      SEA.decrypt(s, pair, function(v){
+      expect(400).to.be(v);
+      done();
+      });});});
+    })*/
     
     it('legacy', function(done){ (async function(){
       var pw = 'test123';

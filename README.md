@@ -9,7 +9,7 @@
 
 Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
 
-Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. are already pushing terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
+Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>
@@ -117,7 +117,8 @@ Thanks to:<br/>
 <a href="http://github.com/velua">John Williamson</a>,
 <a href="http://github.com/finwo">Robin Bron</a>,
 <a href="http://github.com/ElieMakhoul">Elie Makhoul</a>,
-<a href="http://github.com/mikestaub">Mike Staub</a>
+<a href="http://github.com/mikestaub">Mike Staub</a>,
+<a href="http://github.com/bmatusiak">Bradley Matusiak</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
@@ -185,28 +186,24 @@ rm -rf *data*
 
 ### Additional Cryptography Libraries
 
-To install with npm, first install `npm install gun -S`.
-For just the networking layer, import Gun:
+ > These are only needed for NodeJS, they shim the native Browser WebCrypto API.
+
+If you want to use [SEA](https://gun.eco/docs/SEA) for `User` auth and security, you will need to install:
+
+`npm install text-encoding isomorphic-webcrypto --save`
+
+Then you can require [SEA](https://gun.eco/docs/SEA) without an error:
 
 ```javascript
-var Gun = require('gun/gun');
+var GUN = require('gun/gun');
+var SEA = require('gun/sea');
 ```
-
-If you also need to install SEA for user auth and crypto, also install some of its dependencies like this:
-
-`npm install text-encoding @peculiar/webcrypto --save`
-
-You will need to require it too (it will be automatically added to the Gun object):
-
-```javascript
-var Gun = require('gun/gun');
-var Sea = require('gun/sea');
-```
-
 
 ## Deploy
 
-To quickly spin up a Gun test server for your development team, utilize either [Heroku](http://heroku.com) or [Docker](http://docker.com) or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. !
+ > Note: The default examples that get auto-deployed on `npm start` CDN-ify all GUN files, modules, & storage.
+
+To quickly spin up a GUN relay peer for your development team, utilize either [Heroku](http://heroku.com), [Docker](http://docker.com), any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. ! Or use all of them so your relays are decentralized too!
 
 ### [Heroku](https://www.heroku.com/)
 
@@ -242,6 +239,8 @@ Add a Node.js app, select your GUN fork, set `npm start` start as the command an
 Then visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
+
+ > Warning: Docker image is community contributed and may be old with missing security updates, please check version numbers to compare.
 
 [![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
 

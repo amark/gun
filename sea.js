@@ -325,7 +325,7 @@
 
       var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
-      var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      var sa = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
@@ -345,7 +345,7 @@
       // Next: ECDH keys for encryption/decryption...
 
       try{
-      var dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      var dh = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         var key = {};
@@ -404,8 +404,8 @@
       var priv = pair.priv;
       var jwk = S.jwk(pub, priv);
       var hash = await sha(json);
-      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['sign'])
-      .then((key) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
+      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
+      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
       var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
 
@@ -439,12 +439,12 @@
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       var pub = pair.pub || pair;
-      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, S.ecdsa.pair, false, ['verify']);
+      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
       var hash = await sha(json.m);
       var buf, sig, check, tmp; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
         sig = new Uint8Array(buf);
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash));
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash));
         if(!check){ throw "Signature did not match." }
       }catch(e){
         if(SEA.opt.fallback){
@@ -470,7 +470,7 @@
     var keyForPair = SEA.opt.slow_leak = pair => {
       if (knownKeys[pair]) return knownKeys[pair];
       var jwk = S.jwk(pair);
-      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, S.ecdsa.pair, false, ["verify"]);
+      knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ["verify"]);
       return knownKeys[pair];
     };
 
@@ -482,12 +482,12 @@
       var buf; var sig; var check; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
         sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }catch(e){
         buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
         sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify(S.ecdsa.sign, key, sig, new Uint8Array(hash))
+        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }
       var r = check? S.parse(json.m) : u;
@@ -612,7 +612,7 @@
       var epriv = pair.epriv;
       var ecdhSubtle = shim.ossl || shim.subtle;
       var pubKeyData = keysToEcdhJwk(pub);
-      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },S.ecdh); // Thanks to @sirpy !
+      var props = Object.assign({ public: await ecdhSubtle.importKey(...pubKeyData, true, []) },{name: 'ECDH', namedCurve: 'P-256'}); // Thanks to @sirpy !
       var privKeyData = keysToEcdhJwk(epub, epriv);
       var derived = await ecdhSubtle.importKey(...privKeyData, false, ['deriveBits']).then(async (privKey) => {
         // privateKey scope doesn't leak out from here!
@@ -643,7 +643,7 @@
           jwk,
           { x: x, y: y, kty: 'EC', crv: 'P-256', ext: true }
         ), // ??? refactor
-        S.ecdh
+        {name: 'ECDH', namedCurve: 'P-256'}
       ]
     }
 
@@ -659,7 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
-    SEA.aeskey = USE('./aeskey');
+    SEA.opt.aeskey = USE('./aeskey'); // not official!
 
     SEA.random = SEA.random || shim.random;
 

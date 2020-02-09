@@ -619,7 +619,7 @@
 		var Type = USE('./type');
 		function Dup(opt){
 			var dup = {s:{}};
-			opt = opt || {max: 1000, age: 1000 * 9};//1000 * 60 * 2};
+			opt = opt || {max: 1000, age: /*1000 * 9};//*/ 1000 * 9 * 3};
 			dup.check = function(id){ var tmp;
 				if(!(tmp = dup.s[id])){ return false }
 				if(tmp.pass){ return tmp.pass = false }
@@ -629,17 +629,16 @@
 				var it = dup.s[id] || (dup.s[id] = {});
 				it.was = time_is();
 				if(pass){ it.pass = true }
-				if(!dup.to){
-					dup.to = setTimeout(function(){
-						var now = time_is();
-						Type.obj.map(dup.s, function(it, id){
-							if(it && opt.age > (now - it.was)){ return }
-							Type.obj.del(dup.s, id);
-						});
-						dup.to = null;
-					}, opt.age + 9);
-				}
+				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
 				return it;
+			}
+			dup.drop = function(age){
+				var now = time_is();
+				Type.obj.map(dup.s, function(it, id){
+					if(it && (age || opt.age) > (now - it.was)){ return }
+					Type.obj.del(dup.s, id);
+				});
+				dup.to = null;
 			}
 			return dup;
 		}
@@ -702,7 +701,8 @@
 					return;
 				}
 				dup.track(tmp);
-				if(!at.ask(msg['@'], msg)){
+				if(tmp = msg['@']){ dup.track(tmp) } // HNPERF: Bump original request's liveliness.
+				if(!at.ask(tmp, msg)){
 					if(msg.get){
 						Gun.on.get(msg, gun); //at.on('get', get(msg));
 					}
@@ -721,18 +721,21 @@
 		;(function(){
 			Gun.on.put = function(msg, gun){
 				var at = gun._, ctx = {$: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@'], cat: at, stop: {}};
+				if(!Gun.obj.map(msg.put, perf, ctx)){ return } // HNPERF: performance test, not core code, do not port.
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 				if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 				obj_map(ctx.put, merge, ctx);
 				if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 				if(u !== ctx.defer){
+					var to = ctx.defer - ctx.machine;
 					setTimeout(function(){
 						Gun.on.put(msg, gun);
-					}, ctx.defer - ctx.machine);
+					}, to > MD? MD : to ); // setTimeout Max Defer 32bit :(
 				}
 				if(!ctx.diff){ return }
 				at.on('put', obj_to(msg, {put: ctx.diff}));
 			};
+			var MD = 2147483647;
 			function verify(val, key, node, soul){ var ctx = this;
 				var state = Gun.state.is(node, key), tmp;
 				if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
@@ -798,6 +801,7 @@
 				(msg.$._).on('in', msg);
 				this.cat.stop = null; // temporary fix till a better solution?
 			}
+			function perf(node, soul){ if(node !== this.graph[soul]){ return true } } // HNPERF: do not port!
 
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
@@ -811,15 +815,17 @@
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
 				} else {
-					node = Gun.obj.copy(node);
+					node = Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				}
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
+				var faith = function(){}; faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				root.on('in', {
 					'@': msg['#'],
 					how: 'mem',
 					put: node,
-					$: gun
+					$: gun,
+					_: faith
 				});
 				//if(0 < tmp){ return }
 				root.on('get', msg);
@@ -1962,6 +1968,7 @@
 
 			var dup = root.dup;
 
+			// TODO: somewhere in here caused a out-of-memory crash! How? It is inbound!
 			mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				var msg, id, hash, tmp = raw[0];
@@ -1990,11 +1997,11 @@
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 					if(dup.check(id)){ return }
-					dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+					dup.track(id, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
-						dup.track(tmp+hash, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+						dup.track(tmp+hash, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 					}
 					(msg._ = function(){}).via = peer;
 					if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
@@ -2004,9 +2011,9 @@
 						}
 						return;
 					}
-					var S; LOG && (S = +new Date);
+					var S, ST; LOG && (S = +new Date);
 					root.on('in', msg);
-					LOG && !msg.nts && opt.log(S, +new Date - S, 'msg', msg['#']);
+					LOG && !msg.nts && (ST = +new Date - S) > 9 && opt.log(S, ST, 'msg', msg['#']);
 					return;
 				}
 			}
@@ -2014,6 +2021,7 @@
 			mesh.hear.c = mesh.hear.d = 0;
 
 			;(function(){
+				var SMIA = 0;
 				var message;
 				function each(peer){ mesh.say(message, peer) }
 				mesh.say = function(msg, peer){
@@ -2025,24 +2033,28 @@
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 					if(!(raw = meta.raw)){
-						raw = meta.raw = mesh.raw(msg);
+						raw = mesh.raw(msg);
 						if(hash && (tmp = msg['@'])){
-							dup.track(tmp+hash).it = msg;
+							dup.track(tmp+hash).it = it(msg);
 							if(tmp = (dup.s[tmp]||ok).it){
 								if(hash === tmp['##']){ return false }
 								tmp['##'] = hash;
 							}
 						}
 					}
-					LOG && opt.log(S, +new Date - S, 'say prep');
-					dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
+					//LOG && opt.log(S, +new Date - S, 'say prep');
+					dup.track(id).it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 					if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
+					if(!peer && msg['@']){
+						LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
+						return false;
+					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
-						var S; LOG && (S = +new Date);
+						//var S; LOG && (S = +new Date);
 						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						LOG && opt.log(S, +new Date - S, 'say loop');
+						//LOG && opt.log(S, +new Date - S, 'say loop');
 						return;
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -2079,20 +2091,21 @@
 			// for now - find better place later.
 			function send(raw, peer){ try{
 				var wire = peer.wire;
-				var S; LOG && (S = +new Date);
+				var S, ST; LOG && (S = +new Date);
 				if(peer.say){
 					peer.say(raw);
 				} else
 				if(wire.send){
 					wire.send(raw);
 				}
-				LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
+				LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
 			}}
 
 			;(function(){
+				// TODO: this caused a out-of-memory crash!
 				mesh.raw = function(msg){ // TODO: Clean this up / delete it / move logic out!
 					if(!msg){ return '' }
 					var meta = (msg._) || {}, put, hash, tmp;
@@ -2100,7 +2113,7 @@
 					if(typeof msg === 'string'){ return msg }
 					if(!msg.dam){
 						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-							to.push(p.url || p.pid || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids.
+							to.push(p.url || p.pid || p.id); if(++i > 3){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids. // REDUCED THIS TO 3 for temporary relay peer performance, towers still should list neighbors.
 						}); if(i > 1){ msg['><'] = to.join() }
 					}
 					var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
@@ -2109,7 +2122,7 @@
 						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
 						//raw = raw.replace('"'+ _ +'"', put); // NEVER USE THIS! ALSO NEVER DELETE IT TO NOT MAKE SAME MISTAKE! https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}*/
-					if(meta){ meta.raw = raw }
+					if(meta && (raw||'').length < (1000 * 100)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
 					return raw;
 				}
 				var $ = JSON.stringify, _ = ':])([:';
@@ -2210,6 +2223,8 @@
 				this.to[k] = this.on[k];
 			}
 		}());
+
+		function it(msg){ return msg || {_: msg._, '##': msg['##']} } // HNPERF: Only need some meta data, not full reference (took up too much memory). // HNPERF: Garrrgh! We add meta data to msg over time, copying the object happens to early.
 
 	  var empty = {}, ok = true, u;
 		var LOG = console.LOG;
