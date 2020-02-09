@@ -129,7 +129,7 @@
 					}*/
 				}
 				if((tmp = msg['@']) && (tmp = at.dup.s[tmp]) && (tmp = tmp.it)){
-					(tmp = (tmp._||ok)).ack = (tmp.ack || 0) + 1; // count remote ACKs to GET.
+					(tmp = (tmp._||{})).ack = (tmp.ack || 0) + 1; // count remote ACKs to GET.
 				}
 				to.next(msg);
 
