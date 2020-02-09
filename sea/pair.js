@@ -19,7 +19,7 @@
 
       var ecdhSubtle = shim.ossl || shim.subtle;
       // First: ECDSA keys for signing/verifying...
-      var sa = await shim.subtle.generateKey(S.ecdsa.pair, true, [ 'sign', 'verify' ])
+      var sa = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
@@ -39,7 +39,7 @@
       // Next: ECDH keys for encryption/decryption...
 
       try{
-      var dh = await ecdhSubtle.generateKey(S.ecdh, true, ['deriveKey'])
+      var dh = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey'])
       .then(async (keys) => {
         // privateKey scope doesn't leak out from here!
         var key = {};

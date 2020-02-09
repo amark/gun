@@ -11,6 +11,7 @@ function Mesh(root){
 
 	var dup = root.dup;
 
+	// TODO: somewhere in here caused a out-of-memory crash! How? It is inbound!
 	mesh.hear = function(raw, peer){
 		if(!raw){ return }
 		var msg, id, hash, tmp = raw[0];
@@ -39,11 +40,11 @@ function Mesh(root){
 			if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 			if(msg.DBG_s){ opt.log(+new Date - msg.DBG_s, 'to hear', id) }
 			if(dup.check(id)){ return }
-			dup.track(id, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+			dup.track(id, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 			if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 			if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 				if(dup.check(tmp+hash)){ return }
-				dup.track(tmp+hash, true).it = msg; // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
+				dup.track(tmp+hash, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
 			}
 			(msg._ = function(){}).via = peer;
 			if(tmp = msg['><']){ (msg._).to = Type.obj.map(tmp.split(','), tomap) }
@@ -53,9 +54,9 @@ function Mesh(root){
 				}
 				return;
 			}
-			var S; LOG && (S = +new Date);
+			var S, ST; LOG && (S = +new Date);
 			root.on('in', msg);
-			LOG && !msg.nts && opt.log(S, +new Date - S, 'msg', msg['#']);
+			LOG && !msg.nts && (ST = +new Date - S) > 9 && opt.log(S, ST, 'msg', msg['#']);
 			return;
 		}
 	}
@@ -63,6 +64,7 @@ function Mesh(root){
 	mesh.hear.c = mesh.hear.d = 0;
 
 	;(function(){
+		var SMIA = 0;
 		var message;
 		function each(peer){ mesh.say(message, peer) }
 		mesh.say = function(msg, peer){
@@ -74,24 +76,28 @@ function Mesh(root){
 			if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 			if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
 			if(!(raw = meta.raw)){
-				raw = meta.raw = mesh.raw(msg);
+				raw = mesh.raw(msg);
 				if(hash && (tmp = msg['@'])){
-					dup.track(tmp+hash).it = msg;
+					dup.track(tmp+hash).it = it(msg);
 					if(tmp = (dup.s[tmp]||ok).it){
 						if(hash === tmp['##']){ return false }
 						tmp['##'] = hash;
 					}
 				}
 			}
-			LOG && opt.log(S, +new Date - S, 'say prep');
-			dup.track(id).it = msg; // track for 9 seconds, default. Earth<->Mars would need more!
+			//LOG && opt.log(S, +new Date - S, 'say prep');
+			dup.track(id).it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 			if(!peer){ peer = (tmp = dup.s[msg['@']]) && (tmp = tmp.it) && (tmp = tmp._) && (tmp = tmp.via) }
+			if(!peer && msg['@']){
+				LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
+				return false;
+			} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 			if(!peer && mesh.way){ return mesh.way(msg) }
 			if(!peer || !peer.id){ message = msg;
 				if(!Type.obj.is(peer || opt.peers)){ return false }
-				var S; LOG && (S = +new Date);
+				//var S; LOG && (S = +new Date);
 				Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-				LOG && opt.log(S, +new Date - S, 'say loop');
+				//LOG && opt.log(S, +new Date - S, 'say loop');
 				return;
 			}
 			if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -128,20 +134,21 @@ function Mesh(root){
 	// for now - find better place later.
 	function send(raw, peer){ try{
 		var wire = peer.wire;
-		var S; LOG && (S = +new Date);
+		var S, ST; LOG && (S = +new Date);
 		if(peer.say){
 			peer.say(raw);
 		} else
 		if(wire.send){
 			wire.send(raw);
 		}
-		LOG && opt.log(S, +new Date - S, 'wire send', raw.length);
+		LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'wire send', raw.length);
 		mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 	}catch(e){
 		(peer.queue = peer.queue || []).push(raw);
 	}}
 
 	;(function(){
+		// TODO: this caused a out-of-memory crash!
 		mesh.raw = function(msg){ // TODO: Clean this up / delete it / move logic out!
 			if(!msg){ return '' }
 			var meta = (msg._) || {}, put, hash, tmp;
@@ -149,7 +156,7 @@ function Mesh(root){
 			if(typeof msg === 'string'){ return msg }
 			if(!msg.dam){
 				var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-					to.push(p.url || p.pid || p.id); if(++i > 9){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids.
+					to.push(p.url || p.pid || p.id); if(++i > 3){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids. // REDUCED THIS TO 3 for temporary relay peer performance, towers still should list neighbors.
 				}); if(i > 1){ msg['><'] = to.join() }
 			}
 			var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
@@ -158,7 +165,7 @@ function Mesh(root){
 				raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
 				//raw = raw.replace('"'+ _ +'"', put); // NEVER USE THIS! ALSO NEVER DELETE IT TO NOT MAKE SAME MISTAKE! https://github.com/amark/gun/wiki/@$$ Heisenbug
 			}*/
-			if(meta){ meta.raw = raw }
+			if(meta && (raw||'').length < (1000 * 100)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
 			return raw;
 		}
 		var $ = JSON.stringify, _ = ':])([:';
@@ -259,6 +266,8 @@ function Mesh(root){
 		this.to[k] = this.on[k];
 	}
 }());
+
+function it(msg){ return msg || {_: msg._, '##': msg['##']} } // HNPERF: Only need some meta data, not full reference (took up too much memory). // HNPERF: Garrrgh! We add meta data to msg over time, copying the object happens to early.
 
 	  var empty = {}, ok = true, u;
 var LOG = console.LOG;
