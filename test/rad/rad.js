@@ -43,7 +43,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
 //console.log("HYPER TEST");var z = 10000; while(--z){ names.push(Gun.text.random(7)) }this.timeout(9000);
 
-  describe.only('Radix', function(){
+  describe('Radix', function(){
     var radix = Radix();
 
     it('unit', function(){
@@ -264,6 +264,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             if(v.indexOf(find) == 0){ all[v] = true }
         });
         rad(find, function(err, data, info){
+            expect(data).to.be.ok();
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
@@ -312,12 +313,22 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         })
     });
 
+    it('read one', function(done){
+        //gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').get('stu').once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+            done();
+        });
+    });
+
     it('read contacts', function(done){
         var all = {}, find = 'm', to;
         names.forEach(function(v){
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
+        //console.log("<<<<<<<<<");
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
@@ -328,6 +339,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 done();
             },100);
         });
+        //console.log(">>>>>>>>>");
     });
 
     it('read contacts again', function(done){

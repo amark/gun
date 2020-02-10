@@ -97,9 +97,9 @@
 			return !o? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
 		}
 		;(function(){
-			function empty(v,i){ var n = this.n;
+			function empty(v,i){ var n = this.n, u;
 				if(n && (i === n || (obj_is(n) && obj_has(n, i)))){ return }
-				if(i){ return true }
+				if(u !== i){ return true }
 			}
 			Type.obj.empty = function(o, n){
 				if(!o){ return true }
@@ -115,20 +115,21 @@
 				} t.r = t.r || [];
 				t.r.push(k);
 			};
-			var keys = Object.keys, map;
+			var keys = Object.keys, map, u;
 			Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 			Type.obj.map = map = function(l, c, _){
-				var u, i = 0, x, r, ll, lle, f = fn_is(c);
-				t.r = null;
+				var u, i = 0, x, r, ll, lle, f = 'function' == typeof c;
+				t.r = u;
 				if(keys && obj_is(l)){
 					ll = keys(l); lle = true;
 				}
+				_ = _ || {};
 				if(list_is(l) || ll){
 					x = (ll || l).length;
 					for(;i < x; i++){
 						var ii = (i + Type.list.index);
 						if(f){
-							r = lle? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
+							r = lle? c.call(_, l[ll[i]], ll[i], t) : c.call(_, l[i], ii, t);
 							if(r !== u){ return r }
 						} else {
 							//if(Type.test.is(c,l[i])){ return ii } // should implement deep equality testing!
@@ -171,7 +172,7 @@
 						tmp.next(arg);
 				}}
 			}});
-			if(arg instanceof Function){
+			if('function' == typeof arg){
 				var be = {
 					off: onto.off ||
 					(onto.off = function(){
@@ -323,7 +324,7 @@
 			Node.ify = function(obj, o, as){ // returns a node from a shallow object.
 				if(!o){ o = {} }
 				else if(typeof o === 'string'){ o = {soul: o} }
-				else if(o instanceof Function){ o = {map: o} }
+				else if('function' == typeof o){ o = {map: o} }
 				if(o.map){ o.node = o.map.call(as, obj, u, o.node || {}) }
 				if(o.node = Node.soul.ify(o.node || {}, o)){
 					obj_map(obj, map, {o:o,as:as});
@@ -464,8 +465,12 @@
 				if(typeof env === 'string'){
 					env = {soul: env};
 				} else
-				if(env instanceof Function){
+				if('function' == typeof env){
 					env.map = env;
+				}
+				if(typeof as === 'string'){
+					env.soul = env.soul || as;
+					as = u;
 				}
 				if(env.soul){
 					at.link = Val.link.ify(env.soul);
@@ -681,7 +686,8 @@
 					at.on('in', root, at);
 					at.on('in2', root2, at);
 					at.on('put2', map, at);
-					at.on('out', root, {at: at, out: root});
+					//at.on('out', root, {at: at, out: root});
+					at.on('out', root2, at);
 					Gun.on('create', at);
 					at.on('create', at);
 				}
@@ -704,10 +710,10 @@
 				if(tmp = msg['@']){ dup.track(tmp) } // HNPERF: Bump original request's liveliness.
 				if(!at.ask(tmp, msg)){
 					if(msg.get){
-						Gun.on.get(msg, gun); //at.on('get', get(msg));
+						Gun.on._get(msg, gun); //at.on('get', get(msg));
 					}
 					if(msg.put){
-						Gun.on.put(msg, gun); //at.on('put', put(msg));
+						//Gun.on._put(msg, gun); //at.on('put', put(msg));
 					}
 				}
 				ev.to.next(msg);
@@ -718,6 +724,7 @@
 			}
 			function root2(msg){
 				if(!msg){ return }
+				if(msg.out === root2 || msg.out === root){ this.to.next(msg); return }
 				var eve = this, as = eve.as, at = as.at || as, gun = at.$, dup = at.dup, tmp;
 				if(!(tmp = msg['#'])){ tmp = msg['#'] = text_rand(9) }
 				if(dup.check(tmp)){ return } dup.track(tmp);
@@ -741,15 +748,16 @@
 					root.on('in', {'@': id, ok: ok || 1});
 					id = u;
 				};
+				var set = root.set || (root.set = {'':1});
 				all.err = obj_map(put, valid, msg);
 				ctx.node = ctx.state = u;
 				mid = msg = ctx = u;
-				all();
-			}
+				all(); // if synchronous
+				fire(root, ''); // if synchronous
+			} Gun.on.put = put;
 			function valid(node, soul){
 				if(!node){ return ERR+cut(soul)+"no node." }
 				var ctx = this._, tmp;
-					(ctx.root.opt||'').super && ctx.root.$.get(soul); // I think we need super for now, but since we are rewriting, should consider getting rid of it.
 				if(!(tmp = node._)){ return ERR+cut(soul)+"no meta." }
 				ctx.node = node;
 				if(soul !== tmp[_soul]){ return ERR+cut(soul)+"soul not same." }
@@ -769,6 +777,7 @@
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var machine = State(), is = HAM(machine, state, was, val, known), u;
 				(alls = all.s || (all.s = {}))[id] = 1;
+				(root.set || (root.set = {}))[id] = 1; // tmp code;
 				if(!is.incoming){
 					if(is.defer){
 						var to = is.defer - machine;
@@ -789,21 +798,38 @@
 			function map(msg){
       	var eve = this, root = eve.as, graph = root.graph, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
-				debounce(root, soul, key,val, state); // TODO: This should NOT be how the API works, this should be done at an extension layer, but hacky solution to migrate with old code for now.
+				chain(root, soul, key, (u !== (tmp = put['=']))? tmp : val, state); // TODO: This should NOT be how the API works, this should be done at an extension layer, but hacky solution to migrate with old code for now.
+				fire(root, soul+key); // ^ 
 				eve.to.next(msg);
 			}
-			function debounce(root, soul, key,val, state){ var tmp;
-				if(!(tmp = root.next[soul]) || !tmp.$){ return }
-				tmp.change = state_ify(tmp.change, key, state, val, soul);
+			function chain(root, soul, key,val, state){ var tmp, put;
+				(root.opt||'').super && root.$.get(soul); // I think we need super for now, but since we are rewriting, should consider getting rid of it.
+				if(!root || !(tmp = root.next) || !(tmp = tmp[soul]) || !tmp.$){ return }
+				(put = root.put || (root.put = {}))[soul] = state_ify(put[soul], key, state, val, soul);
 				tmp.put = state_ify(tmp.put, key, state, val, soul);
+				return;
+				tmp.change = state_ify(tmp.change, key, state, val, soul);
 				if(tmp.wait){ return }
+				var stop = {};
 				tmp.wait = setTimeout(function(){
 					var change = tmp.change; tmp.change = tmp.wait = null;
-					root.stop = this.stop; // temporary fix till a better solution?
+					root.stop = stop; // temporary fix till a better solution?
 					tmp.on('in', {$: tmp.$, get: soul, put: change});
 					root.stop = null; // temporary fix till a better solution?
 				},0);
 
+			}
+			function fire(root, id){ var set;
+				if(set = root.set){ delete set[id] }
+				if(!obj_empty(set)){ return }
+				var stop = {};
+				var next = root.next||'', put = root.put; root.put = root.set = null;
+				Gun.graph.is(put, function(node,soul){ var tmp;
+					if(!(tmp = next[soul]) || !tmp.$){ return }
+					root.stop = stop; // temporary fix till a better solution?
+					tmp.on('in', {$: tmp.$, get: soul, put: node});
+					root.stop = null; // temporary fix till a better solution?
+				})
 			}
 			var ERR = "Error: Invalid graph!";
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
@@ -811,7 +837,7 @@
 		}());
 
 		;(function(){
-			Gun.on.put = function(msg, gun){
+			Gun.on._put = function(msg, gun){
 				var at = gun._, ctx = {$: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@'], cat: at, stop: {}};
 				if(!Gun.obj.map(msg.put, perf, ctx)){ return } // HNPERF: performance test, not core code, do not port.
 				if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
@@ -821,7 +847,7 @@
 				if(u !== ctx.defer){
 					var to = ctx.defer - ctx.machine;
 					setTimeout(function(){
-						Gun.on.put(msg, gun);
+						Gun.on._put(msg, gun);
 					}, to > MD? MD : to ); // setTimeout Max Defer 32bit :(
 				}
 				if(!ctx.diff){ return }
@@ -894,7 +920,7 @@
 			}
 			function perf(node, soul){ if(node !== this.graph[soul]){ return true } } // HNPERF: do not port!
 
-			Gun.on.get = function(msg, gun){
+			Gun.on._get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
@@ -1008,7 +1034,7 @@
 				}
 				return;
 			}
-			if(n instanceof Function){
+			if('function' == typeof n){
 				var yes, tmp = {back: at};
 				while((tmp = tmp.back)
 				&& u === (yes = n(tmp, opt))){}
@@ -1080,6 +1106,12 @@
 						if(!Gun.obj.empty(put)){
 							put._ = meta;
 							back.on('in', {$: back.$, put: put, get: back.get})
+						}
+						if(tmp = at.lex){
+							tmp = (tmp._) || (tmp._ = function(){});
+							if(back.ack < tmp.ask){ tmp.ask = back.ack }
+							if(tmp.ask){ return }
+							tmp.ask = 1;
 						}
 					}
 					root.ask(ack, msg);
@@ -1311,7 +1343,7 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
-			Gun.on.put(msg, at.root.$);
+			Gun.on._put(msg, at.root.$);
 		}
 		var empty = {}, u;
 		var obj = Gun.obj, obj_has = obj.has, obj_put = obj.put, obj_del = obj.del, obj_to = obj.to, obj_map = obj.map;
@@ -1331,7 +1363,7 @@
 				}
 				gun = gun.$;
 			} else
-			if(key instanceof Function){
+			if('function' == typeof key){
 				if(true === cb){ return soul(this, key, cb, as), this }
 				gun = this;
 				var at = gun._, root = at.root, tmp = root.now, ev;
@@ -1367,7 +1399,7 @@
 			if(tmp = this._.stun){ // TODO: Refactor?
 				gun._.stun = gun._.stun || tmp;
 			}
-			if(cb && cb instanceof Function){
+			if(cb && 'function' == typeof cb){
 				gun.get(cb, as);
 			}
 			return gun;
