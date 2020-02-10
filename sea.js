@@ -439,7 +439,7 @@
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       var pub = pair.pub || pair;
-      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
+      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', S.jwk(pub), {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
       var hash = await sha(json.m);
       var buf, sig, check, tmp; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
@@ -474,9 +474,11 @@
       return knownKeys[pair];
     };
 
-
+    var O = SEA.opt;
     SEA.opt.fall_verify = async function(data, pair, cb, opt, f){
       if(f === SEA.opt.fallback){ throw "Signature did not match" } f = f || 1;
+      var tmp = data||'';
+      data = SEA.opt.unpack(data) || data;
       var json = S.parse(data), pub = pair.pub || pair, key = await SEA.opt.slow_leak(pub);
       var hash = (f <= SEA.opt.fallback)? shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, new shim.TextEncoder().encode(S.parse(json.m)))) : await sha(json.m); // this line is old bad buggy code but necessary for old compatibility.
       var buf; var sig; var check; try{
@@ -491,6 +493,7 @@
         if(!check){ throw "Signature did not match." }
       }
       var r = check? S.parse(json.m) : u;
+      O.fall_soul = tmp['#']; O.fall_key = tmp['.']; O.fall_val = data; O.fall_state = tmp['>'];
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     }
@@ -1099,7 +1102,7 @@
       if(!at.sea){ // only add SEA once per instance, on the "at" context.
         at.sea = {own: {}};
         at.on('in', security, at); // now listen to all input data, acting as a firewall.
-        at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
+        //at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
         at.on('node', each, at);
         at.on('put2', check, at);
       }
@@ -1165,10 +1168,11 @@
       if('~@' === soul.slice(0,2)){ // special case for shared system data, the list of public keys for an alias.
         check.pubs(eve, msg, val, key, soul, at, no); return;
       }
-      if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
-        check.pub(eve, msg, val, key, soul, at, no, (msg._||'').user, tmp); return;
+      //if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
+      if(tmp = SEA.opt.pub(soul)){ // special case, account data for a public key.
+        check.pub(eve, msg, val, key, soul, at, no, at.user||'', tmp); return;
       }
-      check.any(eve, msg, val, key, soul, at, no, (msg._||'noop').user); return;
+      check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
     check.hash = function(eve, msg, val, key, soul, at, no){
@@ -1192,59 +1196,34 @@
         if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!");
       }
-      if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
-        SEA.sign(msg.put, (user._).sea, function(data){ var rel;
+      if((tmp = user.is) && pub === tmp.pub){
+        SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){
           if(u === data){ return no(SEA.err || 'Signature fail.') }
-          if(rel = link_is(val)){ (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1 }
-          console.log("WHAT HAPPENS HERE?", data.m, SEA.opt.unpack(data.m), key, soul);
-          msg.put[':'] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
-          //node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
+          if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+          msg.put[':'] = JSON.stringify({':': tmp = SEA.opt.unpack(data.m), '~': data.s});
+          msg.put['='] = tmp;
           eve.to.next(msg);
-        }, {check: msg.put, raw: 1});
+        }, {raw: 1});
         return;
       }
-      SEA.verify(msg.put, pub, function(data){ var rel, tmp;
-        console.log("WHAT VERIFIES HERE?", data, SEA.opt.unpack(data, key), key, soul);
-        data = SEA.opt.unpack(data, key);
+      SEA.verify(SEA.opt.pack(msg.put), pub, function(data){ var tmp;
+        data = SEA.opt.unpack(data);
         if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
-        if((rel = link_is(data)) && pub === SEA.opt.pub(rel)){
-          (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1;
-        }
+        if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+        msg.put['='] = data;
         eve.to.next(msg);
       });
     };
     check.any = function(eve, msg, val, key, soul, at, no, user){ var tmp, pub;
-      if(!(pub = SEA.opt.pub(soul))){
-        if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
-        // TODO: Ask community if should auto-sign non user-graph data.
-        at.on('secure', function(msg){ this.off();
-          if(!at.opt.secure){ return eve.to.next(msg) }
-          no("Data cannot be changed.");
-        }).on.on('secure', msg);
-        return;
-      }
-      // TODO: DEDUP WITH check.pub ???
-      if(Gun.is(msg.$) && user && user.is && pub === user.is.pub){
-        SEA.sign(mgs.put, (user._).sea, function(data){
-          if(u === data){ return no('User signature fail.') }
-          console.log("WHAT HAPPENS HERE??", data.m, SEA.opt.unpack(data.m), key, soul);
-          msg.put[':'] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
-          //node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
-          eve.to.next(msg);
-        }, {check: msg.put, raw: 1});
-        return;
-      }
-      SEA.verify(msg.put, pub, function(data){ var rel;
-        console.log("WHAT VERIFIES HERE?", data, SEA.opt.unpack(data, key), key, soul);
-        data = SEA.opt.unpack(data, key);
-        if(u === data){ return no("Not owner on '" + key + "'.") } // thanks @rogowski !
-        if((rel = link_is(data)) && pub === SEA.opt.pub(rel)){
-          (at.sea.own[rel] = at.sea.own[rel] || {})[pub] = 1;
-        }
-        eve.to.next(msg);
-      });
+      if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
+      // TODO: Ask community if should auto-sign non user-graph data.
+      at.on('secure', function(msg){ this.off();
+        if(!at.opt.secure){ return eve.to.next(msg) }
+        no("Data cannot be changed.");
+      }).on.on('secure', msg);
+      return;
     }
-    var link_is = Gun.val.link.is;
+    var link_is = Gun.val.link.is, state_ify = Gun.state.ify;
 
     // okay! The security function handles all the heavy lifting.
     // It needs to deal read and write of input and output of system data, account/public key data, and regular data.
@@ -1408,6 +1387,7 @@
       if(!s || !(s = s[1])){ return }
       s = s.split('.');
       if(!s || 2 > s.length){ return }
+      if('@' === (s[0]||'')[0]){ return } // TODO: Should check ~X.Y. are alphanumeric, not just not @.
       s = s.slice(0,2).join('.');
       return s;
     }
@@ -1416,16 +1396,18 @@
     }
     SEA.opt.pack = function(d,k, n,s){ // pack for verifying
       if(SEA.opt.check(d)){ return d }
-      var meta = (Gun.obj.ify(d)||noop), sig = meta['~'];
-      return sig? {m: {'#':s,'.':k,':':meta[':'],'>':Gun.state.is(n, k)}, s: sig} : d;
+      var meta = (Gun.obj.ify(d)||''), sig = meta['~'];
+      return sig? {m: {'#':s||d['#'],'.':k||d['.'],':':meta[':'],'>':d['>']||Gun.state.is(n, k)}, s: sig} : d;
     }
+    var O = SEA.opt;
     SEA.opt.unpack = function(d, k, n){ var tmp;
       if(u === d){ return }
       if(d && (u !== (tmp = d[':']))){ return tmp }
+      k = k || O.fall_key; if(!n && O.fall_val){ n = {}; n[k] = O.fall_val }
       if(!k || !n){ return }
       if(d === n[k]){ return d }
       if(!SEA.opt.check(n[k])){ return d }
-      var soul = Gun.node.soul(n), s = Gun.state.is(n, k);
+      var soul = Gun.node.soul(n) || O.fall_soul, s = Gun.state.is(n, k) || O.fall_state;
       if(d && 4 === d.length && soul === d[0] && k === d[1] && fl(s) === fl(d[3])){
         return d[2];
       }
@@ -1437,6 +1419,7 @@
     var noop = function(){}, u;
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     var rel_is = Gun.val.rel.is;
+    var obj_ify = Gun.obj.ify;
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
 
   })(USE, './index');

@@ -197,20 +197,20 @@ describe('SEA', function(){
       expect(dec.priv).to.be(okey.priv);
       expect(dec.epriv).to.be(okey.epriv);
 
-      var gun = Gun(), tmp = Gun.node.soul(old);
+      var gun = Gun({super: true}), tmp = Gun.node.soul(old);
       var graph = {};
       graph[tmp] = old;
       var alias = await SEA.verify(old.alias, false);
       expect(alias).to.be('bob');
       alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
       graph[tmp] = alias;
-      gun.on('put', {$: gun, put: graph});
+      gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('bob', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
         done();
       });
-    }())})
+    }())});
     
     it('legacy []', function(done){ (async function(){
       var pw = 'test123';
@@ -218,14 +218,14 @@ describe('SEA', function(){
       var old = JSON.parse(atob("eyJfIjp7IiMiOiJ+VThkS0dySFJhX01sMFZ1YlR5OUZBYTlQS1ZlYlh0eTFjS05zWWxnYjduNC5QeVd5cUVVb0ZpYVduUElOV0Nad0xBbzFobjN1MldPWTU3SzZHZnpsNjhVIiwiPiI6eyJwdWIiOjE1NDY5MDI1MDQ5NzksImFsaWFzIjoxNTQ2OTAyNTA0OTc5LCJlcHViIjoxNTQ2OTAyNTA0OTc5LCJhdXRoIjoxNTQ2OTAyNTA0OTc5fX0sInB1YiI6IlU4ZEtHckhSYV9NbDBWdWJUeTlGQWE5UEtWZWJYdHkxY0tOc1lsZ2I3bjQuUHlXeXFFVW9GaWFXblBJTldDWndMQW8xaG4zdTJXT1k1N0s2R2Z6bDY4VSIsImFsaWFzIjoiU0VBe1wibVwiOltcIn5VOGRLR3JIUmFfTWwwVnViVHk5RkFhOVBLVmViWHR5MWNLTnNZbGdiN240LlB5V3lxRVVvRmlhV25QSU5XQ1p3TEFvMWhuM3UyV09ZNTdLNkdmemw2OFVcIixcImFsaWFzXCIsXCJhbGljZVwiLDE1NDY5MDI1MDQ5NzldLFwic1wiOlwienpuaGtIZjhZdFpZM2lGd3FVd0lJUldMTjhZMmlHbmNkcnVTaStGNDNmU1BLYWpSZlI0VzhXVHM4bElSMDBndGJmTWJxS0NjQkpGN3VNSkdGRC9WV2c9PVwifSIsImVwdWIiOiJTRUF7XCJtXCI6W1wiflU4ZEtHckhSYV9NbDBWdWJUeTlGQWE5UEtWZWJYdHkxY0tOc1lsZ2I3bjQuUHlXeXFFVW9GaWFXblBJTldDWndMQW8xaG4zdTJXT1k1N0s2R2Z6bDY4VVwiLFwiZXB1YlwiLFwiRkRzM1VvNTNFZEp6eFNocEpDaVctRGZPQ3lUS0M2U3cxeS1PZVJxam5ZRS5xVGdyYTlFQk1maEpNdVlMVmNaejRZYklLRm85enNBMHpMcV82dEVPMHI0XCIsMTU0NjkwMjUwNDk3OV0sXCJzXCI6XCJPZzRVVjY4OTluSjE4dC9ybWVnV0lkdnNqN01KaEpFc29ranZYQmdteVVRUXVNVjFTdnh4cXJqOFoyV1o2Q25XSkZnTlVDbEVYYWxuMURjUFE3M1R6UT09XCJ9IiwiYXV0aCI6IlNFQXtcIm1cIjpbXCJ+VThkS0dySFJhX01sMFZ1YlR5OUZBYTlQS1ZlYlh0eTFjS05zWWxnYjduNC5QeVd5cUVVb0ZpYVduUElOV0Nad0xBbzFobjN1MldPWTU3SzZHZnpsNjhVXCIsXCJhdXRoXCIsXCJ7XFxcImVrXFxcIjpcXFwiU0VBe1xcXFxcXFwiY3RcXFxcXFxcIjpcXFxcXFxcIi94ZnNPdVNkQUtrNkJiR00zbUV6MnVlSjI3Y0tJNThYMEtUL1FsaExSZXpWcjRkNzVZb2M5QlZNRjkzejl4QXI4N080S2FDNjJUWGVoeERQN0FFa2V4N1paaEpYL2hsVm9kK1FIcVFaaUZMK2lVQzFvL2hpUEJGWElBZmtINGRrcklGOFdqcEVaU3NIVmRSOVRhY2ZzbTB3aHN5NGJXN1ZLSEUySGc9PVxcXFxcXFwiLFxcXFxcXFwiaXZcXFxcXFxcIjpcXFxcXFxcIjhWekduTStEc1lTUktIU3Z4cSszTGc9PVxcXFxcXFwiLFxcXFxcXFwic1xcXFxcXFwiOlxcXFxcXFwibVVSSlJ4TzUvdXM9XFxcXFxcXCJ9XFxcIixcXFwic1xcXCI6XFxcImE1SlA3VFpuVE9jYjEwMGJOejlscEU4dnpqcUE3TWl0NHcwN3pjQTdIOFV0bml1WnVHSmdpZnNNQlFNSGdRdE5cXFwifVwiLDE1NDY5MDI1MDQ5NzldLFwic1wiOlwiSGFzMytJaHFEZTYyN016cElXZVE1cVFrZ2NOMlk3WHRpNGw0TFU3T2JyaktxSlBnSllrVWE2bk9YdlRmQkFzV1BPVzVnemh4Q2RPVGNFQm5icWlpWXc9PVwifSJ9"));
       var okey = {"pub":"U8dKGrHRa_Ml0VubTy9FAa9PKVebXty1cKNsYlgb7n4.PyWyqEUoFiaWnPINWCZwLAo1hn3u2WOY57K6Gfzl68U","epub":"FDs3Uo53EdJzxShpJCiW-DfOCyTKC6Sw1y-OeRqjnYE.qTgra9EBMfhJMuYLVcZz4YbIKFo9zsA0zLq_6tEO0r4","priv":"jMy7WfcldJ4esZEijAj4LTb99smtY_H0yKJLemJl2HI","epriv":"1DszMh-85pGTPLYtRunG-Q-xB78AE4k07PPkbedYYwk"}
 
-      var gun = Gun(), tmp = Gun.node.soul(old);
+      var gun = Gun({super: true}), tmp = Gun.node.soul(old);
       var graph = {};
       graph[tmp] = old;
       var alias = SEA.opt.unpack(await SEA.verify(old.alias, false), 'alias', old);
       expect(alias).to.be('alice');
       alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
       graph[tmp] = alias;
-      gun.on('put', {$: gun, put: graph});
+      gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('alice', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
@@ -277,8 +277,30 @@ describe('SEA', function(){
   });
 
   describe('User', function(){
+    var gun = Gun(), gtmp;
+
+    it('test', function(done){
+      var g = Gun();
+      user = g.user();
+      var gid;
+      SEA.pair(function(p){
+        user.is = user._.sea = p;
+        gtmp = gid = 'test~'+p.pub;
+        g.get(gid).put({yo: 'hi'}, function(ack){
+          var data = SEA.opt.parse(g._.graph[gid].yo);
+          expect(data[':']).to.be('hi');
+          expect(data['~']).to.be.ok();
+          g.get(gid).get('yo').once(function(r){
+            expect(r).to.be('hi');
+            user.leave();
+            done();
+          })
+        })
+      })
+    });
+
     it('is instantiable', function(done){
-      gun = Gun();
+      user.leave();
       user = gun.user();
       done();
     })
@@ -289,7 +311,7 @@ describe('SEA', function(){
         expect(ack.err).to.not.be.ok();
         done();
       })
-    })
+    });
 
     it('login users', function(done){
       user.auth('carl', 'test123', function(ack){
@@ -347,6 +369,7 @@ describe('SEA', function(){
         var ref = user.get('who').get('all').set(msg);
         user.get('who').get('said').set(ref);
         user.get('who').get('said').map().once(function(data){
+          //console.log("*****", data);
           expect(data.what).to.be.ok();
           done();
         })
@@ -356,6 +379,7 @@ describe('SEA', function(){
     it('set user ref null override', function(done){
       this.timeout(9000);
       var gun = Gun();
+      //user.leave();
       var user = gun.user();
       var msg = {what: 'hello world'};
       user.create('xavier', 'password');

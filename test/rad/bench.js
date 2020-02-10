@@ -1,6 +1,6 @@
 var Gun = (typeof window !== "undefined")? window.Gun : require('../../../gun/gun');
 
-var Radisk = (Gun.window && window.Radisk) || require('../../../gun/lib/radiskip');
+var Radisk = (Gun.window && window.Radisk) || require('../../../gun/lib/radisk');
 Gun.TESTING = true;
 try{localStorage.clear()}catch(e){}
 try{indexedDB.deleteDatabase('radatatest');}catch(e){}
