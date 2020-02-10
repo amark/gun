@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.2020.116",
+  "version": "0.2020.201",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "main": "index.js",
   "browser": "browser.js",
@@ -69,7 +69,6 @@
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
-    "0x": "^4.9.1",
     "uglify-js": "^3.6.0"
   }
 }
