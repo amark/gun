@@ -1,1 +1,1 @@
-web: node --prof trace.js
+web: node --prof examples/http.js
