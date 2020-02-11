@@ -113,31 +113,6 @@
 
   <script src="/jquery.js"></script>
   <script src="/gun.js"></script>
-  <script src="/gun/nts.js"></script>
-  <h1><button id="spamit">SPAM</button></h1><script>spamit.onclick = function(){
-    if(window.TO){ clearInterval(window.TO); return; }
-    window.TO = setInterval(function(){
-      var w = 2;
-      function go(i){
-        var S = +new Date;
-        var ref = gun.get(Gun.text.random(12)).put({data: Math.random(), ah: Math.random()}, function(ack){
-          console.log((+new Date - S)/1000, ack.err, ack.ok);
-          ref.off();
-        });
-      }
-      while(w--){ go(w) }
-    },1)
-  }
-  Gun.on('opt', function(root){
-    root.opt.localStorage = false;
-    this.to.next(root);
-    if(root.once){ return }
-    root.on('out', function(msg){
-      msg.DBG_s = +new Date;
-      this.to.next(msg);
-    })
-  })
-  </script>
   <script>
     // Check out the interactive tutorial
     // for how to build a simplified version
