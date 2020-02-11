@@ -54,13 +54,16 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "buffer": "^5.4.3",
     "ws": "^7.1.2"
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
-    "isomorphic-webcrypto": "^2.3.2",
     "emailjs": "^2.2.0"
+  },
+  "peerDependencies": {
+    "isomorphic-webcrypto": "^2.*",
+    "buffer": "^5.*",
+    "@gooddollar/react-native-webview-crypto": "^0.*"
   },
   "devDependencies": {
     "aws-sdk": "^2.528.0",
