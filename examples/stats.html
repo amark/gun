@@ -50,7 +50,7 @@
 		$('#peers').text(data.peers.count);
 		$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
 		$('#nodes').text(data.node.count);
-		$('#hours').text((data.up.time / 60 / 60).toFixed(0));
+		$('#hours').text((data.up.time / 60 / 60).toFixed(1));
 
 		Stats('memory').line.append(+new Date, data.memory.heapTotal / 1024 / 1024);
     try{ Stats('dam # in').line.append(+new Date, data.dam.in.count); }catch(e){}
