@@ -109,7 +109,7 @@
 			at.on('in', input);
 			at.on('in2', input);
 			function input(msg){
-				var to = this.to, peer = (msg._||'').via || mesh.leap; // warning! mesh.leap could be buggy!
+				var to = this.to, peer = (msg._||'').via; // warning! mesh.leap could be buggy!
 				var dht = opt.dht;
 				var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 				var get = msg.get, hash, tmp;

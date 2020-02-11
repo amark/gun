@@ -2170,7 +2170,7 @@
 					}
 					//LOG && opt.log(S, +new Date - S, 'say prep');
 					dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
-					if(!peer){ peer = ((tmp = dup.s[msg['@']]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
+					if(!peer && (tmp = msg['@'])){ peer = ((tmp = dup.s[tmp]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && msg['@']){
 						LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
 						return false;
