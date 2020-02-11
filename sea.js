@@ -487,7 +487,6 @@
         check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
       }catch(e){
-        console.log("--------->", json.s, json, tmp);
         buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
         sig = new Uint8Array(buf)
         check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
@@ -1397,7 +1396,7 @@
     }
     SEA.opt.pack = function(d,k, n,s){ // pack for verifying
       if(SEA.opt.check(d)){ return d }
-      var meta = (Gun.obj.ify(d)||''), sig = meta['~'];
+      var meta = (Gun.obj.ify((d && d[':'])||d)||''), sig = meta['~'];
       return sig? {m: {'#':s||d['#'],'.':k||d['.'],':':meta[':'],'>':d['>']||Gun.state.is(n, k)}, s: sig} : d;
     }
     var O = SEA.opt;
