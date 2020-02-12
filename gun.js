@@ -738,6 +738,7 @@
 				msg.out = root2; at.on('out', msg); // EXPERIMENTAL!
 				;(console.STAT||'').r2e = +new Date;
 			}
+			var SC;
 			function put(msg, gun){
 				var ctx = msg._, root = ctx.root = gun._, put = msg.put, id = msg['#'], mid = 1;
 				if(put['#']){ root.on('put2', msg); return }
@@ -755,11 +756,11 @@
 					id = u;
 				};
 				var set = ctx.set = {'':1};
-				;(console.STAT||'').p = +new Date;
+				SC = 0;(console.STAT||'').p = +new Date;
 				all.err = obj_map(put, valid, msg);
 				;(console.STAT||'').pe = +new Date;
 				Gun.log(S, +new Date - S, 'mix');
-				Gun.log(S, Object.keys(all.s||{}).length, 'mix #');
+				Gun.log(S, SC, 'mix #');
 				mid = ctx.node = ctx.state = u;
 				all(); // if synchronous
 				fire(ctx, ''); // if synchronous
@@ -787,6 +788,7 @@
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var machine = State(), is = HAM(machine, state, was, val, known), u;
 				(alls = all.s || (all.s = {}))[id] = 1;
+				++SC;
 				if(!is.incoming){
 					if(is.defer){
 						var to = is.defer - machine;
