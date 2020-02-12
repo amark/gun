@@ -205,11 +205,11 @@ isomorphic-webcrypto can also works but lacks in performance and has issues with
 for window.crypto.getRandomValues you can use either react-native-crypto or react-native-get-random-values
 
 - `npm install buffer text-encoding react-native-webview-bridge react-native-get-random-values --save`
-- follow instructions to install [WebviewCrypto](saulshanabrook/react-native-webview-crypto)
+- follow instructions to install [WebviewCrypto](https://github.com/saulshanabrook/react-native-webview-crypto)
 - react might still complain about missing isomorphic-webcrypto although its not needed
   so install it `npm i isomorphic-webcrypto`
 
-see working [example repo](gooddollar/gun-expo-react-native)
+see working [example repo](https://github.com/gooddollar/gun-expo-react-native)
 
 ## Deploy
 
