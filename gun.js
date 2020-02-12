@@ -757,6 +757,7 @@
 				var set = ctx.set = {'':1};
 				;(console.STAT||'').p = +new Date;
 				all.err = obj_map(put, valid, msg);
+				Gun.log(S, +new Date - S, 'mix');
 				;(console.STAT||'').pe = +new Date;
 				mid = ctx.node = ctx.state = u;
 				all(); // if synchronous
