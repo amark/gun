@@ -170,7 +170,7 @@
     var o = {};
 
     if(SEA.window){
-      api.crypto = window.crypto || window.msCrypto || require('isomorphic-webcrypto');
+      api.crypto = window.crypto || window.msCrypto
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
@@ -191,7 +191,7 @@
       const isocrypto = require('isomorphic-webcrypto');
       api.ossl = api.subtle = isocrypto.subtle;
     }catch(e){
-      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
+      console.log("text-encoding and isomorphic-webcrypto may not be included by default, please add it to your package.json!");
       TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
     }}
 

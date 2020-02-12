@@ -199,6 +199,18 @@ var GUN = require('gun/gun');
 var SEA = require('gun/sea');
 ```
 
+## React Native
+Like nodejs we need to shim webcrypto we do this with a webview bridge
+isomorphic-webcrypto can also works but lacks in performance and has issues with encrypting large files
+for window.crypto.getRandomValues you can use either react-native-crypto or react-native-get-random-values
+
+- `npm install buffer text-encoding react-native-webview-bridge react-native-get-random-values --save`
+- follow instructions to install [WebviewCrypto](/saulshanabrook/react-native-webview-crypto)
+- react might still complain about missing isomorphic-webcrypto although its not needed
+  so install it `npm i isomorphic-webcrypto`
+
+see working [example repo](/gooddollar/gun-expo-react-native)
+
 ## Deploy
 
  > Note: The default examples that get auto-deployed on `npm start` CDN-ify all GUN files, modules, & storage.
