@@ -2151,12 +2151,12 @@
 						dup_track(id);
 						return;
 					}
-					var S, ST; LOG && (console.STAT.is = S = +new Date); LOG && (console.STAT.msg = msg);
+					var S, ST; LOG && (console.STAT.is = S = +new Date);
 					msg.put? root.on('in2', msg) : root.on('in', msg); // come on, pretty epic live upgrade path for tens of millions of users, no? Oh boy, this is a TEMPORARY hack, make sure future versions are stable. // REMEMBER!!! When you "finish" this, check all adapters, especially RAD, SEA, AXE, UDP & others!!!
 					dup_track(id).via = peer;
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 					//if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)) }
-					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 1000){ try{ var m = Type.obj.to(msg, {put: Object.keys(msg.put||{})}); require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(m)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
+					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 1000){ try{ var m = Type.obj.to(msg, {put: Object.keys(msg.put||{})}); console.STAT.msg = m; require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					
 					return;
 				}
