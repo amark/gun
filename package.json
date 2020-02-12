@@ -59,11 +59,11 @@
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
-    "emailjs": "^2.2.0"
+    "emailjs": "^2.2.0",
+    "@peculiar/webcrypto": "^1.0.22",
+    "buffer": "^5.4.3"
   },
   "peerDependencies": {
-    "isomorphic-webcrypto": "^2.*",
-    "buffer": "^5.*",
     "@gooddollar/react-native-webview-crypto": "^0.*"
   },
   "devDependencies": {
