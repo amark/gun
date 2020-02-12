@@ -2155,7 +2155,7 @@
 					dup_track(id).via = peer;
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 					//if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)) }
-					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 5000){ try{ var m = Type.obj.to(msg, {put: Object.keys(msg.put||{})}); require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
+					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 2000){ try{ var m = Type.obj.to(msg, {put: Object.keys(msg.put||{})}); require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					
 					return;
 				}
@@ -2221,7 +2221,7 @@
 					peer.batch = '['; // TODO: Prevent double JSON!
 					var S, ST; LOG && (S = +new Date);
 					setTimeout(function(){
-						LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, '0ms TO', peer.id);
+						LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, '0ms TO', id, peer.id);
 						flush(peer);
 					}, opt.gap);
 					send(raw, peer);
