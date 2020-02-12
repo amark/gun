@@ -2155,7 +2155,7 @@
 					dup_track(id).via = peer;
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 					//if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#'], JSON.stringify(console.STAT)) }
-					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 500){ try{ require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
+					if(LOG && !msg.nts && (ST = (console.STAT.hd = +new Date) - S) > 9){ opt.log(S, ST, 'msg', msg['#']); if(ST > 5000){ try{ var m = Type.obj.to(msg, {put: Object.keys(msg.put||{})}); require('./lib/email').send({text: ""+ST+"ms "+JSON.stringify(msg)+" | "+JSON.stringify(console.STAT), from: "mark@gun.eco", to: "mark@gun.eco", subject: "GUN MSG"}, noop); }catch(e){} } } // this is ONLY turned on if ENV CONFIGS have email/password to send out from.
 					
 					return;
 				}
