@@ -141,16 +141,6 @@ describe('SEA', function(){
       });});});
     })
     
-    /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
-      var pair, s, v;
-      SEA.pair(function(pair){
-      SEA.encrypt('4e2', pair, function(s){
-      SEA.decrypt(s, pair, function(v){
-      expect(400).to.be(v);
-      done();
-      });});});
-    })*/
-    
     it('legacy', function(done){ (async function(){
       var pw = 'test123';
       // https://cdn.jsdelivr.net/npm/gun@0.9.99999/sea.js !
