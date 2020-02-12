@@ -1159,7 +1159,7 @@
       //console.log("security check", msg);
       //var no = function(why){ at.on('in', {'@': id, err: why}) }
       var no = function(why){ msg.ack(why) }
-      if('#' === soul){ // special case for content addressing immutable hashed data.
+      if('#' === soul[0]){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
       } 
       if('~@' === soul){  // special case for shared system data, the list of aliases.
@@ -1177,7 +1177,7 @@
     }
     check.hash = function(eve, msg, val, key, soul, at, no){
       SEA.work(val, null, function(data){
-        if(data === key){ return eve.to.next(msg) }
+        if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
         no("Data hash not same as hash!");
       }, {name: 'SHA-256'});
     }
