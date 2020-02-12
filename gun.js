@@ -760,7 +760,7 @@
 				all.err = obj_map(put, valid, msg);
 				;(console.STAT||'').pe = +new Date;
 				Gun.log(S, +new Date - S, 'mix');
-				Gun.log(S, SC, 'mix #');
+				Gun.log(S, (console.STAT||'').pns = SC, 'mix #');
 				mid = ctx.node = ctx.state = u;
 				all(); // if synchronous
 				fire(ctx, ''); // if synchronous
