@@ -757,8 +757,9 @@
 				var set = ctx.set = {'':1};
 				;(console.STAT||'').p = +new Date;
 				all.err = obj_map(put, valid, msg);
-				Gun.log(S, +new Date - S, 'mix');
 				;(console.STAT||'').pe = +new Date;
+				Gun.log(S, +new Date - S, 'mix');
+				Gun.log(S, Object.keys(all.s||{}).length, 'mix #');
 				mid = ctx.node = ctx.state = u;
 				all(); // if synchronous
 				fire(ctx, ''); // if synchronous
@@ -2133,7 +2134,7 @@
 					console.STAT.hp = +new Date;
 					}catch(e){return opt.log('DAM JSON parse error', e)}
 					if(!msg){ return }
-					if(msg.DBG_s){ opt.log(+new Date - (console.STAT.ps = msg.DBG_s), 'to hear', msg['#']) }
+					if(msg.DBG_s){ opt.log(+new Date - (console.STAT.os = msg.DBG_s), 'to hear', msg['#']) }
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(tmp = dup_check(id)){ return }
 					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
