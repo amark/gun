@@ -17,16 +17,20 @@
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
-    if(!api.crypto){try{
+    if(!api.crypto)
+    {
+      try
+      {
       var crypto = require('crypto', 1);
       Object.assign(api, {
         crypto,
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });      
-      const isocrypto = require('isomorphic-webcrypto');
-      api.ossl = api.subtle = isocrypto.subtle;
-    }catch(e){
-      console.log("text-encoding and isomorphic-webcrypto may not be included by default, please add it to your package.json!");
+      const { Crypto: WebCrypto } = require('@peculiar/webcrypto', 1);
+      api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+    }
+    catch(e){
+      console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
       TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
     }}
 
