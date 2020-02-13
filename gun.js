@@ -752,11 +752,17 @@
 					if(mid){ return }
 					if(!obj_empty(all.s)){ return } // keep waiting
 					Gun.log(S, +new Date - S, 'put');
+					Gun.log(S, ctx.SFT, 'total fire');
 					root.on('in', {'@': id, ok: ok || 1});
 					id = u;
 				};
 				var set = ctx.set = {'':1};
-				SC = 0;(console.STAT||'').p = +new Date;
+				SC = ctx.SFT = 0;(console.STAT||'').p = +new Date;
+				// TODO: PERF!!!! Oh yeesh, this is badly slow. Because it also calls rad? Or loops? How speed up?
+				// TODO: PERF!!!! Oh yeesh, this is badly slow. Because it also calls rad? Or loops? How speed up?
+				// TODO: PERF!!!! Oh yeesh, this is badly slow. Because it also calls rad? Or loops? How speed up?
+				// TODO: PERF!!!! Oh yeesh, this is badly slow. Because it also calls rad? Or loops? How speed up?
+				// TODO: PERF!!!! Oh yeesh, this is badly slow. Because it also calls rad? Or loops? How speed up?
 				all.err = obj_map(put, valid, msg);
 				;(console.STAT||'').pe = +new Date;
 				Gun.log(S, +new Date - S, 'mix');
@@ -764,7 +770,7 @@
 				mid = ctx.node = ctx.state = u;
 				all(); // if synchronous
 				fire(ctx, ''); // if synchronous
-				msg = ctx = u;
+				msg = u;//ctx = u;
 			} Gun.on.put = put;
 			function valid(node, soul){
 				if(!node){ return ERR+cut(soul)+"no node." }
@@ -774,14 +780,20 @@
 				if(soul !== tmp[_soul]){ return ERR+cut(soul)+"soul not same." }
 				ctx.soul = soul;
 				if(!(ctx.states = tmp[state_])){ return ERR+cut(soul)+"no state." }
-				return obj_map(node, mix, this);
+				var S = +new Date;
+				var r = obj_map(node, mix, this);
+				Gun.log(S, +new Date - S, 'valid node?');
+				return r;
 			}
 			function mix(val, key){
 				if(node_ === key){ return }
 				var ctx = this._, soul = ctx.soul, state = ctx.states[key], tmp;
 				if(u === state){ return ERR+cut(key)+"on"+cut(soul)+"no state." }
 				if(!val_is(val)){ return ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val) }
+				if(SC > 9 && 0 === soul.indexOf('hackernoon!stats') && this['@']){ return ERR+"fake err, test!" }
+				var S = +new Date;
 				ham(val, key, soul, state, ctx); // TODO: HANDLE CALLBACK WHERE ALL DAY IS HISTORIC?
+				Gun.log(S, +new Date - S, 'valid ham?');
 			}
 			function ham(val, key, soul, state, ctx){
 				var root = ctx.root, graph = root.graph, id = soul+key, all = ctx.all, alls;
@@ -802,10 +814,12 @@
 					return;
 				}
 				(ctx.set || (ctx.set = {}))[id] = 1; // tmp code;
+				var S = +new Date;
 				root.on('put2', {put: {'#': soul, '.': key, ':': val, '>': state}, ack: function(err, ok){
 					delete alls[id];
 					all(err, ok);
 				}, _: ctx});
+				Gun.log(S, +new Date - S, 'valid put2');
 			}
 			function map(msg){
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
@@ -837,14 +851,15 @@
 				if(!obj_empty(set)){ return }
 				var stop = {};
 				var root = ctx.root, next = root.next||'', put = ctx.put;
-				;(console.STAT||'').f = +new Date;
+				var S = (console.STAT||'').f = +new Date;
 				Gun.graph.is(put, function(node,soul){ var tmp;
 					if(!(tmp = next[soul]) || !tmp.$){ return }
 					root.stop = stop; // temporary fix till a better solution?
 					tmp.on('in', {$: tmp.$, get: soul, put: node});
 					root.stop = null; // temporary fix till a better solution?
 				});
-				;(console.STAT||'').fe = +new Date;
+				var ST = (console.STAT||'').fe = +new Date;
+				Gun.log(S, ctx.SFT += ST - S, 'fire');
 			}
 			var ERR = "Error: Invalid graph!";
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
