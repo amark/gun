@@ -1,22 +1,17 @@
 ;(function(){
 
-	/* UNBUILD */
-	var root;
-	if(typeof window !== "undefined"){ root = window }
-	if(typeof global !== "undefined"){ root = global }
-	root = root || {};
-	var console = root.console || {log: function(){}};
-	function USE(arg, req){
-		return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
-			arg(mod = {exports: {}});
-			USE[R(path)] = mod.exports;
-		}
-		function R(p){
-			return p.split('/').slice(-1).toString().replace('.js','');
-		}
-	}
-	if(typeof module !== "undefined"){ var common = module }
-	/* UNBUILD */
+  /* UNBUILD */
+  function USE(arg, req){
+    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+      arg(mod = {exports: {}});
+      USE[R(path)] = mod.exports;
+    }
+    function R(p){
+      return p.split('/').slice(-1).toString().replace('.js','');
+    }
+  }
+  if(typeof module !== "undefined"){ var MODULE = module }
+  /* UNBUILD */
 
 	;USE(function(module){
     if(typeof window !== "undefined"){ module.window = window }
@@ -24,7 +19,7 @@
 		var AXE = tmp.AXE || function(){};
 
     if(AXE.window = module.window){ AXE.window.AXE = AXE }
-    try{ if(typeof common !== "undefined"){ common.exports = AXE } }catch(e){}
+    try{ if(typeof MODULE !== "undefined"){ MODULE.exports = AXE } }catch(e){}
     module.exports = AXE;
 	})(USE, './root');
   
@@ -107,7 +102,6 @@
 			var Rad = (Gun.window||{}).Radix || USE('./lib/radix', 1);
 			at.opt.dht = Rad();
 			at.on('in', input);
-			at.on('in2', input);
 			function input(msg){
 				var to = this.to, peer = (msg._||'').via; // warning! mesh.leap could be buggy!
 				var dht = opt.dht;
