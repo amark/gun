@@ -1,12 +1,6 @@
 ;(function(){
 
   /* UNBUILD */
-  var root;
-  if(typeof window !== "undefined"){ root = window }
-  
-  if(typeof global !== "undefined"){ root = global }
-  root = root || {};
-  var console = root.console || {log: function(){}};
   function USE(arg, req){
     return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
       arg(mod = {exports: {}});
@@ -16,7 +10,7 @@
       return p.split('/').slice(-1).toString().replace('.js','');
     }
   }
-  if(typeof module !== "undefined"){ var common = module }
+  if(typeof module !== "undefined"){ var MODULE = module }
   /* UNBUILD */
 
   ;USE(function(module){
@@ -32,7 +26,7 @@
 
     if(SEA.window = module.window){ SEA.window.SEA = SEA }
 
-    try{ if(typeof common !== "undefined"){ common.exports = SEA } }catch(e){}
+    try{ if(typeof MODULE !== "undefined"){ MODULE.exports = SEA } }catch(e){}
     module.exports = SEA;
   })(USE, './root');
 
@@ -50,10 +44,10 @@
   ;USE(function(module){
     if(typeof btoa === "undefined"){
       if(typeof Buffer === "undefined") {
-        root.Buffer = require("buffer").Buffer
+        global.Buffer = require("buffer").Buffer
       }
-      root.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
-      root.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
+      global.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
+      global.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
     }
   })(USE, './base64');
 
@@ -655,7 +649,7 @@
 
   ;USE(function(module){
     var shim = USE('./shim');
-    // Practical examples about usage found from ./test/common.js
+    // Practical examples about usage found in tests.
     var SEA = USE('./root');
     SEA.work = USE('./work');
     SEA.sign = USE('./sign');
@@ -704,7 +698,7 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || USE((typeof common == "undefined"?'.':'')+'./gun', 1);
+    var Gun = (SEA.window||{}).Gun || USE((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
     Gun.SEA = SEA;
     SEA.GUN = SEA.Gun = Gun;
 
@@ -1101,10 +1095,9 @@
     Gun.on('opt', function(at){
       if(!at.sea){ // only add SEA once per instance, on the "at" context.
         at.sea = {own: {}};
-        at.on('in', security, at); // now listen to all input data, acting as a firewall.
+        //at.on('in', security, at); // now listen to all input data, acting as a firewall.
         //at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
-        at.on('node', each, at);
-        at.on('put2', check, at);
+        at.on('put', check, at);
       }
       this.to.next(at); // make sure to call the "next" middleware adapter.
     });
@@ -1156,9 +1149,9 @@
     var u;
     function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
       var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
-      //console.log("security check", msg);
-      //var no = function(why){ at.on('in', {'@': id, err: why}) }
-      var no = function(why){ msg.ack(why) }
+      var no = function(why){ at.on('in', {'@': id, err: why}) };
+      //var no = function(why){ msg.ack(why) };
+      (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
       if('#' === soul[0]){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
       } 
@@ -1341,11 +1334,9 @@
               return;
             }*/
             check['any'+soul+key] = 1;
-            console.log(val, key, node, soul, '...', SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul));
             SEA.sign(SEA.opt.prep(tmp = SEA.opt.parse(val), key, node, soul), (user._).sea, function(data){
               if(u === data){ return each.end({err: 'My signature fail.'}) }
               node[key] = JSON.stringify({':': SEA.opt.unpack(data.m), '~': data.s});
-              console.log(key, node[key], '...', data);
               check['any'+soul+key] = 0;
               each.end({ok: 1});
             }, {check: SEA.opt.pack(tmp, key, node, soul), raw: 1});
