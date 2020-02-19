@@ -10,7 +10,8 @@ var opt = {localStorage: false};
 //opt.chunk = 1024;
 opt.store = (Gun.window && window.RindexedDB(opt)) || require('../../../gun/lib/rfs')(opt)
 var rad = Radisk(opt);
-var gun = Gun(opt);
+//var gun = Gun(opt);
+var gun = Gun('http://localhost:8765/gun');
 
 Gun.window && (wait.onchange = function(){ spam.wait = this.value })
 Gun.window && (burst.onchange = function(){ spam.burst = this.value })
@@ -19,12 +20,15 @@ function spam(){
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 1; spam.burst = 250; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 1000000; spam.left = spam.max; spam.wait = 0; spam.burst = 100; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 300000; spam.left = spam.max; spam.wait = 1; spam.burst = 5; spam.c = 0; spam.s = (+new Date);
-	spam.max = 100000; spam.left = spam.max; spam.wait = 0; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
+	//spam.max = 100000; spam.left = spam.max; spam.wait = 0; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 20; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100; spam.left = spam.max; spam.wait = 1; spam.burst = 1; spam.c = 0; spam.s = (+new Date);
+	spam.max = 100000; spam.left = spam.max; spam.wait = 0; spam.burst = 2; spam.c = 99; spam.s = (+new Date);
 	var S = +new Date, slow = 0; console.only.i = 1;
-	var to = setInterval(function(){ var b = spam.burst;
+	var to = setInterval(function(){
 		if(spam.c >= spam.max){ clearTimeout(to); return; }
+		var b = spam.burst;
+		b = b * Math.ceil(10*Math.random()/3);
 		//console.log('spam', +new Date - S, spam.c); S = +new Date;
 		if(!b){ b = burst = 1 }
 		while(b--){ go(++spam.c) }
@@ -34,8 +38,8 @@ function spam(){
 			//setTimeout(function(){ var ack = {err: 0, ok: 1};
 			//loc.put(i, {test: i}, function(err, ok){ var ack = {err: err, ok: ok};
 			//ind.put(i, {test: i}, function(err, ok){ var ack = {err: err, ok: ok};
-			rad(i, {test: i}, function(err, ok){ var ack = {err: err, ok: ok};
-			//var ref = gun.get(i).put({test: i}, function(ack){
+			//rad(i, {test: i}, function(err, ok){ var ack = {err: err, ok: ok};
+			var ref = gun.get(i).put({test: i}, function(ack){
 				var t = (+new Date - s)/1000; if(1 < t){ ++slow; }
 				if(ack.err){ console.log(ack); }
 				if(d++){ return }
