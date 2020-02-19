@@ -1185,7 +1185,7 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
-      if('pub' === key){
+      if('pub' === key && '~'+pub === soul){
         if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!");
       }
