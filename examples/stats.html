@@ -47,16 +47,17 @@
   var fetchData = async function(){
     // fetch the data from server
     var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+    data.over = (data.over/1000) || 15;
 		$('#peers').text(data.peers.count);
 		$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
 		$('#nodes').text(data.node.count);
 		$('#hours').text((data.up.time / 60 / 60).toFixed(1));
 
 		Stats('memory').line.append(+new Date, data.memory.heapTotal / 1024 / 1024);
-    try{ Stats('dam # in').line.append(+new Date, data.dam.in.count); }catch(e){}
-    try{ Stats('dam in MB').line.append(+new Date, data.dam.in.done / 1024 / 1024); }catch(e){}
-    try{ Stats('dam # out').line.append(+new Date, data.dam.out.count); }catch(e){}
-    try{ Stats('dam out MB').line.append(+new Date, data.dam.out.done / 1024 / 1024); }catch(e){}
+    try{ Stats('dam # in/s').line.append(+new Date, Math.round(data.dam.in.count / data.over)); }catch(e){}
+    try{ Stats('dam in MB/s').line.append(+new Date, data.dam.in.done / 1024 / 1024 / data.over); }catch(e){}
+    try{ Stats('dam # out/s').line.append(+new Date, Math.round(data.dam.out.count / data.over)); }catch(e){}
+    try{ Stats('dam out MB/s').line.append(+new Date, data.dam.out.done / 1024 / 1024 / data.over); }catch(e){}
 
     console.log('data',data);
     //fetch keys in all, these may be dynamically changing
