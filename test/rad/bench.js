@@ -23,12 +23,13 @@ function spam(){
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 0; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 20; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100; spam.left = spam.max; spam.wait = 1; spam.burst = 1; spam.c = 0; spam.s = (+new Date);
-	spam.max = 100000; spam.left = spam.max; spam.wait = 0; spam.burst = 2; spam.c = 99; spam.s = (+new Date);
+	spam.max = 100000; spam.left = spam.max; spam.wait = 100; spam.burst = 100; spam.c = 99; spam.s = (+new Date);
 	var S = +new Date, slow = 0; console.only.i = 1;
-	var to = setInterval(function(){
+	var to = setTimeout(function gap(){
 		if(spam.c >= spam.max){ clearTimeout(to); return; }
+		setTimeout(gap, Math.random() * 100);
 		var b = spam.burst;
-		b = b * Math.ceil(10*Math.random()/3);
+		b = Math.ceil(Math.random() * b);
 		//console.log('spam', +new Date - S, spam.c); S = +new Date;
 		if(!b){ b = burst = 1 }
 		while(b--){ go(++spam.c) }
