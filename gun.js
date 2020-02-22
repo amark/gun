@@ -637,6 +637,7 @@
 					delete s[id];
 				});
 				dup.to = null;
+				console.STAT && (age = +new Date - now) > 9 && console.STAT(now, age, 'dup drop');
 			}
 			return dup;
 		}
@@ -716,6 +717,7 @@
 				});*/
 				ctx.out = msg;
 				ctx.lot = {s: 0, more: 1};
+				var S = +new Date;
 				for(var soul in put){ // Gun.obj.native() makes this safe.
 					var node = put[soul], states;
 					if(!node){ err = ERR+cut(soul)+"no node."; break }
@@ -731,6 +733,7 @@
 					}
 					if(err){ break }
 				}
+				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
 				if(!(--ctx.lot.more)){ fire(ctx) } // if synchronous.
 			} Gun.on.put = put;
@@ -777,14 +780,14 @@
 				if(ctx.err){ return }
 				var stop = {};
 				var root = ctx.root, next = root.next||'', put = ctx.put, tmp;
-				//var S = +new Date;
+				var S = +new Date;
 				Gun.graph.is(put, function(node, soul){
 					if(!(tmp = next[soul]) || !tmp.$){ return }
 					root.stop = stop; // temporary fix till a better solution?
 					tmp.on('in', {$: tmp.$, get: soul, put: node});
 					root.stop = null; // temporary fix till a better solution?
 				});
-				//Gun.log(S, +new Date - S, 'fire');
+				console.STAT && console.STAT(S, +new Date - S, 'fire');
 				if(!(tmp = ctx.out)){ return }
 				tmp.out = universe;
 				root.on('out', tmp);
@@ -892,10 +895,8 @@
 				} else {
 					node = Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				}
-				;(console.STAT||'').gns = Object.keys(node||{}).length;
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
-				;(console.STAT||'').g = +new Date;
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				root.on('in', {
 					'@': msg['#'],
@@ -904,7 +905,6 @@
 					$: gun,
 					_: faith
 				});
-				;(console.STAT||'').ga = +new Date;
 				//if(0 < tmp){ return }
 				root.on('get', msg);
 			}
@@ -2045,13 +2045,13 @@
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
-				var msg, id, hash, tmp = raw[0], DBG = LOG;
+				var msg, id, hash, tmp = raw[0], DBG;
 				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
 				if('[' === tmp){
 					try{msg = JSON.parse(raw)}catch(e){opt.log('DAM JSON parse error', e)}
 					raw = '';
 					if(!msg){ return }
-					LOG && opt.log(+new Date, msg.length, '# on hear batch');
+					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
 					var p = opt.puff;
 					(function puff(){
 						//var p = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
@@ -2087,9 +2087,11 @@
 						dup_track(id);
 						return;
 					}
-					DBG && (DBG.is = +new Date);
+					var S = +new Date, ST;
+					DBG && (DBG.is = S);
 					root.on('in', msg);
-					DBG && (DBG.hd = +new Date) && (tmp = (DBG.hd - DBG.hp) > 9) && opt.log(DBG.hp, tmp, 'msg')
+					DBG && (DBG.hd = +new Date);
+					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg');
 					dup_track(id).via = peer;
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 				}
@@ -2106,11 +2108,10 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S; LOG && (S = +new Date); //msg.DBG_s = msg.DBG_s || +new Date;
+					var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					//if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
-					;(console.STAT||'').s = +new Date;
 					if(!(raw = meta.raw)){
 						raw = mesh.raw(msg);
 						/*if(hash && (tmp = msg['@'])){
@@ -2121,22 +2122,20 @@
 							}
 						}*/
 					}
-					;(console.STAT||'').sr = +new Date;
-					//LOG && opt.log(S, +new Date - S, 'say prep');
+					console.STAT && console.STAT(S, +new Date - S, 'say prep');
 					dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 					//console.log("SEND!", JSON.parse(JSON.stringify(msg)));
 					if(!peer && (tmp = msg['@'])){ peer = ((tmp = dup.s[tmp]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && msg['@']){
-						LOG && opt.log(+new Date, ++SMIA, 'total no peer to ack to');
+						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
-						//var S; LOG && (S = +new Date);
-						;(console.STAT||'').pn = Object.keys(peer || opt.peers || {}).length;
+						var S = +new Date;
 						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						//LOG && opt.log(S, +new Date - S, 'say loop');
+						console.STAT && console.STAT(S, +new Date - S, 'say loop');
 						return;
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -2154,9 +2153,9 @@
 					}
 					//peer.batch = [];
 					peer.batch = '['; // TODO: Prevent double JSON!
-					var S, ST; LOG && (S = +new Date);
+					var S = +new Date, ST;
 					setTimeout(function(){
-						LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, '0ms TO', id, peer.id);
+						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, '0ms TO', id, peer.id);
 						flush(peer);
 					}, opt.gap);
 					send(raw, peer);
@@ -2170,24 +2169,20 @@
 				peer.batch = peer.tail = null;
 				if(!tmp){ return }
 				if(t? 3 > tmp.length : !tmp.length){ return } // TODO: ^
-				var S, ST; LOG && (S = +new Date);
 				if(!t){try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
 				}catch(e){return opt.log('DAM JSON stringify error', e)}}
-				LOG && (ST = +new Date - S) > 9 && opt.log(S, ST, 'say stringify', tmp.length);
 				if(!tmp){ return }
 				send(tmp, peer);
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
 				var wire = peer.wire;
-				var S, ST; LOG && (S = +new Date);
 				if(peer.say){
 					peer.say(raw);
 				} else
 				if(wire.send){
 					wire.send(raw);
 				}
-				LOG && ((console.STAT||'').ps = ST = +new Date - S) > 9 && opt.log(S, ST, 'wire send', raw.length);
 				mesh.say.d += raw.length||0; ++mesh.say.c; // STATS!
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
@@ -2240,7 +2235,6 @@
 				root.on('bye', peer);
 				var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 				mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
-				LOG = console.LOG; // dirty place to cheaply update LOG settings over time.
 			}
 			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
@@ -2304,7 +2298,9 @@
 
 			function sort(k, v){ var tmp;
 				if(!(v instanceof Object)){ return v }
+				var S = +new Date;
 				Type.obj.map(Object.keys(v).sort(), map, {to: tmp = {}, on: v});
+				console.STAT && console.STAT(S, +new Date - S, 'sort');
 				return tmp;
 			}
 			Type.obj.hash.sort = sort;
@@ -2318,7 +2314,6 @@
 
 	  var empty = {}, ok = true, u;
 		var obj_is = Type.obj.is, obj_map = Type.obj.map;
-		var LOG = console.LOG;
 
 	  try{ module.exports = Mesh }catch(e){}
 

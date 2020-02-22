@@ -27,7 +27,7 @@
 
 		var AXE = USE('./root'), Gun = (AXE.window||{}).Gun || USE('./gun', 1);
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
-    var LOG = console.LOG, ST = 0;
+    var ST = 0;
 
 		Gun.on('opt', function(at){
 			start(at);
@@ -90,7 +90,7 @@
 				if (opt.super) {
 					dht(soul, tmp.join(','));
 				}
-				LOG && Gun.log(S, +new Date - S, 'axe verify');
+				console.STAT && console.STAT(S, +new Date - S, 'axe verify');
 			}
 			function route(get){ var tmp;
 				if(!get){ return }
@@ -163,7 +163,6 @@
 				if(peer){ mesh.say({dam: 'opt', ok: 1, '@': msg['#']}, peer) }
 			}
 			setInterval(function(tmp){
-        LOG = console.LOG; // for stats, occasionally update cache.
 				if(!(tmp = at.stats && at.stats.stay)){ return }
 				(tmp.axe = tmp.axe || {}).up = Object.keys(axe.up||{});
 			},1000 * 60)
@@ -200,7 +199,7 @@
 								meta.turn = (meta.turn || 0) + 1;
 								if((old && old[id]) || false === mesh.say(msg, peer)){ ++c }
 							}
-	            LOG && (ST = +new Date - S) > 9 && Gun.log(S, ST, 'axe chat');
+	            console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'axe chat');
 							//console.log("AXE:", Gun.obj.copy(msg), meta.turn, c, ids, opt.peers === peers);
 							if(0 < c){
 								if(peers === opt.peers){ return } // prevent infinite lack loop.
@@ -227,7 +226,7 @@
 							if(!to){ return }
 							Gun.obj.to(to, peers);
 						});
-						LOG && (ST = +new Date - S) > 9 && Gun.log(S, ST, 'axe put');
+						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'axe put');
 						mesh.say(msg, peers);
 						return;
 					}
@@ -260,12 +259,14 @@
 			});
 			at.on('bye', function(peer){ this.to.next(peer);
 				if(peer.url){ delete axe.up[peer.id] }
+				var S = +new Date;
 				Gun.obj.map(peer.routes, function(route, hash){
 					delete route[peer.id];
 					if(Gun.obj.empty(route)){
 						delete axe.routes[hash];
 					}
 				});
+				console.STAT && console.STAT(S, +new Date - S, 'axe bye');
 			});
 
 			// handle rebalancing a mob of peers:
