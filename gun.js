@@ -719,6 +719,7 @@
 				ctx.out = msg;
 				ctx.lot = {s: 0, more: 1};
 				var S = +new Date;
+				DBG && (DBG.p = S);
 				for(var soul in put){ // Gun.obj.native() makes this safe.
 					var node = put[soul], states;
 					if(!node){ err = ERR+cut(soul)+"no node."; break }
@@ -734,7 +735,7 @@
 					}
 					if(err){ break }
 				}
-				DBG && (DBG.p = +new Date);
+				DBG && (DBG.pe = +new Date);
 				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
 				if(!(--ctx.lot.more)){ fire(ctx) } // if synchronous.
@@ -767,10 +768,8 @@
 				if((tmp = ctx.out) && (tmp = tmp.put)){
 					tmp[soul] = state_ify(tmp[soul], key, state, val, soul); // TODO: Hacky, fix & come back later, for actual pushing messages.
 				}
-				(msg._||'').DBG && ((msg._||'').DBG.cm = +new Date);
 				if(!(--ctx.lot.more)){ fire(ctx) }
 				eve.to.next(msg);
-				(msg._||'').DBG && ((msg._||'').DBG.ce = +new Date);
 			}
 			function chain(ctx, soul, key,val, state){
 				var root = ctx.root, put, tmp;
@@ -2092,9 +2091,8 @@
 					}
 					var S = +new Date, ST;
 					DBG && (DBG.is = S);
-					//root.on('in', msg);
-					ECHO = msg.put || ECHO;
-					(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+					root.on('in', msg);
+					//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 					DBG && (DBG.hd = +new Date);
 					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg');
 					dup_track(id).via = peer;
@@ -2104,7 +2102,6 @@
 			var tomap = function(k,i,m){m(k,true)};
 			var noop = function(){};
 			hear.c = hear.d = 0;
-			var ECHO;
 
 			;(function(){
 				var SMIA = 0;
@@ -2114,7 +2111,8 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S = +new Date; //msg.DBG_s = msg.DBG_s || +new Date;
+					var S = +new Date, DBG = msg.DBG;
+					DBG && (DBG.y = +new Date);
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					//if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
