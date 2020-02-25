@@ -69,7 +69,7 @@
 				The mob threshold might be determined by other factors,
 				like how much RAM or CPU stress we have.
 			*/
-			opt.mob = opt.mob || Infinity;
+			opt.mob = opt.mob || 9876 || Infinity;
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(at);
 			console.log("AXE enabled.");
 
