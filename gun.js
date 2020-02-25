@@ -711,6 +711,7 @@
 				if(!msg){ return }
 				var ctx = msg._||'', root = ctx.root = ((msg.$||'')._||'').root;
 				var put = msg.put, id = msg['#'], err, tmp;
+				var DBG = ctx.DBG = msg.DBG;
 				if(put['#']){ root.on('put', msg); return }
 				/*root.on(id, function(m){
 					console.log('ack:', m);
@@ -733,6 +734,7 @@
 					}
 					if(err){ break }
 				}
+				DBG && (DBG.p = +new Date);
 				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
 				if(!(--ctx.lot.more)){ fire(ctx) } // if synchronous.
@@ -754,10 +756,11 @@
 				}
 				(lot = ctx.lot||'').s++; lot.more++;
 				(ctx.stun || (ctx.stun = {}))[soul+key] = 1;
+				var DBG = ctx.DBG; DBG && (DBG.ph = DBG.ph || +new Date);
 				root.on('put', {'#': msg['#'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
 			function map(msg){
-				(msg._||'').DBG && ((msg._||'').DBG.m = +new Date);
+				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
 				graph[soul] = state_ify(graph[soul], key, state, val, soul); // TODO: Only put in graph if subscribed? Relays vs Browsers?
 				chain(ctx, soul, key, (u !== (tmp = put['=']))? tmp : val, state); // TODO: This should NOT be how the API works, this should be done at an extension layer, but hacky solution to migrate with old code for now.
