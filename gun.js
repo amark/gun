@@ -2106,7 +2106,7 @@
 
 			;(function(){
 				var SMIA = 0;
-				var message;
+				var message, loop;
 				function each(peer){ mesh.say(message, peer) }
 				mesh.say = function(msg, peer){
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
@@ -2127,7 +2127,7 @@
 						}*/
 					}
 					S && console.STAT && console.STAT(S, +new Date - S, 'say prep');
-					dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
+					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					//console.log("SEND!", JSON.parse(JSON.stringify(msg)));
 					if(!peer && (tmp = msg['@'])){ peer = ((tmp = dup.s[tmp]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && msg['@']){
@@ -2141,15 +2141,16 @@
 						var P = 3 /*opt.puff*/, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: BETTER PERF? No object.keys? It is polyfilled by Type.js tho.
 						;(function puff(){
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-							var wr = meta.raw; meta.raw = raw; // quick perf hack
+							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 							var i = 0; for(;i < P; i++){ var p = ps[(pl||'')[i]];
 								if(!p){ continue }
 								mesh.say(msg, p);
 							}
-							meta.raw = wr;
+							meta.raw = wr; loop = 0;
 							pl = pl.slice(i); // slicing after is faster than shifting during.
 							if(!pl.length){ console.STAT && console.STAT(S, +new Date - S, 'say loop'); return }
 							setTimeout(puff, 1);
+							dup_track(msg['@']); // keep for later
 						}());
 						return;
 					}
