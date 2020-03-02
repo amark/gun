@@ -739,6 +739,7 @@
 				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
 				if(!(--ctx.lot.more)){ fire(ctx) } // if synchronous.
+				if(!ctx.stun){ root.on('in', {'@': id, ok: -1}) } // in case no diff sent to storage, etc., still ack.
 			} Gun.on.put = put;
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot;
@@ -2054,11 +2055,11 @@
 					raw = '';
 					if(!msg){ return }
 					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
-					var p = opt.puff;
+					var P = opt.puff;
 					(function puff(){
-						//var p = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
-						var i = 0; for(;i < p; i++){ hear(msg[i], peer) }
-						//peer.puff = Math.ceil((+new Date - s)? p * 1.1 : p * 0.9);
+						//var P = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
+						var i = 0; for(;i < P; i++){ hear(msg[i], peer) }
+						//peer.puff = Math.ceil((+new Date - s)? P * 1.1 : P * 0.9);
 						msg = msg.slice(i); // slicing after is faster than shifting during.
 						flush(peer); // force send all synchronously batched acks.
 						if(!msg.length){ return }
@@ -2111,8 +2112,7 @@
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
-					var S = +new Date, DBG = msg.DBG;
-					DBG && (DBG.y = +new Date);
+					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					//if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
@@ -2126,7 +2126,7 @@
 							}
 						}*/
 					}
-					console.STAT && console.STAT(S, +new Date - S, 'say prep');
+					S && console.STAT && console.STAT(S, +new Date - S, 'say prep');
 					dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more!
 					//console.log("SEND!", JSON.parse(JSON.stringify(msg)));
 					if(!peer && (tmp = msg['@'])){ peer = ((tmp = dup.s[tmp]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
@@ -2138,12 +2138,22 @@
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
 						var S = +new Date;
-						var wr = meta.raw; meta.raw = raw; // quick perf hack
-						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						meta.raw = wr;
-						console.STAT && console.STAT(S, +new Date - S, 'say loop'); // PERF: TODO: 1.4s+ on tgif, NEED PUFF
+						var P = 3 /*opt.puff*/, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: BETTER PERF? No object.keys? It is polyfilled by Type.js tho.
+						;(function puff(){
+							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
+							var wr = meta.raw; meta.raw = raw; // quick perf hack
+							var i = 0; for(;i < P; i++){ var p = ps[(pl||'')[i]];
+								if(!p){ continue }
+								mesh.say(msg, p);
+							}
+							meta.raw = wr;
+							pl = pl.slice(i); // slicing after is faster than shifting during.
+							if(!pl.length){ console.STAT && console.STAT(S, +new Date - S, 'say loop'); return }
+							setTimeout(puff, 1);
+						}());
 						return;
 					}
+					// TODO: PERF: consider splitting function here, so say loops do less work.
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
 					if(id === peer.last){ return } peer.last = id;  // was it just sent?
 					if(peer === meta.via){ return false } // don't send back to self.
