@@ -56,11 +56,13 @@
   },
   "dependencies": {
     "buffer": "^5.4.3",
-    "ws": "^7.1.2"
+    "ws": "^7.2.1"
   },
   "optionalDependencies": {
     "text-encoding": "^0.7.0",
     "isomorphic-webcrypto": "^2.3.2",
+    "bufferutil": "^4.0.1",
+    "utf-8-validate": "^5.0.2",
     "emailjs": "^2.2.0"
   },
   "devDependencies": {

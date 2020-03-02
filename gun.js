@@ -2094,7 +2094,7 @@
 					root.on('in', msg);
 					//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 					DBG && (DBG.hd = +new Date);
-					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg');
+					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
 					dup_track(id).via = peer;
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 				}
@@ -2138,8 +2138,10 @@
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
 						var S = +new Date;
+						var wr = meta.raw; meta.raw = raw; // quick perf hack
 						Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
-						console.STAT && console.STAT(S, +new Date - S, 'say loop');
+						meta.raw = wr;
+						console.STAT && console.STAT(S, +new Date - S, 'say loop'); // PERF: TODO: 1.4s+ on tgif, NEED PUFF
 						return;
 					}
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
@@ -2210,6 +2212,10 @@
 						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
 						//raw = raw.replace('"'+ _ +'"', put); // NEVER USE THIS! ALSO NEVER DELETE IT TO NOT MAKE SAME MISTAKE! https://github.com/amark/gun/wiki/@$$ Heisenbug
 					}*/
+					// TODO: PERF: tgif, CPU way too much on re-JSONifying ^ it.
+					/*
+						// NOTE TO SELF: Switch NTS to DAM now.
+					*/
 					if(meta && (raw||'').length < (1000 * 100)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
 					return raw;
 				}
@@ -2270,6 +2276,7 @@
 				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 			});
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
+				// TODO: PERF: these things are too slow. Probably `root.next` loop? Huh? is it discovering itself? What going on.
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				Type.obj.map(root.next, function(node, soul){
 					tmp = {}; tmp[soul] = root.graph[soul];
