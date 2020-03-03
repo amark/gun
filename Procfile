@@ -1,1 +1,1 @@
-web: node --prof examples/http.js
+web: node examples/http.js
