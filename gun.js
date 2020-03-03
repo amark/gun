@@ -197,6 +197,19 @@
 	})(USE, './onto');
 
 	;USE(function(module){
+		var to = (typeof setImmediate !== "undefined")? setImmediate : setTimeout, puff = function(cb){
+			if(Q.length){ Q.push(cb); return } Q = [cb];
+			to(function go(S){ S = S || +new Date;
+				var i = 0, cb; while(i < 9 && (cb = Q[i++])){ cb() }
+				if(cb && !(+new Date - S)){ return go(S) }
+				if(!(Q = Q.slice(i)).length){ return }
+				to(go, 0);
+			}, 0);
+		}, Q = [];
+		module.exports = setTimeout.puff = puff;
+	})(USE, './puff');
+
+	;USE(function(module){
 		/* Based on the Hypothetical Amnesia Machine thought experiment */
 		function HAM(machineState, incomingState, currentState, incomingValue, currentValue){
 			if(machineState < incomingState){
@@ -669,6 +682,7 @@
 		Gun.on = USE('./onto');
 		Gun.ask = USE('./ask');
 		Gun.dup = USE('./dup');
+		Gun.puff = USE('./puff');
 
 		;(function(){
 			Gun.create = function(at){
@@ -2041,7 +2055,8 @@
 			opt.log = opt.log || console.log;
 			opt.gap = opt.gap || opt.wait || 0;
 			opt.pack = opt.pack || (opt.memory? (opt.memory * 1000 * 1000) : 1399000000) * 0.3; // max_old_space_size defaults to 1400 MB.
-			opt.puff = opt.puff || 99; // IDEA: do a start/end benchmark, divide ops/result.
+			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
+			var puff = setTimeout.puff || setTimeout;
 
 			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
@@ -2056,14 +2071,14 @@
 					if(!msg){ return }
 					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
 					var P = opt.puff;
-					(function puff(){
+					(function go(){
 						//var P = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
-						var i = 0; for(;i < P; i++){ hear(msg[i], peer) }
+						var i = 0, m; while(i < P && (m = msg[i++])){ hear(m, peer) }
 						//peer.puff = Math.ceil((+new Date - s)? P * 1.1 : P * 0.9);
 						msg = msg.slice(i); // slicing after is faster than shifting during.
 						flush(peer); // force send all synchronously batched acks.
 						if(!msg.length){ return }
-						setTimeout(puff, 1);
+						puff(go, 0);
 					}());
 					return;
 				}
@@ -2108,7 +2123,7 @@
 				var SMIA = 0;
 				var message, loop;
 				function each(peer){ mesh.say(message, peer) }
-				mesh.say = function(msg, peer){
+				var say = mesh.say = function(msg, peer){
 					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw;
@@ -2138,18 +2153,18 @@
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
 						var S = +new Date;
-						var P = 3 /*opt.puff*/, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: BETTER PERF? No object.keys? It is polyfilled by Type.js tho.
-						;(function puff(){
+						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: BETTER PERF? No object.keys? It is polyfilled by Type.js tho.
+						;(function go(){
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
 							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
-							var i = 0; for(;i < P; i++){ var p = ps[(pl||'')[i]];
-								if(!p){ continue }
-								mesh.say(msg, p);
+							var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
+								if(!(p = ps[p])){ continue }
+								say(msg, p);
 							}
 							meta.raw = wr; loop = 0;
 							pl = pl.slice(i); // slicing after is faster than shifting during.
 							if(!pl.length){ console.STAT && console.STAT(S, +new Date - S, 'say loop'); return }
-							setTimeout(puff, 1);
+							puff(go, 0);
 							dup_track(msg['@']); // keep for later
 						}());
 						return;
@@ -2171,7 +2186,7 @@
 					//peer.batch = [];
 					peer.batch = '['; // TODO: Prevent double JSON!
 					var S = +new Date, ST;
-					setTimeout(function(){
+					puff(function(){
 						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, '0ms TO', id, peer.id);
 						flush(peer);
 					}, opt.gap);
@@ -2287,8 +2302,8 @@
 				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 			});
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
-				// TODO: PERF: these things are too slow. Probably `root.next` loop? Huh? is it discovering itself? What going on.
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
+				if(opt.super){ return } // temporary (?) until we have better fix/solution?
 				Type.obj.map(root.next, function(node, soul){
 					tmp = {}; tmp[soul] = root.graph[soul];
 					mesh.say({'##': Type.obj.hash(tmp), get: {'#': soul}}, peer);
