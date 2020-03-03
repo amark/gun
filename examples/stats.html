@@ -29,7 +29,7 @@
   .tall { height: 5em; }
 </style>
 
-<div class="center"><span class="shout" id="peers">0</span> peers <span class="shout" id="time">0</span> min <span class="shout" id="nodes">0</span> nodes <span class="shout" id="hours">0</span> hours</div>
+<div class="center"><span class="shout" id="peers">0</span> peers <span class="shout" id="time">0</span> min <span class="shout" id="nodes">0</span> nodes <span class="shout" id="hours">0</span> hours <span class="shout" id="block">0</span> block</div>
 
 <input id="url" class="center input crack" placeholder="enter peer stats source url">
 
@@ -44,10 +44,12 @@
 <script src="./jquery.js"></script>
 <script src="./smoothie.js" charset="utf-8"></script>
 <script>
-  var up;
+  var up, br = 0, bt = 0;
   var fetchData = async function(){
     // fetch the data from server
+    var S = +new Date;
     var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+    $('#block').text((br += (+new Date - S)) / ++bt);
     data.over = (data.over/1000) || 15;
 		$('#peers').text(data.peers.count);
 		$('#time').text((data.peers.time / 1000 / 60).toFixed(0));

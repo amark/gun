@@ -7,7 +7,7 @@
   "ios": "browser.ios.js",
   "android": "browser.android.js",
   "scripts": {
-    "start": "node examples/http.js",
+    "start": "node --prof examples/http.js",
     "debug": "node --prof-process --preprocess -j isolate*.log > v8.json && rm isolate*.log && echo 'drag & drop ./v8.json into https://mapbox.github.io/flamebearer/'",
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
