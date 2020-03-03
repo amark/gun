@@ -201,6 +201,7 @@
 			if(Q.length){ Q.push(cb); return } Q = [cb];
 			to(function go(S){ S = S || +new Date;
 				var i = 0, cb; while(i < 9 && (cb = Q[i++])){ cb() }
+				console.STAT && console.STAT(S, +new Date - S, 'puff');
 				if(cb && !(+new Date - S)){ return go(S) }
 				if(!(Q = Q.slice(i)).length){ return }
 				to(go, 0);
@@ -2072,10 +2073,12 @@
 					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
 					var P = opt.puff;
 					(function go(){
+						var S = +new Date;
 						//var P = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
 						var i = 0, m; while(i < P && (m = msg[i++])){ hear(m, peer) }
 						//peer.puff = Math.ceil((+new Date - s)? P * 1.1 : P * 0.9);
 						msg = msg.slice(i); // slicing after is faster than shifting during.
+						console.STAT && console.STAT(S, +new Date - S, 'hear loop');
 						flush(peer); // force send all synchronously batched acks.
 						if(!msg.length){ return }
 						puff(go, 0);
@@ -2152,9 +2155,9 @@
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){ message = msg;
 						if(!Type.obj.is(peer || opt.peers)){ return false }
-						var S = +new Date;
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: BETTER PERF? No object.keys? It is polyfilled by Type.js tho.
 						;(function go(){
+							var S = +new Date;
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
 							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 							var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
@@ -2163,7 +2166,8 @@
 							}
 							meta.raw = wr; loop = 0;
 							pl = pl.slice(i); // slicing after is faster than shifting during.
-							if(!pl.length){ console.STAT && console.STAT(S, +new Date - S, 'say loop'); return }
+							console.STAT && console.STAT(S, +new Date - S, 'say loop');
+							if(!pl.length){ return }
 							puff(go, 0);
 							dup_track(msg['@']); // keep for later
 						}());
@@ -2186,7 +2190,7 @@
 					//peer.batch = [];
 					peer.batch = '['; // TODO: Prevent double JSON!
 					var S = +new Date, ST;
-					puff(function(){
+					setTimeout(function(){
 						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, '0ms TO', id, peer.id);
 						flush(peer);
 					}, opt.gap);
