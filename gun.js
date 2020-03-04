@@ -754,7 +754,7 @@
 				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
 				if(!(--ctx.lot.more)){ fire(ctx) } // if synchronous.
-				if(!ctx.stun){ root.on('in', {'@': id, ok: -1}) } // in case no diff sent to storage, etc., still ack.
+				if(!ctx.stun && !msg['@']){ root.on('in', {'@': id, ok: -1}) } // in case no diff sent to storage, etc., still ack.
 			} Gun.on.put = put;
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot;
@@ -774,7 +774,7 @@
 				(lot = ctx.lot||'').s++; lot.more++;
 				(ctx.stun || (ctx.stun = {}))[soul+key] = 1;
 				var DBG = ctx.DBG; DBG && (DBG.ph = DBG.ph || +new Date);
-				root.on('put', {'#': msg['#'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
+				root.on('put', {'#': msg['#'], '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
 			function map(msg){
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
@@ -806,6 +806,7 @@
 					root.stop = null; // temporary fix till a better solution?
 				});
 				console.STAT && console.STAT(S, +new Date - S, 'fire');
+				ctx.DBG && (ctx.DBG.f = +new Date);
 				if(!(tmp = ctx.out)){ return }
 				tmp.out = universe;
 				root.on('out', tmp);
@@ -903,6 +904,8 @@
 				var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
+				var ctx = msg._||'', DBG = ctx.DBG = msg.DBG;
+				DBG && (DBG.g = +new Date);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
@@ -916,6 +919,7 @@
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
+				DBG && (DBG.ga = +new Date);
 				root.on('in', {
 					'@': msg['#'],
 					put: node,
@@ -923,8 +927,10 @@
 					$: gun,
 					_: faith
 				});
+				DBG && (DBG.gm = +new Date);
 				//if(0 < tmp){ return }
 				root.on('get', msg);
+				DBG && (DBG.gd = +new Date);
 			}
 		}());
 
