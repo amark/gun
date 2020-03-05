@@ -799,12 +799,13 @@
 				var stop = {};
 				var root = ctx.root, next = root.next||'', put = ctx.put, tmp;
 				var S = +new Date;
-				Gun.graph.is(put, function(node, soul){
-					if(!(tmp = next[soul]) || !tmp.$){ return }
+				//Gun.graph.is(put, function(node, soul){
+				for(var soul in put){ var node = put[soul]; // Gun.obj.native() makes this safe.
+					if(!(tmp = next[soul]) || !tmp.$){ continue }
 					root.stop = stop; // temporary fix till a better solution?
 					tmp.on('in', {$: tmp.$, get: soul, put: node});
 					root.stop = null; // temporary fix till a better solution?
-				});
+				}
 				console.STAT && console.STAT(S, +new Date - S, 'fire');
 				ctx.DBG && (ctx.DBG.f = +new Date);
 				if(!(tmp = ctx.out)){ return }
