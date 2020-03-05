@@ -334,6 +334,35 @@ describe('SEA', function(){
       });
     })
 
+    it('save json', function(done){
+      user.get('a').get('c').put(JSON.stringify({hello:'world'}), function(ack){
+        expect(ack.err).to.not.be.ok();
+        done();
+      });
+    })
+
+    it('read json', function(done){
+      user.get('a').get('c').once(function(data){
+        expect(data).to.be(JSON.stringify({hello:'world'}));
+        done();
+      });
+    })
+
+    it('save & read encrypt', function(done){
+      SEA.encrypt('hi', user._.sea, function(data){
+        var is = data.slice();
+        user.get('a').get('d').put(data, function(ack){
+          expect(ack.err).to.not.be.ok();
+          setTimeout(function(){
+            user.get('a').get('d').once(function(data){
+              expect(data).to.be(is);
+              done();
+            });
+          })
+        });
+      })
+    })
+
     it('refresh login', function(done){
       this.timeout(9000);
       setTimeout(function(){
