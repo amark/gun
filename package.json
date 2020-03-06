@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.2020.116",
+  "version": "0.2020.301",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "types": "index.d.ts",
   "main": "index.js",
@@ -8,7 +8,8 @@
   "ios": "browser.ios.js",
   "android": "browser.android.js",
   "scripts": {
-    "start": "node examples/http.js",
+    "start": "node --prof examples/http.js",
+    "debug": "node --prof-process --preprocess -j isolate*.log > v8.json && rm isolate*.log && echo 'drag & drop ./v8.json into https://mapbox.github.io/flamebearer/'",
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
@@ -56,11 +57,13 @@
   },
   "dependencies": {
     "buffer": "^5.4.3",
-    "ws": "^7.1.2"
+    "ws": "^7.2.1"
   },
   "optionalDependencies": {
     "emailjs": "^2.2.0",
     "isomorphic-webcrypto": "^2.3.2",
+    "bufferutil": "^4.0.1",
+    "utf-8-validate": "^5.0.2",
     "text-encoding": "^0.7.0"
   },
   "devDependencies": {
