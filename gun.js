@@ -736,7 +736,7 @@
 				var S = +new Date;
 				DBG && (DBG.p = S);
 				for(var soul in put){ // Gun.obj.native() makes this safe.
-					if((soul||'').indexOf('hackernoon!stats') === 0){ err = 'not right now'; break; }
+					//if((soul||'').indexOf('hackernoon!stats') === 0){ err = 'not right now'; break; }
 					var node = put[soul], states;
 					if(!node){ err = ERR+cut(soul)+"no node."; break }
 					if(!(tmp = node._)){ err = ERR+cut(soul)+"no meta."; break }
@@ -908,7 +908,7 @@
 				// queue concurrent GETs?
 				var ctx = msg._||'', DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
-				if((soul||'').indexOf('hackernoon!stats') === 0){ root.on('in', {'@': msg['#'], err: 'not right now'}); return; }
+				//if((soul||'').indexOf('hackernoon!stats') === 0){ root.on('in', {'@': msg['#'], err: 'not right now'}); return; }
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
