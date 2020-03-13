@@ -2129,8 +2129,8 @@
 					}
 					var S = +new Date, ST;
 					DBG && (DBG.is = S);
-					//root.on('in', msg);
-					ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+					root.on('in', msg);
+					//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 					DBG && (DBG.hd = +new Date);
 					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
 					if(ST > 1000){ require('fs').writeFile('./stats.msg.radata', JSON.stringify(msg, null, 2), noop) }
@@ -2138,7 +2138,6 @@
 					mesh.leap = null; // warning! mesh.leap could be buggy.
 				}
 			}
-			var ECHO;
 			var tomap = function(k,i,m){m(k,true)};
 			var noop = function(){};
 			hear.c = hear.d = 0;
