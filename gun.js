@@ -765,13 +765,16 @@
 				if(!is.incoming){
 					if(is.defer){
 						var to = state - machine;
-						setTimeout(function(){
-							ham(val, key, soul, state, msg);
-						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
-						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1;
-						return to;
+						if(to > 500){ // allow 0.5s tolerance for now.
+							setTimeout(function(){
+								ham(val, key, soul, state, msg);
+							}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
+							if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1;
+							return to;
+						}
+					} else {
+						return;
 					}
-					return;
 				}
 				(lot = ctx.lot||'').s++; lot.more++;
 				(ctx.stun || (ctx.stun = {}))[soul+key] = 1;
