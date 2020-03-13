@@ -765,7 +765,7 @@
 				if(!is.incoming){
 					if(is.defer){
 						var to = state - machine;
-						if(to > 500){ // allow 0.5s tolerance for now.
+						if(to > (1000 * 3)){ // allow 0.5s tolerance for now.
 							setTimeout(function(){
 								ham(val, key, soul, state, msg);
 							}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
