@@ -736,7 +736,7 @@
 				var S = +new Date;
 				DBG && (DBG.p = S);
 				for(var soul in put){ // Gun.obj.native() makes this safe.
-					//if((soul||'').indexOf('hackernoon!stats') === 0){ err = 'not right now'; break; }
+					if((soul||'').indexOf('hackernoon!stats') === 0){ err = 'not right now'; break; }
 					var node = put[soul], states;
 					if(!node){ err = ERR+cut(soul)+"no node."; break }
 					if(!(tmp = node._)){ err = ERR+cut(soul)+"no meta."; break }
@@ -751,6 +751,7 @@
 					}
 					if(err){ break }
 				}
+				//console.log("mix:", +new Date - S);
 				DBG && (DBG.pe = +new Date);
 				if(console.STAT){ console.STAT(S, +new Date - S, 'mix');console.STAT(S, ctx.lot.s, 'mix #') }
 				if(ctx.err = err){ root.on('in', {'@': id, err: Gun.log(err)}); return }
@@ -778,21 +779,15 @@
 				root.on('put', {'#': msg['#'], '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
 			function map(msg){
-				//var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date} // TEMPORARY DISABLE!
+				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
-				mapG(graph, soul, key, state, val);//graph[soul] = state_ify(graph[soul], key, state, val, soul); // TODO: Only put in graph if subscribed? Relays vs Browsers?
+				graph[soul] = state_ify(graph[soul], key, state, val, soul); // TODO: Only put in graph if subscribed? Relays vs Browsers?
 				chain(ctx, soul, key, (u !== (tmp = put['=']))? tmp : val, state); // TODO: This should NOT be how the API works, this should be done at an extension layer, but hacky solution to migrate with old code for now.
 				if((tmp = ctx.out) && (tmp = tmp.put)){
-					mapP(tmp, key, state, val, soul);//tmp[soul] = state_ify(tmp[soul], key, state, val, soul); // TODO: Hacky, fix & come back later, for actual pushing messages.
+					tmp[soul] = state_ify(tmp[soul], key, state, val, soul); // TODO: Hacky, fix & come back later, for actual pushing messages.
 				}
 				if(!(--ctx.lot.more)){ fire(ctx) }
 				eve.to.next(msg);
-			}
-			function mapG(graph, soul, key, state, val){
-				graph[soul] = state_ify(graph[soul], key, state, val, soul); // TODO: Only put in graph if subscribed? Relays vs Browsers?
-			}
-			function mapP(tmp, soul, key, state, val){
-				tmp[soul] = state_ify(tmp[soul], key, state, val, soul); // TODO: Hacky, fix & come back later, for actual pushing messages.
 			}
 			function chain(ctx, soul, key,val, state){
 				var root = ctx.root, put, tmp;
@@ -914,7 +909,7 @@
 				// queue concurrent GETs?
 				var ctx = msg._||'', DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
-				//if((soul||'').indexOf('hackernoon!stats') === 0){ root.on('in', {'@': msg['#'], err: 'not right now'}); return; }
+				if((soul||'').indexOf('hackernoon!stats') === 0){ root.on('in', {'@': msg['#'], err: 'not right now'}); return; }
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
@@ -2106,6 +2101,7 @@
 					var S = +new Date;
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
+					//console.log('dam parse:', +new Date - S);
 					'{' === tmp && console.STAT && console.STAT(S, +new Date - S, 'dam parsed JSON');
 					if(!msg){ return }
 					if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
