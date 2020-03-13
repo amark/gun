@@ -2076,7 +2076,9 @@
 				var msg, id, hash, tmp = raw[0], DBG;
 				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
 				if('[' === tmp){
+					var S = +new Date;
 					try{msg = JSON.parse(raw)}catch(e){opt.log('DAM JSON parse error', e)}
+					console.STAT && console.STAT(S, +new Date - S, 'dam parsed JSONs');
 					raw = '';
 					if(!msg){ return }
 					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
@@ -2095,8 +2097,10 @@
 					return;
 				}
 				if('{' === tmp || ((raw['#'] || obj_is(raw)) && (msg = raw))){
+					var S = +new Date;
 					try{msg = msg || JSON.parse(raw);
 					}catch(e){return opt.log('DAM JSON parse error', e)}
+					'{' === tmp && console.STAT && console.STAT(S, +new Date - S, 'dam parsed JSON');
 					if(!msg){ return }
 					if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 					DBG && (DBG.hp = +new Date);
