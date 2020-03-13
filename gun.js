@@ -711,6 +711,7 @@
 				if(dup.check(tmp)){ return } dup.track(tmp);
 				tmp = msg._; msg._ = ('function' == typeof tmp)? tmp : function(){};
 				(msg.$ && (msg.$ === (msg.$._||'').$)) || (msg.$ = gun);
+				if(msg.get && obj_empty(msg.get)){ return } // who sending these? Need better way to stop.
 				if(!at.ask(msg['@'], msg)){ // is this machine listening for an ack?
 					DBG && (DBG.u = +new Date);
 					if(msg.get){ Gun.on._get(msg, gun) }
