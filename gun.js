@@ -2134,8 +2134,8 @@
 					}
 					var S = +new Date, ST;
 					DBG && (DBG.is = S);
-					hear.ECHO = msg.put || hear.ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
-					//root.on('in', msg);
+					//hear.ECHO = msg.put || hear.ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+					root.on('in', msg);
 					DBG && (DBG.hd = +new Date);
 					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
 					if(ST > 1000){ require('fs').writeFile('./stats.msg.radata', JSON.stringify(msg, null, 2), noop) }
