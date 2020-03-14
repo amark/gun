@@ -2112,7 +2112,12 @@
 					DBG && (DBG.hp = +new Date);
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
 					if(tmp = dup_check(id)){ return }
-					/*if(!(hash = msg['##']) && u !== msg.put){ hash = msg['##'] = Type.obj.hash(msg.put) }
+					if(!(hash = msg['##']) && u !== msg.put){
+						var S = +new Date;
+						hash = msg['##'] = Type.obj.hash(msg.put);
+						console.STAT && console.STAT(S, +new Date - S, 'hash time');
+					}
+					/*
 					if(hash && (tmp = msg['@'] || (msg.get && id))){ // Reduces backward daisy in case varying hashes at different daisy depths are the same.
 						if(dup.check(tmp+hash)){ return }
 						dup.track(tmp+hash, true).it = it(msg); // GUN core also dedups, so `true` is needed. // Does GUN core need to dedup anymore?
@@ -2129,8 +2134,8 @@
 					}
 					var S = +new Date, ST;
 					DBG && (DBG.is = S);
-					root.on('in', msg);
-					//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+					hear.ECHO = msg.put || hear.ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+					//root.on('in', msg);
 					DBG && (DBG.hd = +new Date);
 					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
 					if(ST > 1000){ require('fs').writeFile('./stats.msg.radata', JSON.stringify(msg, null, 2), noop) }
