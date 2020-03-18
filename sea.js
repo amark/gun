@@ -196,7 +196,6 @@
     }
     catch(e){
       console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
-      TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
     }}
 
     module.exports = api
