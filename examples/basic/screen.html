@@ -44,7 +44,7 @@ record.save = function(data){
 $('#play').on('click', ()=>{
   if(record.playing){
     $('#play').text("Play")
-    $('#video').get(0).stop();
+    $('#video').get(0).pause();
     record.playing = false;
     return;
   }

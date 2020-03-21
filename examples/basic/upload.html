@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<video id="video" width="100%"></video>
+<center>
+  <span id="up">Drag & Drop Video to Upload!</span>
+  <button id="play">Play</button>
+</center>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/lib/upload.js"></script>
+
+<script>
+var gun = Gun(location.origin + '/gun');
+var video = {data: null};
+
+$('body').upload(function(e){
+  var b64 = (((e.event || e).target || e).result || e);
+  gun.get('test').get('screen').put(b64);
+})
+
+gun.get('test').get('screen').on((data)=>{
+  if(!data){ return }
+  $('#video').get(0).src = video.data = data;
+})
+
+$('#play').on('click', ()=>{
+  if(video.playing || !video.data){
+    $('#play').text("Play")
+    $('#video').get(0).pause();
+    video.playing = false;
+    return;
+  }
+  $('#play').text("Stop");
+  video.playing = true;
+  $('#video').get(0).play()
+})
+</script>
