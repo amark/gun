@@ -19,16 +19,16 @@ var Gun;
     require('../../lib/store');
     require('../../lib/rfs');
   }
- 
+
   try{ var expect = global.expect = require("../expect") }catch(e){}
- 
+
 }(this));
- 
+
 ;(function(){
 Gun = root.Gun
 
 if(Gun.window && !Gun.window.RindexedDB){ return }
- 
+
 var opt = {};
 opt.file = 'radatatest';
 var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
@@ -36,15 +36,29 @@ opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(
 opt.chunk = 1000;
 var Radix = Radisk.Radix;
 var rad = Radisk(opt), esc = String.fromCharCode(27);
- 
+
 describe('RAD', function(){
- 
+
 var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammamaria","Andy","Anselme","Ardeen","Armand","Ashelman","Aube","Averyl","Baker","Barger","Baten","Bee","Benia","Bernat","Bevers","Bittner","Bobbe","Bonny","Boyce","Breech","Brittaney","Bryn","Burkitt","Cadmann","Campagna","Carlee","Carver","Cavallaro","Chainey","Chaunce","Ching","Cianca","Claudina","Clyve","Colon","Cooke","Corrina","Crawley","Cullie","Dacy","Daniela","Daryn","Deedee","Denie","Devland","Dimitri","Dolphin","Dorinda","Dream","Dunham","Eachelle","Edina","Eisenstark","Elish","Elvis","Eng","Erland","Ethan","Evelyn","Fairman","Faus","Fenner","Fillander","Flip","Foskett","Fredette","Fullerton","Gamali","Gaspar","Gemina","Germana","Gilberto","Giuditta","Goer","Gotcher","Greenstein","Grosvenor","Guthrey","Haldane","Hankins","Harriette","Hayman","Heise","Hepsiba","Hewie","Hiroshi","Holtorf","Howlond","Hurless","Ieso","Ingold","Isidora","Jacoba","Janelle","Jaye","Jennee","Jillana","Johnson","Josy","Justinian","Kannan","Kast","Keeley","Kennett","Kho","Kiran","Knowles","Koser","Kroll","LaMori","Lanctot","Lasky","Laverna","Leff","Leonanie","Lewert","Lilybel","Lissak","Longerich","Lou","Ludeman","Lyman","Madai","Maia","Malvina","Marcy","Maris","Martens","Mathilda","Maye","McLain","Melamie","Meras","Micco","Millburn","Mittel","Montfort","Moth","Mutz","Nananne","Nazler","Nesta","Nicolina","Noellyn","Nuli","Ody","Olympie","Orlena","Other","Pain","Parry","Paynter","Pentheas","Pettifer","Phyllida","Plath","Posehn","Proulx","Quinlan","Raimes","Ras","Redmer","Renelle","Ricard","Rior","Rocky","Ron","Rosetta","Rubia","Ruttger","Salbu","Sandy","Saw","Scholz","Secor","September","Shanleigh","Shenan","Sholes","Sig","Sisely","Soble","Spanos","Stanwinn","Stevie","Stu","Suzanne","Tacy","Tanney","Tekla","Thackeray","Thomasin","Tilla","Tomas","Tracay","Tristis","Ty","Urana","Valdis","Vasta","Vezza","Vitoria","Wait","Warring","Weissmann","Whetstone","Williamson","Wittenburg","Wymore","Yoho","Zamir","Zimmermann"];
- 
+
 //console.log("HYPER TEST");var z = 10000; while(--z){ names.push(Gun.text.random(7)) }this.timeout(9000);
 
   describe('Radix', function(){
     var radix = Radix();
+
+    it('unit', function(){
+        var rad = Radix();
+        rad('asdf.pub', 'yum');
+        rad('ablah', 'cool');
+        rad('ab', {yes: 1});
+        rad('node/circle.bob', 'awesome');
+
+        expect(Gun.obj.copy(rad('asdf.'))).to.be.eql({pub: {'': 'yum'}});
+        expect(rad('nv/foo.bar')).to.be(undefined);
+        expect(rad('ab')).to.eql({yes: 1});
+        expect(Gun.obj.copy(rad())).to.be.eql({"a":{"sdf.pub":{"":"yum"},"b":{"lah":{"":"cool"},"":{"yes":1}}},"node/circle.bob":{"":"awesome"}});
+    });
+
     it('radix write read', function(done){
         var all = {};
         names.forEach(function(v,i){
@@ -59,7 +73,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         expect(Gun.obj.empty(all)).to.be.ok();
         done();
     });
- 
+
     it('radix write read again', function(done){
         var all = {};
         names.forEach(function(v,i){
@@ -74,7 +88,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         expect(Gun.obj.empty(all)).to.be.ok();
         done();
     });
- 
+
     it('radix read start end', function(done){
         var all = {}, start = 'Warring'.toLowerCase(), end = 'Zamir'.toLowerCase();
         names.forEach(function(v,i){
@@ -92,7 +106,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         expect(Gun.obj.empty(all)).to.be.ok();
         done();
     });
- 
+
     it('radix read start- end+', function(done){
         var all = {}, start = 'Warrinf'.toLowerCase(), end = 'Zamis'.toLowerCase();
         names.forEach(function(v,i){
@@ -108,6 +122,16 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[k];
         }, {start: start, end: end});
         expect(Gun.obj.empty(all)).to.be.ok();
+        done();
+    });
+ 
+    it('radix reverse item', function(done){
+        var opt = {reverse: 1, end: 'iesogon'};
+        Radix.map(radix, function(v,k, a,b){
+            expect(k).to.be('ieso');
+            expect(v).to.be(96);
+            return true;
+        }, opt);
         done();
     });
 
@@ -134,7 +158,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   });
 
   describe('Radisk', function(){
- 
+
     /*it('parse', function(done){
         this.timeout(60000);
         if(Gun.window){ return done() }
@@ -144,8 +168,8 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         }, raw);
         return;
     });*/
- 
- 
+
+
     it('write contacts', function(done){
         var all = {}, to, start;
         names.forEach(function(v,i){
@@ -178,7 +202,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         }, opt);
     });
     console.log("UNDO THIS RETURN!!!");return;*/
- 
+
     it('read contacts start end', function(done){
         var opt = {};
         opt.start = 'Warring'.toLowerCase();
@@ -200,7 +224,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             done();
         }, opt);
     });
- 
+
     it('read contacts', function(done){
         var all = {}, find = 'a';
         names.forEach(function(v){
@@ -217,7 +241,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             done();
         });
     });
- 
+
     it('read again', function(done){
         var all = {}, find = 'm';
         names.forEach(function(v){
@@ -240,6 +264,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             if(v.indexOf(find) == 0){ all[v] = true }
         });
         rad(find, function(err, data, info){
+            expect(data).to.be.ok();
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
@@ -252,12 +277,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
   });
- 
+
     var ntmp = names;
   describe('RAD + GUN', function(){
     var ochunk = 1000;
     var gun = Gun({chunk: ochunk});
- 
+
     it('write same', function(done){
         var all = {}, to, start, tmp;
         var names = [], c = 285;
@@ -273,7 +298,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             })
         });
     });
- 
+
     it('write contacts', function(done){
         var all = {}, to, start, tmp;
         names.forEach(function(v,i){
@@ -288,12 +313,22 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         })
     });
 
+    it('read one', function(done){
+        //gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').get('stu').once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+            done();
+        });
+    });
+
     it('read contacts', function(done){
         var all = {}, find = 'm', to;
         names.forEach(function(v){
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
+        //console.log("<<<<<<<<<");
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
@@ -304,6 +339,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 done();
             },100);
         });
+        //console.log(">>>>>>>>>");
     });
 
     it('read contacts again', function(done){
@@ -342,9 +378,46 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             },100);
         });
     });
- 
+
+    it.skip('read contacts smaller than cursor', function(done){ // TODO!!!
+        var all = {}, cursor = 'm', to;
+        names.forEach(function(v){
+            v = v.toLowerCase();
+            if(v < cursor){ all[v] = true }
+        });
+        gun.get('names').get({'.': {'<': cursor}, '%': 1000 * 100}).once().map().once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+            //if(!all.hasOwnProperty(key)){console.error(key);}
+            expect(all.hasOwnProperty(key)).to.be.ok();
+            delete all[key];
+            clearTimeout(to);
+            to = setTimeout(function(){
+                expect(Gun.obj.empty(all)).to.be.ok();
+                done();
+            },100);
+        });
+    });
+
+    it.skip('read contacts in descending order', function(done){ // TODO!!!
+        var all = {}, cursor = 'm', to;
+        names.forEach(function(v){
+            all[v] = true;
+        });
+        gun.get('names').get({'.': {'-': true}, '%': 1000 * 100}).once().map().once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+            delete all[key];
+            clearTimeout(to);
+            to = setTimeout(function(){
+                expect(Gun.obj.empty(all)).to.be.ok();
+                done();
+            },100);
+        });
+    });
+
   });
- 
+
 });
- 
+
 }());

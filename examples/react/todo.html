@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script type="text/babel">
+      const gun = Gun();
+      const App = () => {
+        const newTodo = React.useRef()
+        const [todos, setTodos] = React.useState({})
+
+        React.useEffect(() => {
+          gun
+            .get("todos")
+            .map()
+            .on((todo, id) => setTodos(todos => ({...todos, [id]: todo })));
+        }, [])
+
+        return (
+          <div>
+            <title>TODOs</title>
+            <ul>{Object.values(todos).map(({title}, i) => <li key={i}>{title}</li>)}</ul>
+            <form onSubmit={e => {
+                e.preventDefault();
+                gun.get("todos").set({ title: newTodo.current.value });
+                ref.current.value = ''
+              }}>
+              <input ref={newTodo} placeholder="new todo"/>
+            </form>
+          </div>
+        );
+      };
+      ReactDOM.render(<App />, document.getElementById("app"));
+    </script>
+  </body>
+</html>
