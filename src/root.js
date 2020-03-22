@@ -53,7 +53,8 @@ Gun.dup = require('./dup');
 			return;
 		}
 		dup.track(tmp);
-		if(!at.ask(msg['@'], msg)){
+		if(tmp = msg['@']){ dup.track(tmp) } // HNPERF: Bump original request's liveliness.
+		if(!at.ask(tmp, msg)){
 			if(msg.get){
 				Gun.on.get(msg, gun); //at.on('get', get(msg));
 			}
@@ -72,18 +73,21 @@ Gun.dup = require('./dup');
 ;(function(){
 	Gun.on.put = function(msg, gun){
 		var at = gun._, ctx = {$: gun, graph: at.graph, put: {}, map: {}, souls: {}, machine: Gun.state(), ack: msg['@'], cat: at, stop: {}};
+		if(!Gun.obj.map(msg.put, perf, ctx)){ return } // HNPERF: performance test, not core code, do not port.
 		if(!Gun.graph.is(msg.put, null, verify, ctx)){ ctx.err = "Error: Invalid graph!" }
 		if(ctx.err){ return at.on('in', {'@': msg['#'], err: Gun.log(ctx.err) }) }
 		obj_map(ctx.put, merge, ctx);
 		if(!ctx.async){ obj_map(ctx.map, map, ctx) }
 		if(u !== ctx.defer){
+			var to = ctx.defer - ctx.machine;
 			setTimeout(function(){
 				Gun.on.put(msg, gun);
-			}, ctx.defer - ctx.machine);
+			}, to > MD? MD : to ); // setTimeout Max Defer 32bit :(
 		}
 		if(!ctx.diff){ return }
 		at.on('put', obj_to(msg, {put: ctx.diff}));
 	};
+	var MD = 2147483647;
 	function verify(val, key, node, soul){ var ctx = this;
 		var state = Gun.state.is(node, key), tmp;
 		if(!state){ return ctx.err = "Error: No state on '"+key+"' in node '"+soul+"'!" }
@@ -149,6 +153,7 @@ Gun.dup = require('./dup');
 		(msg.$._).on('in', msg);
 		this.cat.stop = null; // temporary fix till a better solution?
 	}
+	function perf(node, soul){ if(node !== this.graph[soul]){ return true } } // HNPERF: do not port!
 
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get[_soul], node = root.graph[soul], has = get[_has], tmp;
@@ -162,15 +167,17 @@ Gun.dup = require('./dup');
 			// Maybe... in case the in-memory key we have is a local write
 			// we still need to trigger a pull/merge from peers.
 		} else {
-			node = Gun.obj.copy(node);
+			node = Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 		}
 		node = Gun.graph.node(node);
 		tmp = (at||empty).ack;
+		var faith = function(){}; faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 		root.on('in', {
 			'@': msg['#'],
 			how: 'mem',
 			put: node,
-			$: gun
+			$: gun,
+			_: faith
 		});
 		//if(0 < tmp){ return }
 		root.on('get', msg);
