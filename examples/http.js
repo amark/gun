@@ -1,7 +1,7 @@
 ;(function(){
 	var cluster = require('cluster');
 	if(cluster.isMaster){
-	  return cluster.fork() && cluster.on('exit', function(){ cluster.fork() });
+	  return cluster.fork() && cluster.on('exit', function(){ cluster.fork(); require('../lib/crashed'); });
 	}
 
 	var fs = require('fs');
