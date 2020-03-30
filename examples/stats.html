@@ -29,7 +29,7 @@
   .tall { height: 5em; }
 </style>
 
-<div class="center"><span class="shout" id="peers">0</span> peers <span class="shout" id="time">0</span> min <span class="shout" id="nodes">0</span> nodes <span class="shout" id="hours">0</span> hours</div>
+<div class="center"><span class="shout" id="peers">0</span> peers <span class="shout" id="time">0</span> min <span class="shout" id="nodes">0</span> nodes <span class="shout" id="hours">0</span> hours <span class="shout" id="block">0</span> block</div>
 
 <input id="url" class="center input crack" placeholder="enter peer stats source url">
 
@@ -44,19 +44,24 @@
 <script src="./jquery.js"></script>
 <script src="./smoothie.js" charset="utf-8"></script>
 <script>
+  var up, br = 0, bt = 0;
   var fetchData = async function(){
     // fetch the data from server
+    var S = +new Date;
     var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
+    $('#block').text(((br += (+new Date - S)/1000) / ++bt).toFixed(1));
+    data.over = (data.over/1000) || 15;
 		$('#peers').text(data.peers.count);
 		$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
 		$('#nodes').text(data.node.count);
-		$('#hours').text((data.up.time / 60 / 60).toFixed(0));
+		$('#hours').text((data.up.time / 60 / 60).toFixed(1));
+    if(data.up.time === up){ console.log("up same as before") } up = data.up.time;
 
 		Stats('memory').line.append(+new Date, data.memory.heapTotal / 1024 / 1024);
-    try{ Stats('dam # in').line.append(+new Date, data.dam.in.count); }catch(e){}
-    try{ Stats('dam in MB').line.append(+new Date, data.dam.in.done / 1024 / 1024); }catch(e){}
-    try{ Stats('dam # out').line.append(+new Date, data.dam.out.count); }catch(e){}
-    try{ Stats('dam out MB').line.append(+new Date, data.dam.out.done / 1024 / 1024); }catch(e){}
+    try{ Stats('dam # in/s').line.append(+new Date, Math.round(data.dam.in.count / data.over)); }catch(e){}
+    try{ Stats('dam in MB/s').line.append(+new Date, data.dam.in.done / 1024 / 1024 / data.over); }catch(e){}
+    try{ Stats('dam # out/s').line.append(+new Date, Math.round(data.dam.out.count / data.over)); }catch(e){}
+    try{ Stats('dam out MB/s').line.append(+new Date, data.dam.out.done / 1024 / 1024 / data.over); }catch(e){}
 
     console.log('data',data);
     //fetch keys in all, these may be dynamically changing
@@ -83,16 +88,27 @@
   	}
 		// create a new Series for this key
 		// add it into the map
-		chart = Stats[key] = new SmoothieChart({responsive: true, minValue: 0, grid:{strokeStyle:'rgba(100%,100%,100%,0.2)'},labels:{fontSize:20}});
+		chart = Stats[key] = new SmoothieChart({millisPerPixel:500, limitFPS: 16, responsive: true, minValue: 0, grid:{strokeStyle:'rgba(100%,100%,100%,0.2)'},labels:{fontSize:20}, grid: {verticalSections: 0, millisPerLine: 15000 * 4 /*, strokeStyle:'rgb(125, 0, 0)'*/}});
 		chart.line = new TimeSeries();
 		chart.addTimeSeries(chart.line,{ strokeStyle:'rgb('+Math.random()*255+', '+Math.random()*255+','+Math.random()*255+')', lineWidth:5 });
 		chart.canvas = $('.model').find('.chart').clone(true).appendTo('.charts');
 		chart.canvas.find('span').text(key);
 		chart.streamTo(chart.canvas.find('canvas').get(0), 15 * 1000);
+    chart.line.append(0, 0);
 		// check first two characters of key to determine other charts to add this in
 		// tbd later
 		return chart;
   }
+/*
+  Notes to Self about Debugging:
+  1. Read Disks can spike up to 1min, I suspect other operations are blocking it from resolving as fast as it otherwise would.
+  2. JSON parsing/stringifying sometimes way slower than other times, why?
+  3. Looks like RAD lex read is not optimized.
+  4. got prep + got emit = non-RAD problems, compare against read disk & got differentials (should be same).
+  5. Radix map/place ops could be slow?
+  6. SINGLE MESSAGE PROCESS TIME occasionally is huge, should get emailed.
+  7. Watch out for get/put loops times, maybe indicating (5) issues?
+*/
 </script>
 </body>
 </html>
