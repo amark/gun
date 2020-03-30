@@ -7,7 +7,14 @@ yarn.lock
 .idea/
 *.bak
 *.new
+*.log
+v8.json
 *.DS_store
+isolate*.log
 .esm-cache
 .sessionStorage
 .localStorage
+/types/**/*.ts
+!/types/**/*.d.ts
+/gun.ts
+/temp/
