@@ -70,13 +70,98 @@
   Public Key: <input id="pub">
 </div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/sea.js"></script>
 
 <script>
-//var gun = Gun();
-var gun = Gun('http://localhost:8080/gun');
+
+// extend SEA functions to base64 encode encrypted data
+// workaround for https://github.com/amark/gun/issues/783
+
+(() => {
+  const _encrypt = SEA.encrypt;
+  SEA.encrypt = function(...args) {
+    return _encrypt.apply(this, args).then(enc => btoa(JSON.stringify(enc)));
+  }
+
+  const _decrypt = SEA.decrypt;
+  SEA.decrypt = function(data, ...args) {
+    try     { data = JSON.parse(atob(data)); }
+    finally { return _decrypt.apply(this, [data, ...args]); }
+  }
+})();
+
+// override User functions to fix several issues
+// see https://github.com/amark/gun/issues/808
+
+SEA.Gun.User.prototype.grant = function grant(to, cb) {
+  const gun  = this;       const user = gun.back(-1).user();
+  const pair = user._.sea; let   path = '';
+
+  gun.back(at => { if (at.has) { path += at.get; } });
+
+  (async () => {
+    let enc, sec;
+
+    if (sec = await user.get('trust').get(pair.pub).get(path).then()) {
+      sec = await SEA.decrypt(sec, pair);
+
+    } else {
+      sec = SEA.random(24).toString();
+      enc = await SEA.encrypt(sec, pair);
+
+      user.get('trust').get(pair.pub).get(path).put(enc);
+    }
+
+    let pub  = to.get('pub') .then();
+    let epub = to.get('epub').then();
+
+    pub = await pub; epub = await epub;
+
+    const dh = await SEA.secret (epub, pair);
+    enc      = await SEA.encrypt(sec,  dh);
+
+    // if pub is not already in trust, first put an empty node
+    // workaround for https://github.com/amark/gun/issues/844
+
+    if (!await user.get('trust').get(pub).then()) {
+      await user.get('trust').get(pub).get(path).put({}).then();
+    }
+
+    user.get('trust').get(pub).get(path).put(enc, cb);
+  })();
+
+  return gun;
+}
+
+SEA.Gun.User.prototype.secret = function(data, cb) {
+  const gun  = this;       const user = gun.back(-1).user();
+  const pair = user._.sea; let   path = '';
+
+  gun.back(at => { if (at.has) { path += at.get; } });
+
+  (async () => {
+    let enc, sec;
+
+    if (sec = await user.get('trust').get(pair.pub).get(path).then()) {
+      sec = await SEA.decrypt(sec, pair);
+
+    } else {
+      sec = SEA.random(24).toString();
+      enc = await SEA.encrypt(sec, pair);
+
+      user.get('trust').get(pair.pub).get(path).put(enc);
+    }
+
+    enc = await SEA.encrypt(data, sec);
+    gun.put(enc, cb);
+  })();
+
+  return gun;
+}
+
+var gun = Gun('http://localhost:8765/gun');
 var user = gun.user();
 var LI = {};
 
@@ -94,7 +179,7 @@ $('#sign').on('submit', function(e){
 gun.on('auth', function(){
   $('#sign').hide();
 	$('#profile').show();
-  var pub = user.pair().pub;
+  var pub = user._.sea.pub;
   $('#pub').val(pub);
   return;
   $("#search").val(pub).trigger('blur');
@@ -126,13 +211,24 @@ $('#search').on('blur', function(e){
       ev.off();
       return;
     }
-    Gun.node.is(data, async function(v, k){
-      if(k === LI.busy){ return }
-      var key = await find.get('trust').get(user.pair().pub).get(k+'profile').then();
-      var mix = await Gun.SEA.secret(await find.get('epub').then(), user.pair());
-      key = await Gun.SEA.decrypt(key, mix);
-      var val = await Gun.SEA.decrypt(v, key);
-      $('#'+k).val(val || v);
+
+    Gun.node.is(data, async (enc, id) => {
+      if (id === LI.busy) { return; }
+
+      const pair = user._.sea;
+      let key, val;
+
+      if (key =
+        await find.get('trust').get(pair.pub).get(id + 'profile').then()) {
+        const mix = await Gun.SEA.secret(await find.get('epub').then(), pair);
+
+        key = await Gun.SEA.decrypt(key, mix);
+        val = await Gun.SEA.decrypt(enc, key);
+
+        // decode encrypted data to show 'SEA{...}'
+      } else { val = JSON.parse(atob(enc)); }
+
+      $('#' + id).val(val);
     });
   });
 });
