@@ -1,6 +1,7 @@
 import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable, IGunCryptoKeyPair } from './types';
 import { IGunConstructorOptions } from './options';
-import { ITSResolvable } from 'ts-type';
+
+declare type ITSResolvable<R> = R | PromiseLike<R>;
 export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey = any, IsTop extends 'pre_root' | 'root' | false = false> {
     /**
      * Save data into gun, syncing it with your connected peers.
