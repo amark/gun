@@ -738,7 +738,7 @@
 				var ctx = msg._||'', root = ctx.root = ((msg.$||'')._||'').root;
 				var put = msg.put, id = msg['#'], err, tmp;
 				var DBG = ctx.DBG = msg.DBG;
-				if(put['#']){ root.on('put', msg); return }
+				if(put['#'] && put['.']){ root.on('put', msg); return }
 				/*root.on(id, function(m){
 					console.log('ack:', m);
 				});*/

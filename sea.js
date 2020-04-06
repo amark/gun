@@ -1149,6 +1149,7 @@
     var u;
     function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
       var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      if(!soul || !key){ return }
       if((msg._||'').faith && (at.opt||'').faith && 'function' == typeof msg._){
         SEA.verify(SEA.opt.pack(put), false, function(data){ // this is synchronous if false
           put['='] = SEA.opt.unpack(data);
@@ -1159,7 +1160,7 @@
       var no = function(why){ at.on('in', {'@': id, err: why}) };
       //var no = function(why){ msg.ack(why) };
       (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
-      if('#' === soul[0]){ // special case for content addressing immutable hashed data.
+      if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
       } 
       if('~@' === soul){  // special case for shared system data, the list of aliases.
