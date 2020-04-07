@@ -1,60 +1,57 @@
 <html>
-
 <body>
-	<h1>Thoughts</h1>
+  <h1>Thoughts</h1>
 
-	<form id="form">
-		<input id="input">
-		<button>Add</button>
-	</form>
+  <form id="form">
+    <input id="input">
+    <button>Add</button>
+  </form>
 
-	<ul id="parentList"></ul>
+  <ul id="parentList"></ul>
 
-	<script src="../../../gun/gun.js"></script>
+  <script src="../../../gun/gun.js"></script>
 
-	<script>
-		const gun = Gun().get('thoughts')
+  <script>
+    const gun = Gun().get('thoughts')
 
-		const parentList = document.getElementById('parentList')
-		const input = document.getElementById('input')
+    const parentList = document.getElementById('parentList')
+    const input = document.getElementById('input')
 
-		const dynamicEvent = e => {
-			const target = e.target
+    const dynamicEvent = e => {
+      const target = e.target
 
-			gun.get(target.id).put(null)
+      gun.get(target.id).put(null)
 
-			target.innerHTML = document.getElementById(target.innerHTML)
+      target.innerHTML = document.getElementById(target.innerHTML)
 
-			if (target.innerHTML === ' null' || target.innerHTML === ' ' || target.innerHTML === '') {
-				target.style.display = 'none'
-			} else {
-				target.style.display = 'list-item'
-			}
-		}
+      if (target.innerHTML === ' null' || target.innerHTML === ' ' || target.innerHTML === '') {
+        target.style.display = 'none'
+      } else {
+        target.style.display = 'list-item'
+      }
+    }
 
-		gun.map().on((thought, id) => {
-			parentList.insertAdjacentHTML('beforeend', `<li id =${id}> ${thought}</li>`)
+    gun.map().on((thought, id) => {
+      parentList.insertAdjacentHTML('beforeend', `<li id =${id}> ${thought}</li>`)
 
-			const links = parentList.getElementsByTagName('li')
+      const links = parentList.getElementsByTagName('li')
 
-			for (const link of links) {
-				if (link.innerHTML === ' null' || link.innerHTML === ' ' || link.innerHTML === '') {
-					link.style.display = 'none'
-				} else {
-					link.style.display = 'list-item'
-				}
-				link.ondblclick = dynamicEvent
-			}
-		})
+      for (const link of links) {
+        if (link.innerHTML === ' null' || link.innerHTML === ' ' || link.innerHTML === '') {
+          link.style.display = 'none'
+        } else {
+          link.style.display = 'list-item'
+        }
+        link.ondblclick = dynamicEvent
+      }
+    })
 
-		document.getElementById('form').addEventListener('submit', e => {
-			e.preventDefault()
-			const data = input.value
-			gun.set(data)
-			input.value = ''
-		})
-
-	</script>
+    document.getElementById('form').addEventListener('submit', e => {
+      e.preventDefault()
+      const data = input.value
+      gun.set(data)
+      input.value = ''
+    })
+  </script>
 </body>
-
 </html>
