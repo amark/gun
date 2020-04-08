@@ -1,4 +1,11 @@
+<!DOCTYPE html>
 <html>
+
+<head>
+  <title>Think</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+</head>
+
 <body>
   <h1>Thoughts</h1>
 
@@ -9,13 +16,14 @@
 
   <ul id="parentList"></ul>
 
-  <script src="../../../gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
   <script>
-    const gun = Gun().get('thoughts')
+    const gun = Gun(`${window.location.origin}/gun`).get('thoughts')
 
     const parentList = document.getElementById('parentList')
     const input = document.getElementById('input')
+    const form = document.getElementById('form')
 
     const dynamicEvent = e => {
       const target = e.target
@@ -46,12 +54,12 @@
       }
     })
 
-    document.getElementById('form').addEventListener('submit', e => {
+    form.addEventListener('submit', e => {
       e.preventDefault()
-      const data = input.value
-      gun.set(data)
+      gun.set(input.value)
       input.value = ''
     })
   </script>
 </body>
+
 </html>
