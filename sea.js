@@ -1224,7 +1224,7 @@
       }).on.on('secure', msg);
       return;
     }
-    var link_is = Gun.val.link.is, state_ify = Gun.state.ify;
+    var valid = Gun.valid, link_is = function(d,l){ return 'string' == typeof (l = valid(d)) && l }, state_ify = Gun.state.ify;
 
     // okay! The security function handles all the heavy lifting.
     // It needs to deal read and write of input and output of system data, account/public key data, and regular data.

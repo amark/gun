@@ -168,7 +168,7 @@
 			},1000 * 60)
 			setTimeout(function(tmp){
 				if(!(tmp = at.stats && at.stats.stay)){ return }
-				Gun.obj.map((tmp.axe||{}).up, function(url){ mesh.hear.opt({opt: {peers: url}}) })
+				((tmp.axe||{}).up||[]).forEach(function(url){ mesh.hear.opt({opt: {peers: url}}) })
 			},1000);
 
 			if(at.opt.super){
@@ -260,9 +260,9 @@
 			at.on('bye', function(peer){ this.to.next(peer);
 				if(peer.url){ delete axe.up[peer.id] }
 				var S = +new Date;
-				Gun.obj.map(peer.routes, function(route, hash){
+				obj_map(peer.routes, function(route, hash){
 					delete route[peer.id];
-					if(Gun.obj.empty(route)){
+					if(Object.empty(route)){
 						delete axe.routes[hash];
 					}
 				});
@@ -290,7 +290,7 @@
 				setTimeout(function(){ // must wait
 					if(peer.pid !== opt.pid){
 						// this extra logic checks for duplicate connections between 2 peers.
-						if(!Gun.obj.map(axe.up, function(p){
+						if(!obj_map(axe.up, function(p){
 							if(peer.pid === p.pid && peer !== p){
 								return yes = true;
 							}
@@ -303,6 +303,12 @@
 			mesh.hear['-'] = function(msg, peer){
 				mesh.bye(peer);
 				peer.url = '';
+			}
+		}
+		var obj_map = function(o, f, r){
+			for(var k in o){
+				if(!o.hasOwnProperty(k)){ continue }
+				if((r = f(o[k], k)) !== u){ return r }
 			}
 		}
 
