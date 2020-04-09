@@ -50,6 +50,17 @@
 			if(u !== o['<'] && t <= o['<']){ return true }
 			return false;
 		}
+		Type.text.hash = function(s, c){ // via SO
+			if(typeof s !== 'string'){ return }
+	    c = c || 0;
+	    if(!s.length){ return c }
+	    for(var i=0,l=s.length,n; i<l; ++i){
+	      n = s.charCodeAt(i);
+	      c = ((c<<5)-c)+n;
+	      c |= 0;
+	    }
+	    return c;
+	  }
 		Type.list = {is: function(l){ return (l instanceof Array) }}
 		Type.list.slit = Array.prototype.slice;
 		Type.list.sort = function(k){ // creates a new sort function based off some key
@@ -728,7 +739,7 @@
 				var ctx = msg._||'', root = ctx.root = ((msg.$||'')._||'').root;
 				var put = msg.put, id = msg['#'], err, tmp;
 				var DBG = ctx.DBG = msg.DBG;
-				if(put['#']){ root.on('put', msg); return }
+				if(put['#'] && put['.']){ root.on('put', msg); return }
 				/*root.on(id, function(m){
 					console.log('ack:', m);
 				});*/
@@ -963,7 +974,7 @@
 					obj_map(v, each, this[k]);
 				}, at.opt);
 				Gun.on('opt', at);
-				at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
+				//at.opt.uuid = at.opt.uuid || function(){ return state_lex() + text_rand(12) }
 				Gun.obj.native();
 				return gun;
 			}
@@ -1409,7 +1420,7 @@
 			if(cat.jam){ return cat.jam.push([cb, as]) }
 			cat.jam = [[cb,as]];
 			gun.get(function go(msg, eve){
-				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
+				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){
 					return;
 				}
 				eve.rid(msg);
@@ -1495,7 +1506,7 @@
 					if(as.res){ as.res() }
 					return gun;
 				}
-				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') || Gun.text.random)());
+				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') /*|| Gun.text.random*/)());
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 						if(err){ return Gun.log(err) } // TODO: Handle error!
@@ -1620,11 +1631,13 @@
 			}, {as: as, at: at});
 			//if(is){ return {} }
 		}
-
+		var G = String.fromCharCode(31);
 		function soul(id, as, msg, eve){
-			var as = as.as, cat = as.at; as = as.as;
+			var as = as.as, path = as.p, cat = as.at; as = as.as;
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || Gun.text.random)(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous?
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || function(){
+				return (as.soul+'.')+Gun.text.hash(path.join(G)).toString(32);
+			})(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations?
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -1678,13 +1691,13 @@
 			}
 			if(!as.not && !(as.soul = as.soul || soul)){
 				if(as.path && obj_is(as.data)){
-					as.soul = (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+					as.soul = (opt.uuid || as.via.back('opt.uuid') /*|| Gun.text.random*/)();
 				} else {
 					//as.data = obj_put({}, as.$._.get, as.data);
 					if(node_ == at.get){
 						as.soul = (at.put||empty)['#'] || at.dub;
 					}
-					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
+					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') /*|| Gun.text.random*/)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
@@ -1898,9 +1911,9 @@
 			if(soul = Gun.node.soul(item)){ item = Gun.obj.put({}, soul, Gun.val.link.ify(soul)) }
 			if(!Gun.is(item)){
 				if(Gun.obj.is(item)){;
-					item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || gun.back('opt.uuid')()).put(item);
+					item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || (gun.back('opt.uuid') || uuid)()).put(item);
 				}
-				return gun.get(soul || (Gun.state.lex() + Gun.text.random(7))).put(item, cb, opt);
+				return gun.get(soul || uuid()).put(item, cb, opt);
 			}
 			item.get(function(soul, o, msg){
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
@@ -1908,6 +1921,7 @@
 			},true);
 			return item;
 		}
+		function uuid(){ return Gun.state.lex() + Gun.text.random(7) }
 	})(USE, './set');
 
 	;USE(function(module){
@@ -2343,18 +2357,6 @@
 		}
 
 		;(function(){
-			Type.text.hash = function(s){ // via SO
-				if(typeof s !== 'string'){ return {err: 1} }
-		    var c = 0;
-		    if(!s.length){ return c }
-		    for(var i=0,l=s.length,n; i<l; ++i){
-		      n = s.charCodeAt(i);
-		      c = ((c<<5)-c)+n;
-		      c |= 0;
-		    }
-		    return c; // Math.abs(c);
-		  }
-			
 			var $ = JSON.stringify, u;
 
 			Type.obj.hash = function(obj, hash){

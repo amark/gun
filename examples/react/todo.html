@@ -13,10 +13,10 @@
         const [todos, setTodos] = React.useState({})
 
         React.useEffect(() => {
-          gun
+          return gun
             .get("todos")
             .map()
-            .on((todo, id) => setTodos(todos => ({...todos, [id]: todo })));
+            .on((todo, id) => setTodos(todos => ({...todos, [id]: todo }))).off;
         }, [])
 
         return (
