@@ -231,12 +231,14 @@ now --npm amark/gun
 
 Then visit the URL in the output of the 'now --npm' step, in your browser.
 
-### [Unebo](https://unubo.app/)
+### [Unubo](https://unubo.app/)
 
-Fork this GUN repo (Unebo only deploys from your own GitHub repo's).  
-Add a Node.js app, select your GUN fork, set `npm start` start as the command and deploy.
+Fork this GUN repo (Unubo only deploys from your own GitHub repo's).  
+Add a Node.js app, select your GUN fork, set `npm start` start as the command and deploy. 
 
-Then visit the deployed app by following the 'view app' button, in your browser.
+From the experience of [genderev](https://github.com/genderev), this only works if you set your country to the United States.
+
+Visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
 
