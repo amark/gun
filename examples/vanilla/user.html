@@ -20,7 +20,7 @@
 <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
 
 <script>
-  const gun = Gun(['https://gun-us.herokuapp.com/gun', 'https://gun-eu.herokuapp.com/gun'])
+  const gun = Gun(`${window.location.origin}/gun`)
   const user = gun.user().recall({ sessionStorage: true })
 
   const alias = document.querySelector('#alias')
