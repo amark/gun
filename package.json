@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.2020.401",
+  "version": "0.2020.421",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "types": "index.d.ts",
   "main": "index.js",

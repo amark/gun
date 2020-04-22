@@ -734,13 +734,13 @@
       if(user = root.back('user')){ return user }
       var root = (root._), at = root, uuid = at.opt.uuid || Gun.state.lex;
       (at = (user = at.user = gun.chain(new User))._).opt = {};
-      /*at.opt.uuid = function(cb){
+      at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
         if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
-        id = id + '~' + pub + '.';
+        id = id + '~' + pub + '/';
         if(cb && cb.call){ cb(null, id) }
         return id;
-      }*/
+      }
       return user;
     }
     Gun.User = User;
@@ -1160,9 +1160,14 @@
       var no = function(why){ at.on('in', {'@': id, err: why}) };
       //var no = function(why){ msg.ack(why) };
       (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
-      if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
-        check.hash(eve, msg, val, key, soul, at, no); return;
-      } 
+      if(0 <= soul.indexOf('<?')){ // special case for "do not sync data X old"
+        // 'a~pub.key/b<?9'
+        tmp = parseFloat(soul.split('<?')[1]||'');
+        if(tmp && (state < (Gun.state() - (tmp * 1000)))){ // sec to ms
+          (tmp = msg._) && (tmp = tmp.lot) && (tmp.more--); // THIS IS BAD CODE! It assumes GUN internals do something that will probably change in future, but hacking in now.
+          return; // omit!
+        }
+      }
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -1173,6 +1178,9 @@
       if(tmp = SEA.opt.pub(soul)){ // special case, account data for a public key.
         check.pub(eve, msg, val, key, soul, at, no, at.user||'', tmp); return;
       }
+      if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
+        check.hash(eve, msg, val, key, soul, at, no); return;
+      } 
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
@@ -1380,13 +1388,14 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
+    var pubcut = /[^\w_-]/; // anything not alphanumeric or _ -
     SEA.opt.pub = function(s){
       if(!s){ return }
       s = s.split('~');
       if(!s || !(s = s[1])){ return }
-      s = s.split('.');
-      if(!s || 2 > s.length){ return }
-      if('@' === (s[0]||'')[0]){ return } // TODO: Should check ~X.Y. are alphanumeric, not just not @.
+      s = s.split(pubcut).slice(0,2);
+      if(!s || 2 != s.length){ return }
+      if('@' === (s[0]||'')[0]){ return }
       s = s.slice(0,2).join('.');
       return s;
     }
