@@ -795,7 +795,7 @@
 				if((tmp = ctx.out) && (tmp = tmp.put)){
 					tmp[soul] = state_ify(tmp[soul], key, state, val, soul); // TODO: Hacky, fix & come back later, for actual pushing messages.
 				}
-				if(!(--ctx.lot.more)){ fire(ctx) }
+				if(!(--ctx.lot.more)){ fire(ctx) } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				eve.to.next(msg);
 			}
 			function chain(ctx, soul, key,val, state){
@@ -1499,7 +1499,8 @@
 					if(as.res){ as.res() }
 					return gun;
 				}
-				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') /*|| Gun.text.random*/)());
+				as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') || Gun.text.random)());
+				as.via._.stun = {};
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
 						if(err){ return Gun.log(err) } // TODO: Handle error!
@@ -1512,9 +1513,11 @@
 				ify(as);
 				return gun;
 			}
+			as.via._.stun = {};
 			if(Gun.is(data)){
 				data.get(function(soul, o, msg){
 					if(!soul){
+						delete as.via._.stun;
 						return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
 					}
 					gun.put(Gun.val.link.ify(soul), cb, as);
@@ -1578,6 +1581,7 @@
 			if(!as.graph || !obj_empty(as.stun)){ return }
 			as.res = as.res || function(cb){ if(cb){ cb() } };
 			as.res(function(){
+				delete as.via._.stun;
 				var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 					cat.root.on('ack', ack);
 					if(ack.err){ Gun.log(ack) }
@@ -1598,6 +1602,7 @@
 				});
 				cat.root.mum = mum? obj.to(mum, cat.root.mum) : mum;
 				cat.root.now = tmp;
+				as.via._.on('res', {}); delete as.via._.tag.res; // emitting causes mem leak?
 			}, as);
 			if(as.res){ as.res() }
 		} function no(v,k){ if(v){ return true } }
@@ -1620,17 +1625,19 @@
 					return;
 				}
 				(as.stun = as.stun || {})[path] = 1;
-				ref.get(soul, true, {as: {at: at, as: as, p:path}});
+				ref.get(soul, true, {as: {at: at, as: as, p:path, ref: ref}});
 			}, {as: as, at: at});
 			//if(is){ return {} }
 		}
 		var G = String.fromCharCode(31);
 		function soul(id, as, msg, eve){
-			var as = as.as, path = as.p, cat = as.at; as = as.as;
+			var as = as.as, path = as.p, ref = as.ref, cat = as.at; as = as.as;
+			var sat = ref.back(function(at){ return sat = at.soul || at.link || at.dub });
+			var pat = [sat || as.soul].concat(ref._.has || ref._.get || path)
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || (as.via.back('opt.uuid') || function(){
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || pat.join('/') /* || (function(){
 				return (as.soul+'.')+Gun.text.hash(path.join(G)).toString(32);
-			})(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations?
+			})(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations? */
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -1662,6 +1669,7 @@
 			if(as.ref !== as.$){
 				tmp = (as.$._).get || at.get;
 				if(!tmp){ // TODO: Handle
+					delete as.via._.stun;
 					Gun.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
 					return;
 				}
@@ -1669,7 +1677,7 @@
 				tmp = null;
 			}
 			if(u === data){
-				if(!at.get){ return } // TODO: Handle
+				if(!at.get){ delete as.via._.stun; return } // TODO: Handle
 				if(!soul){
 					tmp = at.$.back(function(at){
 						if(at.link || at.soul){ return at.link || at.soul }
@@ -1684,17 +1692,17 @@
 			}
 			if(!as.not && !(as.soul = as.soul || soul)){
 				if(as.path && obj_is(as.data)){
-					as.soul = (opt.uuid || as.via.back('opt.uuid') /*|| Gun.text.random*/)();
+					as.soul = (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				} else {
 					//as.data = obj_put({}, as.$._.get, as.data);
 					if(node_ == at.get){
 						as.soul = (at.put||empty)['#'] || at.dub;
 					}
-					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') /*|| Gun.text.random*/)();
+					as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
 				}
 				if(!as.soul){ // polyfill async uuid for SEA
 					as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
-						if(err){ return Gun.log(err) } // Handle error.
+						if(err){ delete as.via._.stun; return Gun.log(err) } // Handle error.
 						as.ref.put(as.data, as.soul = soul, as);
 					});
 					return;
@@ -1903,12 +1911,14 @@
 			opt = opt || {}; opt.item = opt.item || item;
 			if(soul = Gun.node.soul(item)){ item = Gun.obj.put({}, soul, Gun.val.link.ify(soul)) }
 			if(!Gun.is(item)){
-				if(Gun.obj.is(item)){;
-					item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || (gun.back('opt.uuid') || uuid)()).put(item);
+				if(Gun.obj.is(item)){
+					//item = gun.back(-1).get(soul = soul || Gun.node.soul(item) || (gun.back('opt.uuid') || uuid)()).put(item);
+					soul = soul || Gun.node.soul(item) || uuid(); // this just key now, not a soul.
 				}
 				return gun.get(soul || uuid()).put(item, cb, opt);
 			}
 			item.get(function(soul, o, msg){
+				if(!soul && item._.stun){ item._.on('res', function(){ this.off(); gun.set(item, cb, opt) }); return }
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
 				gun.put(Gun.obj.put({}, soul, Gun.val.link.ify(soul)), cb, opt);
 			},true);
