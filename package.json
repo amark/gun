@@ -13,7 +13,7 @@
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
-    "testsea": "mocha test/sea.js",
+    "testsea": "mocha test/sea/sea.js",
     "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
