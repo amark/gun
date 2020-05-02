@@ -1,15 +1,15 @@
 
-    const SEA = require('./sea')
-    const Gun = SEA.Gun;
+    var SEA = require('./sea')
+    var Gun = SEA.Gun;
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
     Gun.on('opt', function(at){
       if(!at.sea){ // only add SEA once per instance, on the "at" context.
         at.sea = {own: {}};
-        at.on('in', security, at); // now listen to all input data, acting as a firewall.
-        at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
-        at.on('node', each, at);
+        //at.on('in', security, at); // now listen to all input data, acting as a firewall.
+        //at.on('out', signature, at); // and output listeners, to encrypt outgoing data.
+        at.on('put', check, at);
       }
       this.to.next(at); // make sure to call the "next" middleware adapter.
     });
@@ -58,6 +58,94 @@
       security.call(this, msg);
     }
 
+    var u;
+    function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
+      var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      if(!soul || !key){ return }
+      if((msg._||'').faith && (at.opt||'').faith && 'function' == typeof msg._){
+        SEA.verify(SEA.opt.pack(put), false, function(data){ // this is synchronous if false
+          put['='] = SEA.opt.unpack(data);
+          eve.to.next(msg);
+        });
+        return 
+      }
+      var no = function(why){ at.on('in', {'@': id, err: why}) };
+      //var no = function(why){ msg.ack(why) };
+      (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
+      if(0 <= soul.indexOf('<?')){ // special case for "do not sync data X old"
+        // 'a~pub.key/b<?9'
+        tmp = parseFloat(soul.split('<?')[1]||'');
+        if(tmp && (state < (Gun.state() - (tmp * 1000)))){ // sec to ms
+          (tmp = msg._) && (tmp = tmp.lot) && (tmp.more--); // THIS IS BAD CODE! It assumes GUN internals do something that will probably change in future, but hacking in now.
+          return; // omit!
+        }
+      }
+      if('~@' === soul){  // special case for shared system data, the list of aliases.
+        check.alias(eve, msg, val, key, soul, at, no); return;
+      }
+      if('~@' === soul.slice(0,2)){ // special case for shared system data, the list of public keys for an alias.
+        check.pubs(eve, msg, val, key, soul, at, no); return;
+      }
+      //if('~' === soul.slice(0,1) && 2 === (tmp = soul.slice(1)).split('.').length){ // special case, account data for a public key.
+      if(tmp = SEA.opt.pub(soul)){ // special case, account data for a public key.
+        check.pub(eve, msg, val, key, soul, at, no, at.user||'', tmp); return;
+      }
+      if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
+        check.hash(eve, msg, val, key, soul, at, no); return;
+      } 
+      check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
+      eve.to.next(msg); // not handled
+    }
+    check.hash = function(eve, msg, val, key, soul, at, no){
+      SEA.work(val, null, function(data){
+        if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
+        no("Data hash not same as hash!");
+      }, {name: 'SHA-256'});
+    }
+    check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
+      if(!val){ return no("Data must exist!") } // data MUST exist
+      if('~@'+key === link_is(val)){ return eve.to.next(msg) } // in fact, it must be EXACTLY equal to itself
+      no("Alias not same!"); // if it isn't, reject.
+    };
+    check.pubs = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
+      if(!val){ return no("Alias must exist!") } // data MUST exist
+      if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
+      no("Alias not same!"); // that way nobody can tamper with the list of public keys.
+    };
+    check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
+      if('pub' === key && '~'+pub === soul){
+        if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
+        return no("Account not same!");
+      }
+      if((tmp = user.is) && pub === tmp.pub){
+        SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){
+          if(u === data){ return no(SEA.err || 'Signature fail.') }
+          if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+          msg.put[':'] = JSON.stringify({':': tmp = SEA.opt.unpack(data.m), '~': data.s});
+          msg.put['='] = tmp;
+          eve.to.next(msg);
+        }, {raw: 1});
+        return;
+      }
+      SEA.verify(SEA.opt.pack(msg.put), pub, function(data){ var tmp;
+        data = SEA.opt.unpack(data);
+        if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
+        if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+        msg.put['='] = data;
+        eve.to.next(msg);
+      });
+    };
+    check.any = function(eve, msg, val, key, soul, at, no, user){ var tmp, pub;
+      if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
+      // TODO: Ask community if should auto-sign non user-graph data.
+      at.on('secure', function(msg){ this.off();
+        if(!at.opt.secure){ return eve.to.next(msg) }
+        no("Data cannot be changed.");
+      }).on.on('secure', msg);
+      return;
+    }
+    var link_is = Gun.val.link.is, state_ify = Gun.state.ify;
+
     // okay! The security function handles all the heavy lifting.
     // It needs to deal read and write of input and output of system data, account/public key data, and regular data.
     // This is broken down into some pretty clear edge cases, let's go over them:
@@ -83,6 +171,11 @@
         }
       }
       if(msg.put){
+        /*
+          NOTICE: THIS IS OLD AND GETTING DEPRECATED.
+          ANY SECURITY CHANGES SHOULD HAPPEN ABOVE FIRST
+          THEN PORTED TO HERE.
+        */
         // potentially parallel async operations!!!
         var check = {}, each = {}, u;
         each.node = function(node, soul){
@@ -207,12 +300,14 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
+    var pubcut = /[^\w_-]/; // anything not alphanumeric or _ -
     SEA.opt.pub = function(s){
       if(!s){ return }
       s = s.split('~');
       if(!s || !(s = s[1])){ return }
-      s = s.split('.');
-      if(!s || 2 > s.length){ return }
+      s = s.split(pubcut).slice(0,2);
+      if(!s || 2 != s.length){ return }
+      if('@' === (s[0]||'')[0]){ return }
       s = s.slice(0,2).join('.');
       return s;
     }
@@ -221,16 +316,18 @@
     }
     SEA.opt.pack = function(d,k, n,s){ // pack for verifying
       if(SEA.opt.check(d)){ return d }
-      var meta = (Gun.obj.ify(d)||noop), sig = meta['~'];
-      return sig? {m: {'#':s,'.':k,':':meta[':'],'>':Gun.state.is(n, k)}, s: sig} : d;
+      var meta = (Gun.obj.ify((d && d[':'])||d)||''), sig = meta['~'];
+      return sig? {m: {'#':s||d['#'],'.':k||d['.'],':':meta[':'],'>':d['>']||Gun.state.is(n, k)}, s: sig} : d;
     }
+    var O = SEA.opt;
     SEA.opt.unpack = function(d, k, n){ var tmp;
       if(u === d){ return }
       if(d && (u !== (tmp = d[':']))){ return tmp }
+      k = k || O.fall_key; if(!n && O.fall_val){ n = {}; n[k] = O.fall_val }
       if(!k || !n){ return }
       if(d === n[k]){ return d }
       if(!SEA.opt.check(n[k])){ return d }
-      var soul = Gun.node.soul(n), s = Gun.state.is(n, k);
+      var soul = Gun.node.soul(n) || O.fall_soul, s = Gun.state.is(n, k) || O.fall_state;
       if(d && 4 === d.length && soul === d[0] && k === d[1] && fl(s) === fl(d[3])){
         return d[2];
       }
@@ -242,6 +339,7 @@
     var noop = function(){}, u;
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     var rel_is = Gun.val.rel.is;
+    var obj_ify = Gun.obj.ify;
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
 
   
