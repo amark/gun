@@ -2404,7 +2404,7 @@
 			mesh.wire = opt.wire = open;
 			function open(peer){ try{
 				if(!peer || !peer.url){ return wire && wire(peer) }
-				var url = peer.url.replace('http', 'ws');
+				var url = peer.url.replace(/^http/, 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
 					opt.mesh.bye(peer);
