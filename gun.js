@@ -923,7 +923,7 @@
 			if(cat.jam){ return cat.jam.push([cb, as]) }
 			cat.jam = [[cb,as]];
 			gun.get(function go(msg, eve){
-				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){
+				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: BUG! If NodeJS && people connec to it, this peer count will be wrong. See other ref of this bug.
 					return;
 				}
 				eve.rid(msg);
@@ -1311,6 +1311,7 @@
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
 			eve.ack = (eve.ack||0)+1;
+			// TODO: BUG! If NodeJS && people connec to it, these peer counts will be wrong + see other ref of this bug:
 			if(!to && u === data && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
 			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
 			|| (u === data && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
@@ -1436,6 +1437,8 @@
 			opt.pack = opt.pack || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
 			var puff = setTimeout.turn || setTimeout;
+			var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
+			var json = JSON.stringifyAsync || function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
 
 			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
@@ -1503,16 +1506,23 @@
 			;(function(){
 				var SMIA = 0;
 				var message, loop;
+				mesh.hash = function(msg, cb){ var data;
+					if(!cb){ data = msg.put }
+					console.log("HASH:", data);
+					json(data, function(err, text){
+						console.log("STRINGIFIED!", text);
+					})
+				}
 				function each(peer){ mesh.say(message, peer) }
 				var say = mesh.say = function(msg, peer){
-					if(this.to){ this.to.next(msg) } // compatible with middleware adapters.
+					if(this && this.to){ this.to.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, tmp, raw, ack = msg['@'];
 					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
-					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ say.hash(msg); return } // TODO: Should broadcasts be hashed?
+					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ console.log('HASH:', msg); mesh.hash(msg); return } // TODO: Should broadcasts be hashed?
 					if(!(raw = meta.raw)){
 						raw = mesh.raw(msg);
 						if(hash && ack){

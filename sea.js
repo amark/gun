@@ -1426,8 +1426,6 @@
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var noop = function(){}, u;
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
-    var rel_is = Gun.val.rel.is;
-    var obj_ify = Gun.obj.ify;
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
 
   })(USE, './index');
