@@ -735,10 +735,10 @@
 			}
 			function put(msg){
 				if(!msg){ return }
-				var ctx = msg._||'', root = ctx.root = ((msg.$||'')._||'').root;
+				var ctx = msg._||'', root = ctx.root = ((ctx.$ = msg.$||'')._||'').root;
 				var put = msg.put, id = msg['#'], err, tmp;
 				var DBG = ctx.DBG = msg.DBG;
-				if(put['#'] && put['.']){ root.on('put', msg); return }
+				if(put['#'] && put['.']){ root.on('put', msg); return } // TODO: BUG! This needs to call HAM instead.
 				/*root.on(id, function(m){
 					console.log('ack:', m);
 				});*/
@@ -777,10 +777,11 @@
 						setTimeout(function(){
 							ham(val, key, soul, state, msg);
 						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
-						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1;
+						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1; // TODO: This causes too many problems unless sending peers auto-retry.
 						return to;
 					}
-					return;
+					//return; // it should be this
+					if(!ctx.miss){ return } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future.
 				}
 				(lot = ctx.lot||'').s++; lot.more++;
 				(ctx.stun || (ctx.stun = {}))[soul+key] = 1;
@@ -808,7 +809,7 @@
 			function fire(ctx){
 				if(ctx.err){ return }
 				var stop = {};
-				var root = ctx.root, next = root.next||'', put = ctx.put, tmp;
+				var root = ((ctx.$||'')._||'').root, next = (root||'').next||'', put = ctx.put, tmp;
 				var S = +new Date;
 				//Gun.graph.is(put, function(node, soul){
 				for(var soul in put){ var node = put[soul]; // Gun.obj.native() makes this safe.
@@ -931,6 +932,7 @@
 				node = Gun.graph.node(node);
 				tmp = (at||empty).ack;
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
+				faith.$ = msg.$;
 				DBG && (DBG.ga = +new Date);
 				root.on('in', {
 					'@': msg['#'],
@@ -1331,6 +1333,9 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
+			if(at.$ === (msg._||'').$){ // replying to self, for perf, skip ham/security tho needs audit.
+				(msg._).miss = (at.put === u);
+			}
 			Gun.on.put(msg);
 		}
 		var empty = {}, u;
@@ -1631,9 +1636,12 @@
 		}
 		var G = String.fromCharCode(31);
 		function soul(id, as, msg, eve){
-			var as = as.as, path = as.p, ref = as.ref, cat = as.at; as = as.as;
-			var sat = ref.back(function(at){ return sat = at.soul || at.link || at.dub });
-			var pat = [sat || as.soul].concat(ref._.has || ref._.get || path)
+			var as = as.as, path = as.p, ref = as.ref, cat = as.at, pat = []; as = as.as;
+			ref.back(function(at){
+				if(sat = at.soul || at.link || at.dub){ return sat }
+				pat.push(at.has || at.get);
+			});
+			pat = [sat || as.soul].concat(pat.reverse());
 			var at = ((msg || {}).$ || {})._ || {};
 			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || pat.join('/') /* || (function(){
 				return (as.soul+'.')+Gun.text.hash(path.join(G)).toString(32);
@@ -2157,10 +2165,10 @@
 				var SMIA = 0;
 				var message, loop;
 				function each(peer){ mesh.say(message, peer) }
-				var say = mesh.say = function(msg, peer){
-					if(this && this.to){ this.to.next(msg) } // compatible with middleware adapters.
+				var say = mesh.say = function(msg, peer){ var tmp;
+					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
-					var id, hash, tmp, raw;
+					var id, hash, raw;
 					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = Type.text.random(9) }
