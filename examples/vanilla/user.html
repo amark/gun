@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<h1>User</h1>
+
+<form id="sign">
+  <input id="alias" placeholder="username">
+  <input id="pass" type="password" placeholder="passphrase">
+  <input id="signup" type="button" value="sign up">
+  <input id="signin" type="button" value="sign in">
+</form>
+
+<ul id="list"></ul>
+
+<form id="said">
+  <input id="say">
+  <input id="speak" type="submit" value="speak">
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+
+<script>
+  const gun = Gun(`${window.location.origin}/gun`)
+  const user = gun.user().recall({ sessionStorage: true })
+
+  const alias = document.querySelector('#alias')
+  const pass = document.querySelector('#pass')
+  const sign = document.querySelector('#sign')
+  const signup = document.querySelector('#signup')
+  const signin = document.querySelector('#signin')
+  const said = document.querySelector('#said')
+  const say = document.querySelector('#say')
+  const ul = document.querySelector('#list')
+
+  function UI (say, id) {
+    const li = document.createElement('li')
+    li.setAttribute('id', id)
+    li.appendChild(document.createTextNode(say))
+    ul.appendChild(li)
+
+    return false
+  }
+
+  signup.addEventListener('click', () => user.create(alias.value, pass.value, () => user.auth(alias.value, pass.value)))
+  signin.addEventListener('click', () => user.auth(alias.value, pass.value))
+
+  said.addEventListener('submit', e => {
+    e.preventDefault()
+    // if(!user.is){ return }
+    user.get('said').set(say.value)
+    said.value = ''
+  })
+
+  gun.on('auth', () => {
+    sign.style.display = 'none'
+    user.get('said').map().on(UI)
+  })
+</script>

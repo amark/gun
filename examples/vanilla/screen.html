@@ -1,66 +1,77 @@
 <!DOCTYPE html>
+<html>
 
-<video id="video" width="100%"></video>
-<center>
-  <button id="record">Record</button>
-  <button id="play">Play</button>
-</center>
+<head>
+  <title>Think</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+</head>
 
-<script src="../../../gun/gun.js"></script>
+<body>
+  <video id="video" width="100%"></video>
+  <center>
+    <button id="record">Record</button>
+    <button id="play">Play</button>
+  </center>
 
-<script>
-  const gun = Gun(`${ window.location.origin }/gun`)
-  const record = { recorder: null, recording: false }
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
-  const video = document.querySelector('#video')
-  const playButton = document.querySelector('#play')
-  const recordButton = document.querySelector('#record')
+  <script>
+    const gun = Gun(`${window.location.origin}/gun`)
+    const record = { recorder: null, recording: false }
 
-  recordButton.addEventListener('click', () => {
-    console.log(record)
-    if (!record.ing) {
-      return record.stream()
+    const video = document.querySelector('#video')
+    const playButton = document.querySelector('#play')
+    const recordButton = document.querySelector('#record')
+
+    recordButton.addEventListener('click', () => {
+      console.log(record)
+      if (!record.ing) {
+        return record.stream()
+      }
+      recordButton.innerText = 'Record'
+      if (record.ing.stop) { record.ing.stop() }
+      record.ing = false
+    }, false)
+
+    record.stream = () => {
+      navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
+        const chunks = [] // we have a stream, we can record it
+        record.ing = new MediaRecorder(stream)
+        record.ing.ondataavailable = eve => chunks.push(eve.data)
+        record.ing.onstop = () => record.save(new Blob(chunks))
+        record.ing.start()
+        recordButton.innerText = 'End'
+      }, err => { console.log(err) })
     }
-    recordButton.innerText = 'Record'
-    if (record.ing.stop) { record.ing.stop() }
-    record.ing = false
-  }, false)
 
-  record.stream = () => {
-    navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
-      const chunks = [] // we have a stream, we can record it
-      record.ing = new MediaRecorder(stream)
-      record.ing.ondataavailable = eve => chunks.push(eve.data)
-      record.ing.onstop = () => record.save(new Blob(chunks))
-      record.ing.start()
-      recordButton.innerText = 'End'
-    }, err => { console.log(err) })
-  }
-
-  record.save = data => {
-    record.file = record.file || new FileReader()
-    record.file.readAsDataURL(data)
-    record.file.onloadend = () => {
-      let b64 = record.file.result
-      b64 = `data:video/webm${ b64.slice(b64.indexOf(';')) }`
-      gun.get('test').get('screen').put(b64)
+    record.save = data => {
+      record.file = record.file || new FileReader()
+      record.file.readAsDataURL(data)
+      record.file.onloadend = () => {
+        let b64 = record.file.result
+        b64 = `data:video/webm${b64.slice(b64.indexOf(';'))}`
+        gun.get('test').get('screen').put(b64)
+      }
     }
-  }
 
-  playButton.addEventListener('click', () => {
-    if (record.playing) {
-      playButton.innerText = 'Play'
-      video.pause()
-      record.playing = false
-      return
-    }
-    playButton.innerText = 'Stop'
+    playButton.addEventListener('click', () => {
+      if (record.playing) {
+        playButton.innerText = 'Play'
+        video.pause()
+        record.playing = false
+        return
+      }
 
-    record.playing = true
-    gun.get('test').get('screen').once(data => {
-      if (!data) { return }
-      video.src = data
-      video.play()
-    })
-  }, false)
-</script>
+      playButton.innerText = 'Stop'
+      record.playing = true
+
+      gun.get('test').get('screen').once(data => {
+        if (!data) { return }
+        video.src = data
+        video.play()
+      })
+    }, false)
+  </script>
+</body>
+
+</html>
