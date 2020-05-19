@@ -290,7 +290,7 @@
 			}
 			function put(msg){
 				if(!msg){ return }
-				var ctx = msg._||'', root = ctx.root = ((msg.$||'')._||'').root;
+				var ctx = msg._||'', root = ctx.root = ((ctx.$ = msg.$||'')._||'').root;
 				if(msg['@'] && !ctx.me){ // TODO: WARNING! This will prevent relays from caching!
 					msg.out = universe;
 					root.on('out', msg);
@@ -298,7 +298,7 @@
 				}
 				var put = msg.put, id = msg['#'];
 				var DBG = ctx.DBG = msg.DBG;
-				if(put['#'] && put['.']){ root.on('put', msg); return }
+				if(put['#'] && put['.']){ root.on('put', msg); return } // TODO: BUG! This needs to call HAM instead.
 				DBG && (DBG.p = S);
 				ctx.msg = msg;
 				ctx.stun = 1;
@@ -344,7 +344,7 @@
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var now = State(),u;
 				if(state > now){ setTo; return }
-				if(state < was){ old; return }
+				if(state < was){ old; if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future.
 				if(state === was && (val === known || L(val) <= L(known))){ same; return }
 				/*if(!is.incoming){
 					if(is.defer){
@@ -352,7 +352,7 @@
 						setTimeout(function(){
 							ham(val, key, soul, state, msg);
 						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
-						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1;
+						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1; // TODO: This causes too many problems unless sending peers auto-retry.
 						return to;
 					}
 					return;
@@ -385,7 +385,7 @@
 			function fire(ctx){
 				if(ctx.err){ return }
 				var stop = {};
-				var root = ctx.root, next = root.next||'', put = ctx.put, tmp;
+				var root = ((ctx.$||'')._||'').root, next = (root||'').next||'', put = ctx.put, tmp;
 				var S = +new Date;
 				//Gun.graph.is(put, function(node, soul){
 				for(var soul in put){ var node = put[soul]; // Gun.obj.native() makes this safe.
@@ -447,6 +447,7 @@
 				(tmp = {})[node._['#']] = node; node = tmp;
 				tmp = (at||empty).ack;
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
+				faith.$ = msg.$;
 				DBG && (DBG.ga = +new Date);
 				console.only(2, 'GOT:', msg['#'], node);
 				root.on('in', {
@@ -844,6 +845,9 @@
 				at.on('in', {get: at.get, put: Gun.val.link.ify(get['#']), $: at.$, '@': msg['@']});
 				return;
 			}
+			if(at.$ === (msg._||'').$){ // replying to self, for perf, skip ham/security tho needs audit.
+				(msg._).miss = (at.put === u);
+			}
 			Gun.on.put(msg);
 		}
 		var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }
@@ -923,7 +927,7 @@
 			if(cat.jam){ return cat.jam.push([cb, as]) }
 			cat.jam = [[cb,as]];
 			gun.get(function go(msg, eve){
-				if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: BUG! If NodeJS && people connec to it, this peer count will be wrong. See other ref of this bug.
+				if(u === msg.put && !cat.root.opt.super && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: super should not be in core code, bring AXE up into core instead to fix?
 					return;
 				}
 				eve.rid(msg);
@@ -1140,11 +1144,16 @@
 		}
 		var G = String.fromCharCode(31);
 		function soul(id, as, msg, eve){
-			var as = as.as, path = as.p, ref = as.ref, cat = as.at; as = as.as;
-			var sat = ref.back(function(at){ return sat = at.soul || at.link || at.dub });
-			var pat = [sat || as.soul].concat(ref._.has || ref._.get || path);
+			var as = as.as, path = as.p, ref = as.ref, cat = as.at, pat = [], sat; as = as.as;
+			ref.back(function(at){
+				if(sat = at.soul || at.link || at.dub){ return sat }
+				pat.push(at.has || at.get);
+			});
+			pat = [sat || as.soul].concat(pat.reverse());
 			var at = ((msg || {}).$ || {})._ || {};
-			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || pat.join('/'); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations?
+			id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || pat.join('/') /* || (function(){
+				return (as.soul+'.')+Gun.text.hash(path.join(G)).toString(32);
+			})(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations? */
 			if(eve){ eve.stun = true }
 			if(!id){ // polyfill async uuid for SEA
 				as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
@@ -1311,10 +1320,10 @@
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
 			eve.ack = (eve.ack||0)+1;
-			// TODO: BUG! If NodeJS && people connec to it, these peer counts will be wrong + see other ref of this bug:
+			// TODO: BUG! If NodeJS && people connect to it, these peer counts will be wrong + see other ref of this bug: // TODO: super should not be in core code, bring AXE up into core instead to fix?
 			if(!to && u === data && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
 			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
-			|| (u === data && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
+			|| (u === data && !at.root.opt.super && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
 					val.call({as:opt}, msg, eve, tmp || 1);
 				}, opt.wait || 99);
@@ -1514,10 +1523,10 @@
 					})
 				}
 				function each(peer){ mesh.say(message, peer) }
-				var say = mesh.say = function(msg, peer){
-					if(this && this.to){ this.to.next(msg) } // compatible with middleware adapters.
+				var say = mesh.say = function(msg, peer){ var tmp;
+					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
-					var id, hash, tmp, raw, ack = msg['@'];
+					var id, hash, raw, ack = msg['@'];
 					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
