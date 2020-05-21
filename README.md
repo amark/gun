@@ -206,6 +206,8 @@ Like nodejs we need to shim webcrypto we do this with a webview bridge
 isomorphic-webcrypto can also work but lacks in performance and has issues with encrypting large files
 some of the performance issues are related to the javascript engine, which can be improved if switching to JIT
 enabled versions of v8 or jsc
+- [react-native-v8](https://www.npmjs.com/package/react-native-v8)
+- optimized for speed and space: [android-v8-nointl-jit](https://www.npmjs.com/package/v8-android-jit-nointl)
 
 for window.crypto.getRandomValues you can use either react-native-crypto or react-native-get-random-values
 ### Installation Instructions
