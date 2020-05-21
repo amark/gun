@@ -9,19 +9,25 @@
 
 Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
 
-Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
+Decentralized alternatives to [Zoom](https://meething.space/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>
-<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
-<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
-<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
-<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
-<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
-<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
+<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
+<a href="http://gps.gunDB.io/"><img width="31%" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
+</tr>
+<tr>
+<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
+<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
+<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
+</tr>
+<tr>
+<a href="http://chat.gun.eco"><img width="31%" src="https://gun.eco/see/vr-world.gif" title="VR World"/></a>
+<a href="https://youtu.be/1ASrmQ-CwX4"><img width="31%" src="https://gun.eco/see/ar.gif" title="AR"/></a>
+<a href="https://meething.space/"><img width="31%" src="https://gun.eco/see/video-conf.gif" title="Video Confernece"/></a>
 </tr>
 </table>
-<center><a href="https://youtu.be/1ASrmQ-CwX4"><img src="https://gun.eco/see/ar.gif" title="AR"/></a></center>
 
 The ecosystem is one nice stack of technologies that looks like this: (names -> use case)
 
