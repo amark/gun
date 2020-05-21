@@ -659,7 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
-    SEA.opt.aeskey = USE('./aeskey'); // not official!
+    //SEA.opt.aeskey = USE('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
 
