@@ -153,11 +153,11 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/brysgo/graphql-gun">GraphQL</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/PenguinMan98/electrontest">Electron</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React Native</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React & Native</a></h3></td>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/sjones6/vue-gun">Vue</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/React-Tutorial">React</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Svelte">Svelte</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/Stefdv/gun-ui-lcd#syncing">Webcomponents</a></h3></td>
   </tr>
   <tr>
@@ -167,7 +167,7 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://gun.eco/docs/Auth">Crypto Auth</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Awesome-GUN">Modules</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/Awesome-GUN">Modules</a></h3></td>
     <td style="border: 0;"><h3><a href="https://gun.eco/docs/Roadmap">Roadmap</a></h3></td>
   </tr>
 </table>
@@ -176,7 +176,7 @@ This would not be possible without **community contributors**, big shout out to:
 
 **[ajmeyghani](https://github.com/ajmeyghani) ([Learn GUN Basics with Diagrams](https://medium.com/@ajmeyghani/gundb-a-graph-database-in-javascript-3860a08d873c))**; **[anywhichway](https://github.com/anywhichway) ([Block Storage](https://github.com/anywhichway/gun-block))**; **[beebase](https://github.com/beebase) ([Quasar](https://github.com/beebase/gun-vuex-quasar))**; **[BrockAtkinson](https://github.com/BrockAtkinson) ([brunch config](https://github.com/BrockAtkinson/brunch-gun))**; **[Brysgo](https://github.com/brysgo) ([GraphQL](https://github.com/brysgo/graphql-gun))**; **[d3x0r](https://github.com/d3x0r) ([SQLite](https://github.com/d3x0r/gun-db))**; **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; **[hillct](https://github.com/hillct) (Docker)**; **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[JuniperChicago](https://github.com/JuniperChicago) ([cycle.js bindings](https://github.com/JuniperChicago/cycle-gun))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; **[kristianmandrup](https://github.com/kristianmandrup) ([edge](https://github.com/kristianmandrup/gun-edge))**; **[Lightnet](https://github.com/Lightnet)** ([Awesome Vue User Examples](https://glitch.com/edit/#!/jsvuegunui?path=README.md:1:0) & [User Kitchen Sink Playground](https://gdb-auth-vue-node.glitch.me/)); **[lmangani](https://github.com/lmangani) ([Cytoscape Visualizer](https://github.com/lmangani/gun-scape), [Cassandra](https://github.com/lmangani/gun-cassandra), [Fastify](https://github.com/lmangani/fastify-gundb), [LetsEncrypt](https://github.com/lmangani/polyGun-letsencrypt))**; **[mhelander](https://github.com/mhelander) ([SEA](https://github.com/amark/gun/blob/master/sea.js))**; [omarzion](https://github.com/omarzion) ([Sticky Note App](https://github.com/omarzion/stickies)); [PsychoLlama](https://github.com/PsychoLlama) ([LevelDB](https://github.com/PsychoLlama/gun-level)); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; **[rogowski](https://github.com/rogowski) (AXE)**; [sbeleidy](https://github.com/sbeleidy); **[sbiaudet](https://github.com/sbiaudet) ([C# Port](https://github.com/sbiaudet/cs-gun))**; **[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; **[Shadyzpop](https://github.com/Shadyzpop) ([React Native example](https://github.com/amark/gun/tree/master/examples/react-native))**; **[sjones6](https://github.com/sjones6) ([Flint](https://github.com/sjones6/gun-flint))**; **[Stefdv](https://github.com/stefdv) (Polymer/web components)**; **[zrrrzzt](https://github.com/zrrrzzt) ([JWT Auth](https://gist.github.com/zrrrzzt/6f88dc3cedee4ee18588236756d2cfce))**; **[xmonader](https://github.com/xmonader) ([Python Port](https://github.com/xmonader/pygundb))**; 
 
-I am missing many others, apologies, will be adding them soon!
+I am missing many others, apologies, will be adding them soon! This list is infintiely old & way out of date, if you want to be listed in it please make a PR! :)
 
 ## Testing
 
@@ -188,11 +188,13 @@ rm -rf *data*
 
 ### Additional Cryptography Libraries
 
- > These are only needed for NodeJS, they shim the native Browser WebCrypto API.
+ > These are only needed for NodeJS & React Native, they shim the native Browser WebCrypto API.
 
 If you want to use [SEA](https://gun.eco/docs/SEA) for `User` auth and security, you will need to install:
 
-`npm install text-encoding isomorphic-webcrypto --save`
+`npm install text-encoding @peculiar/webcrypto --save`
+
+Please see [our React Native docs](https://gun.eco/docs/React-Native) for installation instructions!
 
 Then you can require [SEA](https://gun.eco/docs/SEA) without an error:
 
@@ -200,37 +202,6 @@ Then you can require [SEA](https://gun.eco/docs/SEA) without an error:
 var GUN = require('gun/gun');
 var SEA = require('gun/sea');
 ```
-
-## React Native
-Like nodejs we need to shim webcrypto we do this with a webview bridge
-isomorphic-webcrypto can also work but lacks in performance and has issues with encrypting large files
-some of the performance issues are related to the javascript engine, which can be improved if switching to JIT
-enabled versions of v8 or jsc
-- [react-native-v8](https://www.npmjs.com/package/react-native-v8)
-- optimized for speed and space: [android-v8-nointl-jit](https://www.npmjs.com/package/v8-android-jit-nointl)
-
-for window.crypto.getRandomValues you can use either react-native-crypto or react-native-get-random-values
-### Installation Instructions
-- `npm install buffer text-encoding react-native-webview-bridge react-native-get-random-values --save`
-- follow instructions to install [WebviewCrypto](https://github.com/webview-crypto/react-native-webview-crypto)
-- for persistent storage you'll need to include RAD + asyncstorage adapter like so
-  you can pass any storage adapter to the Store that implements the AsyncStorage setItem,getItem API
-  ```javascript
-  import {AsyncStorage} from 'react-native'
-  import Gun from 'gun/gun'
-  import SEA from 'gun/sea'
-  import 'gun/lib/radix.js'
-  import 'gun/lib/radisk.js'
-  import 'gun/lib/store.js'
-  import Store from 'gun/lib/ras.js'
-
-  //rad asyncstorage adapter, on Android asyncstorage has 6mb limit by default
-  const asyncStore = Store({AsyncStorage});
-  //start gun
-  Gun({peers:[...],store:asyncStore})
-  ```
-### React Native Example (SEA+RAD) 
-see working [example repo](https://github.com/gooddollar/gun-webcrypto-react-native)
 
 ## Deploy
 
