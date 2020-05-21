@@ -206,12 +206,30 @@ Like nodejs we need to shim webcrypto we do this with a webview bridge
 isomorphic-webcrypto can also work but lacks in performance and has issues with encrypting large files
 some of the performance issues are related to the javascript engine, which can be improved if switching to JIT
 enabled versions of v8 or jsc
+- [react-native-v8](https://www.npmjs.com/package/react-native-v8)
+- optimized for speed and space: [android-v8-nointl-jit](https://www.npmjs.com/package/v8-android-jit-nointl)
 
 for window.crypto.getRandomValues you can use either react-native-crypto or react-native-get-random-values
-
+### Installation Instructions
 - `npm install buffer text-encoding react-native-webview-bridge react-native-get-random-values --save`
-- follow instructions to install [WebviewCrypto](https://github.com/saulshanabrook/react-native-webview-crypto)
+- follow instructions to install [WebviewCrypto](https://github.com/webview-crypto/react-native-webview-crypto)
+- for persistent storage you'll need to include RAD + asyncstorage adapter like so
+  you can pass any storage adapter to the Store that implements the AsyncStorage setItem,getItem API
+  ```javascript
+  import {AsyncStorage} from 'react-native'
+  import Gun from 'gun/gun'
+  import SEA from 'gun/sea'
+  import 'gun/lib/radix.js'
+  import 'gun/lib/radisk.js'
+  import 'gun/lib/store.js'
+  import Store from 'gun/lib/ras.js'
 
+  //rad asyncstorage adapter, on Android asyncstorage has 6mb limit by default
+  const asyncStore = Store({AsyncStorage});
+  //start gun
+  Gun({peers:[...],store:asyncStore})
+  ```
+### React Native Example (SEA+RAD) 
 see working [example repo](https://github.com/gooddollar/gun-webcrypto-react-native)
 
 ## Deploy
