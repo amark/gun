@@ -189,7 +189,7 @@
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
+      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
     }}
 
     module.exports = api
@@ -710,8 +710,7 @@
 
   ;USE(function(module){
     var Gun = USE('./sea').Gun;
-    Gun.chain.then = function(cb, opt = {}){
-      opt = {wait: 200, ...opt}
+    Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
         gun.once(res, opt);
       }));
@@ -1091,7 +1090,7 @@
     /**
      * returns the decrypted value, encrypted by secret
      * @returns {Promise<any>}
-     */
+     // Mark needs to review 1st before officially supported
     User.prototype.decrypt = function(cb) {
       let gun = this,
         path = ''
@@ -1124,6 +1123,7 @@
           return res
         })
     }
+    */
     module.exports = User
   })(USE, './create');
 
