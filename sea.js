@@ -164,7 +164,7 @@
     var o = {};
 
     if(SEA.window){
-      api.crypto = navigator && navigator.product === 'ReactNative' ? require('isomorphic-webcrypto') : window.crypto || window.msCrypto || require('isomorphic-webcrypto');
+      api.crypto = window.crypto || window.msCrypto
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
@@ -176,17 +176,20 @@
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
-    if(!api.crypto){try{
+    if(!api.crypto)
+    {
+      try
+      {
       var crypto = USE('crypto', 1);
       Object.assign(api, {
         crypto,
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });      
-      const isocrypto = require('isomorphic-webcrypto');
-      api.ossl = api.subtle = isocrypto.subtle;
-    }catch(e){
-      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
-      TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
+      const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
+      api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+    }
+    catch(e){
+      console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
     }}
 
     module.exports = api
@@ -707,9 +710,10 @@
 
   ;USE(function(module){
     var Gun = USE('./sea').Gun;
-    Gun.chain.then = function(cb){
+    Gun.chain.then = function(cb, opt = {}){
+      opt = {wait: 200, ...opt}
       var gun = this, p = (new Promise(function(res, rej){
-        gun.once(res);
+        gun.once(res, opt);
       }));
       return cb? p.then(cb) : p;
     }
@@ -1082,6 +1086,43 @@
       gun.put(enc, cb);
       }());
       return gun;
+    }
+
+    /**
+     * returns the decrypted value, encrypted by secret
+     * @returns {Promise<any>}
+     */
+    User.prototype.decrypt = function(cb) {
+      let gun = this,
+        path = ''
+      gun.back(function(at) {
+        if (at.is) {
+          return
+        }
+        path += at.get || ''
+      })
+      return gun
+        .then(async data => {
+          if (data == null) {
+            return
+          }
+          const user = gun.back(-1).user()
+          const pair = user.pair()
+          let sec = await user
+            .get('trust')
+            .get(pair.pub)
+            .get(path)
+          sec = await SEA.decrypt(sec, pair)
+          if (!sec) {
+            return data
+          }
+          let decrypted = await SEA.decrypt(data, sec)
+          return decrypted
+        })
+        .then(res => {
+          cb && cb(res)
+          return res
+        })
     }
     module.exports = User
   })(USE, './create');
