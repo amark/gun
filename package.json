@@ -56,7 +56,6 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "buffer": "^5.4.3",
     "ws": "^7.2.1"
   },
   "optionalDependencies": {
