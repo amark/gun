@@ -1636,7 +1636,7 @@
 		}
 		var G = String.fromCharCode(31);
 		function soul(id, as, msg, eve){
-			var as = as.as, path = as.p, ref = as.ref, cat = as.at, pat = []; as = as.as;
+			var as = as.as, path = as.p, ref = as.ref, cat = as.at, pat = [], sat; as = as.as;
 			ref.back(function(at){
 				if(sat = at.soul || at.link || at.dub){ return sat }
 				pat.push(at.has || at.get);
