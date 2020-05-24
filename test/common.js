@@ -2866,6 +2866,28 @@ describe('Gun', function(){
 			});
 		});
 
+		it('once put once', function(done){
+			gun.get('opo').get('a').put('yay!');
+			var ref = gun.get('opo').get('a');
+			setTimeout(function(){
+				ref.once(function(data){
+					expect(data).to.be('yay!');
+
+					setTimeout(function(){
+						gun.get('opo').get('a').put('z');
+
+
+						setTimeout(function(){
+							ref.once(function(data){
+								expect(data).to.be('z');
+								done();
+							});
+						}, 25);
+					}, 25);
+				})
+			}, 25);
+		});
+
 		it('get node after recursive field', function(done){
 			var bob = {age: 29, name: "Bob!"};
 			var cat = {name: "Fluffy", species: "kitty"};
