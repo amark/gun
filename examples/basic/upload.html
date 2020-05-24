@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 
 <center>
-  <video width="100%" controls="controls"></video>
+  <video width="100%" controls autoplay></video>
+  <audio width="100%" controls autoplay></audio>
   <img style="max-width: 100%;">
-  <span id="up">Drag & drop video or image to upload!</span>
+  <p>Drag & drop videos, songs, or images to upload!</p>
 </center>
 
 <script src="../jquery.js"></script>
@@ -22,11 +23,12 @@ $('html').upload(function resize(eve, up){
 })
 
 gun.get('test').get('paste').on(function(data){
-  $('video, img').css({display: 'none'})
+  $('video, audio, img').css({display: 'none'})
   if(!data){ return }
   var type = data.split(';')[0], ui;
   if(type.indexOf('image') + 1){ ui = $("img") }
   if(type.indexOf('video') + 1){ ui = $('video') }
+  if(type.indexOf('audio') + 1){ ui = $('audio') }
   ($(ui).css({display: 'block'}).get(0)||{}).src = data;
 })
 </script>
