@@ -307,7 +307,6 @@
 					if(nj != ni){ nj = ni;
 						if(!(soul = nl[ni])){
 							ctx.stun--; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
-							console.log('done!', ctx.stun);
 							fire(ctx);
 							return;
 						}
@@ -416,7 +415,6 @@
 				var ctx = msg._||'', DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
 				//console.log("GET", get);
-				console.only(1, 'GET', node);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || !obj_has(node, has)){ return root.on('get', msg) }
@@ -449,7 +447,6 @@
 				var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 				faith.$ = msg.$;
 				DBG && (DBG.ga = +new Date);
-				console.only(2, 'GOT:', msg['#'], node);
 				root.on('in', {
 					'@': msg['#'],
 					put: node,
@@ -1515,11 +1512,15 @@
 			;(function(){
 				var SMIA = 0;
 				var message, loop;
-				mesh.hash = function(msg, cb){ var data;
-					if(!cb){ data = msg.put }
-					console.log("HASH:", data);
-					json(data, function(err, text){
-						console.log("STRINGIFIED!", text);
+				mesh.hash = function(msg, peer){ var h, s, t;
+					json(msg.put, function hash(err, text){
+						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
+					  h = String.hash(ss, h); s = s.slice(32768);
+					  if(s){ puff(hash, 0); return }
+					  msg._.$put = t;
+					  msg['##'] = h;
+					  say(msg, peer);
+					  delete msg._.$put;
 					})
 				}
 				function each(peer){ mesh.say(message, peer) }
@@ -1531,19 +1532,9 @@
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
-					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ console.log('HASH:', msg); mesh.hash(msg); return } // TODO: Should broadcasts be hashed?
-					if(!(raw = meta.raw)){
-						raw = mesh.raw(msg);
-						if(hash && ack){
-							dup_track(ack+hash);//.it = it(msg);
-							if((tmp = (dup.s[ack]||{}).it) || ((tmp = mesh.last) && ack === tmp['#'])){
-								if(hash === tmp['##']){ return false }
-								tmp['##'] = hash;
-							}
-						}
-					}
+					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
+					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					S && console.STAT && console.STAT(S, +new Date - S, 'say prep');
-					//console.log("SEND!", JSON.parse(JSON.stringify(msg)));
 					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && ack){
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
@@ -1553,6 +1544,7 @@
 					if(!peer || !peer.id){ message = msg;
 						if(!Object.plain(peer || opt.peers)){ return false }
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {});
+						console.log('peers', pl);
 						;(function go(){
 							var S = +new Date;
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
@@ -1590,10 +1582,49 @@
 					setTimeout(function(){
 						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, '0ms TO', id, peer.id);
 						flush(peer);
-					}, opt.gap);
+					}, opt.gap); // TODO: queuing/batching might be bad for low-latency video game performance! Allow opt out?
 					send(raw, peer);
 				}
 				mesh.say.c = mesh.say.d = 0;
+				// TODO: this caused a out-of-memory crash!
+				mesh.raw = function(msg, peer){ // TODO: Clean this up / delete it / move logic out!
+					if(!msg){ return '' }
+					var meta = (msg._) || {}, put, tmp;
+					if(tmp = meta.raw){ return tmp }
+					if('string' == typeof msg){ return msg }
+					if(!msg.dam){
+						var i = 0, to = []; tmp = opt.peers;
+						for(var k in tmp){ var p = tmp[k]; // TODO: Make up peers instead!
+							to.push(p.url || p.pid || p.id);
+							if(++i > 6){ break }
+						}
+						if(i > 1){ msg['><'] = to.join() }
+					}
+					var hash = msg['##'], ack = msg['@'];
+					if(put = meta.$put){
+						tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
+						tmp.put = ':])([:';
+						json(tmp, function(err, raw){
+							if(err){ return } // TODO: Handle!!
+							tmp = raw.indexOf('"put":":])([:"');
+							res(u, raw = raw.slice(0, tmp+6) + put + raw.slice(tmp + 14));
+						});
+						return;
+					}
+					json(msg, res);
+					function res(err, raw){
+						if(err){ return } // TODO: Handle!!
+						meta.raw = raw; //if(meta && (raw||'').length < (999 * 99)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
+						if(hash && ack){
+							dup_track(ack+hash);//.it = it(msg);
+							if((tmp = (dup.s[ack]||{}).it) || ((tmp = mesh.last) && ack === tmp['#'])){
+								if(hash === tmp['##']){ return false }
+								tmp['##'] = hash;
+							}
+						}
+						say(msg, peer);
+					}
+				}
 			}());
 
 			function flush(peer){
@@ -1620,35 +1651,6 @@
 			}catch(e){
 				(peer.queue = peer.queue || []).push(raw);
 			}}
-
-			;(function(){
-				// TODO: this caused a out-of-memory crash!
-				mesh.raw = function(msg){ // TODO: Clean this up / delete it / move logic out!
-					if(!msg){ return '' }
-					var meta = (msg._) || {}, put, hash, tmp;
-					if(tmp = meta.raw){ return tmp }
-					if('string' == typeof msg){ return msg }
-					/*if(!msg.dam){ // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
-						var i = 0, to = []; Type.obj.map(opt.peers, function(p){
-							to.push(p.url || p.pid || p.id); if(++i > 3){ return true } // limit server, fast fix, improve later! // For "tower" peer, MUST include 6 surrounding ids. // REDUCED THIS TO 3 for temporary relay peer performance, towers still should list neighbors.
-						}); if(i > 1){ msg['><'] = to.join() }
-					}*/  // TOOD: COME BACK TO THIS LATER!!! IMPORTANT MESH STUFF!!
-					var raw = $(msg); // optimize by reusing put = the JSON.stringify from .hash?
-					/*if(u !== put){
-						tmp = raw.indexOf(_, raw.indexOf('put'));
-						raw = raw.slice(0, tmp-1) + put + raw.slice(tmp + _.length + 1);
-						//raw = raw.replace('"'+ _ +'"', put); // NEVER USE THIS! ALSO NEVER DELETE IT TO NOT MAKE SAME MISTAKE! https://github.com/amark/gun/wiki/@$$ Heisenbug
-					}*/
-					// TODO: PERF: tgif, CPU way too much on re-JSONifying ^ it.
-					/*
-						// NOTE TO SELF: Switch NTS to DAM now.
-					*/
-					if(meta && (raw||'').length < (999 * 99)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
-					return raw;
-				}
-				var $ = JSON.stringify, _ = ':])([:';
-
-			}());
 
 			mesh.hi = function(peer){
 				var tmp = peer.wire || {};

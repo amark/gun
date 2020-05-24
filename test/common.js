@@ -63,6 +63,23 @@ describe('Gun', function(){
 		} );
 		*/
 
+		describe.only('YSON', function(){
+			it('parse', function(){
+				//var json = require('fs').readFileSync('./radix.json').toString();
+				//var json = require('fs').readFileSync('./data.json').toString();
+				//var json = require('fs').readFileSync('./big.json').toString();
+				//var json = require('fs').readFileSync('./stats.json').toString();
+				//var json = require('fs').readFileSync('./video.json').toString();
+			});
+			it('stringify', function(){
+				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
+				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
+				YSON.stringifyAsync(obj, function(err, text){
+					console.log("done!", text);
+				})
+			});
+		});
+
 		describe('Type Check', function(){
 			it('binary', function(){
 				expect(Gun.bi.is(false)).to.be(true);
@@ -2837,6 +2854,28 @@ describe('Gun', function(){
 					gun.get('NYCOUNT').put({NY3: "Third"});
 				},300);
 			});
+		});
+
+		it.only('once put once', function(done){
+			gun.get('opo').get('a').put('yay!');
+			var ref = gun.get('opo').get('a');
+			setTimeout(function(){
+				ref.once(function(data){
+					expect(data).to.be('yay!');
+
+					setTimeout(function(){
+						gun.get('opo').get('a').put('z');
+
+
+						setTimeout(function(){
+							ref.once(function(data){
+								expect(data).to.be('z');
+								done();
+							});
+						}, 25);
+					}, 25);
+				})
+			}, 25);
 		});
 
 		it('get node after recursive field', function(done){
