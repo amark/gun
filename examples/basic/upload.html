@@ -17,9 +17,7 @@
 var gun = Gun(location.origin + '/gun');
 
 $('html').upload(function resize(eve, up){
-  if(up && ((eve.file||{}).type||'').indexOf('image') + 1){
-    return up.shrink(eve, resize, 1024);
-  }
+  if(up){ return up.shrink(eve, resize, 1024) }
   var b64 = (eve.base64 || ((eve.event || eve).target || eve).result || eve);
   gun.get('test').get(eve.id).put(b64);
 });
