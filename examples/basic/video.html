@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 
-<video id="video" width="100%"></video>
+<video id="video" width="100%" controls autoplay></video>
 <center>
   <input id="pass" placeholder="password">
-  <button id="play">Play</button>
   Record <button class="record">Camera</button> or <button class="record">Screen</button>
 </center>
 
@@ -13,27 +12,36 @@
 
 <script>
 var gun = Gun(location.origin + '/gun');
-var record = {recorder: null, recording: false};
 
-$('.record').on('click', function(){
-  if(record.ing){ return }
-  record.stream($(this).text());
+gun.get('test').get('video').on(async function(data){
+  if($('#pass').val()){ data = await SEA.decrypt(data, $('#pass').val()) }
+  $('#video').get(0).src = data;
 })
 
-record.stream = function(type){
+$('.record').on('click', function(){
+  if(record.ing){
+    if(record.ing.stop){ record.ing.stop() }
+    $(this).text(record.type);
+    record.ing = false;
+    return;
+  }
+  record(record.type = $(this).text());
+  $(this).text("End");
+})
+
+function record(type){
   if('Camera' === type){
-    navigator.getMedia({ video: true, audio: true }, stream, error);
+    navigator.getMedia({ video: true, audio: true }, load, error);
   }
   if('Screen' === type){
-    navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(stream, error);
+    navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(load, error);
   }
-  function stream(stream){
-    var chunks = []; // we have a stream, we can record it
-    record.ing = new MediaRecorder(stream);
-    record.ing.ondataavailable = eve => chunks.push(eve.data);
-    record.ing.onstop = eve => record.save(new Blob(chunks));
-    record.ing.start()
-    $('#play').text("End");
+  function load(media){
+    var chunks = [];
+    record.ing = new MediaRecorder(media);
+    record.ing.ondataavailable = function(eve){ chunks.push(eve.data) }
+    record.ing.onstop = function(eve){record.save(new Blob(chunks)) }
+    record.ing.start();
   }
   function error(err){ console.log(err) }
 }
@@ -46,37 +54,8 @@ record.save = function(data){
     b64 = $('#video').get(0).src = "data:video/webm" + b64.slice(b64.indexOf(';'));
     if($('#pass').val()){ b64 = await SEA.encrypt(b64, $('#pass').val()) }
     gun.get('test').get('video').put(b64);
-    $('#play').trigger('click');
   }
 }
-
-$('#play').on('click', function(){
-  if(record.ing){
-    if(record.ing.stop){ record.ing.stop() }
-    record.ing = false;
-    return;
-  }
-  if(record.playing){
-    $('#video').get(0).pause();
-    $('#play').text("Play");
-    record.playing = false;
-    return;
-  }
-  if($('#video').get(0).src){
-    $('#video').get(0).play();
-    $('#play').text("Pause");
-    record.playing = true;
-    return;
-  }
-  $('#play').text("Loading");
-  gun.get('test').get('video').once(async function(data){
-    if($('#pass').val()){ data = await SEA.decrypt(data, $('#pass').val()) }
-    try{ $('#video').get(0).src = data }catch(e){}
-    $('#play').trigger('click');
-  })
-})
-$('#video').on('ended', function(){ $('#play').trigger('click') })
-$('#video').on('error', function(){ $('#play').text("Failed"); })
 
 navigator.getMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia
   || navigator.mozGetUserMedia || navigator.msGetUserMedia);
