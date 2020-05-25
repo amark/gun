@@ -39,6 +39,7 @@ describe('SEA', function(){
 
   describe('Hash', function() {
     it('Content Addressing', function(done){
+      var gun = Gun();
       var data = "hello world";
       SEA.work(data, null, function(hash) {
         gun.get('#').get(hash).put(data);
