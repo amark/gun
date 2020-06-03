@@ -6,7 +6,7 @@ function State(){
 	/*if(perf){
 		t = start + perf.now(); // Danger: Accuracy decays significantly over time, even if precise.
 	} else {*/
-		t = time();
+		t = +new Date;
 	//}
 	if(last < t){
 		return N = 0, last = t + State.drift;
@@ -15,10 +15,10 @@ function State(){
 }
 var time = Type.time.is, last = -Infinity, N = 0, D = 1000; // WARNING! In the future, on machines that are D times faster than 2016AD machines, you will want to increase D by another several orders of magnitude so the processing speed never out paces the decimal resolution (increasing an integer effects the state accuracy).
 var perf = (typeof performance !== 'undefined')? (performance.timing && performance) : false, start = (perf && perf.timing && perf.timing.navigationStart) || (perf = false);
-State._ = '>';
+var S_ = State._ = '>';
 State.drift = 0;
 State.is = function(n, k, o){ // convenience function to get the state on a key on a node and return it.
-	var tmp = (k && n && n[N_] && n[N_][State._]) || o;
+	var tmp = (k && n && n[N_] && n[N_][S_]) || o;
 	if(!tmp){ return }
 	return num_is(tmp = tmp[k])? tmp : -Infinity;
 }
@@ -30,7 +30,7 @@ State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 		}
 		n = Node.soul.ify(n, soul); // then make it so!
 	}
-	var tmp = obj_as(n[N_], State._); // grab the states data.
+	var tmp = obj_as(n[N_], S_); // grab the states data.
 	if(u !== k && k !== N_){
 		if(num_is(s)){
 			tmp[k] = s; // add the valid state.

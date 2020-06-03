@@ -12,13 +12,13 @@
         cb = salt;
         salt = u;
       }
-      salt = salt || shim.random(9);
       data = (typeof data == 'string')? data : JSON.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
+      salt = salt || shim.random(9);
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({
         name: opt.name || 'PBKDF2',

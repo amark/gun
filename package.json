@@ -1,6 +1,6 @@
 {
   "name": "gun",
-  "version": "0.2020.401",
+  "version": "0.2020.520",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "types": "index.d.ts",
   "main": "index.js",
@@ -13,7 +13,7 @@
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
     "test": "mocha",
-    "testsea": "mocha test/sea.js",
+    "testsea": "mocha test/sea/sea.js",
     "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
@@ -56,12 +56,16 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "buffer": "^5.4.3",
     "ws": "^7.2.1"
   },
   "optionalDependencies": {
+    "@peculiar/webcrypto": "^1.1.1",
+    "text-encoding": "^0.7.0",
     "emailjs": "^2.2.0",
-    "isomorphic-webcrypto": "^2.3.2",
+    "buffer": "^5.4.3"
+  },
+  "peerDependencies": {
+    "@gooddollar/react-native-webview-crypto": "^0.*",
     "bufferutil": "^4.0.1",
     "utf-8-validate": "^5.0.2",
     "text-encoding": "^0.7.0"

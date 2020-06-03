@@ -11,6 +11,6 @@
 
     if(SEA.window = module.window){ SEA.window.SEA = SEA }
 
-    try{ if(typeof common !== "undefined"){ common.exports = SEA } }catch(e){}
+    try{ if(typeof MODULE !== "undefined"){ MODULE.exports = SEA } }catch(e){}
     module.exports = SEA;
   

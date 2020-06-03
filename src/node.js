@@ -29,7 +29,7 @@ Node.soul._ = Val.link._;
 	Node.ify = function(obj, o, as){ // returns a node from a shallow object.
 		if(!o){ o = {} }
 		else if(typeof o === 'string'){ o = {soul: o} }
-		else if(o instanceof Function){ o = {map: o} }
+		else if('function' == typeof o){ o = {map: o} }
 		if(o.map){ o.node = o.map.call(as, obj, u, o.node || {}) }
 		if(o.node = Node.soul.ify(o.node || {}, o)){
 			obj_map(obj, map, {o:o,as:as});

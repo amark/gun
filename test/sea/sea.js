@@ -37,14 +37,14 @@ describe('SEA', function(){
   var gun;
   var pub;
   describe('Utility', function(){
-    it('generates aeskey from jwk', function(done) {
+    /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
       console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
       SEA.opt.aeskey('x','x').then(k => {
         //console.log("DATA", k.data);
         expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')
         done()
       })
-    })
+    })*/
     it('quickstart', function(done){
       SEA.pair(function(pair){
       SEA.encrypt('hello self', pair, function(enc){
@@ -413,10 +413,12 @@ describe('SEA', function(){
       var msg = {what: 'hello world'};
       user.create('xavier', 'password');
       gun.on('auth', function(){
+        if(done.a){ return } done.a = 1;
         var ref = user.get('who').get('all').set(msg);
+        var stub = user.get('stub').put({});
         var tmp = ref._.dub || ref._.link;
         setTimeout(function(){
-          user.get('who').put(1);
+          user.get('who').put(stub);
           setTimeout(function(){
             user.get('who').get('all').get(tmp).put({boom: 'ah'});
             setTimeout(function(){
@@ -430,8 +432,98 @@ describe('SEA', function(){
         },9);
       });
     });
-  });
 
+    it("User's nodes must be signed when on user scope!", function(done) {
+      /// https://github.com/amark/gun/issues/850
+      /// https://github.com/amark/gun/issues/616
+      this.timeout(9000);
+      var gun = Gun();
+      var user = gun.user();
+      user.auth('xavier', 'password');
+      gun.on('auth', function(){
+        user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
+          var notsigned = [];
+          Gun.obj.map(gun._.graph, function(v,k) {
+            if (k[0]==='~' || k.indexOf('~', 1)!==-1) { return; } /// ignore '~pubkey' and '~@alias'
+            notsigned.push(k);
+          });
+          expect(notsigned.length).to.be(0); /// all souls must have to be suffixed with the user's pubkey.
+          done();
+        });
+      });
+    });
+
+    describe('predictable souls', function(){
+      var alice = {
+        "pub": "sT1s6lOaUgia5Aiy_Qg_Z4ubCCVFDyGVJsi-i0VmKJI.UTmwQrcKxkHfw0lFK2bkVDaYbd4_2T1Gj-MONFMostM",
+        "priv": "HUmmMsaphGuOsUHAGGg9HHrYOA5FCrsueY6QexE79AE",
+        "epub": "MIPYx3rdRJbJSvtan0ruwIjMYaB5W7t42MJ4U1Y2jsk.HFNKa-LoIp5MPI-KFXZhvANjhAxL8dzgXWzLVhewtuk",
+        "epriv": "7X9rN1NxDYi9jtNU7daIA33__KYEIw3bN5amI-Rc5sw"
+      };
+      it("user's", function(done){
+        var gun = Gun();
+        gun.on('auth', function(){
+          gun.user().get('z').get('y').get('x').put({c: {b: {a: 1}}}, function(ack){setTimeout(function(){
+            if(done.c){ return } done.c = 1;
+            var g = gun._.graph;
+            var p = '~'+alice.pub+'/';
+            console.log(1);
+            //console.log(p, g);
+            expect(g[p+'z']).to.be.ok();
+            expect(g[p+'z/y']).to.be.ok();
+            expect(g[p+'z/y/x']).to.be.ok();
+            expect(g[p+'z/y/x/c']).to.be.ok();
+            expect(g[p+'z/y/x/c/b']).to.be.ok();
+            done();
+          },200)});
+        });
+        gun.user().auth(alice);
+      });
+
+      it('user mix', function(done){
+        var gun = Gun();
+        gun.on('auth', function(){
+          if(done.a){ return } done.a = 1;
+          var ref = gun.user().get('zasdf').put({a: 9});
+          var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref);
+          at.get('foo').get('bar').put('yay');
+          ref.get('foo').get('ah').put(1, function(){setTimeout(function(){
+            if(done.c){ return } done.c = 1;
+            var g = gun._.graph;
+            var p = '~'+alice.pub+'/';
+            //console.log(p, g);
+            console.log(2);
+            expect(Object.keys(g[p+'zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
+            expect(Object.keys(g[p+'zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+            done();
+          },200)});
+        });
+        gun.user().auth(alice);
+      });
+      
+      it('user thread', function(done){
+        // grr this doesn't properly replicate the issue I saw before
+        var gun = Gun();
+        gun.on('auth', async function(){
+          if(done.a){ return } done.a = 1;
+          var to = gun.user().get('pchat').get('their.pub');
+          var enc = await SEA.encrypt('hi', 'secret');
+          var msg = { msg: enc };
+          to.get('2020').put(msg, function(){
+            if(done.c){ return } done.c = 1;
+            var g = gun._.graph;
+            var p = '~'+alice.pub+'/';
+            console.log(3);
+            console.log(p, Object.keys(g[p+'pchat/their.pub/2020']||{}).sort());
+            expect(Object.keys(g[p+'pchat/their.pub/2020']).sort()).to.be.eql(['_', 'msg'].sort());
+            expect(g[p+'2020']).to.not.be.ok();
+            done();
+          });
+        });
+        gun.user().auth(alice);
+      });
+    });
+  });
 })
 
 }());

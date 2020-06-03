@@ -1,20 +1,24 @@
 # CHANGELOG
 
+## 0.2020.x
+
+ - No breaking changes to core API.
+ - Storage adapter `put` event breaking change (temporary?), RAD is official now and storage adapters should be RAD plugins instead of GUN adapters.
+ - GUN soul format changed from being a random UUID to being a more predictable graph path (of where initially created) to support even better offline behavior. This means `null`ing & replacing an object will not create a new but re-merge.
+ - Pretty much all internal GUN utility will be deleted, these are mostly undocumented but will affect some people - they will still be available as a separate file but deprecated.
+ - As the DHT gets implemented, your relay peers may automatically connect to it, so do not assume your peer is standalone. `Gun({axe: false` should help prevent this but loses you most scaling properties.
+ - The 2019 -> 2020 "changes" are happening gradually, based on experimental in-production tests.
+ - As always, **most important** is to ask in the [community chat](http://chat.gun.eco) if you have any issues, and to keep up to date with changes.
+
+## 0.2019.x
+
+Some RAD & SEA data format changes, but with as much backward compatibility as possible, tho ideally should be dropped.
+
 ## 0.9.x
 
-No breaking changes, but the new Radix Storage Engine (RSE) has been finally integrated and works with S3 as a backup. Expect an order of magnitude or more in cost savings, we'll report our December bill compared to November when we get it.
+No breaking changes, but the new Radix Storage Engine (RSE) has been finally integrated and works with S3 as a backup.
 
-We have successfully benchmarked it against **1,000,000 records** doing end-to-end triple verification using our Jepsen-inspired [PANIC](https://github.com/gundb/panic-server) distritubed testing framework, doing **~4K acked writes/second** on a Macbook Air dev machine. For more information on PANIC, check out this [5 minute presentation](https://youtu.be/nTbUCTgLmkY) we did in Sweden (and the prior talk, for those interested in [porting GUN](https://github.com/amark/gun/wiki/porting-gun) out of its reference implementation of JS).
-
-> Warning: There is a known rare edge case in RSE currently, if data is split between two chunked files, a GET will only return from the first chunk. This will be fixed soon, but we still encourage developers to run and test against it, please report any problems.
-
-To use RSE, initialize a gun server peer with the default storage disabled, like `Gun({localStorage: false})`. Want to use it with S3? All you need to do is make sure that your environment variables are configured and it will automatically use S3, here is a [template](https://github.com/amark/gun/wiki/Using-Amazon-S3-for-Storage). This works especially well for our 1-click-deploy Heroku [demo server](http://gunjs.herokuapp.com/) with the example apps.
-
-Finally, with **end-to-end encryption** being enabled with our Security, Encryption, Authorization (SEA) framework (check out our [P2P/decentralized crypto-identity blockchain](https://github.com/amark/gun/wiki/auth)), gun is marching towards a stable v1.0 production-ready system (it is already being used in production by a Northern European government's Navy). So if you are able to [work around the remaining bugs](https://github.com/amark/gun/issues), we would appreciate everybody efforts in experimenting and testing out gun and reporting any last hiccups **in our lead up to the v1.0**!
-
-We will be **overhauling documentation in this v0.9.x series**, please make complaints about what is missing, and how we can make it better, so it will be polished for the v1.0! The [chatroom is actively and friendly for help](https://gitter.im/amark/gun), [StackOverflow](https://stackoverflow.com/questions/tagged/gun) for questions. And we're looking for [sponsors](https://www.patreon.com/gunDB), we **regularly get 1,200+ uniques every 2 weeks** on this repo, we've had **53% monthly growth** on our installs, and GUN is ranked in the top quarter of the top 1% of the top 1% fastest growing projects across all GitHub! If you are an Enterprise, this would be a great time to chat with us about our IoT, AI/ML, edge computing, graph, and cybersecurity solutions.
-
-Here is towards a v1.0! Cheers.
+// Edit: commentary removed.
 
 ## 0.8.x
 
