@@ -18,7 +18,7 @@ ADD . .
 ENV NPM_CONFIG_LOGLEVEL warn
 RUN apk update && apk upgrade \
   && apk add --no-cache ca-certificates nodejs-npm \
-  && apk add --no-cache --virtual .build-dependencies python make g++ \
+  && apk add --no-cache --virtual .build-dependencies python2 make g++ \
   && npm install --production \
   && apk del .build-dependencies && rm -rf /var/cache/* /tmp/npm*
 EXPOSE 8080
