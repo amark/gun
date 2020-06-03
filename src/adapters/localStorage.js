@@ -36,7 +36,7 @@ Gun.on('create', function(root){
 	}
 
 	root.on('out', function(msg){
-		if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs.
+		if(msg.lS){ return } // TODO: for IndexedDB and others, shouldn't send to peers ACKs to our own GETs. // THIS IS BLOCKING BROWSERS REPLYING TO REQUESTS, NO??? CHANGE THIS SOON!! UNDER CONTROLLED CIRCUMSTANCES!! Or maybe in-memory already doe sit?
 		if(Gun.is(msg.$) && msg.put && !msg['@']){
 			id = msg['#'];
 			Gun.graph.is(msg.put, null, map);
@@ -86,10 +86,11 @@ Gun.on('create', function(root){
 	var lS = function(){}, u;
 	root.on('localStorage', disk); // NON-STANDARD EVENT!
 
-	root.on('put', function(at){
-		this.to.next(at);
-		Gun.graph.is(at.put, null, map);
-		if(!at['@']){ acks[at['#']] = true; } // only ack non-acks.
+	root.on('put', function(msg){
+		this.to.next(msg);
+		var put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], tmp;
+		disk[soul] = Gun.state.ify(disk[soul], key, state, val, soul);
+		if(!msg['@']){ (acks[msg['#']] = (tmp = (msg._||'').lot || {})).lS = (tmp.lS||0)+1; } // only ack non-acks.
 		count += 1;
 		if(count >= (opt.batch || 1000)){
 			return flush();
@@ -110,7 +111,7 @@ Gun.on('create', function(root){
 			data = Gun.state.to(data, has);
 		}
 		//if(!data && !Gun.obj.empty(opt.peers)){ return } // if data not found, don't ack if there are peers. // Hmm, what if we have peers but we are disconnected?
-		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), how: 'lS', lS: msg.$});// || root.$});
+		root.on('in', {'@': msg['#'], put: Gun.graph.node(data), lS:1});// || root.$});
 		};
 		Gun.debug? setTimeout(to,1) : to();
 	});
@@ -134,6 +135,10 @@ Gun.on('create', function(root){
 		}
 		if(!err && !Gun.obj.empty(opt.peers)){ return } // only ack if there are no peers.
 		Gun.obj.map(ack, function(yes, id){
+			if(yes){
+				if(yes.more){ acks[id] = yes; return }
+				if(yes.s !== yes.lS){ err = "localStorage batch not same." }
+			}
 			root.on('in', {
 				'@': id,
 				err: err,

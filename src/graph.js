@@ -27,8 +27,12 @@ var Graph = {};
 		if(typeof env === 'string'){
 			env = {soul: env};
 		} else
-		if(env instanceof Function){
+		if('function' == typeof env){
 			env.map = env;
+		}
+		if(typeof as === 'string'){
+			env.soul = env.soul || as;
+			as = u;
 		}
 		if(env.soul){
 			at.link = Val.link.ify(env.soul);

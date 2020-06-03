@@ -10,7 +10,7 @@ Gun.chain.get = function(key, cb, as){
 		}
 		gun = gun.$;
 	} else
-	if(key instanceof Function){
+	if('function' == typeof key){
 		if(true === cb){ return soul(this, key, cb, as), this }
 		gun = this;
 		var at = gun._, root = at.root, tmp = root.now, ev;
@@ -46,7 +46,7 @@ Gun.chain.get = function(key, cb, as){
 	if(tmp = this._.stun){ // TODO: Refactor?
 		gun._.stun = gun._.stun || tmp;
 	}
-	if(cb && cb instanceof Function){
+	if(cb && 'function' == typeof cb){
 		gun.get(cb, as);
 	}
 	return gun;
@@ -72,7 +72,7 @@ function soul(gun, cb, opt, as){
 	if(cat.jam){ return cat.jam.push([cb, as]) }
 	cat.jam = [[cb,as]];
 	gun.get(function go(msg, eve){
-		if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks < tmp){
+		if(u === msg.put && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){
 			return;
 		}
 		eve.rid(msg);
@@ -101,7 +101,7 @@ function use(msg){
 	if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
 	//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
 	if((tmp = data) && tmp[rel._] && (tmp = rel.is(tmp))){
-		tmp = ((msg.$$ = at.root.gun.get(tmp))._);
+		tmp = ((msg.$$ = at.root.$.get(tmp))._);
 		if(u !== tmp.put){
 			msg = obj_to(msg, {put: data = tmp.put});
 		}

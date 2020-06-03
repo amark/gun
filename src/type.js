@@ -35,6 +35,17 @@ Type.text.match = function(t, o){ var tmp, u;
 	if(u !== o['<'] && t <= o['<']){ return true }
 	return false;
 }
+Type.text.hash = function(s, c){ // via SO
+	if(typeof s !== 'string'){ return }
+	    c = c || 0;
+	    if(!s.length){ return c }
+	    for(var i=0,l=s.length,n; i<l; ++i){
+	      n = s.charCodeAt(i);
+	      c = ((c<<5)-c)+n;
+	      c |= 0;
+	    }
+	    return c;
+	  }
 Type.list = {is: function(l){ return (l instanceof Array) }}
 Type.list.slit = Array.prototype.slice;
 Type.list.sort = function(k){ // creates a new sort function based off some key
@@ -77,9 +88,9 @@ Type.obj.copy = function(o){ // because http://web.archive.org/web/2014032822402
 	return !o? o : JSON.parse(JSON.stringify(o)); // is shockingly faster than anything else, and our data has to be a subset of JSON anyways!
 }
 ;(function(){
-	function empty(v,i){ var n = this.n;
+	function empty(v,i){ var n = this.n, u;
 		if(n && (i === n || (obj_is(n) && obj_has(n, i)))){ return }
-		if(i){ return true }
+		if(u !== i){ return true }
 	}
 	Type.obj.empty = function(o, n){
 		if(!o){ return true }
@@ -95,20 +106,21 @@ Type.obj.copy = function(o){ // because http://web.archive.org/web/2014032822402
 		} t.r = t.r || [];
 		t.r.push(k);
 	};
-	var keys = Object.keys, map;
+	var keys = Object.keys, map, u;
 	Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 	Type.obj.map = map = function(l, c, _){
-		var u, i = 0, x, r, ll, lle, f = fn_is(c);
-		t.r = null;
+		var u, i = 0, x, r, ll, lle, f = 'function' == typeof c;
+		t.r = u;
 		if(keys && obj_is(l)){
 			ll = keys(l); lle = true;
 		}
+		_ = _ || {};
 		if(list_is(l) || ll){
 			x = (ll || l).length;
 			for(;i < x; i++){
 				var ii = (i + Type.list.index);
 				if(f){
-					r = lle? c.call(_ || this, l[ll[i]], ll[i], t) : c.call(_ || this, l[i], ii, t);
+					r = lle? c.call(_, l[ll[i]], ll[i], t) : c.call(_, l[i], ii, t);
 					if(r !== u){ return r }
 				} else {
 					//if(Type.test.is(c,l[i])){ return ii } // should implement deep equality testing!

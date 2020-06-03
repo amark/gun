@@ -9,19 +9,25 @@
 
 Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
 
-Decentralized alternatives to [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
+Decentralized alternatives to [Zoom](https://meething.space/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
 
 <table>
 <tr>
-<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" align="left" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
-<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" align="left" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
-<a href="http://gps.gunDB.io/"><img width="31%" align="left" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
-<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" align="left" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
-<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" align="left" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
-<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" align="left" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
+<a href="https://youtu.be/s_m16-w6bBI"><img width="31%" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
+<a href="http://gps.gunDB.io/"><img width="31%" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
+</tr>
+<tr>
+<a href="https://github.com/lmangani/gun-scape#gun-scape"><img width="31%" src="https://gun.eco/see/dataviz.gif" title="Data Viz"/></a>
+<a href="https://github.com/amark/gun/wiki/Auth"><img width="31%" src="https://gun.eco/see/p2p.gif" title="P2P"/></a>
+<a href="https://github.com/Stefdv/gun-ui-lcd#okay-what-about-gundb-"><img width="31%" src="https://gun.eco/see/iot.gif" title="IoT"/></a>
+</tr>
+<tr>
+<a href="http://chat.gun.eco"><img width="31%" src="https://gun.eco/see/vr-world.gif" title="VR World"/></a>
+<a href="https://youtu.be/1ASrmQ-CwX4"><img width="31%" src="https://gun.eco/see/ar.gif" title="AR"/></a>
+<a href="https://meething.space/"><img width="31%" src="https://gun.eco/see/video-conf.gif" title="Video Confernece"/></a>
 </tr>
 </table>
-<center><a href="https://youtu.be/1ASrmQ-CwX4"><img src="https://gun.eco/see/ar.gif" title="AR"/></a></center>
 
 The ecosystem is one nice stack of technologies that looks like this: (names -> use case)
 
@@ -102,6 +108,8 @@ On that note, let's get some official shout outs covered first:
 
 <p align="center">
 Thanks to:<br/>
+ <a href="http://unstoppabledomains.com/"><img src="https://gun.eco/img/unstoppable.png"></a>
+ <br/>
 <a href="https://github.com/robertheessels">Robert Heessels</a>,
 <a href="http://qxip.net/">Lorenzo Mangani</a>,
 <a href="https://nlnet.nl/">NLnet Foundation</a>,
@@ -151,11 +159,11 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/brysgo/graphql-gun">GraphQL</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/PenguinMan98/electrontest">Electron</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React Native</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/React-Native">React & Native</a></h3></td>
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://github.com/sjones6/vue-gun">Vue</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/React-Tutorial">React</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Svelte">Svelte</a></h3></td>
     <td style="border: 0;"><h3><a href="https://github.com/Stefdv/gun-ui-lcd#syncing">Webcomponents</a></h3></td>
   </tr>
   <tr>
@@ -165,7 +173,7 @@ Technically, **GUN is a graph synchronization protocol** with a *lightweight emb
   </tr>
   <tr>
     <td style="border: 0;"><h3><a href="https://gun.eco/docs/Auth">Crypto Auth</a></h3></td>
-    <td style="border: 0;"><h3><a href="https://gun.eco/docs/Awesome-GUN">Modules</a></h3></td>
+    <td style="border: 0;"><h3><a href="https://github.com/amark/gun/wiki/Awesome-GUN">Modules</a></h3></td>
     <td style="border: 0;"><h3><a href="https://gun.eco/docs/Roadmap">Roadmap</a></h3></td>
   </tr>
 </table>
@@ -174,7 +182,7 @@ This would not be possible without **community contributors**, big shout out to:
 
 **[ajmeyghani](https://github.com/ajmeyghani) ([Learn GUN Basics with Diagrams](https://medium.com/@ajmeyghani/gundb-a-graph-database-in-javascript-3860a08d873c))**; **[anywhichway](https://github.com/anywhichway) ([Block Storage](https://github.com/anywhichway/gun-block))**; **[beebase](https://github.com/beebase) ([Quasar](https://github.com/beebase/gun-vuex-quasar))**; **[BrockAtkinson](https://github.com/BrockAtkinson) ([brunch config](https://github.com/BrockAtkinson/brunch-gun))**; **[Brysgo](https://github.com/brysgo) ([GraphQL](https://github.com/brysgo/graphql-gun))**; **[d3x0r](https://github.com/d3x0r) ([SQLite](https://github.com/d3x0r/gun-db))**; **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; **[hillct](https://github.com/hillct) (Docker)**; **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[JuniperChicago](https://github.com/JuniperChicago) ([cycle.js bindings](https://github.com/JuniperChicago/cycle-gun))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; **[kristianmandrup](https://github.com/kristianmandrup) ([edge](https://github.com/kristianmandrup/gun-edge))**; **[Lightnet](https://github.com/Lightnet)** ([Awesome Vue User Examples](https://glitch.com/edit/#!/jsvuegunui?path=README.md:1:0) & [User Kitchen Sink Playground](https://gdb-auth-vue-node.glitch.me/)); **[lmangani](https://github.com/lmangani) ([Cytoscape Visualizer](https://github.com/lmangani/gun-scape), [Cassandra](https://github.com/lmangani/gun-cassandra), [Fastify](https://github.com/lmangani/fastify-gundb), [LetsEncrypt](https://github.com/lmangani/polyGun-letsencrypt))**; **[mhelander](https://github.com/mhelander) ([SEA](https://github.com/amark/gun/blob/master/sea.js))**; [omarzion](https://github.com/omarzion) ([Sticky Note App](https://github.com/omarzion/stickies)); [PsychoLlama](https://github.com/PsychoLlama) ([LevelDB](https://github.com/PsychoLlama/gun-level)); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; **[rogowski](https://github.com/rogowski) (AXE)**; [sbeleidy](https://github.com/sbeleidy); **[sbiaudet](https://github.com/sbiaudet) ([C# Port](https://github.com/sbiaudet/cs-gun))**; **[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; **[Shadyzpop](https://github.com/Shadyzpop) ([React Native example](https://github.com/amark/gun/tree/master/examples/react-native))**; **[sjones6](https://github.com/sjones6) ([Flint](https://github.com/sjones6/gun-flint))**; **[Stefdv](https://github.com/stefdv) (Polymer/web components)**; **[zrrrzzt](https://github.com/zrrrzzt) ([JWT Auth](https://gist.github.com/zrrrzzt/6f88dc3cedee4ee18588236756d2cfce))**; **[xmonader](https://github.com/xmonader) ([Python Port](https://github.com/xmonader/pygundb))**; 
 
-I am missing many others, apologies, will be adding them soon!
+I am missing many others, apologies, will be adding them soon! This list is infintiely old & way out of date, if you want to be listed in it please make a PR! :)
 
 ## Testing
 
@@ -186,11 +194,13 @@ rm -rf *data*
 
 ### Additional Cryptography Libraries
 
- > These are only needed for NodeJS, they shim the native Browser WebCrypto API.
+ > These are only needed for NodeJS & React Native, they shim the native Browser WebCrypto API.
 
 If you want to use [SEA](https://gun.eco/docs/SEA) for `User` auth and security, you will need to install:
 
-`npm install text-encoding isomorphic-webcrypto --save`
+`npm install text-encoding @peculiar/webcrypto --save`
+
+Please see [our React Native docs](https://gun.eco/docs/React-Native) for installation instructions!
 
 Then you can require [SEA](https://gun.eco/docs/SEA) without an error:
 

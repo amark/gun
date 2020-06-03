@@ -25,7 +25,7 @@ Gun.chain.back = function(n, opt){ var tmp;
 		}
 		return;
 	}
-	if(n instanceof Function){
+	if('function' == typeof n){
 		var yes, tmp = {back: at};
 		while((tmp = tmp.back)
 		&& u === (yes = n(tmp, opt))){}

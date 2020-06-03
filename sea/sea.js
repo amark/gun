@@ -1,13 +1,13 @@
 
     var shim = require('./shim');
-    // Practical examples about usage found from ./test/common.js
+    // Practical examples about usage found in tests.
     var SEA = require('./root');
     SEA.work = require('./work');
     SEA.sign = require('./sign');
     SEA.verify = require('./verify');
     SEA.encrypt = require('./encrypt');
     SEA.decrypt = require('./decrypt');
-    SEA.aeskey = require('./aeskey');
+    SEA.opt.aeskey = require('./aeskey'); // not official!
 
     SEA.random = SEA.random || shim.random;
 
@@ -49,7 +49,7 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require((typeof common == "undefined"?'.':'')+'./gun', 1);
+    var Gun = (SEA.window||{}).Gun || require((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
     Gun.SEA = SEA;
     SEA.GUN = SEA.Gun = Gun;
 
