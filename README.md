@@ -1,15 +1,15 @@
-<p><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
+<p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
 [![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
 [![Travis](https://img.shields.io/travis/amark/gun/master.svg)](https://travis-ci.org/amark/gun)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](https://gitter.im/amark/gun)
 
-**GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and encrypted applications.
+**GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and [encrypted applications](https://gun.eco/docs/Cartoon-Cryptography).
 
-Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and HackerNoon run GUN in production.
+Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and [HackerNoon](https://www.coindesk.com/hacker-noon-is-storing-content-on-a-blockchain-after-ditching-medium) run GUN in production.
 
-Decentralized alternatives to [Zoom](https://meething.space/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](https://gitter.im/amark/gun) creating a free fun future for freedom:
+Decentralized alternatives to [Zoom](https://www.zdnet.com/article/era-hatches-meething-an-open-source-browser-based-video-conferencing-system/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](http://chat.gun.eco/) creating a [free fun future for freedom](https://youtu.be/1HJdrBk3BlE):
 
 <table>
 <tr>
