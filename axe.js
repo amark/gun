@@ -217,6 +217,7 @@
 					}
 					// TODO: PUTs need to only go to subs!
 					if(msg.put){
+						mesh.say(msg, axe.up); // always send gets up! Hope that mesh.say below dedups via DAM's check.
 						var S = (+new Date); // STATS!
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
