@@ -825,16 +825,21 @@
       return gun;
     }
     // now that we have created a user, we want to authenticate them!
-    User.prototype.auth = function(alias, pass, cb, opt){
+    User.prototype.auth = function(...args){
+      const alias = typeof args[0] === 'string' ? args[0] : null
+      const pass = alias && typeof args[1] === 'string' ? args[1] : null
+      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null
+      const cb = args.filter(arg => typeof arg === 'function')[0] || function(){} // cb now can stand anywhere, after alias/pass or pair
+      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {} // opt is always the last parameter which typeof === 'object' and stands after cb
+
       var gun = this, cat = (gun._), root = gun.back(-1);
-      cb = cb || function(){};
+      
       if(cat.ing){
         cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      opt = opt || {};
-      var pair = (alias && (alias.pub || alias.epub))? alias : (pass && (pass.pub || pass.epub))? pass : null;
+      
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -896,8 +901,7 @@
           try{var sS = {};
           sS = window.sessionStorage;
           sS.recall = true;
-          sS.alias = alias;
-          sS.tmp = pass;
+          sS.pair = JSON.stringify(pair); // auth using pair is more reliable than alias/pass
           }catch(e){}
         }
         try{
@@ -969,9 +973,8 @@
       if(SEA.window){
         try{var sS = {};
         sS = window.sessionStorage;
-        delete sS.alias;
-        delete sS.tmp;
         delete sS.recall;
+        delete sS.pair;
         }catch(e){};
       }
       return gun;
@@ -995,7 +998,7 @@
       return gun;
     }
     User.prototype.recall = function(opt, cb){
-      var gun = this, root = gun.back(-1), tmp;
+      var gun = this, root = gun.back(-1);
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
@@ -1004,8 +1007,8 @@
           if(sS){
             (root._).opt.remember = true;
             ((gun.back('user')._).opt||opt).remember = true;
-            if(sS.recall || (sS.alias && sS.tmp)){
-              root.user().auth(sS.alias, sS.tmp, cb);
+            if(sS.recall || sS.pair){
+              root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
             }
           }
           }catch(e){}
