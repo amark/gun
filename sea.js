@@ -189,7 +189,7 @@
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
+      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
     }}
 
     module.exports = api
@@ -659,7 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
-    SEA.opt.aeskey = USE('./aeskey'); // not official!
+    //SEA.opt.aeskey = USE('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
 
@@ -710,8 +710,7 @@
 
   ;USE(function(module){
     var Gun = USE('./sea').Gun;
-    Gun.chain.then = function(cb, opt = {}){
-      opt = {wait: 200, ...opt}
+    Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
         gun.once(res, opt);
       }));
@@ -741,7 +740,7 @@
       at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
         if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
-        id = id + '~' + pub + '.';
+        id = id + '~' + pub + '/';
         if(cb && cb.call){ cb(null, id) }
         return id;
       }
@@ -1091,7 +1090,7 @@
     /**
      * returns the decrypted value, encrypted by secret
      * @returns {Promise<any>}
-     */
+     // Mark needs to review 1st before officially supported
     User.prototype.decrypt = function(cb) {
       let gun = this,
         path = ''
@@ -1124,6 +1123,7 @@
           return res
         })
     }
+    */
     module.exports = User
   })(USE, './create');
 
@@ -1190,6 +1190,7 @@
     var u;
     function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
       var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      if(!soul || !key){ return }
       if((msg._||'').faith && (at.opt||'').faith && 'function' == typeof msg._){
         SEA.verify(SEA.opt.pack(put), false, function(data){ // this is synchronous if false
           put['='] = SEA.opt.unpack(data);
@@ -1200,9 +1201,14 @@
       var no = function(why){ at.on('in', {'@': id, err: why}) };
       //var no = function(why){ msg.ack(why) };
       (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
-      if('#' === soul[0]){ // special case for content addressing immutable hashed data.
-        check.hash(eve, msg, val, key, soul, at, no); return;
-      } 
+      if(0 <= soul.indexOf('<?')){ // special case for "do not sync data X old"
+        // 'a~pub.key/b<?9'
+        tmp = parseFloat(soul.split('<?')[1]||'');
+        if(tmp && (state < (Gun.state() - (tmp * 1000)))){ // sec to ms
+          (tmp = msg._) && (tmp = tmp.lot) && (tmp.more--); // THIS IS BAD CODE! It assumes GUN internals do something that will probably change in future, but hacking in now.
+          return; // omit!
+        }
+      }
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -1213,6 +1219,9 @@
       if(tmp = SEA.opt.pub(soul)){ // special case, account data for a public key.
         check.pub(eve, msg, val, key, soul, at, no, at.user||'', tmp); return;
       }
+      if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
+        check.hash(eve, msg, val, key, soul, at, no); return;
+      } 
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
@@ -1420,13 +1429,14 @@
       }
       to.next(msg); // pass forward any data we do not know how to handle or process (this allows custom security protocols).
     }
+    var pubcut = /[^\w_-]/; // anything not alphanumeric or _ -
     SEA.opt.pub = function(s){
       if(!s){ return }
       s = s.split('~');
       if(!s || !(s = s[1])){ return }
-      s = s.split('.');
-      if(!s || 2 > s.length){ return }
-      if('@' === (s[0]||'')[0]){ return } // TODO: Should check ~X.Y. are alphanumeric, not just not @.
+      s = s.split(pubcut).slice(0,2);
+      if(!s || 2 != s.length){ return }
+      if('@' === (s[0]||'')[0]){ return }
       s = s.slice(0,2).join('.');
       return s;
     }

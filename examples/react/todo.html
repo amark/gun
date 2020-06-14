@@ -13,10 +13,10 @@
         const [todos, setTodos] = React.useState({})
 
         React.useEffect(() => {
-          gun
+          return gun
             .get("todos")
             .map()
-            .on((todo, id) => setTodos(todos => ({...todos, [id]: todo })));
+            .on((todo, id) => setTodos(todos => ({...todos, [id]: todo }))).off;
         }, [])
 
         return (
@@ -26,7 +26,7 @@
             <form onSubmit={e => {
                 e.preventDefault();
                 gun.get("todos").set({ title: newTodo.current.value });
-                ref.current.value = ''
+                newTodo.current.value = ''
               }}>
               <input ref={newTodo} placeholder="new todo"/>
             </form>
