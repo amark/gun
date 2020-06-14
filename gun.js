@@ -1183,6 +1183,7 @@
 			if(as.ref !== as.$){
 				tmp = (as.$._).get || at.get;
 				if(!tmp){ // TODO: Handle
+					delete as.via._.stun;
 					Gun.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
 					return;
 				}
@@ -1317,8 +1318,8 @@
 			}
 			if((tmp = eve.wait) && (tmp = tmp[at.id])){ clearTimeout(tmp) }
 			eve.ack = (eve.ack||0)+1;
-			// TODO: BUG! If NodeJS && people connect to it, these peer counts will be wrong + see other ref of this bug: // TODO: super should not be in core code, bring AXE up into core instead to fix?
-			if(!to && u === data && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
+			// TODO: super should not be in core code, bring AXE up into core instead to fix?
+			if(!to && u === data && !at.root.opt.super && eve.ack <= (opt.acks || Object.keys(at.root.opt.peers).length)){ return }
 			if((!to && (u === data || at.soul || at.link || (link && !(0 < link.ack))))
 			|| (u === data && !at.root.opt.super && (tmp = Object.keys(at.root.opt.peers).length) && (!to && (link||at).ack < tmp))){
 				tmp = (eve.wait = {})[at.id] = setTimeout(function(){
@@ -1424,6 +1425,7 @@
 				return gun.get(soul || uuid()).put(item, cb, opt);
 			}
 			item.get(function(soul, o, msg){
+				if(!soul && item._.stun){ item._.on('res', function(){ this.off(); gun.set(item, cb, opt) }); return }
 				if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
 				gun.put(Gun.obj.put({}, soul, Gun.val.link.ify(soul)), cb, opt);
 			},true);
@@ -1692,7 +1694,7 @@
 			});
 
 			root.on('bye', function(peer, tmp){
-				peer = opt.peers[peer.id || peer] || peer; 
+				peer = opt.peers[peer.id || peer] || peer;
 				this.to.next(peer);
 				peer.bye? peer.bye() : (tmp = peer.wire) && tmp.close && tmp.close();
 				delete opt.peers[peer.id];
@@ -1767,7 +1769,7 @@
 			mesh.wire = opt.wire = open;
 			function open(peer){ try{
 				if(!peer || !peer.url){ return wire && wire(peer) }
-				var url = peer.url.replace('http', 'ws');
+				var url = peer.url.replace(/^http/, 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
 					opt.mesh.bye(peer);

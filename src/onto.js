@@ -9,7 +9,7 @@ module.exports = function onto(tag, arg, as){
 				tmp.next(arg);
 		}}
 	}});
-	if(arg instanceof Function){
+	if('function' == typeof arg){
 		var be = {
 			off: onto.off ||
 			(onto.off = function(){

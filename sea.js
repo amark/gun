@@ -164,7 +164,7 @@
     var o = {};
 
     if(SEA.window){
-      api.crypto = navigator && navigator.product === 'ReactNative' ? require('isomorphic-webcrypto') : window.crypto || window.msCrypto || require('isomorphic-webcrypto');
+      api.crypto = window.crypto || window.msCrypto
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
@@ -176,17 +176,20 @@
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
-    if(!api.crypto){try{
+    if(!api.crypto)
+    {
+      try
+      {
       var crypto = USE('crypto', 1);
       Object.assign(api, {
         crypto,
         random: (len) => Buffer.from(crypto.randomBytes(len))
       });      
-      const isocrypto = require('isomorphic-webcrypto');
-      api.ossl = api.subtle = isocrypto.subtle;
-    }catch(e){
+      const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
+      api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
+    }
+    catch(e){
       console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
-      TEXT_ENCODING_OR_PECULIAR_WEBCRYPTO_NOT_INSTALLED;
     }}
 
     module.exports = api
@@ -656,7 +659,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
-    SEA.opt.aeskey = USE('./aeskey'); // not official!
+    //SEA.opt.aeskey = USE('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
 
@@ -707,9 +710,9 @@
 
   ;USE(function(module){
     var Gun = USE('./sea').Gun;
-    Gun.chain.then = function(cb){
+    Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
-        gun.once(res);
+        gun.once(res, opt);
       }));
       return cb? p.then(cb) : p;
     }
@@ -734,13 +737,13 @@
       if(user = root.back('user')){ return user }
       var root = (root._), at = root, uuid = at.opt.uuid || Gun.state.lex;
       (at = (user = at.user = gun.chain(new User))._).opt = {};
-      /*at.opt.uuid = function(cb){
+      at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
         if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
-        id = id + '~' + pub + '.';
+        id = id + '~' + pub + '/';
         if(cb && cb.call){ cb(null, id) }
         return id;
-      }*/
+      }
       return user;
     }
     Gun.User = User;
@@ -1083,6 +1086,44 @@
       }());
       return gun;
     }
+
+    /**
+     * returns the decrypted value, encrypted by secret
+     * @returns {Promise<any>}
+     // Mark needs to review 1st before officially supported
+    User.prototype.decrypt = function(cb) {
+      let gun = this,
+        path = ''
+      gun.back(function(at) {
+        if (at.is) {
+          return
+        }
+        path += at.get || ''
+      })
+      return gun
+        .then(async data => {
+          if (data == null) {
+            return
+          }
+          const user = gun.back(-1).user()
+          const pair = user.pair()
+          let sec = await user
+            .get('trust')
+            .get(pair.pub)
+            .get(path)
+          sec = await SEA.decrypt(sec, pair)
+          if (!sec) {
+            return data
+          }
+          let decrypted = await SEA.decrypt(data, sec)
+          return decrypted
+        })
+        .then(res => {
+          cb && cb(res)
+          return res
+        })
+    }
+    */
     module.exports = User
   })(USE, './create');
 

@@ -1411,6 +1411,33 @@ describe('Gun', function(){
 
 		});
 
+		describe('predictable souls', function(){
+			it('public', function(done){
+				gun.get('z').get('y').get('x').put({c: {b: {a: 1}}}, function(){
+					if(done.c){ return } done.c = 1;
+					var g = gun._.graph;
+					expect(g['z']).to.be.ok();
+					expect(g['z/y']).to.be.ok();
+					expect(g['z/y/x']).to.be.ok();
+					expect(g['z/y/x/c']).to.be.ok();
+					expect(g['z/y/x/c/b']).to.be.ok();
+					done();
+				});
+			});
+			it('public mix', function(done){
+				var ref = gun.get('zasdf').put({a: 9});
+				var at = gun.get('zfdsa').get('y').get('x').get('c').put(ref);
+				at.get('foo').get('bar').put('yay');
+				ref.get('foo').get('ah').put(1, function(){
+					if(done.c){ return } done.c = 1;
+					var g = gun._.graph;
+					expect(Object.keys(g['zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
+					expect(Object.keys(g['zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+					done();
+				});
+			});
+		});
+
 		describe('plural chains', function(){
 			this.timeout(9000);
 			it('uncached synchronous map on', function(done){
@@ -2856,7 +2883,7 @@ describe('Gun', function(){
 			});
 		});
 
-		it.only('once put once', function(done){
+		it('once put once', function(done){
 			gun.get('opo').get('a').put('yay!');
 			var ref = gun.get('opo').get('a');
 			setTimeout(function(){
