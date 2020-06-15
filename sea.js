@@ -825,13 +825,13 @@
       return gun;
     }
     // now that we have created a user, we want to authenticate them!
-    User.prototype.auth = function(...args){
-      const alias = typeof args[0] === 'string' ? args[0] : null
-      const pass = alias && typeof args[1] === 'string' ? args[1] : null
-      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null
-      const cb = args.filter(arg => typeof arg === 'function')[0] || function(){} // cb now can stand anywhere, after alias/pass or pair
-      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {} // opt is always the last parameter which typeof === 'object' and stands after cb
-
+    User.prototype.auth = function(){
+      const alias = typeof arguments[0] === 'string' ? arguments[0] : null
+      const pass = alias && typeof arguments[1] === 'string' ? arguments[1] : null
+      const pair = typeof arguments[0] === 'object' && (arguments[0].pub || arguments[0].epub) ? arguments[0] : typeof arguments[1] === 'object' && (arguments[1].pub || arguments[1].epub) ? arguments[1] : null
+      const cb = Array.prototype.slice.call(arguments).filter(arg => typeof arg === 'function')[0] || function(){} // cb now can stand anywhere, after alias/pass or pair
+      const opt = arguments && arguments.length > 1 && typeof arguments[arguments.length-1] === 'object' ? arguments[arguments.length-1] : {} // opt is always the last parameter which typeof === 'object' and stands after cb
+      console.log({alias,pass,pair,cb,opt})
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
