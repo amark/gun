@@ -302,7 +302,8 @@
 				DBG && (DBG.p = S);
 				ctx.msg = msg;
 				ctx.stun = 1;
-				var nl = Object.keys(put), ni = 0, nj, kl, soul, node, states, err, tmp;
+				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below?
+				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
 					if(nj != ni){ nj = ni;
 						if(!(soul = nl[ni])){
@@ -1453,59 +1454,64 @@
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
-				var msg, id, hash, tmp = raw[0], ash, DBG;
 				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
+				var tmp = raw[0], msg;
 				if('[' === tmp){
-					try{msg = JSON.parse(raw)}catch(e){opt.log('DAM JSON parse error', e)}
-					raw = '';
-					if(!msg){ return }
-					console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
-					var P = opt.puff;
-					(function go(){
-						var S = +new Date;
-						//var P = peer.puff || opt.puff, s = +new Date; // TODO: For future, but in mix?
-						var i = 0, m; while(i < P && (m = msg[i++])){ hear(m, peer) }
-						//peer.puff = Math.ceil((+new Date - s)? P * 1.1 : P * 0.9);
-						msg = msg.slice(i); // slicing after is faster than shifting during.
-						console.STAT && console.STAT(S, +new Date - S, 'hear loop');
-						flush(peer); // force send all synchronously batched acks.
-						if(!msg.length){ return }
-						puff(go, 0);
-					}());
+					parse(raw, function(err, msg){
+						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
+						var P = opt.puff;
+						(function go(){
+							var S = +new Date;
+							var i = 0, m; while(i < P && (m = msg[i++])){ hear(m, peer) }
+							msg = msg.slice(i); // slicing after is faster than shifting during.
+							console.STAT && console.STAT(S, +new Date - S, 'hear loop');
+							flush(peer); // force send all synchronously batched acks.
+							if(!msg.length){ return }
+							puff(go, 0);
+						}());
+					});
+					raw = ''; // 
 					return;
 				}
 				if('{' === tmp || ((raw['#'] || obj_is(raw)) && (msg = raw))){
-					try{msg = msg || JSON.parse(raw);
-					}catch(e){return opt.log('DAM JSON parse error', e)}
-					if(!msg){ return }
-					if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
-					DBG && (DBG.hp = +new Date);
-					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
-					if(tmp = dup_check(id)){ return }
-					// DAM logic:
-					if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
-					if(hash && (tmp = msg['@'] || (msg.get && id)) && dup.check(ash = tmp+hash)){ return } // Imagine A <-> B <=> (C & D), C & D reply with same ACK but have different IDs, B can use hash to dedup. Or if a GET has a hash already, we shouldn't ACK if same.
-					(msg._ = function(){}).via = mesh.leap = peer;
-					if((tmp = msg['><']) && 'string' == typeof tmp){ tmp.slice(0,99).split(',').forEach(function(k){ this[k] = 1 }, (msg._).yo = {}) } // Peers already sent to, do not resend.
-					// DAM ^
-					if(tmp = msg.dam){
-						if(tmp = mesh.hear[tmp]){
-							tmp(msg, peer, root);
-						}
-						dup_track(id);
-						return;
-					}
-					var S = +new Date, ST;
-					DBG && (DBG.is = S);
-					root.on('in', mesh.last = msg);
-					//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
-					DBG && (DBG.hd = +new Date);
-					console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
-					(tmp = dup_track(id)).via = peer;
-					if(msg.get){ tmp.it = msg }
-					if(ash){ dup_track(ash) } //dup.track(tmp+hash, true).it = it(msg);
-					mesh.leap = mesh.last = null; // warning! mesh.leap could be buggy.
+					if(msg){ return hear.one(msg, peer) }
+					parse(raw, function(err, msg){
+						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						hear.one(msg, peer);
+					});
+					return;
 				}
+			}
+			hear.one = function(msg, peer){
+				var id, hash, tmp, ash, DBG;
+				if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
+				DBG && (DBG.hp = +new Date);
+				if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+				if(tmp = dup_check(id)){ return }
+				// DAM logic:
+				if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
+				if(hash && (tmp = msg['@'] || (msg.get && id)) && dup.check(ash = tmp+hash)){ return } // Imagine A <-> B <=> (C & D), C & D reply with same ACK but have different IDs, B can use hash to dedup. Or if a GET has a hash already, we shouldn't ACK if same.
+				(msg._ = function(){}).via = mesh.leap = peer;
+				if((tmp = msg['><']) && 'string' == typeof tmp){ tmp.slice(0,99).split(',').forEach(function(k){ this[k] = 1 }, (msg._).yo = {}) } // Peers already sent to, do not resend.
+				// DAM ^
+				if(tmp = msg.dam){
+					if(tmp = mesh.hear[tmp]){
+						tmp(msg, peer, root);
+					}
+					dup_track(id);
+					return;
+				}
+				var S = +new Date, ST;
+				DBG && (DBG.is = S);
+				root.on('in', mesh.last = msg);
+				//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
+				DBG && (DBG.hd = +new Date);
+				console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
+				(tmp = dup_track(id)).via = peer;
+				if(msg.get){ tmp.it = msg }
+				if(ash){ dup_track(ash) } //dup.track(tmp+hash, true).it = it(msg);
+				mesh.leap = mesh.last = null; // warning! mesh.leap could be buggy.
 			}
 			var tomap = function(k,i,m){m(k,true)};
 			var noop = function(){};
@@ -1596,7 +1602,7 @@
 					if('string' == typeof msg){ return msg }
 					if(!msg.dam){
 						var i = 0, to = []; tmp = opt.peers;
-						for(var k in tmp){ var p = tmp[k]; // TODO: Make up peers instead!
+						for(var k in tmp){ var p = tmp[k]; // TODO: Make it up peers instead!
 							to.push(p.url || p.pid || p.id);
 							if(++i > 6){ break }
 						}
