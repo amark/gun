@@ -400,7 +400,6 @@
 				if(!(tmp = ctx.msg)){ return }
 				tmp.out = universe;
 				//console.log("PUT:", +new Date - ctx.START, ctx.lot); ctx.START = null;
-				console.log('out', tmp);
 				root.on('out', tmp);
 			}
 			var ERR = "Error: Invalid graph!";
@@ -1458,7 +1457,7 @@
 				var tmp = raw[0], msg;
 				if('[' === tmp){
 					parse(raw, function(err, msg){
-						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						if(err || !msg){ return } //mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
 						console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
 						var P = opt.puff;
 						(function go(){
@@ -1474,10 +1473,10 @@
 					raw = ''; // 
 					return;
 				}
-				if('{' === tmp || ((raw['#'] || obj_is(raw)) && (msg = raw))){
+				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
 					if(msg){ return hear.one(msg, peer) }
 					parse(raw, function(err, msg){
-						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						if(err || !msg){ return } //mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
 						hear.one(msg, peer);
 					});
 					return;
@@ -1552,7 +1551,6 @@
 					if(!peer || !peer.id){ message = msg;
 						if(!Object.plain(peer || opt.peers)){ return false }
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {});
-						console.log('peers', pl);
 						;(function go(){
 							var S = +new Date;
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.

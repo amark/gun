@@ -15,6 +15,7 @@ describe('Gun', function(){
 			root.Gun = root.Gun;
 			root.Gun.TESTING = true;
 		} else {
+			require('../lib/yson');
 			root.Gun = require('../gun');
 			root.Gun.TESTING = true;
 			Gun.serve = require('../lib/serve');
@@ -63,7 +64,7 @@ describe('Gun', function(){
 		} );
 		*/
 
-		describe.only('YSON', function(){
+		describe('YSON', function(){
 			it('parse', function(){
 				//var json = require('fs').readFileSync('./radix.json').toString();
 				//var json = require('fs').readFileSync('./data.json').toString();
@@ -71,12 +72,17 @@ describe('Gun', function(){
 				//var json = require('fs').readFileSync('./stats.json').toString();
 				//var json = require('fs').readFileSync('./video.json').toString();
 			});
-			it('stringify', function(){
+			it('stringify', function(done){
+				function Foo(){}; Foo.prototype.toJSON = function(){};
 				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
 				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
-				YSON.stringifyAsync(obj, function(err, text){
-					console.log("done!", text);
-				})
+				obj = [{x:"test",a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
+				JSON.stringifyAsync(obj, function(err, text){
+					JSON.parseAsync(text, function(err, data){
+						expect(data).to.be.eql([{x:"test",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,'go'],blah:9}]);
+						done();
+					})
+				});
 			});
 		});
 
