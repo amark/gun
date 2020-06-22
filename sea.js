@@ -1008,11 +1008,7 @@
             if(sS){
               (root._).opt.remember = true;
               ((gun.back('user')._).opt||opt).remember = true;
-              if(sS.recall || sS.pair){
-                try{
-                  root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
-                }catch(e){}
-              }
+              if(sS.recall || sS.pair) root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
             }
           }catch(e){}
         }
