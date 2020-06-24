@@ -892,6 +892,7 @@
       act.g = function(pair){
         act.pair = pair;
         var user = (root._).user, at = (user._);
+        var tmp = at.tag;
         var upt = at.opt;
         at = user._ = root.get('~'+pair.pub)._;
         at.opt = upt;
