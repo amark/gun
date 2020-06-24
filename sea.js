@@ -892,12 +892,11 @@
       act.g = function(pair){
         act.pair = pair;
         var user = (root._).user, at = (user._);
-        var tmp = at.tag;
         var upt = at.opt;
         at = user._ = root.get('~'+pair.pub)._;
         at.opt = upt;
         // add our credentials in-memory only to our root user instance
-        user.is = {pub: pair.pub, epub: pair.epub, alias: alias};
+        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair.pub};
         at.sea = act.pair;
         cat.ing = false;
         try{if(pass && !Gun.obj.has(Gun.obj.ify(cat.root.graph['~'+pair.pub].auth), ':')){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
