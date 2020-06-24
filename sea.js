@@ -1004,7 +1004,7 @@
       return gun;
     }
     User.prototype.recall = function(opt, cb){
-      var gun = this, root = gun.back(-1);
+      var gun = this, root = gun.back(-1), tmp;
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
