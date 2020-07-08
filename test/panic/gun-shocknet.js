@@ -3,7 +3,7 @@
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 4,
+	servers: 6,
 	browsers: 0,
 	route: {
 		'/': __dirname + '/index.html',
@@ -61,7 +61,11 @@ manager.start({
 var servers = clients.filter('Node.js');
 var server = servers.pluck(1);
 var spawn = servers.excluding(server).pluck(1);
-var serverClients = servers.excluding(new panic.ClientList([server, spawn]))
+var serversRest = servers.excluding(new panic.ClientList([server, spawn]))
+var peer1 = serversRest.pluck(1);
+var peer2 = serversRest.excluding(peer1).pluck(1);
+var peerClients = new panic.ClientList([peer1, peer2])
+var serverClients = serversRest.excluding(new panic.ClientList([peer1, peer2]))
 //var browsers = clients.excluding(servers);
 var alice = serverClients.pluck(1);
 var bob = serverClients.excluding(alice).pluck(1);
@@ -88,12 +92,38 @@ describe("Shocknet Test!", function(){
 				res.end("I am "+ env.i +"!");
 			});
 			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server});
+			var gun = Gun({file: env.i+'data', web: server,axe:false});
 			server.listen(port, function(){
 				test.done();
 			});
 		}, {i: 1, config: config}); 
 	});
+	it("Server Peer initialized gun!",function(){
+		var tests = [], i = 0;
+		peerClients.each(function(client, id){
+			tests.push(client.run(function(test){
+				var env = test.props;
+				test.async();
+				try{ require('fs').unlinkSync((3+env.i)+'data') }catch(e){}
+				try{ require('fs').unlinkSync((env.i+1+3)+'data') }catch(e){}
+				try{ require('gun/lib/fsrm')((3+env.i)+'data') }catch(e){}
+				try{ require('gun/lib/fsrm')((env.i+1+3)+'data') }catch(e){}
+				var port = env.config.port + 3+env.i;
+				var server = require('http').createServer(function(req, res){
+					res.end("I am "+ (3+env.i) +"!");
+				});
+				const peerPort = env.i === 1 ? 5 : 4
+				const peerAddr = 'http://'+ env.config.IP + ':' + (env.config.port+peerPort) + '/gun'
+				var Gun = require('gun');
+				var gun = Gun({file: (3+env.i)+'data', web: server,peers:[peerAddr],axe:false});
+				console.log('\x1b[32m',` I am peer #${env.i}, I am listening on port ${port} and connecting to ${peerAddr}`,'\x1b[0m')
+				server.listen(port, function(){
+					test.done();
+				});
+			}, {i: i += 1, config: config})); 
+		});
+		return Promise.all(tests);
+	})
 
 	it("Server Clients initialized gun!", function(){
 		var tests = [], i = 0;
@@ -115,10 +145,14 @@ describe("Shocknet Test!", function(){
 				try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 				try{ require('gun/lib/fsrm')((env.i+1)+'data') }catch(e){}
 				var Gun = require('gun');
+				const peerAddr = 'http://'+ env.config.IP + ':' + (env.config.port + 3 + env.i) + '/gun'
 				var gun = Gun({
-					peers:['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'],
-					file:env.i+'data'
+					peers:[peerAddr],
+					file:env.i+'data',
+					axe:false
+					
 				});
+				console.log('\x1b[32m',` I am client #${env.i}, I am connecting to ${peerAddr}`,'\x1b[0m')
 				global.gun = gun;
 			}, {i: i += 1, config: config})); 
 		});
