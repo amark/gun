@@ -267,22 +267,21 @@ describe("Shocknet Test!", function(){
 		},{pub: testData[1].pub, config: config})
 	})
 	it("Reading bob display name using .then !",function(){
-		return alice.run(function(test){
+		return alice.run(async function(test){
 			const done = test.async()
 			const {pub} = test.props
 			const {keys} = test.props.config
-			global.gun
+			const dn = await global.gun
 				.user(pub)
 				.get(keys.PROFILE)
 				.get(keys.DISPLAY_NAME)
-				.then(dn => {
-					if(!dn.startsWith('bob')){
-						test.fail(`display Name > ${dn}`)
-					} else {
-						console.log(dn)
-						done()
-					}
-				})
+				.then()
+			if(!dn.startsWith('bob')){
+				test.fail(`display Name > ${dn}`)
+			} else {
+				console.log(dn)
+				done()
+			}
 		},{pub: testData[1].pub, config: config})
 	})
 
@@ -377,28 +376,27 @@ describe("Shocknet Test!", function(){
 			tests.push(client.run(function(test){
 				const env = test.props;
 				const keys = env.config.keys
-				global.pubToEpub = pub =>{
-					return new Promise((res,rej)=> {
-						global.gun
-							.user(pub)
-							.get('epub')
-							.once(epub => typeof epub === 'string' ? res(epub): rej(`Expected epub ti be string found ${typeof epub}`))
-					})
+				global.pubToEpub = async (pub,fail) =>{
+					const epub = await global.gun
+						.user(pub)
+						.get('epub')
+						.then()
+					if(typeof epub === 'string'){
+						return epub
+					} else {
+						fail(`Expected epub ti be string found ${typeof epub}`)
+					}
 				}
 				global.successfulHandshakeAlreadyExists = async pub =>{
 					const {user} = global
-					const maybeIncomingID = await new Promise(res=>{
-						user
-							.get(keys.USER_TO_INCOMING)
-							.get(pub)
-							.once(id => res(id))
-					})
-					const maybeOutgoingID = await new Promise(res =>{
-						user
-							.get(keys.RECIPIENT_TO_OUTGOING)
-							.get(pub)
-							.once(id => res(id))
-					})
+					const maybeIncomingID = await user
+						.get(keys.USER_TO_INCOMING)
+						.get(pub)
+						.then()
+					const maybeOutgoingID = await user
+						.get(keys.RECIPIENT_TO_OUTGOING)
+						.get(pub)
+						.then()
 					return typeof maybeIncomingID === 'string' && typeof maybeOutgoingID === 'string'
 				}
 			}, {i: i += 1, config: config})); 
@@ -468,26 +466,25 @@ describe("Shocknet Test!", function(){
 			},data)
 		})
 		it(`Sending handshake request to ${name} 1: cleanup 4:recipientToOutgoingID !`,function(){
-			return testClient.run(function(test){
+			return testClient.run(async function(test){
 				const done = test.async()
 				const env = test.props
 				const {index} = env
 				const {pub} = env.testData[index]
 				const keys = env.config.keys
-				global.user
+				const maybeEncryptedOutgoingID = await global.user
 					.get(keys.RECIPIENT_TO_OUTGOING)
 					.get(pub)
-					.once(maybeEncryptedOutgoingID => {
-						if(maybeEncryptedOutgoingID === 'string'){
-							
-							global.hsData.maybeEncryptedOutgoingID = maybeEncryptedOutgoingID
-							/*global.SEA.decrypt(maybeEncryptedOutgoingID,global.mySecret)
-								.then(outgoingID => outgoingID ? res(outgoingID) : rej(`expected outgoingID to be exist`))*/
-						} else {
-							global.hsData.outgoingID = maybeEncryptedOutgoingID
-						}
-						done()
-					})
+					.then()
+				if(maybeEncryptedOutgoingID === 'string'){
+						
+					global.hsData.maybeEncryptedOutgoingID = maybeEncryptedOutgoingID
+					/*global.SEA.decrypt(maybeEncryptedOutgoingID,global.mySecret)
+						.then(outgoingID => outgoingID ? res(outgoingID) : rej(`expected outgoingID to be exist`))*/
+				} else {
+					global.hsData.outgoingID = maybeEncryptedOutgoingID
+				}
+				done()
 				
 			},data)
 		})
@@ -556,7 +553,7 @@ describe("Shocknet Test!", function(){
 				pubToEpub,
 				SEA,
 			} = global
-			return pubToEpub(pub)
+			pubToEpub(pub,test.fail)
 			.then(bobEpub =>{
 				SEA.secret(bobEpub,user._.sea)
 				.then(ourSecret =>{
@@ -588,59 +585,53 @@ describe("Shocknet Test!", function(){
 	})
 
 	it("Sending handshake request to bob 4: getting handshake address!",function(){
-		return alice.run(function(test){
+		return alice.run(async function(test){
 			const done = test.async()
 			const {pub} = test.props
 			const {keys} = test.props.config
-			return new Promise(res => {
-				gun
-					.user(pub)
-					.get(keys.CURRENT_HANDSHAKE_ADDRESS)
-					.once(addr => res(addr))
-			}).then(currentHandshakeAddress =>{
-				if(typeof currentHandshakeAddress !== 'string'){
-					test.fail("expected current handshake address to be string")
-				} else {
-					global.hsData.currentHandshakeAddress = currentHandshakeAddress
-					done()
-				}
-			})
-			
+			const currentHandshakeAddress = await gun
+				.user(pub)
+				.get(keys.CURRENT_HANDSHAKE_ADDRESS)
+				.then()
+			if(typeof currentHandshakeAddress !== 'string'){
+				test.fail("expected current handshake address to be string")
+			} else {
+				global.hsData.currentHandshakeAddress = currentHandshakeAddress
+				done()
+			}
 			
 		},{pub: testData[1].pub, config: config})
 	})
 
 	it("Sending handshake request to bob 5: check if already sent request!",function(){
-		return alice.run(function(test){
+		return alice.run(async function(test){
 			const done = test.async()
 			const {pub} = test.props
 			const {keys} = test.props.config
 			const {currentHandshakeAddress} = global.hsData
-			user
+			const maybeLastRequestIDSentToUser = await user
 				.get(keys.USER_TO_LAST_REQUEST_SENT)
 				.get(pub)
-				.once(maybeLastRequestIDSentToUser => {
-					if(typeof maybeLastRequestIDSentToUser === 'string'){
-						if (maybeLastRequestIDSentToUser.length < 5) {
-							test.fail("maybeLastRequestIDSentToUser.length < 5")
-						}
-						const lastRequestIDSentToUser = maybeLastRequestIDSentToUser
-						gun
-							.get(keys.HANDSHAKE_NODES)
-							.get(currentHandshakeAddress)
-							.get(lastRequestIDSentToUser)
-							.once(hrInHandshakeNode =>{
-								if(typeof hrInHandshakeNode !== 'undefined'){
-									test.fail("request already sent")
-								} else {
-									done()
-								}
-							})
-						
-					} else {
-						done()
-					}
-				})
+				.then()
+			if(typeof maybeLastRequestIDSentToUser === 'string'){
+				if (maybeLastRequestIDSentToUser.length < 5) {
+					test.fail("maybeLastRequestIDSentToUser.length < 5")
+				}
+				const lastRequestIDSentToUser = maybeLastRequestIDSentToUser
+				const hrInHandshakeNode = await gun
+					.get(keys.HANDSHAKE_NODES)
+					.get(currentHandshakeAddress)
+					.get(lastRequestIDSentToUser)
+					.then()
+				if(typeof hrInHandshakeNode !== 'undefined'){
+					test.fail("request already sent")
+				} else {
+					done()
+				}
+				
+			} else {
+				done()
+			}
 		},{pub: testData[1].pub, config: config})
 	})
 	const createOutgoingFeed =(name,testClient,data)=>{
@@ -677,26 +668,25 @@ describe("Shocknet Test!", function(){
 			},data)
 		})
 		it(`${name}: create outgoing feed 2.8:maybeOutgoingID !`,function(){
-			return testClient.run(function(test){
+			return testClient.run(async function(test){
 				const done = test.async()
 				const env = test.props
 				const {index} = env
 				const {pub} = env.testData[index]
 				const keys = env.config.keys
-				global.user
+				const maybeEncryptedOutgoingID = await global.user
 					.get(keys.RECIPIENT_TO_OUTGOING)
 					.get(pub)
-					.once(maybeEncryptedOutgoingID => {
-						if(maybeEncryptedOutgoingID === 'string'){
-							
-							global.hsData.maybeEncryptedOutgoingID = maybeEncryptedOutgoingID
-							/*global.SEA.decrypt(maybeEncryptedOutgoingID,global.mySecret)
-								.then(outgoingID => outgoingID ? res(outgoingID) : rej(`expected outgoingID to be exist`))*/
-						} else {
-							global.hsData.maybeOutgoingID = maybeEncryptedOutgoingID
-						}
-						done()
-					})
+					.then()
+				if(maybeEncryptedOutgoingID === 'string'){
+						
+					global.hsData.maybeEncryptedOutgoingID = maybeEncryptedOutgoingID
+					/*global.SEA.decrypt(maybeEncryptedOutgoingID,global.mySecret)
+						.then(outgoingID => outgoingID ? res(outgoingID) : rej(`expected outgoingID to be exist`))*/
+				} else {
+					global.hsData.maybeOutgoingID = maybeEncryptedOutgoingID
+				}
+				done()
 				
 			},data)
 		})
@@ -1018,22 +1008,21 @@ describe("Shocknet Test!", function(){
 		},{testData, config: config,index:1})
 	})
 	it(`Accepting handshake request from alice 7: currentHandshakeAddress !`,function(){
-		return bob.run(function(test){
+		return bob.run(async function(test){
 			const done = test.async()
 			const env = test.props
 			const keys = env.config.keys
 			const {user} = global
 			global.hsData = {}
-			user
+			const currentHandshakeAddress = await user
 				.get(keys.CURRENT_HANDSHAKE_ADDRESS)
-				.once(currentHandshakeAddress => {
-					if(typeof currentHandshakeAddress !== 'string'){
-						test.fail("expected currentHandshakeAddress to be string")
-					} else {
-						global.hsData.currentHandshakeAddress = currentHandshakeAddress
-						done()
-					}
-				})
+				.then()
+				if(typeof currentHandshakeAddress !== 'string'){
+					test.fail("expected currentHandshakeAddress to be string")
+				} else {
+					global.hsData.currentHandshakeAddress = currentHandshakeAddress
+					done()
+				}
 		},{testData, config: config,index:0})
 	})
 	it(`Accepting handshake request from alice 7: receivedReqs **using .load!`,function(){
@@ -1046,7 +1035,7 @@ describe("Shocknet Test!", function(){
 			gun
 				.get(keys.HANDSHAKE_NODES)
 				.get(currentHandshakeAddress)
-				.load(receivedReqs =>{
+				.open(receivedReqs =>{
 					global.hsData.receivedReqs = receivedReqs
 					done()
 				})
@@ -1084,7 +1073,7 @@ describe("Shocknet Test!", function(){
 			const keys = env.config.keys
 			const {pubToEpub} = global
 			const {data} = global.hsData
-			pubToEpub(data.from)
+			pubToEpub(data.from,test.fail)
 			.then(aliceEpub => {
 				global.hsData.otherEpub = aliceEpub
 				done()
