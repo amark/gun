@@ -3,7 +3,7 @@
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 6,
+	servers: 4,
 	browsers: 0,
 	route: {
 		'/': __dirname + '/index.html',
@@ -59,13 +59,10 @@ manager.start({
 });
 
 var servers = clients.filter('Node.js');
-var server = servers.pluck(1);
-var spawn = servers.excluding(server).pluck(1);
-var serversRest = servers.excluding(new panic.ClientList([server, spawn]))
-var peer1 = serversRest.pluck(1);
-var peer2 = serversRest.excluding(peer1).pluck(1);
+var peer1 = servers.pluck(1);
+var peer2 = servers.excluding(peer1).pluck(1);
 var peerClients = new panic.ClientList([peer1, peer2])
-var serverClients = serversRest.excluding(new panic.ClientList([peer1, peer2]))
+var serverClients = servers.excluding(new panic.ClientList([peer1, peer2]))
 //var browsers = clients.excluding(servers);
 var alice = serverClients.pluck(1);
 var bob = serverClients.excluding(alice).pluck(1);
@@ -79,25 +76,7 @@ describe("Shocknet Test!", function(){
 		return servers.atLeast(config.servers);
 	});
 
-	it("GUN started!", function(){
-		return server.run(function(test){
-			var env = test.props;
-			test.async();
-			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
-			try{ require('fs').unlinkSync((env.i+1)+'data') }catch(e){}
-			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
-			try{ require('gun/lib/fsrm')((env.i+1)+'data') }catch(e){}
-			var port = env.config.port + env.i;
-			var server = require('http').createServer(function(req, res){
-				res.end("I am "+ env.i +"!");
-			});
-			var Gun = require('gun');
-			var gun = Gun({file: env.i+'data', web: server,axe:false});
-			server.listen(port, function(){
-				test.done();
-			});
-		}, {i: 1, config: config}); 
-	});
+	
 	it("Server Peer initialized gun!",function(){
 		var tests = [], i = 0;
 		peerClients.each(function(client, id){
