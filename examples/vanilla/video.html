@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<video id="video" width="100%" controls autoplay></video>
+<center>
+  <input id="pass" placeholder="password">
+  Record <button class="record">Camera</button> or <button class="screen">Screen</button>
+</center>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+
+<script>
+  const peers = [
+    `${window.location.origin}/gun`,
+    'https://gun-us.herokuapp.com/gun',
+    'https://gun-eu.herokuapp.com/gun'
+  ]
+
+  const gun = Gun({ localStorage: true, peers })
+
+  const pass = document.querySelector('#pass')
+  const video = document.querySelector('#video')
+  const camera = document.querySelector('.record')
+  const screen = document.querySelector('.screen')
+
+  gun.get('test').get('video').on(async data => {
+    if (pass.value) { data = await SEA.decrypt(data, pass.value) }
+    video.setAttribute('src', data)
+  })
+
+  function record(type) {
+    function load(media) {
+      const chunks = []
+      record.ing = new MediaRecorder(media)
+      record.ing.ondataavailable = eve => { chunks.push(eve.data) }
+      record.ing.onstop = eve => { record.save(new Blob(chunks)) }
+      record.ing.start()
+    }
+
+    function error(err) { console.log(err) }
+
+    if (type === 'Camera') {
+      navigator.getMedia({ video: true, audio: true }, load, error)
+    }
+    if (type === 'Screen') {
+      navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(load, error)
+    }
+  }
+
+  function act(e) {
+    if (record.ing) {
+      if (record.ing.stop) { record.ing.stop() }
+
+      e.target.textContent = record.type
+      record.ing = false
+      return
+    }
+
+    record(record.type = e.target.textContent)
+    e.target.textContent = 'end'
+  }
+
+  record.save = data => {
+    record.file = record.file || new FileReader()
+    record.file.readAsDataURL(data)
+    record.file.onloadend = async () => {
+      const b64 = record.file.result
+      let b64formated = `data:video/webm${b64.slice(b64.indexOf(';'))}`
+
+      video.setAttribute('src', b64formated)
+
+      if (pass.value) { b64formated = await SEA.encrypt(b64formated, pass.value) }
+      gun.get('test').get('video').put(b64formated)
+    }
+  }
+
+  camera.addEventListener('click', e => act(e))
+  screen.addEventListener('click', e => act(e))
+
+  navigator.getMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia || navigator.msGetUserMedia)
+
+</script>
