@@ -232,23 +232,6 @@ git push -f heroku HEAD:master
 
 Then visit the URL in the output of the 'heroku create' step, in a browser.
 
-### [Now.sh](https://zeit.co/now/)
-
-```bash
-npm install -g now
-now --npm amark/gun
-```
-
-Then visit the URL in the output of the 'now --npm' step, in your browser.
-
-### [Unubo](https://unubo.app/)
-
-Fork this GUN repo (Unubo only deploys from your own GitHub repo's).  
-Add a Node.js app, select your GUN fork, set `npm start` start as the command and deploy. 
-
-From the experience of [genderev](https://github.com/genderev), this only works if you set your country to the United States.
-
-Visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
 
