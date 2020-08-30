@@ -2657,22 +2657,46 @@ describe('Gun', function(){
 			}, 25);
 		});
 
+		/*it('get recursive map', function(done){
+			var teams = {red: {}, blue: {}};
+			var alice = {age: 27, name: "Alice"};
+			var bob = {age: 29, name: "Bob"};
+			alice.spouse = bob;
+			bob.spouse = alice;
+			var carl = {age: 31, name: "Carl"};
+			teams.blue.alice = alice;
+			teams.blue.carl = carl;
+			teams.red.bob = bob;
+			teams.red.carl = carl;
+			console.only.i=1;console.log("===============");
+			Gun.statedisk(teams, 'gerema', function(ack){
+				console.log("VVVVVVVVVVVVVVVVVVV", ack);
+				setTimeout(function(){
+
+				gun.get('gerema').map().map().get('spouse').on(function(data){
+					console.only(2,'hi', data);
+					console.only(1,'hi', data);
+						console.log("*****************", data);return;
+				});
+			},500);});
+		});*/
+
 		it.only('get node after recursive field', function(done){
 			var bob = {age: 29, name: "Bob!"};
 			var cat = {name: "Fluffy", species: "kitty"};
 			var user = {bob: bob};
 			bob.pet = cat;
 			cat.slave = bob;
-			Gun.statedisk(user, 'node/circle', function(){
+			Gun.statedisk(user, 'nodecircle', function(){
 
 			console.only.i=1;console.log("===============");
-			gun.get('node/circle').get('bob').get('pet').get('slave').once(function(data){
+			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
 					console.log("*****************", data);return;
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
-					expect(Gun.val.link.is(data.pet)).to.ok();
+					expect('string' == typeof Gun.valid(data.pet)).to.ok();
 					done();
 				//},300);
 			});
