@@ -278,6 +278,18 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
   });
 
+  describe("RAD file hash",function(){
+      it("should have index file",function(done){
+          let found = false
+          opt.store.list((fn) => {
+              if(fn !== undefined) { found = true; return}
+              else {
+                  expect(found).to.be.ok()
+                  done()
+              }
+            })
+      })
+  })
     var ntmp = names;
   describe('RAD + GUN', function(){
     var ochunk = 1000;
