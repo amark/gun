@@ -2639,15 +2639,19 @@ describe('Gun', function(){
 			gun.get('opo').get('a').put('yay!');
 			var ref = gun.get('opo').get('a');
 			setTimeout(function(){
+				//console.only.i=1;console.log("========================");
 				ref.once(function(data){
+					//console.log("************", data);
 					expect(data).to.be('yay!');
 
 					setTimeout(function(){
+						console.only(3, '.put z');
 						gun.get('opo').get('a').put('z');
 
 
 						setTimeout(function(){
 							ref.once(function(data){
+								//console.log("*+*+*+*+*+**+*+*");
 								expect(data).to.be('z');
 								done();
 							});
@@ -2681,7 +2685,7 @@ describe('Gun', function(){
 			},500);});
 		});*/
 
-		it.only('get node after recursive field', function(done){
+		it('get node after recursive field', function(done){
 			var bob = {age: 29, name: "Bob!"};
 			var cat = {name: "Fluffy", species: "kitty"};
 			var user = {bob: bob};
@@ -2689,11 +2693,11 @@ describe('Gun', function(){
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
 
-			console.only.i=1;console.log("===============");
+			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//clearTimeout(done.to);
 				//setTimeout(function(){
-					console.log("*****************", data);return;
+					//console.log("*****************", data);return;
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
 					expect('string' == typeof Gun.valid(data.pet)).to.ok();
@@ -2715,18 +2719,18 @@ describe('Gun', function(){
 			});
 			
 			parent.get('sub').put(child);
-			
+			//console.only.i=1;console.log("============================");
 			parent.get('sub').on(function(data){
-				//console.log("sub", data);
+				//console.log("*********sub", data);
 				done.sub = data;
 			});
 			child.on(function(data){
 				done.child = data;
-				//console.log("child", data);
+				//console.log("*********child", data);
 			});
 			parent.on(function(data){
 				done.parent = data;
-				//console.log("parent", data);
+				//console.log("*********parent", data);
 				if(done.c){ return } done.c = 1;
 				done(); // TODO: Add more meaningful checks!
 			});
