@@ -8,6 +8,6 @@ var sig = decodeURIComponent("SEA%7B%22m%22%3A%22%5C%22hello%5C%22%22%2C%22s%22%
 console.log(sig);
 
 ;(async function(){
-	var test = await Gun.SEA.verify(sig, pub);
-	console.log("???", test);
+  var test = await Gun.SEA.verify(sig, pub);
+  console.log("???", test);
 }());

@@ -8,17 +8,17 @@ import '../extensions/sea';
 import adapter from '../extensions/asyncStorageAdapter';
 
 Gun.on('create', function(db) {
-	this.to.next(db);
-	const pluginInterop = function(middleware) {
-		return function(request) {
-			this.to.next(request);
-			return middleware(request, db);
-		};
-	}
+  this.to.next(db);
+  const pluginInterop = function(middleware) {
+    return function(request) {
+      this.to.next(request);
+      return middleware(request, db);
+    };
+  }
 
-	// Register the adapter
-	db.on('get', pluginInterop(adapter.read));
-	db.on('put', pluginInterop(adapter.write));
+  // Register the adapter
+  db.on('get', pluginInterop(adapter.read));
+  db.on('put', pluginInterop(adapter.write));
 });
 
 export class Demo extends React.Component {

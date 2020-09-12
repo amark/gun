@@ -4,7 +4,7 @@ var http = require('http');
 
 var Gun = require('../../index');
 var gun = Gun({ 
-	file: 'http.json'
+  file: 'http.json'
 });
 
 

@@ -19,12 +19,12 @@ const options =
 var h = usehttps ? https : http
 //var server = h.createServer(options, (req, res) => {
 var server = h.createServer((req, res) => {
-	if(Gun.serve(req, res)){ return } // filters gun requests!
+  if(Gun.serve(req, res)){ return } // filters gun requests!
     res.writeHead(200);
     res.end('go away - nothing for browsers here\n');
 
-	/*
-	fs.createReadStream(path.join(__dirname, req.url))
+  /*
+  fs.createReadStream(path.join(__dirname, req.url))
     .on('error',function(){ // static files!
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.end(fs.readFileSync(path.join(__dirname, 'index.html'))); // or default to index

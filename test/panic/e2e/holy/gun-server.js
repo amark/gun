@@ -2,7 +2,7 @@ var panic = require('panic-client');
 var ports = require('./ports');
 var Gun = require('gun');
 var gun = new Gun({
-	file: 'delete-me.json'
+  file: 'delete-me.json'
 });
 
 var http = require('http');

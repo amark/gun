@@ -1,5 +1,5 @@
 module.exports=require('theory')
 ('interface',function(a){
-	return ":)";
+  return ":)";
 },['../deps/discrete','../deps/key/key']);
 root.opts.key = {host:'/deps'};
