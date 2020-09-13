@@ -25,20 +25,17 @@
   
 	;USE(function(module){
 
-		var AXE = USE('./root'), Gun = (AXE.window||{}).Gun || USE('./gun', 1);
+		var AXE = USE('./root'), Gun = (AXE.window||'').Gun || USE('./gun', 1);
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
     var ST = 0;
 
-		Gun.on('opt', function(at){
-			start(at);
-			this.to.next(at); // make sure to call the "next" middleware adapter.
-		});
+		Gun.on('opt', function(at){ start(at) ; this.to.next(at) }); // make sure to call the "next" middleware adapter.
 
 		function start(at){
 			if(at.axe){ return }
 			var opt = at.opt, peers = opt.peers;
 			if(false === opt.axe){ return }
-			if((typeof process !== "undefined") && 'false' === ''+(process.env||{}).AXE){ return }
+			if((typeof process !== "undefined") && 'false' === ''+(process.env||'').AXE){ return }
 			var axe = at.axe = {}, tmp;
 			// 1. If any remembered peers or from last cache or extension
 			// 2. Fallback to use hard coded peers from dApp
@@ -73,14 +70,14 @@
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(at);
 			console.log("AXE enabled.");
 
-			function verify(dht, msg) {
+			function verify(dht, msg){
 				var S = (+new Date);
 				var puts = Object.keys(msg.put);
 				var soul = puts[0]; /// TODO: verify all souls in puts. Copy the msg only with subscribed souls?
 				var subs = dht(soul);
 				if (!subs) { return; }
 				var tmp = [];
-				Gun.obj.map(subs.split(','), function(pid) {
+				(subs.split(',')||[]).forEach(function(pid){
 					if (pid in peers) {
 						tmp.push(pid);
 						mesh.say(msg, peers[pid]);
@@ -99,7 +96,7 @@
 			}
 			// TODO: AXE NEEDS TO BE CHECKED FOR NEW CODE SYSTEM!!!!!!!!!!
 
-			var Rad = (Gun.window||{}).Radix || USE('./lib/radix', 1);
+			var Rad = (Gun.window||'').Radix || USE('./lib/radix', 1);
 			at.opt.dht = Rad();
 			at.on('in', input);
 			function input(msg){
@@ -134,9 +131,9 @@
 				to.next(msg);
 
 				if (opt.rtc && msg.dht) {
-					Gun.obj.map(msg.dht, function(pids, soul) {
+					Object.keys(msg.dht).forEach(function(soul, pids) { pids = msg.dht[soul];
 						dht(soul, pids);
-						Gun.obj.map(pids.split(','), function(pid) {
+						(pids.split(',')||[]).forEach(function(pid) {
 							/// TODO: here we can put an algorithm of who must connect?
 							if (!pid || pid in opt.peers || pid === opt.pid || opt.announce[pid]) { return; }
 								opt.announce[pid] = true; /// To try only one connection to the same peer.
@@ -152,7 +149,7 @@
 				var tmp = msg.opt;
 				if(!tmp){ return }
 				tmp = tmp.peers;
-				if(!tmp || !Gun.text.is(tmp)){ return }
+				if(!tmp || 'string' != typeof tmp){ return }
 				if(axe.up[tmp] || 6 <= Object.keys(axe.up).length){ return }
 				var o = tmp; //{peers: tmp};
 				at.$.opt(o);
@@ -182,7 +179,7 @@
 							return;
 						}
 					}
-					if(msg.get){ mesh.say(msg, axe.up) } // always send gets up!
+					if(msg.get){ mesh.say(msg, axe.up) } // always send gets up! // send gets up to only rad's up
 					if(msg.get && (tmp = route(msg.get))){
 						var hash = tmp; //Gun.obj.hash(msg.get);
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
@@ -221,11 +218,11 @@
 						var S = (+new Date); // STATS!
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
-						Gun.obj.map(msg.put, function(node, soul){
+						Object.keys(msg.put).forEach(function(soul, node){ node = msg.put[soul];
 							var hash = soul; //Gun.obj.hash({'#': soul});
 							var to = routes[hash];
 							if(!to){ return }
-							Gun.obj.to(to, peers);
+							Object.keys(to).forEach(function(k){ peers[k] = to[k] });
 						});
 						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'axe put');
 						mesh.say(msg, peers);
@@ -306,6 +303,7 @@
 				peer.url = '';
 			}
 		}
+		
 		var obj_map = function(o, f, r){
 			for(var k in o){
 				if(!o.hasOwnProperty(k)){ continue }

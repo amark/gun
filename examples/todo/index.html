@@ -127,7 +127,7 @@
     $(document).on('keyup', '.thought__input', function () {
       var input = $(this), id = input.attr('id');
       if (!id) {
-        input.attr('id', id = Gun.text.random());
+        input.attr('id', id = String.random());
       }
       typing = id;
       clearTimeout(throttle);

@@ -3,7 +3,7 @@ var config = {
 	port: 8765,
 	servers: 1,
 	browsers: 3,
-	each: 1500,
+	each: 10000,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -90,6 +90,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					// It has successfully launched.
 					test.done();
 				});
+				//setInterval(function(){ console.log("CPU turns stacked:", setTimeout.turn.s.length) },1000);
 			}, {i: i += 1, config: config})); 
 		});
 		// NOW, this is very important:
@@ -111,7 +112,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
+				//var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
+				var gun = Gun({localStorage: false, radisk: false, peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
 				window.gun = gun;
 				window.ref = gun.get('chat');
 			}, {i: i += 1, config: config})); 
@@ -124,7 +126,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			console.log("I AM CARL");
 			test.async();
 			var rand = String.random || Gun.text.random;
-			var i = 10000, chat = {}, S = Gun.state();
+			var i = test.props.each, chat = {}, S = Gun.state();
 			while(i--){
 				Gun.state.ify(chat, rand(9), S, rand(200), 'chat');
 			}
@@ -132,23 +134,36 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			gun._.graph.chat = chat;
 			console.log(JSON.stringify(chat,null,2));
 			test.done();
-		});
+		}, config);
 	});
 
 	it("Alice Asks for Chat", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
 			test.async();
-			var i = 0, S = +new Date;
+			var i = 0, t = test.props.each, tmp;
+			$('body').append("<div><i></i> / "+t+", seconds to first reply: <span></span>, CPU turns stacked: <u></u> <button onclick='this.innerText = Math.random();'>Can you click me?</button><input id='msg' style='width:100%;'><b></b></div>");
+			var $msg = $('#msg'), $i = $('i');
+			var V, I, S = +new Date, SS = S, tmp;
 			ref.map().once(function(v,k){
-				S && console.log('first:', +new Date - S) || (S = null);
-				console.log(++i, "chat:",k,v);
-			})
-
-			setTimeout(function(){
-				//test.done();
-			},1000);
-		});
+				S && console.log('first:', $('span').text(tmp = (+new Date - S)/1000) && tmp) || (S = null);
+				if(!v){ no_data }
+				V = v; 
+				I = ++i;
+				//console.log(i, "chat:",k,v);
+				if(i === t){
+					$('b').text("seconds from start to end: " + ((+new Date - SS)/1000));
+					setTimeout(function(){ test.done() },100);
+				}
+			});
+			window.requestAnimationFrame = window.requestAnimationFrame || setTimeout;
+			window.requestAnimationFrame(function frame(){
+				window.requestAnimationFrame(frame, 16);
+				$msg.val(V);
+				$i.text(I);
+			}, 16);
+			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
+		}, config);
 	});
 
 	/*it("Carl Recovers Chats", function(){
