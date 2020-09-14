@@ -73,7 +73,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
 		browsers.atLeast(1).then(function(){
 			browsers.run(function(test){
 				var env = test.props;
