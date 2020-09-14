@@ -80,7 +80,7 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
 		return browsers.atLeast(config.browsers);
 	});
 
