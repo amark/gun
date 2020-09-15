@@ -189,18 +189,17 @@
 			}
 			var dt = dup.track = function(id){
 				var it = s[id] || (s[id] = {});
-				it.was = +new Date;
+				it.was = dup.now = +new Date;
 				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
 				return it;
 			}
 			dup.drop = function(age){
-				var now = +new Date;
-				Object.keys(s).forEach(function(id){ var it = s[id];
-					if(it && (age || opt.age) > (now - it.was)){ return }
-					delete s[id];
-				});
 				dup.to = null;
-				console.STAT && (age = +new Date - now) > 9 && console.STAT(now, age, 'dup drop');
+				dup.now = +new Date;
+				setTimeout.each(Object.keys(s), function(id){ var it = s[id]; // TODO: .keys( is slow
+					if(it && (age || opt.age) > (dup.now - it.was)){ return }
+					delete s[id];
+				},0,99);
 			}
 			return dup;
 		}
@@ -288,6 +287,7 @@
 				DBG && (DBG.uc = +new Date);
 				eve.to.next(msg);
 				DBG && (DBG.ua = +new Date);
+				if(msg.nts || msg.NTS){ return } // TODO: This shouldn't be in core, but fast way to prevent NTS spread. Delete this line after all peers have upgraded to newer versions.
 				msg.out = universe; at.on('out', msg);
 				DBG && (DBG.ue = +new Date);
 			}
@@ -324,7 +324,7 @@
 						if(!(tmp = node._)){ err = ERR+cut(soul)+"no meta." } else
 						if(soul !== tmp['#']){ err = ERR+cut(soul)+"soul not same." } else
 						if(!(states = tmp['>'])){ err = ERR+cut(soul)+"no state." }
-						kl = Object.keys(node||{});
+						kl = Object.keys(node||{}); // TODO: .keys( is slow
 					}
 					if(err){
 						console.log("handle error!", err) // handle!
@@ -411,7 +411,7 @@
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'];
-				// PERF: Consider commenting this out to force disk-only reads for perf testing?
+				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function got(){
 					var i = 0, k, put = {};
 					while(i < 9 && (k = keys[i++])){
@@ -618,7 +618,7 @@
 			var eve = this, cat = eve.as, root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, link, sat;
 
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
-				return setTimeout.each(Object.keys(tmp).sort(), function(k){
+				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow
 					if('_' == k || !(state = state_is(tmp, k))){ return }
 					cat.on('in', {put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
 				});
@@ -648,10 +648,10 @@
 			} else {}
 
 			eve.to.next(msg); // 1st API job is to call all the listeners.
-			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners.
+			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow
 				(act = cat.act[act]) && act(msg);
 			},0,99);
-			setTimeout.each(Object.keys(cat.echo||''), function(lat){ // & linked chains
+			setTimeout.each(Object.keys(cat.echo||''), function(lat){ // & linked chains // TODO: .keys( is slow
 				if(!(lat = cat.echo[lat])){ return }
 				lat.on('in', msg);
 			},0,99);
@@ -659,7 +659,7 @@
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				delete cat.link; // TODO: Empty out links, maps, echos, acks/asks, etc.?
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub properties.
+				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub properties. // TODO: .keys( is slow
 					if(!(sat = cat.next[get])){ return }
 					sat.on('in', {get: get, put: u, $: sat.$});
 				},0,99);
@@ -679,7 +679,7 @@
 					if((tmp = cat.ask||'')['']){
 						sat.on('out', {get: {'#': link}});
 					} else {
-						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data.
+						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow
 							if(!(sat = cat.ask[get])){ return }
 							sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 						},0,99);
@@ -781,7 +781,7 @@
 			if(cat.jam){ return cat.jam.push([cb, as]) }
 			cat.jam = [[cb,as]];
 			gun.get(function go(msg, eve){
-				if(u === msg.put && !cat.root.opt.super && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: super should not be in core code, bring AXE up into core instead to fix?
+				if(u === msg.put && !cat.root.opt.super && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: super should not be in core code, bring AXE up into core instead to fix? // TODO: .keys( is slow
 					return;
 				}
 				eve.rid(msg);
@@ -878,7 +878,7 @@
 				}
 				if(k && v){ at.node = state_ify(at.node, k, s, d) } // handle soul later.
 				else {
-					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse()});
+					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse()}); // Any perf reasons to CPU schedule this .keys( ?
 					at.node = state_ify(at.node, k, s, cat.link);
 					!g && to.push(cat);
 					// ---------------
@@ -922,7 +922,7 @@
 			}, as.opt), acks = 0, stun = as.stun;
 			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun }
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
-				setTimeout.each(Object.keys(stun||''), function(cb){if(cb = stun[cb]){cb()}});
+				setTimeout.each(Object.keys(stun||''), function(cb){if(cb = stun[cb]){cb()}}); // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
@@ -1023,29 +1023,29 @@
 			at.ack = 0; // so can resubscribe.
 			if(tmp = cat.next){
 				if(tmp[at.get]){
-					obj_del(tmp, at.get);
+					delete tmp[at.get];
 				} else {
 
 				}
 			}
 			if(tmp = cat.ask){
-				obj_del(tmp, at.get);
+				delete tmp[at.get];
 			}
 			if(tmp = cat.put){
-				obj_del(tmp, at.get);
+				delete tmp[at.get];
 			}
 			if(tmp = at.soul){
-				obj_del(cat.root.graph, tmp);
+				delete cat.root.graph[tmp];
 			}
 			if(tmp = at.map){
-				obj_map(tmp, function(at){
+				Object.keys(tmp).forEach(function(i,at){ at = tmp[i]; //obj_map(tmp, function(at){
 					if(at.link){
 						cat.root.$.get(at.link).off();
 					}
 				});
 			}
 			if(tmp = at.next){
-				obj_map(tmp, function(neat){
+				Object.keys(tmp).forEach(function(i,neat){ neat = tmp[i]; //obj_map(tmp, function(neat){
 					neat.$.off();
 				});
 			}
@@ -1228,7 +1228,7 @@
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){
 						if(!Object.plain(peer || opt.peers)){ return false }
-						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {});
+						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
 						;(function go(){
 							var S = +new Date;
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
@@ -1390,7 +1390,7 @@
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
-				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul];
+				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
 					tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
 					mesh.say({'##': tmp, get: {'#': soul}}, peer);
 				});

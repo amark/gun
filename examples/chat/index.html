@@ -181,7 +181,7 @@
       $('.chat__message-input').val('').focus();
     }
 
-    chat.map().val(function (msg, id) {
+    chat.map().once(function (msg, id) {
       if (!msg) { return }
       var messageList = $('.chat__message-list');
       var last = sort(msg.when, messageList.children('li').last());

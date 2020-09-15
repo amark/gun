@@ -1,49 +1,40 @@
 ;(function(){
-	// NOTE: While the algorithm is P2P,
-	// the current implementation is one sided,
-	// only browsers self-modify, servers do not.
-	// Need to fix this! Since WebRTC is now working.
-	var env;
-	if(typeof global !== "undefined"){ env = global }
-	if(typeof window !== "undefined"){ var Gun = (env = window).Gun }
-	else {
-	if(typeof require !== "undefined"){ var Gun = require('./gun') }
-	}
+	var Gun = (typeof window !== "undefined")? window.Gun : require('./gun');
 
-	Gun.on('opt', function(ctx){
-		this.to.next(ctx);
-		if(ctx.once){ return }
-		ctx.on('in', function(at){
-			if(!at.nts && !at.NTS){
-				return this.to.next(at);
-			}
-			if(at['@']){
-				(ask[at['@']]||noop)(at);
+	Gun.on('create', function(root){ // switch to DAM, deprecated old
+		var opt = root.opt, mesh = opt.mesh;
+		if(!mesh){ return }
+		var asks = {};
+		mesh.hear['nts'] = function(msg, peer){
+			if(msg.nts){
+				(asks[msg['@']]||noop)(msg);
 				return;
 			}
-			if(env.window){
-				return this.to.next(at);
-			}
-			this.to.next({'@': at['#'], nts: Gun.time.is()});
+			mesh.say({dam: 'nts', nts: Gun.state(), '@': msg['#']}, peer);
+		}
+		var peers = 0;
+		root.on('hi', function(peer){ this.to.next(peer);
+			peers++;
+			setTimeout(function ping(){
+				var NTS = {}, ack = String.random(3), msg = {'#': ack, dam: 'nts'};
+				NTS.start = Gun.state();
+				asks[ack] = function(msg){
+					NTS.end = Gun.state();
+					delete asks[ack];
+					NTS.latency = (NTS.end - NTS.start)/2;
+					if(!msg.nts){ return }
+					NTS.calc = NTS.latency + msg.nts;
+					NTS.step = (NTS.end - NTS.calc)/2;
+					Gun.state.drift -= NTS.step * (1/(peers||1));
+					NTS.next = Math.min(2e4, Math.max(250, 150000 / Math.abs((NTS.end - NTS.calc)||1)));
+					console.log("I am now", Gun.state(), "they are", NTS.calc, "time sync in", NTS.next/1000, 'sec.');
+					setTimeout(ping, NTS.next); // Thanks @finwo ! https://discord.com/channels/612645357850984470/612645357850984473/755334349699809300
+				}
+				mesh.say(msg, peer);
+			}, 1);
 		});
-		var ask = {}, noop = function(){};
-		if(!env.window){ return }
-
-		Gun.state.drift = Gun.state.drift || 0;
-		setTimeout(function ping(){
-			var NTS = {}, ack = Gun.text.random(), msg = {'#': ack, nts: true};
-			NTS.start = Gun.state();
-			ask[ack] = function(at){
-				NTS.end = Gun.state();
-				Gun.obj.del(ask, ack);
-				NTS.latency = (NTS.end - NTS.start)/2;
-				if(!at.nts && !at.NTS){ return }
-				NTS.calc = NTS.latency + (at.NTS || at.nts);
-				Gun.state.drift -= (NTS.end - NTS.calc)/2;
-				setTimeout(ping, 1000);
-			}
-			ctx.on('out', msg);
-		}, 1);
+		root.on('bye', function(peer){ --peers; this.to.next(peer) });
 	});
+
 	// test by opening up examples/game/nts.html on devices that aren't NTP synced.
 }());
