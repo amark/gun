@@ -217,7 +217,7 @@ describe("gun.on should receive updates after crashed relay peer comes back onli
 	});
 
 	after("Everything shut down.", function(){
-		return bob.run(function(){
+		return require('./util/open').cleanup() || bob.run(function(){
 			process.exit();
 		});
 	});

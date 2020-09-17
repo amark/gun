@@ -275,11 +275,7 @@ describe("Make sure the Radix Storage Engine (RAD) works.", function(){
 	});
 
 	after("Everything shut down.", function(){
-		browsers.run(function(){
-			//location.reload();
-			//setTimeout(function(){
-			//}, 15 * 1000);
-		});
+		require('./util/open').cleanup();
 		return servers.run(function(){
 			process.exit();
 		});
