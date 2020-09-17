@@ -249,7 +249,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
-		browsers.run(function(){
+		require('./util/open').cleanup() || browsers.run(function(){
 			setTimeout(function(){
 				location.reload();
 			}, 15 * 1000);
