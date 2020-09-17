@@ -62,16 +62,17 @@ const adjustPaddings = isScrollDown => {
   const container = document.getElementById("container");
   const currentPaddingTop = getNumFromStyle(container.style.paddingTop);
   const currentPaddingBottom = getNumFromStyle(container.style.paddingBottom);
-  const remPaddingsVal = 198 * (size / 2); // TODO: calculate element heights
+  const remPaddingsVal = 198 * (size / 2); // TODO: calculate actual element heights
   if (isScrollDown) {
     container.style.paddingTop = currentPaddingTop + remPaddingsVal + "px";
     container.style.paddingBottom = currentPaddingBottom === 0 ? "0px" : currentPaddingBottom - remPaddingsVal + "px";
-    console.log(container.style.paddingTop, container.style.paddingBottom);
-
   } else {
     container.style.paddingBottom = currentPaddingBottom + remPaddingsVal + "px";
-    container.style.paddingTop = currentPaddingTop === 0 ? "0px" : currentPaddingTop - remPaddingsVal + "px";
-    console.log(container.style.paddingTop, container.style.paddingBottom);
+    if (currentPaddingTop === 0) {
+      $(window).scrollTop($('#post0').offset().top + remPaddingsVal);
+    } else {
+      container.style.paddingTop = currentPaddingTop - remPaddingsVal + "px";
+    }
   }
 }
 
@@ -91,7 +92,7 @@ const topSentCallback = entry => {
     scroller.opts.stickTo !== 'top'
   ) {
     previousUpIndex = scroller.center;
-    adjustPaddings(false); // TODO: if top margin 0, increase it
+    adjustPaddings(false);
     scroller.up(size / 2);
   }
   topSentinelPreviousY = currentY;
@@ -134,7 +135,7 @@ const initIntersectionObserver = () => {
     });
   }
 
-  var observer = new IntersectionObserver(callback, options);
+  var observer = new IntersectionObserver(callback, options); // TODO: It's possible to quickly scroll past the sentinels without them firing. Top and bottom sentinels should extend to page top & bottom?
   observer.observe(document.querySelector("#post0"));
   observer.observe(document.querySelector(`#post${size - 1}`));
 }
