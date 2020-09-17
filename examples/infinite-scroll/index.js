@@ -30,6 +30,7 @@ const render = elements => {
     var date = new Date(data.date);
     $('#date' + j).text(date.toLocaleDateString() + ' ' + date.toLocaleTimeString());
     $('#text' + j).text(data.text);
+    $('#img' + j).attr('src', '');
     $('#img' + j).attr('src', _getCatImg(date.getTime()));
     $('#post' + j).css({visibility: 'visible'});
   });
