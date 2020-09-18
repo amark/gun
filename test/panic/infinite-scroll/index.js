@@ -7,7 +7,9 @@ var config = {
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
-		'/scroller.js': __dirname + '/../../../examples/infinite-scroll/scroller.js',
+		'/ScrollWindow.js': __dirname + '/../../../examples/infinite-scroll/ScrollWindow.js',
+		'/index.js': __dirname + '/../../../examples/infinite-scroll/index.js',
+		'/style.css': __dirname + '/../../../examples/infinite-scroll/style.css',
 		'/gun.js': __dirname + '/../../../gun.js',
 		'/jquery.js': __dirname + '/../../../examples/jquery.js'
 	}
@@ -120,20 +122,6 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// that we've written it on the server. It is not.
 				// Mind blowing, right?
 				var env = test.props;
-				// Like before, we had to manually pass it some scope.
-				$('body').prepend("<button id='allopen' onclick='allopen()'>Open All Browsers</button>");
-				// All right, lets cheat by making a button
-				// that will automatically open all the
-				// remaining browser tabs for us
-				// so we don't have to do it manually.
-				window.allopen = function(i){
-					$('#allopen').remove();
-					if(env.config.browsers <= i){ return }
-					i = i || 1;
-					var win = window.open(location, '_blank');
-					win.focus();
-					setTimeout(function(){allopen(i+1)},0);
-				}
 			}, {config: config});
 		});
 		// Cool! Once that is done...
@@ -175,49 +163,32 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// of all the messages that WILL be sent
 				// according to the expected configuration.
 				// This is equal to...
-				var num = 0, total = 0, check = Gun.obj.map(env.ids, function(v,id,t){
-					// for each browser ID
-					// they will be saving X number of messages each.
-					var i = env.config.each;
-					while(i--){
-						// So add a deterministic key we can check against.
-						t(id + (i + 1), 1);
-						// And count up the total number of messages we expect for all.
-						total += 1;
-					}
-				});
-				// Note, this `check` hash table now looks something like this:
-				// {alice1: 1, alice2: 1, alice3: 1, bob1: 1, bob2: 1, bob3: 1}
+				var num = 0, total = env.config.each, check = {};
 				var report = $("<div>").css({position: 'fixed', top: 0, right: 0, background: 'white', padding: 10}).text(num +" / "+ total +" Verified").prependTo('body');
 				// Add a nifty UI that tells us how many messages have been verified.
 				// FINALLY, tell gun to subscribe to every record
 				// that is is/will be saved to this table.
 
-				var size = 20;
-				for (var n = 0; n < size; n++) {
-					var el = $("<div>").css({margin: 30, padding: 15, 'background-color': '#9de1fe'}).attr('id', 'post' + n).hide();
-					$(log).append(el);
+				var countAndScroll = () => {
+					$('.post b').each(function() {
+						var t = $(this).text();
+						if (check[t]) return;
+						num += 1;
+						report.text(num +" / "+ total +" Verified");
+						if (num === total) {
+							test.done();
+						}
+						check[t] = true;
+					});
+					$(window).scrollTop($(window).height());
 				}
+				window.onRender = elements => {
+					countAndScroll();
+				};
 
-
-
-				// But we have to actually tell the browser to save data!
-				/*
-				var i = 0, to = setInterval(function go(){
-					// Cool, make a recursive function
-					// that keeps going until we've saved each message.
-					if(env.config.each <= i){
-						clearTimeout(to);
-						return;
-					}
-					//to = setTimeout(go, env.config.wait * Math.random()); // add a little jitter.
-					i += 1;
-					var year = 365 * 24 * 60 * 60 * 1000;
-					var d = new Date(40 * year + Math.floor(Math.random() * 10 * year)).toISOString();
-					// And actually save the data with gun,
-					// as a record added to one big 'test' table.
-					gun.get('posts').get(d).put({text: 'Hello world, ' + d + '!', date: d, id: env.id + i});
-				}, env.config.wait); */
+				$('#number').val(env.config.each);
+				$('#generate button').click();
+				countAndScroll();
 			}, {i: i += 1, id: id, ids: ids, config: config}));
 		});
 		// YAY! We're finally done.
