@@ -39,7 +39,7 @@ const render = elements => {
 
 const onChange = debounce(render, 20);
 
-const scroller = new InfiniteScrollWindow(gunNode, {size, stickTo: 'top', onChange});
+const scroller = new ScrollWindow(gunNode, {size, stickTo: 'top', onChange});
 
 const initList = () => {
   for (var n = 0; n < size; n++) {

@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="./style.css">
     <script src="/jquery.js"></script>
     <script src="/gun.js"></script>
-    <script src="./InfiniteScrollWindow.js"></script>
+    <script src="./ScrollWindow.js"></script>
   </head>
 
   <body>
@@ -19,7 +19,9 @@
       </div>
     </header>
 
-    <div id="container" style="padding-top: 0px; padding-bottom: 0px"></div>
+    <div id="top-sentinel" style="padding-top: 0px;"></div>
+    <div id="container"></div>
+    <div id="bottom-sentinel" style="padding-top: 0px;"></div>
 
     <button id="bottom">Bottom</button>
 
