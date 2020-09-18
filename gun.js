@@ -624,7 +624,6 @@
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
-			
 			//if(cat.ask && key){
 			if(key){
 				if(cat.soul && cat.ask && state >= state_is(root.graph[soul], key)){ // faster than HAM
@@ -929,6 +928,18 @@
 
 		function get(as){
 			var at = as.via._, tmp;
+			as.via = as.via.back(function(at){
+				if(at.soul){ return at.$ }
+				tmp = as.data; (as.data = {})[at.get] = tmp;
+			});
+			if(!as.via || !as.via._.soul){
+				console.log("TODO: Error! Handle non-soul put backs");
+				return;
+			}
+			as.via.put(as.data, as.ack, as);
+			
+
+			return;
 			if(at.get && at.back.soul){
 				tmp = as.data;
 				as.via = at.back.$;
@@ -969,19 +980,24 @@
 			opt.ok = tag;
 			//opt.last = {};
 			//gun.get(ok, opt); // TODO: PERF! Event listener leak!!!?
-			((cat.act||(cat.act={}))[id = tmp||String.random(7)] = function one(msg, eve){
+			function one(msg, eve){
+				if(one.stun){ return }
 				var at = msg.$._, data = at.put, tmp;
+				if(opt.not===u && u === data){ return }
 				if(opt.stun===u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id])){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
 					tmp[id] = function(){one(msg,eve)};
 					return;
 				}
 				// call:
 				if(opt.as){
-					opt.ok.call(opt.as, msg, eve);
+					opt.ok.call(opt.as, msg, eve || one);
 				} else {
-					opt.ok.call(at.$, data, msg.get || at.get, msg, eve);
+					opt.ok.call(at.$, data, msg.get || at.get, msg, eve || one);
 				}
-			}).at = cat;
+			};
+			one.at = cat;
+			(cat.act||(cat.act={}))[id = tmp||String.random(7)] = one;
+			one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 			cat.on('out', {get: {}});
 			return gun;
 		}
@@ -993,11 +1009,11 @@
 			var gun = this, cat = gun._, root = cat.root, data = cat.put, id, one, tmp;
 			//(root.act[tmp = ++root.acts] = cat.act[tmp] = function(msg, eve, to){
 			((cat.act||(cat.act={}))[id = tmp||String.random(7)] = function(msg, eve, to){
-				if(!(tmp = msg.put)){
+				/*if(!(tmp = msg.put)){
 					console.log('not found');
 					return;
-				}
-				if('string' == typeof Gun.valid(tmp = tmp['=']||tmp[':'])){
+				}*/
+				if((tmp = msg.put) && 'string' == typeof Gun.valid(tmp = tmp['=']||tmp[':'])){
 					// probably already getting it.
 					return;
 				}
@@ -1009,7 +1025,7 @@
 					one[id] = ''; if(cat.soul || cat.has){ delete cat.act[id] }
 					if(u === (tmp = ((msg.$||'')._||'').put)){ tmp = ((msg.$$||'')._||'').put }
 					cb.call(at.$, tmp, msg.get || at.get);
-				}
+				};
 			}).at = cat;
 			cat.on('out', {get: {}});
 			return gun;
@@ -1082,7 +1098,6 @@
 			if(!put){ return }
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'];
 			// TODO: lex match!
-			//console.log("let's go!!!!!!!!!!!!!!!!!", k, gun._.id, gun._.get);
 			((tmp = gun.get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
@@ -1486,13 +1501,13 @@
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				if(data){ (tmp = {})[soul] = data } // back into a graph.
-				console.log("lS got:", tmp);
 				root.on('in', {'@': msg['#'], put: tmp, lS:1});// || root.$});
 			});
 
 			root.on('put', function(msg){
 				this.to.next(msg); // remember to call next middleware adapter
 				var put = msg.put, soul = put['#'], key = put['.'], tmp; // pull data off wire envelope
+				//console.log('lS put:', key, put[':']);
 				disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 				if(!msg['@']){ acks.push(msg['#']) } // then ack any non-ack write. // TODO: use batch id.
 				if(to){ return }
