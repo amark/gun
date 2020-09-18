@@ -3,32 +3,35 @@ const DEFAULT_OPTIONS = {
   stickTo: 'top',
 };
 
-class InfiniteScrollWindow {
+class ScrollWindow {
   constructor(gunNode, opts = {}) {
     this.opts = Object.assign(DEFAULT_OPTIONS, opts);
     this.elements = new Map();
     this.node = gunNode;
     this.center = this.opts.startAt;
-    this.updateListeners();
+    this.updateSubscriptions();
   }
 
-  updateListeners() {
+  updateSubscriptions() {
     this.upSubscription && this.upSubscription.off();
     this.downSubscription && this.downSubscription.off();
+
+    const subscribe = params => {
+      this.node.get({ '.': params}).map().on((val, key, a, eve) => {
+        if (params['-']) {
+          this.downSubscription = eve;
+        } else {
+          this.upSubscription = eve;
+        }
+        this._addElement(key, val);
+      });
+    };
+
     if (this.center) {
-      this.node.get({ '.': { '>': this.center, '<': '\uffff' }}).map().on((val, key, a, eve) => {
-        this.upSubscription = eve;
-        this._addElement(key, val);
-      });
-      this.node.get({ '.': { '<': this.center, '>' : '', '-': true }}).map().on((val, key, a, eve) => {
-        this.downSubscription = eve;
-        this._addElement(key, val);
-      });
+      subscribe({ '>': this.center, '<': '\uffff' });
+      subscribe({'<': this.center, '>' : '', '-': true});
     } else {
-      this.node.get({ '.': { '<': '\uffff', '>': '', '-': this.opts.stickTo === 'top' }}).map().on((val, key, a, eve) => {
-        this.upSubscription = eve;
-        this._addElement(key, val);
-      });
+      subscribe({ '<': '\uffff', '>': '', '-': this.opts.stickTo === 'top' });
     }
   }
 
@@ -46,7 +49,7 @@ class InfiniteScrollWindow {
     const newMiddleIndex = Math.max(Math.min(half + n, keys.length - 1), 0);
     if (this.center !== keys[newMiddleIndex]) {
       this.center = keys[newMiddleIndex];
-      this.updateListeners();
+      this.updateSubscriptions();
     }
     return this.center;
   }
@@ -62,7 +65,7 @@ class InfiniteScrollWindow {
   _topOrBottom(top) {
     this.opts.stickTo = top ? 'top' : 'bottom';
     this.center = null;
-    this.updateListeners();
+    this.updateSubscriptions();
   }
 
   top() {
