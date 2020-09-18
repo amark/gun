@@ -35,6 +35,7 @@ const render = elements => {
     $('#post' + j).css({visibility: 'visible'});
   });
   console.log('rendering took', new Date().getTime() - t.getTime(), 'ms');
+  window.onRender && window.onRender(elements);
 };
 
 const onChange = debounce(render, 20);
