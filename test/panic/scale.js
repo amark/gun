@@ -223,11 +223,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 	});
 
 	after("Everything shut down.", function(){
-		browsers.run(function(){
-			//location.reload();
-			//setTimeout(function(){
-			//}, 15 * 1000);
-		});
+		require('./util/open').cleanup();
 		return servers.run(function(){
 			process.exit();
 		});
