@@ -4,6 +4,7 @@
   var smooth = 2;
 
   Gun.on('create', function(root){ // switch to DAM, deprecated old
+  	return ; // stub out for now. TODO: IMPORTANT! re-add back in later.
     var opt = root.opt, mesh = opt.mesh;
     if(!mesh) return;
 
