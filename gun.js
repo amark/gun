@@ -381,7 +381,7 @@
 			}
 			function ack(msg){ // aggregate ACKs.
 				var id = msg['@'] || '', root = (msg.$._||'').root, tmp;
-				if(msg.err && root && root.dup.s[id]){ console.log('add err to original message to not send') }
+				if(msg.err && root && (tmp = root.dup.s[id])){ tmp.err = msg.err; } // add error to original message.
 				if(!(tmp = id._)){ /*console.log("TODO: handle ack id.");*/ return }
 				tmp.acks = (tmp.acks||0) + 1;
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
@@ -1232,7 +1232,7 @@
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
-					if(msg.put && msg.err){ return false } // stop relaying a invalid message, like failed SEA.
+					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // stop relaying a invalid message, like failed SEA.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					S && console.STAT && console.STAT(S, +new Date - S, 'say prep');
