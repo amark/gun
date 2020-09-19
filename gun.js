@@ -342,7 +342,7 @@
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 				var now = State(),u;
-				if(state > now){ setTo; return }
+				if(state > now){ /*setTo;*/ return } // TODO: BUG!!!!
 				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well?
 					if(state === was && (val === known || L(val) <= L(known))){ return } // same
