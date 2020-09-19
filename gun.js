@@ -1145,7 +1145,6 @@
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
-				require('fs').writeFileSync('heardatadebug.json',raw,noop);
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var tmp = raw[0], msg;
