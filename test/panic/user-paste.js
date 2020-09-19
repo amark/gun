@@ -77,7 +77,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				var Gun = require(env.config.dir+'/../../');
 				// Attach the server to gun.
 				//var gun = Gun({file: env.i+'data', web: server});
-				console.log("UNDO THIS!!!!!!!!");var gun = Gun({file: env.i+'data', web: server, rad: false, axe: false, localStorage: false});
+				console.log("UNDO THIS!!!!!!!!");var gun = Gun({file: env.i+'data', web: server, rad: false, localStorage: false});
 				server.listen(env.config.port + env.i, function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.

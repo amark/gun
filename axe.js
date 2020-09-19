@@ -219,13 +219,16 @@
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
 						Object.keys(msg.put).forEach(function(soul, node){ node = msg.put[soul];
+						setTimeout.each(Object.keys(msg.put), function(soul, node){ node = msg.put[soul];
 							var hash = soul; //Gun.obj.hash({'#': soul});
 							var to = routes[hash];
 							if(!to){ return }
-							Object.keys(to).forEach(function(k){ peers[k] = to[k] });
+							setTimeout.each(Object.keys(to), function(k){
+								mesh.say(msg, to[k]); //peers[k] = to[k]
+							});
 						});
 						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'axe put');
-						mesh.say(msg, peers);
+						//mesh.say(msg, peers);
 						return;
 					}
 					mesh.say(msg, opt.peers); return; // TODO: DISABLE THIS!!! USE DHT!
@@ -250,15 +253,17 @@
 				};
 			}
 			axe.up = {};
-			at.on('hi', function(peer){
+			var C = 0;
+			at.on('hi', function(peer){ C++;
 				this.to.next(peer);
 				if(!peer.url){ return }
 				axe.up[peer.id] = peer;
 			});
-			at.on('bye', function(peer){ this.to.next(peer);
+			at.on('bye', function(peer){ C--; this.to.next(peer);
 				if(peer.url){ delete axe.up[peer.id] }
 				var S = +new Date;
-				obj_map(peer.routes, function(route, hash){
+				setTimeout.each(Object.keys(peer.routes), function(hash, route){
+					route = peer.routes[hash];
 					delete route[peer.id];
 					if(Object.empty(route)){
 						delete axe.routes[hash];
@@ -271,7 +276,7 @@
 			at.on('hi', function(peer){
 				this.to.next(peer);
 				if(peer.url){ return } // I am assuming that if we are wanting to make an outbound connection to them, that we don't ever want to drop them unless our actual config settings change.
-				var count = Object.keys(opt.peers).length;
+				var count = C;
 				if(opt.mob >= count){ return }  // TODO: Make dynamic based on RAM/CPU also. Or possibly even weird stuff like opt.mob / axe.up length?
 				var peers = Object.keys(axe.up);
 				if(!peers.length){ return }
