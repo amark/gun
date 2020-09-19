@@ -312,12 +312,7 @@
 				(function pop(o){
 					if(nj != ni){ nj = ni;
 						if(!(soul = nl[ni])){
-							ctx.stun--; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
-							ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-							//fire(ctx); // ABC
-							if(err || ctx.err || msg.err){ return }
-							msg.out = universe;
-							root.on('out', msg);
+							fire(ctx);
 							return;
 						}
 						if(!(node = put[soul])){ err = ERR+cut(soul)+"no node." } else
@@ -371,10 +366,18 @@
 			function map(msg){
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
 				if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
 				eve.to.next(msg);
-				--ctx.stun;
+				fire(ctx);
+			}
+			function fire(ctx, msg){
+				if(--ctx.stun !== 0){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
+				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
+				if(!(msg = ctx.msg) || ctx.err || msg.err || !ctx.root){ return }
+				msg.out = universe;
+				ctx.root.on('out', msg);
 			}
 			function ack(msg){ // aggregate ACKs.
 				var id = msg['@'] || '', root = (msg.$._||'').root, tmp;
@@ -624,6 +627,7 @@
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
+
 			//if(cat.ask && key){
 			if(key){
 				if(cat.soul && cat.ask && state >= state_is(root.graph[soul], key)){ // faster than HAM
@@ -1009,21 +1013,17 @@
 			var gun = this, cat = gun._, root = cat.root, data = cat.put, id, one, tmp;
 			//(root.act[tmp = ++root.acts] = cat.act[tmp] = function(msg, eve, to){
 			((cat.act||(cat.act={}))[id = tmp||String.random(7)] = function(msg, eve, to){
-				/*if(!(tmp = msg.put)){
-					console.log('not found');
-					return;
-				}*/
-				if((tmp = msg.put) && 'string' == typeof Gun.valid(tmp = tmp['=']||tmp[':'])){
-					// probably already getting it.
-					return;
-				}
 				var at = msg.$._, one = (at.one||(at.one={}));
 				if('' === one[id]){ return }
-				if(!(tmp = at.soul || at.link)){ once(); return }
+				if(!at.soul && (tmp = msg.put) && 'string' == typeof (tmp = Gun.valid(tmp['=']||tmp[':']))){
+					if(u === (tmp = root.$.get(tmp)._).put){ return } // probably already getting it.
+				}
+				if(!(at.soul || at.link)){ once(); return }
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99);
 				function once(){
+					if('' === one[id]){ return }
 					one[id] = ''; if(cat.soul || cat.has){ delete cat.act[id] }
-					if(u === (tmp = ((msg.$||'')._||'').put)){ tmp = ((msg.$$||'')._||'').put }
+					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
 					cb.call(at.$, tmp, msg.get || at.get);
 				};
 			}).at = cat;
@@ -1168,6 +1168,7 @@
 				}
 				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
 					if(msg){ return hear.one(msg, peer) }
+					//console.log("HEAR:", raw);
 					parse(raw, function(err, msg){
 						if(err || !msg){ return } //mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
 						hear.one(msg, peer);
@@ -1337,7 +1338,7 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				//console.log(raw.slice(0,32));
+				//console.log('SAY:', raw.slice(0,1000));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
