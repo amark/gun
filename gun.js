@@ -342,7 +342,7 @@
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
 
-				if(tmp = console.STAT){ if(!graph[soul] || !known){ stat.has = (stat.has || 0) + 1 } }
+				if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
 				var now = State(),u;
 				if(state > now){ /*setTo;*/ return } // TODO: BUG!!!!
