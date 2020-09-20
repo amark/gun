@@ -51,7 +51,7 @@
     var data = await (await fetch(url.value||(location.origin+'/gun/stats.radata'), {method: 'GET',mode: 'cors'})).json();
     $('#block').text(((br += (+new Date - S)/1000) / ++bt).toFixed(1));
     data.over = (data.over/1000) || 15;
-		$('#stack').text(data.cpu.stack);
+		$('#stack').text((data.cpu||'').stack);
     $('#peers').text(data.peers.count);
 		$('#time').text((data.peers.time / 1000 / 60).toFixed(0));
 		$('#nodes').text(data.node.count);
