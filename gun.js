@@ -339,8 +339,11 @@
 				}());
 			} Gun.on.put = put;
 			function ham(val, key, soul, state, msg){
-				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot;
+				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
+
+				if(tmp = console.STAT){ if(!graph[soul] || !known){ stat.has = (stat.has || 0) + 1 } }
+
 				var now = State(),u;
 				if(state > now){ /*setTo;*/ return } // TODO: BUG!!!!
 				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
@@ -1143,15 +1146,15 @@
 
 			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
-			var ST = +new Date;
+			var ST = +new Date, LT = ST;
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if(mesh === this){
 					if('string' == typeof raw){ try{
-
-						console.log(setTimeout.turn.s.length, 'stacks', (-(ST - (ST = +new Date))/1000).toFixed(3), 'seconds');
+						var stat = console.STAT || {};
+						console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has');
 						console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 					}catch(e){ console.log('DBG err', e) }}
 
@@ -1410,10 +1413,12 @@
 
 			var gets = {};
 			root.on('bye', function(peer, tmp){ this.to.next(peer);
+				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1 }
 				if(!(tmp = peer.url)){ return } gets[tmp] = true;
 				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 			});
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
+				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
 				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
