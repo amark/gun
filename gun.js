@@ -1154,9 +1154,9 @@
 				if(mesh === this){
 					if('string' == typeof raw){ try{
 						var stat = console.STAT || {};
-						console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
+						//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 						
-						console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused, stat.memused, stat.memax, 'heap mem max');
+						//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused, stat.memused, stat.memax, 'heap mem max');
 					}catch(e){ console.log('DBG err', e) }}
 
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
@@ -1238,7 +1238,7 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
-					return; // TODO! OBVIOUSLY BUG! But squelch relay.
+					//return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
@@ -1352,7 +1352,7 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
+				//console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
