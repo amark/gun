@@ -1143,10 +1143,19 @@
 
 			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
+			var ST = +new Date;
+
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
-				if(mesh === this){ 'string' == typeof raw && console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(3)); hear.d += raw.length||0 ; ++hear.c } // STATS!
+				if(mesh === this){
+					if('string' == typeof raw){ try{
+
+						console.log(setTimeout.turn.s.length, 'stacks', (-(ST - (ST = +new Date))/1000).toFixed(3), 'seconds');
+						console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
+					}catch(e){ console.log('DBG err', e) }}
+
+					hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var tmp = raw[0], msg;
 				if('[' === tmp){
 					parse(raw, function(err, msg){
@@ -1225,6 +1234,7 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
+					return; // TODO! OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
@@ -1338,7 +1348,7 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(3));
+				console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
