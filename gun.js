@@ -1145,6 +1145,7 @@
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
+				console.log('HEAR:', (raw||'').slice(0,99));
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var tmp = raw[0], msg;
@@ -1338,7 +1339,7 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				//console.log('SAY:', raw.slice(0,1000));
+				console.log('SAY:', (raw||'').slice(0,99));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
