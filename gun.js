@@ -1145,9 +1145,8 @@
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
-				'string' == typeof raw && console.log('HEAR:', (raw||'').slice(0,75));
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
-				if(mesh === this){ hear.d += raw.length||0 ; ++hear.c } // STATS!
+				if(mesh === this){ 'string' == typeof raw && console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(3)); hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var tmp = raw[0], msg;
 				if('[' === tmp){
 					parse(raw, function(err, msg){
@@ -1339,7 +1338,7 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				console.log('SAY:', (raw||'').slice(0,75));
+				console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(3));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
