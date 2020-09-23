@@ -218,7 +218,7 @@
 						var S = (+new Date); // STATS!
 						var routes = axe.routes || (axe.routes = {}); // USE RAD INSTEAD! TMP TESTING!
 						var peers = {};
-						Object.keys(msg.put).forEach(function(soul, node){ node = msg.put[soul];
+						//Object.keys(msg.put).forEach(function(soul, node){ node = msg.put[soul];
 						setTimeout.each(Object.keys(msg.put), function(soul, node){ node = msg.put[soul];
 							var hash = soul; //Gun.obj.hash({'#': soul});
 							var to = routes[hash];

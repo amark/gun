@@ -1,10 +1,11 @@
-// test SEA end to end.
+// this has Alice read data, measuring its latency, while other browsers are flooding relay with updates.
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
 	servers: 1,
 	browsers: 2,
 	each: 10000,
+	burst: 10,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -42,7 +43,7 @@ manager.start({
 var servers = clients.filter('Node.js');
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
-var bob = browsers.excluding(alice).pluck(1);
+var others = browsers.excluding(alice);
 
 describe("Test vanishing property "+ config.browsers +" browser(s) across "+ config.servers +" server(s)!", function(){
 
@@ -76,7 +77,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				var Gun = require(env.config.dir+'/../../');
 				// Attach the server to gun.
 				//var gun = Gun({file: env.i+'data', web: server});
-				console.log("UNDO THIS!!!!!!!!");var gun = Gun({file: env.i+'data', web: server, rad: false, localStorage: false});
+				var gun = Gun({file: env.i+'data', web: server, rad: false, localStorage: false});
 				server.listen(env.config.port + env.i, function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.
@@ -97,27 +98,6 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 		return browsers.atLeast(config.browsers);
 	});
 
-	it("Browsers load SEA!", function(){
-		var tests = [], i = 0;
-		browsers.each(function(client, id){
-			tests.push(client.run(function(test){
-				test.async();
-				//console.log("load?");
-				function load(src, cb){
-					var script = document.createElement('script');
-					script.onload = cb; script.src = src;
-					document.head.appendChild(script);
-				}
-				load('sea.js', function(){
-					load('yson.js', function(){
-						test.done();
-					});
-				});
-			}, {i: i += 1, config: config})); 
-		});
-		return Promise.all(tests);
-	});
-
 	it("Browsers initialized gun!", function(){
 		var tests = [], i = 0;
 		browsers.each(function(client, id){
@@ -125,56 +105,51 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
-				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
+				var gun = Gun({retry: 2, peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
 				window.gun = gun;
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
 
-	it("Alice creates user", function(){
+	it("Start flooding", function(){
+		var tests = [], i = 0;
+		others.each(function(client, id){
+			tests.push(client.run(function(test){
+				console.log("I SHALL FLOOD");
+				test.async();
+				var config = test.props.config;
+
+				gun.get('test').get('latency').put("hello world");
+				
+				var go = setInterval(function(){
+					var burst = config.burst;
+					while(--burst){
+						console.log(burst);
+						gun.get(String.random(Math.random()*100)).get(String.random(Math.random()*10)).put(String.random(Math.random()*1000))
+					}
+				},config.wait);
+
+				setTimeout(function(){
+					test.done();
+					setTimeout(function(){ clearInterval(go) }, 2000);
+				}, 1000 * 10);
+			}, {i: i += 1, config: config})); 
+		});
+		return Promise.all(tests);
+	});
+
+	it("Alice reads during flood", function(){
 		return alice.run(function(test){
-			console.log("I AM ALICE");
+			console.log("I AM ALICE", gun.back('opt.pid'));
+			$('body').css('background', 'red');
 			test.async();
-			gun.user().create('alice','password', function(){ gun.user().auth('alice','password', function(ack){
-				if(ack.err){ _bad_login_ }
-				test.done();
-			})});
-		}, config);
-	});
-
-	it("Bob logs into user", function(){
-		return bob.run(function(test){
-			console.log("I AM BOB");
-			test.async();
-			console.only.i=1;console.log("====================");
-			gun.user().auth('alice','password', function(ack){
-				if(ack.err){ _bad_login_ }
-				test.done();
-			});
-		}, config);
-	});
-
-	it("Alice pastes", function(){
-		return alice.run(function(test){
-			console.log("paste");
-			test.async();
-			gun.user().get('paste').put('hello world!').on(function(data){
-				if(this.stop){ return } this.stop = 1; // hack for now!
-				if('hello world!' != data){ _bad_data_ }
-				setTimeout(function(){ test.done() }, 1000);
-			})
-		}, config);
-	});
-
-	it("Bob reads", function(){
-		return bob.run(function(test){
-			console.log("I AM BOB");
-			test.async();
-			gun.user().once(function(data){
-				console.log("data!", data);
-				if('hello world!' != data.paste){ _bad_data2_ }
-				test.done();
+			var S = +new Date;
+			gun.get('test').get('latency').on(function(data){
+				var latency = +new Date - S;
+				console.log(latency, data);
+				if(!data){ return }
+				//test.done();
 			});
 		}, config);
 	});
