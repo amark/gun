@@ -262,7 +262,7 @@
 			at.on('bye', function(peer){ C--; this.to.next(peer);
 				if(peer.url){ delete axe.up[peer.id] }
 				var S = +new Date;
-				setTimeout.each(Object.keys(peer.routes), function(hash, route){
+				setTimeout.each(Object.keys(peer.routes||''), function(hash, route){
 					route = peer.routes[hash];
 					delete route[peer.id];
 					if(Object.empty(route)){
