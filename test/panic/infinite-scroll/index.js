@@ -2,13 +2,16 @@ var config = {
 	IP: require('ip').address(),
 	port: 8765,
 	servers: 1,
-	browsers: 4,
+	browsers: 1,
 	each: 1500,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
-		'/gun.js': __dirname + '/../../gun.js',
-		'/jquery.js': __dirname + '/../../examples/jquery.js'
+		'/ScrollWindow.js': __dirname + '/../../../examples/infinite-scroll/ScrollWindow.js',
+		'/index.js': __dirname + '/../../../examples/infinite-scroll/index.js',
+		'/style.css': __dirname + '/../../../examples/infinite-scroll/style.css',
+		'/gun.js': __dirname + '/../../../gun.js',
+		'/jquery.js': __dirname + '/../../../examples/jquery.js'
 	}
 }
 
@@ -94,7 +97,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					// It has successfully launched.
 					test.done();
 				});
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		// NOW, this is very important:
 		// Do not proceed to the next test until
@@ -105,8 +108,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	it(config.browsers +" browser(s) have joined!", function(){
 		// Okay! Cool. Now we can move on to the next step...
-		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
-		// Which is to automatically or manually open up a bunch of browser tabs
+		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		// Which is to manually open up a bunch of browser tabs
 		// and connect to the PANIC server in the same way
 		// the NodeJS servers did.
 
@@ -119,19 +122,6 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// that we've written it on the server. It is not.
 				// Mind blowing, right?
 				var env = test.props;
-				// Like before, we had to manually pass it some scope.
-				$('body').prepend("<button onclick='allopen()'>Open All Browsers</button>");
-				// All right, lets cheat by making a button
-				// that will automatically open all the
-				// remaining browser tabs for us
-				// so we don't have to do it manually.
-				window.allopen = function(i){
-					if(env.config.browsers <= i){ return }
-					i = i || 1;
-					var win = window.open(location, '_blank');
-					win.focus();
-					setTimeout(function(){allopen(i+1)},0);
-				}
 			}, {config: config});
 		});
 		// Cool! Once that is done...
@@ -173,70 +163,33 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// of all the messages that WILL be sent
 				// according to the expected configuration.
 				// This is equal to...
-				var num = 0, total = 0, check = Gun.obj.map(env.ids, function(v,id,t){
-					// for each browser ID
-					// they will be saving X number of messages each.
-					var i = env.config.each;
-					while(i--){
-						// So add a deterministic key we can check against.
-						t(id + (i + 1), 1);
-						// And count up the total number of messages we expect for all.
-						total += 1;
-					}
-				});
-				// Note, this `check` hash table now looks something like this:
-				// {alice1: 1, alice2: 1, alice3: 1, bob1: 1, bob2: 1, bob3: 1}
+				var num = 0, total = env.config.each, check = {};
 				var report = $("<div>").css({position: 'fixed', top: 0, right: 0, background: 'white', padding: 10}).text(num +" / "+ total +" Verified").prependTo('body');
 				// Add a nifty UI that tells us how many messages have been verified.
 				// FINALLY, tell gun to subscribe to every record
 				// that is is/will be saved to this table.
-				gun.get('test').map().on(function(data, key){
-					// When we get realtime updates to the data,
-					// create or reuse a DIV that we
-					//var el = $('#'+key).length ? $('#'+key) : $('<div>');
-					// log the data out to, so we can visually see our test.
-					//$(log).append(el.attr('id', key).text(key +": "+ data));
-					$(log).text(key +": "+ data); // DOM updates thrash performance, try this.
-					// Scroll down with the logging.
-					//$('body').stop(true).animate({scrollTop: $(log).height()});
-					// Now, make sure the received data
-					// matches exactly the data we EXPECT
-					if(("Hello world, "+key+"!") === data){
-						// if it does, we can "check off" record
-						// Bump the total number of verified items and update the UI.
-						if(check[key]){ num += 1 }
-						// from our verify todo list.
-						check[key] = 0;
+
+				var countAndScroll = () => {
+					$('.post b').each(function() {
+						var t = $(this).text();
+						if (check[t]) return;
+						num += 1;
 						report.text(num +" / "+ total +" Verified");
-					}
-					// This next part is important:
-					if(Gun.obj.map(check, function(still){
-						// IF THERE ARE ANY RECORDS STILL LEFT TO BE VERIFIED
-						if(still){ return true }
-					})){ return } // return, PREVENTING the test from being finished.
-					// IF HOWEVER, every single message
-					// that we EXPECTED to see
-					// has now been seen
-					// then THIS ONE BROWSER PEER (of many peers)
-					// is finally done.
-					test.done();
-				});
-				// But we have to actually tell the browser to save data!
-				var i = 0, to = setInterval(function go(){
-					// Cool, make a recursive function
-					// that keeps going until we've saved each message.
-					if(env.config.each <= i){
-						clearTimeout(to);
-						return;
-					}
-					//to = setTimeout(go, env.config.wait * Math.random()); // add a little jitter.
-					i += 1;
-					var p = env.id + i;
-					// And actually save the data with gun,
-					// as a record added to one big 'test' table.
-					gun.get('test').get(p).put('Hello world, '+ p +'!');
-				}, env.config.wait);
-			}, {i: i += 1, id: id, ids: ids, config: config})); 
+						if (num === total) {
+							test.done();
+						}
+						check[t] = true;
+					});
+					$(window).scrollTop($(window).height());
+				}
+				window.onRender = elements => {
+					countAndScroll();
+				};
+
+				$('#number').val(env.config.each);
+				$('#generate button').click();
+				countAndScroll();
+			}, {i: i += 1, id: id, ids: ids, config: config}));
 		});
 		// YAY! We're finally done.
 		// IF AND ONLY IF
@@ -249,7 +202,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
-		require('./util/open').cleanup() || browsers.run(function(){
+		browsers.run(function(){
 			setTimeout(function(){
 				location.reload();
 			}, 15 * 1000);
