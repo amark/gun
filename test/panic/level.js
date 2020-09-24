@@ -61,11 +61,11 @@ describe('Make sure the leveldb storage engine works', function() {
       const Gun   = require('../../../index.js');
       const debug = require('../../../lib/level.js');
 
-      // Add debug messages
-      debug.on('get', key => console.log('LEVEL GET', key));
-      debug.on('put', (key, value) => console.log('LEVEL PUT', key, value));
-      debug.on('list', () => console.log('LEVEL LIST'));
-      debug.on('error', err => console.log('LEVEL ERROR', err));
+      // // Add debug messages
+      // debug.on('get', key => console.log('LEVEL GET', key));
+      // debug.on('put', (key, value) => console.log('LEVEL PUT', key, value));
+      // debug.on('list', () => console.log('LEVEL LIST'));
+      // debug.on('error', err => console.log('LEVEL ERROR', err));
 
       // Track state (so we can wait on put, it's called late by radisk)
       global.state = 0;
@@ -141,11 +141,9 @@ describe('Make sure the leveldb storage engine works', function() {
     clients.pluck(2).run(function() {
       if (global.level) {
         global.level.close(function() {
-          console.log('SHUTDOWN WITH LEVEL');
           process.exit();
         });
       } else {
-        console.log('SHUTDOWN WITHOUT LEVEL');
         process.exit();
       }
     });
@@ -167,11 +165,11 @@ describe('Make sure the leveldb storage engine works', function() {
       const Gun   = require('../../../index.js');
       const debug = require('../../../lib/level.js');
 
-      // Add debug messages
-      debug.on('get', key => console.log('LEVEL GET', key));
-      debug.on('put', (key, value) => console.log('LEVEL PUT', key, value));
-      debug.on('list', () => console.log('LEVEL LIST'));
-      debug.on('error', err => console.log('LEVEL ERROR', err));
+      // // Add debug messages
+      // debug.on('get', key => console.log('LEVEL GET', key));
+      // debug.on('put', (key, value) => console.log('LEVEL PUT', key, value));
+      // debug.on('list', () => console.log('LEVEL LIST'));
+      // debug.on('error', err => console.log('LEVEL ERROR', err));
 
       // Create server
       opts.web = require('http').createServer((req, res) => {
@@ -209,13 +207,9 @@ describe('Make sure the leveldb storage engine works', function() {
     });
   });
 
-  after("All finished!", function() {
+  it("All finished!", function(done) {
     srv.close();
-    console.log('AFTER');
-    console.log(manager);
-    Object.keys(clients.clients).forEach(function(key) {
-      console.log(key);
-    });
+    done();
   });
 
 });
