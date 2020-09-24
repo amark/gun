@@ -308,6 +308,7 @@
 				ctx.all = 0;
 				ctx.stun = 1;
 				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below?
+				msg['%'] && console.log(msg['%']);
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
 					if(nj != ni){ nj = ni;
@@ -345,8 +346,8 @@
 				if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
 				var now = State(),u;
-				if(state > now){ /*setTo;*/ return } // TODO: BUG!!!!
-				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
+				if(state > now){ /*console.log("setTo");*/ /*setTo;*/ return } // TODO: BUG!!!!
+				if(state < was){ /*console.log("old");*/ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well?
 					if(state === was && (val === known || L(val) <= L(known))){ return } // same
 				}
@@ -416,7 +417,7 @@
 					// we still need to trigger a pull/merge from peers.
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
-				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'];
+				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function got(){
 					var i = 0, k, put = {};
@@ -429,6 +430,7 @@
 					tmp = keys.length;
 					DBG && (DBG.ga = +new Date);
 					root.on('in', {'@': ack, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), ram: 1, $: gun, _: faith});
+					//root.on('in', {'@': ack, '#': text_rand(9), put: put, '%': tmp? ((j+=i)+'/'+kl) : u, ram: 1, $: gun, _: faith}); console.log("???", j+'/'+kl);
 					if(!tmp){ return }
 					setTimeout.turn(got);
 				}());
@@ -1238,7 +1240,7 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
-					//return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
+					return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];

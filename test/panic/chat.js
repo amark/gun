@@ -2,8 +2,8 @@ var config = {
 	IP: require('ip').address(),
 	port: 8765,
 	servers: 1,
-	browsers: 3,
-	each: 10000,
+	browsers: 2, //3,
+	each: 100000,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -51,7 +51,7 @@ var servers = clients.filter('Node.js');
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
-var dave = browsers.excluding([alice, carl]).pluck(1);
+//var dave = browsers.excluding([alice, carl]).pluck(1);
 
 describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +" server(s)!", function(){
 
