@@ -59,7 +59,7 @@ describe('Make sure the leveldb storage engine works', function() {
 
       // Load the libraries under test
       const Gun   = require('../../../index.js');
-      const debug = require('../../../lib/level.js');
+      const debug = require('../../../lib/rlevel.js');
 
       // // Add debug messages
       // debug.on('get', key => console.log('LEVEL GET', key));
@@ -163,7 +163,7 @@ describe('Make sure the leveldb storage engine works', function() {
 
       // Load the libraries under test
       const Gun   = require('../../../index.js');
-      const debug = require('../../../lib/level.js');
+      const debug = require('../../../lib/rlevel.js');
 
       // // Add debug messages
       // debug.on('get', key => console.log('LEVEL GET', key));
