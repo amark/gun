@@ -56,7 +56,6 @@
     "node": ">=0.8.4"
   },
   "dependencies": {
-    "why-is-node-running": "^2.2.0",
     "ws": "^7.2.1"
   },
   "optionalDependencies": {
