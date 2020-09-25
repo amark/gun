@@ -3,7 +3,7 @@ var config = {
 	port: 8765,
 	servers: 1,
 	browsers: 2, //3,
-	each: 100000,
+	each: 10000,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -13,15 +13,20 @@ var config = {
 }
 
 /*
-Assume we have 4 peers in a star topology,
+Assume we have 3 peers in a star topology,
 
-...B...
-./.|.\.
-A..C..D
+..B..
+./.\.
+A...C
 
 And they share a chat room with 10K messages.
 
-A - GET chat -> B (cache miss) -> C
+A -> GET chat -> B (cache miss) -> C
+C hosts the data and streams it back
+C -> PUT chat -> B (relay) -> A got.
+
+Using the WebRTC module, C <-> A directly, no need for a relay!
+But we're wanting to test the performance of the whole network.
 */
 
 var panic = require('panic-server');
@@ -51,7 +56,6 @@ var servers = clients.filter('Node.js');
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
-//var dave = browsers.excluding([alice, carl]).pluck(1);
 
 describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +" server(s)!", function(){
 
@@ -90,7 +94,6 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					// It has successfully launched.
 					test.done();
 				});
-				//setInterval(function(){ console.log("CPU turns stacked:", setTimeout.turn.s.length) },1000);
 			}, {i: i += 1, config: config})); 
 		});
 		// NOW, this is very important:
@@ -165,16 +168,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
 		}, config);
 	});
-
-	/*it("Carl Recovers Chats", function(){
-		return carl.run(function(test){
-			console.log("... why not sending ...", window.chat);
-			test.async();
-			gun.on('in', {'#': 'asdf', put: {chat: chat}});
-			//test.done();
-		});
-	});*/
-
+	
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
 		browsers.run(function(){

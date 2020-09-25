@@ -308,7 +308,6 @@
 				ctx.all = 0;
 				ctx.stun = 1;
 				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below?
-				msg['%'] && console.log(msg['%']);
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
 					if(nj != ni){ nj = ni;
