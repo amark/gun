@@ -182,7 +182,7 @@
 		USE('./shim');
 		function Dup(opt){
 			var dup = {s:{}}, s = dup.s;
-			opt = opt || {max: 999, age: /*1000 * 9};//*/ 1000 * 9 * 3};
+			opt = opt || {max: 999, age: 1000 * 9};//*/ 1000 * 9 * 3};
 			dup.check = function(id){
 				if(!s[id]){ return false }
 				return dt(id);
@@ -196,6 +196,7 @@
 			dup.drop = function(age){
 				dup.to = null;
 				dup.now = +new Date;
+				dup.s = s = {};return;
 				setTimeout.each(Object.keys(s), function(id){ var it = s[id]; // TODO: .keys( is slow
 					if(it && (age || opt.age) > (dup.now - it.was)){ return }
 					delete s[id];
@@ -1157,7 +1158,7 @@
 						var stat = console.STAT || {};
 						//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 						
-						console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused, stat.memused, stat.memax, 'heap mem max');
+						console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 					}catch(e){ console.log('DBG err', e) }}
 
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
@@ -1239,7 +1240,7 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
-					return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
+					//return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
@@ -1415,7 +1416,7 @@
 
 			var gets = {};
 			root.on('bye', function(peer, tmp){ this.to.next(peer);
-				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1 }
+				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1; console.log('bye', tmp.peers) }
 				if(!(tmp = peer.url)){ return } gets[tmp] = true;
 				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 			});
