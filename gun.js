@@ -1240,7 +1240,7 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
-					//return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
+					return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
