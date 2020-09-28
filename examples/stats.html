@@ -60,6 +60,7 @@
 
     ;(async function(){ try{
       Stats('peers#').line.append(+new Date, data.peers.count);
+      return;
       Stats('cpu%');
       tmp = await (await fetch(new Request(location.origin+'/gun/stats.top.radata'), {method: 'GET',mode: 'cors'})).text();
       tmp = parseFloat((tmp.split('\n').filter(l => l.indexOf('node')+1)[0]||'').split(/\s+/).slice(-4)[0]||'0');
