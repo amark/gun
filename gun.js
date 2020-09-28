@@ -196,8 +196,9 @@
 			dup.drop = function(age){
 				dup.to = null;
 				dup.now = +new Date;
-				dup.s = s = {};return;
-				setTimeout.each(Object.keys(s), function(id){ var it = s[id]; // TODO: .keys( is slow
+				var l = Object.keys(s);
+				console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys');
+				setTimeout.each(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
 					if(it && (age || opt.age) > (dup.now - it.was)){ return }
 					delete s[id];
 				},0,99);
@@ -1165,7 +1166,7 @@
 				var tmp = raw[0], msg;
 				if('[' === tmp){
 					parse(raw, function(err, msg){
-						if(err || !msg){ return } //mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
 						console.STAT && console.STAT(+new Date, msg.length, '# on hear batch');
 						var P = opt.puff;
 						(function go(){
@@ -1183,9 +1184,8 @@
 				}
 				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
 					if(msg){ return hear.one(msg, peer) }
-					//console.log("HEAR:", raw);
 					parse(raw, function(err, msg){
-						if(err || !msg){ return } //mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
+						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
 						hear.one(msg, peer);
 					});
 					return;
@@ -1216,7 +1216,7 @@
 				//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 				DBG && (DBG.hd = +new Date);
 				console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
-				(tmp = dup_track(id)).via = peer;
+				(tmp = dup_track(id)).via = peer; // don't dedup message ID till after, cause GUN has internal dedup check.
 				if(msg.get){ tmp.it = msg }
 				if(ash){ dup_track(ash) } //dup.track(tmp+hash, true).it = it(msg);
 				mesh.leap = mesh.last = null; // warning! mesh.leap could be buggy.
