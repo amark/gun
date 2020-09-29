@@ -197,7 +197,7 @@
 				dup.to = null;
 				dup.now = +new Date;
 				var l = Object.keys(s);
-				console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys');
+				console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys'); // prev ~20% CPU 7% RAM 300MB // now ~25% CPU 7% RAM 500MB
 				setTimeout.each(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
 					if(it && (age || opt.age) > (dup.now - it.was)){ return }
 					delete s[id];
@@ -406,21 +406,24 @@
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
-				var ctx = msg._||'', DBG = ctx.DBG = msg.DBG;
+				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
 				//console.log("GET", get);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
-					node = Gun.state.ify(node, has, Gun.state.is(node, has), node[has]);
+					node = state_ify(node, has, state_is(node, has), node[has]);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
+				var S = +new Date;
 				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
+				console.STAT && console.STAT(S, +new Date - S, 'got keys');
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function got(){
+					S = +new Date;
 					var i = 0, k, put = {};
 					while(i < 9 && (k = keys[i++])){
 						state_ify(put, k, state_is(node, k), node[k], soul);
@@ -429,8 +432,10 @@
 					(tmp = {})[soul] = put; put = tmp;
 					var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 					tmp = keys.length;
+					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
 					root.on('in', {'@': ack, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), ram: 1, $: gun, _: faith});
+					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					//root.on('in', {'@': ack, '#': text_rand(9), put: put, '%': tmp? ((j+=i)+'/'+kl) : u, ram: 1, $: gun, _: faith}); console.log("???", j+'/'+kl);
 					if(!tmp){ return }
 					setTimeout.turn(got);
@@ -1229,10 +1234,12 @@
 				var SMIA = 0;
 				var loop;
 				mesh.hash = function(msg, peer){ var h, s, t;
+					var S = +new Date;
 					json(msg.put, function hash(err, text){
 						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
 					  h = String.hash(ss, h); s = s.slice(32768);
 					  if(s){ puff(hash, 0); return }
+						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 					  msg._.$put = t;
 					  msg['##'] = h;
 					  say(msg, peer);
@@ -1240,10 +1247,10 @@
 					})
 				}
 				var say = mesh.say = function(msg, peer){ var tmp;
-					return; // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
+					if((!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
 					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
 					var meta = msg._||(msg._=function(){});
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
@@ -1251,7 +1258,6 @@
 					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // stop relaying a invalid message, like failed SEA.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
-					S && console.STAT && console.STAT(S, +new Date - S, 'say prep');
 					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && ack){
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
@@ -1260,7 +1266,9 @@
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					if(!peer || !peer.id){
 						if(!Object.plain(peer || opt.peers)){ return false }
+						var S = +new Date;
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
+						console.STAT && console.STAT(S, +new Date - S, 'peer keys');
 						;(function go(){
 							var S = +new Date;
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
@@ -1327,8 +1335,10 @@
 						tmp.put = ':])([:';
 						json(tmp, function(err, raw){
 							if(err){ return } // TODO: Handle!!
+							var S = +new Date;
 							tmp = raw.indexOf('"put":":])([:"');
 							res(u, raw = raw.slice(0, tmp+6) + put + raw.slice(tmp + 14));
+							console.STAT && console.STAT(S, +new Date - S, 'say slice');
 						});
 						return;
 					}

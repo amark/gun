@@ -188,6 +188,7 @@
 							if(!peers){ return chat(opt.peers) }
 							var S = (+new Date); // STATS!
 							var ids = Object.keys(peers); // TODO: BUG! THIS IS BAD PERFORMANCE!!!!
+							console.STAT && console.STAT(S, +new Date - S, 'axe peer keys');
 							var meta = (msg._||yes);
 							clearTimeout(meta.lack);
 							var id, peer, c = 1; // opt. ?redundancy?
