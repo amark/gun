@@ -302,7 +302,7 @@
 					return;
 				}
 				var put = msg.put;
-				var DBG = ctx.DBG = msg.DBG;
+				var DBG = ctx.DBG = msg.DBG, S = +new Date;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
 				DBG && (DBG.p = S);
 				ctx['#'] = msg['#'];
@@ -310,10 +310,12 @@
 				ctx.all = 0;
 				ctx.stun = 1;
 				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below?
+				console.STAT && console.STAT(S, ((DBG||ctx).pk = +new Date) - S, 'put sort');
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
 					if(nj != ni){ nj = ni;
 						if(!(soul = nl[ni])){
+							console.STAT && console.STAT(S, ((DBG||ctx).pd = +new Date) - S, 'put');
 							fire(ctx);
 							return;
 						}
@@ -420,7 +422,7 @@
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				var S = +new Date;
 				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
-				console.STAT && console.STAT(S, +new Date - S, 'got keys');
+				console.STAT && console.STAT(S, ((DBG||ctx).gk = +new Date) - S, 'got keys');
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function got(){
 					S = +new Date;
@@ -434,7 +436,7 @@
 					tmp = keys.length;
 					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
-					root.on('in', {'@': ack, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), ram: 1, $: gun, _: faith});
+					root.on('in', {'@': ack, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), ram: 1, $: gun, _: faith, DBG: DBG});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					//root.on('in', {'@': ack, '#': text_rand(9), put: put, '%': tmp? ((j+=i)+'/'+kl) : u, ram: 1, $: gun, _: faith}); console.log("???", j+'/'+kl);
 					if(!tmp){ return }
@@ -1160,14 +1162,15 @@
 				if(!raw){ return }
 				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if(mesh === this){
-					if('string' == typeof raw){ try{
+					/*if('string' == typeof raw){ try{
 						var stat = console.STAT || {};
 						//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 						
-						console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
-					}catch(e){ console.log('DBG err', e) }}
+						//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
+					}catch(e){ console.log('DBG err', e) }}*/
 
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
+				var S = peer.SH = +new Date;
 				var tmp = raw[0], msg;
 				if('[' === tmp){
 					parse(raw, function(err, msg){
@@ -1188,17 +1191,18 @@
 					return;
 				}
 				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
-					if(msg){ return hear.one(msg, peer) }
+					if(msg){ return hear.one(msg, peer, S) }
 					parse(raw, function(err, msg){
 						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
-						hear.one(msg, peer);
+						hear.one(msg, peer, S);
 					});
 					return;
 				}
 			}
-			hear.one = function(msg, peer){
+			hear.one = function(msg, peer, S){ // S here is temporary! Undo.
 				var id, hash, tmp, ash, DBG;
 				if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
+				DBG && (DBG.h = S);
 				DBG && (DBG.hp = +new Date);
 				if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 				if(tmp = dup_check(id)){ return }
@@ -1215,12 +1219,12 @@
 					dup_track(id);
 					return;
 				}
-				var S = +new Date, ST;
-				DBG && (DBG.is = S);
+				var S = +new Date;
+				DBG && (DBG.is = S); peer.SI = id;
 				root.on('in', mesh.last = msg);
 				//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 				DBG && (DBG.hd = +new Date);
-				console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, 'msg'); // TODO: PERF: caught one > 1.5s on tgif
+				console.STAT && console.STAT(S, +new Date - S, msg.get? 'msg get' : msg.put? 'msg put' : 'msg');
 				(tmp = dup_track(id)).via = peer; // don't dedup message ID till after, cause GUN has internal dedup check.
 				if(msg.get){ tmp.it = msg }
 				if(ash){ dup_track(ash) } //dup.track(tmp+hash, true).it = it(msg);
@@ -1250,14 +1254,16 @@
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
-					if((!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay.
-					var DBG = msg.DBG, S; if(!peer){ S = +new Date ; DBG && (DBG.y = S) }
+					if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 					var meta = msg._||(msg._=function(){});
+					var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // stop relaying a invalid message, like failed SEA.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
+					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
+					DBG && (DBG.yr = +new Date);
 					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
 					if(!peer && ack){
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
@@ -1291,6 +1297,7 @@
 					if(id === peer.last){ return } peer.last = id;  // was it just sent?
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
+					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
 					if(peer.batch){
 						peer.tail = (tmp = peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
@@ -1300,12 +1307,13 @@
 						flush(peer);
 					}
 					peer.batch = '['; // Prevents double JSON!
-					var S = +new Date, ST;
+					var ST = +new Date;
 					setTimeout(function(){
-						console.STAT && (ST = +new Date - S) > 9 && console.STAT(S, ST, '0ms TO', id, peer.id);
+						console.STAT && console.STAT(ST, +new Date - ST, '0ms TO');
 						flush(peer);
 					}, opt.gap); // TODO: queuing/batching might be bad for low-latency video game performance! Allow opt out?
 					send(raw, peer);
+					console.STAT && (ack === peer.SI) && console.STAT(S, +new Date - peer.SH, 'say ack');
 				}
 				mesh.say.c = mesh.say.d = 0;
 				// TODO: this caused a out-of-memory crash!
@@ -1426,7 +1434,7 @@
 
 			var gets = {};
 			root.on('bye', function(peer, tmp){ this.to.next(peer);
-				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1; console.log('bye', tmp.peers) }
+				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1; }
 				if(!(tmp = peer.url)){ return } gets[tmp] = true;
 				setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 			});
