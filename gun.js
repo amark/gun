@@ -1349,6 +1349,10 @@
 		Gun.chain.get = function(key, cb, as){
 			var gun, tmp;
 			if(typeof key === 'string'){
+			        if(key.length == 0) {
+			              (as = this.chain())._.err = {err: Gun.log('Invalid zero length string key!', key)};
+			              return null
+			        }
 				var back = this, cat = back._;
 				var next = cat.next || empty;
 				if(!(gun = next[key])){
