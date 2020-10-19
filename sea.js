@@ -651,6 +651,77 @@
   })(USE, './secret');
 
   ;USE(function(module){
+    var SEA = USE('./root');
+    var S = USE('./settings');
+    
+    // This is to certify that a group of "certificants" can "put" anything at a group of "keys" in the "issuer"'s graph
+    SEA.certify = SEA.certify || (async (certificants, keys, issuer, cb, opt) => { try {
+      /* 
+      "certificants": A string (~Bobpub) || a pair || an array of pubs/pairs. These people will have the rights.
+      "keys": A string ('~AlicePub/room-for-Bob'), or an array of strings [key 1, key 2]. If '*' exists ('~AlicePub/room-for-Bob/*') then sync ALL THE KEYS with this prefix ('~AlicePub/room-for-Bob/toys' will sync).
+      "issueer": Alice's pair
+      "cb": A callback function after all things are done
+      "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry
+      */
+
+      // We need some logic here to verify that all params are valid
+
+      const getCertificants = () => {
+        var data = []
+        if (certificants) {
+          if (typeof certificants === 'string') {
+            data.push(certificants)
+          }
+
+          if (Array.isArray(certificants)) {
+            certificants.map(person => {
+              if (typeof person ==='string') data.push(person)
+              else if (typeof person === 'object' && person.pub) data.push(person.pub)
+            })
+          }
+
+          if (typeof certificants === 'object' && certificants.pub) data.push(certificants.pub)
+        }
+        if (data.length > 0) return data
+      }
+
+      certificants = getCertificants()
+      keys = keys && typeof keys === 'string' ? [keys] : keys
+
+      opt = opt || {};
+      var key = (issuer||opt).priv || issuer;
+      
+      if(!key){
+        issuer = await SEA.I(null, {what: data, how: 'certify', why: opt.why}); // Some magic here copied from somewhere else. WHAT IS THIS actually? I don't know. SEA.I is not a function!?!?
+        key = issuer.priv || issuer;
+      }
+
+      const data = JSON.stringify({
+        certificants,
+        keys
+      })
+
+      const signature = await SEA.sign(data, issuer, null, {raw:1})
+
+      const certificate = 'SEA' + JSON.stringify({
+        ...signature,
+        issuer: issuer.pub
+      })
+
+      if(cb){ try{ cb(certificate) }catch(e){console.log(e)} }
+      return certificate;
+    } catch(e) {
+      console.log(e);
+      SEA.err = e;
+      if(SEA.throw){ throw e }
+      if(cb){ cb() }
+      return;
+    }});
+
+    module.exports = SEA.certify;
+  })(USE, './certify');
+
+  ;USE(function(module){
     var shim = USE('./shim');
     // Practical examples about usage found in tests.
     var SEA = USE('./root');
@@ -659,6 +730,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
+    SEA.certify = USE('./certify');
     //SEA.opt.aeskey = USE('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
@@ -1217,6 +1289,7 @@
           return; // omit!
         }
       }
+      
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
