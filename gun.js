@@ -327,6 +327,7 @@
 					}
 					if(err){
 						console.log("handle error!", err) // handle!
+						ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
 						return;
 					}
 					var i = 0, key; o = o || 0;
@@ -541,7 +542,6 @@
 			cat.on = Gun.on;
 			cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
 			cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
-			var P = []; cat.$.back(function(at){ at.get && P.push(at.get) }); cat.TMPathBACK = P.reverse();
 			return chain;
 		}
 
@@ -634,17 +634,16 @@
 			var eve = this, cat = eve.as, root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, link, sat;
 
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
-				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow
+				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if('_' == k || !(state = state_is(tmp, k))){ return }
 					cat.on('in', {put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
 
-			//if(cat.ask && key){
-			if(key){
-				if(cat.soul && cat.ask && state >= state_is(root.graph[soul], key)){ // faster than HAM
-					cat.put = state_ify(cat.put, key, state, change, soul);
+			if(key){ // TODO: Should we not only locally cache in the chain if this machine has asked for the data? I think this caused a bug somewhere if we did, so test.
+				if((tmp = cat.soul || at.link) && cat.ask && state >= state_is(root.graph[soul], key)){ // Note: Something other than a soul chain might ask for data, but we should always cache to the soul chain. // TODO: Why does adding || at.soul cause tests to fail? // faster than HAM
+					(tmp = root.$.get(tmp)._).put = state_ify(tmp.put, key, state, change, soul);
 				}
 				if(cat.has && at.soul){
 					cat.put = at.put;
@@ -653,21 +652,20 @@
 					cat.put = change;
 				}
 			}
-			
 			if(cat.soul && at === cat){ // (1) we're a root node chain.
 			} else
 			if(cat.has && at === cat){ // (2)
 			} else
-			if(cat.has && at.soul){ // (3) we're a proxy for a root node.
+			//if(cat.has && at.soul){ // (3) we're a proxy for a root node.
+			if(cat.echo){ // (3) we're a proxy for a root node.
 				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
-				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at; msg = tmp;
+				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at.$; msg = tmp;
 			} else {}
-
 			eve.to.next(msg); // 1st API job is to call all the listeners.
-			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow
+			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 				(act = cat.act[act]) && act(msg);
 			},0,99);
-			setTimeout.each(Object.keys(cat.echo||''), function(lat){ // & linked chains // TODO: .keys( is slow
+			setTimeout.each(Object.keys(cat.echo||''), function(lat){ // & linked chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 				if(!(lat = cat.echo[lat])){ return }
 				lat.on('in', msg);
 			},0,99);
@@ -675,7 +673,7 @@
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				delete cat.link; // TODO: Empty out links, maps, echos, acks/asks, etc.?
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub properties. // TODO: .keys( is slow
+				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub properties. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if(!(sat = cat.next[get])){ return }
 					sat.on('in', {get: get, put: u, $: sat.$});
 				},0,99);
@@ -695,7 +693,7 @@
 					if((tmp = cat.ask||'')['']){
 						sat.on('out', {get: {'#': link}});
 					} else {
-						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow
+						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 							if(!(sat = cat.ask[get])){ return }
 							sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 						},0,99);
@@ -938,7 +936,8 @@
 			}, as.opt), acks = 0, stun = as.stun;
 			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun }
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
-				setTimeout.each(Object.keys(stun||''), function(cb){if(cb = stun[cb]){cb()}}); // Any perf reasons to CPU schedule this .keys( ?
+				if(!stun){ return } stun.end = noop;
+				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
@@ -1000,11 +999,13 @@
 			function one(msg, eve){
 				if(one.stun){ return }
 				var at = msg.$._, data = at.put, tmp;
+				if(tmp = at.link){ data = root.$.get(tmp)._.put }
 				if(opt.not===u && u === data){ return }
-				if(opt.stun===u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id])){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
+				if(opt.stun===u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
 					tmp[id] = function(){one(msg,eve)};
 					return;
 				}
+				//tmp = one.wait || (one.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';one(msg,eve)},1); return } delete tmp[at.id];
 				// call:
 				if(opt.as){
 					opt.ok.call(opt.as, msg, eve || one);
@@ -1013,7 +1014,7 @@
 				}
 			};
 			one.at = cat;
-			(cat.act||(cat.act={}))[id = tmp||String.random(7)] = one;
+			(cat.act||(cat.act={}))[id = String.random(7)] = one;
 			one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 			cat.on('out', {get: {}});
 			return gun;
@@ -1032,7 +1033,7 @@
 					if(u === (tmp = root.$.get(tmp)._).put){ return } // probably already getting it.
 				}
 				if(!(at.soul || at.link)){ once(); return }
-				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99);
+				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
 					if('' === one[id]){ return }
 					one[id] = ''; if(cat.soul || cat.has){ delete cat.act[id] }
@@ -1092,7 +1093,7 @@
 				if(chain = cat.each){ return chain }
 				cat.each = chain = gun.chain();
 				chain._.nix = gun.back('nix');
-				gun.on(map, {as: chain._});
+				gun.on(map, {as: chain._, stun: false});
 				return chain;
 			}
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
@@ -1125,7 +1126,7 @@
 			if(soul = ((item||'')._||'')['#']){ (item = {})[soul] = {'#': soul}; }
 			if(!Gun.is(item)){
 				if(Object.plain(item)){
-					soul = soul || Gun.node.soul(item) || uuid(); // this just key now, not a soul.
+					soul = soul || ((item||'')._||'')['#'] || uuid(); // this just key now, not a soul.
 				}
 				return gun.get(soul || uuid()).put(item, cb, opt);
 			}
