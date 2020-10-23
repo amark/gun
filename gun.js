@@ -735,20 +735,38 @@
 			} else
 			if('function' == typeof key){
 				if(true === cb){ return soul(this, key, cb, as), this }
-				gun = this;
-				var at = gun._, root = at.root, tmp = root.now, ev;
-				as = cb || {};
-				as.at = at;
-				as.use = key;
-				as.out = as.out || {};
-				as.out.get = as.out.get || {};
-				(ev = at.on('in', use, as)).rid = rid;
-				(root.now = {$:1})[as.now = at.id] = ev;
-				var mum = root.mum; root.mum = {};
-				at.on('out', as.out);
-				root.mum = mum;
-				root.now = tmp;
+
+				var gun = this, cat = gun._, opt = cb || {}, root = cat.root, id;
+				opt.at = cat;
+				opt.ok = key;
+				function any(msg, eve){
+					if(any.stun){ return }
+					var at = msg.$._, data = at.put, tmp;
+					if(tmp = at.link){ data = root.$.get(tmp)._.put }
+					if(opt.not !== u && u === data){ return }
+					if(opt.stun === u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
+						tmp[id] = function(){any(msg,eve)};
+						return;
+					}
+					//tmp = any.wait || (any.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';any(msg,eve)},1); return } delete tmp[at.id];
+					// call:
+					if(opt.on){
+						opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any); return;
+					}
+					opt.ok(msg, eve || any); return;
+					if(opt.as){
+						opt.ok.call(opt.as, msg, eve || any);
+					} else {
+						opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any);
+					}
+				};
+				any.at = cat;
+				(cat.act||(cat.act={}))[id = String.random(7)] = any;
+				any.off = function(){ any.stun = 1; if(!cat.act){ return } delete cat.act[id] }
+				any.rid = rid;
+				cat.on('out', {get: {}});
 				return gun;
+
 			} else
 			if('number' == typeof key){
 				return this.get(''+key, cb, as);
@@ -809,42 +827,8 @@
 			}, {out: {get: {'.':true}}});
 			return gun;
 		}
-		function use(msg){
-			var eve = this, as = eve.as, cat = as.at, root = cat.root, gun = msg.$, at = (gun||{})._ || {}, data = msg.put || at.put, tmp;
-			if((tmp = root.now) && eve !== tmp[as.now]){ return eve.to.next(msg) }
-			//if(at.async && msg.root){ return }
-			//if(at.async === 1 && cat.async !== true){ return }
-			//if(root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
-			//if(!at.async && !cat.async && at.put && msg.put === at.put){ return }
-			//else if(!cat.async && msg.put !== at.put && root.stop && root.stop[at.id]){ return } root.stop && (root.stop[at.id] = true);
-
-
-			//root.stop && (root.stop.id = root.stop.id || Gun.text.random(2));
-			//if((tmp = root.stop) && (tmp = tmp[at.id] || (tmp[at.id] = {})) && tmp[cat.id]){ return } tmp && (tmp[cat.id] = true);
-			if(eve.seen && at.id && eve.seen[at.id]){ return eve.to.next(msg) }
-			//if((tmp = root.stop)){ if(tmp[at.id]){ return } tmp[at.id] = msg.root; } // temporary fix till a better solution?
-			if((tmp = data) && tmp['#'] && 'string' == typeof (tmp = valid(tmp))){
-				tmp = ((msg.$$ = at.root.$.get(tmp))._);
-				if(u !== tmp.put){
-					//msg = obj_to(msg, {put: data = tmp.put});
-					var o = {}; Object.keys(msg).forEach(function(k){ o[k] = msg[k] }); o.put = data = tmp.put;
-					msg = o;
-				}
-			}
-			if((tmp = root.mum) && at.id){ // TODO: can we delete mum entirely now?
-				var id = at.id + (eve.id || (eve.id = String.random(9)));
-				if(tmp[id]){ return }
-				if(u !== data && 'string' != typeof valid(data)){ tmp[id] = true; }
-			}
-			as.use(msg, eve);
-			if(eve.stun){
-				eve.stun = null;
-				return;
-			}
-			eve.to.next(msg);
-		}
 		function rid(at){
-			var cat = this.on;
+			var cat = this.at || this.on;
 			if(!at || cat.soul || cat.has){ return this.off() }
 			if(!(at = (at = (at = at.$ || at)._ || at).id)){ return }
 			var map = cat.map, tmp, seen;
@@ -991,11 +975,12 @@
 				return gun;
 			}
 			var opt = arg;
-			opt = (true === opt)? {change: true} : opt || {};
-			opt.at = cat;
-			opt.ok = tag;
+			(opt = (true === opt)? {change: true} : opt || {}).not = 1; opt.on = 1;
+			//opt.at = cat;
+			//opt.ok = tag;
 			//opt.last = {};
-			//gun.get(ok, opt); // TODO: PERF! Event listener leak!!!?
+			gun.get(tag, opt); // TODO: PERF! Event listener leak!!!?
+			/*
 			function one(msg, eve){
 				if(one.stun){ return }
 				var at = msg.$._, data = at.put, tmp;
@@ -1016,7 +1001,7 @@
 			one.at = cat;
 			(cat.act||(cat.act={}))[id = String.random(7)] = one;
 			one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
-			cat.on('out', {get: {}});
+			cat.on('out', {get: {}});*/
 			return gun;
 		}
 		// Rules:
@@ -1093,7 +1078,7 @@
 				if(chain = cat.each){ return chain }
 				cat.each = chain = gun.chain();
 				chain._.nix = gun.back('nix');
-				gun.on(map, {as: chain._, stun: false});
+				gun.get(map, {as: chain._, stun: false, not: 1});
 				return chain;
 			}
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
@@ -1108,7 +1093,7 @@
 			return chain;
 		}
 		function map(msg){
-			var cat = this, gun = msg.$, put = msg.put;
+			var cat = this.as, gun = msg.$, put = msg.put;
 			if(!put){ return }
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'];
 			// TODO: lex match!
