@@ -687,16 +687,11 @@
       keys = keys ? typeof keys === 'string' ? [keys] : Array.isArray(keys)?keys : null : null
 
       const data = JSON.stringify({
-        certificants,
-        keys
+        c: certificants,
+        k: keys
       })
 
-      const signature = await SEA.sign(data, issuer, null, {raw:1})
-
-      const certificate = {
-        ...signature,
-        'p': issuer.pub // "p" stands for the "pub" of the issuer
-      }
+      const certificate = await SEA.sign(data, issuer, null, {raw:1})
 
       var r = certificate
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
@@ -1315,52 +1310,54 @@
       if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
-    check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
-      new Promise(resolve => {
-        // check for certificate
-        if (msg._?.out?.opt?.cert) {
-          var raw = S.parse(msg._.out.opt.cert)
-          // even if cert exist, we must verify it
-          if (raw && raw.m && raw.s && raw.p) {
-            // "p": issuer's pub
-            SEA.verify(raw, raw.p, data => {
-              if (u !== data && JSON.stringify(data) === JSON.stringify(raw.m)) resolve(raw)
-              else {
-                no('Certificate invalid!')
-                resolve()
-              }
-            })
+    check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
+      if('pub' === key && '~'+pub === soul){
+        if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
+        return no("Account not same!")
+      }
+      if(user?.is?.pub){
+        console.log('user logged in')
+        SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){ // needs to be refactored
+          if(u === data){ return no(SEA.err || 'Signature fail.') }
+          if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+          msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
+          msg.put['='] = tmp
+
+          const next = msg => {
+            msg.put[':'] = JSON.stringify(msg.put[':'])
+            eve.to.next(msg)
           }
-          else {
-            no('Certificate invalid!')
-            resolve()
+
+          // if writing to other's graph, check if cert exists then try to inject cert into put
+          if(pub !== user.is.pub && msg._?.out?.opt?.cert) {
+            console.log('writing to other\' graph')
+            const cert = S.parse(msg._.out.opt.cert)
+            // even if cert exists, we must verify it
+            if (cert && cert.m && cert.s) {
+              SEA.verify(cert, pub, _data => {
+                if (u !== _data) msg.put[':']['*'] = cert
+                next(msg)
+              })
+            }
           }
-        }
-        else resolve()
-      }).then(cert => {
-        if('pub' === key && '~'+pub === soul){
-          if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
-          return no("Account not same!");
-        }
-        if((tmp = user.is) && (pub === tmp.pub || (pub !== tmp.pub && u !== cert))){ // If user is authenticated, and wants to put to his own graph, allow. If he tries to put to other's graph, a valid cert must be provided
-          SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){
-            if(u === data){ return no(SEA.err || 'Signature fail.') }
-            if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
-            msg.put[':'] = JSON.stringify({':': tmp = SEA.opt.unpack(data.m), '~': data.s, ...(u !== cert ? {'&': cert} : {})}); // "&" stands for cert, inject cert to put if possible
-            msg.put['='] = tmp;
-            eve.to.next(msg);
-          }, {raw: 1});
-          return;
-        }
-        // cert injected, now do some logic to verify put
-        SEA.verify(SEA.opt.pack(msg.put), pub, function(data){ var tmp;
-          data = SEA.opt.unpack(data);
-          if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
-          if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
-          msg.put['='] = data;
-          eve.to.next(msg);
-        });
-      })
+          // if writing to own graph, just allow it
+          else if (pub === user.is.pub) {
+            console.log('writing to own graph')
+            next(msg)
+          }
+        }, {raw: 1})
+        return;
+      }
+      
+      console.log('before verify')
+      SEA.verify(SEA.opt.pack(msg.put), pub, function(data){ var tmp;
+        console.log('after verify')
+        data = SEA.opt.unpack(data);
+        if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
+        if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+        msg.put['='] = data;
+        eve.to.next(msg);
+      });
     };
     check.any = function(eve, msg, val, key, soul, at, no, user){ var tmp, pub;
       if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
