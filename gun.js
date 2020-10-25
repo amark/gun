@@ -301,6 +301,7 @@
 					root.on('out', msg);
 					return;
 				}
+				root.hatch = [];
 				var put = msg.put;
 				var DBG = ctx.DBG = msg.DBG, S = +new Date;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
@@ -326,8 +327,10 @@
 						kl = Object.keys(node||{}); // TODO: .keys( is slow
 					}
 					if(err){
-						console.log("handle error!", err) // handle!
-						ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
+						ctx.err = err;
+						fire(ctx);
+						//console.log("handle error!", err) // handle!
+						//ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
 						return;
 					}
 					var i = 0, key; o = o || 0;
@@ -381,9 +384,13 @@
 				fire(ctx);
 			}
 			function fire(ctx, msg){
-				if(--ctx.stun !== 0){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
+				if(ctx.stop){ return }
+				if(--ctx.stun !== 0 && !ctx.err){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
+				ctx.stop = 1;
 				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-				if(!(msg = ctx.msg) || ctx.err || msg.err || !ctx.root){ return }
+				if(!ctx.root){ return }
+				var hatch = ctx.root.hatch; ctx.root.hatch = 0; setTimeout.each(hatch, function(cb){cb && cb()});
+				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
 			}
@@ -554,7 +561,11 @@
 					at.on('in', at);
 					return;
 				}*/
+				if(root.pass){ at.pass = root.pass; } // will this make for buggy behavior elsewhere?
 				if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
+				console.only(5, 'out', get, at.id);
+				console.only(4, 'out', get, at.id);
+				console.only(3, 'out', get, at.id);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
@@ -575,6 +586,7 @@
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						tmp = back.ask && back.ask[get];
 						(back.ask || (back.ask = {}))[get] = back.$.get(get)._;
+						console.only(6, 'out', back.put);
 						back.on('in', {put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 						if(tmp){ return }
 					}
@@ -661,6 +673,7 @@
 				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
 				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at.$; msg = tmp;
 			} else {}
+			console.only(7, 'in:', cat.get, change);
 			eve.to.next(msg); // 1st API job is to call all the listeners.
 			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 				(act = cat.act[act]) && act(msg);
@@ -688,7 +701,9 @@
 			if('string' == typeof (link = valid(change))){
 				if((cat.has && at === cat)){
 					sat = root.$.get(cat.link = link)._; // grab what we're linking to.
-					if((sat.echo || (sat.echo = {}))[cat.id]){ return } // we've already added ourself.
+					console.only(8, 'in:', cat.get, change, cat.ask, at.soul, cat.id, cat.pass);
+					if((sat.echo || (sat.echo = {}))[cat.id] && !cat.pass){ return } // we've already added ourself.
+					delete cat.pass;
 					sat.echo[cat.id] = cat; // add ourselves to it.
 					if((tmp = cat.ask||'')['']){
 						sat.on('out', {get: {'#': link}});
@@ -739,9 +754,11 @@
 				var gun = this, cat = gun._, opt = cb || {}, root = cat.root, id;
 				opt.at = cat;
 				opt.ok = key;
+				console.only(2, 'get', cat.get);
 				function any(msg, eve){
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
+					if((tmp = root.pass) && !tmp[id]){ return }
 					if(tmp = at.link){ data = root.$.get(tmp)._.put }
 					if(opt.not !== u && u === data){ return }
 					if(opt.stun === u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
@@ -753,6 +770,7 @@
 					if(opt.on){
 						opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any); return;
 					}
+					//msg.put = data; // 2019 COMPATIBILITY! TODO: GET RID OF THIS!
 					opt.ok(msg, eve || any); return;
 					if(opt.as){
 						opt.ok.call(opt.as, msg, eve || any);
@@ -764,7 +782,9 @@
 				(cat.act||(cat.act={}))[id = String.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 				any.rid = rid;
+				tmp = root.pass; (root.pass = {})[id] = 1;
 				cat.on('out', {get: {}});
+				root.pass = tmp;
 				return gun;
 
 			} else
@@ -855,8 +875,8 @@
 			as.data = as.data || data;
 			as.soul || (as.soul = at.soul || ('string' == typeof cb && cb));
 			var s = as.state = as.state || Gun.state();
-			if(!as.soul){ return get(as), gun }
 			if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
+			if(!as.soul){ return get(as), gun }
 			as.$ = root.$.get(as.soul);
 			as.todo = [{it: as.data, ref: as.$}];
 			as.turn = as.turn || turn;
@@ -979,7 +999,16 @@
 			//opt.at = cat;
 			//opt.ok = tag;
 			//opt.last = {};
-			gun.get(tag, opt); // TODO: PERF! Event listener leak!!!?
+			console.only(1, '.on', cat.get);
+			var wait = {};
+			gun.get(function on(data,key,msg,eve){ var _ = this;
+				if(tmp = root.hatch){ // quick hack!
+					if(wait[_._.id]){ return } wait[_._.id] = 1;
+					tmp.push(function(){on.call(_, data,key,msg,eve)});
+					return;
+				}; wait = {}; // end quick hack.
+				tag.call(_, data,key,msg,eve);
+			}, opt); // TODO: PERF! Event listener leak!!!?
 			/*
 			function one(msg, eve){
 				if(one.stun){ return }
