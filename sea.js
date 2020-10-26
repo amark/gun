@@ -1311,25 +1311,26 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
+      const raw = S.parse(val) || {}
       if('pub' === key && '~'+pub === soul){
         if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
-      if(user?.is?.pub){
+      if (user?.is?.pub && !raw['*'] && !raw['+']){
         SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){ // needs to be refactored
           if(u === data){ return no(SEA.err || 'Signature fail.') }
-          if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
           msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
           msg.put['='] = tmp
-          
+
           // if writing to own graph, just allow it
           if (pub === user.is.pub) {
+            if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
             msg.put[':'] = JSON.stringify(msg.put[':'])
-            eve.to.next(msg)
+            return eve.to.next(msg)
           }
 
           // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-          if(pub !== user.is.pub && msg._?.out?.opt?.cert) {
+          if (pub !== user.is.pub && msg._?.out?.opt?.cert) {
             const cert = S.parse(msg._.out.opt.cert)
             // even if cert exists, we must verify it
             if (cert && cert.m && cert.s) {
@@ -1339,7 +1340,7 @@
                   msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
                 }
                 msg.put[':'] = JSON.stringify(msg.put[':'])
-                eve.to.next(msg)
+                return eve.to.next(msg)
               })
             }
           }
@@ -1347,8 +1348,6 @@
         return;
       }
 
-      const raw = S.parse(val) || {}
-      
       SEA.verify(SEA.opt.pack(msg.put), raw['*'] || pub, function(data){ var tmp;
         data = SEA.opt.unpack(data);
         if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
@@ -1360,20 +1359,18 @@
           SEA.verify(raw['+'], pub, _ => { // check if "pub" (of the graph owner) really issued this cert
             if (u !== _ && _.c && _.k && (_.c.indexOf('*') || _.c.indexOf(raw['*']))) { // "c" = certificants/certified users, "k" = allowed keys
               // ok, now putter is in the "certificants" list, but is "key" allowed? Check key
-              var yesOrNo = false
               for (k of _.k) {
-                if (new RegExp(k).test(key)) yesOrNo = true
-              }
-              if (yesOrNo === true) {
-                msg.put['='] = data;
-                eve.to.next(msg);
+                if (new RegExp(k).test(key)) {
+                  msg.put['='] = data;
+                  return eve.to.next(msg);
+                }
               }
             }
           })
         }
         else {
           msg.put['='] = data;
-          eve.to.next(msg);
+          return eve.to.next(msg);
         }
       });
     };
