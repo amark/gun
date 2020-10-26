@@ -1335,10 +1335,9 @@
             // even if cert exists, we must verify it
             if (cert && cert.m && cert.s) {
               SEA.verify(cert, pub, data => {
-                if (u !== data) {
-                  msg.put[':']['+'] = cert // '+' is a certificate
-                  msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
-                }
+                if (u === data) return no("Certificate verification fail.")
+                msg.put[':']['+'] = cert // '+' is a certificate
+                msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
                 msg.put[':'] = JSON.stringify(msg.put[':'])
                 return eve.to.next(msg)
               })
