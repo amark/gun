@@ -1341,7 +1341,7 @@
         return no("Account not same!")
       }
 
-      if (user?.is?.pub && !raw['*'] && !raw['+']){
+      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+']){
         SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){ // needs to be refactored
           if(u === data){ return no(SEA.err || 'Signature fail.') }
           msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
@@ -1355,7 +1355,7 @@
           }
 
           // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-          if (pub !== user.is.pub && msg._?.out?.opt?.cert) {
+          if (pub !== user.is.pub && ((msg._.out || {}).opt || {}).cert) {
             const cert = S.parse(msg._.out.opt.cert)
             // even if cert exists, we must verify it
             if (cert && cert.m && cert.s) {
