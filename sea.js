@@ -653,12 +653,13 @@
   ;USE(function(module){
     var SEA = USE('./root');
     
-    // This is to certify that a group of "certificants" can "put" anything at a group of "keys" in the "issuer"'s graph
-    SEA.certify = SEA.certify || (async (certificants, keys, issuer, cb, opt = {}) => { try {
-      /* 
+    // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate issuer's graph
+    SEA.certify = SEA.certify || (async (certificants, patterns, issuer, cb, opt = {}) => { try {
+      /*
+      IMPORTANT: A Certificate is like a Signature. No one knows who (issuer) created/signed a cert until you put it into their graph.
       "certificants": A string (~Bobpub) || a pair || an array of pubs/pairs. These people will have the rights.
-      "keys": A string ('~AlicePub/room-for-Bob'), or an array of strings [key 1, key 2]. If '*' exists ('~AlicePub/room-for-Bob/*') then sync ALL THE KEYS with this prefix ('~AlicePub/room-for-Bob/toys' will sync).
-      "issuer": Alice's pair
+      "patterns": A string (^inbox.*), or an array of strings [^inbox.*, ^secret\-group.*]. These patterns will be used to check against soul+'/'+key
+      "issuer": Key pair or priv of the certificate issuer
       "cb": A callback function after all things are done
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry
       */
@@ -684,11 +685,12 @@
         return data
       })()
 
-      keys = keys ? typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : null : null
+      patterns = patterns ? typeof patterns === 'string' ? [patterns] : Array.isArray(patterns) ? patterns : null : null
 
       const data = JSON.stringify({
         c: certificants,
-        k: keys
+        p: patterns,
+        ...(opt?.expiry && typeof opt.expiry === 'number' ? {e: opt.expiry} : {}) // inject expiry if possible
       })
 
       const certificate = await SEA.sign(data, issuer, null, {raw:1})
@@ -1312,10 +1314,33 @@
     };
     check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
       const raw = S.parse(val) || {}
-      if('pub' === key && '~'+pub === soul){
+      
+      const verify = (certificate, certificant, cb) => {
+        if (certificate['m'] && certificate['s'] && certificant && pub) {
+          // now verify certificate
+          return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
+            if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.")
+            if (u !== data && data.c && data.p && (data.c.indexOf('*') || data.c.indexOf(certificant))) { // "data.c" = a list of certificants/certified users, "data.p" = a list of allowed patterns
+              // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
+              let path = soul + '/' + key
+              path = path.replace(path.substring(0, path.indexOf('/') + 1), '')
+              for (p of data.p) {
+                if (new RegExp(p).test(path)) {
+                  return cb(data)
+                }
+              }
+              return no("Certificate verification fail.")
+            }
+          })
+        }
+        return
+      }
+      
+      if ('pub' === key && '~'+pub === soul) {
         if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
+
       if (user?.is?.pub && !raw['*'] && !raw['+']){
         SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){ // needs to be refactored
           if(u === data){ return no(SEA.err || 'Signature fail.') }
@@ -1324,7 +1349,7 @@
 
           // if writing to own graph, just allow it
           if (pub === user.is.pub) {
-            if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+            if (tmp = link_is(val)) { (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
             msg.put[':'] = JSON.stringify(msg.put[':'])
             return eve.to.next(msg)
           }
@@ -1334,8 +1359,7 @@
             const cert = S.parse(msg._.out.opt.cert)
             // even if cert exists, we must verify it
             if (cert && cert.m && cert.s) {
-              SEA.verify(cert, pub, data => {
-                if (u === data) return no("Certificate verification fail.")
+              verify(cert, user.is.pub, _ => {
                 msg.put[':']['+'] = cert // '+' is a certificate
                 msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
                 msg.put[':'] = JSON.stringify(msg.put[':'])
@@ -1355,16 +1379,9 @@
         // check if cert ('+') and putter's pub ('*') exist
         if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*']) {
           // now verify certificate
-          SEA.verify(raw['+'], pub, _ => { // check if "pub" (of the graph owner) really issued this cert
-            if (u !== _ && _.c && _.k && (_.c.indexOf('*') || _.c.indexOf(raw['*']))) { // "c" = certificants/certified users, "k" = allowed keys
-              // ok, now putter is in the "certificants" list, but is "key" allowed? Check key
-              for (k of _.k) {
-                if (new RegExp(k).test(key)) {
-                  msg.put['='] = data;
-                  return eve.to.next(msg);
-                }
-              }
-            }
+          verify(raw['+'], raw['*'], _ => {
+            msg.put['='] = data;
+            return eve.to.next(msg);
           })
         }
         else {
