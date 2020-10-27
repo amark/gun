@@ -690,7 +690,7 @@
       const data = JSON.stringify({
         c: certificants,
         p: patterns,
-        ...(opt?.expiry && typeof opt.expiry === 'number' ? {e: opt.expiry} : {}) // inject expiry if possible
+        ...(opt.expiry && typeof opt.expiry === 'number' ? {e: opt.expiry} : {}) // inject expiry if possible
       })
 
       const certificate = await SEA.sign(data, issuer, null, {raw:1})
