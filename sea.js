@@ -665,6 +665,8 @@
       */
 
       // We need some logic here to verify that all params are valid
+      
+      console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
