@@ -563,9 +563,6 @@
 				}*/
 				if(root.pass){ at.pass = root.pass; } // will this make for buggy behavior elsewhere?
 				if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
-				console.only(5, 'out', get, at.id);
-				console.only(4, 'out', get, at.id);
-				console.only(3, 'out', get, at.id);
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
@@ -586,7 +583,6 @@
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						tmp = back.ask && back.ask[get];
 						(back.ask || (back.ask = {}))[get] = back.$.get(get)._;
-						console.only(6, 'out', back.put);
 						back.on('in', {put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 						if(tmp){ return }
 					}
@@ -652,16 +648,18 @@
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
-
 			if(key){ // TODO: Should we not only locally cache in the chain if this machine has asked for the data? I think this caused a bug somewhere if we did, so test.
-				if((tmp = cat.soul || at.link) && cat.ask && state >= state_is(root.graph[soul], key)){ // Note: Something other than a soul chain might ask for data, but we should always cache to the soul chain. // TODO: Why does adding || at.soul cause tests to fail? // faster than HAM
-					(tmp = root.$.get(tmp)._).put = state_ify(tmp.put, key, state, change, soul);
+				if(cat.ask && state >= state_is(root.graph[soul], key)){ // This handles any chain, such as a proxy chain or plural chain, that asks for data, but always updates the cache of the root soul chain. // TODO: Why does adding || at.soul cause tests to fail? // faster than HAM
+					(tmp = root.$.get(soul)._).put = state_ify(tmp.put, key, state, change, soul);
 				}
 				if(cat.has && at.soul){
 					cat.put = at.put;
 				}
 				if(cat.has && at === cat && state >= state_is(root.graph[soul], key)){ // faster than HAM
-					cat.put = change;
+					tmp = cat.put = change; // update cache
+					if('string' == typeof (tmp = valid(tmp))){
+						cat.put = root.$.get(tmp)._.put || cat.put; // but if link, update to linked cache.
+					}
 				}
 			}
 			if(cat.soul && at === cat){ // (1) we're a root node chain.
@@ -673,7 +671,6 @@
 				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
 				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at.$; msg = tmp;
 			} else {}
-			console.only(7, 'in:', cat.get, change);
 			eve.to.next(msg); // 1st API job is to call all the listeners.
 			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 				(act = cat.act[act]) && act(msg);
@@ -701,15 +698,16 @@
 			if('string' == typeof (link = valid(change))){
 				if((cat.has && at === cat)){
 					sat = root.$.get(cat.link = link)._; // grab what we're linking to.
-					console.only(8, 'in:', cat.get, change, cat.ask, at.soul, cat.id, cat.pass);
 					if((sat.echo || (sat.echo = {}))[cat.id] && !cat.pass){ return } // we've already added ourself.
-					delete cat.pass;
+					delete cat.pass; // TODO: Make this global so we're not cleaning self up?
 					sat.echo[cat.id] = cat; // add ourselves to it.
-					if((tmp = cat.ask||'')['']){
+					tmp = cat.ask||'';
+					delete cat.ask; // TODO: BUG: Is this correct? Can we avoid?
+					if(tmp['']){
 						sat.on('out', {get: {'#': link}});
 					} else {
 						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-							if(!(sat = cat.ask[get])){ return }
+							if(!(sat = tmp[get])){ return }
 							sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 						},0,99);
 					}
@@ -754,29 +752,22 @@
 				var gun = this, cat = gun._, opt = cb || {}, root = cat.root, id;
 				opt.at = cat;
 				opt.ok = key;
-				console.only(2, 'get', cat.get);
 				function any(msg, eve){
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
-					if(tmp = at.link){ data = root.$.get(tmp)._.put }
+					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put }
 					if(opt.not !== u && u === data){ return }
-					if(opt.stun === u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){ // Remember! If you port this into `.get(cb` make sure you allow stun:0 skip option for `.put(`.
+					if(opt.stun === u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){
 						tmp[id] = function(){any(msg,eve)};
 						return;
 					}
 					//tmp = any.wait || (any.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';any(msg,eve)},1); return } delete tmp[at.id];
 					// call:
-					if(opt.on){
-						opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any); return;
-					}
-					//msg.put = data; // 2019 COMPATIBILITY! TODO: GET RID OF THIS!
-					opt.ok(msg, eve || any); return;
-					if(opt.as){
-						opt.ok.call(opt.as, msg, eve || any);
-					} else {
-						opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any);
-					}
+					if(opt.on){ opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any); return }
+					if(opt.v2020){ opt.ok(msg, eve || any); return }
+					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); msg = tmp; msg.put = data; // 2019 COMPATIBILITY! TODO: GET RID OF THIS!
+					opt.ok.call(opt.as, msg, eve || any); // is this the right
 				};
 				any.at = cat;
 				(cat.act||(cat.act={}))[id = String.random(7)] = any;
@@ -903,7 +894,7 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0});
+					(tmp = tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1});
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
@@ -999,15 +990,14 @@
 			//opt.at = cat;
 			//opt.ok = tag;
 			//opt.last = {};
-			console.only(1, '.on', cat.get);
-			var wait = {};
-			gun.get(function on(data,key,msg,eve){ var _ = this;
+			var wait = {}; // can we assign this to the at instead, like in once?
+			gun.get(function on(data,key,msg,eve){ var $ = this;
 				if(tmp = root.hatch){ // quick hack!
-					if(wait[_._.id]){ return } wait[_._.id] = 1;
-					tmp.push(function(){on.call(_, data,key,msg,eve)});
+					if(wait[$._.id]){ return } wait[$._.id] = 1;
+					tmp.push(function(){on.call($, data,key,msg,eve)});
 					return;
 				}; wait = {}; // end quick hack.
-				tag.call(_, data,key,msg,eve);
+				tag.call($, data,key,msg,eve);
 			}, opt); // TODO: PERF! Event listener leak!!!?
 			/*
 			function one(msg, eve){
@@ -1038,24 +1028,20 @@
 		// 2. Should not retrigger other listeners, should get triggered even if nothing found.
 		// 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 		Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
-			var gun = this, cat = gun._, root = cat.root, data = cat.put, id, one, tmp;
-			//(root.act[tmp = ++root.acts] = cat.act[tmp] = function(msg, eve, to){
-			((cat.act||(cat.act={}))[id = tmp||String.random(7)] = function(msg, eve, to){
-				var at = msg.$._, one = (at.one||(at.one={}));
-				if('' === one[id]){ return }
-				if(!at.soul && (tmp = msg.put) && 'string' == typeof (tmp = Gun.valid(tmp['=']||tmp[':']))){
-					if(u === (tmp = root.$.get(tmp)._).put){ return } // probably already getting it.
-				}
-				if(!(at.soul || at.link)){ once(); return }
+			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
+			gun.get(function(data,key,msg,eve){
+				var $ = this, at = $._, one = (at.one||(at.one={}));
+				if(eve.stun){ return } //if('' === one[id]){ return }
+				if(true === (tmp = Gun.valid(data))){ once(); return }
+				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
-					if('' === one[id]){ return }
-					one[id] = ''; if(cat.soul || cat.has){ delete cat.act[id] }
+					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
+					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					cb.call(at.$, tmp, msg.get || at.get);
+					cb.call($, tmp, msg.get || at.get);
 				};
-			}).at = cat;
-			cat.on('out', {get: {}});
+			}, {on: 1});
 			return gun;
 		}
 
@@ -1107,7 +1093,7 @@
 				if(chain = cat.each){ return chain }
 				cat.each = chain = gun.chain();
 				chain._.nix = gun.back('nix');
-				gun.get(map, {as: chain._, stun: false, not: 1});
+				gun.get(map, {as: chain._, stun: false, not: 1, v2020:1});
 				return chain;
 			}
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
