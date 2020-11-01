@@ -22,8 +22,9 @@ describe('Gun', function(){
 			//require('../lib/file');
 			require('../lib/store');
 			require('../lib/rfs');
-			require('./rad/rad.js');
-			require('./sea/sea.js');
+			console.log("UNDO THIS SO RAD & SEA RUN!");
+			//require('./rad/rad.js');
+			//require('./sea/sea.js');
 		}
 	}(this));
 	//Gun.log.squelch = true;
@@ -99,26 +100,10 @@ describe('Gun', function(){
 				expect(String.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
 				expect(String.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
 				expect(String.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
-				expect(String.match("user/amber/nadal", {'>': 'user/j', '<': 'user/o'})).to.not.be.ok();
-				expect(String.match("user/amber/nadal", {'>': 'user/a', '<': 'user/c'})).to.be.ok();
+				expect(String.match("user/timber/nadal", {'>': 'user/j', '<': 'user/o'})).to.not.be.ok();
+				expect(String.match("user/timber/nadal", {'>': 'user/a', '<': 'user/c'})).to.be.ok();
 				expect(String.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
 				return; // below is OLD bloat, still available in lib/match.js
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '>': 'j', '<': 'o', '?': 'm/n'})).to.be.ok();
-				expect(Gun.text.match("user/amber/cazzell", {'*': 'user/', '?': 'm/n'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '-': 'mad'})).to.be.ok();
-				expect(Gun.text.match("user/mad/person", {'*': 'user/', '-': 'mad'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '-': ['mark', 'nadal']})).to.not.be.ok();
-				expect(Gun.text.match("user/amber/rachel/cazzell", {'*': 'user/', '-': ['mark', 'nadal']})).to.be.ok();
-				expect(Gun.text.match("user/mark/nadal", {'*': 'user/', '+': 'ark'})).to.be.ok();
-				expect(Gun.text.match("user/mad/person", {'*': 'user/', '+': 'ark'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['mark', 'nadal']})).to.be.ok();
-				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['nadal', 'mark']})).to.be.ok();
-				expect(Gun.text.match("user/mark/timothy/nadal", {'*': 'user/', '+': ['mark', 'amber']})).to.not.be.ok();
-				expect(Gun.text.match("user/mark/rachel/nadal/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.be.ok();
-				expect(Gun.text.match("user/mark/rachel/timothy/cazzell", {'*': 'user/', '+': ['mark', 'cazzell'], '-': ['amber', 'timothy']})).to.not.be.ok();
-				expect(Gun.text.match("photo/kitten.jpg", {'*': 'photo/', '!': '.jpg'})).to.be.ok();
-				expect(Gun.text.match("photo/kittens.gif", {'*': 'photo/', '!': '.jpg'})).to.not.be.ok();
-				expect(Gun.text.match("user/mark", {'~': 'user/Mark'})).to.be.ok();
 			});
 			it('plain object',function(){
 				expect(Object.plain({})).to.be(true);
@@ -2692,17 +2677,16 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
-
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
-				//clearTimeout(done.to);
-				//setTimeout(function(){
-					//console.log("*****************", data);return;
+				//console.log("*****************", data, done.to);//return;
+				expect(done.to).to.not.be.ok();
+				done.to = setTimeout(function(){
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
 					expect('string' == typeof Gun.valid(data.pet)).to.ok();
 					done();
-				//},300);
+				},300);
 			});
 			});
 		});
@@ -2776,6 +2760,22 @@ describe('Gun', function(){
 			},40);
 		});
 
+		it('get list set map simple', function(done){
+
+			var gun = Gun();
+
+			var list = gun.get('list-s');
+
+			list.set(gun.get('alice-s').put({name: "Alice", group: "awesome", married: true}));
+			var check = {}, count = {};
+			list.map().on(function(data, id){
+				expect(data.group).to.be('awesome');
+				expect(data.married).to.be(true);
+				expect(data.name).to.be('Alice');
+				done();
+			});
+		});
+
 		it('get list set map val', function(done){
 
 			var gun = Gun();
@@ -2788,10 +2788,7 @@ describe('Gun', function(){
 			list.set(gun.get('dave').put({name: "Dave", group: "awesome", married: true}));
 
 			var check = {}, count = {};
-			//console.log("===============================");
-			//console.only.i=1;
 			list.map().on(function(data, id){
-				//console.log("***************", id, data);
 				check[id] = data;
 				count[id] = (count[id] || 0) + 1;
 				if(check.alice && check.bob && check.carl && check.dave){
@@ -2856,7 +2853,7 @@ describe('Gun', function(){
 
 		it('get get get set root get put', function(done){
 			var gun = Gun().get('app');
-			//console.debug.i=1;console.log('---------------');
+			//console.only.i=1;console.log('---------------');
 			gun.get('alias').get('mark').set(
 				gun.back(-1).get('pub').put({
 					alias: 'mark',
@@ -2866,7 +2863,6 @@ describe('Gun', function(){
 					salt: 'random'
 				})
 			);
-			//return;
 			setTimeout(function(){
 				//console.debug.i=1;console.log('---------------');
 				gun.get(function(at){
@@ -2874,11 +2870,11 @@ describe('Gun', function(){
 					done.app = done.app || at.put.alias;
 				});
 				gun.back(-1).get('pub').get(function(at){
-					//console.log("**", at.put);
+					//console.log("**", at.put.auth);
 					done.pub = done.pub || at.put.auth;
 				});
 				gun.get('alias').get(function(at){
-					//console.log("***", at.put);
+					//console.log("***", at);
 					done.alias = done.alias || at.put.mark;
 					//!console.debug.i&&(console.debug.i=1)&&console.log("---------------------");
 				}).get('mark').on(function(data){
@@ -2886,7 +2882,8 @@ describe('Gun', function(){
 					clearTimeout(done.to);
 					done.to = setTimeout(function(){
 						done.mark = done.mark || data.pub;
-						expect(Gun.val.link.is(done.mark)).to.be('pub');
+						//console.log('???', done.app, done.pub, done.alias);
+						expect(Gun.valid(done.mark)).to.be('pub');
 						expect(done.app).to.be.ok();
 						expect(done.pub).to.be.ok();
 						expect(done.alias).to.be.ok();
@@ -2913,7 +2910,7 @@ describe('Gun', function(){
 				var gun2 = Gun();
 				//console.log(require('fs').readFileSync('./radata/!').toString());
 				gun2.get('stef').get('address').once(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
-					//console.log("******", data);
+					//console.log("******", data);return;
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
 					expect(data.zip).to.be('999999');
@@ -2922,8 +2919,7 @@ describe('Gun', function(){
 					done();
 				});
 				gun2.get('stef').once(function(data){ //Object {_: Object, address: Object} "stef"
-					//console.log("**************", data);
-					//return;
+					//console.log("**************", data);return;
 					done.s = true;
 					expect(data.name).to.be('Stef');
 					expect(data.address).to.be.ok();
@@ -2935,15 +2931,16 @@ describe('Gun', function(){
 		});
 
 		it('get get get any parallel', function(done){
-			gun.on('test', {$: gun, put: Gun.graph.ify({
+
+			Gun.statedisk({
 				bob: {
 					age: 29,
 					name: "Bob!"
 				}
-			}, Gun.state.map(), 'parallel')});
+			}, 'parallel', function(){
 			gun.get('parallel').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data, at.$._.ack);//return;
+				//console.log("***** age", data, field, at.$._.ack, '...', at);//return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
@@ -2958,18 +2955,19 @@ describe('Gun', function(){
 				if(done.c){ return } done.c = 1;
 				done();
 			});
+			});
 		});
 
 		it('get get get any later', function(done){
-			gun.on('test', {$: gun, put: Gun.graph.ify({
+			Gun.statedisk({
 				bob: {_:{'#':'ddfsa'},
 					age: 29,
 					name: "Bob!"
 				}
-			}, Gun.state.map(), 'parallel/later')});
+			}, 'parallel/later', function(){
 			gun.get('parallel/later').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data);
+				//console.log("***** age", data, field, at); return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
@@ -2977,7 +2975,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				gun.get('parallel/later').get('bob').get('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
-					//console.log("*********** name", data);
+					//console.log("*********** name", data, field); return;
 					expect(data).to.be('Bob!');
 					expect(field).to.be('name');
 					done.name = true;
@@ -2986,6 +2984,7 @@ describe('Gun', function(){
 					done();
 				});
 			},400);
+			});
 		});
 
 		it('get get get any not', function(done){
@@ -3032,31 +3031,32 @@ describe('Gun', function(){
 		});
 
 		it('get any any', function(done){
-			gun.on('test', {$: gun, put: Gun.graph.ify({
+			Gun.statedisk({
 				hello: 'world',
 				goodbye: 'mars'
-			}, Gun.state.map(), 'full')});
+			}, 'full', function(){
 			gun.get('full').get(function(at, ev){
 				var err = at.err, data = at.$._.put || at.put, field = at.get;
-				//console.log("*****1", data);
+				//console.log("*****1", data, field);return;
 				expect(data.hello).to.be('world');
 				expect(data.goodbye).to.be('mars');
 			});
 			gun.get('full').get(function(at, ev){
 				var err = at.err, data = at.$._.put || at.put, field = at.get;
-				//console.log("*****1", data);
+				//console.log("*****2", data, field);return;
 				expect(data.hello).to.be('world');
 				expect(data.goodbye).to.be('mars');
 				if(done.c){ return } done.c = 1;
 				done();
 			});
+			});
 		});
 
 		it('get any any later', function(done){
-			gun.on('test', {$: gun, put: Gun.graph.ify({
+			Gun.statedisk({
 				hello: 'world',
 				goodbye: 'mars'
-			}, Gun.state.map(), 'full/later')});
+			}, 'full/later', function(){
 			gun.get('full/later').get(function(at, ev){
 				var err = at.err, data = at.$._.put || at.put, field = at.get;
 				//console.log("*****", data);
@@ -3071,8 +3071,9 @@ describe('Gun', function(){
 					expect(data.goodbye).to.be('mars');
 					if(done.c){ return } done.c = 1;
 					done();
-				});
+				});al
 			},400);
+			});
 		});
 
 		it('multiple times map', function(done){
@@ -3085,10 +3086,10 @@ describe('Gun', function(){
 						name: "mark"
 					}
 				},
-				'amber': {
+				'timber': {
 					asdf: {
 						pub: 'asdf',
-						name: "amber"
+						name: "timber"
 					}
 				}
 			});
@@ -3096,14 +3097,14 @@ describe('Gun', function(){
 			var check = {A: {}, B: {}};
 			setTimeout(function(){
 				gun.get('usersMM').map().map().once(function(data){
-					//console.log('A', data);
+					console.log('A', data);
 					check.A[data.pub] = true;
 				})
 			}, 900);
 
 			setTimeout(function(){
 				gun.get('usersMM').map().map().once(function(data){
-					//console.log('B', data, check);
+					console.log('B', data, check);
 					check.B[data.pub] = true;
 					if(check.A['asdf'] && check.A['fdsa'] && check.B['asdf'] && check.B['fdsa']){
 						if(done.c){ return } done.c = 1;
@@ -4985,12 +4986,12 @@ describe('Gun', function(){
 
 		it.skip('put gun node', function(done){
 			var mark = gun.put({age: 23, name: "Mark Nadal"});
-			var amber = gun.put({age: 23, name: "Amber Nadal"});
-			mark.path('wife').put(amber, function(err){
+			var timber = gun.put({age: 3, name: "Timber Nadal"});
+			mark.path('boss').put(timber, function(err){
 				expect(err).to.not.be.ok();
 			});
-			mark.path('wife.name').once(function(val){
-				expect(val).to.be("Amber Nadal");
+			mark.path('boss.name').once(function(val){
+				expect(val).to.be("timber Nadal");
 			});
 		});
 
@@ -5378,35 +5379,35 @@ describe('Gun', function(){
 				age: 23,
 				name: "Mark Nadal"
 			}
-			var amber = {
+			var timber = {
 				age: 23,
-				name: "Amber Nadal",
+				name: "timber Nadal",
 				phd: true
 			}
-			mark.wife = amber;
-			amber.husband = mark;
+			mark.boss = timber;
+			timber.husband = mark;
 			var cat = {
 				age: 3,
 				name: "Hobbes"
 			}
 			mark.pet = cat;
-			amber.pet = cat;
+			timber.pet = cat;
 			cat.owner = mark;
-			cat.master = amber;
+			cat.master = timber;
 			//console.debug.i=1;console.log("------------");
 			gun.put(mark, function(err, ok){
 				expect(err).to.not.be.ok();
 			}).once(function(val){
 				expect(val.age).to.be(23);
 				expect(val.name).to.be("Mark Nadal");
-				expect(Gun.val.link.is(val.wife)).to.be.ok();
+				expect(Gun.val.link.is(val.boss)).to.be.ok();
 				expect(Gun.val.link.is(val.pet)).to.be.ok();
-			}).path('wife.pet.name').once(function(val){
+			}).path('boss.pet.name').once(function(val){
 				//console.debug(1, "*****************", val);
 				expect(val).to.be('Hobbes');
 			}).back().path('pet.master').once(function(val){
 				//console.log("*****************", val);
-				expect(val.name).to.be("Amber Nadal");
+				expect(val.name).to.be("timber Nadal");
 				expect(val.phd).to.be.ok();
 				expect(val.age).to.be(23);
 				expect(Gun.val.link.is(val.pet)).to.be.ok();
@@ -5426,25 +5427,25 @@ describe('Gun', function(){
 
 		it('put partial sub merge', function(done){
 			var gun = Gun();
-			var mark = gun.put({name: "Mark", wife: { name: "Amber" }}).key('person/mark').once(function(mark){
+			var mark = gun.put({name: "Mark", boss: { name: "timber" }}).key('person/mark').once(function(mark){
 				//console.log("VAL1", mark);
 				done.marksoul = Gun.node.soul(mark);
 				expect(mark.name).to.be("Mark");
 			});
-			mark.put({age: 23, wife: {age: 23}});
+			mark.put({age: 23, boss: {age: 3}});
 			setTimeout(function(){
-				mark.put({citizen: "USA", wife: {citizen: "USA"}}).once(function(mark){
+				mark.put({citizen: "USA", boss: {citizen: "USA"}}).once(function(mark){
 					//console.log("VAL2", mark, gun);
 					expect(mark.name).to.be("Mark");
 					expect(mark.age).to.be(23);
 					expect(mark.citizen).to.be("USA");
-					this.path('wife').on(function(Amber){ // TODO: turn this .on back into a .val
-						//console.log("VAL3", Amber);
+					this.path('boss').on(function(timber){ // TODO: turn this .on back into a .val
+						//console.log("VAL3", timber);
 						if(done.c){ return }
 						expect(done.c).to.not.be.ok(); // RELATED TO BELOW #"CONTEXT NO DOUBLE EMIT".
-						expect(Amber.name).to.be("Amber");
-						expect(Amber.age).to.be(23);
-						expect(Amber.citizen).to.be("USA");
+						expect(timber.name).to.be("timber");
+						expect(timber.age).to.be(23);
+						expect(timber.citizen).to.be("USA");
 						done();done.c=1;
 					});
 				});
