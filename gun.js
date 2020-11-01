@@ -301,7 +301,7 @@
 					root.on('out', msg);
 					return;
 				}
-				root.hatch = [];
+				root.hatch = root.hatch || [];
 				var put = msg.put;
 				var DBG = ctx.DBG = msg.DBG, S = +new Date;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
@@ -753,15 +753,23 @@
 				var gun = this, cat = gun._, opt = cb || {}, root = cat.root, id;
 				opt.at = cat;
 				opt.ok = key;
+				var wait = {}; // can we assign this to the at instead, like in once?
 				function any(msg, eve){
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put }
 					if(opt.not !== u && u === data){ return }
-					if(opt.stun === u && (tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){
-						tmp[id] = function(){any(msg,eve)};
-						return;
+					if(opt.stun === u){
+						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){
+							tmp[id] = function(){any(msg,eve)};
+							return;
+						}
+						if(tmp = root.hatch){ // quick hack!
+							if(wait[at.$._.id]){ return } wait[at.$._.id] = 1;
+							tmp.push(function(){any(msg,eve)});
+							return;
+						}; wait = {}; // end quick hack.
 					}
 					//tmp = any.wait || (any.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';any(msg,eve)},1); return } delete tmp[at.id];
 					// call:
@@ -992,14 +1000,15 @@
 			//opt.ok = tag;
 			//opt.last = {};
 			var wait = {}; // can we assign this to the at instead, like in once?
-			gun.get(function on(data,key,msg,eve){ var $ = this;
+			gun.get(tag, opt);
+			/*gun.get(function on(data,key,msg,eve){ var $ = this;
 				if(tmp = root.hatch){ // quick hack!
 					if(wait[$._.id]){ return } wait[$._.id] = 1;
 					tmp.push(function(){on.call($, data,key,msg,eve)});
 					return;
 				}; wait = {}; // end quick hack.
 				tag.call($, data,key,msg,eve);
-			}, opt); // TODO: PERF! Event listener leak!!!?
+			}, opt); // TODO: PERF! Event listener leak!!!?*/
 			/*
 			function one(msg, eve){
 				if(one.stun){ return }
