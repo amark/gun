@@ -283,8 +283,8 @@
 				if(msg['@'] && !msg.put){ ack(msg) }
 				if(!at.ask(msg['@'], msg)){ // is this machine listening for an ack?
 					DBG && (DBG.u = +new Date);
+					if(msg.put){ put(msg); return } else
 					if(msg.get){ Gun.on._get(msg, gun) }
-					if(msg.put){ put(msg); return }
 				}
 				DBG && (DBG.uc = +new Date);
 				eve.to.next(msg);
@@ -661,6 +661,7 @@
 						cat.put = root.$.get(tmp)._.put || cat.put; // but if link, update to linked cache.
 					}
 				}
+				msg.get = msg.get || key;
 			}
 			if(cat.soul && at === cat){ // (1) we're a root node chain.
 			} else
