@@ -401,7 +401,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     it('read contacts in descending order', function(done){
         var to; 
-        const filtered = [...names].filter(v => v.startsWith('M'));
+        const filtered = names.filter(v => v.startsWith('M'));
 
         gun.get('names').get({'.': { '*': 'm' }, '%': 1000 * 100, '-': 1}).map().once(function(data){
             expect(filtered.pop()).to.be(data.name);
