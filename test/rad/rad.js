@@ -399,18 +399,15 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
     });
 
-    it.skip('read contacts in descending order', function(done){ // TODO!!!
-        var all = {}, cursor = 'm', to;
-        names.forEach(function(v){
-            all[v] = true;
-        });
-        gun.get('names').get({'.': {'-': true}, '%': 1000 * 100}).once().map().once(function(data, key){
-            expect(data.name).to.be.ok();
-            expect(data.age).to.be.ok();
-            delete all[key];
+    it('read contacts in descending order', function(done){
+        var to; 
+        const filtered = [...names].filter(v => v.startsWith('M'));
+
+        gun.get('names').get({'.': { '*': 'm' }, '%': 1000 * 100, '-': 1}).map().once(function(data){
+            expect(filtered.pop()).to.be(data.name);
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.be.ok();
+                expect(filtered.length).to.be(0);
                 done();
             },100);
         });
