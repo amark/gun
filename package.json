@@ -17,7 +17,7 @@
     "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
-    "minify": "find node_modules && npx uglifyjs gun.js -o gun.min.js -c -m",
+    "minify": "uglifyjs gun.js -o gun.min.js -c -m",
     "unbuild": "node lib/unbuild.js & npm run minify",
     "unbuildMeta": "node lib/unbuild.js lib/meta"
   },
