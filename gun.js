@@ -561,7 +561,7 @@
 					at.on('in', at);
 					return;
 				}*/
-				if(root.pass){ at.pass = root.pass; } // will this make for buggy behavior elsewhere?
+				if(root.pass){ root.pass[at.id] = at; } // will this make for buggy behavior elsewhere?
 				if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
@@ -697,13 +697,12 @@
 				}
 			}
 			if('string' == typeof (link = valid(change))){
-				if((cat.has && at === cat)){
-					sat = root.$.get(cat.link = link)._; // grab what we're linking to.
-					if((sat.echo || (sat.echo = {}))[cat.id] && !cat.pass){ return } // we've already added ourself.
-					delete cat.pass; // TODO: Make this global so we're not cleaning self up?
-					sat.echo[cat.id] = cat; // add ourselves to it.
-					tmp = cat.ask||'';
-					delete cat.ask; // TODO: BUG: Is this correct? Can we avoid?
+				if(at.has){
+					sat = root.$.get(at.link = link)._; // grab what we're linking to.
+					if((sat.echo || (sat.echo = {}))[at.id] && !(root.pass||'')[at.id]){ return } // we've already linked ourselves so we do not need to do it again. Except if a new event listener was added, we need to make a pass through for it.
+					if(tmp = root.pass){ if(tmp[link+at.id]){ return } tmp[link+at.id] = 1 } // The above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
+					sat.echo[at.id] = at; // add ourselves to it.
+					tmp = at.ask||'';
 					if(tmp['']){
 						sat.on('out', {get: {'#': link}});
 					} else {
@@ -773,7 +772,7 @@
 					}
 					//tmp = any.wait || (any.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';any(msg,eve)},1); return } delete tmp[at.id];
 					// call:
-					if(opt.on){ opt.ok.call(at.$, data, msg.get || at.get, msg, eve || any); return }
+					if(opt.on){ opt.ok.call(at.$, data, at.get, msg, eve || any); return }
 					if(opt.v2020){ opt.ok(msg, eve || any); return }
 					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); msg = tmp; msg.put = data; // 2019 COMPATIBILITY! TODO: GET RID OF THIS!
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
@@ -782,7 +781,7 @@
 				(cat.act||(cat.act={}))[id = String.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 				any.rid = rid;
-				tmp = root.pass; (root.pass = {})[id] = 1;
+				tmp = root.pass; (root.pass = {})[id] = 1; // Explanation: test trade-offs want to prevent recursion so we add/remove pass flag as it gets fulfilled to not repeat, however map map needs many pass flags - how do we reconcile?
 				cat.on('out', {get: {}});
 				root.pass = tmp;
 				return gun;
@@ -1049,7 +1048,7 @@
 					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
 					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					cb.call($, tmp, msg.get || at.get);
+					cb.call($, tmp, at.get);
 				};
 			}, {on: 1});
 			return gun;
@@ -1103,7 +1102,7 @@
 				if(chain = cat.each){ return chain }
 				cat.each = chain = gun.chain();
 				chain._.nix = gun.back('nix');
-				gun.get(map, {as: chain._, stun: false, not: 1, v2020:1});
+				gun.on('in', map, chain._);
 				return chain;
 			}
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
