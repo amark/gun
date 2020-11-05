@@ -65,6 +65,7 @@
     "buffer": "^5.4.3"
   },
   "peerDependencies": {
+    "@gooddollar/react-native-webview-crypto": "^0.*",
     "bufferutil": "^4.0.1",
     "utf-8-validate": "^5.0.2",
     "text-encoding": "^0.7.0"
