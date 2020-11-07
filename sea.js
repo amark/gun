@@ -702,7 +702,6 @@
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) {
-      console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -1322,7 +1321,8 @@
           // now verify certificate
           return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.")
-            if (u !== data && data.c && data.p && (data.c.indexOf('*') || data.c.indexOf(certificant))) { // "data.c" = a list of certificants/certified users, "data.p" = a list of allowed patterns
+            // "data.c" = a list of certificants/certified users, "data.p" = a list of allowed patterns
+            if (u !== data && data.c && data.p && (data.c.indexOf('*') || data.c.indexOf(certificant))) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul + '/' + key
               path = path.replace(path.substring(0, path.indexOf('/') + 1), '')
