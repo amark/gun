@@ -11,8 +11,6 @@
 	};
 	var Gun = require('../'); // require('gun')
 
-	console.log(config.peers);
-
 	if(process.env.HTTPS_KEY){
 		config.key = fs.readFileSync(process.env.HTTPS_KEY);
 		config.cert = fs.readFileSync(process.env.HTTPS_CERT);
