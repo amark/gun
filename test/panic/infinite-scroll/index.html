@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <title>Infinite scroll example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <script src="/jquery.js"></script>
+    <script src="/gun.js"></script>
+    <script src="./ScrollWindow.js"></script>
+    <script src='panic.js'></script>
+    <script>panic.server(location.origin)</script>
+  </head>
+
+  <body>
+    <header>
+      <form id="generate">
+        <input type="text" id="number" placeholder="Number of posts"/>
+        <button>Generate</button>
+      </form>
+      <div id="top-buttons">
+        <button id="top">Top</button>
+      </div>
+    </header>
+
+    <div id="container" style="padding-top: 0px; padding-bottom: 0px"></div>
+
+    <button id="bottom">Bottom</button>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

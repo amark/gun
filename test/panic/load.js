@@ -105,8 +105,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	it(config.browsers +" browser(s) have joined!", function(){
 		// Okay! Cool. Now we can move on to the next step...
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
-		// Which is to manually open up a bunch of browser tabs
+		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+		// Which is to automatically or manually open up a bunch of browser tabs
 		// and connect to the PANIC server in the same way
 		// the NodeJS servers did.
 
@@ -249,7 +249,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
-		browsers.run(function(){
+		require('./util/open').cleanup() || browsers.run(function(){
 			setTimeout(function(){
 				location.reload();
 			}, 15 * 1000);
