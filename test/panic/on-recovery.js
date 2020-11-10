@@ -72,7 +72,7 @@ describe("gun.on should receive updates after crashed relay peer comes back onli
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -217,7 +217,7 @@ describe("gun.on should receive updates after crashed relay peer comes back onli
 	});
 
 	after("Everything shut down.", function(){
-		return bob.run(function(){
+		return require('./util/open').cleanup() || bob.run(function(){
 			process.exit();
 		});
 	});

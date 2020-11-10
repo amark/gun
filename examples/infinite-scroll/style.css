@@ -1,0 +1,77 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  padding-top: 65px;
+}
+
+header {
+  background: rgba(255,255,255,0.75);
+  padding: 15px;
+}
+
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+}
+
+#bottom {
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+}
+
+input {
+  border: 0;
+  background-color: #efefef;
+  padding: 15px;
+  border-radius: 50px;
+}
+
+button {
+  background-color: #4a4f9d;
+  border: 0;
+  padding: 15px;
+  color: white;
+  border-radius: 50px;
+}
+
+input, button {
+  outline: none;
+  opacity: 1;
+}
+
+input:focus, button:focus, button:hover {
+  opacity: 0.8;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+#top-buttons, form {
+  display: inline-block;
+  margin: 0;
+}
+
+#top-buttons {
+  float: right;
+}
+
+.post {
+  margin: 15px;
+  padding: 15px;
+  background-color: #9de1fe;
+  border-radius: 5px;
+}
+
+.post b {
+  margin-right: 5;
+}
+
+.post img {
+  display: block;
+  margin: 10px 0;
+}
