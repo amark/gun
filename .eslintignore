@@ -1,0 +1,12 @@
+test/sea/sea_old.js
+test/mocha.js
+test/expect.js
+test/json2.js
+test/ptsd/*
+test/tmp/*
+
+# only because of CRLF
+lib/jsonp.js
+lib/wsp.js
+lib/http.js
+lib/aws.js
