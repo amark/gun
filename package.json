@@ -12,15 +12,28 @@
     "debug": "node --prof-process --preprocess -j isolate*.log > v8.json && rm isolate*.log && echo 'drag & drop ./v8.json into https://mapbox.github.io/flamebearer/'",
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
+    "pretest": "npm run lint",
     "test": "mocha",
+    "lint": "eslint src lib sea test",
     "testsea": "mocha test/sea/sea.js",
     "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
-    "lint": "eslint src lib sea test",
     "docker": "hooks/build",
     "minify": "uglifyjs gun.js -o gun.min.js -c -m",
     "unbuild": "node lib/unbuild.js & npm run minify",
     "unbuildMeta": "node lib/unbuild.js lib/meta"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test:lint"
+    }
+  },
+  "lint-staged": {
+    "{src|lib|sea|test}/**/*.js": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "repository": {
     "type": "git",
@@ -78,7 +91,9 @@
     "@types/ws": "^7.2.1",
     "aws-sdk": "^2.528.0",
     "eslint": "^7.13.0",
+    "husky": "^4.3.0",
     "ip": "^1.1.5",
+    "lint-staged": "^10.5.1",
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",

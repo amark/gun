@@ -10,6 +10,7 @@ lib/jsonp.js
 lib/wsp.js
 lib/http.js
 lib/aws.js
+test/common.js
 test/old/shotgun.js
 test/old/server.js
 test/old/interface.js

@@ -1,6 +1,9 @@
 # Carefully curated
 # https://eslint.org/docs/rules/
 
+env: { es6: true, node: true, browser: true }
+parserOptions: { ecmaVersion: 2018 }
+
 rules:
   # ==> Possible Errors
   for-direction: error

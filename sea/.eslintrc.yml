@@ -1,6 +1,9 @@
 # Carefully curated
 # https://eslint.org/docs/rules/
 
+env: { es6: true, node: true, browser: true }
+parserOptions: { ecmaVersion: 2018 }
+
 rules:
   # ==> Possible Errors
   for-direction: error
@@ -43,21 +46,21 @@ rules:
   no-unsafe-finally: error
   no-unsafe-negation: error
   no-useless-backreference: error
-  require-atomic-updates: error
+  # require-atomic-updates: error
   use-isnan: error
   valid-typeof: error
   # ==> Best Practices
   accessor-pairs: error
   array-callback-return: error
-  block-scoped-var: error
+  # block-scoped-var: error
   class-methods-use-this: error
   # complexity: [error, 3]
   # consistent-return: [error, { treatUndefinedAsUnspecified: true }]
-  curly: error
+  # curly: error
   default-case: error
   default-case-last: error
   default-param-last: error
-  dot-location: [ error, object ]
+  # dot-location: [ error, object ]
   dot-notation: error
   # eqeqeq: [ error, smart ]
   grouped-accessor-pairs: error
@@ -71,7 +74,7 @@ rules:
   # no-else-return: error
   # no-empty-function: error
   no-empty-pattern: error
-  no-eq-null: error
+  # no-eq-null: error
   no-eval: error
   no-extra-bind: error
   no-extra-label: error
@@ -99,28 +102,28 @@ rules:
   # no-redeclare: error
   no-restricted-properties: 0
   # no-return-assign: error
-  no-return-await: error
+  # no-return-await: error
   no-script-url: error
   no-self-assign: error
   no-self-compare: error
   no-sequences: error
-  no-throw-literal: error
+  # no-throw-literal: error
   no-unmodified-loop-condition: error
   # no-unused-expressions: error
   no-unused-labels: error
   no-useless-call: error
   no-useless-catch: error
   no-useless-concat: error
-  no-useless-escape: error
+  # no-useless-escape: error
   # no-useless-return: error
-  no-void: error
+  # no-void: error
   no-warning-comments: 0
   no-with: error
-  prefer-named-capture-group: error
+  # prefer-named-capture-group: error
   prefer-promise-reject-errors: error
   prefer-regex-literals: error
   radix: error
-  require-await: error
+  # require-await: error
   require-unicode-regexp: 0
   # vars-on-top: error
   wrap-iife: [error, outside]
@@ -140,25 +143,25 @@ rules:
   # no-unused-vars: error
   # no-use-before-define: error
   # ==> Stylistic Issues
-  array-bracket-newline: error
-  array-bracket-spacing: error
-  array-element-newline: error
-  block-spacing: error
+  # array-bracket-newline: error
+  # array-bracket-spacing: error
+  # array-element-newline: error
+  # block-spacing: error
   # brace-style: error
   # camelcase: error
   # capitalized-comments: error
-  comma-dangle: error
+  # comma-dangle: error
   # comma-spacing: error
   comma-style: error
-  computed-property-spacing: error
+  # computed-property-spacing: error
   # consistent-this: error
   # eol-last: error
   func-call-spacing: error
-  func-name-matching: error
+  # func-name-matching: error
   # func-names: error
   # func-style: error
   # function-call-argument-newline: error
-  function-paren-newline: error
+  # function-paren-newline: error
   id-denylist: error
   # id-length: error
   id-match: error
@@ -171,7 +174,7 @@ rules:
   linebreak-style: error
   # lines-around-comment: error
   lines-between-class-members: error
-  max-depth: error
+  # max-depth: error
   # max-len: error
   # max-lines: error
   # max-lines-per-function: error
@@ -181,9 +184,9 @@ rules:
   # max-statements-per-line: error
   # multiline-comment-style: error
   # multiline-ternary: error
-  new-cap: error
+  # new-cap: error
   # new-parens: error
-  newline-per-chained-call: error
+  # newline-per-chained-call: error
   no-array-constructor: error
   no-bitwise: error
   no-continue: error
@@ -191,22 +194,22 @@ rules:
   no-lonely-if: error
   no-mixed-operators: error
   no-mixed-spaces-and-tabs: error
-  no-multi-assign: error
+  # no-multi-assign: error
   no-multiple-empty-lines: error
   no-negated-condition: error
-  no-nested-ternary: error
+  # no-nested-ternary: error
   no-new-object: error
   # no-plusplus: error
   no-restricted-syntax: error
   no-tabs: error
   # no-ternary: error
   # no-trailing-spaces: error
-  no-underscore-dangle: error
+  # no-underscore-dangle: error
   no-unneeded-ternary: error
   no-whitespace-before-property: error
   nonblock-statement-body-position: error
   object-curly-newline: error
-  object-curly-spacing: error
+  # object-curly-spacing: error
   # object-property-newline: error
   # one-var: error
   # one-var-declaration-per-line: error
@@ -215,7 +218,7 @@ rules:
   # padded-blocks: error
   padding-line-between-statements: error
   prefer-exponentiation-operator: error
-  prefer-object-spread: error
+  # prefer-object-spread: error
   # quote-props: error
   # quotes: error
   # semi: error
@@ -225,7 +228,7 @@ rules:
   # sort-vars: error
   # space-before-blocks: error
   # space-before-function-paren: error
-  space-in-parens: error
+  # space-in-parens: error
   # space-infix-ops: error
   space-unary-ops: error
   # spaced-comment: error
@@ -234,9 +237,9 @@ rules:
   unicode-bom: error
   wrap-regex: error
   # ==> ECMAScript 6
-  arrow-body-style: error
-  arrow-parens: error
-  arrow-spacing: error
+  # arrow-body-style: error
+  # arrow-parens: error
+  # arrow-spacing: error
   constructor-super: error
   generator-star-spacing: error
   no-class-assign: error
@@ -254,10 +257,10 @@ rules:
   # no-var: error
   # object-shorthand: error
   # prefer-arrow-callback: error
-  prefer-const: error
+  # prefer-const: error
   # prefer-destructuring: error
   prefer-numeric-literals: error
-  prefer-rest-params: error
+  # prefer-rest-params: error
   prefer-spread: error
   # prefer-template: error
   require-yield: error

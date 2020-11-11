@@ -1,11 +1,14 @@
 # Carefully curated
 # https://eslint.org/docs/rules/
 
+env: { es6: true, node: true, browser: true }
+parserOptions: { ecmaVersion: 2018 }
+
 rules:
   # ==> Possible Errors
   for-direction: error
   getter-return: error
-  no-async-promise-executor: error
+  # no-async-promise-executor: error
   no-await-in-loop: error
   no-compare-neg-zero: error
   # no-cond-assign: error
@@ -43,32 +46,32 @@ rules:
   no-unsafe-finally: error
   no-unsafe-negation: error
   no-useless-backreference: error
-  require-atomic-updates: error
+  # require-atomic-updates: error
   use-isnan: error
   valid-typeof: error
   # ==> Best Practices
   accessor-pairs: error
-  array-callback-return: error
+  # array-callback-return: error
   # block-scoped-var: error
   class-methods-use-this: error
   # complexity: [error, 3]
   # consistent-return: [error, { treatUndefinedAsUnspecified: true }]
   # curly: error
-  default-case: error
+  # default-case: error
   default-case-last: error
   default-param-last: error
   # dot-location: [ error, object ]
   # dot-notation: error
   # eqeqeq: [ error, smart ]
   grouped-accessor-pairs: error
-  guard-for-in: error
+  # guard-for-in: error
   max-classes-per-file: error
   no-alert: error
   no-caller: error
   no-case-declarations: error
   no-constructor-return: error
   no-div-regex: error
-  no-else-return: error
+  # no-else-return: error
   # no-empty-function: error
   no-empty-pattern: error
   # no-eq-null: error
@@ -113,14 +116,14 @@ rules:
   no-useless-concat: error
   # no-useless-escape: error
   # no-useless-return: error
-  no-void: error
+  # no-void: error
   no-warning-comments: 0
   no-with: error
   prefer-named-capture-group: error
-  prefer-promise-reject-errors: error
+  # prefer-promise-reject-errors: error
   prefer-regex-literals: error
   radix: error
-  require-await: error
+  # require-await: error
   require-unicode-regexp: 0
   # vars-on-top: error
   wrap-iife: [error, outside]
@@ -215,7 +218,7 @@ rules:
   # padded-blocks: error
   padding-line-between-statements: error
   prefer-exponentiation-operator: error
-  prefer-object-spread: error
+  # prefer-object-spread: error
   # quote-props: error
   # quotes: error
   # semi: error
@@ -234,13 +237,13 @@ rules:
   unicode-bom: error
   wrap-regex: error
   # ==> ECMAScript 6
-  arrow-body-style: error
-  arrow-parens: error
-  arrow-spacing: error
+  # arrow-body-style: error
+  # arrow-parens: error
+  # arrow-spacing: error
   constructor-super: error
   generator-star-spacing: error
   no-class-assign: error
-  no-confusing-arrow: error
+  # no-confusing-arrow: error
   no-const-assign: error
   no-dupe-class-members: error
   no-duplicate-imports: error
@@ -254,7 +257,7 @@ rules:
   # no-var: error
   # object-shorthand: error
   # prefer-arrow-callback: error
-  prefer-const: error
+  # prefer-const: error
   # prefer-destructuring: error
   prefer-numeric-literals: error
   # prefer-rest-params: error
@@ -263,6 +266,6 @@ rules:
   require-yield: error
   rest-spread-spacing: error
   sort-imports: error
-  symbol-description: error
+  # symbol-description: error
   template-curly-spacing: error
   yield-star-spacing: error

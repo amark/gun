@@ -1,6 +1,9 @@
 # Carefully curated
 # https://eslint.org/docs/rules/
 
+env: { es6: true, node: true, browser: true }
+parserOptions: { ecmaVersion: 2018 }
+
 rules:
   # ==> Possible Errors
   for-direction: error
@@ -32,7 +35,7 @@ rules:
   no-misleading-character-class: error
   no-obj-calls: error
   no-promise-executor-return: error
-  no-prototype-builtins: error
+  # no-prototype-builtins: error
   no-regex-spaces: error
   no-setter-return: error
   no-sparse-arrays: error
@@ -43,7 +46,7 @@ rules:
   no-unsafe-finally: error
   no-unsafe-negation: error
   no-useless-backreference: error
-  require-atomic-updates: error
+  # require-atomic-updates: error
   use-isnan: error
   valid-typeof: error
   # ==> Best Practices
@@ -85,7 +88,7 @@ rules:
   no-iterator: error
   no-labels: error
   no-lone-blocks: error
-  no-loop-func: error
+  # no-loop-func: error
   # no-magic-numbers: error
   # no-multi-spaces: error
   no-multi-str: error
@@ -120,7 +123,7 @@ rules:
   prefer-promise-reject-errors: error
   prefer-regex-literals: error
   radix: error
-  require-await: error
+  # require-await: error
   require-unicode-regexp: 0
   # vars-on-top: error
   wrap-iife: [error, outside]
@@ -175,7 +178,7 @@ rules:
   # max-len: error
   # max-lines: error
   # max-lines-per-function: error
-  max-nested-callbacks: error
+  # max-nested-callbacks: error
   # max-params: error
   # max-statements: error
   # max-statements-per-line: error
@@ -186,7 +189,7 @@ rules:
   # newline-per-chained-call: error
   no-array-constructor: error
   # no-bitwise: error
-  no-continue: error
+  # no-continue: error
   # no-inline-comments: error
   # no-lonely-if: error
   # no-mixed-operators: error
@@ -235,8 +238,8 @@ rules:
   wrap-regex: error
   # ==> ECMAScript 6
   arrow-body-style: error
-  arrow-parens: error
-  arrow-spacing: error
+  # arrow-parens: error
+  # arrow-spacing: error
   constructor-super: error
   generator-star-spacing: error
   no-class-assign: error
@@ -254,7 +257,7 @@ rules:
   # no-var: error
   # object-shorthand: error
   # prefer-arrow-callback: error
-  prefer-const: error
+  # prefer-const: error
   # prefer-destructuring: error
   prefer-numeric-literals: error
   prefer-rest-params: error
