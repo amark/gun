@@ -26,14 +26,11 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "npm run test:lint"
+      "pre-push": "npm run lint"
     }
   },
   "lint-staged": {
-    "{src|lib|sea|test}/**/*.js": [
-      "eslint --fix",
-      "git add"
-    ]
+    "{src|lib|sea|test}/**/*.js": "eslint --fix"
   },
   "repository": {
     "type": "git",
