@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Wave example</title>
+  </head>
+  <body>
+    <button id="bPiano">Piano left</button>
+    <button id="bGuitar">Guitar itched</button>
+    <button id="bXylo">Xylophone slow</button>
+    <button id="bAll">All in one</button>
+
+    <script src="../lib/wave.js"></script>
+    <script>
+      function piano() {
+        wave(':piano:zxcvbn').balance(-1).play()
+      }
+      function guitar() {
+        wave(':guitar:zxcvbn').itch(0.5).play()
+      }
+      function xylo() {
+        wave(':xylophone:zxcvbn').pace(100).play()
+      }
+      function all() {
+        wave(`
+          :pace 400: :itch 0: :balance 0:
+
+          :piano: :balance -1: zxcvbn
+
+          :guitar: :balance 0: :itch 0.5:  zxcvbn
+
+          :xylophone: :itch 0: :pace 100: zxcvbn
+        `).play()
+      }
+      document.querySelector('#bPiano').addEventListener("click", piano)
+      document.querySelector('#bGuitar').addEventListener("click", guitar)
+      document.querySelector('#bXylo').addEventListener("click", xylo)
+      document.querySelector('#bAll').addEventListener("click", all)
+    </script>
+  </body>
+</html>
