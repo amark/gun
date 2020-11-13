@@ -10,8 +10,8 @@ jobs:
   test:
     strategy:
       matrix:
-	node-version: [14.x] # [12.x, 14.x]
-	os: [ubuntu-latest] #, macos-latest, windows-latest]
+        node-version: [14.x] # [12.x, 14.x]
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -25,14 +25,14 @@ jobs:
     - name: Setup Node ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
-	node-version: ${{ matrix.node-version }}
+        node-version: ${{ matrix.node-version }}
 
     - name: Cache
       id: cache-modules
       uses: actions/cache@v2
       with:
-	path: node_modules
-	key: ${{ matrix.node-version }}-${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+        path: node_modules
+        key: ${{ matrix.node-version }}-${{ runner.OS }}-build-${{ hashFiles('package.json') }}
 
     - name: Install
       if: steps.cache-modules.outputs.cache-hit != 'true'
@@ -67,9 +67,9 @@ jobs:
       #   run: find artifacts -mindepth 1 -maxdepth 1  -exec tar -C {} -cvzf {}.tgz . \;
 
       - name: Release
-	uses: softprops/action-gh-release@v1
-	# with:
-	#   files: |
-	#     artifacts/*.tgz
-	env:
-	  GITHUB_TOKEN: ${{ secrets.PAT }}
+        uses: softprops/action-gh-release@v1
+        # with:
+        #   files: |
+        #     artifacts/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
