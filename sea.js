@@ -1343,8 +1343,8 @@
         return no("Account not same!")
       }
 
-      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+']){
-        SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){ // needs to be refactored
+      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.out || {}).opt || {}).cert))){
+        SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){
           if(u === data){ return no(SEA.err || 'Signature fail.') }
           msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
           msg.put['='] = tmp
