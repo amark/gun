@@ -1,6 +1,6 @@
 {
-  "name": "@tcurdt/gun",
-  "version": "0.2020.1105",
+  "name": "gun",
+  "version": "0.2020.520",
   "description": "A realtime, decentralized, offline-first, graph data synchronization engine.",
   "types": "index.d.ts",
   "main": "index.js",
@@ -65,7 +65,6 @@
     "buffer": "^5.4.3"
   },
   "peerDependencies": {
-    "@gooddollar/react-native-webview-crypto": "^0.*",
     "bufferutil": "^4.0.1",
     "utf-8-validate": "^5.0.2",
     "text-encoding": "^0.7.0"
