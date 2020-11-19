@@ -1,3 +1,5 @@
+const expect = require('../expect')
+
 var root;
 var Gun;
 (function(){
@@ -523,6 +525,119 @@ describe('SEA', function(){
         gun.user().auth(alice);
       });
     });
+
+    var alice = {
+      epriv: "Odtnqn-gng-NCLAULCdhxcG7KE26WSWdnNTBSYf8Dsw",
+      epub:
+          "rOWulaGGaNOKhrS9XtZUbdWjcIfTM5k5pImolyNwLe0.9Ks7JRrOQl3e401dSgCGlNWgvIC_DQm0EA9jGKXBDg0",
+      priv: "ijke9inZcbIpNUy5p3wiMRxUvqM12xU8WLewGzUXj8E",
+      pub:
+          "Zpf4KFmDmxNnHbRcTkZcAvPnke8_4hLv_FtNhBLcSps.ICAIjzky_T0ENNFIC5cjE-dN87dWp7cb88y0Rb3Nbvo"
+    }
+
+    var bob = {
+        epriv: "z5OC6iWYPVZO-sNqxd20t_qAPsA5nn9d-_yg5uW2mZM",
+        epub:
+            "bHUUjC-xP9QoTEyY5rubZJwft_szXgvetGOGUPOT8Mw.5J2j9SBZ8lqSHKgeFRbMZDs0EuNgM-VVWgMHE3YMFSI",
+        priv: "dWDbrbKUinmSxrlilKmyPzKAgmZCzm9i14bTydUf0kQ",
+        pub:
+            "naP2o7Ebn5tFF2V-z8pDFwOgOazduoiKogWnZ0cTtEE.K-sa7v6DXkb_saMFlCepqPUH--C-6rv6cO1t3wEo6-M"
+    }
+
+    var dave = {
+        epriv: "1eBCIIk30bzfTN50uqSTIN10TWP2AqkqExioV5P-oCE",
+        epub:
+            "PneRg1oMRw3mrrnjbRq8YSADLrdbg8BGEBoC0_P6It4.Vhv8QIkLhurxU5-LhHctaaNn5u3LNujqMNRdh6JbzvU",
+        priv: "XKJrGFWoERdHfhXfhc-VY0nIWeI2eAIDAfkX0nu_O0A",
+        pub:
+            "AXEGD2GABu1lnzTKML_wXHSlznwI5ZFebF-MLPKxI8Y.0Sx-Sd5GpF_1kzrUcliWRdhppq7FFehQi41oZ-WOJmI"
+    }
+    
+    it('certify + the good', function(done){(async function(){
+      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      
+      user.auth(bob, () => {
+          var data = Gun.state.lex()
+          gun.get("~" + alice.pub)
+              .get("private")
+              .get("asdf")
+              .get("qwerty")
+              .put(data, () => {
+                  gun.get("~" + alice.pub)
+                  .get("private")
+                  .get("asdf")
+                  .get("qwerty").once(_data=>{
+                      expect(_data).to.be(data)
+                      user.leave()
+                      done()
+                  })
+              }, { opt: { cert } })
+      })
+    }())})
+
+    it('certify + the public', function(done){(async function(){
+      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      
+      user.auth(bob, () => {
+          var data = Gun.state.lex()
+          gun.get("~" + alice.pub)
+              .get("private")
+              .get("asdf")
+              .get("qwerty")
+              .put(data, () => {
+                  user.leave()
+                  gun.get("~" + alice.pub)
+                  .get("private")
+                  .get("asdf")
+                  .get("qwerty").once(_data=>{
+                      expect(_data).to.be(data)
+                      done()
+                  })
+              }, { opt: { cert } })
+      })
+    }())})
+
+    it('certify + someone', function(done){(async function(){
+      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      
+      user.auth(bob, () => {
+          var data = Gun.state.lex()
+          gun.get("~" + alice.pub)
+              .get("private")
+              .get("asdf")
+              .get("qwerty")
+              .put(data, () => {
+                  user.leave()
+                  user.auth(dave, () => {
+                      gun.get("~" + alice.pub)
+                      .get("private")
+                      .get("asdf")
+                      .get("qwerty").once(_data=>{
+                          expect(_data).to.be(data)
+                          done()
+                      })
+                  })
+                  
+              }, { opt: { cert } })
+      })
+    }())})
+
+    it('certify + the evil', function(done){(async function(){
+      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      
+      user.auth(bob, () => {
+          var data = Gun.state.lex()
+          gun.get("~" + alice.pub)
+              .get("wrongway")
+              .get("asdf")
+              .get("qwerty")
+              .put(data, ack => {
+                expect(ack.err).to.be.ok()
+                done()
+              }, { opt: { cert } })
+      })
+    }())})
+
   });
 })
 
