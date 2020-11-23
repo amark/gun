@@ -653,13 +653,13 @@
   ;USE(function(module){
     var SEA = USE('./root');
     
-    // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate issuer's graph
-    SEA.certify = SEA.certify || (async (certificants, patterns, issuer, cb, opt = {}) => { try {
+    // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate authority's graph
+    SEA.certify = SEA.certify || (async (certificants, patterns, authority, cb, opt = {}) => { try {
       /*
-      IMPORTANT: A Certificate is like a Signature. No one knows who (issuer) created/signed a cert until you put it into their graph.
+      IMPORTANT: A Certificate is like a Signature. No one knows who (authority) created/signed a cert until you put it into their graph.
       "certificants": A string (~Bobpub) || a pair || an array of pubs/pairs. These people will have the rights.
       "patterns": A string (^inbox.*), or an array of strings [^inbox.*, ^secret\-group.*]. These patterns will be used to check against soul+'/'+key
-      "issuer": Key pair or priv of the certificate issuer
+      "authority": Key pair or priv of the certificate authority
       "cb": A callback function after all things are done
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry
       */
@@ -692,10 +692,11 @@
       const data = JSON.stringify({
         c: certificants,
         p: patterns,
-        ...(opt.expiry && typeof opt.expiry === 'number' ? {e: opt.expiry} : {}) // inject expiry if possible
+        ...(opt.expiry && typeof opt.expiry === 'number' ? {e: parseFloat(opt.expiry)} : {}), // inject expiry if possible
+        ...(opt.blacklist && typeof opt.blacklist === 'string' ? {b: opt.blacklist} : {}) // inject blacklist if possible
       })
 
-      const certificate = await SEA.sign(data, issuer, null, {raw:1})
+      const certificate = await SEA.sign(data, authority, null, {raw:1})
 
       var r = certificate
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
@@ -1315,9 +1316,8 @@
     };
     check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
       const raw = S.parse(val) || {}
-      
       const verify = (certificate, certificant, cb) => {
-        if (certificate['m'] && certificate['s'] && certificant && pub) {
+        if (certificate.m && certificate.s && certificant && pub) {
           // now verify certificate
           return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.")
@@ -1328,6 +1328,15 @@
               path = path.replace(path.substring(0, path.indexOf('/') + 1), '')
               for (p of data.p) {
                 if (new RegExp(p).test(path)) {
+                  // path is allowed, but is there any blacklist? Check blacklist
+                  if (data.b && typeof data.b === 'string') { // "data.b" = path to the blacklist
+                    var root = user.back(-1)
+                    if ('~' !== data.b.slice(0,1)) root = root.get('~'+pub)
+                    root.get(data.b).get(certificant).once(value => {
+                      if (value && (value === 1 || value === true)) return no("Certificant blacklisted.")
+                      return cb(data)
+                    })
+                  }
                   return cb(data)
                 }
               }
