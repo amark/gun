@@ -1,0 +1,17 @@
+name: cleanup
+
+on:
+  schedule:
+    - cron:  '1 1 * * 1' # once a week clean out old artifacts
+
+jobs:
+
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Expire Artifacts
+      uses: kolpav/purge-artifacts-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        expire-in: 1hour
