@@ -654,46 +654,60 @@
     var SEA = USE('./root');
     
     // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate authority's graph
-    SEA.certify = SEA.certify || (async (certificants, patterns, authority, cb, opt = {}) => { try {
+    SEA.certify = SEA.certify || (async (certificants, policy = {}, authority, cb, opt = {}) => { try {
       /*
       IMPORTANT: A Certificate is like a Signature. No one knows who (authority) created/signed a cert until you put it into their graph.
-      "certificants": A string (~Bobpub) || a pair || an array of pubs/pairs. These people will have the rights.
-      "patterns": A string (^inbox.*), or an array of strings [^inbox.*, ^secret\-group.*]. These patterns will be used to check against soul+'/'+key
-      "authority": Key pair or priv of the certificate authority
-      "cb": A callback function after all things are done
-      "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry
+      "certificants": '*' or a String (Bob.pub) || an Object that contains "pub" as a key || an array of [object || string]. These people will have the rights.
+      "policy": A string ('inbox'), or a RAD/LEX object {'*': 'inbox'}, or an Array of RAD/LEX objects or strings. RAD/LEX object can contain key "?" with indexOf("*") > -1 to force key equals certificant pub. This rule is used to check against soul+'/'+key using Gun.text.match or String.match.
+      "authority": Key pair or priv of the certificate authority.
+      "cb": A callback function after all things are done.
+      "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.blacklist is set, SEA will look for blacklist before syncing.
       */
-
-      // We need some logic here to verify that all params are valid
       
       console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
         if (certificants) {
+          if (certificants === '*' || (Array.isArray(certificants) && certificants.indexOf('*'))) return '*'
+          
           if (typeof certificants === 'string') {
-            data.push(certificants)
+            return certificants
           }
 
           if (Array.isArray(certificants)) {
-            certificants.map(person => {
-              if (typeof person ==='string') data.push(person)
-              else if (typeof person === 'object' && person.pub) data.push(person.pub)
+            if (certificants.length === 1 && certificants[0]) return typeof certificants[0] === 'object' && certificants[0].pub ? certificants[0].pub : typeof certificants[0] === 'string' ? certificants[0] : null
+            certificants.map(certificant => {
+              if (typeof certificant ==='string') data.push(certificant)
+              else if (typeof certificant === 'object' && certificant.pub) data.push(certificant.pub)
             })
           }
 
-          if (typeof certificants === 'object' && certificants.pub) data.push(certificants.pub)
+          if (typeof certificants === 'object' && certificants.pub) return certificants.pub
+          
+          return data.length > 0 ? data : null
         }
-        return data
+        return null
       })()
 
-      patterns = patterns ? typeof patterns === 'string' ? [patterns] : Array.isArray(patterns) ? patterns : null : null
+      if (!certificants) return console.log("No certificant found.")
 
+      const expiry = opt.expiry && (typeof opt.expiry === 'number' || typeof opt.expiry === 'string') ? parseFloat(opt.expiry) : null
+      const readPolicy = (policy || {}).read ? policy.read : null
+      const writePolicy = (policy || {}).write ? policy.write : typeof policy === 'string' || Array.isArray(policy) || (policy["?"] || policy["#"] || policy["."] || policy["="] || policy["*"] || policy[">"] || policy["<"]) ? policy : null
+      const readBlacklist = ((opt || {}).blacklist || {}).read && (typeof opt.blacklist.read === 'string' || opt.blacklist.read['#']) ? opt.blacklist.read : null
+      const writeBlacklist = typeof (opt || {}).blacklist === 'string' || (((opt || {}).blacklist || {}).write || {})['#'] ? opt.blacklist : ((opt || {}).blacklist || {}).write && (typeof opt.blacklist.write === 'string' || opt.blacklist.write['#']) ? opt.blacklist.write : null
+
+      if (!readPolicy && !writePolicy) return console.log("No policy found.")
+
+      // reserved keys: c, e, r, w, rb, wb
       const data = JSON.stringify({
         c: certificants,
-        p: patterns,
-        ...(opt.expiry && typeof opt.expiry === 'number' ? {e: parseFloat(opt.expiry)} : {}), // inject expiry if possible
-        ...(opt.blacklist && typeof opt.blacklist === 'string' ? {b: opt.blacklist} : {}) // inject blacklist if possible
+        ...(expiry ? {e: expiry} : {}), // inject expiry if possible
+        ...(readPolicy ? {r: readPolicy }  : {}), // "r" stands for read, which means read permission.
+        ...(writePolicy ? {w: writePolicy} : {}), // "w" stands for write, which means write permission.
+        ...(readBlacklist ? {rb: readBlacklist} : {}), // inject READ blacklist if possible
+        ...(writeBlacklist ? {wb: writeBlacklist} : {}), // inject WRITE blacklist if possible
       })
 
       const certificate = await SEA.sign(data, authority, null, {raw:1})
@@ -1320,19 +1334,23 @@
         if (certificate.m && certificate.s && certificant && pub) {
           // now verify certificate
           return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
-            if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.")
-            // "data.c" = a list of certificants/certified users, "data.p" = a list of allowed patterns
-            if (u !== data && data.c && data.p && (data.c.indexOf('*') || data.c.indexOf(certificant))) {
+            if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
+            // "data.c" = a list of certificants/certified users
+            // "data.w" = lex WRITE permission, in the future, there will be "data.r" which means lex READ permission
+            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
-              let path = soul + '/' + key
-              path = path.replace(path.substring(0, path.indexOf('/') + 1), '')
-              for (p of data.p) {
-                if (new RegExp(p).test(path)) {
-                  // path is allowed, but is there any blacklist? Check blacklist
-                  if (data.b && typeof data.b === 'string') { // "data.b" = path to the blacklist
+              let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
+              String.match = String.match || Gun.text.match
+              const w = typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : Array.isArray(data.w) ? data.w : []
+              for (const lex of w) {
+                if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
+                  // is Key forced to be the same as Certificant
+                  if (lex['?'] && lex['?'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no("Key not same as certificant pub.")
+                  // path is allowed, but is there any WRITE blacklist? Check it out
+                  if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
                     var root = user.back(-1)
-                    if ('~' !== data.b.slice(0,1)) root = root.get('~'+pub)
-                    root.get(data.b).get(certificant).once(value => {
+                    if (typeof data.wb === 'string' && '~' !== data.wb.slice(0, 1)) root = root.get('~' + pub)
+                    root.get(data.wb).get(certificant).once(value => {
                       if (value && (value === 1 || value === true)) return no("Certificant blacklisted.")
                       return cb(data)
                     })
