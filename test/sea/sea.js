@@ -526,10 +526,11 @@ describe('SEA', function(){
       });
     });
     
-    it('Certify: Alice certs Bob, Bob writes to Alice', function(done){(async function(){
+    it('Certify: Simple', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      var dave = await SEA.pair()
+      var cert = await SEA.certify(bob, {"*": "private"}, alice)
       
       user.auth(bob, () => {
         var data = Gun.state.lex()
@@ -538,73 +539,39 @@ describe('SEA', function(){
           .get("asdf")
           .get("qwerty")
           .put(data, () => {
+            // Bob reads
             gun.get("~" + alice.pub)
             .get("private")
             .get("asdf")
             .get("qwerty").once(_data=>{
               expect(_data).to.be(data)
               user.leave()
-              done()
-            })
-          }, { opt: { cert } })
-      })
-    }())})
-
-    it('Certify: Alice certs Bob, Bob writes to Alice, everyone reads from Alice', function(done){(async function(){
-      var alice = await SEA.pair()
-      var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice)
-      
-      user.auth(bob, () => {
-        var data = Gun.state.lex()
-        gun.get("~" + alice.pub)
-          .get("private")
-          .get("asdf")
-          .get("qwerty")
-          .put(data, () => {
-            user.leave()
-            gun.get("~" + alice.pub)
-            .get("private")
-            .get("asdf")
-            .get("qwerty").once(_data=>{
-                expect(_data).to.be(data)
-                done()
-            })
-          }, { opt: { cert } })
-      })
-    }())})
-
-    it('Certify: Alice certs Bob, Bob writes to Alice, Dave reads from Alice', function(done){(async function(){
-      var alice = await SEA.pair()
-      var bob = await SEA.pair()
-      var dave = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice)
-      
-      user.auth(bob, () => {
-        var data = Gun.state.lex()
-        gun.get("~" + alice.pub)
-          .get("private")
-          .get("asdf")
-          .get("qwerty")
-          .put(data, () => {
-            user.leave()
-            user.auth(dave, () => {
+              // everyone reads
               gun.get("~" + alice.pub)
               .get("private")
               .get("asdf")
               .get("qwerty").once(_data=>{
-                  expect(_data).to.be(data)
-                  done()
+                expect(_data).to.be(data)
+                user.auth(dave, () => {
+                  // Dave reads
+                  gun.get("~" + alice.pub)
+                  .get("private")
+                  .get("asdf")
+                  .get("qwerty").once(_data=>{
+                    expect(_data).to.be(data)
+                    done()
+                  })
+                })
               })
             })
           }, { opt: { cert } })
       })
     }())})
 
-    it('Certify: Simple Cert (without Expiry + Blacklist), Bob hacks Alice', function(done){(async function(){
+    it('Certify: Attack', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice)
+      var cert = await SEA.certify(bob, {"*": "private"}, alice)
       
       user.auth(bob, () => {
         var data = Gun.state.lex()
@@ -622,8 +589,8 @@ describe('SEA', function(){
     it('Certify: Expiry', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice, null, {
-        expiry: Gun.state() - 100, // expires in 100 miliseconds
+      var cert = await SEA.certify(bob, {"*": "private"}, alice, null, {
+        expiry: Gun.state() - 100, // expired 100 miliseconds ago
       })
 
       user.auth(bob, () => {
@@ -639,36 +606,42 @@ describe('SEA', function(){
       })
     }())})
 
-    it('Certify: SIMPLE Blacklist', function(done){(async function(){
+    it('Certify: Path must contain Certificant Pub', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice, null, {
-        expiry: Gun.state() + 5000, // expires in 5 seconds
-        blacklist: '~'+alice.pub+'/blacklist' // path to blacklist
-      })
+      var cert = await SEA.certify(bob, {"*": "private", "?": "*"}, alice)
 
-      user.auth(alice, async () => {
-        await user.get('blacklist').get(bob.pub).put(true)
-        await user.leave()
-        user.auth(bob, async () => {
-          var data = Gun.state.lex()
-          gun.get("~" + alice.pub)
+      user.auth(bob, () => {
+        var data = Gun.state.lex()
+        gun.get("~" + alice.pub)
+          .get("private")
+          .get('wrongway')
+          .put(data, ack => {
+            expect(ack.err).to.be.ok()
+            gun.get("~" + alice.pub)
             .get("private")
-            .get("asdf")
-            .get("qwerty")
+            .get(bob.pub)
+            .get('today')
             .put(data, ack => {
-              expect(ack.err).to.be.ok()
-              done()
+              expect(ack.ok).to.be.ok()
+              gun.get("~" + alice.pub)
+              .get("private")
+              .get(bob.pub)
+              .get('today')
+              .once(_data => {
+                expect(_data).to.be(data)
+                done()
+              })
             }, { opt: { cert } })
-        })
+          }, { opt: { cert } })
       })
     }())})
 
-    it('Certify: ADVANCED Blacklist, Alice\'s graph, Dave\'s blacklist, Bob\'s put', function(done){(async function(){
+    it('Certify: Advanced - Blacklist', function(done){(async function(){
       var alice = await SEA.pair()
       var dave = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, ["^private.*"], alice, null, {
+      var cert = await SEA.certify(bob, {"*": "private"}, alice, null, {
         expiry: Gun.state() + 5000, // expires in 5 seconds
         blacklist: 'blacklist' // path to blacklist in Alice's graph
       })
@@ -678,7 +651,7 @@ describe('SEA', function(){
         await user.get('blacklist').put({'#': '~'+dave.pub+'/blacklist'})
         await user.leave()
 
-        // Dave logins, he add Bob to his blacklist, which is connected to the certificate that Alice issued for Bob
+        // Dave logins, he adds Bob to his blacklist, which is connected to the certificate that Alice issued for Bob
         user.auth(dave, async () => {
           await user.get('blacklist').get(bob.pub).put(true)
           await user.leave()
