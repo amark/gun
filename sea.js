@@ -1344,7 +1344,7 @@
               const w = typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : Array.isArray(data.w) ? data.w : []
               for (const lex of w) {
                 if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
-                  // is Key forced to be the same as Certificant
+                  // is Certificant forced to present in Path
                   if (lex['?'] && lex['?'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no("Key not same as certificant pub.")
                   // path is allowed, but is there any WRITE blacklist? Check it out
                   if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
