@@ -669,7 +669,7 @@
       certificants = (() => {
         var data = []
         if (certificants) {
-          if (certificants === '*' || (Array.isArray(certificants) && certificants.indexOf('*'))) return '*'
+          if ((typeof certificants === 'string' || Array.isArray(certificants)) && certificants.indexOf('*')) return '*'
           
           if (typeof certificants === 'string') {
             return certificants
