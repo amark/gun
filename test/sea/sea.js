@@ -606,10 +606,10 @@ describe('SEA', function(){
       })
     }())})
 
-    it('Certify: Path must contain Certificant Pub', function(done){(async function(){
+    it('Certify: Path or Key must contain Certificant Pub', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, {"*": "private", "?": "*"}, alice)
+      var cert = await SEA.certify(bob, {"*": "private", "+": "*"}, alice)
 
       user.auth(bob, () => {
         var data = Gun.state.lex()
