@@ -694,7 +694,7 @@
 
       const expiry = opt.expiry && (typeof opt.expiry === 'number' || typeof opt.expiry === 'string') ? parseFloat(opt.expiry) : null
       const readPolicy = (policy || {}).read ? policy.read : null
-      const writePolicy = (policy || {}).write ? policy.write : typeof policy === 'string' || Array.isArray(policy) || (policy["?"] || policy["#"] || policy["."] || policy["="] || policy["*"] || policy[">"] || policy["<"]) ? policy : null
+      const writePolicy = (policy || {}).write ? policy.write : typeof policy === 'string' || Array.isArray(policy) || policy["+"] || policy["#"] || policy["."] || policy["="] || policy["*"] || policy[">"] || policy["<"] ? policy : null
       const readBlacklist = ((opt || {}).blacklist || {}).read && (typeof opt.blacklist.read === 'string' || opt.blacklist.read['#']) ? opt.blacklist.read : null
       const writeBlacklist = typeof (opt || {}).blacklist === 'string' || (((opt || {}).blacklist || {}).write || {})['#'] ? opt.blacklist : ((opt || {}).blacklist || {}).write && (typeof opt.blacklist.write === 'string' || opt.blacklist.write['#']) ? opt.blacklist.write : null
 
@@ -1331,7 +1331,7 @@
     check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
       const raw = S.parse(val) || {}
       const verify = (certificate, certificant, cb) => {
-        if (certificate.m && certificate.s && certificant && pub) {
+        if (certificate.m && certificate.s && certificant && pub)
           // now verify certificate
           return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
@@ -1345,7 +1345,7 @@
               for (const lex of w) {
                 if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
                   // is Certificant forced to present in Path
-                  if (lex['?'] && lex['?'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no("Key not same as certificant pub.")
+                  if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
                   // path is allowed, but is there any WRITE blacklist? Check it out
                   if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
                     var root = user.back(-1)
@@ -1361,24 +1361,23 @@
               return no("Certificate verification fail.")
             }
           })
-        }
         return
       }
       
-      if ('pub' === key && '~'+pub === soul) {
-        if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
+      if ('pub' === key && '~' + pub === soul) {
+        if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
 
       if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.out || {}).opt || {}).cert))){
         SEA.sign(SEA.opt.pack(msg.put), (user._).sea, function(data){
-          if(u === data){ return no(SEA.err || 'Signature fail.') }
+          if (u === data) return no(SEA.err || 'Signature fail.')
           msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
           msg.put['='] = tmp
 
           // if writing to own graph, just allow it
           if (pub === user.is.pub) {
-            if (tmp = link_is(val)) { (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+            if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
             msg.put[':'] = JSON.stringify(msg.put[':'])
             return eve.to.next(msg)
           }
@@ -1387,14 +1386,13 @@
           if (pub !== user.is.pub && ((msg._.out || {}).opt || {}).cert) {
             const cert = S.parse(msg._.out.opt.cert)
             // even if cert exists, we must verify it
-            if (cert && cert.m && cert.s) {
+            if (cert && cert.m && cert.s)
               verify(cert, user.is.pub, _ => {
                 msg.put[':']['+'] = cert // '+' is a certificate
                 msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
                 msg.put[':'] = JSON.stringify(msg.put[':'])
                 return eve.to.next(msg)
               })
-            }
           }
         }, {raw: 1})
         return;
@@ -1402,17 +1400,16 @@
 
       SEA.verify(SEA.opt.pack(msg.put), raw['*'] || pub, function(data){ var tmp;
         data = SEA.opt.unpack(data);
-        if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
-        if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
+        if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
+        if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
         
         // check if cert ('+') and putter's pub ('*') exist
-        if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*']) {
+        if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
           // now verify certificate
           verify(raw['+'], raw['*'], _ => {
             msg.put['='] = data;
             return eve.to.next(msg);
           })
-        }
         else {
           msg.put['='] = data;
           return eve.to.next(msg);
