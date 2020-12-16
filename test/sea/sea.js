@@ -586,6 +586,23 @@ describe('SEA', function(){
       })
     }())})
 
+    it('Certify: Public inbox', function(done){(async function(){
+      var alice = await SEA.pair()
+      var bob = await SEA.pair()
+      var cert = await SEA.certify('*', [{"*": "test", "+": "*"}, {"*": "inbox", "+": "*"}], alice)
+      
+      user.auth(bob, () => {
+        var data = Gun.state.lex()
+        gun.get("~" + alice.pub)
+          .get("inbox")
+          .get(user.is.pub)
+          .put(data, ack => {
+            expect(ack.ok).to.be(1)
+            done()
+          }, { opt: { cert } })
+      })
+    }())})
+
     it('Certify: Expiry', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
