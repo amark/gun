@@ -1348,9 +1348,9 @@
                   if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
                   // path is allowed, but is there any WRITE blacklist? Check it out
                   if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
-                    var root = user.back(-1)
+                    var root = at.$.back(-1)
                     if (typeof data.wb === 'string' && '~' !== data.wb.slice(0, 1)) root = root.get('~' + pub)
-                    root.get(data.wb).get(certificant).once(value => {
+                    return root.get(data.wb).get(certificant).once(value => {
                       if (value && (value === 1 || value === true)) return no("Certificant blacklisted.")
                       return cb(data)
                     })
