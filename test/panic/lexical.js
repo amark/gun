@@ -10,7 +10,7 @@
  */
 var config = {
   IP: require('ip').address(),
-  port: process.env.PORT ? parseInt(process.env.PORT) : 8765,
+  port: process.env.PORT ? parseInt(process.env.PORT, 10) : 8765,
   servers: 1,
   browsers: 1,
   route: {

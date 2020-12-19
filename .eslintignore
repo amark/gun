@@ -1,0 +1,19 @@
+test/sea/sea_old.js
+test/mocha.js
+test/expect.js
+test/json2.js
+test/ptsd/*
+test/tmp/*
+
+# only because of CRLF
+lib/jsonp.js
+lib/wsp.js
+lib/http.js
+lib/aws.js
+test/common.js
+test/old/shotgun.js
+test/old/server.js
+test/old/interface.js
+test/bug/686.js
+test/old/interface.js
+test/old/shoot.js
