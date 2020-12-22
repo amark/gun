@@ -100,8 +100,8 @@ describe('Gun', function(){
 				expect(String.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
 				expect(String.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
 				expect(String.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/j', '<': 'user/o'})).to.not.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/a', '<': 'user/c'})).to.be.ok();
+				expect(String.match("user/timber/nadal", {'>': 'user/c', '<': 'user/j'})).to.not.be.ok();
+				expect(String.match("user/timber/nadal", {'>': 'user/m', '<': 'user/u'})).to.be.ok();
 				expect(String.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
 				return; // below is OLD bloat, still available in lib/match.js
 			});
@@ -2624,7 +2624,6 @@ describe('Gun', function(){
 			gun.get('opo').get('a').put('yay!');
 			var ref = gun.get('opo').get('a');
 			setTimeout(function(){
-				//console.only.i=1;console.log("========================");
 				ref.once(function(data){
 					//console.log("************", data);
 					expect(data).to.be('yay!');
@@ -2677,6 +2676,7 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
+			//console.only.i=1;console.log("=============");
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//console.log("*****************", data, done.to);//return;
@@ -2788,7 +2788,7 @@ describe('Gun', function(){
 			list.set(gun.get('dave').put({name: "Dave", group: "awesome", married: true}));
 
 			var check = {}, count = {};
-			list.map().on(function(data, id){
+			list.map().once(function(data, id){
 				check[id] = data;
 				count[id] = (count[id] || 0) + 1;
 				if(check.alice && check.bob && check.carl && check.dave){
@@ -3071,7 +3071,7 @@ describe('Gun', function(){
 					expect(data.goodbye).to.be('mars');
 					if(done.c){ return } done.c = 1;
 					done();
-				});al
+				});
 			},400);
 			});
 		});
@@ -3079,11 +3079,11 @@ describe('Gun', function(){
 		it('multiple times map', function(done){
 			var gun = Gun();
 
-			gun.get('usersMM').put({
-				'mark': {
-					fdsa: {
+			gun.get('A').put({
+				'B': {
+					C: {
 						pub: 'fdsa',
-						name: "mark"
+						y: "mark"
 					}
 				},
 				'timber': {
@@ -3094,24 +3094,80 @@ describe('Gun', function(){
 				}
 			});
 
-			var check = {A: {}, B: {}};
+			var check = {on: {}, once: {}};
 			setTimeout(function(){
-				gun.get('usersMM').map().map().once(function(data){
-					console.log('A', data);
-					check.A[data.pub] = true;
+				//console.log('A=2, map=7, map.map=8, A.B=3, AB=5, A.B.C=4, ABC=6, AB.C=?', gun);
+				gun.get('A').map().map().on(function(data, key){
+					check.on[data.pub] = true;
 				})
 			}, 900);
 
 			setTimeout(function(){
-				gun.get('usersMM').map().map().once(function(data){
-					console.log('B', data, check);
-					check.B[data.pub] = true;
-					if(check.A['asdf'] && check.A['fdsa'] && check.B['asdf'] && check.B['fdsa']){
+				gun.get('A').map().map().once(function(data, key){
+					check.once[data.pub] = true;
+					if(check.on['asdf'] && check.on['fdsa'] && check.once['asdf'] && check.once['fdsa']){
 						if(done.c){ return } done.c = 1;
 						done();
 					}
 				})
 			}, 1200);
+
+		});
+
+		it('multiple map test with @rogowski!', function(done){
+			var check = {};
+			var gun1 = Gun();
+			gun1.get('mmA').put({
+				'B': {
+					C: {
+						pub: 'fdsa',
+						y: "mark"
+					}
+				},
+				'timber': {
+					asdf: {
+						pub: 'asdf',
+						name: "timber"
+					}
+				}
+			});
+			gun1.get('mmA').map().map().on(function(data, has){
+				check[has+1] = data;
+				//console.log('first test ONLY get called with FDSA & ASDF objects:', has, data);
+			});//return;
+
+			setTimeout(function(){
+				var gun2 = Gun();
+				gun2.get('2mmA').put({nest: {
+					'B': {
+						C: {
+							pub: 'fdsa',
+							y: "mark"
+						}
+					},
+					'timber': {
+						asdf: {
+							pub: 'asdf',
+							name: "timber"
+						}
+					}
+				}});
+				//console.only.i=1;console.log("------------------");
+				//console.log("CHAIN ID: 2mma = 2, 2mmA.nest = 3, map=4, map.map=5, 2mmaNBC=17, 2mma.nest.b.c=8, 2mmanest=9, 2mmanest.b=11", gun2._);
+
+				gun2.get('2mmA').get('nest').map().map().get('pub').on(function(data, has){
+					check[has+2] = data;
+					//console.log('should log /*ASDF*/ & FDSA text not object:', has, data);
+					check.to = check.to || setTimeout(function(){
+						if(check.C1.pub === 'fdsa' && check.C1.y === 'mark'
+						&& check.asdf1.pub === 'asdf' && check.asdf1.name === 'timber'
+						&& check.C2.pub === 'fdsa' && check.C2.y === 'mark'
+						&& check.asdf2.pub === 'asdf' && check.asdf2.name === 'timber'){
+							done();
+						}
+					});
+				});
+			},70);
 
 		});
 
@@ -3125,7 +3181,7 @@ describe('Gun', function(){
 				born: 1
 			}));
 
-			app.get('alias').map().map().get('pub').on(function(data){
+			gun.get('mult/times').get('alias').map().map().get('pub').on(function(data){
 				done.one = data;
 				//console.log("pub 1!", data);
 			});

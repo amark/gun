@@ -346,6 +346,7 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
+			console.log("TODO: Mark: HAM is unfinished, new acks, RAD, etc.");
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -418,7 +419,6 @@
 				// TODO: consider tagging original message into dup for DAM.
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
-				//console.log("GET", get);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
@@ -624,7 +624,6 @@
 						return back.on('out', msg);
 					}
 					msg = {get: {}, $: at.$};
-					console.log("NO ASK", msg);
 					return back.on('out', msg);
 				}
 				(at.ask || (at.ask = {}))[''] = at;	 //at.ack = at.ack || -1;
@@ -648,6 +647,8 @@
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
+
+			// this section below can be improved probably by normalizing directly off of the put's soul/has rather than normalizing based off of chain detection.
 			if(key){ // TODO: Should we not only locally cache in the chain if this machine has asked for the data? I think this caused a bug somewhere if we did, so test.
 				if(cat.ask && state >= state_is(root.graph[soul], key)){ // This handles any chain, such as a proxy chain or plural chain, that asks for data, but always updates the cache of the root soul chain. // TODO: Why does adding || at.soul cause tests to fail? // faster than HAM
 					(tmp = root.$.get(soul)._).put = state_ify(tmp.put, key, state, change, soul);
@@ -663,6 +664,7 @@
 				}
 				msg.get = msg.get || key;
 			}
+
 			if(cat.soul && at === cat){ // (1) we're a root node chain.
 			} else
 			if(cat.has && at === cat){ // (2)
@@ -672,7 +674,17 @@
 				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
 				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at.$; msg = tmp;
 			} else {}
-			eve.to.next(msg); // 1st API job is to call all the listeners.
+
+			/// test --->
+			if(!cat.soul && !cat.has){
+				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
+				tmp.FLAG = cat.id;
+				eve.to.next(tmp);
+			} else {
+				eve.to.next(msg);
+			} // <----
+
+			//eve.to.next(msg); // 1st API job is to call all the listeners.
 			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 				(act = cat.act[act]) && act(msg);
 			},0,99);
@@ -690,6 +702,13 @@
 				},0,99);
 				return;
 			}
+
+			if(!at.soul && !cat.soul && !cat.has){ // EXPERIMENTAL CODE FOR MAPPING!
+				if((sat = cat.next) && (sat = sat[key])){
+					sat.on('in', tmp);
+				}
+			} // isolate
+
 			if(at.soul){
 				if((sat = cat.next) && (sat = sat[key])){
 					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }); tmp.$ = sat.$;
@@ -697,12 +716,21 @@
 				}
 			}
 			if('string' == typeof (link = valid(change))){
-				if(at.has){
-					sat = root.$.get(at.link = link)._; // grab what we're linking to.
-					if((sat.echo || (sat.echo = {}))[at.id] && !(root.pass||'')[at.id]){ return } // we've already linked ourselves so we do not need to do it again. Except if a new event listener was added, we need to make a pass through for it.
-					if(tmp = root.pass){ if(tmp[link+at.id]){ return } tmp[link+at.id] = 1 } // The above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
-					sat.echo[at.id] = at; // add ourselves to it.
-					tmp = at.ask||'';
+				if(at.soul){ return }
+				if(!cat.has && !cat.soul){ other(link, at, cat, root); return; } // IF IT IS NOT A SOUL OR HAS, THEN IT IS A MAP (are there any chains other than these 3?)
+
+				var tat = at;
+				//if(tat.link && tat.link != soul){ return }
+				if(tat.has){
+					//tat = root.$.get(soul).get(key)._;
+					sat = root.$.get(tat.link = link)._; // grab what we're linking to.
+					tat.linkID = sat.id; // debugging only, delete later.
+					root.pass && (root.pass.ID = root.pass.ID || String.random(2));
+					if((sat.echo || (sat.echo = {}))[tat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
+						&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down.
+					if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
+					sat.echo[tat.id] = tat; // add ourselves to it.
+					tmp = cat.ask||at.ask||''; // ask the chain at first!
 					if(tmp['']){
 						sat.on('out', {get: {'#': link}});
 					} else {
@@ -731,6 +759,21 @@
 			Gun.on.put(msg);
 			return; // eom
 		}
+
+		function other(link, at, cat, root){
+			//return; // this will break unit test "multiple times map", but we're keeping it for now to see if we can consolidate code.
+			var sat = root.$.get(at.link = link)._, tmp; // grab what we're linking to.
+			tmp = cat.ask||at.ask||'';
+			if(tmp['']){
+				sat.on('out', {get: {'#': link}});
+			} else {
+				setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+					if(!(sat = tmp[get])){ return }
+					sat.on('out', {get: {'#': link, '.': get}}); // go get it.
+				},0,99);
+			}
+		}
+
 		var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
 	})(USE, './chain');
 
@@ -1048,6 +1091,7 @@
 					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
 					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
+					if('string' == typeof Gun.valid(tmp)){ return } // TODO: POSSIBLE BUG! MARK HACKED THIS IN DURING TEST EXPERIMENTATION, IT IS NOT WELL THOUGHT OUT.
 					cb.call($, tmp, at.get);
 				};
 			}, {on: 1});
@@ -1117,11 +1161,24 @@
 			return chain;
 		}
 		function map(msg){
-			var cat = this.as, gun = msg.$, put = msg.put;
+			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
 			if(!put){ return }
-			var soul = put['#'], k = put['.'], val = put['=']||put[':'];
-			// TODO: lex match!
-			((tmp = gun.get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
+			// a map on a root node hears 
+			if(msg.FLAG && !msg.$$){ return; } // TODO: Variable change that is quickly hacked in, not thought through, but did get test passing, probably need to add 7 other considerations to the copying of this message with the flag.
+			/*
+			if(at.soul){ tmp = gun.get(k)._ }
+			else if('string' == typeof (tmp = Gun.valid(val))){ tmp = at.root.$.get(tmp)._ }
+			if(!tmp){ return }*/
+			if(!msg.$$){ tmp = gun.get(k)._ }
+			else if('string' == typeof (tmp = Gun.valid(val))){
+				//tmp = at.root.$.get(tmp)._ // resolve to closest soul
+				tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
+				//tmp = gun.get(k)._; // resolve to child of parent
+			}
+			//((tmp = gun._.root.$.get()).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+			//((tmp = gun._.root.$.get(soul).get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
 	})(USE, './map');
