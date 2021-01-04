@@ -1,0 +1,178 @@
+<html>
+<head>
+<title>Gun Msg Trace</title>
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0 0;
+  font-family: monospace;
+  padding: 10px 15px;
+}
+body {
+  background: rgba(0,0,0,0.7);
+}
+#app {
+}
+#editor {
+  width: 90%;
+  height: 90%;
+  background: gray;
+}
+
+#diagram {
+/*   width: 100%; */
+/*   height: 100%; */
+  margin: 0 auto;
+/*   background: #d2d2d2; */
+/*   position: absolute; */
+  top:0;
+  left:0;
+}
+/*#diagram svg {
+  width: 100%;
+  height: 100%;
+}*/
+#diagram svg text {
+  fill: #79ce7f;
+}
+#diagram svg text:hover {
+  fill: #20ff3b;
+  cursor: pointer;
+}
+#diagram svg .note rect, #diagram svg .note path {
+    fill: #666666;
+}
+#diagram svg .title rect,
+#diagram svg .title path,
+#diagram svg .actor rect,
+#diagram svg .actor path {
+    fill: #ffffff;
+}
+#diagram svg .actor text {
+    fill: #000000;
+}
+#diagram svg .actor line {
+    fill: #000000;
+    stroke-width: 5px;
+}
+#diagram svg line {
+  stroke: rgba(0,0,0,0.5);
+/*   stroke-width: 5px; */
+}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>GUN internals</h1>
+<!--   <h3>Chain Log</h3> -->
+<!--   <div id="logschain"></div> -->
+  <h2></h2>
+  <div id="diagram"></div>
+</div>
+<script src="./jquery.js"></script>
+<script src="../gun.js"></script>
+<script src="../sea.js"></script>
+<!-- <script src="../lib/open.js"></script> -->
+<!-- <script src="../lib/load.js"></script> -->
+
+<script src="./vendor/webfont-mock.js"></script>
+<script src="./vendor/snap.svg.min.js"></script>
+<script src="./vendor/underscore.min.js"></script>
+<script src="./vendor/sequence-diagram-min.js"></script>
+<script>
+var u, user, gun = Gun('https://us.meething.space:8787/gun');
+
+var app = {};
+var on = function(v,k) { console.log('ON: %s, ', k, v); };
+
+
+app.init = function() {
+//   user = app.user = gun.user().auth('gun-manhattan', app.pair);
+//   var ctx = app.ctx = app.user.get('code'); /// my app to store my dev code
+
+  setTimeout(function() {
+
+  gun.get('soul-empty').on(on);
+//   gun.get('r1').on(on);
+//   gun.get('r1').put({lA1:1});
+//   gun.get('r1').put({lA1:1, lB1:2}, console.log);
+//   gun.get('~'+app.pair.pub+'/code/r1').on(on);
+//   ctx.get('r1').on(on);
+//   ctx.get('r1').put({l1a:1}, console.log);
+//   ctx.get('L1').get('L2').get('L3').get('L4').get('L5').on(on);
+//   ctx.get('r1').map().on(on);
+  },0);
+
+  
+  
+  setTimeout(function() {
+    console.log('_____TOTAL LOGS: ',Gun.logs.length, new Date());
+    $('h2:first').text(`Total of steps: ${Gun.logs.length}`);
+    $('title:first').text(`(${Gun.logs.length}) steps | Gun Msg Trace`);
+    app.render_diagram(Gun.logs.join('\n'));
+    
+//       Gun.logschain
+//     $('h3:first').text(`Chain steps: ${Gun.logschain.length}`);
+//     app.render_diagram(Gun.logschain.join('\n'), logschain);
+  }, 1500);
+};
+
+app.render_diagram = function(code, id) {
+  var diagram = Diagram.parse(code);
+  diagram.drawSVG(id||'diagram', {theme: 'simple'});
+};
+
+app.pair = {
+//   alias: 'gun-manhattan',
+  "pub": "WO5rpQ5E2ZRY_MaMpKmQ4ZJWtOb_Lqj70b81FjeJHbk.HkcxjGtsxjajYIQJhNqRJbgb5NeFDoBf63fd-zMMOck",
+  "priv": "ypSl2AaJQezW7qesfDg676c6F_DdndDEwbzO7XzANIE",
+  "epub": "y17GOOYSGynFJmOSgC0GWbq5JRNfVeTsO_YAD32LWQM.1M4wlRjTViJRvQC8mtpIbWXNwTt2CqAnAdP3W4SSQ5s",
+  "epriv": "-9I2jGjMTVoaD5xJ9Gp3BE0PkPtiYUI2FuACXHnR9xk"
+};
+
+///// TESTS rogowski
+Gun.logs=[`Participant GUN`];
+// Gun.logs=[];
+Gun._log = function(evname, msg) {
+  if (!msg) {
+    console.log('WARN, empty message: ',msg);
+//         msg=evname;
+//         evname = 'GUN';
+  }
+  if (!Gun.lastev) { Gun.lastev=evname||'PEER'; };
+//       msg.lastev = Gun.lastev;
+  Gun._log.i = Gun._log.i ? ++Gun._log.i : 1;
+  console.log(`_____(${Gun._log.i}) ${Gun.lastev}->:%s, msg:`, evname, msg);
+
+  var __ = (!msg||!msg['#'] ? '' : ('#:'+msg['#']).slice(0,6)+'...');
+  var dam = (!msg||!msg.dam ? '' : ('dam:'+msg.dam));
+  var at = (!msg||!msg['@'] ? '' : ('@:'+msg['@']).slice(0,9)+'...');
+  var lS = (!msg||!msg.lS ? '' : ('lS:'+msg.lS));
+  var id = (!msg||!msg.id ? '' : ('id:'+msg.id));
+  var ram = (!msg||!msg.ram ? '' : ('ram:'+msg.ram));
+  var get = (!msg||!msg.get ? '' : ('get:'+Gun._clean(msg.get)).slice(0,15)+'...');
+  var put = !(msg && ('put' in msg)) ? '' : ('put:'+Gun._clean(msg.put)).slice(0,30)+'...';
+//       if (dam && Gun.lastev==='UNIVERSE') { evname='PEER'; }
+  var keys = Object.keys(msg||{}).sort();
+  if (dam) {
+    if (msg['#']) {
+      evname='GUN';
+    } else {
+      Gun.lastev='GUN';
+    }
+    Gun.logs.push(`${Gun.lastev}->${evname}: (${Gun._log.i})  {${keys}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
+  } else {
+    Gun.logs.push(`${Gun.lastev}->${evname}: (${Gun._log.i})  {${keys}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
+  }
+
+  Gun.lastev = evname;
+};
+Gun._clean = function(txt) { return JSON.stringify(typeof txt==='undefined' ? 'undef' : txt||null).replace(/"|\{|\}+/g,'').slice(0,20).trim(); };
+
+///// TESTS rogowski ^^^^
+
+$(document).ready(app.init);
+</script>
+</body>
+</html>
