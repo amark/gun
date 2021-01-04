@@ -82,14 +82,24 @@ body {
 <script>
 ;(function(){
   // OVERLOAD GUN FUNCTIONS THAT WE WANT TO TRACE:
-  var get = Gun.on._get;
-  Gun.on._get = function(a,b,c){ Gun._log('GET', a); get(a,b,c) }
+  var _get = Gun.on._get;
+  Gun.on._get = function(a,b,c,d,e){ Gun._trace('_GET', a); _get.call(this, a,b,c,d,e) }
+  var get = Gun.chain.get;
+  Gun.chain.get = function(a,b,c,d,e){ Gun._trace('GET', a); return get.call(this, a,b,c,d,e) }  
+  var put = Gun.chain.put;
+  Gun.chain.put = function(a,b,c,d,e){ Gun._trace('PUT', a); put.call(this, a,b,c,d,e) }
+  
+  var on = Gun.chain.on;
+  Gun.chain.on = function(a,b,c,d,e){ Gun._trace('ON', a); on.call(this, a,b,c,d,e) }
+  
+  var map = Gun.chain.map;
+  Gun.chain.map = function(a,b,c,d,e){ Gun._trace('MAP', a); map.call(this, a,b,c,d,e) }
 
   var input = Gun.on.in;
-  Gun.on.in = function(a,b,c){ Gun._log('input', a); input.call(this, a,b,c) }
+  Gun.on.in = function(a,b,c,d,e){ Gun._trace('input', a); input.call(this, a,b,c,d,e) }
 
   var output = Gun.on.out;
-  Gun.on.out = function(a,b,c){ Gun._log('output', a); output.call(this, a,b,c) }
+  Gun.on.out = function(a,b,c,d,e){ Gun._trace('output', a); output.call(this, a,b,c,d,e) }
 }());
 
 ;(function(){ // PASTE YOUR UNIT TEST INTO HERE TO TRACE IT!
@@ -100,11 +110,12 @@ body {
   };
   //gun.get('level1').put(data);
   //gun.get('level1').map().map().on(function(v,k){ console.log('level3', k, v); check[k] = v });
-  gun.get('level1').put({hello: 'world'}, function(ack){
-    Gun._log('ACKED')
+//   gun.get('level2').put({D1: 'hello!!', C1: 'world!!'})
+  gun.get('level1').put({A1: 'hello', B1: 'world'}, function(ack){
+    Gun._trace('ACKED')
     //console.log('ack!', ack);
     gun.get('level1').on(function(data){
-      Gun._log('READ')
+      Gun._trace('READ')
       //console.log("read!", data);
     });
   });
@@ -112,9 +123,9 @@ body {
 
 Gun.on('trace.end', function(msg){
   var code = msg.code, id;
-  console.log('_____TOTAL LOGS: ',Gun.logs.length, new Date());
-  $('h2:first').text(`Total of steps: ${Gun.logs.length}`);
-  $('title:first').text(`(${Gun.logs.length}) steps | Gun Msg Trace`);
+  console.log('_____TOTAL LOGS: ',Gun.traces.length, new Date());
+  $('h2:first').text(`Total of steps: ${Gun.traces.length}`);
+  $('title:first').text(`(${Gun.traces.length}) steps | Gun Msg Trace`);
   var diagram = Diagram.parse(code);
   diagram.drawSVG(id||'diagram', {theme: 'simple'});
 });
