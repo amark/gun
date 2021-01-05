@@ -1,14 +1,15 @@
 // @rogowski CAME UP WITH THIS BRILLIANT GENIUS ABSOLUTELY AMAZING AWESOME IDEA!!!!
 ///// TESTS rogowski
-Gun.traces=[`Participant GUN`];
-// Gun.logs=[];
+//Gun.traces=[`Participant GUN`];
+Gun.traces=[];
 Gun._trace = function(evname, msg) {
+  //if(!(console.only.i)){ return }
   clearTimeout(Gun._trace.to);
   Gun._trace.to = setTimeout(function(){
     Gun.on('trace.end', {code: Gun.traces.join('\n')});
   }, 1000);
   if (!msg) {
-    console.log('WARN, empty message: ',msg);
+    //console.log('WARN, empty message: ',msg);
 //         msg=evname;
 //         evname = 'GUN';
   }
@@ -17,15 +18,15 @@ Gun._trace = function(evname, msg) {
   };
 //       msg.lastev = Gun._tracelastev;
   Gun._trace.i = Gun._trace.i ? ++Gun._trace.i : 1;
-  console.log(`*(${Gun._trace.i}) ${Gun._tracelastev}->:%s, msg:`, evname, msg);
+  //console.log(`*(${Gun._trace.i}) ${Gun._tracelastev}->:%s, msg:`, evname, msg);
 
-  var __ = (!msg||!msg['#'] ? '' : ('#:'+msg['#']).slice(0,6)+'...');
+  var __ = (!msg||!msg['#'] ? '' : ('#'+msg['#']).slice(0,4)+'');
   var dam = (!msg||!msg.dam ? '' : ('dam:'+msg.dam));
-  var at = (!msg||!msg['@'] ? '' : ('@:'+msg['@']).slice(0,9)+'...');
+  var at = (!msg||!msg['@'] ? '' : ('@:'+msg['@']).slice(0,9)+'');
   var lS = (!msg||!msg.lS ? '' : ('lS:'+msg.lS));
   var id = (!msg||!msg.id ? '' : ('id:'+msg.id));
   var ram = (!msg||!msg.ram ? '' : ('ram:'+msg.ram));
-  var get = (!msg||!msg.get ? '' : ('get:'+Gun._clean(msg.get)).slice(0,15)+'...');
+  var get = (!msg||!msg.get ? '' : ('get:'+Gun._clean(msg.get)).slice(0,15)+'');
   var put = !(typeof msg === 'object' && ('put' in msg)) ? '' : ('put:'+Gun._clean(msg&&msg.put?msg.put:'')).slice(0,30)+'...';
   
 //   Gun._tracelastevdt Gun._tracelastev;
@@ -38,6 +39,7 @@ Gun._trace = function(evname, msg) {
   var keys = Array.isArray(msg) ? keys.sort().join(',')
     : typeof msg==='object' ? Object.keys(msg).sort().join(',')
     : 'this';
+
   if (dam) {
     if (msg['#']) {
       evname='GUN';
@@ -46,7 +48,8 @@ Gun._trace = function(evname, msg) {
     }
     Gun.traces.push(`${Gun._tracelastev}->${evname}: (${Gun._trace.i})  {${keys}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
   } else {
-    Gun.traces.push(`${Gun._tracelastev}->${evname}: (${Gun._trace.i})  {${keys.slice(0,15)}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
+    //Gun.traces.push(`${Gun._tracelastev}->${evname}: (${Gun._trace.i})  {${keys.slice(0,15)}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
+    Gun.traces.push(Gun._tracelastev+'->'+evname+': '+(console.only.i||'')+' '+__);
 //     Gun.traces.push(`${Gun._tracelastev}->${evname}: (${Gun._trace.i}) {${!keys?'this':keys}}`);
   }
 
