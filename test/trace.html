@@ -74,15 +74,13 @@ body {
   background: black;
   color: white;
   padding: 0.3em;
-  top: 5em;
+  top: 7em;
 }
 </style>
 </head>
 <body>
 <div id="trace">
-<h1>GUN internals</h1>
-<!--   <h3>Chain Log</h3> -->
-<!--   <div id="logschain"></div> -->
+  <h1>Gun Msg Trace</h1>
   <h2></h2>
   <div id="diagram"></div>
 </div>
@@ -98,70 +96,62 @@ body {
 <script>
 ;(function(){
   // OVERLOAD GUN FUNCTIONS THAT WE WANT TO TRACE:
-  var _get = Gun.on._get; Gun.on._get = function(a,b,c,d,e){ Gun._trace('GET', a); _get.call(this, a,b,c,d,e) }
-  var _put = Gun.on.put; Gun.on.put = function(a,b,c,d,e){ Gun._trace('PUT', a); _put.call(this, a,b,c,d,e) }
   
-  /*var get = Gun.chain.get; Gun.chain.get = function(a,b,c,d,e){ Gun._trace('.get', a); return get.call(this, a,b,c,d,e) }
-  var put = Gun.chain.put; Gun.chain.put = function(a,b,c,d,e){ Gun._trace('.put', a); return put.call(this, a,b,c,d,e) }
-  var on = Gun.chain.on; Gun.chain.on = function(a,b,c,d,e){ Gun._trace('.on', a); return on.call(this, a,b,c,d,e) }
-  var map = Gun.chain.map; Gun.chain.map = function(a,b,c,d,e){ Gun._trace('.map', a); return map.call(this, a,b,c,d,e) }*/
-  var once = Gun.chain.once; Gun.chain.once = function(a,b,c,d,e){ Gun._trace('.once', a); return once.call(this, a,b,c,d,e) }
+  /// GUN protocolo
+  var _get = Gun.on._get; Gun.on._get = function(a,b,c,d,e){ Trace.log('GET', a); _get.call(this, a,b,c,d,e) } /// PROTOCOL
+  var _put = Gun.on.put; Gun.on.put = function(a,b,c,d,e){ Trace.log('PUT', a); _put.call(this, a,b,c,d,e) } /// PROTOCOL
+  
+  /// GUN chain
+//   var get = Gun.chain.get; Gun.chain.get = function(a,b,c,d,e){ Trace.log('.get', a); return get.call(this, a,b,c,d,e) } /// chain
+//   var put = Gun.chain.put; Gun.chain.put = function(a,b,c,d,e){ Trace.log('.put', a); return put.call(this, a,b,c,d,e) } /// chain
+//   var map = Gun.chain.map; Gun.chain.map = function(a,b,c,d,e){ Trace.log('.map', a); return map.call(this, a,b,c,d,e) } /// chain
+//   var once = Gun.chain.once; Gun.chain.once = function(a,b,c,d,e){ Trace.log('.once', a); return once.call(this, a,b,c,d,e) } /// chain
+//   var on = Gun.chain.on; Gun.chain.on = function(a,b,c,d,e){ Trace.log('.on', a); return on.call(this, a,b,c,d,e) } /// chain
 
-  var input = Gun.on.in; Gun.on.in = function(a,b,c,d,e){ Gun._trace('in', a); input.call(this, a,b,c,d,e) }
+  /// GUN events
+  var input = Gun.on.in; Gun.on.in = function(a,b,c,d,e){ Trace.log('in', a); input.call(this, a,b,c,d,e) } /// EVENT
 
-  var output = Gun.on.out; Gun.on.out = function(a,b,c,d,e){ Gun._trace('out', a); output.call(this, a,b,c,d,e) }
+  var output = Gun.on.out; Gun.on.out = function(a,b,c,d,e){ Trace.log('out', a); output.call(this, a,b,c,d,e) } /// EVENT
 
-  //var only = console.only; console.only = function(a,b,c,d,e,f,g){ Gun._trace('ONLY'); return only.apply(console,arguments) }
-  var start = +new Date;
-  setTimeout(function log(){
-    if((+new Date - start) > 100){ return }
-    setTimeout(log, 0);
-    Gun._trace("ASYNC");
-  },0);
+//   var only = console.only; console.only = function(a,b,c,d,e,f,g){ Trace.log('ONLY'); return only.apply(console,arguments) }
+//   var start = +new Date;
+//   setTimeout(function log(){
+//     if((+new Date - start) > 100){ return }
+//     setTimeout(log, 0);
+//     Trace.log("ASYNC");
+//   },0);
 }());
 
 ;(function(){ // PASTE YOUR UNIT TEST INTO HERE TO TRACE IT!
-localStorage.clear();
-var goff = Gun();
-Gun.statedisk = function(o,s,cb){
-  goff.get(s).put(o, cb, {turn: function(fn){fn()}});
-};
-//Gun._trace('ONLY');
-Gun._trace('GET');
-Gun._trace('PUT');
-Gun._trace('out');
-Gun._trace('in');
-//Gun._trace('.get');
-Gun._trace('.once');
-//Gun._trace('.put');
+// if (typeof localStorage!=='undefined') { localStorage.clear(); }
+// var goff = Gun();
+// Gun.statedisk = function(o,s,cb){ goff.get(s).put(o, cb, {turn: function(fn){fn()}}); };
 
-      var gun = Gun();
-      var bob = {age: 29, name: "Bob!"};
-      var cat = {name: "Fluffy", species: "kitty"};
-      var user = {bob: bob};
-      bob.pet = cat;
-      cat.slave = bob;
-      Gun.statedisk(user, 'nodecircle', function(){
-      console.only.i=1;console.log("=============", gun);
-      //gun.get('nodecircle').get('bob').once(function(data){
-      gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
-        console.log("*****************", data);//return;
-        expect(done.to).to.not.be.ok();
-        done.to = setTimeout(function(){
-          expect(data.age).to.be(29);
-          expect(data.name).to.be("Bob!");
-          expect('string' == typeof Gun.valid(data.pet)).to.ok();
-          done();
-        },300);
-      });
-      });
+var gun = Gun();
+var bob = {age: 29, name: "Bob!"};
+var cat = {name: "Fluffy", species: "kitty"};
+var user = {bob: bob};
+bob.pet = cat;
+cat.slave = bob;
+Trace.log('START');
+// Gun.statedisk(user, 'nodecircle', function(){
+console.only.i=1;console.log("=============", gun);
+
+// gun.get('nodecircle').put(user, function(ack) { Trace.log('ACK', ack); });
+// gun.get('nodecircle').on(function(ack) { Trace.log('END', ack); });
+gun.get('nodecircle').once(function(ack) { Trace.log('END', ack); });
+//       gun.get('nodecircle').get('a').get('b').get('c').on(function(v,k){
+//       gun.get('nodecircle').get('bob').on(function(v,k){
+//       gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(v,k){
+// });
 }());
 
-Gun.on('trace.end', function(msg){
-  var code = msg.code, id;
-  //console.log('_____TOTAL LOGS: ',Gun.traces.length, new Date());
-  $('h2:first').text(`Total of steps: ${Gun.traces.length}`);
-  $('title:first').text(`(${Gun.traces.length}) steps | Gun Msg Trace`);
+// Gun.on('trace.end', function(msg){
+setTimeout(function(){
+  console.log('_____TOTAL LOGS: ',Trace.traces.length, new Date());
+  var id, code = Trace.traces.join('\n');
+  $('h2:first').text(`Total of steps: ${Trace.traces.length}`);
+  $('title:first').text(`(${Trace.traces.length}) steps | Gun Msg Trace`);
   var diagram = Diagram.parse(code);
   diagram.drawSVG(id||'diagram', {theme: 'simple'});
   setTimeout(function(){
@@ -169,8 +159,8 @@ Gun.on('trace.end', function(msg){
       var pos = $(this).offset();
       $("<span class='method'>").text($(this).text()).css({position: 'fixed', left: pos.left}).appendTo('body');
     });
-  })
-});
+  });
+}, 2000);
 </script>
 </body>
 </html>
