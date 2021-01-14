@@ -110,38 +110,51 @@ const HomeView = () => {
   `;
 };
 
-const MenuView = () => {
-  const pub = Session.getPubKey();
-  return html`
-    <div class="application-list">
-      <a href="/profile/${pub}">
-        <span class="icon"><${Identicon} str=${pub} width=40/></span>
-        <span class="text" style="font-size: 1.2em;border:0;margin-left: 7px;"><iris-text user="${pub}" path="profile/name" editable="false"/></span>
-      </a>
-      <br/><br/>
-      ${APPLICATIONS.map(a => {
-        if (a.url) {
-          return html`
-            <a href=${a.url}>
-              <span class="icon">${a.icon || Icons.circle}</span>
-              <span class="text">${a.text}</span>
-            </a>`;
-        } else {
-          return html`<br/><br/>`;
-        }
-      })}
-    </div>
+class MenuView extends Component {
+  componentDidMount() {
+    State.local.get('showMenu').on(showMenu => this.setState({showMenu}));
+  }
 
-  `;
+  render() {
+    const pub = Session.getPubKey();
+    return html`
+      <div class="application-list ${this.state.showMenu ? 'menu-visible-xs' : ''}">
+        <a href="/profile/${pub}">
+          <span class="icon"><${Identicon} str=${pub} width=40/></span>
+          <span class="text" style="font-size: 1.2em;border:0;margin-left: 7px;"><iris-text user="${pub}" path="profile/name" editable="false"/></span>
+        </a>
+        <br/><br/>
+        ${APPLICATIONS.map(a => {
+          if (a.url) {
+            return html`
+              <a href=${a.url}>
+                <span class="icon">${a.icon || Icons.circle}</span>
+                <span class="text">${a.text}</span>
+              </a>`;
+          } else {
+            return html`<br/><br/>`;
+          }
+        })}
+      </div>
+    `;
+  }
 };
 
 class Main extends Component {
+  constructor() {
+    super();
+    this.showMenu = false;
+  }
+
   componentDidMount() {
     localState.get('loggedIn').on(loggedIn => this.setState({loggedIn}));
   }
 
   render() {
     const content = this.state.loggedIn ? html`
+      <div class="visible-xs-flex" style="border-bottom:var(--sidebar-border-right)">
+        <svg onClick=${() => State.local.get('showMenu').put(this.showMenu = !this.showMenu)} style="padding: 5px;cursor:pointer;" viewBox="0 -53 384 384" width="40px"><path d="m368 154.667969h-352c-8.832031 0-16-7.167969-16-16s7.167969-16 16-16h352c8.832031 0 16 7.167969 16 16s-7.167969 16-16 16zm0 0"/><path d="m368 32h-352c-8.832031 0-16-7.167969-16-16s7.167969-16 16-16h352c8.832031 0 16 7.167969 16 16s-7.167969 16-16 16zm0 0"/><path d="m368 277.332031h-352c-8.832031 0-16-7.167969-16-16s7.167969-16 16-16h352c8.832031 0 16 7.167969 16 16s-7.167969 16-16 16zm0 0"/></svg>
+      </div>
       <section class="main" style="flex-direction: row;">
         <${MenuView}/>
         <div style="flex: 3; display: flex">
