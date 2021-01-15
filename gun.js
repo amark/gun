@@ -547,8 +547,8 @@
 			cat.id = ++root.once;
 			cat.back = gun._;
 			cat.on = Gun.on;
-			cat.on('in', input, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
-			cat.on('out', output, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
+			cat.on('in', Gun.on.in, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
+			cat.on('out', Gun.on.out, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
 			return chain;
 		}
 
@@ -634,11 +634,10 @@
 				}
 			}
 			return back.on('out', msg);
-		}
+		}; Gun.on.out = output;
 
 		function input(msg){
-			// manhattan:
-			var eve = this, cat = eve.as, root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, link, sat;
+			var eve = this, cat = eve.as, root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
 				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
@@ -646,102 +645,85 @@
 					cat.on('in', {put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
 				});
 			}
-			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat;
+			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat; // help stop some infinite loops
 
-			// this section below can be improved probably by normalizing directly off of the put's soul/has rather than normalizing based off of chain detection.
-			if(key){ // TODO: Should we not only locally cache in the chain if this machine has asked for the data? I think this caused a bug somewhere if we did, so test.
-				if(cat.ask && state >= state_is(root.graph[soul], key)){ // This handles any chain, such as a proxy chain or plural chain, that asks for data, but always updates the cache of the root soul chain. // TODO: Why does adding || at.soul cause tests to fail? // faster than HAM
-					(tmp = root.$.get(soul)._).put = state_ify(tmp.put, key, state, change, soul);
+			if(cat !== at){ // don't worry about this when first understanding the code, it handles changing contexts on a message. A soul chain will never have a different context.
+				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); // make copy of message
+				tmp.get = cat.get || tmp.get;
+				if(/*cat.has && */at.soul){ // a has (property) chain will have a different context sometimes if it is linked (to a soul chain). Anything that is not a soul or has chain, such as a map chain, will always have different contexts.
+					tmp.$ = cat.$;
+					tmp.$$ = at.$;
 				}
-				if(cat.has && at.soul){
-					cat.put = at.put;
+				if(!cat.soul && !cat.has){
+					tmp.$$$ = cat.$;
 				}
-				if(cat.has && at === cat && state >= state_is(root.graph[soul], key)){ // faster than HAM
-					tmp = cat.put = change; // update cache
-					if('string' == typeof (tmp = valid(tmp))){
-						cat.put = root.$.get(tmp)._.put || cat.put; // but if link, update to linked cache.
-					}
-				}
-				msg.get = msg.get || key;
+				msg = tmp; // use the message with the new context instead;
 			}
 
-			if(cat.soul && at === cat){ // (1) we're a root node chain.
-			} else
-			if(cat.has && at === cat){ // (2)
-			} else
-			//if(cat.has && at.soul){ // (3) we're a proxy for a root node.
-			if(cat.echo){ // (3) we're a proxy for a root node.
-				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
-				tmp.get = cat.has; tmp.$ = cat.$; tmp.$$ = at.$; msg = tmp;
-			} else {}
+			// There is the root in-memory graph cache, but each chain has its own cache which may have transformed data. Below sets that:
+			if((cat.soul || msg.$$) && state >= state_is(root.graph[soul], key)){ // This handles any chain, such as a link chain or map chain, that asks for data, but always updates the cache of the root soul chain.
+				(tmp = root.$.get(soul)._).put = state_ify(tmp.put, key, state, change, soul);
+			}
+			if(!at.soul && state >= state_is(root.graph[soul], key)){
+				(sat = root.$.get(soul).get(key)._).put = change; // update cache // TODO: PERFORMANCE!!!!!! This may create an unnecessary chain we never asked for, so figure out how to detect that and not bother.
+				if('string' == typeof (tmp = valid(change))){
+					sat.put = root.$.get(tmp)._.put || change;
+				}
+			}
 
-			/// test --->
-			if(!cat.soul && !cat.has){
-				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {});
-				tmp.FLAG = cat.id;
-				eve.to.next(tmp);
-			} else {
-				eve.to.next(msg);
-			} // <----
-
-			//eve.to.next(msg); // 1st API job is to call all the listeners.
-			setTimeout.each(Object.keys(cat.act||''), function(act){ // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-				(act = cat.act[act]) && act(msg);
-			},0,99);
-			setTimeout.each(Object.keys(cat.echo||''), function(lat){ // & linked chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-				if(!(lat = cat.echo[lat])){ return }
-				lat.on('in', msg);
-			},0,99);
+			eve.to.next(msg); // 1st API job is to call all chain listeners.
+			setTimeout.each(Object.keys(cat.act||''), function(act){ (act = cat.act[act]) && act(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			setTimeout.each(Object.keys(cat.echo||''), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
+				// TODO: BUG! because emptying cache could be async from below, make sure we are not emptying a newer cache. So maybe pass an Async ID to check against?
+				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				delete cat.link; // TODO: Empty out links, maps, echos, acks/asks, etc.?
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub properties. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if(!(sat = cat.next[get])){ return }
-					sat.on('in', {get: get, put: u, $: sat.$});
+					sat.on('in', {get: get, put: u, $: sat.$}); // TODO: BUG? Add recursive seen check?
 				},0,99);
 				return;
 			}
 
-			if(!at.soul && !cat.soul && !cat.has){ // EXPERIMENTAL CODE FOR MAPPING!
-				if((sat = cat.next) && (sat = sat[key])){
-					sat.on('in', tmp);
-				}
-			} // isolate
-
-			if(at.soul){
-				if((sat = cat.next) && (sat = sat[key])){
-					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }); tmp.$ = sat.$;
+			//if(cat.soul || msg.$$){
+			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
+				// is there cases where it is a $$ that we do NOT want to do the following? 
+				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ion map` code set a sat?
+					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
+					tmp.$ = (msg.$$||msg.$).get(tmp.get = key); delete tmp.$$; delete tmp.$$$;
 					sat.on('in', tmp);
 				}
 			}
-			if('string' == typeof (link = valid(change))){
-				if(at.soul){ return }
-				if(!cat.has && !cat.soul){ other(link, at, cat, root); return; } // IF IT IS NOT A SOUL OR HAS, THEN IT IS A MAP (are there any chains other than these 3?)
 
-				var tat = at;
-				//if(tat.link && tat.link != soul){ return }
-				if(tat.has){
-					//tat = root.$.get(soul).get(key)._;
-					sat = root.$.get(tat.link = link)._; // grab what we're linking to.
-					tat.linkID = sat.id; // debugging only, delete later.
-					root.pass && (root.pass.ID = root.pass.ID || String.random(2));
-					if((sat.echo || (sat.echo = {}))[tat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
-						&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down.
-					if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
-					sat.echo[tat.id] = tat; // add ourselves to it.
-					tmp = cat.ask||at.ask||''; // ask the chain at first!
-					if(tmp['']){
-						sat.on('out', {get: {'#': link}});
-					} else {
-						setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-							if(!(sat = tmp[get])){ return }
-							sat.on('out', {get: {'#': link, '.': get}}); // go get it.
-						},0,99);
-					}
-				}
+			link(msg, cat)
+		}; Gun.on.in = input;
+
+		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
+			var put = msg.put||'', link = put['=']||put[':'], zoo;
+			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
+			//if(!cat.has && msg.$$$){ return } // TODO: Add safety check for non core chains, like maps?
+			if('string' != typeof (link = valid(link))){ return }
+
+			var tat = cat.root.$.get(put['#']).get(put['.'])._;
+			if((tat.echo || (tat.echo = {}))[cat.id]){ return } // do not re-link if we have already.
+			(cat.id !== tat.id) && (tat.echo[cat.id] = cat); // set ourselfs up for an echo, but not if to self.
+
+			var sat = cat.root.$.get(tat.link = link)._; // grab what we're linking to.
+			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
+
+			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
+			if(tmp['']){
+				sat.on('out', {get: {'#': link}});
+			} else {
+				setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+					if(!(sat = tmp[get])){ return }
+					sat.on('out', {get: {'#': link, '.': get}}); // go get it.
+				},0,99);
 			}
-		}
+		}; Gun.on.link = link;
+
 		function ack(msg, ev){
 			// manhattan:
 			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
@@ -758,20 +740,6 @@
 			(msg._||{}).miss = 1;
 			Gun.on.put(msg);
 			return; // eom
-		}
-
-		function other(link, at, cat, root){
-			//return; // this will break unit test "multiple times map", but we're keeping it for now to see if we can consolidate code.
-			var sat = root.$.get(at.link = link)._, tmp; // grab what we're linking to.
-			tmp = cat.ask||at.ask||'';
-			if(tmp['']){
-				sat.on('out', {get: {'#': link}});
-			} else {
-				setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-					if(!(sat = tmp[get])){ return }
-					sat.on('out', {get: {'#': link, '.': get}}); // go get it.
-				},0,99);
-			}
 		}
 
 		var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
@@ -801,6 +769,7 @@
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put }
+					if(u === data && msg.$$){ data = msg.$$._.put }
 					if(opt.not !== u && u === data){ return }
 					if(opt.stun === u){
 						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){
@@ -815,7 +784,7 @@
 					}
 					//tmp = any.wait || (any.wait = {}); console.log(tmp[at.id] === ''); if(tmp[at.id] !== ''){ tmp[at.id] = tmp[at.id] || setTimeout(function(){tmp[at.id]='';any(msg,eve)},1); return } delete tmp[at.id];
 					// call:
-					if(opt.on){ opt.ok.call(at.$, data, at.get, msg, eve || any); return }
+					if(opt.on){ opt.ok.call(at.$, data, at.get, msg, eve || any); return } // TODO: Also consider breaking `this` since a lot of people do `=>` these days and `.call(` has slower performance.
 					if(opt.v2020){ opt.ok(msg, eve || any); return }
 					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); msg = tmp; msg.put = data; // 2019 COMPATIBILITY! TODO: GET RID OF THIS!
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
@@ -919,7 +888,7 @@
 			var s = as.state = as.state || Gun.state();
 			if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
 			if(!as.soul){ return get(as), gun }
-			as.$ = root.$.get(as.soul);
+			as.$ = root.$.get(as.soul); // TODO: This may not allow user chaining and similar?
 			as.todo = [{it: as.data, ref: as.$}];
 			as.turn = as.turn || turn;
 			as.ran = as.ran || ran;
@@ -1163,8 +1132,44 @@
 		function map(msg){
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
 			if(!put){ return }
+			//if(msg.$$$){ return} // TODO: And some other conditions?
+			Gun.on.link(msg, cat);
+			return;
+			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
+			tmp = at.root.$.get(soul).get(k)._;
+			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+
+			return;
+			if(!put){ return }
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
 			// a map on a root node hears 
+			if(!msg.$$){
+				if(at.soul){
+					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
+				} else
+				if(at.has){
+					// DO NOTHING!
+					return;
+				}
+			} else {
+				if(at.soul){
+
+				} else
+				if(at.has){
+					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
+				} else {
+					if(msg.$$$){
+						return; // 2nd map hears exact copy of 1st map's events which may be a copy itself, so we need to ignore these.
+					}
+					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
+				}
+			}
+			if(!tmp){ return }
+			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+			return;
+
+
+
 			if(msg.FLAG && !msg.$$){ return; } // TODO: Variable change that is quickly hacked in, not thought through, but did get test passing, probably need to add 7 other considerations to the copying of this message with the flag.
 			/*
 			if(at.soul){ tmp = gun.get(k)._ }
