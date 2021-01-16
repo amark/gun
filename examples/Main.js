@@ -91,17 +91,17 @@ const HomeView = () => {
         <p>Explore the data saved on the GUN database. Open to the side while using an application and see the data change in real-time.</p>
       </div></a>
       <a class="msg" href="game/space.html"><div class="msg-content">
-        <div class="img-container"><img src="game/space.jpg"/></div>
+        <div class="img-container"><img src="iris/img/space-game.jpg"/></div>
         <b>Space</b>
         <p>Spaceflight game. Open in 2 or more browser windows.</p>
       </div></a>
       <a class="msg" href="/iris/index.html"><div class="msg-content">
-        <div class="img-container"><img src="/iris.jpg"/></div>
+        <div class="img-container"><img src="iris/img/screenshot.png"/></div>
         <b>Iris</b>
         <p>Decentralized Twitter/Instagram. Provides modular components that can be reused in other applications (including this one).</p>
       </div></a>
       <a native class="msg" href="/chat/index.html"><div class="msg-content">
-        <div class="img-container"><img src="/chat/chat.jpg"/></div>
+        <div class="img-container"><img src="iris/img/gun-chat.jpg"/></div>
         <b>Chat</b>
         <p>Shoutbox!</p>
       </div></a>
