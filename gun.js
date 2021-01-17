@@ -697,7 +697,7 @@
 				}
 			}
 
-			link(msg, cat)
+			link(msg, cat);
 		}; Gun.on.in = input;
 
 		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
@@ -768,7 +768,7 @@
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
-					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put }
+					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					if(u === data && msg.$$){ data = msg.$$._.put }
 					if(opt.not !== u && u === data){ return }
 					if(opt.stun === u){
@@ -1060,7 +1060,7 @@
 					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
 					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					if('string' == typeof Gun.valid(tmp)){ return } // TODO: POSSIBLE BUG! MARK HACKED THIS IN DURING TEST EXPERIMENTATION, IT IS NOT WELL THOUGHT OUT.
+					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					cb.call($, tmp, at.get);
 				};
 			}, {on: 1});
