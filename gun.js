@@ -707,12 +707,16 @@
 			if(msg.$$$ && msg.$$$._.id === cat.id){ return } // TODO: Combine this with above so it is less ugly (code aesthetics).
 			//if(!cat.has && msg.$$$){ return } // TODO: Add safety check for non core chains, like maps?
 			if('string' != typeof (link = valid(link))){ return }
+			var root = cat.root;
 
-			var tat = cat.root.$.get(put['#']).get(put['.'])._;
-			if((tat.echo || (tat.echo = {}))[cat.id]){ return } // do not re-link if we have already.
+			var tat = root.$.get(put['#']).get(put['.'])._;
+			if((tat.echo || (tat.echo = {}))[cat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
+				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
+			if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
+
 			(cat.id !== tat.id) && (tat.echo[cat.id] = cat); // set ourselfs up for an echo, but not if to self.
 
-			var sat = cat.root.$.get(tat.link = link)._; // grab what we're linking to.
+			var sat = root.$.get(tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
