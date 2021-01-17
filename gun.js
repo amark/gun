@@ -1132,7 +1132,7 @@
 		function map(msg){
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
 			if(!put){ return }
-			//if(msg.$$$){ return} // TODO: And some other conditions?
+			if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
 			Gun.on.link(msg, cat);
 			return;
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
@@ -1159,7 +1159,7 @@
 					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
 				} else {
 					if(msg.$$$){
-						return; // 2nd map hears exact copy of 1st map's events which may be a copy itself, so we need to ignore these.
+						return; // 2nd map hears same message as 1st map's events which may be a copy itself, so we need to ignore these.
 					}
 					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
 				}
