@@ -703,6 +703,7 @@
 		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
 			var put = msg.put||'', link = put['=']||put[':'], zoo;
 			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
+			if(msg.$$$ && !msg.$$){ return } // TODO: And some other conditions?
 			//if(!cat.has && msg.$$$){ return } // TODO: Add safety check for non core chains, like maps?
 			if('string' != typeof (link = valid(link))){ return }
 
@@ -1132,7 +1133,7 @@
 		function map(msg){
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
 			if(!put){ return }
-			if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
+			//if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
 			Gun.on.link(msg, cat);
 			return;
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
