@@ -143,7 +143,7 @@
 		    }
 		    s.x = d.x + d.vx * dt;
 		    s.y = d.y + d.vy * dt;
-		    
+
 		    s.x = s.x % area.x;
 		    if(s.x < 0){
 		      s.x += area.x;
@@ -159,7 +159,6 @@
 		  }
 			return s;
 		}
-		localStorage.clear();
 		game.sync = function(shoot){
 			var me = game.me;
 			if(!me || me.boom){ return }

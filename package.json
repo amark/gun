@@ -60,9 +60,9 @@
   },
   "optionalDependencies": {
     "@peculiar/webcrypto": "^1.1.1",
-    "text-encoding": "^0.7.0",
+    "buffer": "^5.4.3",
     "emailjs": "^2.2.0",
-    "buffer": "^5.4.3"
+    "text-encoding": "^0.7.0"
   },
   "peerDependencies": {
     "bufferutil": "^4.0.1",
@@ -80,6 +80,7 @@
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
+    "iris-messenger": "github:irislib/iris-messenger",
     "uglify-js": "^3.6.0"
   }
 }
