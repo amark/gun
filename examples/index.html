@@ -1,28 +1,57 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>gun examples</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  
-	<body>
-		<!-- h1>Examples Directory <button style="float: right;" onclick="localStorage.clear()">Clear Local Storage</button></h1 -->
-		<style>
-			html, body {
-				margin: 0;
-				padding: 0;
-			}
-			iframe {
-				width: 100%;
-				height: 50%;
-				border: none;
-				b-order-top: ridge 2em skyblue;
-				border: none;
-			}
-		</style>
-		<a href="/todo/index.html"><iframe src="/todo/index.html" style="height: 100%;"></iframe></a>
-		<!-- a href="/json/index.html"><iframe src="/json/index.html"></iframe></a -->
-		<!-- a href="/chat/index.html"><iframe src="/chat/index.html"></iframe></a --> <!-- removing until DOM bug fixed -->
-		<!-- script src="../gun.js"></script -->
-	</body>
+
+<head>
+  <title>GUN — the database for freedom fighters</title>
+  <meta charset="utf-8">
+  <meta name="description" content="GUN is a distributed, offline-first, realtime graph database engine with built-in encryption.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta property="og:title" content="GUN — the database for freedom fighters">
+  <meta property="og:description" content="GUN is a distributed, offline-first, realtime graph database engine with built-in encryption.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="iris/img/gun-og-image.png">
+
+  <meta name="twitter:card" content="summary"></meta>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="./iris/img/apple-touch-icon.png">
+  <link rel="icon" href="iris/img/gun-48x48.png">
+  <link rel="manifest" href="./iris/site.webmanifest">
+  <link rel="mask-icon" href="./iris/img/safari-pinned-tab.svg" color="#74d5f1">
+  <link rel="shortcut icon" href="iris/img/gun-48x48.png">
+  <meta name="msapplication-TileColor" content="#74d5f1">
+  <meta name="msapplication-config" content="./iris/browserconfig.xml">
+  <meta name="theme-color" content="#74d5f1">
+
+  <link rel="stylesheet" type="text/css" href="./iris/css/cropper.min.css">
+
+  <link rel="stylesheet" href="./iris/css/dark.css" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="./iris/css/light.css" media="(prefers-color-scheme: no-preference), (prefers-color-scheme: light)">
+  <!-- The main stylesheet -->
+  <link rel="stylesheet" type="text/css" href="./iris/css/style.css">
+</head>
+
+<body>
+  <script src="./iris/js/lib/jquery.js"></script>
+  <script src="./iris/js/lib/cropper.min.js"></script>
+  <script src="./iris/js/lib/pica.min.js"></script>
+  <script src="./iris/js/lib/underscore-min.js"></script>
+  <script src="./iris/js/lib/gun.js"></script>
+  <script src="./iris/js/lib/open.js"></script>
+  <script src="./iris/js/lib/sea.js"></script>
+  <script src="./iris/js/lib/nts.js"></script>
+  <script src="./iris/js/lib/radix.js"></script>
+  <script src="./iris/js/lib/radisk.js"></script>
+  <script src="./iris/js/lib/store.js"></script>
+  <script src="./iris/js/lib/rindexed.js"></script>
+  <script src="./iris/js/lib/iris.js"></script>
+  <script src="./iris/js/lib/emoji-button.js"></script>
+  <script src="./iris/js/lib/Autolinker.min.js"></script>
+  <script src="./iris/js/lib/qrcode.min.js"></script>
+  <script src="./iris/js/lib/qr.zxing.js"></script>
+  <script src="./iris/js/lib/webtorrent.min.js"></script>
+  <script type="module" src="./Main.js"></script>
+</body>
+
 </html>
