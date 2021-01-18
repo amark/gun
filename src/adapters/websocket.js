@@ -47,7 +47,15 @@ Gun.on('opt', function(root){
 	var wait = 2 * 1000;
 	function reconnect(peer){
 		clearTimeout(peer.defer);
-		if(doc && peer.retry <= 0){ return } peer.retry = (peer.retry || opt.retry || 60) - 1;
+		let retry = 60;
+		if (peer.retry !== undefined) {
+			retry = peer.retry;
+		} else if (opt.retry !== undefined) {
+			retry = opt.retry;
+		}
+		peer.retry = retry;
+		if (doc && peer.retry <= 0) { return }
+		peer.retry -= 1;
 		peer.defer = setTimeout(function to(){
 			if(doc && doc.hidden){ return setTimeout(to,wait) }
 			open(peer);
