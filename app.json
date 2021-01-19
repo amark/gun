@@ -9,7 +9,7 @@
   "env": {
     "NPM_CONFIG_PRODUCTION": {
       "description": "If you don't want to serve the Gun landing page, set to \"true\".",
-      "value": false
+      "value": "false"
     }
   }
 }
