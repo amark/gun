@@ -2635,7 +2635,7 @@ describe('Gun', function(){
 
 						setTimeout(function(){
 							ref.once(function(data){
-								//console.log("*+*+*+*+*+**+*+*");
+								console.log("*+*+*+*+*+**+*+*");
 								expect(data).to.be('z');
 								done();
 							});
@@ -2676,7 +2676,7 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
-			//console.only.i=1;console.log("=============");
+			//console.only.i=1;console.log("=============", gun);
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//console.log("*****************", data, done.to);//return;
@@ -3098,13 +3098,16 @@ describe('Gun', function(){
 			setTimeout(function(){
 				//console.log('A=2, map=7, map.map=8, A.B=3, AB=5, A.B.C=4, ABC=6, AB.C=?', gun);
 				gun.get('A').map().map().on(function(data, key){
+					//console.log(111111, key, data);
 					check.on[data.pub] = true;
 				})
 			}, 900);
 
 			setTimeout(function(){
 				gun.get('A').map().map().once(function(data, key){
+					//console.log(22222, key, data);
 					check.once[data.pub] = true;
+					//console.log(check);
 					if(check.on['asdf'] && check.on['fdsa'] && check.once['asdf'] && check.once['fdsa']){
 						if(done.c){ return } done.c = 1;
 						done();
@@ -3112,6 +3115,59 @@ describe('Gun', function(){
 				})
 			}, 1200);
 
+		});
+
+		it.only('many maps with @rogowski!', function(done){
+			var gun = Gun();
+			var data = {
+				levelA2: { levelA3: { levelA4: { levelA5: "hello" } } },
+				//levelB2: { levelB3: { levelB4: { levelB5: "world" } } }
+			};
+
+			Gun.statedisk(data, 'level1', function(){
+				var check = {};
+				console.only.i=0;console.log("================");
+				//gun.get('level1').on(function(v,k){ console.log(1,k,v); check[k] = v });
+				//gun.get('level1').map().on(function(v,k){ console.log('*',2,k,v); check[k] = v });
+				gun.get('level1').map().map().on(function(v,k){ console.log(3,k,v); check[k] = v });
+				return;
+				gun.get('level1').map().map().map().on(function(v,k){ console.log(4,k,v); check[k] = v;
+					check.to = check.to || setTimeout(function(){
+						//console.log("log once", check);
+						expect(check.level1.levelA2).to.eql({'#':"level1/levelA2"});
+						expect(check.level1.levelB2).to.eql({'#':"level1/levelB2"});
+
+						expect(check.levelA2.levelA3).to.eql({'#':"level1/levelA2/levelA3"});
+						expect(check.levelA3.levelA4).to.eql({'#':"level1/levelA2/levelA3/levelA4"});
+						expect(check.levelA4.levelA5).to.be("hello");
+
+						expect(check.levelB2.levelB3).to.eql({'#':"level1/levelB2/levelB3"});
+						expect(check.levelB3.levelB4).to.eql({'#':"level1/levelB2/levelB3/levelB4"});
+						expect(check.levelB4.levelB5).to.be("world");
+
+						done();
+					}, 250);
+				});
+			}, 1000);
+		});
+
+		it('many maps with @rogowski last value map', function(done){
+			var gun = Gun();
+			var data = {
+				levelA2: { levelA3: { levelA4: { levelA5: "hello" } } },
+				levelB2: { levelB3: { levelB4: { levelB5: "world" } } }
+			};
+
+			Gun.statedisk(data, 'level1p', function(){
+				var check = {};
+				gun.get('level1p').map().map().map().map().on(function(v,k){ console.log('level5', k,v); check[k] = v;
+					check.to = check.to || setTimeout(function(){
+						expect(check.levelA5).to.be('hello');
+						expect(check.levelB5).to.be('world');
+						done();
+					}, 20);
+				});
+			}, 1000);
 		});
 
 		it('multiple map test with @rogowski!', function(done){
@@ -3131,10 +3187,11 @@ describe('Gun', function(){
 					}
 				}
 			});
+			//console.only.i=1;console.log("--------------------", gun1._.next);
 			gun1.get('mmA').map().map().on(function(data, has){
 				check[has+1] = data;
-				//console.log('first test ONLY get called with FDSA & ASDF objects:', has, data);
-			});//return;
+				console.log('first test ONLY get called with C/asdf = pub:fdsa/pub:asdf......', has, data);
+			});
 
 			setTimeout(function(){
 				var gun2 = Gun();
@@ -3152,12 +3209,12 @@ describe('Gun', function(){
 						}
 					}
 				}});
-				//console.only.i=1;console.log("------------------");
+				//console.only.i=101;console.log("------------------");
 				//console.log("CHAIN ID: 2mma = 2, 2mmA.nest = 3, map=4, map.map=5, 2mmaNBC=17, 2mma.nest.b.c=8, 2mmanest=9, 2mmanest.b=11", gun2._);
 
-				gun2.get('2mmA').get('nest').map().map().get('pub').on(function(data, has){
+				gun2.get('2mmA').get('nest').map().map().on(function(data, has){
 					check[has+2] = data;
-					//console.log('should log /*ASDF*/ & FDSA text not object:', has, data);
+					console.log('should log pub=fdsa/asdf....', has, data);
 					check.to = check.to || setTimeout(function(){
 						if(check.C1.pub === 'fdsa' && check.C1.y === 'mark'
 						&& check.asdf1.pub === 'asdf' && check.asdf1.name === 'timber'
@@ -3181,10 +3238,13 @@ describe('Gun', function(){
 				born: 1
 			}));
 
+			console.only.i=1;console.log("=====================");
+			console.log('2=mt, mtalias=9, mt.alias=3, 6=map, 7=map.map, 8=map.map.pub, 10=mtalias.mark, 11=mtaliasmark, 12=mtaliasmark.asdf, 5=asdf', gun._);
+			console.log('11 echo 6, not 7')
 			gun.get('mult/times').get('alias').map().map().get('pub').on(function(data){
 				done.one = data;
-				//console.log("pub 1!", data);
-			});
+				console.log("pub 1!", data);
+			});return;
 
 			setTimeout(function(){
 				app.get('alias').map().map().get('alias').on(function(data){
