@@ -636,8 +636,8 @@
 			return back.on('out', msg);
 		}; Gun.on.out = output;
 
-		function input(msg){
-			var eve = this, cat = eve.as, root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
+		function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to optimize functions with different parameter calls, so try to do benchmark to see if there is any actual difference.
+			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
 				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
@@ -650,12 +650,12 @@
 			if(cat !== at){ // don't worry about this when first understanding the code, it handles changing contexts on a message. A soul chain will never have a different context.
 				Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); // make copy of message
 				tmp.get = cat.get || tmp.get;
-				if(/*cat.has && */at.soul){ // a has (property) chain will have a different context sometimes if it is linked (to a soul chain). Anything that is not a soul or has chain, such as a map chain, will always have different contexts.
+				if(!cat.soul && !cat.has){ // if we do not recognize the chain type
+					tmp.$$$ = tmp.$$$ || cat.$; // make a reference to wherever it came from.
+				} else
+				if(at.soul){ // a has (property) chain will have a different context sometimes if it is linked (to a soul chain). Anything that is not a soul or has chain, will always have different contexts.
 					tmp.$ = cat.$;
-					tmp.$$ = at.$;
-				}
-				if(!cat.soul && !cat.has){
-					tmp.$$$ = cat.$;
+					tmp.$$ = tmp.$$ || at.$;
 				}
 				msg = tmp; // use the message with the new context instead;
 			}
@@ -671,7 +671,8 @@
 				}
 			}
 
-			eve.to.next(msg); // 1st API job is to call all chain listeners.
+			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
+			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
 			setTimeout.each(Object.keys(cat.act||''), function(act){ (act = cat.act[act]) && act(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 			setTimeout.each(Object.keys(cat.echo||''), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
@@ -687,10 +688,9 @@
 				return;
 			}
 
-			//if(cat.soul || msg.$$){
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following? 
-				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ion map` code set a sat?
+				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ionmap` code set a sat?
 					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 					tmp.$ = (msg.$$||msg.$).get(tmp.get = key); delete tmp.$$; delete tmp.$$$;
 					sat.on('in', tmp);
@@ -701,11 +701,12 @@
 		}; Gun.on.in = input;
 
 		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
-			var put = msg.put||'', link = put['=']||put[':'], zoo;
+			var put = msg.put||'', link = put['=']||put[':'], tmp;
 			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
-			if(msg.$$$ && !msg.$$){ return } // TODO: And some other conditions?
-			if(msg.$$$ && msg.$$$._.id === cat.id){ return } // TODO: Combine this with above so it is less ugly (code aesthetics).
-			//if(!cat.has && msg.$$$){ return } // TODO: Add safety check for non core chains, like maps?
+			if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all?
+				if(cat.id === tmp.id && msg.$$){ return } // ignore below us
+				if(!msg.$$ && cat.id != tmp.id){ return } // ignore above us
+			}
 			if('string' != typeof (link = valid(link))){ return }
 			var root = cat.root;
 
@@ -1138,8 +1139,33 @@
 		function map(msg){
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
 			if(!put){ return }
-			//if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
+
+			//Gun.on.in(msg, cat);return;
 			Gun.on.link(msg, cat);
+			return;
+
+			// UGLY CODE BELOW, HACKY JUST TO GET TEST PASS FOR NOW BEFORE CLEAN UP.
+			if(true !== Gun.valid(put['=']||put[':'])){ return }
+			var g = gun.get(put['.']); g._.put = put['=']||put[':'];
+			Gun.on.in({get: msg.get, put: put, $: g}, cat);
+			//setTimeout.each(Object.keys(cat.act||''), function(act){ (act = cat.act[act]) && act({get: msg.get, put: put, $: gun.get(put['.'])}) },0,99);// THIS IS BAD!!!
+			return;
+
+
+
+
+
+
+
+
+
+			var tmp = Gun.valid(put);
+			if('string' == tmp){
+				return;
+			}
+			Gun.on.in(msg, cat);
+			return;
+			//if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
 			return;
 			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
 			tmp = at.root.$.get(soul).get(k)._;
