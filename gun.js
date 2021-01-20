@@ -673,12 +673,13 @@
 
 			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
-			setTimeout.each(Object.keys(cat.act||''), function(act){ (act = cat.act[act]) && act(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			setTimeout.each(Object.keys(cat.any||''), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 			setTimeout.each(Object.keys(cat.echo||''), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
 				// TODO: BUG! because emptying cache could be async from below, make sure we are not emptying a newer cache. So maybe pass an Async ID to check against?
 				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
+				if(u !== cat.put && msg['@']){ return } // a "not found" from other peers should not clear out data if we have already found it.
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				delete cat.link; // TODO: Empty out links, maps, echos, acks/asks, etc.?
 				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
@@ -703,7 +704,7 @@
 		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
 			var put = msg.put||'', link = put['=']||put[':'], tmp;
 			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
-			if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all?
+			if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all? // Note: Mark knows why this works, but it should also work with `!cat.has` yet it does not, so this is still one area of the chain that Mark does not understand why X but not Y.
 				if(cat.id === tmp.id && msg.$$){ return } // ignore below us
 				if(!msg.$$ && cat.id != tmp.id){ return } // ignore above us
 			}
@@ -735,7 +736,7 @@
 			// manhattan:
 			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[at.get])){
-				if(at.put !== u){ return }
+				if(u !== at.put){ return }
 				at.on('in', {
 					get: at.get,
 					put: at.put = u,
@@ -797,8 +798,9 @@
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
 				};
 				any.at = cat;
-				(cat.act||(cat.act={}))[id = String.random(7)] = any;
-				any.off = function(){ any.stun = 1; if(!cat.act){ return } delete cat.act[id] }
+				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = String.random(7)] = any; // maybe switch to this in future?
+				(cat.any||(cat.any={}))[id = String.random(7)] = any;
+				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 				any.rid = rid;
 				tmp = root.pass; (root.pass = {})[id] = 1; // Explanation: test trade-offs want to prevent recursion so we add/remove pass flag as it gets fulfilled to not repeat, however map map needs many pass flags - how do we reconcile?
 				cat.on('out', {get: {}});
@@ -1136,86 +1138,12 @@
 			});
 			return chain;
 		}
-		function map(msg){
-			var cat = this.as, gun = msg.$, at = gun._, put = msg.put;
-			if(!put){ return }
-
-			//Gun.on.in(msg, cat);return;
-			Gun.on.link(msg, cat);
-			return;
-
-			// UGLY CODE BELOW, HACKY JUST TO GET TEST PASS FOR NOW BEFORE CLEAN UP.
-			if(true !== Gun.valid(put['=']||put[':'])){ return }
-			var g = gun.get(put['.']); g._.put = put['=']||put[':'];
-			Gun.on.in({get: msg.get, put: put, $: g}, cat);
-			//setTimeout.each(Object.keys(cat.act||''), function(act){ (act = cat.act[act]) && act({get: msg.get, put: put, $: gun.get(put['.'])}) },0,99);// THIS IS BAD!!!
-			return;
-
-
-
-
-
-
-
-
-
-			var tmp = Gun.valid(put);
-			if('string' == tmp){
-				return;
-			}
-			Gun.on.in(msg, cat);
-			return;
-			//if(msg.$$$ && !msg.$$){ return} // TODO: And some other conditions?
-			return;
-			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
-			tmp = at.root.$.get(soul).get(k)._;
-			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
-
-			return;
-			if(!put){ return }
-			var soul = put['#'], k = put['.'], val = put['=']||put[':'], tmp;
-			// a map on a root node hears 
-			if(!msg.$$){
-				if(at.soul){
-					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
-				} else
-				if(at.has){
-					// DO NOTHING!
-					return;
-				}
-			} else {
-				if(at.soul){
-
-				} else
-				if(at.has){
-					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
-				} else {
-					if(msg.$$$){
-						return; // 2nd map hears same message as 1st map's events which may be a copy itself, so we need to ignore these.
-					}
-					tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
-				}
-			}
-			if(!tmp){ return }
-			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
-			return;
-
-
-
-			if(msg.FLAG && !msg.$$){ return; } // TODO: Variable change that is quickly hacked in, not thought through, but did get test passing, probably need to add 7 other considerations to the copying of this message with the flag.
-			/*
-			if(at.soul){ tmp = gun.get(k)._ }
-			else if('string' == typeof (tmp = Gun.valid(val))){ tmp = at.root.$.get(tmp)._ }
-			if(!tmp){ return }*/
-			if(!msg.$$){ tmp = gun.get(k)._ }
-			else if('string' == typeof (tmp = Gun.valid(val))){
-				//tmp = at.root.$.get(tmp)._ // resolve to closest soul
-				tmp = at.root.$.get(soul).get(k)._; // resolve to child of gotten soul
-				//tmp = gun.get(k)._; // resolve to child of parent
-			}
-			//((tmp = gun._.root.$.get()).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
-			//((tmp = gun._.root.$.get(soul).get(k)._).echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
-			(tmp.echo || (tmp.echo = {}))[cat.id] = tmp.echo[cat.id] || cat;
+		function map(msg){ this.to.next(msg);
+			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
+			if(!put){ return } // map should not work on nothingness.
+			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above/below chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
+			tmp = (msg.$$||msg.$).get(put['.'])._;
+			(tmp.echo||(tmp.echo={}))[cat.id] = cat;
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
 	})(USE, './map');
