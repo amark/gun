@@ -3227,7 +3227,7 @@ describe('Gun', function(){
 
 		});
 
-		it.only('multiple times', function(done){
+		it('multiple times', function(done){
 			var gun = Gun();
 			var app = gun.get('mult/times');
 
@@ -3237,27 +3237,25 @@ describe('Gun', function(){
 				born: 1
 			}));
 
-			console.only.i=1;console.log("=====================");
-			console.log('2=mt, mtalias=9, mt.alias=3, 6=map, 7=map.map, 8=map.map.pub, 10=mtalias.mark, 11=mtaliasmark, 12=mtaliasmark.asdf, 5=asdf', gun._);
-			console.log('11 echo 6, not 7')
-			gun.get('mult/times').get('alias').map().map().get('pub').on(function(data){
-				done.one = data;
-				console.log("pub 1!", data);
-			});
+			gun.get('mult/times').get('alias').map().map().get('pub').on(foo);
+			function foo(data){
+				done.one = done.one || data;
+				if(!done.one || !done.two){ return }
+				expect(done.one).to.be("ASDF");
+				expect(done.two).to.be("mark");
+				if(done.c){ return } done.c = 1;
+				done();
+			};
 
 			setTimeout(function(){
 				app.get('alias').map().map().get('alias').on(function(data){
 					done.two = data;
-					//console.log("alias 2!", data);
-					expect(done.one).to.be("ASDF");
-					expect(done.two).to.be("mark");
-					if(done.c){ return } done.c = 1;
-					done();
+					foo();
 				});
-			},100);
+			},10);
 		});
 
-		it('multiple times partial', function(done){
+		it.only('multiple times partial', function(done){
 			var gun = Gun();
 
 			gun.on('test', {$: gun, put: Gun.graph.ify({
