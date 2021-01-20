@@ -3117,23 +3117,20 @@ describe('Gun', function(){
 
 		});
 
-		it.only('many maps with @rogowski!', function(done){
+		it('many maps with @rogowski!', function(done){
 			var gun = Gun();
 			var data = {
 				levelA2: { levelA3: { levelA4: { levelA5: "hello" } } },
-				//levelB2: { levelB3: { levelB4: { levelB5: "world" } } }
+				levelB2: { levelB3: { levelB4: { levelB5: "world" } } }
 			};
 
 			Gun.statedisk(data, 'level1', function(){
-				var check = {};
-				console.only.i=0;console.log("================");
-				//gun.get('level1').on(function(v,k){ console.log(1,k,v); check[k] = v });
-				//gun.get('level1').map().on(function(v,k){ console.log('*',2,k,v); check[k] = v });
-				gun.get('level1').map().map().on(function(v,k){ console.log(3,k,v); check[k] = v });
-				return;
-				gun.get('level1').map().map().map().on(function(v,k){ console.log(4,k,v); check[k] = v;
+				var check = {}, log = function(){} || console.log;
+				gun.get('level1').on(function(v,k){ log(1,k,v); check[k] = v });
+				gun.get('level1').map().on(function(v,k){ log('*',2,k,v); check[k] = v });
+				gun.get('level1').map().map().on(function(v,k){ log('*',3,k,v); check[k] = v });
+				gun.get('level1').map().map().map().on(function(v,k){ log('*',4,k,v); check[k] = v;
 					check.to = check.to || setTimeout(function(){
-						//console.log("log once", check);
 						expect(check.level1.levelA2).to.eql({'#':"level1/levelA2"});
 						expect(check.level1.levelB2).to.eql({'#':"level1/levelB2"});
 
@@ -3148,6 +3145,7 @@ describe('Gun', function(){
 						done();
 					}, 250);
 				});
+				gun.get('level1').map().map().map().map().on(function(v,k){ log('*',5,k,v); check[k] = v; }); // see test below
 			}, 1000);
 		});
 
@@ -3159,8 +3157,9 @@ describe('Gun', function(){
 			};
 
 			Gun.statedisk(data, 'level1p', function(){
-				var check = {};
-				gun.get('level1p').map().map().map().map().on(function(v,k){ console.log('level5', k,v); check[k] = v;
+				var check = {}, log = function(){} || console.log;
+				//console.log("======================");
+				gun.get('level1p').map().map().map().map().on(function(v,k){ log('level5', k,v); check[k] = v;
 					check.to = check.to || setTimeout(function(){
 						expect(check.levelA5).to.be('hello');
 						expect(check.levelB5).to.be('world');
@@ -3190,7 +3189,7 @@ describe('Gun', function(){
 			//console.only.i=1;console.log("--------------------", gun1._.next);
 			gun1.get('mmA').map().map().on(function(data, has){
 				check[has+1] = data;
-				console.log('first test ONLY get called with C/asdf = pub:fdsa/pub:asdf......', has, data);
+				//console.log('first test ONLY get called with C/asdf = pub:fdsa/pub:asdf......', has, data);
 			});
 
 			setTimeout(function(){
@@ -3214,7 +3213,7 @@ describe('Gun', function(){
 
 				gun2.get('2mmA').get('nest').map().map().on(function(data, has){
 					check[has+2] = data;
-					console.log('should log pub=fdsa/asdf....', has, data);
+					//console.log('should log pub=fdsa/asdf....', has, data);
 					check.to = check.to || setTimeout(function(){
 						if(check.C1.pub === 'fdsa' && check.C1.y === 'mark'
 						&& check.asdf1.pub === 'asdf' && check.asdf1.name === 'timber'
@@ -3228,7 +3227,7 @@ describe('Gun', function(){
 
 		});
 
-		it('multiple times', function(done){
+		it.only('multiple times', function(done){
 			var gun = Gun();
 			var app = gun.get('mult/times');
 
@@ -3244,7 +3243,7 @@ describe('Gun', function(){
 			gun.get('mult/times').get('alias').map().map().get('pub').on(function(data){
 				done.one = data;
 				console.log("pub 1!", data);
-			});return;
+			});
 
 			setTimeout(function(){
 				app.get('alias').map().map().get('alias').on(function(data){
