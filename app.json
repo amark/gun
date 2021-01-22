@@ -10,6 +10,10 @@
     "NPM_CONFIG_PRODUCTION": {
       "description": "If you don't want to serve the Gun landing page, set to \"true\".",
       "value": "false"
+    },
+    "PEERS": {
+      "description": "Comma-separated list of peer urls to connect to",
+      "required": "false"
     }
   }
 }
