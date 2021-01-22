@@ -734,7 +734,7 @@
 		function ack(msg, ev){
 			// manhattan:
 			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
-			if(!msg.put || ('string' == typeof get['.'] && u === tmp[at.get])){
+			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
 				at.on('in', {
 					get: at.get,
@@ -922,7 +922,7 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1});
+					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1});
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
