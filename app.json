@@ -13,7 +13,7 @@
     },
     "PEERS": {
       "description": "Comma-separated list of peer urls to connect to",
-      "required": "false"
+      "required": false
     }
   }
 }
