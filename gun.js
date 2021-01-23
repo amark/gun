@@ -775,6 +775,7 @@
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
+					if(!at.has && !at.soul){ data = (msg.put||'')['=']||msg.put } // handles non-core messages.
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					if(u === data && msg.$$){ data = msg.$$._.put }
 					if(opt.not !== u && u === data){ return }
@@ -1067,6 +1068,7 @@
 				function once(){
 					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
 					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
+					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
 					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					cb.call($, tmp, at.get);
@@ -1133,7 +1135,7 @@
 				if(u === next){ return }
 				if(data === next){ return chain._.on('in', at) }
 				if(Gun.is(next)){ return chain._.on('in', next._) }
-				chain._.on('in', {get: key, put: next});
+				chain._.on('in', {get: key, put: {'=':next}});
 			});
 			return chain;
 		}
