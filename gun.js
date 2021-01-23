@@ -642,7 +642,7 @@
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
 				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if('_' == k || !(state = state_is(tmp, k))){ return }
-					cat.on('in', {put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
+					cat.on('in', {$: gun, put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
 				});
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat; // help stop some infinite loops
@@ -1058,6 +1058,7 @@
 		// 2. Should not retrigger other listeners, should get triggered even if nothing found.
 		// 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 		Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
+			if(!cb){ return none(this,opt) }
 			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
 			gun.get(function(data,key,msg,eve){
 				var $ = this, at = $._, one = (at.one||(at.one={}));
@@ -1075,6 +1076,11 @@
 				};
 			}, {on: 1});
 			return gun;
+		}
+		function none(gun,opt,chain){
+			Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+			(chain = gun.chain())._.nix = gun.once(function(data, key){ chain._.on('in', this._) });
+			return chain;
 		}
 
 		Gun.chain.off = function(){
@@ -1130,10 +1136,10 @@
 			}
 			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			chain = gun.chain();
-			gun.map().on(function(data, key, at, ev){
-				var next = (cb||noop).call(this, data, key, at, ev);
+			gun.map().on(function(data, key, msg, eve){
+				var next = (cb||noop).call(this, data, key, msg, eve);
 				if(u === next){ return }
-				if(data === next){ return chain._.on('in', at) }
+				if(data === next){ return chain._.on('in', msg) }
 				if(Gun.is(next)){ return chain._.on('in', next._) }
 				chain._.on('in', {get: key, put: {'=':next}});
 			});
