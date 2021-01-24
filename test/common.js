@@ -3252,7 +3252,7 @@ describe('Gun', function(){
 			},10);
 		});
 
-		it.only('multiple times partial', function(done){
+		it('multiple times partial', function(done){
 			Gun.statedisk({ alias: { mark: { pub: {_:{'#':'PUB'}, pub: 'asdf', alias: 'mark', born: 1 } } } }, 'mult/times/part', function(){
 			var gun = Gun();
 			var app = gun.get('mult/times/part');
@@ -3335,11 +3335,11 @@ describe('Gun', function(){
 			var list = app.get('list');
 
 			var check = {};
-			gun.get('user').get('alice').put({name:'Alice', email:'alice@example.com'})
-			gun.get('user').get('bob').put({name:'Bob', email:'bob@example.com'})
-			gun.get('user').get('carl').put({name:'Carl', email:'carl@example.com'})
+			gun.get('useromo').get('alice').put({name:'Alice', email:'alice@example.com'})
+			gun.get('useromo').get('bob').put({name:'Bob', email:'bob@example.com'})
+			gun.get('useromo').get('carl').put({name:'Carl', email:'carl@example.com'})
 
-			gun.get('user').once().map(v => {
+			gun.get('useromo').once().map(v => {
 			  //console.log('this gets called', v);
 			  return v
 			}).once((v, k) => {
@@ -3403,22 +3403,25 @@ describe('Gun', function(){
 			list.get('message').put('hello world'); // outputs "message: hello world"
 			list.get('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
 		});
-		return;
 
-		it('Check multi instance message passing', function(done){
+		it.only('Check multi instance message passing', function(done){
+			// NOTICE: The behavior of this test changed from v0.2020.520 to version after.
 			try{ require('fs').unlinkSync('bdata') }catch(e){}
 			try{ require('fs').unlinkSync('ddata') }catch(e){}
 			Gun.on('opt', function(ctx){
 				ctx.on('out', function(msg){
 					this.to.next(msg);
 					var onGun = ctx;
+					var tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }); delete tmp.out; delete tmp._; msg = tmp; // copy message.
 					if(onGun.$ === b) {
 						if(d){
-							//console.log("b can send to d....", Gun.obj.copy(msg));
+							//console.log("b can send to d....", JSON.parse(JSON.stringify(msg)));
+							msg.$ = d;
 							d.on("in", msg);
 						}
 					} else if(onGun.$ === d){
-						//console.log("d sends to b....", Gun.obj.copy(msg));
+						//console.log("d sends to b....", JSON.parse(JSON.stringify(msg)));
+						msg.$ = b;
 						b.on("in", msg);
 					}
 				});
