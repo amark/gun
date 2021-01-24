@@ -780,11 +780,11 @@
 					if(u === data && msg.$$){ data = msg.$$._.put }
 					if(opt.not !== u && u === data){ return }
 					if(opt.stun === u){
-						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end){
-							tmp[id] = function(){any(msg,eve)};
+						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
+							tmp[id] = function(){any(msg,eve)}; // add ourself to the stun callback list that is called at end of the write.
 							return;
 						}
-						if(tmp = root.hatch){ // quick hack!
+						if(tmp = root.hatch){ // quick hack! // What's going on here? Because data is streamed, we get things one by one, but a lot of developers would rather get a callback after each batch instead, so this does that by creating a wait list per chain id that is then called at the end of the batch by the hatch code in the root put listener.
 							if(wait[at.$._.id]){ return } wait[at.$._.id] = 1;
 							tmp.push(function(){any(msg,eve)});
 							return;
@@ -801,7 +801,8 @@
 				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = String.random(7)] = any; // maybe switch to this in future?
 				(cat.any||(cat.any={}))[id = String.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
-				any.rid = rid;
+				any.rid = rid; // logic from old version, can we clean it up now?
+				any.id = ++root.once; // used in callback to check if we are earlier than a write. // will this ever cause an integer overflow?
 				tmp = root.pass; (root.pass = {})[id] = 1; // Explanation: test trade-offs want to prevent recursion so we add/remove pass flag as it gets fulfilled to not repeat, however map map needs many pass flags - how do we reconcile?
 				cat.on('out', {get: {}});
 				root.pass = tmp;
@@ -889,7 +890,8 @@
 			var gun = this, at = gun._, root = at.root;
 			as = as || {};
 			(root.stun = root.stun || {})[at.id] = (as.stun = as.stun
-				|| ((root.stun._ = (root.stun._ || 0) + 1) && {}));
+				|| ((root.stun._ = (root.stun._ || 0) + 1) && {})); // set a flag for reads to check if this chain is writing.
+			as.stun._ || ((as.stun._ = function(){}).id = root.once); // but alas, only if our write has an earlier id. // this is ugly but other options either use more memory or require an extra type check on each stun callback. So meh, this works for now, any better ideas?
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
 			as.data = as.data || data;
@@ -958,10 +960,10 @@
 				if(!as.ack){ return }
 				as.ack(ack, this);
 			}, as.opt), acks = 0, stun = as.stun;
-			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun }
+			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done.
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
-				if(!stun){ return } stun.end = noop;
-				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // Any perf reasons to CPU schedule this .keys( ?
+				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
+				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
