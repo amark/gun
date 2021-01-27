@@ -2632,7 +2632,7 @@ describe('Gun', function(){
 
 						setTimeout(function(){
 							ref.once(function(data){
-								console.log("*+*+*+*+*+**+*+*");
+								//console.log("*+*+*+*+*+**+*+*");
 								expect(data).to.be('z');
 								done();
 							});
@@ -3404,7 +3404,7 @@ describe('Gun', function(){
 			list.get('message').put(null); // throws Uncaught TypeError: Cannot read property '#' of null
 		});
 
-		it.only('Check multi instance message passing', function(done){
+		it('Check multi instance message passing', function(done){
 			// NOTICE: The behavior of this test changed from v0.2020.520 to version after.
 			try{ require('fs').unlinkSync('bdata') }catch(e){}
 			try{ require('fs').unlinkSync('ddata') }catch(e){}
@@ -3494,21 +3494,43 @@ describe('Gun', function(){
 			var app = gun.get('nl/app');
 
 			app.get(function(d){
-				expect(d.put.wat).to.be(1);
-				expect(d.put.a).to.be(true);
+				if(done.a){ return }
+				d = (d.$$||d.$)._.put;
+				//console.log('*', d);
+				expect(d.wat).to.be(1);
+				expect(d.a).to.be(true);
 				done.a = 1;
-			});
+			}, {v2020:1});
 
 			app.get('a').get('b').get(function(d){
-				expect(d.put).to.be(u);
+				d = (d.$$||d.$)._.put;
+				//console.log('****', d);
+				expect(d).to.be(u);
 				expect(done.a).to.be.ok();
-				if(done.c){ return }
-				done(); done.c = 1;
-			});
+				done.b = (done.b || 0) + 1;
+			}, {v2020:1});
+
+			setTimeout(function(){ // adding more rigorous test!
+
+				app.get('a').get('b').get(function(d){
+					d = (d.$$||d.$)._.put;
+					//console.log('****::::', d);
+					expect(done.b).to.be(1);
+					done.c = (done.c || 0) + 1;
+				});
+
+				app.get('a').put('lol');
+
+				setTimeout(function(){
+					expect(done.c).to.be(1);
+					if(done.d){ return }
+					done(); done.d = 1;
+				},50);
+			}, 50);
 			}, 1000);
 		});
 
-		it('Chain on known nested object should ack', function(done){
+		it.only('Chain on known nested object should ack', function(done){
 			Gun.statedisk({ bar: { wat: 1 } }, 'nl/app', function(){
 			var gun = Gun(), u;
 			var app = gun.get('nl/app').get('bar');

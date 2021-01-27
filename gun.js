@@ -664,8 +664,8 @@
 			if((cat.soul || msg.$$) && state >= state_is(root.graph[soul], key)){ // This handles any chain, such as a link chain or map chain, that asks for data, but always updates the cache of the root soul chain.
 				(tmp = root.$.get(soul)._).put = state_ify(tmp.put, key, state, change, soul);
 			}
-			if(!at.soul && state >= state_is(root.graph[soul], key)){
-				(sat = root.$.get(soul).get(key)._).put = change; // update cache // TODO: PERFORMANCE!!!!!! This may create an unnecessary chain we never asked for, so figure out how to detect that and not bother.
+			if(!at.soul && state >= state_is(root.graph[soul], key) && (sat = (root.$.get(soul)._.next||'')[key])){
+				sat.put = change; // update cache
 				if('string' == typeof (tmp = valid(change))){
 					sat.put = root.$.get(tmp)._.put || change;
 				}
@@ -681,13 +681,21 @@
 				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
 				if(u !== cat.put && msg['@']){ return } // a "not found" from other peers should not clear out data if we have already found it.
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
-				delete cat.link; // TODO: Empty out links, maps, echos, acks/asks, etc.?
+				cat.link = null; // TODO: Empty out links, maps, echos, acks/asks, etc.?
 				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if(!(sat = cat.next[get])){ return }
 					sat.on('in', {get: get, put: u, $: sat.$}); // TODO: BUG? Add recursive seen check?
 				},0,99);
 				return;
-			}
+			} if(cat.ask && at.has && !msg.$$ && (('string' != typeof (tmp = valid(change))) || (cat.link && cat.link != tmp))){ // whenever we are not a link, nor the same link as before, (for our layer) we need to clear out subchains, and...
+				if(cat.link !== null || (root.pass||'')[cat.id]){
+				cat.link = null; // ideally only once, don't forget pass logic, see linking logic for why.
+					cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
+						if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
+						sat.on('in', {get: get, put: u, $: sat.$});
+					},0,99);
+				}
+			} // this was an absurd amount of code to handle a tiny edge case :/ maybe don't support it in future?
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following? 
@@ -717,7 +725,7 @@
 
 			(cat.id !== tat.id) && (tat.echo[cat.id] = cat); // set ourselfs up for an echo, but not if to self.
 
-			var sat = root.$.get(tat.link = link)._; // grab what we're linking to.
+			var sat = root.$.get(cat.link = tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
