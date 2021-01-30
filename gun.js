@@ -687,19 +687,33 @@
 					sat.on('in', {get: get, put: u, $: sat.$}); // TODO: BUG? Add recursive seen check?
 				},0,99);
 				return;
-			} if(cat.ask && at.has && !msg.$$ && (('string' != typeof (tmp = valid(change))) || (cat.link && cat.link != tmp))){ // whenever we are not a link, nor the same link as before, (for our layer) we need to clear out subchains, and...
-				if(cat.link !== null || (root.pass||'')[cat.id]){
-				cat.link = null; // ideally only once, don't forget pass logic, see linking logic for why.
+			}
+			if(!cat.soul && !msg.$$){
+				if(
+					(cat.link !== null || (root.pass||'')[cat.id]) &&
+					//cat.link !== u && // TODO: BUG? actually this should be if link as a property exists or not.
+					(('string' != typeof (tmp = valid(change))) || (cat.link && tmp != cat.link)) // any time there is a change in value that is different from the previous link in any way, we need to fire a clear/empty event on chains below. // However! Do this only when unique, and make sure to do it with performance in mind.
+				){
+					cat.link = null;
 					cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
 						if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
 						sat.on('in', {get: get, put: u, $: sat.$});
 					},0,99);
 				}
-			} // this was an absurd amount of code to handle a tiny edge case :/ maybe don't support it in future?
+			}
+			/*if(cat.ask && ((at.has && !msg.$$) || (!at.has && msg.$$)) && (('string' != typeof (tmp = valid(change))) || (cat.link && cat.link != tmp))){ // whenever we are not a link, nor the same link as before, (for our layer) we need to clear out subchains, and... // this code is so ugly & heavy, is there something easier?
+				if(cat.link !== null || (root.pass||'')[cat.id]){ cat.link = null; // ideally only once, don't forget pass logic, see linking logic for why. // TODO: What about async loaded?
+					console.log("ugggggh", msg, cat);
+					cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
+						if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
+						sat.on('in', {get: get, put: u, $: sat.$});
+					},0,99);
+				}
+			} // this was an absurd amount of code to handle a tiny edge case :/ maybe don't support it in future? */
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following? 
-				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ionmap` code set a sat?
+				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ionmap` code set a sat? // TODO: Maybe we should do `cat.ask` instead? I guess does not matter.
 					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 					tmp.$ = (msg.$$||msg.$).get(tmp.get = key); delete tmp.$$; delete tmp.$$$;
 					sat.on('in', tmp);

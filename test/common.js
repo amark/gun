@@ -2964,7 +2964,7 @@ describe('Gun', function(){
 			}, 'parallel/later', function(){
 			gun.get('parallel/later').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data, field, at); return;
+				//console.log("*****", field, data); return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
@@ -2972,7 +2972,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				gun.get('parallel/later').get('bob').get('name').get(function(at, ev){
 					var err = at.err, data = at.put, field = at.get;
-					//console.log("*********** name", data, field); return;
+					//console.log("***********", field, data); return;
 					expect(data).to.be('Bob!');
 					expect(field).to.be('name');
 					done.name = true;
@@ -3511,7 +3511,7 @@ describe('Gun', function(){
 			}, {v2020:1});
 
 			setTimeout(function(){ // adding more rigorous test!
-
+				//console.log("------------");
 				app.get('a').get('b').get(function(d){
 					d = (d.$$||d.$)._.put;
 					//console.log('****::::', d);
@@ -3536,25 +3536,28 @@ describe('Gun', function(){
 			var app = gun.get('nl/app').get('bar');
 
 			app.get(function(d){
-				//console.log("!!", d.put);
+				//d = (d.$$||d.$)._.put;
 				if(!d || !d.put || !d.put.wat){ return }
+				console.log('should be called: {wat:1}=', d.put);
 				expect(d.put.wat).to.be(1);
 				done.a = 1;
 				if(!done.u){ return }
 				expect(done.u).to.be.ok();
 				if(done.c){ return } done.c = 1;
 				done();
-			});
+			});//, {v2020:1});
 
+			console.log("----------");
 			app.get('a').get('b').get(function(d){
-				//console.log("????", d.put);
+				console.log("empty/clear: undefined=", d.put);
+				//d = (d.$$||d.$)._.put;
 				expect(d.put).to.be(u);
 				done.u = true;
 				if(!done.a){ return }
 				expect(done.a).to.be.ok();
 				if(done.c){ return } done.c = 1;
 				done();
-			});
+			}, {v2020:1});
 			}, 1000);
 		});
 
