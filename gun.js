@@ -691,8 +691,9 @@
 			if(!cat.soul && !msg.$$){
 				if(
 					(cat.link !== null || (root.pass||'')[cat.id]) &&
-					//cat.link !== u && // TODO: BUG? actually this should be if link as a property exists or not.
+					(((root.pass||'')[cat.id] && cat.link !== u && cat.ask['']) || // fire again if we have a pass but be careful not to fire if we do not have the node fully loaded yet.
 					(('string' != typeof (tmp = valid(change))) || (cat.link && tmp != cat.link)) // any time there is a change in value that is different from the previous link in any way, we need to fire a clear/empty event on chains below. // However! Do this only when unique, and make sure to do it with performance in mind.
+					)
 				){
 					cat.link = null;
 					cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?

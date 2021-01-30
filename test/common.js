@@ -2937,14 +2937,15 @@ describe('Gun', function(){
 			}, 'parallel', function(){
 			gun.get('parallel').get('bob').get('age').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("***** age", data, field, at.$._.ack, '...', at);//return;
+				//console.log("*****", field, data);return;
 				expect(data).to.be(29);
 				expect(field).to.be('age');
 				done.age = true;
 			});
+			//console.log("-----------------------");
 			gun.get('parallel').get('bob').get('name').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				//console.log("*********** name", data, at.$._.ack);//return;
+				//console.log("***********", field, data);return;
 				expect(data).to.be('Bob!');
 				expect(field).to.be('name');
 				done.name = true;
@@ -3530,7 +3531,7 @@ describe('Gun', function(){
 			}, 1000);
 		});
 
-		it.only('Chain on known nested object should ack', function(done){
+		it('Chain on known nested object should ack', function(done){
 			Gun.statedisk({ bar: { wat: 1 } }, 'nl/app', function(){
 			var gun = Gun(), u;
 			var app = gun.get('nl/app').get('bar');
@@ -3538,7 +3539,7 @@ describe('Gun', function(){
 			app.get(function(d){
 				//d = (d.$$||d.$)._.put;
 				if(!d || !d.put || !d.put.wat){ return }
-				console.log('should be called: {wat:1}=', d.put);
+				//console.log('should be called: {wat:1}=', d.put);
 				expect(d.put.wat).to.be(1);
 				done.a = 1;
 				if(!done.u){ return }
@@ -3547,9 +3548,9 @@ describe('Gun', function(){
 				done();
 			});//, {v2020:1});
 
-			console.log("----------");
+			//console.log("----------");
 			app.get('a').get('b').get(function(d){
-				console.log("empty/clear: undefined=", d.put);
+				//console.log("empty/clear: undefined=", d.put);
 				//d = (d.$$||d.$)._.put;
 				expect(d.put).to.be(u);
 				done.u = true;
@@ -3580,7 +3581,7 @@ describe('Gun', function(){
 
 		});
 
-		it('users map map who said map on', function(done){
+		it.only('users map map who said map on', function(done){
 			this.timeout(1000 * 9);
 			var gun = Gun();
 
