@@ -256,14 +256,22 @@ Visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
 
- > Warning: Docker image is community contributed and may be old with missing security updates, please check version numbers to compare.
+ > Warning: The docker image provided by [@DimensionDev](https://github.com/DimensionDev).
 
-[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
+[![Docker Automated buil](https://img.shields.io/docker/automated/dimensiondev/gun.svg)][docker-image]
+[![Get your own image badge on microbadger.com](https://images.microbadger.com/badges/image/dimensiondev/gun.svg)][micro-badger]
+[![Docker Pulls](https://img.shields.io/docker/pulls/dimensiondev/gun.svg)][docker-image]
+[![Docker Stars](https://img.shields.io/docker/stars/dimensiondev/gun.svg)][docker-image]
 
-Pull from the [Docker Hub](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun). Or:
+Pull from the [Docker Hub][docker-image] [![badge](https://images.microbadger.com/badges/version/dimensiondev/gun.svg)][micro-badger].
+
+[micro-badger]: https://microbadger.com/images/dimensiondev/gun
+[docker-image]: https://hub.docker.com/r/dimensiondev/gun
+
+Or:
 
 ```bash
-docker run -p 8765:8765 gundb/gun
+docker run -p 8765:8765 dimensiondev/gun
 ```
 
 Or build the [Docker](https://docs.docker.com/engine/installation/) image locally:
