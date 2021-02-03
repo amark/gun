@@ -258,7 +258,7 @@ Visit the deployed app by following the 'view app' button, in your browser.
 
  > Warning: The docker image provided by [@DimensionDev](https://github.com/DimensionDev).
 
-[![Docker Automated buil](https://img.shields.io/docker/automated/dimensiondev/gun.svg)][docker-image]
+[![Docker Automated Build](https://img.shields.io/docker/automated/dimensiondev/gun.svg)][docker-image]
 [![Get your own image badge on microbadger.com](https://images.microbadger.com/badges/image/dimensiondev/gun.svg)][micro-badger]
 [![Docker Pulls](https://img.shields.io/docker/pulls/dimensiondev/gun.svg)][docker-image]
 [![Docker Stars](https://img.shields.io/docker/stars/dimensiondev/gun.svg)][docker-image]
