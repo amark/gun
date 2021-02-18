@@ -278,7 +278,7 @@
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
-      salt = salt || shim.random(9);
+      salt = salt || '';
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({
         name: opt.name || 'PBKDF2',
