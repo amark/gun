@@ -3606,11 +3606,11 @@ describe('Gun', function(){
 					if(check[msg.num]){
 						//console.log("!!!!", msg.num, "!!!!");
 					}
-					check[msg.num] = false;
+					delete check[msg.num];
 					c++;
 					clearTimeout(end); end = setTimeout(function(){
 						//console.log("?", c, check);
-						if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
+						if(!Object.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
 						done();
 					},100);
 			});
@@ -3618,9 +3618,9 @@ describe('Gun', function(){
 			var said = gun.get('pub/asdf').get('who').get('said');
 
 			function run(i){
-
+				//if(i > 1){ return } // DEBUGGING!
 				//console.log("----", i, "----");
-				//2 === i && (console.debug.i = 1) && console.debug(1, '======= what happens?');
+				//2 === i && (console.only.i = 1) && console.only(1, '==========');
 				//(console.debug.i = console.debug.i || 1);
 				said.set({
 					what: i + " Hello world!",
@@ -3643,7 +3643,7 @@ describe('Gun', function(){
 
 		});
 
-		it('get map should not slowdown', function(done){
+		it.only('get map should not slowdown', function(done){
 			this.timeout(5000);
 			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");

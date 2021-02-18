@@ -705,13 +705,14 @@
 		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
 			var put = msg.put||'', link = put['=']||put[':'], tmp;
 			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
-			if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all? // Note: Mark knows why this works, but it should also work with `!cat.has` yet it does not, so this is still one area of the chain that Mark does not understand why X but not Y.
+			/*if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all? // Note: Mark knows why this works, but it should also work with `!cat.has` yet it does not, so this is still one area of the chain that Mark does not understand why X but not Y.
 				if(!msg.$$ && cat.id != tmp.id){ return } // ignore above us
+			}*/ // this above commented out code seems to be handled correctly by the below if condition. 
+			var root = cat.root, tat = root.$.get(put['#']).get(put['.'])._;
+			if('string' != typeof (link = valid(link))){
+				if(this === Gun.on){ (tat.echo || (tat.echo = {}))[cat.id] = cat } // allow some chain to explicitly force linking to simple data.
+				return; // by default do not link to data that is not a link.
 			}
-			if('string' != typeof (link = valid(link))){ return }
-			var root = cat.root;
-
-			var tat = root.$.get(put['#']).get(put['.'])._;
 			if((tat.echo || (tat.echo = {}))[cat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
 				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
 			if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
@@ -1169,8 +1170,7 @@
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!put){ return } // map should not work on nothingness.
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
-			tmp = (msg.$$||msg.$).get(put['.'])._;
-			(tmp.echo||(tmp.echo={}))[cat.id] = cat;
+			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
 	})(USE, './map');
