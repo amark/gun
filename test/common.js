@@ -3581,7 +3581,7 @@ describe('Gun', function(){
 
 		});
 
-		it.only('users map map who said map on', function(done){
+		it('users map map who said map on', function(done){
 			this.timeout(1000 * 9);
 			var gun = Gun();
 
@@ -3643,7 +3643,7 @@ describe('Gun', function(){
 
 		});
 
-		it.only('get map should not slowdown', function(done){
+		it('get map should not slowdown', function(done){
 			this.timeout(5000);
 			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
@@ -3651,25 +3651,25 @@ describe('Gun', function(){
 			//var prev, diff, max = Infinity, total = 10000, largest = -1, gone = {};
 			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.get('history').map().on(function(time, index){
-				diff = Gun.time.is() - time;
-				//console.log(">>>", index, time, diff);
-				//return;
+				diff = +new Date - time;
+				//console.log(">>>", index, time, diff);return;
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;
 			  expect(diff > max).to.not.be.ok();
 			});
+			//console.only.i=1;
 			var turns = 0;
 			var many = setInterval(function(){
 				if(turns > total || (diff || 0) > (max + 5)){
 					if(u === diff){ return }
 					clearTimeout(many);
-			  	expect(Gun.num.is(diff)).to.be.ok();
+			  	expect('number' === typeof diff).to.be.ok();
 			  	if(done.c){ return } done.c = 1;
 			  	done(); 
 			  	return;
 			  }
-			  prev = Gun.time.is();
+			  prev = +new Date;
 			  var put = {}; put[turns += 1] = prev;
 			  //console.log("put", put);
 			  //console.log("------", turns, "-------");

@@ -717,7 +717,7 @@
 				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
 			if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
 
-			(cat.id !== tat.id) && (tat.echo[cat.id] = cat); // set ourselfs up for an echo, but not if to self.
+			(tat.echo[cat.id] = cat); // set ourself up for the echo! // TODO: BUG? Echo to self no longer causes problems? Confirm.
 
 			var sat = root.$.get(cat.link = tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
