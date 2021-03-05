@@ -755,6 +755,7 @@
 			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
+				if(!at.soul && !at.has){ return } // TODO: BUG? For now, only core-chains will handle not-founds, because bugs creep in if non-core chains are used as $ but we can revisit this later for more powerful extensions.
 				at.on('in', {
 					get: at.get,
 					put: at.put = u,
@@ -922,10 +923,9 @@
 			as.todo = [{it: as.data, ref: as.$}];
 			as.turn = as.turn || turn;
 			as.ran = as.ran || ran;
-			var S = +new Date;
 			(function walk(){
 				var to = as.todo, at = to.pop(), d = at.it, v, k, cat, tmp, g;
-				(tmp = at.ref) && (root.stun[tmp._.id] = as.stun); // stun
+				(tmp = at.ref) && (root.stun[tmp._.id] = as.stun); // stun // TODO: NOT CRASH!
 				if(tmp = at.todo){
 					k = tmp.pop(); d = d[k];
 					if(tmp.length){ to.push(at) }
@@ -948,7 +948,7 @@
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
-						(tmp = msg.$) && (root.stun[tmp._.id] = as.stun); // stun
+						(tmp = msg.$) && (root.stun[tmp._.id] = as.stun); // stun // TODO: NOT CRASH!
 						if(!soul){
 							soul = [];
 							msg.$.back(function(at){
