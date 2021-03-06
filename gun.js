@@ -735,19 +735,17 @@
 
 		function unlink(msg, cat){ // ugh, so much code for barely used behavior.
 			if(cat.soul || msg.$$){ return }
-			var put = msg.put||'', change = put['=']||put[':']
-			if( // TODO: refactor this to be a return rather than a nested if.
-				(cat.link !== null || (cat.root.pass||'')[cat.id]) &&
-				(((cat.root.pass||'')[cat.id] && cat.link !== u && cat.ask['']) || // fire again if we have a pass but be careful not to fire if we do not have the node fully loaded yet. // TODO: Bug? What about async load needing to pass?
-				(('string' != typeof (tmp = valid(change))) || (cat.link && tmp != cat.link)) // any time there is a change in value that is different from the previous link in any way, we need to fire a clear/empty event on chains below. // However! Do this only when unique (not at init, or unnecessary duplications, etc.), and make sure to do it with performance in mind.
-				)
-			){
-				cat.link = null;
-				cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
-					if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
-					sat.on('in', {get: get, put: u, $: sat.$});
-				},0,99);
-			}
+			var put = msg.put||'', change = put['=']||put[':'], link, tmp;
+			tmp = (cat.root.pass||'')[cat.id];
+			if(cat.link === null && !tmp){ return }
+			link = valid(change);
+			if(link === cat.link && !(cat.ask||'')['']){ return }
+			if(u === cat.link && 'string' == typeof link){ return }
+			cat.link = null;
+			cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
+				if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
+				sat.on('in', {get: get, put: u, $: sat.$});
+			},0,99);
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
@@ -925,7 +923,7 @@
 			as.ran = as.ran || ran;
 			(function walk(){
 				var to = as.todo, at = to.pop(), d = at.it, v, k, cat, tmp, g;
-				(tmp = at.ref) && (root.stun[tmp._.id] = as.stun); // stun // TODO: NOT CRASH!
+				(tmp = at.ref) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
 				if(tmp = at.todo){
 					k = tmp.pop(); d = d[k];
 					if(tmp.length){ to.push(at) }
@@ -944,11 +942,12 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1});
+					//console.log("...ask", k);
+					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
-						(tmp = msg.$) && (root.stun[tmp._.id] = as.stun); // stun // TODO: NOT CRASH!
+						(tmp = msg.$) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
 						if(!soul){
 							soul = [];
 							msg.$.back(function(at){
@@ -971,7 +970,7 @@
 		}
 
 		function ran(as){
-			if(as.todo.length || !Object.empty(as.wait)){ return }
+			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
 			var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
 				cat.root.on('ack', ack);
 				if(ack.err){ Gun.log(ack) }
