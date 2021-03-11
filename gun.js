@@ -310,7 +310,7 @@
 				ctx.msg = msg;
 				ctx.all = 0;
 				ctx.stun = 1;
-				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below?
+				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
 				console.STAT && console.STAT(S, ((DBG||ctx).pk = +new Date) - S, 'put sort');
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
@@ -583,7 +583,7 @@
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						tmp = back.ask && back.ask[get];
 						(back.ask || (back.ask = {}))[get] = back.$.get(get)._;
-						back.on('in', {put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
+						back.on('in', {get: get, put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 						if(tmp){ return }
 					}
 						/*put = (back.$.get(get)._);
@@ -725,6 +725,12 @@
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
 			if(tmp['']){
 				sat.on('out', {get: {'#': link}});
+				if((root.pass||'')[cat.id]){ // Special case! For `Chain on known nested object should ack` test! // TODO: Can we move this to `out` somehow, please, or somewhere cleaner? 
+					setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+						if(!get || !(sat = tmp[get])){ return }
+						sat.on('in', {get: get, put: {'#': link, '.': get, ':': sat.put, '>': state_is(root.graph[link], get)}, $: sat.$}); // TODO: BUG? Is link correct? This could be buggy in other not yet written tests?
+					},0,99);
+				}
 			} else {
 				setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if(!(sat = tmp[get])){ return }
@@ -739,7 +745,7 @@
 			tmp = (cat.root.pass||'')[cat.id];
 			if(cat.link === null && !tmp){ return }
 			link = valid(change);
-			if(link === cat.link && !(cat.ask||'')['']){ return }
+			if(link === cat.link){ return } //if(link === cat.link && !(cat.ask||'')['']){ return } // ask now handled by link `pass['']` special case.
 			if(u === cat.link && 'string' == typeof link){ return }
 			cat.link = null;
 			cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
@@ -942,7 +948,6 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					//console.log("...ask", k);
 					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
