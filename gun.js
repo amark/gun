@@ -826,7 +826,7 @@
 				(cat.any||(cat.any={}))[id = String.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 				any.rid = rid; // logic from old version, can we clean it up now?
-				any.id = ++root.once; // used in callback to check if we are earlier than a write. // will this ever cause an integer overflow?
+				any.id = opt.run || ++root.once; // used in callback to check if we are earlier than a write. // will this ever cause an integer overflow?
 				tmp = root.pass; (root.pass = {})[id] = 1; // Explanation: test trade-offs want to prevent recursion so we add/remove pass flag as it gets fulfilled to not repeat, however map map needs many pass flags - how do we reconcile?
 				cat.on('out', {get: {}});
 				root.pass = tmp;
@@ -915,7 +915,7 @@
 			as = as || {};
 			(root.stun = root.stun || {})[at.id] = (as.stun = as.stun
 				|| ((root.stun._ = (root.stun._ || 0) + 1) && {})); // set a flag for reads to check if this chain is writing.
-			as.stun._ || ((as.stun._ = function(){}).id = root.once); // but alas, only if our write has an earlier id. // this is ugly but other options either use more memory or require an extra type check on each stun callback. So meh, this works for now, any better ideas?
+			as.stun._ || ((as.stun._ = function(){}).id = as.run = root.once); // but alas, only if our write has an earlier id. // this is ugly but other options either use more memory or require an extra type check on each stun callback. So meh, this works for now, any better ideas?
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
 			as.data = as.data || data;
@@ -948,7 +948,7 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {stun: 0, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
+					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
