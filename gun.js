@@ -702,9 +702,9 @@
 			link(msg, cat);
 		}; Gun.on.in = input;
 
-		function link(msg, cat){ cat = cat || this.as || msg.$._; // NEW CODE ASSUMING MAPS
-			var put = msg.put||'', link = put['=']||put[':'], tmp;
+		function link(msg, cat){ cat = cat || this.as || msg.$._;
 			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
+			var put = msg.put||'', link = put['=']||put[':'], tmp;
 			/*if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all? // Note: Mark knows why this works, but it should also work with `!cat.has` yet it does not, so this is still one area of the chain that Mark does not understand why X but not Y.
 				if(!msg.$$ && cat.id != tmp.id){ return } // ignore above us
 			}*/ // this above commented out code seems to be handled correctly by the below if condition. 
@@ -742,13 +742,11 @@
 		function unlink(msg, cat){ // ugh, so much code for barely used behavior.
 			if(cat.soul || msg.$$){ return }
 			var put = msg.put||'', change = put['=']||put[':'], link, tmp;
-			tmp = (cat.root.pass||'')[cat.id];
-			if(cat.link === null && !tmp){ return }
-			link = valid(change);
-			if(link === cat.link){ return } //if(link === cat.link && !(cat.ask||'')['']){ return } // ask now handled by link `pass['']` special case.
-			if(u === cat.link && 'string' == typeof link){ return }
+			if(cat.link === null && !(cat.root.pass||'')[cat.id]){ return } // if we have already unlinked, do not do it again. We might need to ignore this for passes tho.
+			if((link = valid(change)) === cat.link){ return } // if we are linked to the same thing as before, no need to unlink. Or more importantly, what this is saying, is if we are linking to something different, than we first need to unlink everything before making the new link. // if(link === cat.link && !(cat.ask||'')['']){ return } // ask now handled by link `pass['']` special case.
+			if(!cat.link && 'string' == typeof link){ return } // but if the chain has not been initialized (or has already been unlinked) and is now being linked, then we do not need to unlink (again).
 			cat.link = null;
-			cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all?
+			cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all? // see potential async issues.
 				if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
 				sat.on('in', {get: get, put: u, $: sat.$});
 			},0,99);
@@ -983,12 +981,12 @@
 				if(!as.ack){ return }
 				as.ack(ack, this);
 			}, as.opt), acks = 0, stun = as.stun;
-			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done.
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
+			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done. // this used to be above the out call, but trying out new stun/run checks.
 		}
 
 		function get(as){
