@@ -339,7 +339,7 @@
 						var val = node[key], state = states[key];
 						if(u === state){ err = ERR+cut(key)+"on"+cut(soul)+"no state."; break }
 						if(!valid(val)){ err = ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val); break }
-						ctx.all++; //ctx.ack[soul+key] = '';
+						//ctx.all++; //ctx.ack[soul+key] = '';
 						ham(val, key, soul, state, msg);
 					}
 					if((kl = kl.slice(i)).length){ turn(pop); return }
@@ -357,7 +357,7 @@
 				if(state > now){ /*console.log("setTo");*/ /*setTo;*/ return } // TODO: BUG!!!!
 				if(state < was){ /*console.log("old");*/ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well?
-					if(state === was && (val === known || L(val) <= L(known))){ return } // same
+					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ return } // same
 				}
 				/*if(!is.incoming){
 					if(is.defer){
@@ -370,8 +370,9 @@
 					}
 					return;
 				}*/
-				//ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
-				var aid = msg['#']+ctx.stun++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
+				//ctx.all++;
+				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
+				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
 				var DBG = ctx.DBG; DBG && (DBG.ph = DBG.ph || +new Date);
 				root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
@@ -1315,7 +1316,7 @@
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
 					var id, hash, raw, ack = msg['@'];
-					if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
+//if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 					var meta = msg._||(msg._=function(){});
 					var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
@@ -1605,7 +1606,6 @@
 			root.on('put', function(msg){
 				this.to.next(msg); // remember to call next middleware adapter
 				var put = msg.put, soul = put['#'], key = put['.'], tmp; // pull data off wire envelope
-				//console.log('lS put:', key, put[':']);
 				disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 				if(!msg['@']){ acks.push(msg['#']) } // then ack any non-ack write. // TODO: use batch id.
 				if(to){ return }
