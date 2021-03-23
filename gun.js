@@ -703,11 +703,9 @@
 		}; Gun.on.in = input;
 
 		function link(msg, cat){ cat = cat || this.as || msg.$._;
-			if(cat.soul || (cat.has && msg.$$)){ return } // a soul chain never links. If we are a has (property) chain that is linked to a soul chain, we get an echo of those messages. When we do, do not confuse that next layer with ourself, ignore it. The code below does several context changes for safety, but ultimately has to ask ourself for what needs to be loaded next, so we need to make sure what is being loaded is on the correct layer.
+			if(msg.$$ && this !== Gun.on){ return } // $$ means we came from a link, so we are at the wrong level, thus ignore it unless overruled manually by being called directly.
+			if(!msg.put || cat.soul){ return } // But you cannot overrule being linked to nothing, or trying to link a soul chain - that must never happen.
 			var put = msg.put||'', link = put['=']||put[':'], tmp;
-			/*if(tmp = msg.$$$){ tmp = tmp._; // below is best guess for chains we do not recognize, maybe won't work for all? // Note: Mark knows why this works, but it should also work with `!cat.has` yet it does not, so this is still one area of the chain that Mark does not understand why X but not Y.
-				if(!msg.$$ && cat.id != tmp.id){ return } // ignore above us
-			}*/ // this above commented out code seems to be handled correctly by the below if condition. 
 			var root = cat.root, tat = root.$.get(put['#']).get(put['.'])._;
 			if('string' != typeof (link = valid(link))){
 				if(this === Gun.on){ (tat.echo || (tat.echo = {}))[cat.id] = cat } // allow some chain to explicitly force linking to simple data.
@@ -717,20 +715,15 @@
 				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
 			if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
 
-			(tat.echo[cat.id] = cat); // set ourself up for the echo! // TODO: BUG? Echo to self no longer causes problems? Confirm.
+			tat.echo[cat.id] = cat; // set ourself up for the echo! // TODO: BUG? Echo to self no longer causes problems? Confirm.
 
-			var sat = root.$.get(cat.link = tat.link = link)._; // grab what we're linking to.
+			if(cat.has){ cat.link = link }
+			var sat = root.$.get(tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
 			if(tmp['']){
 				sat.on('out', {get: {'#': link}});
-				if((root.pass||'')[cat.id]){ // Special case! For `Chain on known nested object should ack` test! // TODO: Can we move this to `out` somehow, please, or somewhere cleaner? 
-					setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-						if(!get || !(sat = tmp[get])){ return }
-						sat.on('in', {get: get, put: {'#': link, '.': get, ':': sat.put, '>': state_is(root.graph[link], get)}, $: sat.$}); // TODO: BUG? Is link correct? This could be buggy in other not yet written tests?
-					},0,99);
-				}
 			} else {
 				setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if(!(sat = tmp[get])){ return }
@@ -742,8 +735,16 @@
 		function unlink(msg, cat){ // ugh, so much code for barely used behavior.
 			if(cat.soul || msg.$$){ return }
 			var put = msg.put||'', change = put['=']||put[':'], link, tmp;
-			if(cat.link === null && !(cat.root.pass||'')[cat.id]){ return } // if we have already unlinked, do not do it again. We might need to ignore this for passes tho.
-			if((link = valid(change)) === cat.link){ return } // if we are linked to the same thing as before, no need to unlink. Or more importantly, what this is saying, is if we are linking to something different, than we first need to unlink everything before making the new link. // if(link === cat.link && !(cat.ask||'')['']){ return } // ask now handled by link `pass['']` special case.
+			if(cat.link === null && !(cat.root.pass||'')[cat.id]){ return } // if we have already unlinked, do not do it again. Except for annoying passes edge case.
+			if((link = valid(change)) === cat.link){ // if we are the same, unchanged, do not do anything.
+				if((cat.ask||'')[''] && (cat.root.pass||'')[cat.id]){ // Special case! For `Chain on known nested object should ack` test! If there are any unfound children that asked to be triggered, to it here? // TODO: Please, somehow cleaner? Reuse some other .each(ask? This is probably the potentially buggiest part of the code.
+					setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+						if(!get || !(sat = cat.next[get])){ return }
+						sat.on('in', {get: get, put: {'#': link, '.': get, ':': (cat.root.graph[link]||'')[get], '>': state_is(cat.root.graph[link], get)}, $: sat.$});
+					},0,99);
+				}
+				return;
+			}
 			if(!cat.link && 'string' == typeof link){ return } // but if the chain has not been initialized (or has already been unlinked) and is now being linked, then we do not need to unlink (again).
 			cat.link = null;
 			cat.next && setTimeout.each(Object.keys(cat.ask||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all? // see potential async issues.
@@ -949,7 +950,7 @@
 					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
-						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']) || ((tmp = msg.put) && tmp['#']);
+						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']);
 						(tmp = msg.$) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
 						if(!soul){
 							soul = [];
@@ -1170,7 +1171,6 @@
 		}
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
-			if(!put){ return } // map should not work on nothingness.
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
 			Gun.on.link(msg, cat);
 		}
