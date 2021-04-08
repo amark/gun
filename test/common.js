@@ -1161,17 +1161,25 @@ describe('Gun', function(){
 					done();
 				});
 			});
+			it('no not found on incremental write', function(done){
+				gun.get('nnfoiw').get('y').put({a:1}, function(ack){
+					if(ack.err){ return }
+					done();
+				})
+			});
 			it('public mix', function(done){
 				var ref = gun.get('zasdf').put({a: 9});
 				var at = gun.get('zfdsa').get('y').get('x').get('c').put(ref);
-				at.get('foo').get('bar').put('yay');
-				ref.get('foo').get('ah').put(1, function(){
+				at.get('foo').get('bar').put('yay', function(ack){ done.a = 1; end() });
+				ref.get('foo').get('ah').put(1, function(ack){ done.b = 1; end() });
+				function end(ack){
+					if(!done.a || !done.b){ return }
 					if(done.c){ return } done.c = 1;
 					var g = gun._.graph;
 					expect(Object.keys(g['zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
 					expect(Object.keys(g['zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
 					done();
-				});
+				};
 			});
 		});
 
@@ -1197,11 +1205,11 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.age).to.be(26);
 							expect(check.alice.name).to.be('Alice');
-							expect(Gun.val.link.is(check.alice.pet)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.alice.pet)).to.be.ok();
 							//expect(count.alice).to.be(1);
 							expect(check.bob.age).to.be(29);
 							expect(check.bob.name).to.be('Bob!');
-							expect(Gun.val.link.is(check.bob.pet)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.bob.pet)).to.be.ok();
 							//expect(count.bob).to.be(1);
 							done();
 						},10);
@@ -1302,9 +1310,10 @@ describe('Gun', function(){
 							expect(check.Fluffy).to.be('name');
 							expect(check.Frisky).to.be('name');
 							//console.log("????", gun._.graph);
-							Gun.obj.map(gun._.graph, function(n,s){
+							//Gun.obj.map(gun._.graph, function(n,s){
+							Object.keys(gun._.graph).forEach(function(s,n){ n = gun._.graph[s];
 								if('u/m/p/n/p' === s){ return }
-								var a = Gun.obj.map(n, function(v,f,t){t(v)});
+								var a = Object.keys(n);//Gun.obj.map(n, function(v,f,t){t(v)});
 								expect(a.length).to.be(2); // make sure that ONLY the selected properties were loaded, not the whole node.
 							});
 							//expect(count.Fluffy).to.be(1);
@@ -1316,7 +1325,7 @@ describe('Gun', function(){
 				}, 1000);
 			});
 
-			it('uncached synchronous map on mutate', function(done){
+			it.only('uncached synchronous map on mutate', function(done){
 				Gun.statedisk({
 					alice: {
 						age: 26,
@@ -1389,6 +1398,7 @@ describe('Gun', function(){
 						_:{'#':'u/m/m/n/soul'},
 						name: 'Alice Zzxyz'
 					});
+					return;
 					setTimeout(function(){
 						gun.get('umaliceo').put({
 							name: 'Alice Aabca'
@@ -1847,10 +1857,10 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.name).to.be('alice');
 							expect(check.alice.age).to.be(24);
-							expect(Gun.val.link.is(check.alice.spouse)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.alice.spouse)).to.be.ok();
 							expect(check.bob.name).to.be('bob');
 							expect(check.bob.age).to.be(26);
-							expect(Gun.val.link.is(check.bob.spouse)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.bob.spouse)).to.be.ok();
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
@@ -1935,10 +1945,10 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(check.alice.name).to.be('alice');
 							expect(check.alice.age).to.be(24);
-							expect(Gun.val.link.is(check.alice.spouse)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.alice.spouse)).to.be.ok();
 							expect(check.bob.name).to.be('bob');
 							expect(check.bob.age).to.be(26);
-							expect(Gun.val.link.is(check.bob.spouse)).to.be.ok();
+							expect('string' == typeof Gun.valid(check.bob.spouse)).to.be.ok();
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
@@ -2676,7 +2686,7 @@ describe('Gun', function(){
 			//console.only.i=1;console.log("=============", gun);
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
-				//console.log("*****************", data, done.to);//return;
+				//console.log("*****************", data, done.to);return;
 				expect(done.to).to.not.be.ok();
 				done.to = setTimeout(function(){
 					expect(data.age).to.be(29);
@@ -3539,7 +3549,7 @@ describe('Gun', function(){
 			app.get(function(d){
 				//d = (d.$$||d.$)._.put;
 				if(!d || !d.put || !d.put.wat){ return }
-				//console.log('should be called: {wat:1}=', d.put);
+				//console.log('************ should be called: {wat:1}=', d.put);
 				expect(d.put.wat).to.be(1);
 				done.a = 1;
 				if(!done.u){ return }
@@ -3550,7 +3560,7 @@ describe('Gun', function(){
 
 			//console.log("----------");
 			app.get('a').get('b').get(function(d){
-				//console.log("empty/clear: undefined=", d.put);
+				//console.log("************ empty/clear: undefined=", d.put);
 				//d = (d.$$||d.$)._.put;
 				expect(d.put).to.be(u);
 				done.u = true;
@@ -3599,20 +3609,20 @@ describe('Gun', function(){
 			});
 
 			var check = {}, c = 0, end;
-			//console.log(check);
+			//console.log(check, gun._.graph);
 			gun.get('users/mm').map().map()
 				.get('who').get('said').map().on(function(msg){
-					//console.log("------>", msg.num);
+					//console.log("------>", msg);
 					if(check[msg.num]){
 						//console.log("!!!!", msg.num, "!!!!");
 					}
 					delete check[msg.num];
 					c++;
 					clearTimeout(end); end = setTimeout(function(){
-						//console.log("?", c, check);
+						//console.log("?", c, check, Object.keys(check), gun._.graph);
 						if(!Object.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
 						done();
-					},100);
+					},9);
 			});
 
 			var said = gun.get('pub/asdf').get('who').get('said');
@@ -3631,7 +3641,7 @@ describe('Gun', function(){
 
 			}
 
-			var i = 0, m = 9, to = setInterval(function frame(){
+			var i = 0, m = 9, to = setTimeout(function frame(){
 				if(m <= i){
 					clearTimeout(to);
 					return;
@@ -3639,6 +3649,7 @@ describe('Gun', function(){
 				i++;
 				check[i] = true;
 				run(i);
+				setTimeout(frame, 1);
 			}, 1);
 
 		});
@@ -3733,8 +3744,8 @@ describe('Gun', function(){
 			var msg = {what: 'hello world'};
 			//var ref = user.get('who').get('all').set(msg);
 			//user.get('who').get('said').set(ref);
-			var ref = gun.get('s/r/who').get('all').set(msg);
-			gun.get('s/r/who').get('said').set(ref);
+			var ref = gun.get('s/r/who').get('all').set(msg, function(ack){ /*console.log('@@@', ack)*/ });
+			gun.get('s/r/who').get('said').set(ref, function(ack){ /*console.log('###', ack)*/ });
 			gun.get('s/r/who').get('said').map().once(function(data){
 				expect(data.what).to.be.ok();
 				done();
