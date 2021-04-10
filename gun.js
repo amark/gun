@@ -671,11 +671,13 @@
 					sat.put = root.$.get(tmp)._.put || change; // share same cache as what we're linked to.
 				}
 			}
+			console.only(3, "IN --->", cat.id, cat.get, msg, cat);
 
 			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
 			cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 			cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			cat.soul && console.only(2, "IN --->", cat.id, cat.get, msg, cat);
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following? 
@@ -707,7 +709,6 @@
 			if(cat.has){ cat.link = link }
 			var sat = root.$.get(tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
-
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
 			if(tmp['']){ // we might need to load the whole thing
 				if(!(sat.ask||'')['']){ // if it wasn't already fully asked for.
@@ -715,6 +716,7 @@
 					return;
 				}
 			}
+			//console.log("link:", cat.id, msg, cat, '?', tmp);
 			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if(!(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
@@ -729,17 +731,17 @@
 				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
 				if(cat.soul && u !== cat.put){ return } // data may not be found on a soul, but if a soul already has data, then nothing can clear the soul as a whole.
 				//if(!cat.has){ return }
-				var at = (msg.$$||msg.$||'')._||'';
-				if(msg['@'] && u !== at.put){ return } // a "not found" from other peers should not clear out data if we have already found it.
-				if(u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
+				tmp = (msg.$$||msg.$||'')._||'';
+				if(msg['@'] && u !== tmp.put){ return } // a "not found" from other peers should not clear out data if we have already found it.
+				if(cat.has && u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
 				//console.log('unlink:', cat.id, cat.has, msg, cat.link, '?', cat.put, change, '!!!', (root.pass||'')[cat.id]);
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				if(cat.has){ cat.link = null } // TODO: Empty out links, maps, echos, acks/asks, etc.?
-				//console.log('unlink', cat.id, msg, cat.link, '???', cat.was, change);
 				// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order?
+				//console.log("unlink!", cat.id, msg, cat);
+				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 					if(!(sat = cat.next[get])){ return }
-					if(u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
+					if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
 					sat.on('in', {get: get, put: u, $: sat.$}); // TODO: BUG? Add recursive seen check?
 				},0,99);
 				return;
@@ -747,12 +749,20 @@
 			if(cat.soul){ return } // a soul cannot unlink itself.
 			if(msg.$$){ return } // a linked chain does not do the unlinking, the sub chain does. // TODO: BUG! But will this cancel maps?
 			link = valid(change);
-			if(true === link){
-				//if(u === cat.link && u !== change){ return }
-				//console.log(cat.id, '    ', cat.put, change, cat.link);
-				unlink({get: cat.get, put: u, $: cat.$}, cat); // unlink our sub chains.
-				return;
+			if(true !== link){
+				// TODO: Implement some logic here for changing links.
+				return
 			}
+			//console.log("unlinking:", cat.id, cat.get, msg, link, cat, '?', change, cat.put);
+			//if(true === link){
+				//if(u === cat.link && u !== change){ return }
+				//console.log(cat.id, '    ', cat.id, change, cat, msg);
+				unlink({get: cat.get, put: u, $: cat.$}, cat); // unlink our sub chains.
+				if(cat.has){ return }
+				tmp = (msg.$||'')._||'';
+				if(!tmp.echo){ return }
+				delete tmp.echo[cat.id];
+				return;
 			return;
 			if(!cat.has){ return } // TODO: BUG? "non-core" map has to select correct sub chain to unsubscribe.
 			if(cat.soul || msg.$$){ return }
@@ -1017,6 +1027,7 @@
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
+			console.only(1, "PUT!", as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done. // this used to be above the out call, but trying out new stun/run checks.
 		}
@@ -1203,6 +1214,7 @@
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
+			//console.log("mapmapmapmap", cat.id, msg);
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
