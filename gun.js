@@ -753,6 +753,7 @@
 				// TODO: Implement some logic here for changing links.
 				return
 			}
+			if(cat.has && true === valid(cat.put) && !(root.pass||'')[cat.id]){ return } // if the previous value would have caused an unlink, we do not need to unlink again. Except for annoying passes edge case.
 			//console.log("unlinking:", cat.id, cat.get, msg, link, cat, '?', change, cat.put);
 			//if(true === link){
 				//if(u === cat.link && u !== change){ return }
