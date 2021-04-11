@@ -35,3 +35,4 @@ export declare type IGunRecordNode<DataType> = {
     [K in keyof DataType]: IGunRecordNodeRawBase;
 } & IGunRecordNodeRaw<DataType>;
 export declare type IGunRecordData<DataType> = DataType & IGunRecordNodeRaw<DataType>;
+export declare type MaybeGunChainReference<DataType = Record<string, any>, ReferenceKey = any> = DataType | IGunChainReference<DataType, ReferenceKey, false>

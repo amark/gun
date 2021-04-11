@@ -1,7 +1,9 @@
-import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable, IGunCryptoKeyPair } from './types';
+import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable, IGunCryptoKeyPair, MaybeGunChainReference } from './types';
 import { IGunConstructorOptions } from './options';
 
 declare type ITSResolvable<R> = R | PromiseLike<R>;
+/** for cases where a chain reference is acceptable, such as an argument to `.set()` */
+
 export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey = any, IsTop extends 'pre_root' | 'root' | false = false> {
     /**
      * Save data into gun, syncing it with your connected peers.
@@ -81,10 +83,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      *
      * **This means only objects, for now, are supported.**
      */
-    set(data: AlwaysDisallowedType<DataType extends Array<infer U> ? U extends {
-        [key: string]: any;
-        [key: number]: any;
-    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback): IGunChainReference<ArrayOf<DataType>>;
+    set(data: MaybeGunChainReference< AlwaysDisallowedType<DataType extends Array<infer U> ? U extends Record<string|number, any> ? ArrayOf<DataType> : never : never>>, callback?: AckCallback): IGunChainReference<ArrayOf<DataType>>;
     /**
      * Map iterates over each property and item on a node, passing it down the chain,
      * behaving like a forEach on your data.
