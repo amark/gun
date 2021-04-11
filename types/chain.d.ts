@@ -83,7 +83,9 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      *
      * **This means only objects, for now, are supported.**
      */
-    set(data: MaybeGunChainReference< AlwaysDisallowedType<DataType extends Array<infer U> ? U extends Record<string|number, any> ? ArrayOf<DataType> : never : never>>, callback?: AckCallback): IGunChainReference<ArrayOf<DataType>>;
+    set(data: MaybeGunChainReference<AlwaysDisallowedType<DataType extends Array<infer U> ? U extends Record<string|number, any> ? ArrayOf<DataType> : never : never>>, 
+		callback?: AckCallback
+	): IGunChainReference<ArrayOf<DataType>>;
     /**
      * Map iterates over each property and item on a node, passing it down the chain,
      * behaving like a forEach on your data.
