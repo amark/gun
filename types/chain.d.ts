@@ -91,8 +91,9 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * behaving like a forEach on your data.
      * It also subscribes to every item as well and listens for newly inserted items.
      */
-    map(callback?: (value: ArrayOf<DataType>, key: DataType) => ArrayOf<DataType> | undefined): IGunChainReference<ArrayOf<DataType>, ReferenceKey>;
-    /**
+	map(callback?: (value: ArrayOf<DataType>, key: DataType) => ArrayOf<DataType> | undefined
+	): IGunChainReference<DataType extends Array<unknown> ? ArrayOf<DataType> : DataType extends Record<any,infer V> ? V : never, ReferenceKey>;
+	 /**
      * Undocumented, but extremely useful and mentioned in the document
      *
      * Remove **all** listener on this node.
