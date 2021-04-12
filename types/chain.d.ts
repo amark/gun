@@ -15,8 +15,9 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * * Traditional arrays are dangerous in real-time apps. Use `gun.set` instead.
      *
      * @param callback invoked on each acknowledgment
+     * @param options additional options (used for specifying certs)
      */
-    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DisallowArray<DataType>>>>, callback?: AckCallback): IGunChainReference<DataType, ReferenceKey, IsTop>;
+    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DisallowArray<DataType>>>>, callback?: AckCallback|null, options?: {opt?:{cert?:string}}): IGunChainReference<DataType, ReferenceKey, IsTop>;
     /**
      * Where to read data from.
      * @param key The key is the ID or property name of the data that you saved from earlier
@@ -80,11 +81,14 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * If the item is added twice, it will be merged.
      *
      * **This means only objects, for now, are supported.**
+     * @param data the object to add to the set
+     * @param callback optional function to invoke when the operation is complete
+     * @param options additional options (used for specifying certs)
      */
     set(data: AlwaysDisallowedType<DataType extends Array<infer U> ? U extends {
         [key: string]: any;
         [key: number]: any;
-    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback): IGunChainReference<ArrayOf<DataType>>;
+    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback|null, options?: {opt?:{cert?:string}}): IGunChainReference<ArrayOf<DataType>>;
     /**
      * Map iterates over each property and item on a node, passing it down the chain,
      * behaving like a forEach on your data.
