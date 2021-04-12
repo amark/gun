@@ -71,7 +71,7 @@ Gun.on('create', function(root){
 		clearTimeout(to);
 		to = false;
 		try{store.setItem('gap/'+opt.prefix, JSON.stringify(gap));
-		}catch(e){ Gun.log(err = e || "localStorage failure") }
+		}catch(e){ Gun.log("localStorage failure: "+e.message) }
 	}
 });
 
