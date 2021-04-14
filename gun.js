@@ -671,13 +671,11 @@
 					sat.put = root.$.get(tmp)._.put || change; // share same cache as what we're linked to.
 				}
 			}
-			console.only(3, "IN --->", cat.id, cat.get, msg, cat);
 
 			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
 			cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 			cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-			cat.soul && console.only(2, "IN --->", cat.id, cat.get, msg, cat);
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following? 
@@ -716,7 +714,6 @@
 					return;
 				}
 			}
-			//console.log("link:", cat.id, msg, cat, '?', tmp);
 			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if(!(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
@@ -732,11 +729,16 @@
 				if(cat.soul && u !== cat.put){ return } // data may not be found on a soul, but if a soul already has data, then nothing can clear the soul as a whole.
 				//if(!cat.has){ return }
 				tmp = (msg.$$||msg.$||'')._||'';
-				if(msg['@'] && u !== tmp.put){ return } // a "not found" from other peers should not clear out data if we have already found it.
+				if(msg['@'] && (u !== tmp.put || u !== cat.put)){ return } // a "not found" from other peers should not clear out data if we have already found it.
 				if(cat.has && u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
 				//console.log('unlink:', cat.id, cat.has, msg, cat.link, '?', cat.put, change, '!!!', (root.pass||'')[cat.id]);
+				if(cat.has){ // TODO: Empty out links, maps, echos, acks/asks, etc.?
+					if(tmp = cat.link){
+						delete (root.$.get(tmp)._.echo||'')[cat.id];
+					}
+					cat.link = null;
+				}
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
-				if(cat.has){ cat.link = null } // TODO: Empty out links, maps, echos, acks/asks, etc.?
 				// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
 				//console.log("unlink!", cat.id, msg, cat);
 				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
@@ -747,51 +749,18 @@
 				return;
 			}
 			if(cat.soul){ return } // a soul cannot unlink itself.
-			if(msg.$$){ return } // a linked chain does not do the unlinking, the sub chain does. // TODO: BUG! But will this cancel maps?
-			link = valid(change);
-			if(true !== link){
-				// TODO: Implement some logic here for changing links.
-				return
-			}
-			if(cat.has && true === valid(cat.put) && !(root.pass||'')[cat.id]){ return } // if the previous value would have caused an unlink, we do not need to unlink again. Except for annoying passes edge case.
-			//console.log("unlinking:", cat.id, cat.get, msg, link, cat, '?', change, cat.put);
-			//if(true === link){
-				//if(u === cat.link && u !== change){ return }
-				//console.log(cat.id, '    ', cat.id, change, cat, msg);
-				unlink({get: cat.get, put: u, $: cat.$}, cat); // unlink our sub chains.
-				if(cat.has){ return }
-				tmp = (msg.$||'')._||'';
-				if(!tmp.echo){ return }
-				delete tmp.echo[cat.id];
-				return;
-			return;
-			if(!cat.has){ return } // TODO: BUG? "non-core" map has to select correct sub chain to unsubscribe.
-			if(cat.soul || msg.$$){ return }
-			if(cat.link === null && !(cat.root.pass||'')[cat.id]){ return } // if we have already unlinked, do not do it again. Except for annoying passes edge case.
-			if((link = valid(change)) === cat.link){
-				if((cat.ask||'')[''] && (cat.root.pass||'')[cat.id]){ // Special case! For `Chain on known nested object should ack` test! If there are any unfound children that asked to be triggered, to it here? // TODO: Please, somehow cleaner? Reuse some other .each(ask? This is probably the potentially buggiest part of the code.
-					console.log("go go go go", cat.id);
-					setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-						if(!get || !(sat = cat.next[get])){ return }
-						sat.on('in', {get: get, put: {'#': link, '.': get, ':': (cat.root.graph[link]||'')[get], '>': state_is(cat.root.graph[link], get)}, $: sat.$});
-					},0,99);
-				}
-				console.log("....", cat.link, change);
-				return;
-			}
-			if(!cat.link && 'string' == typeof link){ return } // but if the chain has not been initialized (or has already been unlinked) and is now being linked, then we do not need to unlink (again).
-			if(u === cat.link && !(cat.root.pass||'')[cat.id]){ return }
-			if(u === cat.link && u !== change){ return }
-			cat.link = null;
+			if(msg.$$){ return } // a linked chain does not do the unlinking, the sub chain does. // TODO: BUG? Will this cancel maps?
+			link = valid(change); // need to unlink anytime we are not the same link, though only do this once per unlink.
+			tmp = msg.$._;
+			if(link === tmp.link || (cat.has && !tmp.link)){
+				if((root.pass||'')[cat.id] && 'string' !== typeof link){
 
-			console.log('unlinking:', cat.id, msg, cat.link, '???', cat.was, change, '!!!', (cat.root.pass||'')[cat.id]);
-			cat.on('in', {get: cat.get, put: u, $: cat.$}); return; // 3 4 5 5 5 6 4 6 8 8
-			//unlink({get: cat.get, put: u, $: cat.$}, cat); return;
-			// 3 4 5 5 6 4 6 8
-			cat.next && setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // TODO: Bug? If we're a map do we want to clear out everything, wouldn't it just be the one item's subchains, not all? // see potential async issues.
-				if(!(sat = cat.next[get])){ return } // only if next, even if asked. (right?)
-				sat.on('in', {get: get, put: u, $: sat.$});
-			},0,99);
+				} else {
+					return;
+				}
+			}
+			unlink({get: cat.get, put: u, $: cat.$}, cat); // unlink our sub chains.
+			delete (msg.$._.echo||'')[cat.id];
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
@@ -1028,7 +997,7 @@
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			console.only(1, "PUT!", as.graph);
+			//console.log("PUT!", as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done. // this used to be above the out call, but trying out new stun/run checks.
 		}

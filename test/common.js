@@ -1325,7 +1325,7 @@ describe('Gun', function(){
 				}, 1000);
 			});
 
-			it.only('uncached synchronous map on mutate', function(done){
+			it('uncached synchronous map on mutate', function(done){
 				Gun.statedisk({
 					alice: {
 						age: 26,
@@ -1385,10 +1385,10 @@ describe('Gun', function(){
 						done.to = setTimeout(function(){
 							expect(done.last).to.be.ok();
 							expect(check['Alice Aabca']).to.not.be.ok();
-							//expect(count.Alice).to.be(1);
-							//expect(count.Bob).to.be(1);
-							//expect(count['undefined']).to.be(1);
-							//expect(count['Alice Zzxyz']).to.be(1);
+							expect(count.Alice).to.be(1);
+							expect(count.Bob).to.be(1);
+							expect(count['undefined']).to.be(1);
+							expect(count['Alice Zzxyz']).to.be(1);
 							done();
 						},200);
 					}
@@ -1398,7 +1398,6 @@ describe('Gun', function(){
 						_:{'#':'u/m/m/n/soul'},
 						name: 'Alice Zzxyz'
 					});
-					return;
 					setTimeout(function(){
 						gun.get('umaliceo').put({
 							name: 'Alice Aabca'
@@ -1485,7 +1484,7 @@ describe('Gun', function(){
 					if(check.Alice && check.Bob && check['Alice Zzxyz']){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
-							var a = Gun.obj.map(gun._.graph['u/m/p/m/n/u/soul'], function(v,f,t){t(v)});
+							var a = Object.keys(gun._.graph['u/m/p/m/n/u/soul']); //Gun.obj.map(gun._.graph['u/m/p/m/n/u/soul'], function(v,f,t){t(v)});
 							expect(a.length).to.be(2);
 							expect(done.last).to.be.ok();
 							expect(check['Alice Aabca']).to.not.be.ok();
