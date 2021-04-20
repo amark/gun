@@ -1511,7 +1511,7 @@ describe('Gun', function(){
 				}, 1000);
 			});
 
-			it('uncached synchronous map on get node mutate node uncached', function(done){
+			it.only('uncached synchronous map on get node mutate node uncached', function(done){
 				Gun.statedisk({
 					alice: {_:{'#':'umaliceo3'},
 						age: 26,
@@ -1528,15 +1528,15 @@ describe('Gun', function(){
 				gun.get('u/m/p/n/mutate/n/u').map().get('pet').on(function(v,f){
 					check[v.name] = f;
 					count[v.name] = (count[v.name] || 0) + 1;
-					//console.log("*****************", f,v);
+					console.log("*****************", f,v, check);
 					if(check.Fluffy && check.Frisky && check.Fuzzball){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
 							expect(done.last).to.be.ok();
 							expect(check['Fluffs']).to.not.be.ok();
-							//expect(count.Fluffy).to.be(1);
-							//expect(count.Frisky).to.be(1);
-							//expect(count.Fuzzball).to.be(1);
+							expect(count.Fluffy).to.be(1);
+							expect(count.Frisky).to.be(1);
+							expect(count.Fuzzball).to.be(1);
 							done();
 						},200);
 					}
@@ -1558,6 +1558,51 @@ describe('Gun', function(){
 					}, 1000);
 				}, 300);
 				}, 1000);
+			});
+
+			it("unlink deeply nested", function(done){
+				Gun.statedisk({
+					a: {_:{'#':'audn'},
+						age: 26,
+						name: "Alice",
+						b: {_:{'#':'budn'}, c: {_:{'#':'cudn'}, id: 'first', level: 3}, level: 2}
+					}
+				}, 'udn', function() {
+					var check = {}, count = {};
+					gun.get('udn').get('a').get('b').get('c').on(function(data){
+						//console.log("udn.a.b.c:", data);
+						check[data.id] = 1;
+						count[data.id] = (count[data.id] || 0) + 1;
+						expect(data.foo).to.not.be.ok();
+						//console.log("*****************", f,v, check);
+						if(check.first && check.other){
+							clearTimeout(done.to);
+							done.to = setTimeout(function(){
+								expect(done.last).to.be.ok();
+								expect(check.firsta).to.not.be.ok();
+								expect(count.first).to.be(1);
+								expect(count.other).to.be(1);
+								done();
+							},200);
+						}
+					});
+					setTimeout(function(){
+						Gun.statedisk({
+							name: 'Alice2', age: 34,
+							b: {_:{'#':'2budn'}, c: {_:{'#':'2cudn'}, id: 'other', level: 3}, level: 2}
+						}, '2audn', function() {
+							//console.only.i=1;console.log('=============================');
+							gun.get('udn').put({
+								a: {'#':'2audn'}
+							});
+							setTimeout(function(){
+								//console.log("- - - - - - - - - - - -");
+								gun.get('cudn').put({id: 'firsta', foo: 'bar'});
+								done.last = 1;
+							}, 50);
+						});
+					},50);
+				});
 			});
 
 			it("get before put in memory", function(done){

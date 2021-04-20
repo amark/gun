@@ -722,7 +722,6 @@
 
 		function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior.
 			var put = msg.put||'', change = put['=']||put[':'], root = cat.root, link, tmp;
-			//if(!cat.has){ return } // MARK COME BACK HERE !!!!!!!!!!!!!!!! undef not need to trigger undef! No, already?
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
 				// TODO: BUG! because emptying cache could be async from below, make sure we are not emptying a newer cache. So maybe pass an Async ID to check against?
 				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
@@ -730,28 +729,27 @@
 				//if(!cat.has){ return }
 				tmp = (msg.$$||msg.$||'')._||'';
 				if(msg['@'] && (u !== tmp.put || u !== cat.put)){ return } // a "not found" from other peers should not clear out data if we have already found it.
-				if(cat.has && u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
-				//console.log('unlink:', cat.id, cat.has, msg, cat.link, '?', cat.put, change, '!!!', (root.pass||'')[cat.id]);
+				//if(cat.has && u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
+				if(link = cat.link){
+					delete (root.$.get(link)._.echo||'')[cat.id];
+				}
 				if(cat.has){ // TODO: Empty out links, maps, echos, acks/asks, etc.?
-					if(tmp = cat.link){
-						delete (root.$.get(tmp)._.echo||'')[cat.id];
-					}
 					cat.link = null;
 				}
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-				//console.log("unlink!", cat.id, msg, cat);
 				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 					if(!(sat = cat.next[get])){ return }
-					if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case.
+					//if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
+					if(link){ delete (root.$.get(link).get(get)._.echo||'')[sat.id] }
 					sat.on('in', {get: get, put: u, $: sat.$}); // TODO: BUG? Add recursive seen check?
 				},0,99);
 				return;
 			}
 			if(cat.soul){ return } // a soul cannot unlink itself.
 			if(msg.$$){ return } // a linked chain does not do the unlinking, the sub chain does. // TODO: BUG? Will this cancel maps?
-			link = valid(change); // need to unlink anytime we are not the same link, though only do this once per unlink.
-			tmp = msg.$._;
+			link = valid(change); // need to unlink anytime we are not the same link, though only do this once per unlink (and not on init).
+			tmp = msg.$._||'';
 			if(link === tmp.link || (cat.has && !tmp.link)){
 				if((root.pass||'')[cat.id] && 'string' !== typeof link){
 
@@ -759,8 +757,8 @@
 					return;
 				}
 			}
-			unlink({get: cat.get, put: u, $: cat.$}, cat); // unlink our sub chains.
-			delete (msg.$._.echo||'')[cat.id];
+			delete (tmp.echo||'')[cat.id];
+			unlink({get: cat.get, put: u, $: msg.$}, cat); // unlink our sub chains.
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
