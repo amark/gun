@@ -730,7 +730,7 @@
 				tmp = (msg.$$||msg.$||'')._||'';
 				if(msg['@'] && (u !== tmp.put || u !== cat.put)){ return } // a "not found" from other peers should not clear out data if we have already found it.
 				//if(cat.has && u === cat.put && !(root.pass||'')[cat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
-				if(link = cat.link){
+				if(link = cat.link || msg.linked){
 					delete (root.$.get(link)._.echo||'')[cat.id];
 				}
 				if(cat.has){ // TODO: Empty out links, maps, echos, acks/asks, etc.?
@@ -758,7 +758,7 @@
 				}
 			}
 			delete (tmp.echo||'')[cat.id];
-			unlink({get: cat.get, put: u, $: msg.$}, cat); // unlink our sub chains.
+			unlink({get: cat.get, put: u, $: msg.$, linked: msg.linked = msg.linked || tmp.link}, cat); // unlink our sub chains.
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
@@ -995,7 +995,7 @@
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.log("PUT!", as.graph);
+			//console.only(1, "PUT!", as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done. // this used to be above the out call, but trying out new stun/run checks.
 		}
