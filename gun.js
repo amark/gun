@@ -927,7 +927,7 @@
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
 			as.data = as.data || data;
-			as.soul || (as.soul = at.soul || ('string' == typeof cb && cb));
+			as.soul || (as.soul = at.soul || ('string' == typeof cb && cb) || (as.data && as.data._ && as.data._['#']));
 			var s = as.state = as.state || Gun.state();
 			if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
 			if(!as.soul){ return get(as), gun }
