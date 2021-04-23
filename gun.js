@@ -476,6 +476,7 @@
 					obj_each(v, each);
 				});
 				Gun.on('opt', at);
+				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
 				return gun;
 			}
 		}());
@@ -927,7 +928,7 @@
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
 			as.data = as.data || data;
-			as.soul || (as.soul = at.soul || ('string' == typeof cb && cb) || (as.data && as.data._ && as.data._['#']));
+			as.soul || (as.soul = at.soul || ('string' == typeof cb && cb));
 			var s = as.state = as.state || Gun.state();
 			if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
 			if(!as.soul){ return get(as), gun }
@@ -1003,12 +1004,11 @@
 		function get(as){
 			var at = as.via._, tmp;
 			as.via = as.via.back(function(at){
-				if(at.soul){ return at.$ }
+				if(at.soul || !at.get){ return at.$ }
 				tmp = as.data; (as.data = {})[at.get] = tmp;
 			});
 			if(!as.via || !as.via._.soul){
-				console.log("TODO: Error! Handle non-soul put backs");
-				return;
+				as.via = at.root.$.get(((as.data||'')._||'')['#'] || at.$.back('opt.uuid')())
 			}
 			as.via.put(as.data, as.ack, as);
 			
@@ -1197,9 +1197,9 @@
 			if(soul = ((item||'')._||'')['#']){ (item = {})[soul] = {'#': soul}; }
 			if(!Gun.is(item)){
 				if(Object.plain(item)){
-					soul = soul || ((item||'')._||'')['#'] || uuid(); // this just key now, not a soul.
+					soul = soul || ((item||'')._||'')['#'] || gun.back('opt.uuid')(7); // this just key now, not a soul.
 				}
-				return gun.get(soul || uuid()).put(item, cb, opt);
+				return gun.get(soul || gun.back('opt.uuid')(7)).put(item, cb, opt);
 			}
 			gun.put(function(go){
 				item.get(function(soul, o, msg){ // TODO: BUG! We no longer have this option? & go error not handled?
@@ -1209,7 +1209,6 @@
 			})
 			return item;
 		}
-		function uuid(){ return Gun.state().toString(36).replace('.','') + String.random(7) }
 	})(USE, './set');
 
 	;USE(function(module){
