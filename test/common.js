@@ -1511,7 +1511,7 @@ describe('Gun', function(){
 				}, 1000);
 			});
 
-			it.only('uncached synchronous map on get node mutate node uncached', function(done){
+			it('uncached synchronous map on get node mutate node uncached', function(done){
 				Gun.statedisk({
 					alice: {_:{'#':'umaliceo3'},
 						age: 26,
@@ -1528,7 +1528,7 @@ describe('Gun', function(){
 				gun.get('u/m/p/n/mutate/n/u').map().get('pet').on(function(v,f){
 					check[v.name] = f;
 					count[v.name] = (count[v.name] || 0) + 1;
-					console.log("*****************", f,v, check);
+					//console.log("*****************", f,v, check);
 					if(check.Fluffy && check.Frisky && check.Fuzzball){
 						clearTimeout(done.to);
 						done.to = setTimeout(function(){
