@@ -1,5 +1,3 @@
-const expect = require('../expect')
-
 var root;
 var Gun;
 (function(){
@@ -597,7 +595,7 @@ describe('SEA', function(){
           .get("inbox")
           .get(user.is.pub)
           .put(data, ack => {
-            expect(ack.ok).to.be(1)
+            expect(ack.err).to.not.be.ok()
             done()
           }, { opt: { cert } })
       })
@@ -640,7 +638,7 @@ describe('SEA', function(){
             .get(bob.pub)
             .get('today')
             .put(data, ack => {
-              expect(ack.ok).to.be.ok()
+              expect(ack.err).to.not.be.ok()
               gun.get("~" + alice.pub)
               .get("private")
               .get(bob.pub)
