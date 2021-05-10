@@ -14,7 +14,7 @@ Decentralized alternatives to [Zoom](https://www.zdnet.com/article/era-hatches-m
 <table>
 <tr>
 <a href="https://youtu.be/s_m16-w6bBI"><img width="31%" src="https://gun.eco/see/3dvr.gif" title="3D VR"/></a>
-<a href="https://github.com/cstefanache/cstefanache.github.io/blob/master/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md#gundb"><img width="31%" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
+<a href="https://github.com/cstefanache/cstefanache.github.io/blob/06697003449e4fc531fd32ee068bab532976f47b/_posts/2016-08-02-gun-db-artificial-knowledge-sharing.md"><img width="31%" src="https://gun.eco/see/aiml.gif" title="AI/ML"/></a>
 <a href="http://gps.gunDB.io/"><img width="31%" src="https://gun.eco/see/gps.gif" title="GPS"/></a>
 </tr>
 <tr>
