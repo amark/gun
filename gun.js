@@ -1369,6 +1369,7 @@
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
+					ack && dup_track(ack); // streaming long responses needs to keep alive the ack.
 					if(peer.batch){
 						peer.tail = (tmp = peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
@@ -1598,9 +1599,9 @@
 			var opt = root.opt, graph = root.graph, acks = [], disk, to;
 			if(false === opt.localStorage){ return }
 			opt.prefix = opt.file || 'gun/';
-			try{ disk = lg[opt.prefix] = lg[opt.prefix] || JSON.parse(store.getItem(opt.prefix)) || {};
+			try{ disk = lg[opt.prefix] = lg[opt.prefix] || JSON.parse(store.getItem(opt.prefix)) || {}; // TODO: Perf! This will block, should we care, since limited to 5MB anyways?
 			}catch(e){ disk = lg[opt.prefix] = {}; }
-			
+
 			root.on('get', function(msg){
 				this.to.next(msg);
 				var lex = msg.get, soul, data, tmp, u;

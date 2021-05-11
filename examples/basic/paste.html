@@ -9,14 +9,9 @@
 <script>
 var gun = Gun(location.origin + '/gun');
 
-var to, paste = gun.get('test').get('paste').on(function(data){
-  $('textarea').val(data);
-})
-
 $('textarea').on('input change blur keyup mouseup touchend', function(){
-  clearTimeout(to); // debounce
-  to = setTimeout(function(){
-    paste.put($('textarea').val());
-  }, 100);
-})
+	gun.get('test').get('paste').put($('textarea').val())
+});
+
+gun.get('test').get('paste').on(data => $('textarea').val(data))
 </script>

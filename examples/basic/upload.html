@@ -10,12 +10,12 @@
 </center>
 
 <script src="../jquery.js"></script>
+<script src="../../../gun/lib/yson.js"></script>
 <script src="../../../gun/gun.js"></script>
 <script src="../../../gun/lib/upload.js"></script>
 
 <script>
-var gun = Gun(location.origin + '/gun');
-
+var gun = Gun('http://localhost:8765/gun');
 $('html').upload(function resize(eve, up){
   if(up){ return up.shrink(eve, resize, 1024) }
   var b64 = (eve.base64 || ((eve.event || eve).target || eve).result || eve);

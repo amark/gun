@@ -3,7 +3,7 @@ var config = {
 	port: 8765,
 	servers: 1,
 	browsers: 2, //3,
-	each: 10000,
+	each: 100000,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -104,7 +104,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port); //console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -127,15 +127,17 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 	it("Carl Create Chats", function(){
 		return carl.run(function(test){
 			console.log("I AM CARL");
+			$('body').append("<div>CPU turns stacked: <u></u> <button onclick='this.innerText = Math.random();'>Can you click me?</button><input id='msg' style='width:100%;'><b></b></div>");
 			test.async();
 			var rand = String.random || Gun.text.random;
 			var i = test.props.each, chat = {}, S = Gun.state();
 			while(i--){
-				Gun.state.ify(chat, rand(9), S, rand(200), 'chat');
+				Gun.state.ify(chat, i+'-'+rand(9), S, rand(200), 'chat');
 			}
 			//window.chat = chat;
 			gun._.graph.chat = chat;
-			console.log(JSON.stringify(chat,null,2));
+			//console.log(JSON.stringify(chat,null,2));
+			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
 			test.done();
 		}, config);
 	});
@@ -155,7 +157,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				I = ++i;
 				//console.log(i, "chat:",k,v);
 				if(i === t){
-					$('b').text("seconds from start to end: " + ((+new Date - SS)/1000));
+					console.log(tmp = "seconds from start to end: " + (tmp = ((+new Date - SS)/1000)) + ", roughly " + (t/tmp) + "ops/sec.");
+					$('b').text(tmp);
 					setTimeout(function(){ test.done() },100);
 				}
 			});
@@ -171,7 +174,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 	
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
-		browsers.run(function(){
+		require('./util/open').cleanup() || browsers.run(function(){
 			setTimeout(function(){
 				location.reload();
 			}, 15 * 1000);
