@@ -61,7 +61,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 
 	// We'll have to manually launch the browsers,
 	// So lets up the timeout so we have time to do that.
-	this.timeout(5 * 60 * 1000);
+	this.timeout(50 * 60 * 1000);
 
 	it("Servers have joined!", function(){
 		// Alright, lets wait until enough gun server peers are connected.
@@ -131,14 +131,26 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			test.async();
 			var rand = String.random || Gun.text.random;
 			var i = test.props.each, chat = {}, S = Gun.state();
-			while(i--){
-				Gun.state.ify(chat, i+'-'+rand(9), S, rand(200), 'chat');
+			var tmp = "generating " + i + " records..."; console.log(tmp); $('b').text(tmp);
+			function gen(){
+				var j = 99;
+				$('b').text(i + ' left to generate...');
+				var data = rand(100);
+				while(--j && i){ --i;
+					Gun.state.ify(chat, i/*+'-'+rand(9)*/, S, rand(100) + data, 'chat');
+				}
+				if(i === 0){
+					gun._.graph.chat = chat;
+					test.done();
+					$('b').text('');
+					return;
+				}
+				setTimeout.turn(gen);
 			}
+			gen();
 			//window.chat = chat;
-			gun._.graph.chat = chat;
 			//console.log(JSON.stringify(chat,null,2));
 			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
-			test.done();
 		}, config);
 	});
 
@@ -157,7 +169,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				I = ++i;
 				//console.log(i, "chat:",k,v);
 				if(i === t){
-					console.log(tmp = "seconds from start to end: " + (tmp = ((+new Date - SS)/1000)) + ", roughly " + (t/tmp) + "ops/sec.");
+					console.log(tmp = "seconds from start to end: " + (tmp = ((+new Date - SS)/1000)) + ", roughly " + (t/tmp).toFixed(2) + "ops/sec.");
 					$('b').text(tmp);
 					setTimeout(function(){ test.done() },100);
 				}
