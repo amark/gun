@@ -67,7 +67,7 @@ gun.get('mark').on(function(data, key){
 ```javascript
 var cat = {name: "Fluffy", species: "kitty"};
 var mark = {boss: cat};
-cat.slave = mark;
+cat.pet = mark;
 
 // partial updates merge with existing data!
 gun.get('mark').put(mark);
@@ -79,8 +79,8 @@ gun.get('mark').get('boss').get('name').once(function(data, key){
 });
 
 // traverse a graph of circular references!
-gun.get('mark').get('boss').get('slave').once(function(data, key){
-  console.log("Mark is the slave!", data);
+gun.get('mark').get('boss').get('pet').once(function(data, key){
+  console.log("Mark is the pet!", data);
 });
 
 // add both of them to a table!
