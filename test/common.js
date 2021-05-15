@@ -7744,7 +7744,6 @@ describe('Gun', function(){
 			});
 		});
 
-				if(!err){ return done() }
 		it("get context", function(done){ // TODO: HUH?????? This was randomly causing errors?
 			var gun = Gun();
 			var ref = gun.get('ctx/lol').get('ctx/foo').put({hello: 'world'});
