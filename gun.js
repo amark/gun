@@ -327,7 +327,7 @@
 						kl = Object.keys(node||{}); // TODO: .keys( is slow
 					}
 					if(err){
-						ctx.err = err;
+						msg.err = ctx.err = err; // invalid data should error and stun the message.
 						fire(ctx);
 						//console.log("handle error!", err) // handle!
 						//ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
@@ -398,7 +398,7 @@
 			}
 			function ack(msg){ // aggregate ACKs.
 				var id = msg['@'] || '', root = (msg.$._||'').root, tmp;
-				if(msg.err && root && (tmp = root.dup.s[id])){ tmp.err = msg.err; } // add error to original message.
+				// TODO: check for the sharded message err and transfer it onto the original batch?
 				if(!(tmp = id._)){ /*console.log("TODO: handle ack id.");*/ return }
 				tmp.acks = (tmp.acks||0) + 1;
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
@@ -1330,7 +1330,7 @@
 					var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
 					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
-					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // stop relaying a invalid message, like failed SEA.
+					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }

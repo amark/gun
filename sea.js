@@ -1204,10 +1204,10 @@
         })})
         return 
       }
-      var no = function(why){ at.on('in', {'@': id, err: why}) };
+      var no = function(why){ at.on('in', {'@': id, err: msg.err = why}) }; // exploit internal relay stun for now, maybe violates spec, but testing for now. // Note: this may be only the sharded message, not original batch.
       //var no = function(why){ msg.ack(why) };
       (msg._||'').DBG && ((msg._||'').DBG.c = +new Date);
-      if(0 <= soul.indexOf('<?')){ // special case for "do not sync data X old"
+      if(0 <= soul.indexOf('<?')){ // special case for "do not sync data X old" forget
         // 'a~pub.key/b<?9'
         tmp = parseFloat(soul.split('<?')[1]||'');
         if(tmp && (state < (Gun.state() - (tmp * 1000)))){ // sec to ms

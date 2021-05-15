@@ -4,6 +4,7 @@ var config = {
 	servers: 1,
 	browsers: 2, //3,
 	each: 100000,
+	size: 1,
 	wait: 1,
 	route: {
 		'/': __dirname + '/index.html',
@@ -132,12 +133,13 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			var rand = String.random || Gun.text.random;
 			var i = test.props.each, chat = {}, S = Gun.state();
 			var tmp = "generating " + i + " records..."; console.log(tmp); $('b').text(tmp);
+			var big = rand(test.props.size || 1); //1000 * 10);
 			function gen(){
 				var j = 99;
 				$('b').text(i + ' left to generate...');
 				var data = rand(100);
 				while(--j && i){ --i;
-					Gun.state.ify(chat, i/*+'-'+rand(9)*/, S, rand(100) + data, 'chat');
+					Gun.state.ify(chat, i/*+'-'+rand(9)*/, S, rand(100) + data + big, 'chat');
 				}
 				if(i === 0){
 					gun._.graph.chat = chat;
