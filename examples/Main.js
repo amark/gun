@@ -2,31 +2,36 @@ import { render } from './iris/js/lib/preact.js';
 import { Router, route } from './iris/js/lib/preact-router.es.js';
 import { createHashHistory } from './iris/js/lib/history.production.min.js';
 import { Component } from './iris/js/lib/preact.js';
+import { Link } from './iris/js/lib/preact.match.js';
 
 import Helpers from './iris/js/Helpers.js';
 import { html } from './iris/js/Helpers.js';
 import QRScanner from './iris/js/QRScanner.js';
 import PeerManager from './iris/js/PeerManager.js';
 import Session from './iris/js/Session.js';
-import PublicMessages from './iris/js/PublicMessages.js';
 import { translate as t } from './iris/js/Translation.js';
 
-import Settings from './iris/js/components/Settings.js';
-import LogoutConfirmation from './iris/js/components/LogoutConfirmation.js';
-import ChatView from './iris/js/components/ChatView.js';
-import StoreView from './iris/js/components/StoreView.js';
-import CheckoutView from './iris/js/components/CheckoutView.js';
-import ProductView from './iris/js/components/ProductView.js';
-import Login from './iris/js/components/Login.js';
-import Profile from './iris/js/components/Profile.js';
-import Header from './iris/js/components/Header.js';
-import Footer from './iris/js/components/Footer.js';
-import MessageView from './iris/js/components/MessageView.js';
-import FollowsView from './iris/js/components/FollowsView.js';
-import FeedView from './iris/js/components/FeedView.js';
-import ExplorerView from './iris/js/components/ExplorerView.js';
+import Settings from './iris/js/views/Settings.js';
+import LogoutConfirmation from './iris/js/views/LogoutConfirmation.js';
+import Chat from './iris/js/views/Chat.js';
+import Store from './iris/js/views/Store.js';
+import Checkout from './iris/js/views/Checkout.js';
+import Product from './iris/js/views/Product.js';
+import Login from './iris/js/views/Login.js';
+import Profile from './iris/js/views/Profile.js';
+import Group from './iris/js/views/Group.js';
+import Message from './iris/js/views/Message.js';
+import Follows from './iris/js/views/Follows.js';
+import Feed from './iris/js/views/Feed.js';
+import About from './iris/js/views/About.js';
+import Explorer from './iris/js/views/Explorer.js';
+import Contacts from './iris/js/views/Contacts.js';
+import Torrent from './iris/js/views/Torrent.js';
+
 import VideoCall from './iris/js/components/VideoCall.js';
 import Identicon from './iris/js/components/Identicon.js';
+import MediaPlayer from './iris/js/components/MediaPlayer.js';
+import Footer from './iris/js/components/Footer.js';
 import State from './iris/js/State.js';
 import Icons from './iris/js/Icons.js';
 
@@ -42,31 +47,20 @@ if (!isElectron && ('serviceWorker' in navigator)) {
   });
 }
 
-const peers = [`${window.location.protocol}//${window.location.host}/gun`];
-State.init({peers});
+State.init();
 Session.init({autologin: true});
 PeerManager.init();
-PublicMessages.init();
 
 Helpers.checkColorScheme();
 
-function handleRoute(e) {
-  document.title = 'GUN — the database for freedom fighters';
-  const activeRoute = e.url;
-  if (!activeRoute && window.location.hash) {
-    return route(window.location.hash.replace('#', '')); // bubblegum fix back navigation
-  }
-  const activeProfile = activeRoute.indexOf('/profile') === 0 ? activeRoute.replace('/profile/', '') : null;
-  localState.get('activeRoute').put(activeRoute);
-  QRScanner.cleanupScanner();
-}
-
-const APPLICATIONS = [ // TODO: move editable shortcuts to localState gun
+const APPLICATIONS = [ // TODO: move editable shortcuts to State.local gun
   {url: '/', text: t('home'), icon: Icons.home},
+  {url: '/feed', text: t('feed'), icon: Icons.feed},
+  {url: '/media', text: t('media'), icon: Icons.play},
   {url: '/settings', text: t('settings'), icon: Icons.settings},
+  {url: '/store', text: t('store'), icon: Icons.store},
   {url: '/explorer', text: t('explorer'), icon: Icons.folder},
   {url: '/chat', text: t('messages'), icon: Icons.chat},
-  {url: '/feed', text: t('feed'), icon: Icons.feed},
   // {url: '/store', text: t('store'), icon: Icons.store}, // restore when it works!
   {},
   {url: '../stats.html', text: 'Gun node stats'},
@@ -147,7 +141,28 @@ class Main extends Component {
   }
 
   componentDidMount() {
-    localState.get('loggedIn').on(loggedIn => this.setState({loggedIn}));
+    State.local.get('loggedIn').on(loggedIn => this.setState({loggedIn}));
+  }
+
+  handleRoute(e) {
+    let activeRoute = e.url;
+    if (!activeRoute && window.location.hash) {
+      return route(window.location.hash.replace('#', '')); // bubblegum fix back navigation
+    }
+    document.title = 'Iris';
+    if (activeRoute && activeRoute.length > 1) { document.title += ' - ' + Helpers.capitalize(activeRoute.replace('/', '')); }
+    State.local.get('activeRoute').put(activeRoute);
+    QRScanner.cleanupScanner();
+  }
+
+  onClickOverlay() {
+    if (this.state.showMenu) {
+      this.setState({showMenu: false});
+    }
+  }
+
+  toggleMenu(show) {
+    this.setState({showMenu: typeof show === 'undefined' ? !this.state.showMenu : show});
   }
 
   render() {
@@ -158,23 +173,32 @@ class Main extends Component {
       <section class="main" style="flex-direction: row;">
         <${MenuView}/>
         <div style="flex: 3; display: flex">
-          <${Router} history=${createHashHistory()} onChange=${e => handleRoute(e)}>
+          <${Router} history=${createHashHistory()} onChange=${e => this.handleRoute(e)}>
             <${HomeView} path="/"/>
-            <${FeedView} path="/feed"/>
+            <${Feed} path="/feed"/>
+            <${Feed} path="/search/:term?/:type?"/>
+            <${Feed} path="/media" index="media"/>
             <${Login} path="/login"/>
-            <${ChatView} path="/chat/:id?"/>
-            <${MessageView} path="/message/:hash"/>
-            <${Settings} path="/settings" showSwitchAccount=${true}/>
+            <${Chat} path="/chat/:id?"/>
+            <${Message} path="/post/:hash"/>
+            <${Torrent} path="/torrent/:id"/>
+            <${About} path="/about"/>
+            <${Settings} path="/settings"/>
             <${LogoutConfirmation} path="/logout"/>
-            <${Profile.Profile} path="/profile/:id?"/>
-            <${StoreView} path="/store/:store?"/>
-            <${CheckoutView} path="/checkout/:store"/>
-            <${ProductView} path="/product/:product/:store"/>
-            <${ProductView} path="/product/new" store=Session.getPubKey()/>
-            <${ExplorerView} path="/explorer/:node"/>
-            <${ExplorerView} path="/explorer"/>
-            <${FollowsView} path="/follows/:id"/>
-            <${FollowsView} followers=${true} path="/followers/:id"/>
+            <${Profile} path="/profile/:id?" tab="profile"/>
+            <${Profile} path="/replies/:id?" tab="replies"/>
+            <${Profile} path="/likes/:id?" tab="likes"/>
+            <${Profile} path="/media/:id" tab="media"/>
+            <${Group} path="/group/:id?"/>
+            <${Store} path="/store/:store?"/>
+            <${Checkout} path="/checkout/:store?"/>
+            <${Product} path="/product/:product/:store"/>
+            <${Product} path="/product/new" store=Session.getPubKey()/>
+            <${Explorer} path="/explorer/:node"/>
+            <${Explorer} path="/explorer"/>
+            <${Follows} path="/follows/:id"/>
+            <${Follows} followers=${true} path="/followers/:id"/>
+            <${Contacts} path="/contacts"/>
           </${Router}>
         </div>
       </section>
