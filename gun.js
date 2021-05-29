@@ -301,7 +301,7 @@
 					root.on('out', msg);
 					return;
 				}
-				root.hatch = root.hatch || [];
+				root.hatch = root.hatch || []; //ctx.latch = root.hatch = [];
 				var put = msg.put;
 				var DBG = ctx.DBG = msg.DBG, S = +new Date;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
@@ -391,7 +391,7 @@
 				ctx.stop = 1;
 				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
 				if(!ctx.root){ return }
-				var hatch = ctx.root.hatch; ctx.root.hatch = 0; setTimeout.each(hatch, function(cb){cb && cb()});
+				var hatch = ctx.root.hatch; ctx.root.hatch = 0; setTimeout.each(hatch, function(cb){cb && cb()}); //ctx.latch.end = 1; if(ctx.root.hatch.end){ ctx.root.hatch = 0 } setTimeout.each(ctx.latch, function(cb){cb && cb()});
 				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
@@ -639,8 +639,7 @@
 		}; Gun.on.out = output;
 
 		function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to optimize functions with different parameter calls, so try to do benchmark to see if there is any actual difference.
-			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = tmp['=']||tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains). // TODO: BUG? What if `['=']` is falsy?
-
+			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 			if(tmp && tmp._ && tmp._['#']){ // convert from old format
 				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 					if('_' == k || !(state = state_is(tmp, k))){ return }
@@ -722,7 +721,7 @@
 		}; Gun.on.link = link;
 
 		function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior.
-			var put = msg.put||'', change = put['=']||put[':'], root = cat.root, link, tmp;
+			var put = msg.put||'', change = (u !== put['='])? put['='] : put[':'], root = cat.root, link, tmp;
 			if(u === change){ // 1st edge case: If we have a brand new database, no data will be found.
 				// TODO: BUG! because emptying cache could be async from below, make sure we are not emptying a newer cache. So maybe pass an Async ID to check against?
 				// TODO: BUG! What if this is a map? // Warning! Clearing things out needs to be robust against sync/async ops, or else you'll see `map val get put` test catastrophically fail because map attempts to link when parent graph is streamed before child value gets set. Need to differentiate between lack acks and force clearing.
@@ -768,6 +767,7 @@
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
 				if(!at.soul && !at.has){ return } // TODO: BUG? For now, only core-chains will handle not-founds, because bugs creep in if non-core chains are used as $ but we can revisit this later for more powerful extensions.
+				//console.only; if('~sT1s6lOaUgia5Aiy_Qg_Z4ubCCVFDyGVJsi-i0VmKJI.UTmwQrcKxkHfw0lFK2bkVDaYbd4_2T1Gj-MONFMostM/zfdsa/y/x' == at.soul){ console.log("ACK:", msg, at, at.put, u !== at.put, 'da da da', at.root.graph[at.soul]); debugger; }
 				at.ack = (at.ack || 0) + 1;
 				at.on('in', {
 					get: at.get,
@@ -808,15 +808,16 @@
 					if(any.stun){ return }
 					var at = msg.$._, data = at.put, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
-					if(!at.has && !at.soul){ data = (msg.put||'')['=']||msg.put } // handles non-core messages.
+					if(!at.has && !at.soul){ data = (u !== (msg.put||'')['='])? msg.put['='] : msg.put } // handles non-core messages.
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					if(u === data && msg.$$){ data = msg.$$._.put }
 					if(opt.not !== u && u === data){ return }
 					if(opt.stun === u){
+						//if(tmp = root.stun){ tmp = tmp[at.id] || at.$.back(function(back){ return tmp[back.id] || u }); if(tmp && !tmp.end && any.id > (tmp._||'').id){ // this is more thorough, but below seems to work too?
 						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
 							tmp[id] = function(){any(msg,eve)}; // add ourself to the stun callback list that is called at end of the write.
 							return;
-						}
+						} //}
 						if(tmp = root.hatch){ // quick hack! // What's going on here? Because data is streamed, we get things one by one, but a lot of developers would rather get a callback after each batch instead, so this does that by creating a wait list per chain id that is then called at the end of the batch by the hatch code in the root put listener.
 							if(wait[at.$._.id]){ return } wait[at.$._.id] = 1;
 							tmp.push(function(){any(msg,eve)});
@@ -883,7 +884,7 @@
 		}
 		function soul(gun, cb, opt, as){
 			var cat = gun._, acks = 0, tmp;
-			if(tmp = cat.soul || cat.link || cat.dub){ return cb(tmp, as, cat) }
+			if(tmp = cat.soul || cat.link){ return cb(tmp, as, cat) }
 			if(cat.jam){ return cat.jam.push([cb, as]) }
 			cat.jam = [[cb,as]];
 			gun.get(function go(msg, eve){
@@ -896,7 +897,7 @@
 				//if(tmp.length){ process.nextTick(function(){ go(msg, eve) }) }
 				while(as = tmp[i++]){ //Gun.obj.map(tmp, function(as, cb){
 					var cb = as[0], id; as = as[1];
-					cb && cb(id = at.link || at.soul || Gun.valid(msg.put) || ((msg.put||{})._||{})['#'] || at.dub, as, msg, eve);
+					cb && cb(id = at.link || at.soul || Gun.valid(msg.put) || ((msg.put||{})._||{})['#'], as, msg, eve);
 				} //);
 			}, {out: {get: {'.':true}}});
 			return gun;
@@ -952,24 +953,25 @@
 				else {
 					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse()}); // Any perf reasons to CPU schedule this .keys( ?
 					at.node = state_ify(at.node, k, s, cat.link);
-					!g && to.push(cat);
+					!g && cat.todo.length && to.push(cat);
 					// ---------------
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link || tmp.dub)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
+					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
-						var soul = msg.soul || ((tmp = msg.put) && (tmp = tmp._) && (tmp = tmp['#'])) || ((tmp = msg.put) && (tmp = tmp['='] || tmp[':']) && tmp['#']);
+						var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
 						(tmp = msg.$) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
 						if(!soul){
 							soul = [];
 							msg.$.back(function(at){
-								if(tmp = at.soul || at.link || at.dub){ return soul.push(tmp) }
+								if(tmp = at.soul || at.link){ return soul.push(tmp) }
 								soul.push(at.get);
 							});
-							soul = msg.$._.dub = soul.reverse().join('/');
+							soul = soul.reverse().join('/');
 						}
+						//if(soul.indexOf('/zfdsa/y/x/c/foo') >= 1){ console.log('!!! *** ---', window.ZOW, cat, msg, as);debugger; /* id 5 ~ 8 should be stunned */ }
 						cat.link['#'] = soul;
 						!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 						delete as.wait[id];
