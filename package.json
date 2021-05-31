@@ -77,10 +77,10 @@
     "@types/ws": "^7.2.1",
     "aws-sdk": "^2.528.0",
     "ip": "^1.1.5",
+    "iris-messenger": "github:irislib/iris-messenger",
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
-    "iris-messenger": "github:irislib/iris-messenger",
     "uglify-js": "^3.6.0"
   }
 }
