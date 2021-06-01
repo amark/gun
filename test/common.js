@@ -80,7 +80,7 @@ describe('Gun', function(){
 				obj = [{x:"test",a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
 				JSON.stringifyAsync(obj, function(err, text){
 					JSON.parseAsync(text, function(err, data){
-						expect(data).to.be.eql([{x:"test",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,'go'],blah:9}]);
+						expect(data).to.be.eql([{x:"test",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
 						done();
 					})
 				});
@@ -3813,7 +3813,6 @@ describe('Gun', function(){
 				});
 			});
 		});*/
-		return;
 		it('Nested listener should be called', function(done){
 			
 			var gun = Gun();
@@ -3834,20 +3833,26 @@ describe('Gun', function(){
 
 			var app = gun.get('nl/app');
 			var node = app.get('watcher/1').put({"stats":{"num":3},"name":"trex"});
+			var C = 0;
 
 			app.get('watcher/1').get('stats').on(function (v, k) {
-			  console.log('v:', k, v);
+			  //console.log('v:', k, v);
+				if(++C === 1){
+					expect(v.num).to.be(3);
+					return;
+				}
+				expect(v.num).to.be(4);
+				done();
 			});
 
 			setTimeout(function(){
 			  
-			  console.log("Huh?");
 			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
 			  
 			},100);
 		});
-		return;
-		it.only('Memory management', function(done){
+
+		/*it.skip('Memory management', function(done){
 			this.timeout(9999999);
 			var gun = Gun(), c = 100000, big = "big";
 			while(--c){big += "big"}
@@ -3865,8 +3870,7 @@ describe('Gun', function(){
 			},25);
 		});
 
-		return;
-		it.only('Custom extensions are chainable', function(done){
+		it('Custom extensions are chainable', function(done){
 			Gun.chain.filter = function(filter){
 			  var chain = this.chain();
 			  var context = this;
@@ -3910,24 +3914,32 @@ describe('Gun', function(){
 			      .filter(['a','b'])  // Gun.chain.filter = function(tags){ .... }
 			      .get(function(no){console.log("NO!", no)})
 			      .once(function(yes){console.log("YES!", yes)})
-		});
+		}); */
 
-		it.only('Check that events are called with multiple instances', function(done){
+		it('Check that events are called with multiple instances', function(done){
 			var gunA = Gun( { file : "A.json" } );
 			var gunB = Gun( { file : "B.json" });
 			var gunC = Gun( { file : "C.json" });
 
-			gunA.get( "some path A" ).map(function(v,f){ console.log( "event on A: ", f, v ) } );
-			gunB.get( "some path B" ).map(function(v,f){ console.log( "event on B: ", f, v ) } );
-			gunC.get( "some path C" ).map(function(v,f){ console.log( "event on C: ", f, v ) } );
+			var check = {};
+
+			gunA.get( "some path A" ).map(function(v,f){ check.A = v; /*console.log( "event on A: ", f, v )*/ } );
+			gunB.get( "some path B" ).map(function(v,f){ check.B = v; /*console.log( "event on B: ", f, v )*/ } );
+			gunC.get( "some path C" ).map(function(v,f){ check.C = v; /*console.log( "event on C: ", f, v )*/ } );
 
 			gunA.get( "some path A" ).put( { simple:"message" } );
 			gunB.get( "some path B" ).put( { simple:"message" } );
 			gunC.get( "some path C" ).put( { simple:"message" } );
+			setTimeout(function(){
+				expect(check.A).to.be('message');
+				expect(check.B).to.be('message');
+				expect(check.C).to.be('message');
+				done();
+			}, 100);
 		});
 
-		it.only('Make sure circular contexts are not copied', function(done){
-			/* let's define an appropriate deep default database... */
+		/*it.only('Make sure circular contexts are not copied', function(done){
+			//let's define an appropriate deep default database...
 			var dfltSansUsers = { 1: { name : "org1", sites : { 1: {name : "site1"} } } };
 
 			var alice =  {name: "alice" }
@@ -3939,19 +3951,19 @@ describe('Gun', function(){
 
 			var alice = gun.get( "alice" ).put( { name: "alice" } );
 			console.log( "Failed after this" );
-			root.path( "1.sites.1.users" ).put( { 1: alice } );
+			root.get("1").get("sites").get("1").get("users" ).put( { 1: alice } );
 			console.log( "Failed before this" );
-		});
+		});*/
 
-		it.only('get any any none', function(done){
+		it('get any any none', function(done){
 			gun.get('full/none').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				console.log("*****", data);
+				//console.log("*****", data);
 				expect(data).to.be(undefined);
 			});
 			gun.get('full/none').get(function(at, ev){
 				var err = at.err, data = at.put, field = at.get;
-				console.log("*****2", data);
+				//console.log("*****2", data);
 				expect(data).to.be(undefined);
 				done();
 			});
@@ -3971,23 +3983,24 @@ describe('Gun', function(){
 					done();
 				});
 			},400);
-		});return;
+		});
 
 		it('get get any parallel', function(done){
 			Gun.statedisk({ bob: { age: 29, name: "Bob!" } }, 'parallel/get/get', function(){
-				gun.get('parallel/get/get').path('bob').any(function(err, data, field, at, ev){
+				gun.get('parallel/get/get').get('bob').get(function(data){ data = data.put;
 				//console.log("***** 1", data);
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
 			});
-			gun.get('parallel/get/get').path('bob').any(function(err, data, field, at, ev){
+			gun.get('parallel/get/get').get('bob').get(function(data){ data = data.put;
 				//console.log("***** 2", data);
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				done();
+				if(done.c){ return }
+				done(); done.c = 1;
 			});
 			}, 1000);
-		});
+		});return;
 
 		it('get get any parallel later', function(done){
 			Gun.statedisk({ bob: { age: 29, name: "Bob!" } }, 'parallel/get/get/later', function(){
@@ -7990,6 +8003,7 @@ describe('Gun', function(){
 
 	describe('localStorage', function(){
 		it("err", function(done){
+			this.timeout(9000);
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();
@@ -8004,6 +8018,7 @@ describe('Gun', function(){
 			});
 		});
 		it("ack", function(done){
+			this.timeout(9000);
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();

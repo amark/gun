@@ -37,6 +37,9 @@ describe('SEA', function(){
   var user;
   var gun;
   var pub;
+
+  var prep = async function(d,k, n,s){ return {'#':s,'.':k,':': await SEA.opt.parse(d),'>':Gun.state.is(n, k)} }; // shim for old - prep for signing.
+  var pack = function(d,cb,k, n,s){ return new Promise(function(res, rej){ SEA.opt.pack(d, function(r){ res(r) }, k,n,s) }) }; // make easier to upgrade test, cb to await
   describe('Utility', function(){
     /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
       console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
@@ -197,14 +200,14 @@ describe('SEA', function(){
       expect(dec.priv).to.be(okey.priv);
       expect(dec.epriv).to.be(okey.epriv);
 
-      var gun = Gun({super: true}), tmp = Gun.node.soul(old);
+      var gun = Gun({super: true}), tmp = old._['#'];
       var graph = {};
-      graph[tmp] = old;
+      gun._.graph[tmp] = graph[tmp] = old;
       var alias = await SEA.verify(old.alias, false);
       expect(alias).to.be('bob');
-      alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
+      alias = Gun.state.ify({}, tmp, 1, {'#': tmp}, tmp = '~@'+alias);
       graph[tmp] = alias;
-      gun.on('test', {$: gun, put: graph});
+      gun._.graph[tmp] = alias;//gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('bob', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
@@ -220,12 +223,12 @@ describe('SEA', function(){
 
       var gun = Gun({super: true}), tmp = old._['#'];//Gun.node.soul(old);
       var graph = {};
-      graph[tmp] = old;
+      gun._.graph[tmp] = graph[tmp] = old;
       var alias = SEA.opt.unpack(await SEA.verify(old.alias, false), 'alias', old);
       expect(alias).to.be('alice');
-      alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
-      graph[tmp] = alias;
-      gun.on('test', {$: gun, put: graph});
+      alias = Gun.state.ify({}, tmp, 1, {'#': tmp}, tmp = '~@'+alias);
+      gun._.graph[tmp] = graph[tmp] = alias;
+      //gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('alice', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
@@ -233,15 +236,15 @@ describe('SEA', function(){
       });
     }())})
 
-    it('JSON escape', function(done){
+    it('JSON escape', async function(done){
       var plain = "hello world";
       var json = JSON.stringify({hello:'world'});
 
       var n1 = Gun.state.ify({}, 'key', 1, plain, 'soul');
       var n2 = Gun.state.ify({}, 'key', 1, json, 'soul');
-      var tmp = SEA.opt.prep(plain, 'key', n1, 'soul');
+      var tmp = await prep(plain, 'key', n1, 'soul');
       expect(tmp[':']).to.be("hello world");
-      tmp = SEA.opt.prep(json, 'key', n2, 'soul');
+      tmp = await prep(json, 'key', n2, 'soul');
       expect(tmp[':'].hello).to.be("world");
       tmp = SEA.opt.unpack(tmp);
       expect(tmp.hello).to.be("world");
@@ -256,15 +259,15 @@ describe('SEA', function(){
 
       var json = JSON.stringify({hello:'world'});
       var n1 = Gun.state.ify({}, 'key', 1, json, 'soul');
-      var sig = await SEA.sign(SEA.opt.prep(json, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(json, 'key', n1, 'soul')});
-      var dup = await SEA.sign(SEA.opt.prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(sig, 'key', n1, 'soul')});
+      var sig = await SEA.sign(await prep(json, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(json, 'key', n1, 'soul')});
+      var dup = await SEA.sign(await prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(sig, 'key', n1, 'soul')});
       expect(dup).to.be.eql(sig);
 
       var json = JSON.stringify({hello:'world'});
       var n1 = Gun.state.ify({}, 'key', 1, json, 'soul');
       var bob = await SEA.pair();
-      var sig = await SEA.sign(SEA.opt.prep(json, 'key', n1, 'soul'), bob, null, {raw:1 , check: SEA.opt.pack(json, 'key', n1, 'soul')});
-      var dup = await SEA.sign(SEA.opt.prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(sig, 'key', n1, 'soul')});
+      var sig = await SEA.sign(await prep(json, 'key', n1, 'soul'), bob, null, {raw:1 , check: await pack(json, 'key', n1, 'soul')});
+      var dup = await SEA.sign(await prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(sig, 'key', n1, 'soul')});
       expect(dup).to.not.be.eql(sig);
 
       var json = JSON.stringify({hello:'world'});
@@ -286,8 +289,8 @@ describe('SEA', function(){
       SEA.pair(function(p){
         user.is = user._.sea = p;
         gtmp = gid = 'test~'+p.pub;
-        g.get(gid).put({yo: 'hi'}, function(ack){
-          var data = SEA.opt.parse(g._.graph[gid].yo);
+        g.get(gid).put({yo: 'hi'}, async function(ack){
+          var data = await SEA.opt.parse(g._.graph[gid].yo);
           expect(data[':']).to.be('hi');
           expect(data['~']).to.be.ok();
           g.get(gid).get('yo').once(function(r){
@@ -326,7 +329,6 @@ describe('SEA', function(){
         done();
       });
     })
-
     it('read data', function(done){
       user.get('a').get('b').once(function(data){
         expect(data).to.be(0);
@@ -416,10 +418,10 @@ describe('SEA', function(){
         if(done.a){ return } done.a = 1;
         var ref = user.get('who').get('all').set(msg);
         var stub = user.get('stub').put({});
-        var tmp = ref._.dub || ref._.link;
         setTimeout(function(){
           user.get('who').put(stub);
           setTimeout(function(){
+            var tmp = ref._.has;
             user.get('who').get('all').get(tmp).put({boom: 'ah'});
             setTimeout(function(){
               user.get('who').get('all').map().once(function(data){
@@ -443,7 +445,8 @@ describe('SEA', function(){
       gun.on('auth', function(){
         user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
           var notsigned = [];
-          Gun.obj.map(gun._.graph, function(v,k) {
+          //Gun.obj.map(gun._.graph, function(v,k) {
+          Object.keys(gun._.graph).forEach(function(k,v){ v = gun._.graph[k]; 
             if (k[0]==='~' || k.indexOf('~', 1)!==-1) { return; } /// ignore '~pubkey' and '~@alias'
             notsigned.push(k);
           });
@@ -467,7 +470,6 @@ describe('SEA', function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
             var p = '~'+alice.pub+'/';
-            console.log(1);
             //console.log(p, g);
             expect(g[p+'z']).to.be.ok();
             expect(g[p+'z/y']).to.be.ok();
@@ -482,21 +484,31 @@ describe('SEA', function(){
 
       it('user mix', function(done){
         var gun = Gun();
-        gun.on('auth', function(){
+        gun.on('auth', async function(){
           if(done.a){ return } done.a = 1;
-          var ref = gun.user().get('zasdf').put({a: 9});
-          var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref);
-          at.get('foo').get('bar').put('yay');
-          ref.get('foo').get('ah').put(1, function(){setTimeout(function(){
+          var c = 0, go = function(){ check(++c) }
+          var ref = gun.user().get('zasdf').put({a: 9}, go);
+          var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref, go);
+          at.get('foo').get('bar').put('yay', go);
+          ref.get('foo').get('ah').put(1, go);
+          function check(){
+            if(c !== 4){ return }
+            setTimeout(function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
-            var p = '~'+alice.pub+'/';
-            //console.log(p, g);
-            console.log(2);
-            expect(Object.keys(g[p+'zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
-            expect(Object.keys(g[p+'zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+            var p = '~'+alice.pub;
+            //console.log(g);
+            expect(Object.keys(g[p]).sort()).to.be.eql(['_', 'zasdf', 'zfdsa'].sort());
+            expect(Object.keys(g[p+'/zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
+            expect(Object.keys(g[p+'/zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+            expect(Object.keys(g[p+'/zfdsa']).sort()).to.be.eql(['_', 'y'].sort());
+            expect(Object.keys(g[p+'/zfdsa/y']).sort()).to.be.eql(['_', 'x'].sort());
+            expect(Object.keys(g[p+'/zfdsa/y/x']).sort()).to.be.eql(['_', 'c'].sort());
+            expect(g[p+'/zfdsa'].y.indexOf('/zfdsa/y"') > 0).to.be.ok();
+            expect(g[p+'/zfdsa/y'].x.indexOf('/zfdsa/y/x"') > 0).to.be.ok();
+            expect(g[p+'/zfdsa/y/x'].c.indexOf('/zasdf"') > 0).to.be.ok();
             done();
-          },200)});
+          },500)};
         });
         gun.user().auth(alice);
       });
@@ -513,8 +525,7 @@ describe('SEA', function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
             var p = '~'+alice.pub+'/';
-            console.log(3);
-            console.log(p, Object.keys(g[p+'pchat/their.pub/2020']||{}).sort());
+            //console.log(p, Object.keys(g[p+'pchat/their.pub/2020']||{}).sort());
             expect(Object.keys(g[p+'pchat/their.pub/2020']).sort()).to.be.eql(['_', 'msg'].sort());
             expect(g[p+'2020']).to.not.be.ok();
             done();

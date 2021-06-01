@@ -96,14 +96,11 @@
 		// On event emitter generic javascript utility.
 		module.exports = function onto(tag, arg, as){
 			if(!tag){ return {to: onto} }
-			var u, tag = (this.tag || (this.tag = {}))[tag] ||
-			(this.tag[tag] = {tag: tag, to: onto._ = {
-				next: function(arg){ var tmp;
-					if((tmp = this.to)){
-						tmp.next(arg);
-				}}
-			}});
-			if('function' == typeof arg){
+			var u, f = 'function' == typeof arg, tag = (this.tag || (this.tag = {}))[tag] || f && (
+				this.tag[tag] = {tag: tag, to: onto._ = { next: function(arg){ var tmp;
+					if(tmp = this.to){ tmp.next(arg) }
+			}}});
+			if(f){
 				var be = {
 					off: onto.off ||
 					(onto.off = function(){
@@ -301,7 +298,7 @@
 					root.on('out', msg);
 					return;
 				}
-				root.hatch = root.hatch || []; //ctx.latch = root.hatch = [];
+				ctx.latch = root.hatch; ctx.match = root.hatch = [];
 				var put = msg.put;
 				var DBG = ctx.DBG = msg.DBG, S = +new Date;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
@@ -385,13 +382,15 @@
 				eve.to.next(msg);
 				fire(ctx);
 			}
-			function fire(ctx, msg){
+			function fire(ctx, msg){ var root;
 				if(ctx.stop){ return }
 				if(--ctx.stun !== 0 && !ctx.err){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				ctx.stop = 1;
+				if(!(root = ctx.root)){ return }
+				var tmp = ctx.match; tmp.end = 1;
+				if(tmp === root.hatch){ if(!(tmp = ctx.latch) || tmp.end){ delete root.hatch } else { root.hatch = tmp } }
 				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-				if(!ctx.root){ return }
-				var hatch = ctx.root.hatch; ctx.root.hatch = 0; setTimeout.each(hatch, function(cb){cb && cb()}); //ctx.latch.end = 1; if(ctx.root.hatch.end){ ctx.root.hatch = 0 } setTimeout.each(ctx.latch, function(cb){cb && cb()});
+				setTimeout.each(ctx.match, function(cb){cb && cb()}); 
 				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
@@ -767,7 +766,6 @@
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
 				if(!at.soul && !at.has){ return } // TODO: BUG? For now, only core-chains will handle not-founds, because bugs creep in if non-core chains are used as $ but we can revisit this later for more powerful extensions.
-				//console.only; if('~sT1s6lOaUgia5Aiy_Qg_Z4ubCCVFDyGVJsi-i0VmKJI.UTmwQrcKxkHfw0lFK2bkVDaYbd4_2T1Gj-MONFMostM/zfdsa/y/x' == at.soul){ console.log("ACK:", msg, at, at.put, u !== at.put, 'da da da', at.root.graph[at.soul]); debugger; }
 				at.ack = (at.ack || 0) + 1;
 				at.on('in', {
 					get: at.get,
@@ -804,23 +802,29 @@
 				opt.at = cat;
 				opt.ok = key;
 				var wait = {}; // can we assign this to the at instead, like in once?
-				function any(msg, eve){
+				function any(msg, eve, f){
 					if(any.stun){ return }
-					var at = msg.$._, data = at.put, tmp;
+					var at = msg.$._, data = at.put, aid, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
 					if(!at.has && !at.soul){ data = (u !== (msg.put||'')['='])? msg.put['='] : msg.put } // handles non-core messages.
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
 					if(u === data && msg.$$){ data = msg.$$._.put }
-					if(opt.not !== u && u === data){ return }
-					if(opt.stun === u){
+					if(u !== opt.not && u === data){ return }
+					if(u === opt.stun){
 						//if(tmp = root.stun){ tmp = tmp[at.id] || at.$.back(function(back){ return tmp[back.id] || u }); if(tmp && !tmp.end && any.id > (tmp._||'').id){ // this is more thorough, but below seems to work too?
-						if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
-							tmp[id] = function(){any(msg,eve)}; // add ourself to the stun callback list that is called at end of the write.
+						//if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
+						if((tmp = root.stun) && (tmp = tmp[aid = cat.id] || tmp[aid = at.id] || (msg.$$ && tmp[aid = msg.$$._.id]) || tmp[aid = at.back.id]) && any.id > tmp.run){
+							if(tmp.stun && !tmp.stun.end){
+								tmp.stun[id] = function(){any(msg,eve,1)}; // add ourself to the stun callback list that is called at end of the write.
+								return;
+							}
+							root.stun[aid] = tmp.next;
+							any(msg,eve,f);
 							return;
-						} //}
-						if(tmp = root.hatch){ // quick hack! // What's going on here? Because data is streamed, we get things one by one, but a lot of developers would rather get a callback after each batch instead, so this does that by creating a wait list per chain id that is then called at the end of the batch by the hatch code in the root put listener.
+						}
+						if((tmp = root.hatch) && !tmp.end && u === opt.hatch && !f){ // quick hack! // What's going on here? Because data is streamed, we get things one by one, but a lot of developers would rather get a callback after each batch instead, so this does that by creating a wait list per chain id that is then called at the end of the batch by the hatch code in the root put listener.
 							if(wait[at.$._.id]){ return } wait[at.$._.id] = 1;
-							tmp.push(function(){any(msg,eve)});
+							tmp.push(function(){any(msg,eve,1)});
 							return;
 						}; wait = {}; // end quick hack.
 					}
@@ -923,9 +927,10 @@
 		Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 			var gun = this, at = gun._, root = at.root;
 			as = as || {};
-			(root.stun = root.stun || {})[at.id] = (as.stun = as.stun
-				|| ((root.stun._ = (root.stun._ || 0) + 1) && {})); // set a flag for reads to check if this chain is writing.
-			as.stun._ || ((as.stun._ = function(){}).id = as.run = root.once); // but alas, only if our write has an earlier id. // this is ugly but other options either use more memory or require an extra type check on each stun callback. So meh, this works for now, any better ideas?
+			as.root = at.root;
+			as.run || (as.run = root.once);
+			(as.stun || (as.stun = function(){ return as.run })).back = (root.stun || (root.stun = {}))._; (as.ta = root.stun)._ = as.stun;
+			stun(as, at.id); // set a flag for reads to check if this chain is writing.
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
 			as.data = as.data || data;
@@ -937,15 +942,16 @@
 			as.todo = [{it: as.data, ref: as.$}];
 			as.turn = as.turn || turn;
 			as.ran = as.ran || ran;
+			// TODO: Perf! We only need to stun chains that are being modified, not necessarily written to.
 			(function walk(){
-				var to = as.todo, at = to.pop(), d = at.it, v, k, cat, tmp, g;
-				(tmp = at.ref) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
+				var to = as.todo, at = to.pop(), d = at.it, cid = at.ref && at.ref._.id, v, k, cat, tmp, g;
+				stun(as, at.ref);
 				if(tmp = at.todo){
 					k = tmp.pop(); d = d[k];
 					if(tmp.length){ to.push(at) }
 				}
 				if(!(v = valid(d)) && !(g = Gun.is(d))){
-					if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: Gun.log("Invalid data, " + typeof d + " at " + (as.path||[]).join('.'))}); return } // TODO: BUG! Clear out stun!
+					if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: as.err = Gun.log("Invalid data, " + typeof d + " at " + (as.path||[]).join('.'))}); as.ran(as); return }
 					var seen = as.seen || (as.seen = []), i = seen.length;
 					while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 				}
@@ -958,11 +964,12 @@
 					var id = as.seen.length;
 					(as.wait || (as.wait = {}))[id] = '';
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
-					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
+					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, /*hatch: 0,*/ v2020:1}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded.
 					function resolve(msg, eve){
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
+						// TODO: BUG maybe? Make sure this does not pick up a link change wipe, that it uses the changign link instead.
 						var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
-						(tmp = msg.$) && ((root.stun || (root.stun = {}))[tmp._.id] = as.stun); // stun
+						stun(as, msg.$);
 						if(!soul){
 							soul = [];
 							msg.$.back(function(at){
@@ -971,7 +978,6 @@
 							});
 							soul = soul.reverse().join('/');
 						}
-						//if(soul.indexOf('/zfdsa/y/x/c/foo') >= 1){ console.log('!!! *** ---', window.ZOW, cat, msg, as);debugger; /* id 5 ~ 8 should be stunned */ }
 						cat.link['#'] = soul;
 						!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 						delete as.wait[id];
@@ -985,22 +991,36 @@
 			return gun;
 		}
 
+		function stun(as, id){
+			if(!id){ return } id = (id._||'').id||id;
+			tmp = as.root.stun || (as.root.stun = as.ta);
+			var it = {run: as.run, stun: as.stun};
+			(tmp[id]? (tmp[id].last.next = it) : (tmp[id] = it)).last = it;
+		}
+
 		function ran(as){
+			if(as.err){ console.log("GUN in a buggy state, restart & report please."); return } // move log handle here. // TODO: BUG! Clear out stun!
 			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
-			var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
-				cat.root.on('ack', ack);
+			var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
+				root.on('ack', ack);
 				if(ack.err){ Gun.log(ack) }
 				if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 				if(!as.ack){ return }
 				as.ack(ack, this);
-			}, as.opt), acks = 0, stun = as.stun;
+			}, as.opt), acks = 0, stun = as.stun, tmp;
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
+				if(root.stun){ delete root.stun['s'+as.run] }
+				if((tmp = root.stun) && stun === tmp._){
+					if(!(tmp = stun.back) || tmp.end){
+						delete root.stun; // ABC, ACB, BAC, BCA, CBA, CAB;
+					}
+					(root.stun||{})._ = tmp;
+				}
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.only(1, "PUT!", as.graph);
+			//console.log(1, "PUT!", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
-			if((tmp = cat.root.stun) && --tmp._ === 0){ delete cat.root.stun } // decrease stun ids until done. // this used to be above the out call, but trying out new stun/run checks.
 		}
 
 		function get(as){
@@ -1184,7 +1204,6 @@
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
-			//console.log("mapmapmapmap", cat.id, msg);
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
