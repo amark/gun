@@ -939,7 +939,9 @@
           }catch(e){}
         }
         try{
+          if(root._.tag.auth){ // auth handle might not be registered yet
           (root._).on('auth', at) // TODO: Deprecate this, emit on user instead! Update docs when you do.
+          } else { setTimeout(function(){ (root._).on('auth', at) },1) } // if not, hackily add a timeout.
           //at.on('auth', at) // Arrgh, this doesn't work without event "merge" code, but "merge" code causes stack overflow and crashes after logging in & trying to write data.
         }catch(e){
           Gun.log("Your 'auth' callback crashed with:", e);
