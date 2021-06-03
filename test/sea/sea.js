@@ -421,7 +421,7 @@ describe('SEA', function(){
         setTimeout(function(){
           user.get('who').put(stub);
           setTimeout(function(){
-            var tmp = ref._.has;
+            var tmp = ref._.has || ref._.soul;
             user.get('who').get('all').get(tmp).put({boom: 'ah'});
             setTimeout(function(){
               user.get('who').get('all').map().once(function(data){
@@ -441,7 +441,7 @@ describe('SEA', function(){
       this.timeout(9000);
       var gun = Gun();
       var user = gun.user();
-      user.auth('xavier', 'password');
+      user.create('xavier2', 'password2');
       gun.on('auth', function(){
         user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
           var notsigned = [];
