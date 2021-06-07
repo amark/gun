@@ -27,15 +27,7 @@ var Gun;
 ;(function(){
 Gun = root.Gun
 
-if(Gun.window && !Gun.window.RindexedDB){ return }
-
-var opt = {};
-opt.file = 'radatatest';
-var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
-opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
-opt.chunk = 1000;
-var Radix = Radisk.Radix;
-var rad = Radisk(opt), esc = String.fromCharCode(27);
+var Radix = (Gun.window && Gun.window.Radix) || require('../../lib/radix3');
 
 describe('RAD', function(){
 
@@ -157,6 +149,15 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
   });
 
+  if(Gun.window && !Gun.window.RindexedDB){ return }
+
+  var opt = {};
+  opt.file = 'radatatest';
+  var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
+  opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
+  opt.chunk = 1000;
+  var rad = Radisk(opt), esc = String.fromCharCode(27);
+
   describe('Radisk', function(){
 
     /*it('parse', function(done){
@@ -184,24 +185,30 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         })
     });
 
-    /*it('read contacts reverse', function(done){
+    it('read contacts reverse', function(done){
         var opt = {};
         opt.reverse = true;
         opt.end = 'nothing';
-        opt.start = 'marcy';
+        opt.start = 'keeley';
         var first, last;
+        var all = {}, start = opt.start.toLowerCase(), end = opt.end.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            //console.log(v, i);
+            all[v] = v;
+            //rad(v, i)
+        });
         rad('', function(err, data){
-            console.log("???", err, data);
-            return;
             Radix.map(data, function(v,k){
-                console.log(k, v);
-                //delete all[find+k];
+                //console.log(k, v);
+                delete all[k];
             });
-            //if(!Object.empty(all)){ return }
-            //done();
+            if(!Object.empty(all)){ return }
+            done();
         }, opt);
     });
-    console.log("UNDO THIS RETURN!!!");return;*/
 
     it('read contacts start end', function(done){
         var opt = {};
@@ -277,13 +284,14 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
   });
+  return;
 
     var ntmp = names;
   describe('RAD + GUN', function(){
     var ochunk = 1000;
     var gun = Gun({chunk: ochunk});
 
-    it.only('write same', function(done){
+    it('write same', function(done){
         var all = {}, to, start, tmp;
         var names = [], c = 285;
         while(--c){ names.push('bob') }
