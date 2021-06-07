@@ -210,6 +210,30 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         }, opt);
     });
 
+    it('read contacts range', function(done){
+        var opt = {};
+        opt.end = 'nothing';
+        opt.start = 'keeley';
+        var first, last;
+        var all = {}, start = opt.start.toLowerCase(), end = opt.end.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            //console.log(v, i);
+            all[v] = v;
+            //rad(v, i)
+        });
+        rad('', function(err, data){
+            Radix.map(data, function(v,k){
+                //console.log(k, v);
+                delete all[k];
+            });
+            if(!Object.empty(all)){ return }
+            done();
+        }, opt);
+    });
+
     it('read contacts start end', function(done){
         var opt = {};
         opt.start = 'Warring'.toLowerCase();
