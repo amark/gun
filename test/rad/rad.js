@@ -308,7 +308,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
   });
-  return;
 
     var ntmp = names;
   describe('RAD + GUN', function(){
@@ -330,7 +329,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 done();
             })
         });
-    });
+    });return;
 
     it('write contacts', function(done){
         var all = {}, to, start, tmp;
