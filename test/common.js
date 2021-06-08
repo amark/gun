@@ -81,7 +81,14 @@ describe('Gun', function(){
 				JSON.stringifyAsync(obj, function(err, text){
 					JSON.parseAsync(text, function(err, data){
 						expect(data).to.be.eql([{x:"test",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
-						done();
+
+						var obj = {a: [], b: [""], c: ["", 1], d: [1, ""], e: {"":[]}, "a\"b": {0: 1}, wow: {'': {cool: 1}}};obj.lol = {0: {sweet: 9}};obj.wat = {"": 'cool'};obj.oh = {phew: {}, "": {}};
+						JSON.stringifyAsync(obj, function(err, text2){
+							JSON.parseAsync(text2, function(err, data){
+								expect(data).to.be.eql(obj);
+								done();
+							})
+						})
 					})
 				});
 			});
