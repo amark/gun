@@ -707,8 +707,8 @@
 			var sat = root.$.get(tat.link = link)._; // grab what we're linking to.
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
-			if(tmp['']){ // we might need to load the whole thing
-				if(!(sat.ask||'')['']){ // if it wasn't already fully asked for.
+			if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
+				if(!(sat.ask||'')[''] || cat.lex){ // if it wasn't already fully asked for. // TODO: ^
 					sat.on('out', {get: {'#': link}});
 					return;
 				}
@@ -855,7 +855,7 @@
 			} else
 			if(Object.plain(key)){
 				gun = this;
-				if(tmp = ((tmp = key['#'])||'')['='] || tmp){ gun = gun.get(tmp) }
+				if(tmp = ((tmp = key['#'])||'')['='] || tmp){ return gun.get(tmp) }
 				gun._.lex = key;
 				return gun;
 			} else {
