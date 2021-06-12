@@ -563,7 +563,7 @@
 					return;
 				}*/
 				if(root.pass){ root.pass[at.id] = at; } // will this make for buggy behavior elsewhere?
-				if(at.lex){ msg.get = obj_to(at.lex, msg.get) }
+				if(at.lex){ Object.keys(at.lex).forEach(function(k){ tmp[k] = at.lex[k] }, tmp = msg.get = msg.get || {}) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
@@ -813,7 +813,7 @@
 					if(u === opt.stun){
 						//if(tmp = root.stun){ tmp = tmp[at.id] || at.$.back(function(back){ return tmp[back.id] || u }); if(tmp && !tmp.end && any.id > (tmp._||'').id){ // this is more thorough, but below seems to work too?
 						//if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
-						if((tmp = root.stun) && (tmp = tmp[aid = cat.id] || tmp[aid = at.id] || (msg.$$ && tmp[aid = msg.$$._.id]) || tmp[aid = at.back.id]) && any.id > tmp.run){
+						if((tmp = root.stun) && (tmp = tmp[aid = cat.id] || tmp[aid = at.id] || (msg.$$ && tmp[aid = msg.$$._.id]) /*|| tmp[aid = at.back.id]*/) && any.id > tmp.run){
 							if(tmp.stun && !tmp.stun.end){
 								tmp.stun[id] = function(){any(msg,eve,1)}; // add ourself to the stun callback list that is called at end of the write.
 								return;
@@ -855,7 +855,7 @@
 			} else
 			if(Object.plain(key)){
 				gun = this;
-				if(tmp = ((tmp = key['#'])||empty)['='] || tmp){ gun = gun.get(tmp) }
+				if(tmp = ((tmp = key['#'])||'')['='] || tmp){ gun = gun.get(tmp) }
 				gun._.lex = key;
 				return gun;
 			} else {
@@ -1019,7 +1019,7 @@
 				}
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.log(1, "PUT!", as.run, as.graph);
+			//console.log("PUT!", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
 
@@ -1136,6 +1136,7 @@
 		function none(gun,opt,chain){
 			Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			(chain = gun.chain())._.nix = gun.once(function(data, key){ chain._.on('in', this._) });
+			chain._.lex = gun._.lex; // TODO: Better approach in future? This is quick for now.
 			return chain;
 		}
 
@@ -1182,10 +1183,11 @@
 	;USE(function(module){
 		var Gun = USE('./index');
 		Gun.chain.map = function(cb, opt, t){
-			var gun = this, cat = gun._, chain;
+			var gun = this, cat = gun._, lex, chain;
+			if(Object.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
 			if(!cb){
 				if(chain = cat.each){ return chain }
-				cat.each = chain = gun.chain();
+				(cat.each = chain = gun.chain())._.lex = lex || chain._.lex || cat.lex;
 				chain._.nix = gun.back('nix');
 				gun.on('in', map, chain._);
 				return chain;
@@ -1204,6 +1206,7 @@
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
+			if((tmp = cat.lex) && !String.match(msg.get|| (put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
