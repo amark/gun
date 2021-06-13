@@ -29,7 +29,7 @@
 			tmp = (o['='] || o['*'] || o['>'] || o['<']);
 			if(t === tmp){ return true }
 			if(u !== o['=']){ return false }
-			tmp = (o['*'] || o['>'] || o['<']);
+			tmp = (o['*'] || o['>']);
 			if(t.slice(0, (tmp||'').length) === tmp){ return true }
 			if(u !== o['*']){ return false }
 			if(u !== o['>'] && u !== o['<']){
@@ -1118,13 +1118,13 @@
 			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
 			gun.get(function(data,key,msg,eve){
 				var $ = this, at = $._, one = (at.one||(at.one={}));
-				if(eve.stun){ return } //if('' === one[id]){ return }
+				if(eve.stun){ return } if('' === one[id]){ return }
 				if(true === (tmp = Gun.valid(data))){ once(); return }
 				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
-					if(eve.stun){ return } //if('' === one[id]){ return } one[id] = '';
-					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains?
+					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
+					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
 					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
@@ -1153,6 +1153,7 @@
 
 				}
 			}
+			// TODO: delete cat.one[map.id]?
 			if(tmp = cat.ask){
 				delete tmp[at.get];
 			}

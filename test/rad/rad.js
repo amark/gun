@@ -27,7 +27,7 @@ var Gun;
 ;(function(){
 Gun = root.Gun
 
-var Radix = (Gun.window && Gun.window.Radix) || require('../../lib/radix3');
+var Radix = (Gun.window && Gun.window.Radix) || require('../../lib/radix');
 
 describe('RAD', function(){
 
@@ -311,25 +311,27 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     var ntmp = names;
   describe('RAD + GUN', function(){
+    this.timeout(1000 * 5);
     var ochunk = 1000;
     var gun = Gun({chunk: ochunk});
 
-    it('write same', function(done){
+    /*it('write same', function(done){
         var all = {}, to, start, tmp;
         var names = [], c = 285;
         while(--c){ names.push('bob') }
         names.forEach(function(v,i){
             all[++i] = true;
             tmp = v.toLowerCase();
+            //console.only.i=1;console.log("save", tmp, v, i);
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
-                console.log("???", ack);
+                //console.log("???", ack);
                 expect(ack.err).to.not.be.ok();
                 delete all[i];
                 if(!Object.empty(all)){ return }
                 done();
             })
         });
-    });return;
+    });*/
 
     it('write contacts', function(done){
         var all = {}, to, start, tmp;
@@ -346,12 +348,73 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
     it('read one', function(done){
+        var g = Gun({chunk: ochunk});
         //gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
-        gun.get('names').get('stu').once(function(data, key){
+        g.get('names').get('stu').once(function(data, key){ // on this chunk setting, Stu should be split between 2 files.
+            if(done.c){ return } done.c = 1;
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             done();
         });
+    });
+
+    it('small range', function(done){
+        var check = {};
+        gun.get('users').get('alice').put({cool: 'beans'});
+        gun.get('users').get('alexander').put({nice: 'beans'});
+        gun.get('users').get('bob').put({lol: 'beans'});
+        gun.get('users').get({'.': {'*': 'a'}, '%': 1000 * 100}).map().on(function(d,k){
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+    });
+
+    it('small range once', function(done){
+        var check = {};
+        gun.get('people').get('alice').put({cool: 'beans'});
+        gun.get('people').get('alexander').put({nice: 'beans'});
+        gun.get('people').get('bob').put({lol: 'beans'});
+        gun.get('people').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+    });
+
+    it('small range twice', function(done){
+        var check = {};
+        gun.get('peoplez').get('alice').put({cool: 'beans'});
+        gun.get('peoplez').get('alexander').put({nice: 'beans'});
+        gun.get('peoplez').get('bob').put({lol: 'beans'});
+        gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            //console.log("<<<<<<<<", k, d);
+            expect('a' === k[0]).to.be.ok();
+            check[k] = (check[k] || 0) + 1;
+            expect(check[k]).to.be(1);
+            if(check.alice && check.alexander){
+                if(next.c){ return } next.c = 1;
+                next();
+            }
+        });
+        function next(){
+        var neck = {};
+        gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            //console.log("<<<<<<<<<<<<<<<<", k, d);
+            expect('a' === k[0]).to.be.ok();
+            neck[k] = d;
+            if(neck.alice && neck.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+        }
     });
 
     it('read contacts', function(done){
@@ -360,10 +423,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        //console.log("<<<<<<<<<");
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
+            expect('m' == key[0]).to.be.ok();
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
@@ -371,7 +434,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 done();
             },100);
         });
-        //console.log(">>>>>>>>>");
     });
 
     it('read contacts again', function(done){
@@ -411,7 +473,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
     });
 
-    it.skip('read contacts smaller than cursor', function(done){ // TODO!!!
+    it('read contacts smaller than cursor', function(done){ // TODO!!!
         var all = {}, cursor = 'm', to;
         names.forEach(function(v){
             v = v.toLowerCase();
@@ -432,11 +494,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
     it.skip('read contacts in descending order', function(done){ // TODO!!!
-        var all = {}, cursor = 'm', to;
+        var all = {}, to;
         names.forEach(function(v){
             all[v] = true;
         });
-        gun.get('names').get({'.': {'-': true}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').get({'.': {'-': 1}, '%': 1000 * 100}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
