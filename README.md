@@ -80,7 +80,7 @@ gun.get('mark').get('boss').get('name').once(function(data, key){
 
 // traverse a graph of circular references!
 gun.get('mark').get('boss').get('slave').once(function(data, key){
-  console.log("Mark is the slave!", data);
+  console.log( data, " is the slave!");
 });
 
 // add both of them to a table!
