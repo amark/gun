@@ -396,6 +396,7 @@
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       opt = opt || {};
       if(!(pair||opt).priv){
+        if(!SEA.I){ throw 'No signing key.' }
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
       }
       if(u === data){ throw '`undefined` not allowed.' }
@@ -538,6 +539,7 @@
       var key = (pair||opt).epriv || pair;
       if(u === data){ throw '`undefined` not allowed.' }
       if(!key){
+        if(!SEA.I){ throw 'No encryption key.' }
         pair = await SEA.I(null, {what: data, how: 'encrypt', why: opt.why});
         key = pair.epriv || pair;
       }
@@ -576,6 +578,7 @@
       opt = opt || {};
       var key = (pair||opt).epriv || pair;
       if(!key){
+        if(!SEA.I){ throw 'No decryption key.' }
         pair = await SEA.I(null, {what: data, how: 'decrypt', why: opt.why});
         key = pair.epriv || pair;
       }
@@ -616,6 +619,7 @@
     SEA.secret = SEA.secret || (async (key, pair, cb, opt) => { try {
       opt = opt || {};
       if(!pair || !pair.epriv || !pair.epub){
+        if(!SEA.I){ throw 'No secret mix.' }
         pair = await SEA.I(null, {what: key, how: 'secret', why: opt.why});
       }
       var pub = key.epub || key;
@@ -738,7 +742,10 @@
     // only one user can be logged in at a time, per gun instance.
     Gun.chain.user = function(pub){
       var gun = this, root = gun.back(-1), user;
-      if(pub){ return root.get('~'+pub) }
+      if(pub){
+        pub = SEA.opt.pub((pub._||'')['#']) || pub;
+        return root.get('~'+pub);
+      }
       if(user = root.back('user')){ return user }
       var root = (root._), at = root, uuid = at.opt.uuid || lex;
       (at = (user = at.user = gun.chain(new User))._).opt = {};
@@ -1259,7 +1266,6 @@
         SEA.sign(raw, (user._).sea, function(data){
           if(u === data){ return no(SEA.err || 'Signature fail.') }
           if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
-          //console.log("SYNCHRONOUS JSON!!! CHECK EVERYWHERE ELSE");
           JSON.stringifyAsync({':': tmp = SEA.opt.unpack(data.m), '~': data.s}, function(err,s){
             if(err){ return no(err || "Stringify error.") }
             msg.put['='] = tmp;
@@ -1300,6 +1306,9 @@
       if('@' === (s[0]||'')[0]){ return }
       s = s.slice(0,2).join('.');
       return s;
+    }
+    SEA.opt.stringy = function(t){
+      // TODO: encrypt etc. need to check string primitive. Make as breaking change.
     }
     SEA.opt.pack = function(d,cb,k, n,s){ var tmp, f; // pack for verifying
       if(SEA.opt.check(d)){ return cb(d) }
