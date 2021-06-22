@@ -6,7 +6,7 @@
   <img style="max-width: 100%;">
 </div>
 <center>
-  <p>Drag & drop videos, songs, or images! <input type="file" multiple></p>
+  <p>Drag & drop videos, songs, or images! <input id="upload" type="file" multiple></p>
 </center>
 
 <script src="../jquery.js"></script>
@@ -16,7 +16,7 @@
 
 <script>
 var gun = Gun('http://localhost:8765/gun');
-$('html').upload(function resize(eve, up){
+$('html, #upload').upload(function resize(eve, up){
   if(up){ return up.shrink(eve, resize, 1024) }
   var b64 = (eve.base64 || ((eve.event || eve).target || eve).result || eve);
   gun.get('test').get(eve.id).put(b64);
