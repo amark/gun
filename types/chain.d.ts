@@ -228,6 +228,27 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
         err: string;
     }) => void, opt?: {}): IGunChainReference;
     /**
+     * Authenticates a user, previously created via User.create.
+     * @param pair Public/Private Key Pair
+     * @param cb Callback that is to be called upon authentication of the user.
+     * @param opt Option Object containing options for authentiaction. (In gun options are added at end of syntax. opt is rarely used, hence is added at the end.)
+     */
+    auth(pair: CryptoKeyPair, cb?: (ack: {
+        ack: 2;
+        get: string;
+        on: (...args: [unknown, unknown, unknown]) => unknown;
+        put: {
+            alias: string;
+            auth: any;
+            epub: string;
+            pub: string;
+        };
+        sea: IGunCryptoKeyPair;
+        soul: string;
+    } | {
+        err: string;
+    }) => void, opt?: {}): IGunChainReference;
+    /**
      * Returns the key pair in the form of an object as below.
      */
     pair(): IGunCryptoKeyPair;
