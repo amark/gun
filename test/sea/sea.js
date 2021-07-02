@@ -6,7 +6,7 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
-  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
+  //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
@@ -15,7 +15,6 @@ var Gun;
     try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
-    //require('../lib/file');
     require('../../lib/store');
     require('../../lib/rfs');
   }
@@ -41,6 +40,14 @@ describe('SEA', function(){
   var prep = async function(d,k, n,s){ return {'#':s,'.':k,':': await SEA.opt.parse(d),'>':Gun.state.is(n, k)} }; // shim for old - prep for signing.
   var pack = function(d,cb,k, n,s){ return new Promise(function(res, rej){ SEA.opt.pack(d, function(r){ res(r) }, k,n,s) }) }; // make easier to upgrade test, cb to await
   describe('Utility', function(){
+    it('deleting old SEA tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    });
+    it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
     /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
       console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
       SEA.opt.aeskey('x','x').then(k => {
@@ -236,7 +243,7 @@ describe('SEA', function(){
       });
     }())})
 
-    it('JSON escape', async function(done){
+    it('JSON escape', function(done){ (async function(){
       var plain = "hello world";
       var json = JSON.stringify({hello:'world'});
 
@@ -249,7 +256,7 @@ describe('SEA', function(){
       tmp = SEA.opt.unpack(tmp);
       expect(tmp.hello).to.be("world");
       done();
-    });
+    }())});
 
     it('double sign', function(done){ (async function(){
       var pair = await SEA.pair();

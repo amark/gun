@@ -6,7 +6,7 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
-  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
+  //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
@@ -15,7 +15,6 @@ var Gun;
     try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
-    //require('../lib/file');
     require('../../lib/store');
     require('../../lib/rfs');
   }
@@ -170,6 +169,14 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         return;
     });*/
 
+    it('deleting old RAD tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    });
+    it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
 
     it('write contacts', function(done){
         var all = {}, to, start;
@@ -315,6 +322,14 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     var ochunk = 1000;
     var gun = Gun({chunk: ochunk});
 
+    /*it('deleting old tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    }); it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });*/
+
     /*it('write same', function(done){
         var all = {}, to, start, tmp;
         var names = [], c = 285;
@@ -363,7 +378,9 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         gun.get('users').get('alice').put({cool: 'beans'});
         gun.get('users').get('alexander').put({nice: 'beans'});
         gun.get('users').get('bob').put({lol: 'beans'});
+        //console.log("=================");console.only.i=1;
         gun.get('users').get({'.': {'*': 'a'}, '%': 1000 * 100}).map().on(function(d,k){
+            //console.log("small range:", k, d);
             expect('a' === k[0]).to.be.ok();
             check[k] = d;
             if(check.alice && check.alexander){
@@ -372,6 +389,29 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             }
         });
     });
+
+    /*it.only('small range once TEST', function(done){
+        var gun = Gun({file: 'yuio'});
+        var check = {};
+        gun.get('people').get('alice').put({cool: 'beans'});
+        gun.get('people').get('alexander').put({nice: 'beans'});
+        gun.get('people').get('bob').put({lol: 'beans'});
+        //setTimeout(function(){
+        console.only.i=1;
+        console.log("==================");
+        console.log("==================");
+        console.log("==================");
+        gun.get('people').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            console.log("***********", k,d);
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+        //},500);
+    });*/
 
     it('small range once', function(done){
         var check = {};
@@ -443,6 +483,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             if(v.indexOf(find) == 0){ all[v] = true }
         });
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+            //console.log("*******", key, data, this._.back.get);
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];

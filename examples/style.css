@@ -31,6 +31,13 @@ ul, li {
   list-style: none;
 }
 
+p {
+  padding: 0;
+}
+p + p {
+  padding-top: 0;
+}
+
 [contenteditable=true]:empty:before {
   content: attr(placeholder);
 }

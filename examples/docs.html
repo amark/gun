@@ -38,6 +38,7 @@
 <div class="hold full hue2">
 	<div id="page" class="max focus gap" style="margin-top: 9%;"></div>
 </div>
+
 <script src="../../gun/gun.js"></script>
 <script src="../../gun/lib/monotype.js"></script>
 <script src="../../gun/lib/meta.js"></script>
@@ -49,26 +50,44 @@
 
 <script>
 var gun = Gun();
+var page = {};
 //var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']);
 
 ;(window.onhashchange = function(){
 	var file = (location.hash||'').slice(1);
 	var S = +new Date;
 	$('#page').empty().attr('contenteditable', 'false');
-	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
-		if(window.LOCK){ return }
+	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i, msg, eve){
+		var tmp = page[i] || '';
+		var last = Gun.state.is(gun._.root.graph[msg.put['#']], i);
+		if(last < tmp.last){ return }
+	//});
+		//if(window.LOCK){ return }
 		var p = $('#page').children().get(i);
 		if(!p){
 			$('#page').append('<p>');
-			setTimeout(function(){ render(data, i) },0);
+			setTimeout(function(){ render(data, i, msg, eve) },0);
 			return;
 		}
+		var DBG = {s: +new Date};
 		var r = monotype(p);
+		DBG.mono = +new Date;
 		var safe = $.normalize(data);
-		p.outerHTML = safe;
+		DBG.norm = +new Date;
+		p.outerHTML = data;
+		DBG.html = +new Date;
 		r.restore();
+		DBG.rest = +new Date;
+		//console.log("mono:", DBG.mono - DBG.s, "norm:", DBG.norm - DBG.mono, 'html:', DBG.html - DBG.norm, 'rest:', DBG.rest - DBG.html, ':::', msg, eve);
 	});
 })();
+
+
+window.requestAnimationFrame = window.requestAnimationFrame || setTimeout;
+window.requestAnimationFrame(function frame(){
+	window.requestAnimationFrame(frame, 16);
+	
+}, 16);
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 meta.edit({
@@ -103,17 +122,28 @@ meta.edit({
       });
 		}).on('keyup.tmp', '[contenteditable]', function(eve){
 			//$('#debug').val(doc.html());
-			var p = $(window.getSelection().anchorNode).closest('p');
+			var p = $(window.getSelection().anchorNode).closest('p'), tmp;
+			(tmp = page[p.index()] || (page[p.index()] = {})).last = (+new Date) + 99;
+			clearTimeout(tmp.to); tmp.to = setTimeout(function(){
+			var DBG = {s: +new Date};
 			var r = monotype(p);
+			DBG.m = +new Date;
 			var html = p.html() || '';
+			DBG.g = +new Date;
 			if(!html && !p.prev().length && !p.next().length && !$('#page').html()){
 				edit.init();
 			}
+			DBG.i = +new Date;
 			var safe = $.normalize(html);
+			DBG.n = +new Date;
 			p.html(safe);
+			DBG.h = +new Date;
 			r.restore();
+			DBG.r = +new Date;
 			edit.save(p);
-		});
+			DBG.p = +new Date;
+			//console.log("save:", DBG.p - DBG.r, "rest:", DBG.r - DBG.h, "html:", DBG.h - DBG.n, "norm:", DBG.n - DBG.i, 'init:', DBG.i - DBG.g, 'grab:', DBG.g - DBG.m, 'mono:', DBG.m - DBG.s);
+		},50)});
 	},
 	up: function(){
 		console.log("UP");
@@ -132,6 +162,7 @@ meta.edit({
 		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
 		var file = (location.hash||'').slice(1);
 		var data = (p.get(0)||{}).outerHTML||'';
+		//data = $.normalize(data); // GOOD TO DO SECURITY ON SENDING SIDE TOO!!!
 		window.LOCK = true;
 		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
 		window.LOCK = false;
@@ -232,6 +263,28 @@ meta.edit({
 }());
 
 ;(function(){
+	var logic = {};
+
+	meta.edit({name: "Logic", combo: ['L']});
+
+	meta.edit({name: "Symbol", combo: ['L','S'],
+    on: function(eve){
+    	console.log(1);
+    }
+	});
+	meta.edit({name: "Action", combo: ['L','A'],
+    on: function(eve){
+    	console.log(2);
+    }
+	});
+	meta.edit({name: "Data", combo: ['L','D'],
+    on: function(eve){
+    	console.log(3);
+    }
+	});
+}());
+
+;(function(){
 	var song = {};
 	// TODO:
 	// 1. Manually OR automatically load music.js API, dependencies, and modules. - FINE for now
@@ -312,6 +365,10 @@ meta.edit({
 			X
 			Y
 		Fill
+	Logic
+		Symbol
+		Action
+		Data
 */
 /*
 
