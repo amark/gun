@@ -343,7 +343,7 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
-			console.log("TODO: Mark: HAM is unfinished, new acks, RAD, etc.");
+			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!");
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -419,6 +419,7 @@
 				// TODO: consider tagging original message into dup for DAM.
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
+				console.log("GET:", get, node, has);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
@@ -1641,7 +1642,7 @@
 				var lex = msg.get, soul, data, tmp, u;
 				if(!lex || !(soul = lex['#'])){ return }
 				data = disk[soul] || u;
-				if(data && (tmp = lex['.'])){ // pluck!
+				if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				if(data){ (tmp = {})[soul] = data } // back into a graph.
