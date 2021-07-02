@@ -766,7 +766,7 @@
   })(USE, './user');
 
   ;USE(function(module){
-    var u, Gun = (''+u != typeof window)? (window.Gun||{chain:{}}) : require('../gun');
+    var u, Gun = (''+u != typeof window)? (window.Gun||{chain:{}}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
         gun.once(res, opt);
@@ -1174,7 +1174,7 @@
 
   ;USE(function(module){
     var SEA = USE('./sea'), noop = function(){}, u;
-    var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : require('../gun');
+    var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)

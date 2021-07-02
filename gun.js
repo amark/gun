@@ -624,7 +624,7 @@
 						(back.ask || (back.ask = {}))[at.get] = msg.$._; // TODO: PERFORMANCE? More elegant way?
 						return back.on('out', msg);
 					}
-					msg = {get: {}, $: at.$};
+					msg = {get: at.lex? msg.get : {}, $: at.$};
 					return back.on('out', msg);
 				}
 				(at.ask || (at.ask = {}))[''] = at;	 //at.ack = at.ack || -1;
@@ -639,11 +639,17 @@
 
 		function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to optimize functions with different parameter calls, so try to do benchmark to see if there is any actual difference.
 			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
-			if(tmp && tmp._ && tmp._['#']){ // convert from old format
-				return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-					if('_' == k || !(state = state_is(tmp, k))){ return }
-					cat.on('in', {$: gun, put: {'#': tmp._['#'], '.': k, ':': tmp[k], '>': state}});
-				});
+			if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || (u === tmp[':'] && u === tmp['=']) || u === tmp['>'])){ // convert from old format
+				if(!valid(tmp)){
+					if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
+					gun = cat.root.$.get(soul);
+					return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+						if('_' == k || u === (state = state_is(tmp, k))){ return }
+						cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
+					});
+				}
+				cat.on('in', {$: at.back.$, put: {'#': soul = at.back.soul, '.': key = at.has || at.get, '=': tmp, '>': state_is(at.back.put, key)}, via: msg}); // TODO: This could be buggy! It assumes/approxes data, other stuff could have corrupted it.
+				return;
 			}
 			if((msg.seen||'')[cat.id]){ return } (msg.seen || (msg.seen = function(){}))[cat.id] = cat; // help stop some infinite loops
 
@@ -856,8 +862,9 @@
 			if(Object.plain(key)){
 				gun = this;
 				if(tmp = ((tmp = key['#'])||'')['='] || tmp){ return gun.get(tmp) }
-				gun._.lex = key;
-				return gun;
+				(tmp = gun.chain()._).lex = key; // LEX: // TODO! Consider making this only a `.map(` thing?
+				gun.on('in', function(eve){ this.to.next(eve); tmp.on('in', eve) }); // should filter here but ^
+				return tmp.$;
 			} else {
 				(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 				if(cb){ cb.call(as, as._.err) }
@@ -1019,7 +1026,7 @@
 				}
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.log("PUT!", as.run, as.graph);
+			//console.only(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
 
@@ -1200,7 +1207,8 @@
 				if(u === next){ return }
 				if(data === next){ return chain._.on('in', msg) }
 				if(Gun.is(next)){ return chain._.on('in', next._) }
-				chain._.on('in', {get: key, put: {'=':next}});
+				var tmp = {}; Object.keys(msg.put).forEach(function(k){ tmp[k] = msg.put[k] }, tmp); tmp['='] = next; 
+				chain._.on('in', {get: key, put: tmp});
 			});
 			return chain;
 		}
@@ -1637,7 +1645,9 @@
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				if(data){ (tmp = {})[soul] = data } // back into a graph.
+				//setTimeout(function(){	
 				root.on('in', {'@': msg['#'], put: tmp, lS:1});// || root.$});
+				//}, Math.random() * 10); // FOR TESTING PURPOSES!
 			});
 
 			root.on('put', function(msg){
