@@ -36,6 +36,7 @@
 			var opt = at.opt, peers = opt.peers;
 			if(false === opt.axe){ return }
 			if((typeof process !== "undefined") && 'false' === ''+(process.env||'').AXE){ return }
+			if(!Gun.window){ return }
 			var axe = at.axe = {}, tmp, id;
 			tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
