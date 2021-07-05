@@ -417,6 +417,20 @@
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
+				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
+				// TODO: localStorage reply did not get chunked.
+				// TMP note for now: viMZq1slG was chat LEX query #.
+				/*if(gun !== (tmp = msg.$) && (tmp = (tmp||'')._)){
+					if(tmp.Q){ return } // chain does not need to ask for it again.
+					tmp.Q = {};
+				}*/
+				/*if(u === has){
+					if(at.Q){
+						//at.Q[msg['#']] = '';
+						//return;
+					}
+					at.Q = {};
+				}*/
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
 				//console.log("GET:", get, node, has);
@@ -1027,7 +1041,7 @@
 				}
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.only(1, "PUT", as.run, as.graph);
+			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
 
@@ -1131,11 +1145,11 @@
 				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
-					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
-					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
+					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} }
+					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
+					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					cb.call($, tmp, at.get);
 				};
 			}, {on: 1});
