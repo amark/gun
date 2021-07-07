@@ -211,11 +211,13 @@
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
 			if(!('function' == typeof cb)){
-				if(!cb || !as){ return }
+				if(!cb){ return }
 				var id = cb['#'] || cb, tmp = (this.tag||'')[id];
 				if(!tmp){ return }
-				tmp = this.on(id, as);
-				clearTimeout(tmp.err);
+				if(as){
+					tmp = this.on(id, as);
+					clearTimeout(tmp.err);
+				}
 				return true;
 			}
 			var id = (as && as['#']) || Math.random().toString(36).slice(2);
@@ -277,6 +279,7 @@
 				if(dup.check(tmp)){ return } dup.track(tmp);
 				tmp = msg._; msg._ = ('function' == typeof tmp)? tmp : function(){};
 				(msg.$ && (msg.$ === (msg.$._||'').$)) || (msg.$ = gun);
+				//console.only.i && console.log("UNI:", msg);
 				if(msg['@'] && !msg.put){ ack(msg) }
 				if(!at.ask(msg['@'], msg)){ // is this machine listening for an ack?
 					DBG && (DBG.u = +new Date);
@@ -421,7 +424,7 @@
 				// TODO: localStorage reply did not get chunked.
 				// TMP note for now: viMZq1slG was chat LEX query #.
 				/*if(gun !== (tmp = msg.$) && (tmp = (tmp||'')._)){
-					if(tmp.Q){ return } // chain does not need to ask for it again.
+					if(tmp.Q){ tmp.Q[msg['#']] = ''; return } // chain does not need to ask for it again.
 					tmp.Q = {};
 				}*/
 				/*if(u === has){
@@ -782,8 +785,9 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
+			if((this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
 			// manhattan:
-			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
+			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
 				if(!at.soul && !at.has){ return } // TODO: BUG? For now, only core-chains will handle not-founds, because bugs creep in if non-core chains are used as $ but we can revisit this later for more powerful extensions.
@@ -794,6 +798,10 @@
 					$: at.$,
 					'@': msg['@']
 				});
+				(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
+					root.on('in', tmp);
+				}); delete at.Q;
 				return;
 			}
 			(msg._||{}).miss = 1;
