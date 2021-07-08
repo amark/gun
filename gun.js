@@ -279,7 +279,6 @@
 				if(dup.check(tmp)){ return } dup.track(tmp);
 				tmp = msg._; msg._ = ('function' == typeof tmp)? tmp : function(){};
 				(msg.$ && (msg.$ === (msg.$._||'').$)) || (msg.$ = gun);
-				//console.only.i && console.log("UNI:", msg);
 				if(msg['@'] && !msg.put){ ack(msg) }
 				if(!at.ask(msg['@'], msg)){ // is this machine listening for an ack?
 					DBG && (DBG.u = +new Date);
@@ -422,6 +421,9 @@
 				// TODO: consider tagging original message into dup for DAM.
 				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
 				// TODO: localStorage reply did not get chunked.
+				// TODO: Moving quick hacks fixing these things to axe for now.
+				// TODO: a lot of GET #foo then GET #foo."" happening, why?
+				// TODO: DAM's ## hash check, on same get ACK, producing multiple replies still, maybe JSON vs YSON?
 				// TMP note for now: viMZq1slG was chat LEX query #.
 				/*if(gun !== (tmp = msg.$) && (tmp = (tmp||'')._)){
 					if(tmp.Q){ tmp.Q[msg['#']] = ''; return } // chain does not need to ask for it again.
@@ -601,6 +603,7 @@
 					} else
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						tmp = back.ask && back.ask[get];
+						//'pub' === get && console.log("what the freak?", get, back.id);
 						(back.ask || (back.ask = {}))[get] = back.$.get(get)._;
 						back.on('in', {get: get, put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 						if(tmp){ return }
@@ -732,13 +735,10 @@
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
 			if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
-				if(!(sat.ask||'')[''] || cat.lex){ // if it wasn't already fully asked for. // TODO: ^
-					sat.on('out', {get: {'#': link}});
-					return;
-				}
+				sat.on('out', {get: {'#': link}});
 			}
 			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-				if(!(sat = tmp[get])){ return }
+				if(!get || !(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 			},0,99);
 		}; Gun.on.link = link;
@@ -1392,8 +1392,9 @@
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					DBG && (DBG.yr = +new Date);
-					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
-					if(!peer && ack){
+					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
+					if(!peer && ack){ // still no peer, then ack daisy chain lost.
+						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to self, ignore.
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
