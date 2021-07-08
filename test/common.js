@@ -7,7 +7,6 @@ describe('Gun', function(){
 		root = env.window? env.window : global;
 		try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
 		try{ localStorage.clear() }catch(e){}
-		try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
 		try{ require('fs').unlinkSync('data.json') }catch(e){}
   	try{ require('../lib/fsrm')('radatatest') }catch(e){}
 		//root.Gun = root.Gun || require('../gun');
@@ -18,10 +17,8 @@ describe('Gun', function(){
 			require('../lib/yson');
 			root.Gun = require('../gun');
 			root.Gun.TESTING = true;
-			Gun.serve = require('../lib/serve');
-			//require('../lib/file');
-			require('../lib/store');
-			require('../lib/rfs');
+	    require('../lib/store');
+	    require('../lib/rfs');
 			console.log("UNDO THIS SO RAD & SEA RUN!");
 			//require('./rad/rad.js');
 			//require('./sea/sea.js');
@@ -40,6 +37,14 @@ describe('Gun', function(){
 	var t = {};
 
 	describe('Utility', function(){
+		it('deleting old GUN tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    });
+    it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
 		var u;
 		/* // causes logger to no longer log.
 		it('verbose console.log debugging', function(done) {
@@ -3718,7 +3723,7 @@ describe('Gun', function(){
 			// TODO: It would be nice if we could change these numbers for different platforms/versions of javascript interpreters so we can squeeze as much out of them.
 			gun.get('history').map().on(function(time, index){
 				diff = +new Date - time;
-				//console.log(">>>", index, time, diff);return;
+				//console.log(">>>", index, time, diff);//return;
 				expect(gone[index]).to.not.be.ok();
 				gone[index] = diff;
 			  largest = (largest < diff)? diff : largest;

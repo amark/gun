@@ -211,11 +211,13 @@
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
 			if(!('function' == typeof cb)){
-				if(!cb || !as){ return }
+				if(!cb){ return }
 				var id = cb['#'] || cb, tmp = (this.tag||'')[id];
 				if(!tmp){ return }
-				tmp = this.on(id, as);
-				clearTimeout(tmp.err);
+				if(as){
+					tmp = this.on(id, as);
+					clearTimeout(tmp.err);
+				}
 				return true;
 			}
 			var id = (as && as['#']) || Math.random().toString(36).slice(2);
@@ -307,7 +309,7 @@
 				ctx.msg = msg;
 				ctx.all = 0;
 				ctx.stun = 1;
-				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
+				var nl = Object.keys(put);//.sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
 				console.STAT && console.STAT(S, ((DBG||ctx).pk = +new Date) - S, 'put sort');
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
@@ -417,13 +419,30 @@
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
+				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
+				// TODO: localStorage reply did not get chunked.
+				// TODO: Moving quick hacks fixing these things to axe for now.
+				// TODO: a lot of GET #foo then GET #foo."" happening, why?
+				// TODO: DAM's ## hash check, on same get ACK, producing multiple replies still, maybe JSON vs YSON?
+				// TMP note for now: viMZq1slG was chat LEX query #.
+				/*if(gun !== (tmp = msg.$) && (tmp = (tmp||'')._)){
+					if(tmp.Q){ tmp.Q[msg['#']] = ''; return } // chain does not need to ask for it again.
+					tmp.Q = {};
+				}*/
+				/*if(u === has){
+					if(at.Q){
+						//at.Q[msg['#']] = '';
+						//return;
+					}
+					at.Q = {};
+				}*/
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
 				//console.log("GET:", get, node, has);
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
-					node = state_ify(node, has, state_is(node, has), node[has]);
+					node = state_ify({}, has, state_is(node, has), node[has]);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
@@ -569,17 +588,13 @@
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 					back = (root.$.get(get['#'])._);
-					if(!(get = get['.'])){
+					if(!(get = get['.'])){ // soul
 						tmp = back.ask && back.ask['']; // check if we have already asked for the full node
 						(back.ask || (back.ask = {}))[''] = back; // add a flag that we are now.
 						if(u !== back.put){ // if we already have data,
 							back.on('in', back); // send what is cached down the chain
 							if(tmp){ return } // and don't ask for it again.
 						}
-						/*if(obj_has(back, 'put')){
-							back.on('in', back);
-						}
-						if(tmp && u !== back.put){ return } // if we already asked for it AND have data, don't ask again. */
 						msg.$ = back.$;
 					} else
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
@@ -715,13 +730,10 @@
 			(sat.echo || (sat.echo = {}))[tat.id] = tat; // link it.
 			var tmp = cat.ask||''; // ask the chain for what needs to be loaded next!
 			if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
-				if(!(sat.ask||'')[''] || cat.lex){ // if it wasn't already fully asked for. // TODO: ^
-					sat.on('out', {get: {'#': link}});
-					return;
-				}
+				sat.on('out', {get: {'#': link}});
 			}
 			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
-				if(!(sat = tmp[get])){ return }
+				if(!get || !(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 			},0,99);
 		}; Gun.on.link = link;
@@ -768,8 +780,9 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
+			if((this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
 			// manhattan:
-			var as = this.as, at = as.$._, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
+			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
 				if(u !== at.put){ return }
 				if(!at.soul && !at.has){ return } // TODO: BUG? For now, only core-chains will handle not-founds, because bugs creep in if non-core chains are used as $ but we can revisit this later for more powerful extensions.
@@ -780,6 +793,10 @@
 					$: at.$,
 					'@': msg['@']
 				});
+				/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
+					root.on('in', tmp);
+				}); delete at.Q;*/
 				return;
 			}
 			(msg._||{}).miss = 1;
@@ -1027,7 +1044,7 @@
 				}
 				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.only(1, "PUT", as.run, as.graph);
+			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
 
@@ -1131,11 +1148,11 @@
 				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
-					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
-					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
+					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} }
+					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
+					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					cb.call($, tmp, at.get);
 				};
 			}, {on: 1});
@@ -1354,8 +1371,14 @@
 					  msg['##'] = h;
 					  say(msg, peer);
 					  delete msg._.$put;
-					})
+					}, sort);
 				}
+				function sort(k, v){ var tmp;
+					if(!(v instanceof Object)){ return v }
+					Object.keys(v).sort().forEach(sorta, {to: tmp = {}, on: v});
+					return tmp;
+				} function sorta(k){ this.to[k] = this.on[k] }
+
 				var say = mesh.say = function(msg, peer){ var tmp;
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
@@ -1370,8 +1393,9 @@
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					DBG && (DBG.yr = +new Date);
-					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || mesh.leap } // warning! mesh.leap could be buggy!
-					if(!peer && ack){
+					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
+					if(!peer && ack){ // still no peer, then ack daisy chain lost.
+						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to self, ignore.
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.

@@ -31,17 +31,17 @@
 
 		Gun.on('opt', function(at){ start(at) ; this.to.next(at) }); // make sure to call the "next" middleware adapter.
 
-		function start(at){
-			if(at.axe){ return }
-			var opt = at.opt, peers = opt.peers;
+		function start(root){
+			if(root.axe){ return }
+			var opt = root.opt, peers = opt.peers;
 			if(false === opt.axe){ return }
 			if((typeof process !== "undefined") && 'false' === ''+(process.env||'').AXE){ return }
 			if(!Gun.window){ return }
-			var axe = at.axe = {}, tmp, id;
+			var axe = root.axe = {}, tmp, id;
 			tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
-			tmp.retry = tmp.retry || 2; // BUG: Check 0?
-			console.log("Attempting to discover network via (1) local peer (2) last used peers (3) hardcoded peers!");
+			tmp.retry = tmp.retry || 0; // BUG: Check 0?
+			console.log("AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) hard coded peers.");
 			var last = JSON.parse((localStorage||'')[(opt.file||'')+'axe/']||null) || {};
 			Object.keys(last.peers||'').forEach(function(key){
 				tmp = peers[id = key] = peers[id] || {};
@@ -49,6 +49,21 @@
 			});
 			tmp = peers[id = 'https://gun-manhattan.herokuapp.com/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
+
+			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root); // DAM!
+			mesh.way = function(msg){
+				if(root.$ === msg.$ || (msg._||'').via){
+					mesh.say(msg, opt.peers);
+					return;
+				}
+				var at = (msg.$||'')._;
+				if(!at){ mesh.say(msg, opt.peers); return }
+				if(msg.get){
+					if(at.axe){ return } // don't ask for it again!
+					at.axe = {};
+				}
+				mesh.say(msg, opt.peers);
+			}
 		}
 
 		var empty = {}, yes = true, u;
