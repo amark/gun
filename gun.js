@@ -309,7 +309,7 @@
 				ctx.msg = msg;
 				ctx.all = 0;
 				ctx.stun = 1;
-				var nl = Object.keys(put).sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
+				var nl = Object.keys(put);//.sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
 				console.STAT && console.STAT(S, ((DBG||ctx).pk = +new Date) - S, 'put sort');
 				var ni = 0, nj, kl, soul, node, states, err, tmp;
 				(function pop(o){
@@ -588,22 +588,17 @@
 					get['#'] = get['#'] || at.soul;
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 					back = (root.$.get(get['#'])._);
-					if(!(get = get['.'])){
+					if(!(get = get['.'])){ // soul
 						tmp = back.ask && back.ask['']; // check if we have already asked for the full node
 						(back.ask || (back.ask = {}))[''] = back; // add a flag that we are now.
 						if(u !== back.put){ // if we already have data,
 							back.on('in', back); // send what is cached down the chain
 							if(tmp){ return } // and don't ask for it again.
 						}
-						/*if(obj_has(back, 'put')){
-							back.on('in', back);
-						}
-						if(tmp && u !== back.put){ return } // if we already asked for it AND have data, don't ask again. */
 						msg.$ = back.$;
 					} else
 					if(obj_has(back.put, get)){ // TODO: support #LEX !
 						tmp = back.ask && back.ask[get];
-						//'pub' === get && console.log("what the freak?", get, back.id);
 						(back.ask || (back.ask = {}))[get] = back.$.get(get)._;
 						back.on('in', {get: get, put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 						if(tmp){ return }
@@ -798,10 +793,10 @@
 					$: at.$,
 					'@': msg['@']
 				});
-				(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+				/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
 					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
 					root.on('in', tmp);
-				}); delete at.Q;
+				}); delete at.Q;*/
 				return;
 			}
 			(msg._||{}).miss = 1;
@@ -1376,8 +1371,14 @@
 					  msg['##'] = h;
 					  say(msg, peer);
 					  delete msg._.$put;
-					})
+					}, sort);
 				}
+				function sort(k, v){ var tmp;
+					if(!(v instanceof Object)){ return v }
+					Object.keys(v).sort().forEach(sorta, {to: tmp = {}, on: v});
+					return tmp;
+				} function sorta(k){ this.to[k] = this.on[k] }
+
 				var say = mesh.say = function(msg, peer){ var tmp;
 					if((tmp = this) && (tmp = tmp.to) && tmp.next){ tmp.next(msg) } // compatible with middleware adapters.
 					if(!msg){ return false }
