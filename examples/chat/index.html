@@ -166,11 +166,11 @@
     function submit(e) {
       e.preventDefault();
 
-      var msg = { when: Gun.time.is() };
+      var msg = { when: Gun.state() };
 
       msg.who = $('.chat__name-input').val();
       if (!msg.who) {
-        msg.who = 'user' + Gun.text.random(3);
+        msg.who = 'user' + String.random(3);
         $('.chat__name-input').val(msg.who);
       }
 
