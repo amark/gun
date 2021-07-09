@@ -442,7 +442,7 @@
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
-					node = state_ify({}, has, state_is(node, has), node[has]);
+					node = state_ify({}, has, state_is(node, has), node[has], soul);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
 					// we still need to trigger a pull/merge from peers.
