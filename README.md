@@ -131,7 +131,8 @@ Thanks to:
 <a href="http://github.com/ElieMakhoul">Elie Makhoul</a>,
 <a href="http://github.com/mikestaub">Mike Staub</a>,
 <a href="http://github.com/bmatusiak">Bradley Matusiak</a>,
-<a href="https://github.com/sjuxax">Jeff Cook</a>
+<a href="https://github.com/sjuxax">Jeff Cook</a>,
+<a href="https://github.com/nmauersberg">Nico</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
