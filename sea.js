@@ -1041,7 +1041,7 @@
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     User.prototype.pair = function(){
       var user = this, proxy; // undeprecated, hiding with proxies.
-      try{ proxy = new Proxy({}, {get: function(t,p,r){
+      try{ proxy = new Proxy({DANGER:'\u2620'}, {get: function(t,p,r){
         if(!user.is || !(user._||'').sea){ return }
         return user._.sea[p];
       }})}catch(e){}
