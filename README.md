@@ -112,6 +112,7 @@ Thanks to:
 <table><tr>
 <td vlign="center"><a href="https://mozilla.org/builders"><img height="100" src="https://user-images.githubusercontent.com/1423657/81992335-85346480-9643-11ea-8754-8275e98e06bc.png"></a></td>
 <td vlign="center"><a href="http://unstoppabledomains.com/"><img src="https://gun.eco/img/unstoppable.png"></a></td>
+<td vlign="center"><a href="https://www.ajar.org/"><img src="https://www.ajar.org/logo.png" width="200"></a></td>
 </tr></table>
 
 <a href="https://github.com/robertheessels">Robert Heessels</a>,
@@ -132,7 +133,8 @@ Thanks to:
 <a href="http://github.com/mikestaub">Mike Staub</a>,
 <a href="http://github.com/bmatusiak">Bradley Matusiak</a>,
 <a href="https://github.com/sjuxax">Jeff Cook</a>,
-<a href="https://github.com/nmauersberg">Nico</a>
+<a href="https://github.com/nmauersberg">Nico</a>,
+<a href="https://github.com/ajartille">Aaron Artille</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
