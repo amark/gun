@@ -1040,10 +1040,12 @@
   ;USE(function(module){
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     User.prototype.pair = function(){
-      console.log("user.pair() IS DEPRECATED AND WILL BE DELETED!!!");
-      var user = this;
-      if(!user.is){ return false }
-      return user._.sea;
+      var user = this, proxy; // undeprecated, hiding with proxies.
+      try{ proxy = new Proxy({DANGER:'\u2620'}, {get: function(t,p,r){
+        if(!user.is || !(user._||'').sea){ return }
+        return user._.sea[p];
+      }})}catch(e){}
+      return proxy;
     }
     // If authenticated user wants to delete his/her account, let's support it!
     User.prototype.delete = async function(alias, pass, cb){

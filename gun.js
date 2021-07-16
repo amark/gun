@@ -295,7 +295,7 @@
 			function put(msg){
 				if(!msg){ return }
 				var ctx = msg._||'', root = ctx.root = ((ctx.$ = msg.$||'')._||'').root;
-				if(msg['@'] && ctx.faith && !ctx.miss){ // TODO: AXE may split/route based on 'put' what should we do here? Detect @ in AXE?
+				if(msg['@'] && ctx.faith && !ctx.miss){ // TODO: AXE may split/route based on 'put' what should we do here? Detect @ in AXE? I think we don't have to worry, as DAM will route it on @.
 					msg.out = universe;
 					root.on('out', msg);
 					return;
@@ -329,7 +329,6 @@
 						msg.err = ctx.err = err; // invalid data should error and stun the message.
 						fire(ctx);
 						//console.log("handle error!", err) // handle!
-						//ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
 						return;
 					}
 					var i = 0, key; o = o || 0;
@@ -449,7 +448,7 @@
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
 				var S = +new Date;
-				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||''), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
+				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||'').sort(), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
 				console.STAT && console.STAT(S, ((DBG||ctx).gk = +new Date) - S, 'got keys');
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function got(){
@@ -1467,7 +1466,7 @@
 							to.push(p.url || p.pid || p.id);
 							if(++i > 6){ break }
 						}
-						if(i > 1){ msg['><'] = to.join() }
+						if(i > 1){ msg['><'] = to.join() } // TODO: BUG! This gets set regardless of peers sent to! Detect?
 					}
 					if(put = meta.$put){
 						tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
