@@ -283,7 +283,7 @@
 				if(!at.ask(msg['@'], msg)){ // is this machine listening for an ack?
 					DBG && (DBG.u = +new Date);
 					if(msg.put){ put(msg); return } else
-					if(msg.get){ Gun.on._get(msg, gun) }
+					if(msg.get){ Gun.on.get(msg, gun) }
 				}
 				DBG && (DBG.uc = +new Date);
 				eve.to.next(msg);
@@ -344,7 +344,7 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
-			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!");
+			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync.
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -352,8 +352,8 @@
 				if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
 				var now = State(),u;
-				if(state > now){ /*console.log("setTo");*/ /*setTo;*/ return } // TODO: BUG!!!!
-				if(state < was){ /*console.log("old");*/ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
+				if(state > now){ console.log("setTo"); /*setTo;*/ return } // TODO: BUG!!!!
+				if(state < was){ console.log("old"); /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well?
 					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ return } // same
 				}
@@ -413,7 +413,7 @@
 		}());
 
 		;(function(){
-			Gun.on._get = function(msg, gun){
+			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'], tmp;
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
@@ -447,11 +447,15 @@
 					// we still need to trigger a pull/merge from peers.
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
-				var S = +new Date;
-				var ack = msg['#'], id = text_rand(9), keys = Object.keys(node||'').sort(), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0;
+				ack(msg, node);
+				root.on('get', msg); // send GET to storage adapters.
+			}
+			function ack(msg, node){
+				var S = +new Date, ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
+				var to = msg['#'], id = text_rand(9), keys = Object.keys(node||'').sort(), soul = ((node||'')._||'')['#'], kl = keys.length, j = 0, root = msg.$._.root, F = (node === root.graph[soul]);
 				console.STAT && console.STAT(S, ((DBG||ctx).gk = +new Date) - S, 'got keys');
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
-				node && (function got(){
+				node && (function go(){
 					S = +new Date;
 					var i = 0, k, put = {};
 					while(i < 9 && (k = keys[i++])){
@@ -459,18 +463,16 @@
 					}
 					keys = keys.slice(i);
 					(tmp = {})[soul] = put; put = tmp;
-					var faith = function(){}; faith.ram = faith.faith = true; // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
+					var faith; if(F){ faith = function(){}; faith.ram = faith.faith = true; } // HNPERF: We're testing performance improvement by skipping going through security again, but this should be audited.
 					tmp = keys.length;
 					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
-					root.on('in', {'@': ack, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), ram: 1, $: gun, _: faith, DBG: DBG});
+					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
-					//root.on('in', {'@': ack, '#': text_rand(9), put: put, '%': tmp? ((j+=i)+'/'+kl) : u, ram: 1, $: gun, _: faith}); console.log("???", j+'/'+kl);
 					if(!tmp){ return }
-					setTimeout.turn(got);
+					setTimeout.turn(go);
 				}());
-				root.on('get', msg); // send GET to storage adapters.
-			}
+			} Gun.on.get.ack = ack;
 		}());
 
 		;(function(){
@@ -1270,7 +1272,7 @@
 			var opt = root.opt || {};
 			opt.log = opt.log || console.log;
 			opt.gap = opt.gap || opt.wait || 0;
-			opt.pack = opt.pack || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
+			opt.pack = opt.pack || 9 * 1000;//(opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
 			var puff = setTimeout.turn || setTimeout;
 			var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
@@ -1454,10 +1456,10 @@
 					if('string' == typeof msg){ return msg }
 					var hash = msg['##'], ack = msg['@'];
 					if(hash && ack){
-						dup_track(ack+hash);//.it = it(msg);
+						if(dup_check(ack+hash)){ return false } // memory & storage may ack the same thing, this dedups that. //dup_track(ack+hash);//.it = it(msg);
 						if((tmp = (dup.s[ack]||'').it) || ((tmp = mesh.last) && ack === tmp['#'])){
-							if(hash === tmp['##']){ return false }
-							tmp['##'] = hash;
+							if(hash === tmp['##']){ return false } // if ask has a matching hash, acking is optional.
+							if(!tmp['##']){ tmp['##'] = hash } // if none, add our hash to ask so anyone we relay to can dedup. // NOTE: May only check against 1st ack chunk, 2nd+ won't know and still stream back to relaying peers which may then dedup. Any way to fix this wasted bandwidth? I guess force rate limiting breaking change, that asking peer has to ask for next lexical chunk.
 						}
 					}
 					if(!msg.dam){
@@ -1669,7 +1671,8 @@
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				if(data){ (tmp = {})[soul] = data } // back into a graph.
-				//setTimeout(function(){	
+				//setTimeout(function(){
+				//Gun.on.get.ack(msg, data); //
 				root.on('in', {'@': msg['#'], put: tmp, lS:1});// || root.$});
 				//}, Math.random() * 10); // FOR TESTING PURPOSES!
 			});
