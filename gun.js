@@ -419,7 +419,6 @@
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
 				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
-				// TODO: localStorage reply did not get chunked.
 				// TODO: Moving quick hacks fixing these things to axe for now.
 				// TODO: a lot of GET #foo then GET #foo."" happening, why?
 				// TODO: DAM's ## hash check, on same get ACK, producing multiple replies still, maybe JSON vs YSON?
@@ -447,7 +446,7 @@
 					// we still need to trigger a pull/merge from peers.
 				}
 				//Gun.window? Gun.obj.copy(node) : node; // HNPERF: If !browser bump Performance? Is this too dangerous to reference root graph? Copy / shallow copy too expensive for big nodes. Gun.obj.to(node); // 1 layer deep copy // Gun.obj.copy(node); // too slow on big nodes
-				ack(msg, node);
+				node && ack(msg, node);
 				root.on('get', msg); // send GET to storage adapters.
 			}
 			function ack(msg, node){
@@ -472,6 +471,7 @@
 					if(!tmp){ return }
 					setTimeout.turn(go);
 				}());
+				if(!node){ root.on('in', {'@': msg['#']}) } // TODO: I don't think I like this, the default lS adapter uses this but "not found" is a sensitive issue, so should probably be handled more carefully/individually.
 			} Gun.on.get.ack = ack;
 		}());
 
@@ -1670,10 +1670,9 @@
 				if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
-				if(data){ (tmp = {})[soul] = data } // back into a graph.
+				//if(data){ (tmp = {})[soul] = data } // back into a graph.
 				//setTimeout(function(){
-				//Gun.on.get.ack(msg, data); //
-				root.on('in', {'@': msg['#'], put: tmp, lS:1});// || root.$});
+				Gun.on.get.ack(msg, data); //root.on('in', {'@': msg['#'], put: tmp, lS:1});// || root.$});
 				//}, Math.random() * 10); // FOR TESTING PURPOSES!
 			});
 
