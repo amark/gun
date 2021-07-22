@@ -348,30 +348,22 @@
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
+				
+				var DBG = ctx.DBG; if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
-				if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
-
-				var now = State(),u;
-				if(state > now){ console.log("setTo"); /*setTo;*/ return } // TODO: BUG!!!!
-				if(state < was){ console.log("old"); /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
+				var now = State(), u;
+				if(state > now){
+					setTimeout(function(){ ham(val, key, soul, state, msg) }, (tmp = state - now) > MD? MD : tmp); // Max Defer 32bit. :(
+					console.STAT && console.STAT(((DBG||ctx).Hf = +new Date), tmp, 'future');
+					return;
+				}
+				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well?
 					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ return } // same
 				}
-				/*if(!is.incoming){
-					if(is.defer){
-						var to = state - machine;
-						setTimeout(function(){
-							ham(val, key, soul, state, msg);
-						}, to > MD? MD : to); // setTimeout Max Defer 32bit :(
-						if(!ctx.to){ root.on('in', {'@': msg['#'], err: to}) } ctx.to = 1; // TODO: This causes too many problems unless sending peers auto-retry.
-						return to;
-					}
-					return;
-				}*/
-				//ctx.all++;
 				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
-				var DBG = ctx.DBG; DBG && (DBG.ph = DBG.ph || +new Date);
+				DBG && (DBG.ph = DBG.ph || +new Date);
 				root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
 			function map(msg){

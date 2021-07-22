@@ -29,6 +29,7 @@
 		(Gun.AXE = AXE).GUN = AXE.Gun = Gun;
     var ST = 0;
 
+    if(!Gun.window){ try{ USE('./lib/axe', 1) }catch(e){} }
 		Gun.on('opt', function(at){ start(at) ; this.to.next(at) }); // make sure to call the "next" middleware adapter.
 
 		function start(root){
@@ -47,7 +48,7 @@
 				tmp = peers[id = key] = peers[id] || {};
 				tmp.id = tmp.url = id;
 			});
-			tmp = peers[id = 'https://gun-manhattan.herokuapp.com/gun'] = peers[id] || {};
+			tmp = peers[id = 'https://mg-gun-manhattan.herokuapp.com/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root); // DAM!
