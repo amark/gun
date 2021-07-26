@@ -1,9 +1,12 @@
 /** @see https://gun.eco/docs/SEA */
 export interface IGunStaticSEA {
+
     /** If you want SEA to throw while in development, turn SEA.throw = true on, but please do not use this in production. */
     throw?: boolean;
+
     /** Last known error */
     err?: Error;
+
     /**
      * This gives you a Proof of Work (POW) / Hashing of Data
      * @param data The data to be hashed, work to be performed on.
@@ -22,6 +25,7 @@ export interface IGunStaticSEA {
         hash: string;
         length: any;
     }>): Promise<string | undefined>;
+
     /**
      * This generates a cryptographically secure public/private key pair - be careful not to leak the private keys!
      * Note: API subject to change we may change the parameters to accept data and work, in addition to generation.
@@ -29,24 +33,28 @@ export interface IGunStaticSEA {
      * The default cryptographic primitives for the asymmetric keys are ECDSA for signing and ECDH for encryption.
      */
     pair(cb: (data: CryptoKeyPair) => void, opt?: {}): Promise<CryptoKeyPair | undefined>;
+
     /**
      * Adds a signature to a message, for data that you want to prevent attackers tampering with.
      * @param data is the content that you want to prove is authorized.
      * @param pair is from .pair.
      */
     sign(data: any, pair: CryptoKeyPair): Promise<string | undefined>;
+
     /**
      * Gets the data if and only if the message can be verified as coming from the person you expect.
      * @param message is what comes from .sign.
      * @param pair from .pair or its public key text (pair.pub).
      */
     verify(message: any, pair: CryptoKeyPair | string): Promise<unknown>;
+
     /**
      * Takes some data that you want to keep secret and encrypts it so nobody else can read it.
      * @param data is the content that you want to encrypt.
      * @param pair from .pair or a passphrase you want to use as a cypher to encrypt with.
      */
     encrypt(data: any, pair: CryptoKeyPair | string): Promise<string>;
+
     /**
      * Read the secret data, if and only if you are allowed to.
      * @param message is what comes from .encrypt.
