@@ -2,7 +2,9 @@ import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, A
 import { IGunConstructorOptions } from './options';
 
 declare type ITSResolvable<R> = R | PromiseLike<R>;
+
 export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey = any, IsTop extends 'pre_root' | 'root' | false = false> {
+
     /**
      * Save data into gun, syncing it with your connected peers.
      *
@@ -17,7 +19,8 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * @param callback invoked on each acknowledgment
      * @param options additional options (used for specifying certs)
      */
-    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DisallowArray<DataType>>>>, callback?: AckCallback|null, options?: {opt?:{cert?:string}}): IGunChainReference<DataType, ReferenceKey, IsTop>;
+    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DisallowArray<DataType>>>>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<DataType, ReferenceKey, IsTop>;
+
     /**
      * Where to read data from.
      * @param key The key is the ID or property name of the data that you saved from earlier
@@ -31,10 +34,11 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Here the type of callback respect to the actual behavior**
      */
     get<K extends keyof DataType>(key: ArrayOf<DataType> extends never ? K : ArrayOf<DataType>, callback?: (
-    /** the raw data. Internal node of gun. Will not typed here. */
-    paramA: Record<'gun' | '$' | 'root' | 'id' | 'back' | 'on' | 'tag' | 'get' | 'soul' | 'ack' | 'put', any>, 
-    /** the key, ID, or property name of the data. */
-    paramB: Record<'off' | 'to' | 'next' | 'the' | 'on' | 'as' | 'back' | 'rid' | 'id', any>) => void): IGunChainReference<DataType[K], K, IsTop extends 'pre_root' ? 'root' : false>;
+        /** the raw data. Internal node of gun. Will not typed here. */
+        paramA: Record<'gun' | '$' | 'root' | 'id' | 'back' | 'on' | 'tag' | 'get' | 'soul' | 'ack' | 'put', any>,
+        /** the key, ID, or property name of the data. */
+        paramB: Record<'off' | 'to' | 'next' | 'the' | 'on' | 'as' | 'back' | 'rid' | 'id', any>) => void): IGunChainReference<DataType[K], K, IsTop extends 'pre_root' ? 'root' : false>;
+
     /**
      * Change the configuration of the gun database instance.
      * @param options The options argument is the same object you pass to the constructor.
@@ -43,6 +47,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * @returns No mention in the document, behavior as `ChainReference<DataType, ReferenceKey>`
      */
     opt(options: IGunConstructorOptions): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Move up to the parent context on the chain.
      *
@@ -52,6 +57,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * @returns Impossible to determinate final type. You must cast it by yourself.
      */
     back(amount?: number): IGunChainReference;
+
     /**
      * Subscribe to updates and changes on a node or property in realtime.
      * @param option Currently, the only option is to filter out old data, and just be given the changes.
@@ -66,6 +72,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     on(callback: (data: DisallowPrimitives<IsTop, AlwaysDisallowedType<ArrayAsRecord<DataType>>>, key: ReferenceKey) => void, option?: {
         change: boolean;
     } | boolean): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Get the current data without subscribing to updates. Or `undefined` if it cannot be found.
      * @returns In the document, it said the return value may change in the future. Don't rely on it.
@@ -73,6 +80,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     once(callback?: (data: (DisallowPrimitives<IsTop, AlwaysDisallowedType<ArrayAsRecord<DataType>>>) | undefined, key: ReferenceKey) => void, option?: {
         wait: number;
     }): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * **.set does not means 'set data', it means a Mathematical Set**
      *
@@ -88,19 +96,22 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     set(data: AlwaysDisallowedType<DataType extends Array<infer U> ? U extends {
         [key: string]: any;
         [key: number]: any;
-    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback|null, options?: {opt?:{cert?:string}}): IGunChainReference<ArrayOf<DataType>>;
+    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<ArrayOf<DataType>>;
+
     /**
      * Map iterates over each property and item on a node, passing it down the chain,
      * behaving like a forEach on your data.
      * It also subscribes to every item as well and listens for newly inserted items.
      */
     map(callback?: (value: ArrayOf<DataType>, key: DataType) => ArrayOf<DataType> | undefined): IGunChainReference<ArrayOf<DataType>, ReferenceKey>;
+
     /**
      * Undocumented, but extremely useful and mentioned in the document
      *
      * Remove **all** listener on this node.
      */
     off(): void;
+
     /**
      *
      * Path does the same thing as `.get` but has some conveniences built in.
@@ -112,6 +123,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/path.js"></script>`!
      */
     path?(path: string | string[]): IGunChainReference;
+
     /**
      * Handle cases where data can't be found.
      *
@@ -119,6 +131,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/not.js"></script>`!
      */
     not?(callback: (key: ReferenceKey) => void): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Open behaves very similarly to gun.on, except it gives you the **full depth of a document** on every update.
      * It also works with graphs, tables, or other data structures. Think of it as opening up a live connection to a document.
@@ -127,6 +140,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/open.js"></script>`!
      */
     open?(callback: (data: ArrayAsRecord<DataType>) => void): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Loads the full object once. It is the same as `open` but with the behavior of `once`.
      *
@@ -134,6 +148,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/load.js"></script>`!
      */
     load?(callback: (data: ArrayAsRecord<DataType>) => void): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Returns a promise for you to use.
      *
@@ -142,6 +157,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      */
     then?<R, TResult1 = ArrayAsRecord<DataType>>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
     then?<TResult1 = ArrayAsRecord<DataType>>(): Promise<TResult1>;
+
     /**
      * Returns a promise for you to use.
      *
@@ -158,6 +174,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
         key: ReferenceKey;
         gun: IGunChainReference<DataType, ReferenceKey>;
     }>(): Promise<TResult1>;
+
     /**
      * bye lets you change data after that browser peer disconnects.
      * This is useful for games and status messages,
@@ -169,6 +186,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     bye?(): {
         put(data: DisallowArray<Saveable<DataType>>): void;
     };
+
     /**
      * Say you save some data, but want to do something with it later, like expire it or refresh it.
      * Well, then `later` is for you! You could use this to easily implement a TTL or similar behavior.
@@ -177,6 +195,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/later.js"></script>`!
      */
     later?(callback: (this: IGunChainReference<DataType, ReferenceKey>, data: ArrayAsRecord<DataType>, key: ReferenceKey) => void, seconds: number): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * After you save some data in an unordered list, you may need to remove it.
      *
@@ -184,14 +203,17 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/unset.js"></script>`!
      */
     unset?(data: ArrayOf<DataType>): IGunChainReference<DataType, ReferenceKey>;
+
     /**
      * Subscribes to all future events that occur on the Timegraph and retrieve a specified number of old events
      *
      * **Warning**: The Timegraph extension isn't required by default, you would need to include at "gun/lib/time.js"
      */
     time?(callback: (data: ArrayOf<DataType>, key: ReferenceKey, time: number) => void, alsoReceiveNOldEvents?: number): IGunChainReference<DataType, ReferenceKey>;
+
     /** Pushes data to a Timegraph with it's time set to Gun.state()'s time */
     time?(data: ArrayOf<DataType>): void;
+
     /**
      * Creates a new user and calls callback upon completion.
      * @param alias Username or Alias which can be used to find a user.
@@ -205,6 +227,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     } | {
         err: string;
     }) => void, opt?: {}): IGunChainReference;
+
     /**
      * Authenticates a user, previously created via User.create.
      * @param alias Username or Alias which can be used to find a user.
@@ -227,6 +250,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     } | {
         err: string;
     }) => void, opt?: {}): IGunChainReference;
+
     /**
      * Authenticates a user, previously created via User.create.
      * @param pair Public/Private Key Pair
@@ -248,16 +272,19 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     } | {
         err: string;
     }) => void, opt?: {}): IGunChainReference;
+
     /**
      * Returns the key pair in the form of an object as below.
      */
     pair(): IGunCryptoKeyPair;
+
     /**
      * Log out currently authenticated user. Parameters are unused in the current implementation.
      * @param opt unused in current implementation.
      * @param cb unused in current implementation.
      */
     leave(opt?: never, cb?: never): IGunChainReference;
+
     /**
      * Deletes a user from the current gun instance and propagates the delete to other peers.
      * @param alias Username or alias.
@@ -267,6 +294,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     delete(alias: string, pass: string, cb?: (ack: {
         ok: 0;
     }) => void): Promise<void>;
+
     /**
      * Recall saves a users credentials in sessionStorage of the browser. As long as the tab of your app is not closed the user stays logged in, even through page refreshes and reloads.
      * @param opt option object If you want to use browser sessionStorage to allow users to stay logged in as long as the session is open, set opt.sessionStorage to true
@@ -275,6 +303,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     recall(opt?: {
         sessionStorage: boolean;
     }, cb?: Parameters<IGunChainReference['auth']>[2]): IGunChainReference;
+
     /**
      * @param publicKey If you know a users publicKey you can get their user graph and see any unencrypted data they may have stored there.
      */

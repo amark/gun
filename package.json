@@ -66,8 +66,11 @@
   },
   "peerDependencies": {
     "bufferutil": "^4.0.1",
-    "utf-8-validate": "^5.0.2",
-    "text-encoding": "^0.7.0"
+    "text-encoding": "^0.7.0",
+    "utf-8-validate": "^5.0.2"
+  },
+  "tsd": {
+    "directory": "types"
   },
   "devDependencies": {
     "@types/ip": "^1.1.0",
@@ -81,6 +84,7 @@
     "mocha": "^6.2.0",
     "panic-manager": "^1.2.0",
     "panic-server": "^1.1.1",
+    "tsd": "^0.17.0",
     "uglify-js": "^3.6.0"
   }
 }
