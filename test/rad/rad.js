@@ -175,6 +175,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     it('deleted', function(done){
         this.timeout(60 * 1000);
         if(!Gun.window){ return done() }
+        //await new Promise(function(res){ indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ res() } } );
         indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
     });
 
@@ -427,14 +428,14 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             }
         });
     });
-
-    it('small range twice', function(done){
+    
+    it('small range twice', async function(done){
         var check = {};
+        var gun = Gun();
         gun.get('peoplez').get('alice').put({cool: 'beans'});
         gun.get('peoplez').get('alexander').put({nice: 'beans'});
         gun.get('peoplez').get('bob').put({lol: 'beans'});
         gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
-            //console.log("<<<<<<<<", k, d);
             expect('a' === k[0]).to.be.ok();
             check[k] = (check[k] || 0) + 1;
             expect(check[k]).to.be(1);
@@ -446,7 +447,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         function next(){
         var neck = {};
         gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
-            //console.log("<<<<<<<<<<<<<<<<", k, d);
             expect('a' === k[0]).to.be.ok();
             neck[k] = d;
             if(neck.alice && neck.alexander){
@@ -491,7 +491,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             to = setTimeout(function(){
                 expect(Object.empty(all)).to.be.ok();
                 done();
-            },100);
+            },300);
         });
     });
 
@@ -502,14 +502,21 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
+            if(!Object.empty(all)){ return }
             clearTimeout(to);
             to = setTimeout(function(){
                 expect(Object.empty(all)).to.be.ok();
                 done();
+                setTimeout(function(){
+        gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+        });
+                },500);
             },100);
         });
     });
