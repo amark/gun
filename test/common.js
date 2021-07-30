@@ -1192,8 +1192,8 @@ describe('Gun', function(){
 					if(!done.a || !done.b){ return }
 					if(done.c){ return } done.c = 1;
 					var g = gun._.graph;
-					expect(Object.keys(g['zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
-					expect(Object.keys(g['zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+					expect(Object.keys(g['zasdf']||'').sort()).to.be.eql(['_', 'a', 'foo'].sort());
+					expect(Object.keys(g['zasdf/foo']||'').sort()).to.be.eql(['_', 'bar', 'ah'].sort());
 					done();
 				};
 			});
@@ -2736,7 +2736,7 @@ describe('Gun', function(){
 			},500);});
 		});*/
 
-		it('get node after recursive field', function(done){
+		it.only('get node after recursive field', function(done){
 			var bob = {age: 29, name: "Bob!"};
 			var cat = {name: "Fluffy", species: "kitty"};
 			var user = {bob: bob};

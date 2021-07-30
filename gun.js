@@ -773,7 +773,7 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
-			if((this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
+			if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
 			// manhattan:
 			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
@@ -814,8 +814,8 @@
 			} else
 			if('function' == typeof key){
 				if(true === cb){ return soul(this, key, cb, as), this }
-
-				var gun = this, cat = gun._, opt = cb || {}, root = cat.root, id;
+				gun = this;
+				var cat = gun._, opt = cb || {}, root = cat.root, id;
 				opt.at = cat;
 				opt.ok = key;
 				var wait = {}; // can we assign this to the at instead, like in once?
@@ -862,7 +862,6 @@
 				cat.on('out', {get: {}});
 				root.pass = tmp;
 				return gun;
-
 			} else
 			if('number' == typeof key){
 				return this.get(''+key, cb, as);
@@ -870,16 +869,13 @@
 			if('string' == typeof (tmp = valid(key))){
 				return this.get(tmp, cb, as);
 			} else
-			if(Object.plain(key)){
-				gun = this;
-				if(tmp = ((tmp = key['#'])||'')['='] || tmp){ return gun.get(tmp) }
-				(tmp = gun.chain()._).lex = key; // LEX: // TODO! Consider making this only a `.map(` thing?
-				gun.on('in', function(eve){ this.to.next(eve); tmp.on('in', eve) }); // should filter here but ^
-				return tmp.$;
-			} else {
-				(as = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
-				if(cb){ cb.call(as, as._.err) }
-				return as;
+			if(tmp = this.get.next){
+				gun = tmp(this, key);
+			}
+			if(!gun){
+				(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+				if(cb){ cb.call(gun, gun._.err) }
+				return gun;
 			}
 			if(tmp = this._.stun){ // TODO: Refactor?
 				gun._.stun = gun._.stun || tmp;
@@ -1200,7 +1196,19 @@
 	})(USE, './on');
 
 	;USE(function(module){
-		var Gun = USE('./index');
+		var Gun = USE('./index'), next = Gun.chain.get.next;
+		Gun.chain.get.next = function(gun, lex){ var tmp;
+			if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
+			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
+			(tmp = gun.chain()._).lex = lex; // LEX!
+			gun.on('in', function(eve){
+				if(String.match(eve.get|| (eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
+					tmp.on('in', eve);
+				}
+				this.to.next(eve);
+			});
+			return tmp.$;
+		}
 		Gun.chain.map = function(cb, opt, t){
 			var gun = this, cat = gun._, lex, chain;
 			if(Object.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
