@@ -3,7 +3,7 @@ branches:
   except:
     - debug
 node_js:
-  - 10
+  - 14.17.4
 cache:
   directories:
     - node_modules
