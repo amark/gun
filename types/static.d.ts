@@ -3,7 +3,6 @@ import { IGunConstructorOptions } from './options';
 import { IGunStaticNode } from './static/node';
 import { IGunStaticSEA } from './static/sea';
 export interface IGunStatic {
-
     /**
      * @description
      * no parameters creates a local datastore using the default persistence layer, either localStorage or Radisk.
@@ -15,7 +14,6 @@ export interface IGunStatic {
     <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
     new <DataType = any>(options?: string | string[] | IGunConstructorOptions): IGunChainReference<DataType, any, 'pre_root'>;
     readonly node: IGunStaticNode;
-
     /** @see https://gun.eco/docs/SEA */
     readonly SEA: IGunStaticSEA;
     readonly version: string;
