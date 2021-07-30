@@ -1,4 +1,4 @@
-import { AlwaysDisallowedType, DisallowPrimitives, DisallowArray, AckCallback, ArrayOf, ArrayAsRecord, Saveable, IGunCryptoKeyPair } from './types';
+import { AlwaysDisallowedType, DisallowPrimitives, AckCallback, Saveable, IGunCryptoKeyPair } from './types';
 import { IGunConstructorOptions } from './options';
 
 declare type ITSResolvable<R> = R | PromiseLike<R>;
@@ -19,33 +19,47 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * @param callback invoked on each acknowledgment
      * @param options additional options (used for specifying certs)
      */
-    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DisallowArray<DataType>>>>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<DataType, ReferenceKey, IsTop>;
+    put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DataType>>>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<DataType, ReferenceKey, IsTop>;
 
     /**
-     * Where to read data from.
-     * @param key The key is the ID or property name of the data that you saved from earlier
-     *  (or that will be saved later).
-     * * Note that if you use .put at any depth after a get it first reads the data and then writes, merging the data as a partial update.
-     * @param callback You will usually be using gun.on or gun.once to actually retrieve your data,
-     * not this callback (it is intended for more low level control, for module and extensions).
+     * **.set does not means 'set data', it means a Mathematical Set**
      *
-     * **Avoid use callback. The type in the document may be wrong.**
+     * Add a unique item to an unordered list.
+     * `gun.set` works like a mathematical set, where each item in the list is unique.
+     * If the item is added twice, it will be merged.
      *
-     * **Here the type of callback respect to the actual behavior**
+     * **This means only objects, for now, are supported.**
+     * @param data the object to add to the set
+     * @param callback optional function to invoke when the operation is complete
+     * @param options additional options (used for specifying certs)
      */
-    get<K extends keyof DataType>(key: ArrayOf<DataType> extends never ? K : ArrayOf<DataType>, callback?: (
+    set<K extends keyof DataType>(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DataType[K]>>>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<DataType, ReferenceKey, IsTop>;
+
+    /**
+    * Where to read data from.
+    * @param key The key is the ID or property name of the data that you saved from earlier
+    *  (or that will be saved later).
+    * * Note that if you use .put at any depth after a get it first reads the data and then writes, merging the data as a partial update.
+    * @param callback You will usually be using gun.on or gun.once to actually retrieve your data,
+    * not this callback (it is intended for more low level control, for module and extensions).
+    *
+    * **Avoid use callback. The type in the document may be wrong.**
+    *
+    * **Here the type of callback respect to the actual behavior**
+    */
+    get<K extends keyof DataType>(key: Exclude<K, Array<any>>, callback?: (
         /** the raw data. Internal node of gun. Will not typed here. */
         paramA: Record<'gun' | '$' | 'root' | 'id' | 'back' | 'on' | 'tag' | 'get' | 'soul' | 'ack' | 'put', any>,
         /** the key, ID, or property name of the data. */
         paramB: Record<'off' | 'to' | 'next' | 'the' | 'on' | 'as' | 'back' | 'rid' | 'id', any>) => void): IGunChainReference<DataType[K], K, IsTop extends 'pre_root' ? 'root' : false>;
 
     /**
-     * Change the configuration of the gun database instance.
-     * @param options The options argument is the same object you pass to the constructor.
-     *
-     * The options's properties replace those in the instance's configuration but options.peers are **added** to peers known to the gun instance.
-     * @returns No mention in the document, behavior as `ChainReference<DataType, ReferenceKey>`
-     */
+    * Change the configuration of the gun database instance.
+    * @param options The options argument is the same object you pass to the constructor.
+    *
+    * The options's properties replace those in the instance's configuration but options.peers are **added** to peers known to the gun instance.
+    * @returns No mention in the document, behavior as `ChainReference<DataType, ReferenceKey>`
+    */
     opt(options: IGunConstructorOptions): IGunChainReference<DataType, ReferenceKey>;
 
     /**
@@ -69,7 +83,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * Since gun streams data, the callback will probably be called multiple times as new chunk comes in.
      * To remove a listener call .off() on the same property or node.
      */
-    on(callback: (data: DisallowPrimitives<IsTop, AlwaysDisallowedType<ArrayAsRecord<DataType>>>, key: ReferenceKey) => void, option?: {
+    on(callback: (data: DisallowPrimitives<IsTop, AlwaysDisallowedType<DataType>>, key: ReferenceKey) => void, option?: {
         change: boolean;
     } | boolean): IGunChainReference<DataType, ReferenceKey>;
 
@@ -77,33 +91,16 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * Get the current data without subscribing to updates. Or `undefined` if it cannot be found.
      * @returns In the document, it said the return value may change in the future. Don't rely on it.
      */
-    once(callback?: (data: (DisallowPrimitives<IsTop, AlwaysDisallowedType<ArrayAsRecord<DataType>>>) | undefined, key: ReferenceKey) => void, option?: {
+    once(callback?: (data: (DisallowPrimitives<IsTop, AlwaysDisallowedType<Record<string, DataType>>>) | undefined, key: ReferenceKey) => void, option?: {
         wait: number;
     }): IGunChainReference<DataType, ReferenceKey>;
-
-    /**
-     * **.set does not means 'set data', it means a Mathematical Set**
-     *
-     * Add a unique item to an unordered list.
-     * `gun.set` works like a mathematical set, where each item in the list is unique.
-     * If the item is added twice, it will be merged.
-     *
-     * **This means only objects, for now, are supported.**
-     * @param data the object to add to the set
-     * @param callback optional function to invoke when the operation is complete
-     * @param options additional options (used for specifying certs)
-     */
-    set(data: AlwaysDisallowedType<DataType extends Array<infer U> ? U extends {
-        [key: string]: any;
-        [key: number]: any;
-    } ? ArrayOf<DataType> : never : never>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<ArrayOf<DataType>>;
 
     /**
      * Map iterates over each property and item on a node, passing it down the chain,
      * behaving like a forEach on your data.
      * It also subscribes to every item as well and listens for newly inserted items.
      */
-    map(callback?: (value: ArrayOf<DataType>, key: DataType) => ArrayOf<DataType> | undefined): IGunChainReference<ArrayOf<DataType>, ReferenceKey>;
+    map(callback?: (value: DataType, key: string) => DataType | undefined): IGunChainReference<DataType, ReferenceKey>;
 
     /**
      * Undocumented, but extremely useful and mentioned in the document
@@ -139,7 +136,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/open.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/open.js"></script>`!
      */
-    open?(callback: (data: ArrayAsRecord<DataType>) => void): IGunChainReference<DataType, ReferenceKey>;
+    open?(callback: (data: DataType) => void): IGunChainReference<DataType, ReferenceKey>;
 
     /**
      * Loads the full object once. It is the same as `open` but with the behavior of `once`.
@@ -147,7 +144,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/load.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/load.js"></script>`!
      */
-    load?(callback: (data: ArrayAsRecord<DataType>) => void): IGunChainReference<DataType, ReferenceKey>;
+    load?(callback: (data: DataType) => void): IGunChainReference<DataType, ReferenceKey>;
 
     /**
      * Returns a promise for you to use.
@@ -155,8 +152,8 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/then.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>`!
      */
-    then?<R, TResult1 = ArrayAsRecord<DataType>>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
-    then?<TResult1 = ArrayAsRecord<DataType>>(): Promise<TResult1>;
+    // then?<R, TResult1 = DataType>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
+    // then?<TResult1 = DataType>(): Promise<TResult1>;
 
     /**
      * Returns a promise for you to use.
@@ -165,12 +162,12 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>`!
      */
     promise?<R, TResult1 = {
-        put: ArrayAsRecord<DataType>;
+        put: Record<string, DataType>;
         key: ReferenceKey;
         gun: IGunChainReference<DataType, ReferenceKey>;
     }>(onfulfilled: (value: TResult1) => ITSResolvable<R>): Promise<R>;
     promise?<TResult1 = {
-        put: ArrayAsRecord<DataType>;
+        put: Record<string, DataType>;
         key: ReferenceKey;
         gun: IGunChainReference<DataType, ReferenceKey>;
     }>(): Promise<TResult1>;
@@ -184,7 +181,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/bye.js"></script>`!
      */
     bye?(): {
-        put(data: DisallowArray<Saveable<DataType>>): void;
+        put(data: Saveable<DataType>): void;
     };
 
     /**
@@ -194,7 +191,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/later.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/later.js"></script>`!
      */
-    later?(callback: (this: IGunChainReference<DataType, ReferenceKey>, data: ArrayAsRecord<DataType>, key: ReferenceKey) => void, seconds: number): IGunChainReference<DataType, ReferenceKey>;
+    later?(callback: (this: IGunChainReference<DataType, ReferenceKey>, data: Record<string, DataType>, key: ReferenceKey) => void, seconds: number): IGunChainReference<DataType, ReferenceKey>;
 
     /**
      * After you save some data in an unordered list, you may need to remove it.
@@ -202,17 +199,17 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * **Warning**: Not included by default! You must include it yourself via `require('gun/lib/unset.js')` or
      * `<script src="https://cdn.jsdelivr.net/npm/gun/lib/unset.js"></script>`!
      */
-    unset?(data: ArrayOf<DataType>): IGunChainReference<DataType, ReferenceKey>;
+    unset?<K extends keyof DataType>(data: K): IGunChainReference<DataType, ReferenceKey>;
 
     /**
      * Subscribes to all future events that occur on the Timegraph and retrieve a specified number of old events
      *
      * **Warning**: The Timegraph extension isn't required by default, you would need to include at "gun/lib/time.js"
      */
-    time?(callback: (data: ArrayOf<DataType>, key: ReferenceKey, time: number) => void, alsoReceiveNOldEvents?: number): IGunChainReference<DataType, ReferenceKey>;
+    time?<K extends keyof DataType>(callback: (data: DataType[K], key: ReferenceKey, time: number) => void, alsoReceiveNOldEvents?: number): IGunChainReference<DataType, ReferenceKey>;
 
     /** Pushes data to a Timegraph with it's time set to Gun.state()'s time */
-    time?(data: ArrayOf<DataType>): void;
+    time?<K extends keyof DataType>(data: DataType[K]): void;
 
     /**
      * Creates a new user and calls callback upon completion.

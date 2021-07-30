@@ -23,26 +23,32 @@ interface AppState {
     bool: boolean;
     specstr: 'a' | 'b';
     obj: {
-      arr2: Array<{ foo: number; bar: string }>;
+      arr2: Record<string, { foo: number; bar: string }>;
     };
   };
-  chatRoom: Array<{ by: string; message: string }>;
+  chatRoom: Record<string, { by: string; message: string }>;
 }
 
 const app = new Gun<AppState>();
+
+// Put and get something that was previously put
 app.get('object')
   .get('bool')
   .put(true);
 app.get('object')
   .get('num')
   .put(1);
-app.get('object')
-  .get('obj')
-  .get('arr2')
-  .set({ foo: 1, bar: '2' });
 app.get('object').put({
   bool: true
 });
+
+// Set and get something that was inserted using `set`.
+const appSet = app.get('object')
+  .get('obj')
+  .get('arr2');
+appSet.set({ foo: 1, bar: '2' });
+// getting an auto-generated key may return an undefined value.
+appSet.get('stringIdentifier').once(a => a?.foo);
 
 expectError(
   app.get('object')
