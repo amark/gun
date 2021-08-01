@@ -4,6 +4,7 @@ html, body {
 	position: relative;
   line-height: 1.5;
   font-size: 18pt;
+  f-ont-size: max(18pt, 2?vw);
 }
 
 div, ul, ol, li, p, span, form, button, input, textarea, img {
@@ -14,6 +15,7 @@ div, ul, ol, li, p, span, form, button, input, textarea, img {
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   box-sizing: border-box;
+  font: inherit;
 }
 
 a, button, input, textarea {
@@ -21,10 +23,18 @@ a, button, input, textarea {
   border: inherit;
   color: inherit;
   text-decoration: inherit;
+  outline: none;
+}
+a:focus, button:focus, input[type=button]:focus, input[type=submit]:focus {
+  animation: pulse 2s infinite;
 }
 
-input, textarea {
+input:not([type=button]):not([type=submit]), textarea {
 	width: 100%;
+}
+::placeholder, .hint {
+  color: inherit;
+  opacity: 0.3;
 }
 
 ul, li {
@@ -92,8 +102,11 @@ p + p {
   vertical-align: bottom;
 }
 
-.rim { margin: 2%; }
-.gap { padding: 3%; }
+.rim { margin: 1%; }
+.gap {
+  padding: 3%;
+  padding: clamp(0.5em, 3%, 1.5em);
+}
 .stack { line-height: 0; }
 .crack { margin-bottom: 1%; }
 .sit { margin-bottom: 0; }
@@ -110,16 +123,12 @@ p + p {
   float: none;
   clear: both;
 }
-.unit, .symbol {
-  display: inline-block;
-  vertical-align: inherit;
-}
 
 .leak { overflow: visible; }
 .hold { overflow: hidden; }
 
 .act {
-  display: block;
+  /*display: block;*/
   font-weight: normal;
   text-decoration: none;
   -webkit-transition: all 0.3s;
@@ -127,6 +136,10 @@ p + p {
   cursor: pointer;
 }
 
+.unit, .symbol {
+  display: inline-block;
+  vertical-align: inherit;
+}
 .sap { border-radius: 0.1em; }
 .jot { border-bottom: 1px dashed #95B2CA; }
 
@@ -137,7 +150,6 @@ p + p {
   font-size: 36pt;
   font-size: 6.5vmax;
 }
-
 
 .red { background: #ea3224; }
 .green { background: #33cc33; }

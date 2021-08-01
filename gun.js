@@ -570,6 +570,7 @@
 			var put, get, at = this.as, back = at.back, root = at.root, tmp;
 			if(!msg.$){ msg.$ = at.$ }
 			this.to.next(msg);
+			if(at.err){ at.on('in', {put: at.put = u, $: at.$}); return }
 			if(get = msg.get){
 				/*if(u !== at.put){
 					at.on('in', at);
@@ -808,9 +809,9 @@
 				var back = this, cat = back._;
 				var next = cat.next || empty;
 				if(!(gun = next[key])){
-					gun = cache(key, back);
+					gun = key && cache(key, back);
 				}
-				gun = gun.$;
+				gun = gun && gun.$;
 			} else
 			if('function' == typeof key){
 				if(true === cb){ return soul(this, key, cb, as), this }

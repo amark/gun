@@ -828,7 +828,7 @@
       at.opt.uuid = function(cb){
         var id = uuid(), pub = root.user;
         if(!pub || !(pub = pub.is) || !(pub = pub.pub)){ return id }
-        id = id + '~' + pub + '/'; // TODO: What's the best perf we can get on which side?
+        id = '~' + pub + '/' + id;
         if(cb && cb.call){ cb(null, id) }
         return id;
       }
@@ -858,12 +858,21 @@
     User.prototype.create = function(alias, pass, cb, opt){
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
+      opt = opt || {};
+      if(false !== opt.check){
+        var err;
+        if(!alias){ err = "No user." }
+        if((pass||'').length < 8){ err = "Password too short!" }
+        if(err){
+          cb({err: Gun.log(err)});
+          return gun;
+        }
+      }
       if(cat.ing){
         cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      opt = opt || {};
       var act = {}, u;
       act.a = function(pubs){
         act.pubs = pubs;
