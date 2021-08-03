@@ -3,15 +3,15 @@
 <style>html, body, textarea { width: 100%; height: 100%; padding: 0; margin: 0; }</style>
 <textarea placeholder="paste here!"></textarea>
 
-<script src="../jquery.js"></script>
 <script src="../../../gun/gun.js"></script>
+<script src="../../../gun/lib/dom.js"></script>
 
 <script>
-var gun = Gun(location.origin + '/gun');
+gun = GUN(location.origin + '/gun');
 
-$('textarea').on('input change blur keyup mouseup touchend', function(){
+$('textarea').on('input change blur keyup mouseup touchend', () => {
 	gun.get('test').get('paste').put($('textarea').val())
 });
 
-gun.get('test').get('paste').on(data => $('textarea').val(data))
+gun.get('test').get('paste').on(data => $('textarea').val(data));
 </script>

@@ -321,6 +321,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   describe('RAD + GUN', function(){
     this.timeout(1000 * 5);
     var ochunk = 1000;
+    Gun.on('opt', function(root){
+        root.opt.localStorage = false;
+        Gun.window && console.log("RAD disabling localStorage during tests.");
+        this.to.next(root);
+    })
     var gun = Gun({chunk: ochunk});
 
     /*it('deleting old tests (may take long time)', function(done){

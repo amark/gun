@@ -359,7 +359,7 @@
 				}
 				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well? // Yes this was a bug, need to check cache miss for RAD tests, but should we care about the faith check now? Probably not.
-					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(!ctx.miss){ return } } // same
+					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(true || !ctx.miss){ return } } // same
 				}
 				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
@@ -774,7 +774,7 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
-			if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
+			//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
 			// manhattan:
 			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
@@ -1273,7 +1273,8 @@
 			var opt = root.opt || {};
 			opt.log = opt.log || console.log;
 			opt.gap = opt.gap || opt.wait || 0;
-			opt.pack = opt.pack || 9 * 1000;//(opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
+			opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
+			opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
 			var puff = setTimeout.turn || setTimeout;
 			var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
@@ -1285,7 +1286,7 @@
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
-				if(opt.pack <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
+				if(opt.max <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
 				if(mesh === this){
 					/*if('string' == typeof raw){ try{
 						var stat = console.STAT || {};

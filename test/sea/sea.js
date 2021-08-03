@@ -316,7 +316,7 @@ describe('SEA', function(){
     })
 
     it('register users', function(done){
-      user.create('carl', 'test123', function(ack){
+      user.create('carl', 'testing123', function(ack){
         pub = '~'+ack.pub;
         expect(ack.err).to.not.be.ok();
         done();
@@ -324,7 +324,7 @@ describe('SEA', function(){
     });
 
     it('login users', function(done){
-      user.auth('carl', 'test123', function(ack){
+      user.auth('carl', 'testing123', function(ack){
         expect(ack.err).to.not.be.ok();
         done()
       })
@@ -377,7 +377,7 @@ describe('SEA', function(){
       setTimeout(function(){
         gun = Gun();
         user = gun.user();
-        user.auth('carl', 'test123', function(ack){
+        user.auth('carl', 'testing123', function(ack){
           expect(ack.err).to.not.be.ok();
           done()
         })
