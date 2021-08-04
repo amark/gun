@@ -1393,9 +1393,6 @@
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
-					DBG && (DBG.yh = +new Date);
-					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
-					DBG && (DBG.yr = +new Date);
 					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
 					if(!peer && ack){ // still no peer, then ack daisy chain lost.
 						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to self, ignore.
@@ -1403,6 +1400,9 @@
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 					if(!peer && mesh.way){ return mesh.way(msg) }
+					DBG && (DBG.yh = +new Date);
+					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
+					DBG && (DBG.yr = +new Date);
 					if(!peer || !peer.id){
 						if(!Object.plain(peer || opt.peers)){ return false }
 						var S = +new Date;
@@ -1421,7 +1421,7 @@
 							console.STAT && console.STAT(S, +new Date - S, 'say loop');
 							if(!pl.length){ return }
 							puff(go, 0);
-							dup_track(ack); // keep for later
+							ack && dup_track(ack); // keep for later
 						}());
 						return;
 					}
@@ -1431,7 +1431,7 @@
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
-					ack && dup_track(ack); // streaming long responses needs to keep alive the ack.
+					!loop && ack && dup_track(ack); // streaming long responses needs to keep alive the ack.
 					if(peer.batch){
 						peer.tail = (tmp = peer.tail || 0) + raw.length;
 						if(peer.tail <= opt.pack){
@@ -1458,7 +1458,7 @@
 					if('string' == typeof msg){ return msg }
 					var hash = msg['##'], ack = msg['@'];
 					if(hash && ack){
-						if(dup_check(ack+hash)){ return false } // memory & storage may ack the same thing, this dedups that. //dup_track(ack+hash);//.it = it(msg);
+						if(!meta.via && dup_check(ack+hash)){ return false } // for our own out messages, memory & storage may ack the same thing, so dedup that. Tho if via another peer, we already tracked it upon hearing, so this will always trigger false positives, so don't do that!
 						if((tmp = (dup.s[ack]||'').it) || ((tmp = mesh.last) && ack === tmp['#'])){
 							if(hash === tmp['##']){ return false } // if ask has a matching hash, acking is optional.
 							if(!tmp['##']){ tmp['##'] = hash } // if none, add our hash to ask so anyone we relay to can dedup. // NOTE: May only check against 1st ack chunk, 2nd+ won't know and still stream back to relaying peers which may then dedup. Any way to fix this wasted bandwidth? I guess force rate limiting breaking change, that asking peer has to ask for next lexical chunk.
