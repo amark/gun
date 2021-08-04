@@ -220,6 +220,8 @@ var SEA = require('gun/sea');
 ## Deploy
 
  > Note: The default examples that get auto-deployed on `npm start` CDN-ify all GUN files, modules, & storage.
+ 
+ > Note: When deploying a web application using GUN on a cloud provider, you may have to set `CI=false` in your `.env`. This prevents GUN-specific warnings from being treated as errors when deploying your app. You may also resolve this by modifying your webpack config to not try to build the GUN dependencies.
 
 To quickly spin up a GUN relay peer for your development team, utilize [Zeet](https://zeet.co), [Heroku](http://heroku.com), [Docker](http://docker.com), or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. ! Or use all of them so your relays are decentralized too!
 
