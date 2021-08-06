@@ -22,7 +22,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     put(data: Partial<AlwaysDisallowedType<DisallowPrimitives<IsTop, DataType>>>, callback?: AckCallback | null, options?: { opt?: { cert?: string } }): IGunChainReference<DataType, ReferenceKey, IsTop>;
 
     /**
-     * **.set does not means 'set data', it means a Mathematical Set**
+     * **.set does not mean 'set data', it means a Mathematical Set**
      *
      * Add a unique item to an unordered list.
      * `gun.set` works like a mathematical set, where each item in the list is unique.
@@ -41,7 +41,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     *  (or that will be saved later).
     * * Note that if you use .put at any depth after a get it first reads the data and then writes, merging the data as a partial update.
     * @param callback You will usually be using gun.on or gun.once to actually retrieve your data,
-    * not this callback (it is intended for more low level control, for module and extensions).
+    * not this callback (it is intended for more low-level control, for module and extensions).
     *
     * **Avoid use callback. The type in the document may be wrong.**
     *
@@ -73,14 +73,14 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     back(amount?: number): IGunChainReference;
 
     /**
-     * Subscribe to updates and changes on a node or property in realtime.
+     * Subscribe to updates and changes on a node or property in real-time.
      * @param option Currently, the only option is to filter out old data, and just be given the changes.
      * If you're listening to a node with 100 fields, and just one changes,
      * you'll instead be passed a node with a single property representing that change rather than the full node every time.
      * @param callback
      * Once initially and whenever the property or node you're focused on changes, this callback is immediately fired with the data as it is at that point in time.
      *
-     * Since gun streams data, the callback will probably be called multiple times as new chunk comes in.
+     * Since gun streams data, the callback will probably be called multiple times as new chunks come in.
      * To remove a listener call .off() on the same property or node.
      */
     on(callback: (data: DisallowPrimitives<IsTop, AlwaysDisallowedType<DataType>>, key: ReferenceKey) => void, option?: {
@@ -230,7 +230,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * @param alias Username or Alias which can be used to find a user.
      * @param pass Passphrase for the user
      * @param cb Callback that is to be called upon authentication of the user.
-     * @param opt Option Object containing options for authentiaction. (In gun options are added at end of syntax. opt is rarely used, hence is added at the end.)
+     * @param opt Option Object containing options for authentication. (In gun options are added at end of syntax. opt is rarely used, hence is added at the end.)
      */
     auth(alias: string, pass: string, cb?: (ack: {
         ack: 2;
@@ -252,7 +252,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
      * Authenticates a user, previously created via User.create.
      * @param pair Public/Private Key Pair
      * @param cb Callback that is to be called upon authentication of the user.
-     * @param opt Option Object containing options for authentiaction. (In gun options are added at end of syntax. opt is rarely used, hence is added at the end.)
+     * @param opt Option Object containing options for authentication. (In gun options are added at end of syntax. opt is rarely used, hence is added at the end.)
      */
     auth(pair: CryptoKeyPair, cb?: (ack: {
         ack: 2;
@@ -295,7 +295,7 @@ export interface IGunChainReference<DataType = Record<string, any>, ReferenceKey
     /**
      * Recall saves a users credentials in sessionStorage of the browser. As long as the tab of your app is not closed the user stays logged in, even through page refreshes and reloads.
      * @param opt option object If you want to use browser sessionStorage to allow users to stay logged in as long as the session is open, set opt.sessionStorage to true
-     * @param cb internally the callback is passed on to the user.auth function to logged the user back in. Refer to user.auth for callback documentation.
+     * @param cb internally the callback is passed on to the user.auth function to log the user back in. Refer to user.auth for callback documentation.
      */
     recall(opt?: {
         sessionStorage: boolean;
