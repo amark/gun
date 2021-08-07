@@ -1,13 +1,9 @@
 /**
- * AXE test 1
+ * AXE test data balance webrtc
  * What we want here: (1) Superpeer and (n) peers
  *  - The peers receives only the requested data.
  *  - If the Superpeer crash, after restart, must recreate all subscriptions and update the peers.
  *  - If some peer crash or go offline, must receive the changes via RTC.
- *
- * Tip: to run this `npm run testaxe`
- * Tip 2: if you clone the gun repo, you need to create a link do gun package. Do `npm install && cd node_modules && ln -s ../ gun`
- * Tip 3: If you not in localhost, run the browsers in anonymous mode because of domain security policies. https://superuser.com/questions/565409/how-to-stop-an-automatic-redirect-from-http-to-https-in-chrome
  */
 var config = {
 	IP: require('ip').address(),
@@ -16,11 +12,10 @@ var config = {
 	browsers: 3,
 	route: {
 		'/': __dirname + '/index.html',
-		'/gun.js': __dirname + '/../../gun.js',
-		'/gun/axe.js': __dirname + '/../../axe.js',
-		'/gun/lib/radix.js': __dirname + '/../../lib/radix.js',
-		'/gun/lib/webrtc.js': __dirname + '/../../lib/webrtc.js',
-		'/jquery.js': __dirname + '/../../examples/jquery.js'
+		'/gun.js': __dirname + '/../../../gun.js',
+		'/gun/axe.js': __dirname + '/../../../axe.js',
+		'/gun/lib/webrtc.js': __dirname + '/../../../lib/webrtc.js',
+		'/jquery.js': __dirname + '/../../../examples/jquery.js'
 	}
 }
 var panic = require('panic-server');
