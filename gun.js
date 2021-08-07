@@ -210,6 +210,7 @@
 		USE('./onto'); // depends upon onto!
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
+			var lack = (this.opt||{}).lack || 9000;
 			if(!('function' == typeof cb)){
 				if(!cb){ return }
 				var id = cb['#'] || cb, tmp = (this.tag||'')[id];
@@ -217,16 +218,16 @@
 				if(as){
 					tmp = this.on(id, as);
 					clearTimeout(tmp.err);
+					tmp.err = setTimeout(function(){ tmp.off() }, lack);
 				}
 				return true;
 			}
 			var id = (as && as['#']) || Math.random().toString(36).slice(2);
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
-			to.err = to.err || setTimeout(function(){
+			to.err = to.err || setTimeout(function(){ to.off();
 				to.next({err: "Error: No ACK yet.", lack: true});
-				to.off();
-			}, (this.opt||{}).lack || 9000);
+			}, lack);
 			return id;
 		}
 	})(USE, './ask');
@@ -344,7 +345,7 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
-			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync. // msg put, put, say ack, hear loop...
+			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync, SEA certify wire merge, // msg put, put, say ack, hear loop...
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -359,7 +360,7 @@
 				}
 				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well? // Yes this was a bug, need to check cache miss for RAD tests, but should we care about the faith check now? Probably not.
-					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(true || !ctx.miss){ return } } // same
+					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(!ctx.miss){ return } } // same
 				}
 				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
@@ -774,7 +775,7 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
-			//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
+			//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners! Now handled by .ask itself
 			// manhattan:
 			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
