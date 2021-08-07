@@ -14,7 +14,6 @@
     "prepublishOnly": "npm run unbuild",
     "test": "echo 'Did you run PANIC holy-grail, 1~X, on-recover, etc.?' && mocha",
     "testsea": "mocha test/sea/sea.js",
-    "testaxe": "mocha test/axe/holy-grail.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "minify": "uglifyjs gun.js -o gun.min.js -c -m",
