@@ -448,7 +448,7 @@
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function go(){
 					S = +new Date;
-					var i = 0, k, put = {};
+					var i = 0, k, put = {}, tmp;
 					while(i < 9 && (k = keys[i++])){
 						state_ify(put, k, state_is(node, k), node[k], soul);
 					}
@@ -1008,7 +1008,7 @@
 
 		function stun(as, id){
 			if(!id){ return } id = (id._||'').id||id;
-			tmp = as.root.stun || (as.root.stun = as.ta);
+			var tmp = as.root.stun || (as.root.stun = as.ta);
 			var it = {run: as.run, stun: as.stun};
 			(tmp[id]? (tmp[id].last.next = it) : (tmp[id] = it)).last = it;
 		}
