@@ -1260,7 +1260,7 @@
   })(USE, './share');
 
   ;USE(function(module){
-    var SEA = USE('./sea'), noop = function(){}, u;
+    var SEA = USE('./sea'), S = USE('./settings'), noop = function () {}, u;
     var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
@@ -1291,7 +1291,6 @@
     function check(msg){ // REVISE / IMPROVE, NO NEED TO PASS MSG/EVE EACH SUB?
       var eve = this, at = eve.as, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
       if(!soul || !key){ return }
-      //console.log('check', put, msg);
       if((msg._||'').faith && (at.opt||'').faith && 'function' == typeof msg._){
         SEA.opt.pack(put, function(raw){
         SEA.verify(raw, false, function(data){ // this is synchronous if false
@@ -1343,33 +1342,106 @@
       if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
-    check.pub = function(eve, msg, val, key, soul, at, no, user, pub){ var tmp; // Example: {_:#~asdf, hello:'world'~fdsa}}
-      if('pub' === key && '~'+pub === soul){
-        if(val === pub){ return eve.to.next(msg) } // the account MUST match `pub` property that equals the ID of the public key.
-        return no("Account not same!");
-      }
-      if((tmp = user.is) && pub === tmp.pub){// && (tmp = msg._.$) && (tmp = tmp._) && tmp !== tmp.root){
-        SEA.opt.pack(msg.put, function(raw){
-        SEA.sign(raw, (user._).sea, function(data){
-          if(u === data){ return no(SEA.err || 'Signature fail.') }
-          if(tmp = link_is(val)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
-          JSON.stringifyAsync({':': tmp = SEA.opt.unpack(data.m), '~': data.s}, function(err,s){
-            if(err){ return no(err || "Stringify error.") }
-            msg.put['='] = tmp;
-            msg.put[':'] = s;
-            eve.to.next(msg);
+    check.pub = async function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
+      const raw = await S.parse(val) || {}
+      const verify = (certificate, certificant, cb) => {
+        if (certificate.m && certificate.s && certificant && pub)
+          // now verify certificate
+          return SEA.verify(certificate, pub, data => { // check if "pub" (of the graph owner) really issued this cert
+            if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
+            // "data.c" = a list of certificants/certified users
+            // "data.w" = lex WRITE permission, in the future, there will be "data.r" which means lex READ permission
+            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
+              // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
+              let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
+              String.match = String.match || Gun.text.match
+              const w = Array.isArray(data.w) ? data.w : typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : []
+              for (const lex of w) {
+                if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
+                  // is Certificant forced to present in Path
+                  if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
+                  // path is allowed, but is there any WRITE blacklist? Check it out
+                  if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
+                    var root = at.$.back(-1)
+                    if (typeof data.wb === 'string' && '~' !== data.wb.slice(0, 1)) root = root.get('~' + pub)
+                    return root.get(data.wb).get(certificant).once(value => {
+                      if (value && (value === 1 || value === true)) return no("Certificant blacklisted.")
+                      return cb(data)
+                    })
+                  }
+                  return cb(data)
+                }
+              }
+              return no("Certificate verification fail.")
+            }
           })
-        }, {raw: 1})});
+        return
+      }
+      
+      if ('pub' === key && '~' + pub === soul) {
+        if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
+        return no("Account not same!")
+      }
+
+      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.msg || {}).opt || {}).cert))){
+        SEA.opt.pack(msg.put, packed => {
+          SEA.sign(packed, (user._).sea, async function (data) {
+            if (u === data) return no(SEA.err || 'Signature fail.')
+            msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
+            msg.put['='] = tmp
+  
+            // if writing to own graph, just allow it
+            if (pub === user.is.pub) {
+              if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
+              JSON.stringifyAsync(msg.put[':'], function(err,s){
+                if(err){ return no(err || "Stringify error.") }
+                msg.put[':'] = s;
+                return eve.to.next(msg);
+              })
+              return
+            }
+  
+            // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
+            if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
+              const cert = await S.parse(msg._.msg.opt.cert)
+              // even if cert exists, we must verify it
+              if (cert && cert.m && cert.s)
+                verify(cert, user.is.pub, _ => {
+                  msg.put[':']['+'] = cert // '+' is a certificate
+                  msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
+                  JSON.stringifyAsync(msg.put[':'], function(err,s){
+                    if(err){ return no(err || "Stringify error.") }
+                    msg.put[':'] = s;
+                    return eve.to.next(msg);
+                  })
+                  return
+                })
+            }
+          }, {raw: 1})
+        })
         return;
       }
-      SEA.opt.pack(msg.put, function(raw){
-      SEA.verify(raw, pub, function(data){ var tmp;
-        data = SEA.opt.unpack(data);
-        if(u === data){ return no("Unverified data.") } // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
-        if((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)){ (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1 }
-        msg.put['='] = data;
-        eve.to.next(msg);
-      })});
+
+      SEA.opt.pack(msg.put, packed => {
+        SEA.verify(packed, raw['*'] || pub, function(data){ var tmp;
+          data = SEA.opt.unpack(data);
+          if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
+          if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
+          
+          // check if cert ('+') and putter's pub ('*') exist
+          if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
+            // now verify certificate
+            verify(raw['+'], raw['*'], _ => {
+              msg.put['='] = data;
+              return eve.to.next(msg);
+            })
+          else {
+            msg.put['='] = data;
+            return eve.to.next(msg);
+          }
+        });
+      })
+      return
     };
     check.any = function(eve, msg, val, key, soul, at, no, user){ var tmp, pub;
       if(at.opt.secure){ return no("Soul missing public key at '" + key + "'.") }
