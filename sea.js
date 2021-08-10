@@ -1260,7 +1260,7 @@
   })(USE, './share');
 
   ;USE(function(module){
-    var SEA = USE('./sea'), S = USE('./settings'), noop = function () {}, u;
+    var SEA = USE('./sea'), S = USE('./settings'), noop = function() {}, u;
     var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
@@ -1385,7 +1385,7 @@
 
       if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.msg || {}).opt || {}).cert))){
         SEA.opt.pack(msg.put, packed => {
-          SEA.sign(packed, (user._).sea, async function (data) {
+          SEA.sign(packed, (user._).sea, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
