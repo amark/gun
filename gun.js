@@ -396,7 +396,9 @@
 				tmp.acks = (tmp.acks||0) + 1;
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
 					root && root.on('in', {'@': tmp['#'], err: msg.err, ok: 'shard'});
+					return;
 				}
+				if(msg.err){ msg['@'] = tmp['#'] }
 			}
 
 			var ERR = "Error: Invalid graph!";
