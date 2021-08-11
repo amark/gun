@@ -4,10 +4,6 @@
  *  - The peers receives only the requested data.
  *  - If the Superpeer crash, must recreate all subscriptions and update the peers.
  *  - If some peer crash or go offline, when connected again must receive the changes made by others while out.
- *
- * Tip: to run this `npm run testaxe`
- * Tip 2: if you clone the gun repo, you need to create a link do gun package. Do `npm install && cd node_modules && ln -s ../ gun`
- * Tip 3: If you not in localhost, run the browsers in anonymous mode because of domain security policies. https://superuser.com/questions/565409/how-to-stop-an-automatic-redirect-from-http-to-https-in-chrome
  */
 var config = {
 	IP: require('ip').address(),
@@ -47,7 +43,7 @@ var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
 var again = {};
 
-describe("The Holy Grail AXE Test!", function(){
+describe("Data sync AXE Test!", function(){
 	console.time('TOTAL TEST TIME');
 	this.timeout(5 * 60 * 1000);
 // 	this.timeout(10 * 60 * 1000);
@@ -79,7 +75,8 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
+    require('../util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+// 		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -134,7 +131,7 @@ describe("The Holy Grail AXE Test!", function(){
 		return bob.run(function(test){
 			test.async();
 			ref.put('Hi Alice!', function(ack) {
-				console.log('[OK] Bob Write response: Hi Alice!', ack);
+				console.log('[OK] Bob Write response: Hi Alice!', JSON.stringify(ack));
 				setTimeout(test.done, 2000);
 			});
 		});
@@ -187,7 +184,7 @@ describe("The Holy Grail AXE Test!", function(){
 			test.async();
 			gun.get('bob').once(function(data){
 				if(data){
-					console.log('[OK] Alice receive the value: ', data);
+					console.log('[OK] Alice receive the value: ', JSON.stringify(data));
 					return test.done();
 				} else {
 					var err = '[FAIL] Alice receive the value: ' + data;
@@ -211,7 +208,7 @@ describe("The Holy Grail AXE Test!", function(){
 		return alice.run(function(test){
 			test.async();
 			if (gun._.graph.bob && gun._.graph.bob.mine === 'Alice WANT this data now!') {
-				console.log('[OK] GRAPH: ', gun._.graph.bob);
+				console.log('[OK] GRAPH: ', JSON.stringify(gun._.graph.bob));
 				test.done();
 			} else {
 				var err = '[FAIL] GRAPH: ' + JSON.stringify(gun._.graph.bob);
@@ -318,10 +315,8 @@ describe("The Holy Grail AXE Test!", function(){
 		},1000);
 	});
 	after("Everything shut down.", function(){
-		browsers.run(function(){
-			//location.reload();
-			//setTimeout(function(){
-			//}, 15 * 1000);
+		require('../util/open').cleanup() ||	browsers.run(function(){
+			setTimeout(location.reload, 15 * 1000);
 		});
 		return servers.run(function(){
 			process.exit();
