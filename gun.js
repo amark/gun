@@ -62,7 +62,7 @@
 			return l;
 		}
 		;(function(){ // max ~1ms or before stack overflow 
-			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT;
+			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
 			sT.poll = sT.poll || function(f){
 				if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
 				sI(function(){ l = +new Date; f() },c=0)
@@ -210,6 +210,7 @@
 		USE('./onto'); // depends upon onto!
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
+			var lack = (this.opt||{}).lack || 9000;
 			if(!('function' == typeof cb)){
 				if(!cb){ return }
 				var id = cb['#'] || cb, tmp = (this.tag||'')[id];
@@ -217,16 +218,16 @@
 				if(as){
 					tmp = this.on(id, as);
 					clearTimeout(tmp.err);
+					tmp.err = setTimeout(function(){ tmp.off() }, lack);
 				}
 				return true;
 			}
 			var id = (as && as['#']) || Math.random().toString(36).slice(2);
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
-			to.err = to.err || setTimeout(function(){
+			to.err = to.err || setTimeout(function(){ to.off();
 				to.next({err: "Error: No ACK yet.", lack: true});
-				to.off();
-			}, (this.opt||{}).lack || 9000);
+			}, lack);
 			return id;
 		}
 	})(USE, './ask');
@@ -344,7 +345,7 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
-			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync. // msg put, put, say ack, hear loop...
+			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -359,7 +360,7 @@
 				}
 				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well? // Yes this was a bug, need to check cache miss for RAD tests, but should we care about the faith check now? Probably not.
-					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(true || !ctx.miss){ return } } // same
+					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(!ctx.miss){ return } } // same
 				}
 				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; // this *trick* makes it compatible between old & new versions.
@@ -395,7 +396,9 @@
 				tmp.acks = (tmp.acks||0) + 1;
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
 					root && root.on('in', {'@': tmp['#'], err: msg.err, ok: 'shard'});
+					return;
 				}
+				if(msg.err){ msg['@'] = tmp['#'] }
 			}
 
 			var ERR = "Error: Invalid graph!";
@@ -406,7 +409,7 @@
 
 		;(function(){
 			Gun.on.get = function(msg, gun){
-				var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'], tmp;
+				var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'];
 				var next = root.next || (root.next = {}), at = next[soul];
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
@@ -448,7 +451,7 @@
 				// PERF: Consider commenting this out to force disk-only reads for perf testing? // TODO: .keys( is slow
 				node && (function go(){
 					S = +new Date;
-					var i = 0, k, put = {};
+					var i = 0, k, put = {}, tmp;
 					while(i < 9 && (k = keys[i++])){
 						state_ify(put, k, state_is(node, k), node[k], soul);
 					}
@@ -774,7 +777,7 @@
 		}; Gun.on.unlink = unlink;
 
 		function ack(msg, ev){
-			//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners!
+			//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners! Now handled by .ask itself
 			// manhattan:
 			var as = this.as, at = as.$._, root = at.root, get = as.get||'', tmp = (msg.put||'')[get['#']]||'';
 			if(!msg.put || ('string' == typeof get['.'] && u === tmp[get['.']])){
@@ -822,7 +825,7 @@
 				var wait = {}; // can we assign this to the at instead, like in once?
 				function any(msg, eve, f){
 					if(any.stun){ return }
-					var at = msg.$._, data = at.put, aid, tmp;
+					var at = msg.$._, data = at.put, aid, test, tmp;
 					if((tmp = root.pass) && !tmp[id]){ return }
 					if(!at.has && !at.soul){ data = (u !== (msg.put||'')['='])? msg.put['='] : msg.put } // handles non-core messages.
 					if('string' == typeof (tmp = Gun.valid(data))){ data = root.$.get(tmp)._.put } // TODO: Can we delete this line of code, because the line below (which was inspired by @rogowski) handles it anyways?
@@ -831,14 +834,20 @@
 					if(u === opt.stun){
 						//if(tmp = root.stun){ tmp = tmp[at.id] || at.$.back(function(back){ return tmp[back.id] || u }); if(tmp && !tmp.end && any.id > (tmp._||'').id){ // this is more thorough, but below seems to work too?
 						//if((tmp = root.stun) && (tmp = tmp[at.id] || tmp[at.back.id]) && !tmp.end && any.id > (tmp._||'').id){ // if we are in the middle of a write, don't read until it is done, unless our callback was earlier than the write.
-						if((tmp = root.stun) && (tmp = tmp[aid = cat.id] || tmp[aid = at.id] || (msg.$$ && tmp[aid = msg.$$._.id]) /*|| tmp[aid = at.back.id]*/) && any.id > tmp.run){
-							if(tmp.stun && !tmp.stun.end){
-								tmp.stun[id] = function(){any(msg,eve,1)}; // add ourself to the stun callback list that is called at end of the write.
-								return;
+						if((tmp = root.stun) && tmp.on){
+							tmp.on(''+(aid = cat.id), test = {});
+							!test.run && tmp.on(''+(aid = at.id), test);
+							!test.run && msg.$$ && tmp.on(''+(aid = msg.$$._.id), test);
+							if(test.run && any.id > test.run){ // what if I'm less than the last item but more than an earlier item? Don't I need to check first item but add to last item?
+								if(!test.stun || test.stun.end){
+									test.stun = tmp.on('stun');
+									test.stun = test.stun && test.stun.last;
+								}
+								if(test.stun && !test.stun.end){
+									(test.stun.add || (test.stun.add = {}))[id] = function(){any(msg,eve,1)} // add ourself to the stun callback list that is called at end of the write.
+									return;
+								}
 							}
-							root.stun[aid] = tmp.next;
-							any(msg,eve,f);
-							return;
 						}
 						if((tmp = root.hatch) && !tmp.end && u === opt.hatch && !f){ // quick hack! // What's going on here? Because data is streamed, we get things one by one, but a lot of developers would rather get a callback after each batch instead, so this does that by creating a wait list per chain id that is then called at the end of the batch by the hatch code in the root put listener.
 							if(wait[at.$._.id]){ return } wait[at.$._.id] = 1;
@@ -877,9 +886,6 @@
 				(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
 				if(cb){ cb.call(gun, gun._.err) }
 				return gun;
-			}
-			if(tmp = this._.stun){ // TODO: Refactor?
-				gun._.stun = gun._.stun || tmp;
 			}
 			if(cb && 'function' == typeof cb){
 				gun.get(cb, as);
@@ -944,7 +950,6 @@
 			as = as || {};
 			as.root = at.root;
 			as.run || (as.run = root.once);
-			(as.stun || (as.stun = function(){ return as.run })).back = (root.stun || (root.stun = {}))._; (as.ta = root.stun)._ = as.stun;
 			stun(as, at.id); // set a flag for reads to check if this chain is writing.
 			as.ack = as.ack || cb;
 			as.via = as.via || gun;
@@ -1008,9 +1013,23 @@
 
 		function stun(as, id){
 			if(!id){ return } id = (id._||'').id||id;
-			tmp = as.root.stun || (as.root.stun = as.ta);
-			var it = {run: as.run, stun: as.stun};
-			(tmp[id]? (tmp[id].last.next = it) : (tmp[id] = it)).last = it;
+			var run = as.root.stun || (as.root.stun = {on: Gun.on}), test = {}, tmp;
+			as.stun || (as.stun = run.on('stun', function(){ }));
+			if(tmp = run.on(''+id)){ tmp.the.last.next(test) }
+			if(test.run >= as.run){ return }
+			run.on(''+id, function(test){
+				if(as.stun.end){
+					this.off();
+					this.to.next(test);
+					return;
+				}
+				test.run = test.run || as.run;
+				if(this.to.to){
+					this.the.last.next(test);
+					return;
+				}
+				test.stun = as.stun;
+			});
 		}
 
 		function ran(as){
@@ -1025,14 +1044,9 @@
 			}, as.opt), acks = 0, stun = as.stun, tmp;
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
-				if(root.stun){ delete root.stun['s'+as.run] }
-				if((tmp = root.stun) && stun === tmp._){
-					if(!(tmp = stun.back) || tmp.end){
-						delete root.stun; // ABC, ACB, BAC, BCA, CBA, CAB;
-					}
-					(root.stun||{})._ = tmp;
-				}
-				setTimeout.each(Object.keys(stun), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
+				if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
+				stun.off();
+				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
