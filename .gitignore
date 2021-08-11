@@ -1,4 +1,5 @@
 node_modules
+radata
 npm-debug.log
 yarn.lock
 *data.json
