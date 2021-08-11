@@ -36,6 +36,18 @@ describe('SEA', function(){
   var user;
   var gun;
   var pub;
+
+  describe('Hash', function() {
+    it('Content Addressing', function(done){
+      var gun = Gun();
+      var data = "hello world";
+      SEA.work(data, null, function(hash) {
+        gun.get('#').get(hash).put(data);
+        expect(gun.get('#').get(hash).put("hi")).to.throwError();
+      }, {name: "SHA-256"});
+    });
+  });
+
   describe('Utility', function(){
     /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
       console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
