@@ -69,20 +69,25 @@
         if(noop === cb){ gun.auth(alias, pass) } // if no callback is passed, auto-login after signing up.
         },10);
       }
-      root.get('~@'+alias).once(act.a);
+      root.get('~@'+alias).then(act.a);
       return gun;
     }
     // now that we have created a user, we want to authenticate them!
-    User.prototype.auth = function(alias, pass, cb, opt){
+    User.prototype.auth = function(){
+      const alias = typeof arguments[0] === 'string' ? arguments[0] : null
+      const pass = alias && typeof arguments[1] === 'string' ? arguments[1] : null
+      const pair = typeof arguments[0] === 'object' && (arguments[0].pub || arguments[0].epub) ? arguments[0] : typeof arguments[1] === 'object' && (arguments[1].pub || arguments[1].epub) ? arguments[1] : null
+      const cb = Array.prototype.slice.call(arguments).filter(arg => typeof arg === 'function')[0] || function(){} // cb now can stand anywhere, after alias/pass or pair
+      const opt = arguments && arguments.length > 1 && typeof arguments[arguments.length-1] === 'object' ? arguments[arguments.length-1] : {} // opt is always the last parameter which typeof === 'object' and stands after cb
+      
       var gun = this, cat = (gun._), root = gun.back(-1);
-      cb = cb || function(){};
+      
       if(cat.ing){
         cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      opt = opt || {};
-      var pair = (alias && (alias.pub || alias.epub))? alias : (pass && (pass.pub || pass.epub))? pass : null;
+      
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -100,7 +105,7 @@
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
           return act.err('Wrong user or password.') 
         }
-        root.get(get).once(act.a);
+        root.get(get).then(act.a);
       }
       act.c = function(auth){
         if(u === auth){ return act.b() }
@@ -144,8 +149,7 @@
           try{var sS = {};
           sS = window.sessionStorage;
           sS.recall = true;
-          sS.alias = alias;
-          sS.tmp = pass;
+          sS.pair = JSON.stringify(pair); // auth using pair is more reliable than alias/pass
           }catch(e){}
         }
         try{
@@ -194,7 +198,7 @@
         act.g(pair);
       } else
       if(alias){
-        root.get('~@'+alias).once(act.a);
+        root.get('~@'+alias).then(act.a);
       } else
       if(!alias && !pass){
         SEA.name(act.plugin);
@@ -217,9 +221,8 @@
       if(SEA.window){
         try{var sS = {};
         sS = window.sessionStorage;
-        delete sS.alias;
-        delete sS.tmp;
         delete sS.recall;
+        delete sS.pair;
         }catch(e){};
       }
       return gun;
@@ -243,7 +246,7 @@
       return gun;
     }
     User.prototype.recall = function(opt, cb){
-      var gun = this, root = gun.back(-1), tmp;
+      var gun = this, root = gun.back(-1);
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
@@ -252,8 +255,8 @@
           if(sS){
             (root._).opt.remember = true;
             ((gun.back('user')._).opt||opt).remember = true;
-            if(sS.recall || (sS.alias && sS.tmp)){
-              root.user().auth(sS.alias, sS.tmp, cb);
+            if(sS.recall || sS.pair){
+              root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
             }
           }
           }catch(e){}
@@ -338,7 +341,7 @@
     /**
      * returns the decrypted value, encrypted by secret
      * @returns {Promise<any>}
-     */
+     // Mark needs to review 1st before officially supported
     User.prototype.decrypt = function(cb) {
       let gun = this,
         path = ''
@@ -371,5 +374,6 @@
           return res
         })
     }
+    */
     module.exports = User
   

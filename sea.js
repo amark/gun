@@ -906,7 +906,7 @@
         (cb || noop)({ok: 0, pub: act.pair.pub}); // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
         if(!cb) {pair ? gun.auth(pair) : gun.auth(alias, pass)} // if no callback is passed, auto-login after signing up.
       }
-      root.get('~@'+alias).once(act.a);
+      root.get('~@'+alias).then(act.a);
       return gun;
     }
     // now that we have created a user, we want to authenticate them!
@@ -942,7 +942,7 @@
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
           return act.err('Wrong user or password.') 
         }
-        root.get(get).once(act.a);
+        root.get(get).then(act.a);
       }
       act.c = function(auth){
         if(u === auth){ return act.b() }
@@ -1035,7 +1035,7 @@
         act.g(pair);
       } else
       if(alias){
-        root.get('~@'+alias).once(act.a);
+        root.get('~@'+alias).then(act.a);
       } else
       if(!alias && !pass){
         SEA.name(act.plugin);
