@@ -19,9 +19,9 @@ describe('Gun', function(){
 			root.Gun.TESTING = true;
 	    require('../lib/store');
 	    require('../lib/rfs');
-			console.log("UNDO THIS SO RAD & SEA RUN!");
-			//require('./rad/rad.js');
-			//require('./sea/sea.js');
+			//console.log("UNDO THIS SO RAD & SEA RUN!");
+			require('./rad/rad.js');
+			require('./sea/sea.js');
 		}
 	}(this));
 	//Gun.log.squelch = true;
@@ -1059,6 +1059,15 @@ describe('Gun', function(){
 		};
 		var gun = Gun();
 
+		var nopasstun = function(done, g){
+			g = (g || gun)._.root;
+			setTimeout(function(){
+				expect(g.pass).to.not.be.ok();
+				expect(g.stun).to.not.be.ok();
+				done && done();
+			},9);
+		}
+
 		it.skip('gun chain separation', function(done){ // TODO: UNDO!
 			var gun = Gun();
 
@@ -1174,13 +1183,13 @@ describe('Gun', function(){
 					expect(g['z/y/x']).to.be.ok();
 					expect(g['z/y/x/c']).to.be.ok();
 					expect(g['z/y/x/c/b']).to.be.ok();
-					done();
+					nopasstun(done, gun);
 				});
 			});
 			it('no not found on incremental write', function(done){
 				gun.get('nnfoiw').get('y').put({a:1}, function(ack){
 					if(ack.err){ return }
-					done();
+					nopasstun(done, gun);
 				})
 			});
 			it('public mix', function(done){
@@ -1194,8 +1203,9 @@ describe('Gun', function(){
 					var g = gun._.graph;
 					expect(Object.keys(g['zasdf']||'').sort()).to.be.eql(['_', 'a', 'foo'].sort());
 					expect(Object.keys(g['zasdf/foo']||'').sort()).to.be.eql(['_', 'bar', 'ah'].sort());
-					done();
+					nopasstun(done, gun);
 				};
+				//setTimeout(function(){ console.log('???', gun._.stun); }, 1700);
 			});
 		});
 
@@ -1227,7 +1237,7 @@ describe('Gun', function(){
 							expect(check.bob.name).to.be('Bob!');
 							expect('string' == typeof Gun.valid(check.bob.pet)).to.be.ok();
 							//expect(count.bob).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1259,7 +1269,7 @@ describe('Gun', function(){
 							expect(check.bob).to.be('name');
 							//expect(count.alice).to.be(1);
 							//expect(count.bob).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1293,7 +1303,7 @@ describe('Gun', function(){
 							//expect(count.Frisky).to.be(1);
 							//expect(count['undefined']).to.not.be.ok();
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1334,7 +1344,7 @@ describe('Gun', function(){
 							});
 							//expect(count.Fluffy).to.be(1);
 							//expect(count.Frisky).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1367,7 +1377,7 @@ describe('Gun', function(){
 							//expect(count.Bob).to.be(1);
 							//expect(count['undefined']).to.be(1);
 							if(done.c){ return } done.c = 1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1405,7 +1415,7 @@ describe('Gun', function(){
 							expect(count.Bob).to.be(1);
 							expect(count['undefined']).to.be(1);
 							expect(count['Alice Zzxyz']).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},200);
 					}
 				});
@@ -1451,7 +1461,7 @@ describe('Gun', function(){
 							//expect(count['Bob']).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
 							if(done.c){ return } done.c = 1;
-							done();
+							nopasstun(done, gun);
 						},200);
 					}
 				});
@@ -1507,7 +1517,7 @@ describe('Gun', function(){
 							//expect(count.Alice).to.be(1);
 							//expect(count.Bob).to.be(1);
 							//expect(count['Alice Zzxyz']).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},200);
 					}
 				});
@@ -1553,7 +1563,7 @@ describe('Gun', function(){
 							expect(count.Fluffy).to.be(1);
 							expect(count.Frisky).to.be(1);
 							expect(count.Fuzzball).to.be(1);
-							done();
+							nopasstun(done, gun);
 						},200);
 					}
 				});
@@ -1598,7 +1608,7 @@ describe('Gun', function(){
 								expect(check.firsta).to.not.be.ok();
 								expect(count.first).to.be(1);
 								expect(count.other).to.be(1);
-								done();
+								nopasstun(done, gun);
 							},200);
 						}
 					});
@@ -1637,8 +1647,8 @@ describe('Gun', function(){
 							expect(check.alice.PhD).to.be(true);
 							//expect(count.alice).to.be(2);
 							//expect(count.bob).to.be(1);
-							if(done.c){return}
-							done();done.c=1;
+							if(done.c){return} done.c=1;
+							nopasstun(done, gun);
 						},50);
 					}
 				});
@@ -1710,7 +1720,7 @@ describe('Gun', function(){
 							expect(check.alice.age).to.be(24);
 							expect(check.bob.age).to.be(26);
 							expect(check.alice.PhD).to.be(true);
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1732,7 +1742,7 @@ describe('Gun', function(){
 							expect(check.bob).to.be('name');
 							expect(check.Alice).to.be('name');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1804,7 +1814,7 @@ describe('Gun', function(){
 							expect(check.alice).to.be('name');
 							expect(check.bob).to.be('name');
 							expect(check.Alice).to.be('name');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1826,7 +1836,7 @@ describe('Gun', function(){
 							expect(check['ACME INC']).to.be('work');
 							expect(check['ACME INC.']).to.be('work');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1897,7 +1907,7 @@ describe('Gun', function(){
 							expect(check['GUN INC']).to.be('work');
 							expect(check['ACME INC']).to.be('work');
 							expect(check['ACME INC.']).to.be('work');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -1925,7 +1935,7 @@ describe('Gun', function(){
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2012,7 +2022,7 @@ describe('Gun', function(){
 							expect(check.GUN.name).to.be('GUN');
 							expect(check.ACME.name).to.be('ACME');
 							expect(check.ACME.corp).to.be('C');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2036,7 +2046,7 @@ describe('Gun', function(){
 							expect(check.ACME).to.be('name');
 							expect(check.ACMEINC).to.be('name');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2117,7 +2127,7 @@ describe('Gun', function(){
 							expect(check.GUN).to.be('name');
 							expect(check.ACME).to.be('name');
 							expect(check.ACMEINC).to.be('name');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2140,7 +2150,7 @@ describe('Gun', function(){
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2244,7 +2254,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('state');
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2269,7 +2279,7 @@ describe('Gun', function(){
 							expect(check.TX).to.be('code');
 							expect(check.MA).to.be('code');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2416,7 +2426,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('code');
 							expect(check.TX).to.be('code');
 							expect(check.MA).to.be('code');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2440,7 +2450,7 @@ describe('Gun', function(){
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
 							if(done.c){return}done.c=1;
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2585,7 +2595,7 @@ describe('Gun', function(){
 							expect(check.CA).to.be('state');
 							expect(check.TX).to.be('state');
 							expect(check.MA).to.be('state');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2677,7 +2687,7 @@ describe('Gun', function(){
 							expect(check.CA2).to.be('Second');
 							expect(check.NY2).to.be('Second');
 							expect(check.NY3).to.be('Third');
-							done();
+							nopasstun(done, gun);
 						},10);
 					}
 				});
@@ -2704,7 +2714,7 @@ describe('Gun', function(){
 							ref.once(function(data){
 								//console.log("*+*+*+*+*+**+*+*");
 								expect(data).to.be('z');
-								done();
+								nopasstun(done);
 							});
 						}, 25);
 					}, 25);
@@ -2736,7 +2746,7 @@ describe('Gun', function(){
 			},500);});
 		});*/
 
-		it.only('get node after recursive field', function(done){
+		it('get node after recursive field', function(done){
 			var bob = {age: 29, name: "Bob!"};
 			var cat = {name: "Fluffy", species: "kitty"};
 			var user = {bob: bob};
@@ -2752,7 +2762,7 @@ describe('Gun', function(){
 					expect(data.age).to.be(29);
 					expect(data.name).to.be("Bob!");
 					expect('string' == typeof Gun.valid(data.pet)).to.ok();
-					done();
+					nopasstun(done);
 				},300);
 			});
 			});
@@ -2783,7 +2793,7 @@ describe('Gun', function(){
 				done.parent = data;
 				//console.log("*********parent", data);
 				if(done.c){ return } done.c = 1;
-				done(); // TODO: Add more meaningful checks!
+				nopasstun(done, gun); // TODO: Add more meaningful checks!
 			});
 		});
 
@@ -2795,7 +2805,7 @@ describe('Gun', function(){
 			}).get(function(at){
 				//console.log("?????", at);
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			});
 
 		});
@@ -2815,7 +2825,7 @@ describe('Gun', function(){
 						expect(check['2-2'].what).to.be('you.');
 						expect(count['1-1']).to.be(1);
 						expect(count['2-2']).to.be(1);
-						done();
+						nopasstun(done, gun);
 					},50);
 				}
 			});
@@ -2839,7 +2849,7 @@ describe('Gun', function(){
 				expect(data.group).to.be('awesome');
 				expect(data.married).to.be(true);
 				expect(data.name).to.be('Alice');
-				done();
+				nopasstun(done, gun);
 			});
 		});
 
@@ -2877,7 +2887,7 @@ describe('Gun', function(){
 						expect(check.dave.name).to.be('Dave');
 						expect(check.dave.group).to.be('awesome');
 						expect(check.dave.married).to.be(true);
-						done();
+						nopasstun(done, gun);
 					},50);
 				}
 			});
@@ -2955,7 +2965,7 @@ describe('Gun', function(){
 						expect(done.pub).to.be.ok();
 						expect(done.alias).to.be.ok();
 						if(done.c){ return } done.c = 1;
-						done();
+						nopasstun(done, gun);
 					},100);
 				})
 			},100);
@@ -2983,7 +2993,7 @@ describe('Gun', function(){
 					expect(data.zip).to.be('999999');
 					if(!done.s){ return }
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun2);
 				});
 				gun2.get('stef').once(function(data){ //Object {_: Object, address: Object} "stef"
 					//console.log("**************", data);return;
@@ -2992,7 +3002,7 @@ describe('Gun', function(){
 					expect(data.address).to.be.ok();
 					if(!done.a){ return }
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun2);
 				});
 			},1200);
 		});
@@ -3021,7 +3031,7 @@ describe('Gun', function(){
 				done.name = true;
 				expect(done.age).to.be.ok();
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			});
 			});
 		});
@@ -3049,7 +3059,7 @@ describe('Gun', function(){
 					done.name = true;
 					expect(done.age).to.be.ok();
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun);
 				});
 			},400);
 			});
@@ -3071,7 +3081,7 @@ describe('Gun', function(){
 				done.name = true;
 				expect(done.age).to.be.ok();
 				if(done.c){return}done.c=1;
-				done();
+				nopasstun(done, gun);
 			});
 		});
 
@@ -3093,7 +3103,7 @@ describe('Gun', function(){
 					done.name = true;
 					expect(done.age).to.be.ok();
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun);
 				});
 			},400);
 		});
@@ -3115,7 +3125,7 @@ describe('Gun', function(){
 				expect(data.hello).to.be('world');
 				expect(data.goodbye).to.be('mars');
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			});
 			});
 		});
@@ -3138,7 +3148,7 @@ describe('Gun', function(){
 					expect(data.hello).to.be('world');
 					expect(data.goodbye).to.be('mars');
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun);
 				});
 			},400);
 			});
@@ -3178,7 +3188,7 @@ describe('Gun', function(){
 					//console.log(check);
 					if(check.on['asdf'] && check.on['fdsa'] && check.once['asdf'] && check.once['fdsa']){
 						if(done.c){ return } done.c = 1;
-						done();
+						nopasstun(done, gun);
 					}
 				})
 			}, 1200);
@@ -3210,7 +3220,7 @@ describe('Gun', function(){
 						expect(check.levelB3.levelB4).to.eql({'#':"level1/levelB2/levelB3/levelB4"});
 						expect(check.levelB4.levelB5).to.be("world");
 
-						done();
+						nopasstun(done, gun);
 					}, 250);
 				});
 				gun.get('level1').map().map().map().map().on(function(v,k){ log('*',5,k,v); check[k] = v; }); // see test below
@@ -3231,7 +3241,7 @@ describe('Gun', function(){
 					check.to = check.to || setTimeout(function(){
 						expect(check.levelA5).to.be('hello');
 						expect(check.levelB5).to.be('world');
-						done();
+						nopasstun(done, gun);
 					}, 20);
 				});
 			}, 1000);
@@ -3287,9 +3297,9 @@ describe('Gun', function(){
 						&& check.asdf1.pub === 'asdf' && check.asdf1.name === 'timber'
 						&& check.C2.pub === 'fdsa' && check.C2.y === 'mark'
 						&& check.asdf2.pub === 'asdf' && check.asdf2.name === 'timber'){
-							done();
+							nopasstun(done, gun2);
 						}
-					});
+					}, 150);
 				});
 			},70);
 
@@ -3312,7 +3322,7 @@ describe('Gun', function(){
 				expect(done.one).to.be("ASDF");
 				expect(done.two).to.be("mark");
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			};
 
 			setTimeout(function(){
@@ -3348,7 +3358,7 @@ describe('Gun', function(){
 					expect(done.alias.alias).to.be("mark");
 					expect(done.alias.born).to.be(1);
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun);
 				});
 			},400);
 			}, 1000);
@@ -3367,7 +3377,7 @@ describe('Gun', function(){
 				if(1 === data.a && 3 === data.c){
 					if(done.c){ return } done.c = 1;
 					//console.log("-------");
-					done();
+					nopasstun(done, gun);
 				}
 			});
 
@@ -3390,7 +3400,7 @@ describe('Gun', function(){
 				check[data] = true;
 				if(check.alicethezombie && check.bobthezombie){
 					if(done.c){return}done.c=1;
-					done();
+					setTimeout(function(){ nopasstun(done, gun) },9);
 				}
 			});
 			//console.debug.i=1;console.log("--------------");
@@ -3418,7 +3428,7 @@ describe('Gun', function(){
 			  check[k] = (check[k] || 0) + 1;
 			  if(1 === check.alice && 1 === check.bob && 1 === check.carl){
 			  	if(done.c){return}done.c=1;
-			  	done();
+			  	setTimeout(function(){ nopasstun(done, gun) },9);
 			  }
 			});
 
@@ -3446,7 +3456,7 @@ describe('Gun', function(){
 						expect(check.dave.age).to.be(25);
 						expect(check.eve).to.not.be.ok();
 						if(done.c){return}done.c=1;
-						done();
+						setTimeout(function(){ nopasstun(done, gun) },9);
 					}
 				},600);
 			});
@@ -3468,7 +3478,7 @@ describe('Gun', function(){
 				}
 				if(done.one && done.two){
 					if(done.c){ return } done.c = 1;
-					done();
+					nopasstun(done, gun);
 				}
 			});
 			list.get('message').put('hello world'); // outputs "message: hello world"
@@ -3510,7 +3520,8 @@ describe('Gun', function(){
 				expect(val).to.be('hello');
 				if(done.c){ return } done.c = 1;
 				setTimeout(function(){
-					done();
+					nopasstun(0, b);
+					nopasstun(done, d);
 				},1700);
 			});
 		});
@@ -3537,7 +3548,7 @@ describe('Gun', function(){
 				setTimeout(function(){
 					if(done.fbb && done.t && done.bzl){
 						if(done.c){ return } done.c = 1;
-						done();
+						nopasstun(done, gun);
 					}
 				},100);
 			});
@@ -3555,7 +3566,7 @@ describe('Gun', function(){
 			gun.get('ds/safe').once(function(data){
 				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			});
 		});
 
@@ -3594,8 +3605,8 @@ describe('Gun', function(){
 
 				setTimeout(function(){
 					expect(done.c).to.be(1);
-					if(done.d){ return }
-					done(); done.d = 1;
+					if(done.d){ return } done.d = 1;
+					nopasstun(done, gun);
 				},50);
 			}, 50);
 			}, 1000);
@@ -3615,7 +3626,7 @@ describe('Gun', function(){
 				if(!done.u){ return }
 				expect(done.u).to.be.ok();
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			});//, {v2020:1});
 
 			//console.log("----------");
@@ -3627,7 +3638,7 @@ describe('Gun', function(){
 				if(!done.a){ return }
 				expect(done.a).to.be.ok();
 				if(done.c){ return } done.c = 1;
-				done();
+				nopasstun(done, gun);
 			}, {v2020:1});
 			}, 1000);
 		});
@@ -3644,7 +3655,7 @@ describe('Gun', function(){
 					a.once(function(data){
 						expect(data.profile).to.be.eql({'#': 'sabnbprofile'});
 						if(done.c){ return } done.c = 1;
-						done();
+						nopasstun(done, gun);
 					})
 				}, 100);
 			}, 100);
@@ -3681,7 +3692,7 @@ describe('Gun', function(){
 					clearTimeout(end); end = setTimeout(function(){
 						//console.log("?", c, check, Object.keys(check), gun._.graph);
 						if(!Object.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
-						done();
+						nopasstun(done, gun);
 					},9);
 			});
 
@@ -3715,7 +3726,7 @@ describe('Gun', function(){
 		});
 
 		it('get map should not slowdown', function(done){
-			this.timeout(5000);
+			this.timeout(9000);
 			var gun = Gun({test_no_peer:true}).get('g/m/no/slow');
 			//console.log("---------- setup data done -----------");
 			var prev, diff, max = 90, total = 500, largest = -1, gone = {}, u;
@@ -3737,7 +3748,7 @@ describe('Gun', function(){
 					clearTimeout(many);
 			  	expect('number' === typeof diff).to.be.ok();
 			  	if(done.c){ return } done.c = 1;
-			  	done(); 
+			  	nopasstun(done, gun);
 			  	return;
 			  }
 			  prev = +new Date;
@@ -3755,7 +3766,7 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('c/p/c').get('a').put('lol', function(ack){
-				done();
+				nopasstun(done, gun);
 			});
 		});
 
@@ -3773,7 +3784,7 @@ describe('Gun', function(){
 				check['b'+data.property] = 1;
 			  if(check.avalue && check.bvalue && check.anewValue && check.bnewValue){
 			  	if(done.c){ return } done.c = true;
-			  	done();
+			  	nopasstun(done, gun);
 			  }
 			});
 
@@ -3793,7 +3804,7 @@ describe('Gun', function(){
 					gun.get('who').get('all').once(function(data){
 						expect(data.what).to.be.ok();
 						expect(data.when).to.be.ok();
-						done();
+						nopasstun(done, gun);
 					});
 				});
 			//});
@@ -3808,7 +3819,7 @@ describe('Gun', function(){
 			gun.get('s/r/who').get('said').set(ref, function(ack){ /*console.log('###', ack)*/ });
 			gun.get('s/r/who').get('said').map().once(function(data){
 				expect(data.what).to.be.ok();
-				done();
+				nopasstun(done, gun);
 			})
 		});
 
@@ -3858,8 +3869,9 @@ describe('Gun', function(){
 					return;
 				}
 				expect(v.num).to.be(4);
-				done();
+				nopasstun(done, gun);
 			});
+			//return;
 
 			setTimeout(function(){
 			  
@@ -3950,7 +3962,9 @@ describe('Gun', function(){
 				expect(check.A).to.be('message');
 				expect(check.B).to.be('message');
 				expect(check.C).to.be('message');
-				done();
+				nopasstun(0, gunA);
+				nopasstun(0, gunB);
+				nopasstun(done, gunC);
 			}, 100);
 		});
 
@@ -3981,7 +3995,8 @@ describe('Gun', function(){
 				var err = at.err, data = at.put, field = at.get;
 				//console.log("*****2", data);
 				expect(data).to.be(undefined);
-				done();
+				if(done.c){ return } done.c = 1;
+				nopasstun(done, gun);
 			});
 		});
 
@@ -3996,7 +4011,7 @@ describe('Gun', function(){
 					var err = at.err, data = at.put, field = at.get;
 					//console.log("*****2", data);
 					expect(data).to.be(undefined);
-					done();
+					nopasstun(done, gun);
 				});
 			},400);
 		});
@@ -4012,8 +4027,8 @@ describe('Gun', function(){
 				//console.log("***** 2", data);
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
-				if(done.c){ return }
-				done(); done.c = 1;
+				if(done.c){ return } done.c = 1;
+				nopasstun(done, gun); 
 			});
 			}, 1000);
 		});return;

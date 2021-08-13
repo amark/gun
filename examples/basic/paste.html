@@ -5,5 +5,5 @@
 <script>
 	gun = GUN(location.origin + '/gun');
 	paste.oninput = () => { gun.get('test').get('paste').put(paste.value) }
-	gun.get('test').get('paste').on(data => paste.value = data);
+	gun.get('test').get('paste').on((data) => { paste.value = data });
 </script>

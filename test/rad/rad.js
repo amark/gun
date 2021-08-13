@@ -434,7 +434,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
     });
     
-    it('small range twice', async function(done){
+    it('small range twice', function(done){
         var check = {};
         var gun = Gun();
         gun.get('peoplez').get('alice').put({cool: 'beans'});
