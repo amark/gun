@@ -3400,7 +3400,7 @@ describe('Gun', function(){
 				check[data] = true;
 				if(check.alicethezombie && check.bobthezombie){
 					if(done.c){return}done.c=1;
-					setTimeout(function(){ nopasstun(done, gun) },9);
+					setTimeout(function(){ nopasstun(done, gun) },99);
 				}
 			});
 			//console.debug.i=1;console.log("--------------");

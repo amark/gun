@@ -823,6 +823,7 @@
 				opt.at = cat;
 				opt.ok = key;
 				var wait = {}; // can we assign this to the at instead, like in once?
+				//var path = []; cat.$.back(at => { at.get && path.push(at.get.slice(0,9))}); path = path.reverse().join('.');
 				function any(msg, eve, f){
 					if(any.stun){ return }
 					if((tmp = root.pass) && !tmp[id]){ return }
@@ -988,7 +989,7 @@
 				}
 				if(k && v){ at.node = state_ify(at.node, k, s, d) } // handle soul later.
 				else {
-					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse()}); // Any perf reasons to CPU schedule this .keys( ?
+					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse(), up: at}); // Any perf reasons to CPU schedule this .keys( ?
 					at.node = state_ify(at.node, k, s, cat.link);
 					!g && cat.todo.length && to.push(cat);
 					// ---------------
@@ -1001,6 +1002,9 @@
 						// TODO: BUG maybe? Make sure this does not pick up a link change wipe, that it uses the changign link instead.
 						var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
 						stun(as, msg.$);
+						if(!soul && 'string' == typeof (tmp = Gun.valid(at.link))){ // check soul link above us
+							soul = [tmp, cat.ref._.get || msg.get].join('/');
+						}
 						if(!soul){
 							soul = [];
 							(msg.$$||msg.$).back(function(at){
@@ -1061,7 +1065,7 @@
 				//console.log("PUT HATCH END", as.run, Object.keys(stun.add||''));
 				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
-			//console.only(1, "PUT", as.run, as.graph);
+			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
 		}
 

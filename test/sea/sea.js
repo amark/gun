@@ -422,16 +422,21 @@ describe('SEA', function(){
       var msg = {what: 'hello world'};
       user.create('xavier', 'password');
       gun.on('auth', function(){
+        //console.log(1);
         if(done.a){ return } done.a = 1;
         var ref = user.get('who').get('all').set(msg);
         var stub = user.get('stub').put({});
         setTimeout(function(){
+          //console.log(2);
           user.get('who').put(stub);
           setTimeout(function(){
+            console.log(3);
             var tmp = ref._.has || ref._.soul;
             user.get('who').get('all').get(tmp).put({boom: 'ah'});
             setTimeout(function(){
+              //console.log(4);
               user.get('who').get('all').map().once(function(data){
+                //console.log(5);
                 expect(data).to.be.ok();
                 expect(data.what).to.not.be.ok();
                 done();
@@ -495,7 +500,10 @@ describe('SEA', function(){
           if(done.a){ return } done.a = 1;
           var c = 0, go = function(){ check(++c) }
           var ref = gun.user().get('zasdf').put({a: 9}, go);
+          //ref._.REF = 'ref!';
+          //console.only.i=1;console.log("=================");
           var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref, go);
+          //ref._.DAT = 'dat!';
           at.get('foo').get('bar').put('yay', go);
           ref.get('foo').get('ah').put(1, go);
           function check(){
@@ -542,7 +550,7 @@ describe('SEA', function(){
       });
     });
 
-    describe('CERTIFY', function () {
+    describe.skip('CERTIFY', function () {
       var gun = Gun()
       var user = gun.user()
 
