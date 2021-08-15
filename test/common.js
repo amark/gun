@@ -3770,6 +3770,26 @@ describe('Gun', function(){
 			});
 		});
 
+		it('Resume reads after put error', function(done){
+			var gun = Gun();
+
+			gun.get('r/r/a/p/e').put({a: 1});
+			setTimeout(function(){
+				gun.get('r/r/a/p/e').get('a').get('b').get('c').put([], function(ack){
+					expect(ack.err).to.be.ok();
+					expect(ack.err.toLowerCase().indexOf('array') >= 0).to.be.ok();
+					expect(ack.err.toLowerCase().indexOf('a.b.c') >= 0).to.be.ok();
+					setTimeout(function(){
+						gun.get('r/r/a/p/e').once(function(data){
+							expect(data.a).to.be(1);
+							//console.log("data!", data);
+							nopasstun(done, gun);
+						});
+					},50);
+				});
+			},100)
+		});
+
 		it('Multiple subscribes should trigger', function(done){
 			// thanks to @ivkan for reporting and providing test.
 			var gun = Gun();

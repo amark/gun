@@ -982,14 +982,15 @@
 					k = tmp.pop(); d = d[k];
 					if(tmp.length){ to.push(at) }
 				}
+				k && (to.path || (to.path = [])).push(k);
 				if(!(v = valid(d)) && !(g = Gun.is(d))){
-					if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: as.err = Gun.log("Invalid data, " + typeof d + " at " + (as.path||[]).join('.'))}); as.ran(as); return }
+					if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: as.err = Gun.log("Invalid data: " + ((d && (tmp = d.constructor) && tmp.name) || typeof d) + " at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.'))}); as.ran(as); return }
 					var seen = as.seen || (as.seen = []), i = seen.length;
 					while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 				}
 				if(k && v){ at.node = state_ify(at.node, k, s, d) } // handle soul later.
 				else {
-					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse(), up: at}); // Any perf reasons to CPU schedule this .keys( ?
+					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse(), path: (to.path||[]).slice(), up: at}); // Any perf reasons to CPU schedule this .keys( ?
 					at.node = state_ify(at.node, k, s, cat.link);
 					!g && cat.todo.length && to.push(cat);
 					// ---------------
@@ -1049,7 +1050,7 @@
 		}
 
 		function ran(as){
-			if(as.err){ console.log("GUN in a buggy state, restart & report please."); return } // move log handle here. // TODO: BUG! Clear out stun!
+			if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
 			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
 			var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 				root.on('ack', ack);
@@ -1059,14 +1060,17 @@
 				as.ack(ack, this);
 			}, as.opt), acks = 0, stun = as.stun, tmp;
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
-				if(!stun){ return } stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
-				if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
-				stun.off();
+				if(!stun){ return }
+				ran.end(stun, root);
 				//console.log("PUT HATCH END", as.run, Object.keys(stun.add||''));
 				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
+		}; ran.end = function(stun,root){
+			stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
+			if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
+			stun.off();
 		}
 
 		function get(as){
