@@ -999,12 +999,14 @@
 					tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
 					(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, /*hatch: 0,*/ v2020:1, out:{get:{'.':' '}}}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded. // Fixed now?
 					function resolve(msg, eve){
+						if(cat.link['#']){ return as.ran(as) }
 						if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 						// TODO: BUG maybe? Make sure this does not pick up a link change wipe, that it uses the changign link instead.
 						var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
 						stun(as, msg.$);
-						if(!soul && 'string' == typeof (tmp = Gun.valid(at.link))){ // check soul link above us
-							soul = [tmp, cat.ref._.get || msg.get].join('/');
+						if(!soul && !at.link['#']){ // check soul link above us
+							(at.wait || (at.wait = [])).push(function(){ resolve(msg, eve) }) // wait
+							return;
 						}
 						if(!soul){
 							soul = [];
@@ -1017,6 +1019,7 @@
 						cat.link['#'] = soul;
 						!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 						delete as.wait[id];
+						cat.wait && setTimeout.each(cat.wait, function(cb){ cb && cb() });
 						as.ran(as);
 					};
 					// ---------------
