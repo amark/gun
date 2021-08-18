@@ -414,7 +414,7 @@ describe('SEA', function(){
       })
     });
 
-    it('set user ref null override', function(done){
+    it('set user ref null override', function foo(done){
       this.timeout(9000);
       var gun = Gun();
       //user.leave();
@@ -424,16 +424,16 @@ describe('SEA', function(){
       gun.on('auth', function(){
         //console.log(1);
         if(done.a){ return } done.a = 1;
-        var ref = user.get('who').get('all').set(msg);
+        var ref = user.get('who').get('all').set(msg, A);
         var stub = user.get('stub').put({});
-        setTimeout(function(){
+        function A(){
           //console.log(2);
-          user.get('who').put(stub);
-          setTimeout(function(){
-            console.log(3);
+          user.get('who').put(stub, B);
+          function B(){
+            //console.log(3);
             var tmp = ref._.has || ref._.soul;
-            user.get('who').get('all').get(tmp).put({boom: 'ah'});
-            setTimeout(function(){
+            user.get('who').get('all').get(tmp).put({boom: 'ah'}, C);
+            function C(){
               //console.log(4);
               user.get('who').get('all').map().once(function(data){
                 //console.log(5);
@@ -441,9 +441,9 @@ describe('SEA', function(){
                 expect(data.what).to.not.be.ok();
                 done();
               });
-            },9);
-          },9);
-        },9);
+            }
+          }
+        };
       });
     });
 
