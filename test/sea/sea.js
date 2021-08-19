@@ -550,7 +550,7 @@ describe('SEA', function(){
       });
     });
 
-    describe.skip('CERTIFY', function () {
+    describe('CERTIFY', function () {
       var gun = Gun()
       var user = gun.user()
 
