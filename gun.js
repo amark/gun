@@ -1332,7 +1332,6 @@
 						
 						//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 					}catch(e){ console.log('DBG err', e) }}*/
-
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var S = peer.SH = +new Date;
 				var tmp = raw[0], msg;
@@ -1385,6 +1384,7 @@
 				}
 				var S = +new Date;
 				DBG && (DBG.is = S); peer.SI = id;
+				console.log("hear:", ((peer.wire||'').headers||'').origin, msg.put || msg.get);
 				root.on('in', mesh.last = msg);
 				//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 				DBG && (DBG.hd = +new Date);
