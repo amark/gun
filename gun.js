@@ -395,7 +395,7 @@
 				if(!(tmp = id._)){ /*console.log("TODO: handle ack id.");*/ return }
 				tmp.acks = (tmp.acks||0) + 1;
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
-					root && root.on('in', {'@': tmp['#'], err: msg.err, ok: 'shard'});
+					root && root.on('in', {'@': tmp['#'], err: msg.err, ok: msg.err? u : 'shard'});
 					return;
 				}
 				if(msg.err){ msg['@'] = tmp['#'] }
