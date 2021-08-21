@@ -23,7 +23,7 @@ $('html, #upload').upload(function resize(eve, up){
   gun.get('test').get((eve.id+(new Date).getUTCSeconds()) % 60).put(b64); // limit uploads to 1 of 60 slots.
 });
 
-gun.get('test').map().on(function(data){
+gun.get('test').map().once(function(data){
   if("string" != typeof data){ return }
   var type = data.split(';')[0], ui;
   if(type.indexOf('image') + 1){ ui = $("img").get(0) }
