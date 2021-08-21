@@ -35,7 +35,9 @@
     try{ if(SEA.window){
       if(location.protocol.indexOf('s') < 0
       && location.host.indexOf('localhost') < 0
+      && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
       && location.protocol.indexOf('file:') < 0){
+        console.warn('WebCrypto used by GUN SEA implementation does not work without HTTPS. Will automatically redirect.')
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
     } }catch(e){}
@@ -669,7 +671,6 @@
 
   ;USE(function(module){
     var SEA = USE('./root');
-
     // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate authority's graph
     SEA.certify = SEA.certify || (async (certificants, policy = {}, authority, cb, opt = {}) => { try {
       /*
@@ -680,14 +681,12 @@
       "cb": A callback function after all things are done.
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.blacklist is set, SEA will look for blacklist before syncing.
       */
-
       console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
         if (certificants) {
           if ((typeof certificants === 'string' || Array.isArray(certificants)) && certificants.indexOf('*') !== -1) return '*'
-
           if (typeof certificants === 'string') {
             return certificants
           }
@@ -701,7 +700,6 @@
           }
 
           if (typeof certificants === 'object' && certificants.pub) return certificants.pub
-
           return data.length > 0 ? data : null
         }
         return null
@@ -752,6 +750,7 @@
     SEA.verify = USE('./verify');
     SEA.encrypt = USE('./encrypt');
     SEA.decrypt = USE('./decrypt');
+    SEA.certify = USE('./certify');
     //SEA.opt.aeskey = USE('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
@@ -857,7 +856,13 @@
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
 
     // Well first we have to actually create a user. That is what this function does.
-    User.prototype.create = function(alias, pass, cb, opt){
+    User.prototype.create = function(...args){
+      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
+      const alias = pair && (pair.pub || pair.epub) ? pair.pub : typeof args[0] === 'string' ? args[0] : null;
+      const pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
+      const cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
+      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
+      
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
       opt = opt || {};
@@ -871,7 +876,7 @@
         }
       }
       if(cat.ing){
-        cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -882,7 +887,7 @@
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
           var ack = {err: Gun.log('User already created!')};
           cat.ing = false;
-          cb(ack);
+          (cb || noop)(ack);
           gun.leave();
           return;
         }
@@ -891,9 +896,10 @@
       }
       act.b = function(proof){
         act.proof = proof;
-        SEA.pair(act.c); // now we have generated a brand new ECDSA key pair for the user account.
+        pair ? act.c(pair) : SEA.pair(act.c) // generate a brand new key pair or use the existing.
       }
-      act.c = function(pair){ var tmp;
+      act.c = function(pair){
+        var tmp
         act.pair = pair || {};
         if(tmp = cat.root.user){
           tmp._.sea = pair;
@@ -928,7 +934,7 @@
         if(!act.h.ok || !act.i.ok){ return }
         cat.ing = false;
         cb({ok: 0, pub: act.pair.pub}); // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-        if(noop === cb){ gun.auth(alias, pass) } // if no callback is passed, auto-login after signing up.
+        if(noop === cb){ pair? gun.auth(pair) : gun.auth(alias, pass) } // if no callback is passed, auto-login after signing up.
       }
       root.get('~@'+alias).once(act.a);
       return gun;
@@ -954,17 +960,17 @@
   ;USE(function(module){
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     // now that we have created a user, we want to authenticate them!
-    User.prototype.auth = function(){ // TODO: this PR with arguments need to be cleaned up / refactored.
-      const alias = typeof arguments[0] === 'string' ? arguments[0] : null
-      const pass = alias && typeof arguments[1] === 'string' ? arguments[1] : null
-      const pair = typeof arguments[0] === 'object' && (arguments[0].pub || arguments[0].epub) ? arguments[0] : typeof arguments[1] === 'object' && (arguments[1].pub || arguments[1].epub) ? arguments[1] : null
-      const cb = Array.prototype.slice.call(arguments).filter(arg => typeof arg === 'function')[0] || function(){} // cb now can stand anywhere, after alias/pass or pair
-      const opt = arguments && arguments.length > 1 && typeof arguments[arguments.length-1] === 'object' ? arguments[arguments.length-1] : {} // opt is always the last parameter which typeof === 'object' and stands after cb
+    User.prototype.auth = function(...args){ // TODO: this PR with arguments need to be cleaned up / refactored.
+      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
+      const alias = !pair && typeof args[0] === 'string' ? args[0] : null;
+      const pass = alias && typeof args[1] === 'string' ? args[1] : null;
+      const cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
+      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
       
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
-        cb({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -1019,11 +1025,11 @@
         at = user._ = root.get('~'+pair.pub)._;
         at.opt = upt;
         // add our credentials in-memory only to our root user instance
-        user.is = {pub: pair.pub, epub: pair.epub, alias: alias};
+        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair};
         at.sea = act.pair;
         cat.ing = false;
         try{if(pass && u == (obj_ify(cat.root.graph['~'+pair.pub].auth)||'')[':']){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
-        opt.change? act.z() : cb(at);
+        opt.change? act.z() : (cb || oop)(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
           try{var sS = {};
@@ -1060,12 +1066,12 @@
           tmp.auth = auth;
           root.get('~'+act.pair.pub).put(tmp);
         } // end delete
-        root.get('~'+act.pair.pub).get('auth').put(auth, cb);
+        root.get('~'+act.pair.pub).get('auth').put(auth, cb || noop);
       }
       act.err = function(e){
         var ack = {err: Gun.log(e || 'User cannot be found!')};
         cat.ing = false;
-        cb(ack);
+        (cb || noop)(ack);
       }
       act.plugin = function(name){
         if(!(act.name = name)){ return act.err() }
@@ -1098,19 +1104,18 @@
   ;USE(function(module){
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN;
     User.prototype.recall = function(opt, cb){
-      var gun = this, root = gun.back(-1);
+      var gun = this, root = gun.back(-1), tmp;
       opt = opt || {};
       if(opt && opt.sessionStorage){
         if(SEA.window){
-          try{var sS = {};
-          sS = window.sessionStorage;
-          if(sS){
-            (root._).opt.remember = true;
-            ((gun.back('user')._).opt||opt).remember = true;
-            if(sS.recall || sS.pair){
-              root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
+          try{
+            var sS = {};
+            sS = window.sessionStorage;
+            if(sS){
+              (root._).opt.remember = true;
+              ((gun.back('user')._).opt||opt).remember = true;
+              if(sS.recall || sS.pair) root.user().auth(JSON.parse(sS.pair), cb); // pair is more reliable than alias/pass
             }
-          }
           }catch(e){}
         }
         return gun;
@@ -1312,6 +1317,7 @@
           return; // omit!
         }
       }
+      
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }

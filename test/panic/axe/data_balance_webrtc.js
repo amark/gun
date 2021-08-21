@@ -75,7 +75,7 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-    require('../util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+	    require('../util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
 // 		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});

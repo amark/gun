@@ -551,7 +551,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         names.forEach(function(v){
             all[v] = true;
         });
-        gun.get('names').get({'.': {'-': 1}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').get({'.': {'-': 1}, '%': 1000 * 100, '-': 1}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
