@@ -60,26 +60,15 @@
   "optionalDependencies": {
     "@peculiar/webcrypto": "^1.1.1",
     "text-encoding": "^0.7.0",
-    "emailjs": "^2.2.0",
-    "buffer": "^5.4.3"
+    "emailjs": "^2.2.0"
   },
   "peerDependencies": {
-    "bufferutil": "^4.0.1",
-    "utf-8-validate": "^5.0.2",
     "text-encoding": "^0.7.0"
   },
   "devDependencies": {
-    "@types/ip": "^1.1.0",
-    "@types/mocha": "^7.0.1",
-    "@types/node": "^13.7.0",
-    "@types/uglify-js": "^3.0.4",
-    "@types/ws": "^7.2.1",
     "aws-sdk": "^2.528.0",
     "ip": "^1.1.5",
-    "iris-messenger": "github:irislib/iris-messenger",
     "mocha": "^6.2.0",
-    "panic-manager": "^1.2.0",
-    "panic-server": "^1.1.1",
     "uglify-js": "^3.6.0"
   }
 }
