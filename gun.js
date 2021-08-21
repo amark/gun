@@ -1335,7 +1335,7 @@
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var S = peer.SH = +new Date;
 				var tmp = raw[0], msg;
-				console.log("hear:", ((peer.wire||'').headers||'').origin, raw.slice && raw.slice(0,200)); //tc-iamunique-tc-package-ds1
+				//raw && raw.slice && console.log("hear:", ((peer.wire||'').headers||'').origin, raw.length, raw.slice && raw.slice(0,50)); //tc-iamunique-tc-package-ds1
 				if('[' === tmp){
 					parse(raw, function(err, msg){
 						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -1364,7 +1364,6 @@
 				}
 			}
 			hear.one = function(msg, peer, S){ // S here is temporary! Undo.
-				if(msg.put){ if(!msg.put['tc-iamunique-tc-package-ds1']){ return } } // isolate?
 				var id, hash, tmp, ash, DBG;
 				if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 				DBG && (DBG.h = S);
