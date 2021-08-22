@@ -1,28 +1,23 @@
 /**
- * AXE test 1
+ * AXE test data balance
  * What we want here: (1) Superpeer and (n) peers
  *  - The peers receives only the requested data.
- *  - If the Superpeer crash, after restart, must recreate all subscriptions and update the peers.
- *  - If some peer crash or go offline, must receive the changes via RTC.
- *
- * Tip: to run this `npm run testaxe`
- * Tip 2: if you clone the gun repo, you need to create a link do gun package. Do `npm install && cd node_modules && ln -s ../ gun`
- * Tip 3: If you not in localhost, run the browsers in anonymous mode because of domain security policies. https://superuser.com/questions/565409/how-to-stop-an-automatic-redirect-from-http-to-https-in-chrome
+ *  - If the Superpeer crash, must recreate all subscriptions and update the peers.
+ *  - If some peer crash or go offline, when connected again must receive the changes made by others while out.
  */
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
 	servers: 2,
-	browsers: 3,
+	browsers: 2,
 	route: {
 		'/': __dirname + '/index.html',
-		'/gun.js': __dirname + '/../../gun.js',
-		'/gun/axe.js': __dirname + '/../../axe.js',
-		'/gun/lib/radix.js': __dirname + '/../../lib/radix.js',
-		'/gun/lib/webrtc.js': __dirname + '/../../lib/webrtc.js',
-		'/jquery.js': __dirname + '/../../examples/jquery.js'
+		'/gun.js': __dirname + '/../../../gun.js',
+		'/gun/axe.js': __dirname + '/../../../axe.js',
+		'/jquery.js': __dirname + '/../../../examples/jquery.js'
 	}
 }
+
 var panic = require('panic-server');
 panic.server().on('request', function(req, res){
 	config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
@@ -46,10 +41,10 @@ var server2 = servers.excluding(server).pluck(1);
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
-var john = browsers.excluding(alice).excluding(bob).pluck(1);
 var again = {};
 
-describe("The Holy Grail AXE Test!", function(){
+describe("Data sync AXE Test!", function(){
+	console.time('TOTAL TEST TIME');
 	this.timeout(5 * 60 * 1000);
 // 	this.timeout(10 * 60 * 1000);
 
@@ -80,7 +75,8 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+    require('../util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+// 		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -90,35 +86,25 @@ describe("The Holy Grail AXE Test!", function(){
 			tests.push(client.run(function(test){
 				localStorage.clear(); console.log('Clear localStorage!!!');
 				var env = test.props;
-				var opt = {peers:['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], wait: 1000};
-				var pid = location.hash.slice(1);
-				if (pid) { opt.pid = pid; }
-				Gun.on('opt', function(ctx) {
-					this.to.next(ctx);
-					ctx.on('hi', function(opt) {
-						document.getElementById('pid').innerHTML = (document.getElementById('pid').innerHTML || "-")  + ', ' + this.on.opt.pid;
-					});
-				});
-				var gun = window.gun = Gun(opt);
+				var gun = window.gun = Gun({peers:['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], wait: 1000});
 				window.ref = gun.get('holy').get('grail');
 			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
 
-	it("Wait for Alice, Bob and John...", function(done){
+	it("Wait for Alice and Bob...", function(done){
 		setTimeout(done, 1000);
 	});
 
 	it("Alice Write: Hi Bob!", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
-			$('#name').text('Alice');
 			test.async();
 			ref.once(function() { // TODO: Need `.once` first for subscription. If Alice do a `.put` before a `.once`, Alice will get old data from localStorage if Bob update
 				ref.put('Hi Bob!', function(ack) {
 					console.log(ack);
-					setTimeout(test.done, 2000);
+					setTimeout(test.done, 10000);
 				});
 			});
 		});
@@ -127,7 +113,6 @@ describe("The Holy Grail AXE Test!", function(){
 	it("Bob receive ONCE from Alice: Hi Bob!", function(){
 		return bob.run(function(test){
 			console.log("I AM BOB");
-			$('#name').text('Bob');
 			test.async();
 			ref.once(function(data){
 				if('Hi Bob!' === data){
@@ -146,7 +131,7 @@ describe("The Holy Grail AXE Test!", function(){
 		return bob.run(function(test){
 			test.async();
 			ref.put('Hi Alice!', function(ack) {
-				console.log('[OK] Bob Write response: Hi Alice!', ack);
+				console.log('[OK] Bob Write response: Hi Alice!', JSON.stringify(ack));
 				setTimeout(test.done, 2000);
 			});
 		});
@@ -169,29 +154,10 @@ describe("The Holy Grail AXE Test!", function(){
 		})
 	});
 
-	it("John Read what Bob say to Alice: Hi Alice!", function(){
-		return john.run(function(test){
-			test.async();
-			console.log("I AM JOHN");
-			$('#name').text('John');
-			ref.once(function(data){
-				if('Hi Alice!' === data){
-					console.log('[OK] John receive the data: ', data);
-					return test.done();
-				} else {
-					//TODO: aqui em duvida.. está pegando do localStorage, mas Bob alterou o dado.
-					var err = '[FAIL] John receive wrong data: "' + data + '" and must be "Hi Alice!"';
-					console.log(err);
-					return test.fail(err);
-				}
-			})
-		})
-	});
-
 	it("Bob Write in some data, Alice not subscribed", function(){
 		return bob.run(function(test){
 			test.async();
-			gun.get('bob').get('mine').put('Alice dont want this data now!', function() {
+			gun.get('bob').get('mine').put('Alice dont want this data!', function() {
 				setTimeout(test.done, 2000);
 			});
 		});
@@ -203,17 +169,13 @@ describe("The Holy Grail AXE Test!", function(){
 			/// This must be empty, because alice don't make a subscription to this node.
 			var bobdata = JSON.parse(localStorage.getItem('gun/')).bob;
 			if (bobdata) {
-				var err = '[FAIL] Alice receive not subscribed data in localStorage: ' + JSON.stringify(bobdata);
+				var err = '[FAIL] Alice receive not subscribed data: ' + JSON.stringify(bobdata);
 				console.log(err);
 				return test.fail(err);
+			} else {
+				console.log('[OK] Alice Read must NOT receive data from Bob: ', bobdata);
+				return test.done();
 			}
-			if (gun._.graph.bob) {
-				var err = '[FAIL] Alice receive not subscribed data in in graph: ' + JSON.stringify(gun._.graph.bob);
-				console.log(err);
-				return test.fail(err);
-			}
-			console.log('[OK] Alice Read must NOT receive data from Bob: ', bobdata);
-			return test.done();
 		})
 	});
 
@@ -222,7 +184,7 @@ describe("The Holy Grail AXE Test!", function(){
 			test.async();
 			gun.get('bob').once(function(data){
 				if(data){
-					console.log('[OK] Alice receive the value: ', data);
+					console.log('[OK] Alice receive the value: ', JSON.stringify(data));
 					return test.done();
 				} else {
 					var err = '[FAIL] Alice receive the value: ' + data;
@@ -237,16 +199,16 @@ describe("The Holy Grail AXE Test!", function(){
 		return bob.run(function(test){
 			test.async();
 			gun.get('bob').get('mine').put('Alice WANT this data now!', function() {
-				setTimeout(test.done, 5000);
+				setTimeout(test.done, 2000);
 			});
 		});
 	});
 
-	it("Alice must receive 'Alice WANT this data now!' from Bob node", function(){
+	it("Alice must receive updates from Bob node", function(){
 		return alice.run(function(test){
 			test.async();
 			if (gun._.graph.bob && gun._.graph.bob.mine === 'Alice WANT this data now!') {
-				console.log('[OK] GRAPH: ', gun._.graph.bob);
+				console.log('[OK] GRAPH: ', JSON.stringify(gun._.graph.bob));
 				test.done();
 			} else {
 				var err = '[FAIL] GRAPH: ' + JSON.stringify(gun._.graph.bob);
@@ -258,6 +220,7 @@ describe("The Holy Grail AXE Test!", function(){
 
 	it("Server has crashed!", function(){
 		return server.run(function(test){
+			console.log(3);
 // 			var env = test.props;
 // 			try{ require('fs').unlinkSync(env.i+'data'); }catch(e){}
 			process.exit(0);
@@ -265,10 +228,11 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it("Wait...", function(done){
+		console.log(4);
 		setTimeout(done, 2000);
 	});
 
-	it("Alice change the data (superpeer crashed yet).", function(){
+	it("Alice update the data (superpeer crashed yet).", function(){
 		return alice.run(function(test){
 			var env = test.props;
 			if(window.WebSocket){
@@ -280,53 +244,20 @@ describe("The Holy Grail AXE Test!", function(){
 			}
 			test.async()
 			ref.put("Superpeer? Where are you?", function() {
-				setTimeout(test.done, 1000);
+				setTimeout(test.done, 100);
 			});
 		}, {config: config});
 	});
 
-	it("Bob receive what Alice change via WebRTC.", function(){
+	it("Bob can't see what Alice change because Superpeer is out.", function(){
 		return bob.run(function(test){
 			test.async();
 			ref.once(function(data){
-				if('Superpeer? Where are you?' === data){
-					console.log('[OK] Bob received data via WebRTC: ', data);
+				if('Superpeer? Where are you?' !== data){
+					console.log('[OK] Bob have old data: ', data);
 					return test.done();
 				} else {
 					var err = '[FAIL] Bob MUST not receive: "Superpeer? Where are you?", but receive: ' + data;
-					console.log(err);
-					return test.fail(err);
-				}
-			})
-		})
-	});
-
-	it("Bob change the data again (superpeer crashed yet).", function(){
-		return alice.run(function(test){
-			var env = test.props;
-			if(window.WebSocket){
-				var err;
-				try{ new WebSocket('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun') }catch(e){ err = e }
-				if(!err){
-					test.fail("Server did not crash.");
-				}
-			}
-			test.async()
-			ref.put("Alice, can you hear me?", function() {
-				setTimeout(test.done, 1000);
-			});
-		}, {config: config});
-	});
-
-	it("Alice MUST receive 'Alice, can you hear me?' via WebRTC.", function(){
-		return bob.run(function(test){
-			test.async();
-			ref.once(function(data){
-				if('Alice, can you hear me?' === data){
-					console.log('[OK] Alice received data via WebRTC: ', data);
-					return test.done();
-				} else {
-					var err = '[FAIL] Alice MUST not receive: "Superpeer? Where are you?", but receive: ' + data;
 					console.log(err);
 					return test.fail(err);
 				}
@@ -357,52 +288,23 @@ describe("The Holy Grail AXE Test!", function(){
 	});
 
 	it("Wait sync...", function(done){
+		console.log(4);
 		setTimeout(done, 5000);
 	});
 
-	it("Alice change the data again (superpeer is UP!).", function(){
-		return alice.run(function(test){
-			var env = test.props;
-			test.async()
-			ref.put("Yes Bob! Thanks for asking!", function() {
-				setTimeout(test.done, 1000);
-			});
-		}, {config: config});
-	});
-
-	it("Bob MUST receive 'Yes Bob! Thanks for asking!'", function(){
+	it("Bob now receive what Alice change because Superpeer is on.", function(){
 		return bob.run(function(test){
 			test.async();
 			ref.once(function(data){
-				if('Yes Bob! Thanks for asking!' === data){
-					console.log('[OK] Bob received the data change: ', data);
+				if('Superpeer? Where are you?' === data){
+					console.log('[OK] Bob have old data: ', data);
 					return test.done();
 				} else {
-					var err = '[FAIL] Bob MUST not receive: "Yes Bob! Thanks for asking!", but receive: ' + data;
+					var err = '[FAIL] Bob MUST not receive: "Superpeer? Where are you?", but receive: ' + data;
 					console.log(err);
 					return test.fail(err);
 				}
 			})
-		})
-	});
-
-	it("John dont want to know what Bob say in his node!", function(){
-		return john.run(function(test){
-			test.async();
-			/// This must be empty, because John don't make a subscription to this node.
-			var bobdata = JSON.parse(localStorage.getItem('gun/')).bob;
-			if (bobdata) {
-				var err = '[FAIL] John receive not subscribed data: ' + JSON.stringify(bobdata);
-				console.log(err);
-				return test.fail(err);
-			}
-			if (gun._.graph.bob) {
-				var err = '[FAIL] John receive not subscribed data in in graph: ' + JSON.stringify(gun._.graph.bob);
-				console.log(err);
-				return test.fail(err);
-			}
-			console.log('[OK] John Read must NOT receive data from Bob: ', bobdata, gun._.graph.bob);
-			return test.done();
 		})
 	});
 
@@ -413,9 +315,12 @@ describe("The Holy Grail AXE Test!", function(){
 		},1000);
 	});
 	after("Everything shut down.", function(){
-		require('./util/open').cleanup();
+		require('../util/open').cleanup() ||	browsers.run(function(){
+			setTimeout(location.reload, 15 * 1000);
+		});
 		return servers.run(function(){
 			process.exit();
 		});
+		console.timeEnd('TOTAL TEST TIME');
 	});
 });

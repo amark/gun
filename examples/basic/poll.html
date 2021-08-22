@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+
+	<script src="../jquery.js"></script>
+	<script src="../../../gun/gun.js"></script>
+	<script src="../../../gun/sea.js"></script>
+	<!-- script src="../../../gun/axe.js"></script -->
+	<script> // main init!
+	var app = {
+		view: $, // replace with not jquery!
+		data: GUN('http://localhost:8765/gun'), // peer-to-peer database!
+	};
+	app.user = app.data.user().recall({sessionStorage: true});
+	</script>
+
+</head>
+<body>
+
+<div id="login" class="center pad">
+	<style>
+	#login input {
+		max-width: 6em;
+	}
+	</style>
+	<form id="sign" onsubmit="app.login(event)">
+	  <input id="alias" placeholder="username" class="jot rim">
+	  <input id="pass" type="password" placeholder="passphrase" class="jot rim">
+	  <input id="in" type="submit" value="sign in" class="green whitet act gap sap rim">
+	  <input id="up" type="button" value="sign up" onclick="app.register()" class="act gap sap rim">
+	</form>
+	<script>
+	app.login = function(eve){
+		if(app.error(eve)){ return }
+	  app.data.user().auth(
+	  	app.view('#alias').val(),
+	  	app.view('#pass').val(),
+	  	app.error
+	  );
+	};
+
+	app.register = function(eve){
+	  app.data.user().create(
+	  	app.view('#alias').val(),
+	  	app.view('#pass').val(),
+	  	app.login
+	  );
+	};
+
+	app.data.on('auth', function(eve){
+	  app.view('#sign').hide(); // hide login form upon logging in.
+	});
+	</script>
+</div>
+
+<div id="poll" class="pad">
+	<style>
+	#poll {
+		display: flex;
+		flex-wrap: wrap;
+	}
+	#poll div {
+		margin: 1%;
+		width: 100%;
+	}
+	</style>
+	<script>
+	(window.onhashchange = async function(){
+		app.poll = app.data.get(location.hash.slice(1));
+		app.poll.map().on(function(data, id){
+			app.render(id = 'p'+String.hash(id), '.q', '#poll', data).css({order: data.how}).data('as',{$:this});
+			console.log("poll?", id, data);
+		});
+	})();
+	app.render = function(id, model, onto, data){
+		var ui = $(
+			$('#'+id).get(0) ||
+			$('.model').find(model).clone(true).attr('id', id).appendTo(onto)
+		);
+		$.each(data, function(field, val){
+			if($.isPlainObject(val)){ return }
+			ui.find("[name='" + field + "']").val(val).text(val);
+		});
+		return ui;
+	}
+	</script>
+	<div class="model">
+		<div class="q">
+			<span name="what"></span>
+		</div>
+	</div>
+</div>
+
+<div id="make" class="pad">
+	<style>
+	#make #add {
+		border-radius: 100%;
+    width: 2em;
+    height: 2em;
+    line-height: 0em;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+	}
+	</style>
+	<button id="add" onclick="app.add()" class="green whitet act">+</button>
+	<span class="hint">add new title, text, question...</span>
+	<script>
+	app.add = async function(){
+		if(app.error(app.user)){ return }
+		var tmp = await (app.poll = app.poll || app.data.get(location.hash.slice(1)));
+		if(!tmp){ app.poll = app.user.get('poll').set({}) }
+		app.poll.set({how: tmp = Object.keys(tmp||'').length || 1, what: "Question " + tmp });
+		if(!location.hash){ location.hash = (await app.poll)._['#'] }
+	}
+</script>
+</div>
+
+<span id="error">
+	<span id="err"></span>
+	<script>
+	app.error = function(eve){
+		app.view('#err').text('').hide();
+		if(!eve){ return }
+		if(eve.preventDefault){
+			eve.preventDefault();
+			return;
+		}
+		if(eve._ && !eve.is){ eve = {err: "Not signed in!"} }
+		if(!eve.err){ return }
+		app.view('#err').text(eve.err).show();
+		return true;
+	}
+	</script>
+</span>
+
+<style>
+#error { position: fixed; top: 0; width: 100%; text-align: center; background: white; }
+</style>
+<link rel="stylesheet" href="../style.css"/>
+<style>
+@import url('https://fonts.googleapis.com/css?family=Oxygen');
+html, body { font-family: "Oxygen", sans-serif; }
+</style>
+</body>
+</html>

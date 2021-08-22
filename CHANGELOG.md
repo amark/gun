@@ -2,6 +2,8 @@
 
 ## 0.2020.x
 
+`>0.2020.520` may break in-process `gun1` `gun2` message passing. Check `test/common.js` "Check multi instance message passing" for a hint and/or complain on community chat. 
+
  - No breaking changes to core API.
  - Storage adapter `put` event breaking change (temporary?), RAD is official now and storage adapters should be RAD plugins instead of GUN adapters.
  - GUN soul format changed from being a random UUID to being a more predictable graph path (of where initially created) to support even better offline behavior. This means `null`ing & replacing an object will not create a new but re-merge.

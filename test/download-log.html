@@ -1,0 +1,13 @@
+<html>
+<body>
+Paste the log URL into here:
+<input id="peer">
+Then right click save-as here:
+<a id="url">right click not normal click</a>
+<script>
+peer.onkeyup = function(){
+	url.href = url.download = this.value;
+}
+</script>
+</body>
+</html>

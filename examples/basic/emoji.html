@@ -1,40 +1,21 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-<ul id='list'>
-</ul>
+<ul id='list'></ul>
 <form id='form'>
   <input id='who' placeholder='name'>
-  <input id='input' placeholder='say'>
+  <input id='what' placeholder='say'>
   <input type='submit' value='send'>
 </form>
-<script src="https://cdn.jsdelivr.net/npm/emojione@4.0.0/lib/js/emojione.min.js"></script>
 <script src="../../../gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emojione@4.0.0/lib/js/emojione.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emojione@4.0.0/extras/css/emojione.min.css"/>
 <script>
-var gun = Gun(location.origin + '/gun');
-
-var chat = gun.get("chat/" + location.hash.slice(1));
-
-form.onsubmit = function(eve){
-  eve.preventDefault();
-  chat.set(who.value +': ' + input.value);
-  input.value = "";
-}
-
-chat.map().once(function(msg){ render(msg) });
-
-function render(msg, li, beep){
+gun = Gun(location.origin + '/gun'), chat = gun.get("chat/" + location.hash.slice(1));
+form.onsubmit = (eve) => { chat.set(who.value+': '+what.value), eve.preventDefault(what.value = "") }
+chat.map().once((data) => { render(data) });
+function render(msg, li, beep){ // render emoji, scroll to bottom, and notify sound!
   (li = document.createElement("li")).innerText = emojione.shortnameToUnicode(msg);
-  list.appendChild(li);
-  window.scroll(0, list.offsetHeight);
+  list.appendChild(li), window.scroll(0, list.offsetHeight);
   (beep = new SpeechSynthesisUtterance()).text = "new";
-  beep.rate = 10; beep.pitch = 2;
-  window.speechSynthesis.speak(beep);
+  beep.rate = 10, beep.pitch = 2, window.speechSynthesis.speak(beep);
 }
 </script>
-</body>
-</html>

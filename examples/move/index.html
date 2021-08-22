@@ -178,21 +178,21 @@
             });
             $('#share').addClass("hide");
           } else {
-            document.cookie = 'gps=' + (gps.track = (document.cookie.match(/gps\=(.*?)(\&|$|\;)/i)||[])[1] || Gun.text.random(5)); // trick with cookies!
+            document.cookie = 'gps=' + (gps.track = (document.cookie.match(/gps\=(.*?)(\&|$|\;)/i)||[])[1] || String.random(5)); // trick with cookies!
             gps.ref = gun.get('gps/' + gps.track);
             gps.opt.track = function(pos){
               pos = pos.latlng;
               if(gps.follow
-              || Gun.time.is() - gps.when < 1000
+              || Gun.state() - gps.when < 1000
               || gps.last && gps.last.lat == pos.lat && gps.last.lng == pos.lng){
                 return; // throttle!
               }
-              gps.when = Gun.time.is();
+              gps.when = Gun.state();
               gps.ref.put(gps.last = pos);
               //$('#debug').value = JSON.stringify(gps.last);
             }
             gps.where = gps.where || Where(gps.opt);
-            $('#follow').text(("where.gunDB.io/" || (location.origin + location.pathname)) + '#' + gps.track);
+            $('#follow').text((location.origin + location.pathname) + '#' + gps.track);
             $('#share').removeClass("hide");
             $('#share').on('click', function(){
               $('#link').toggleClass("hide");
