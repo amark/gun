@@ -158,6 +158,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   var rad = Radisk(opt), esc = String.fromCharCode(27);
 
   describe('Radisk', function(){
+    this.timeout(1000 * 9);
 
     /*it('parse', function(done){
         this.timeout(60000);
@@ -319,7 +320,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     var ntmp = names;
   describe('RAD + GUN', function(){
-    this.timeout(1000 * 5);
+    this.timeout(1000 * 9);
     var ochunk = 1000;
     Gun.on('opt', function(root){
         root.opt.localStorage = false;

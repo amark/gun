@@ -33,6 +33,7 @@ var SEA = Gun.SEA
 if(!SEA){ return }
 
 describe('SEA', function(){
+  this.timeout(1000 * 9);
   var user;
   var gun;
   var pub;
