@@ -6,6 +6,7 @@
     SEA.secret = SEA.secret || (async (key, pair, cb, opt) => { try {
       opt = opt || {};
       if(!pair || !pair.epriv || !pair.epub){
+        if(!SEA.I){ throw 'No secret mix.' }
         pair = await SEA.I(null, {what: key, how: 'secret', why: opt.why});
       }
       var pub = key.epub || key;
