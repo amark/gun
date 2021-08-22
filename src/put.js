@@ -1,236 +1,146 @@
 
 var Gun = require('./root');
-Gun.chain.put = function(data, cb, as){
-	var gun = this, at = (gun._), root = at.root.$, ctx = root._, M = 100, tmp;
+Gun.chain.put = function(data, cb, as){ // I rewrote it :)
+	var gun = this, at = gun._, root = at.root;
 	as = as || {};
-	as.data = data;
-	as.via = as.$ = as.via || as.$ || gun;
-	if(typeof cb === 'string'){
-		as.soul = cb;
-	} else {
-		as.ack = as.ack || cb;
-	}
-	if(at.soul){
-		as.soul = at.soul;
-	}
-	if(as.soul || root === gun){
-		if(!obj_is(as.data)){
-			(as.ack||noop).call(as, as.out = {err: Gun.log("Data saved to the root level of the graph must be a node (an object), not a", (typeof as.data), 'of "' + as.data + '"!')});
-			if(as.res){ as.res() }
-			return gun;
-		}
-		as.soul = as.soul || (as.not = Gun.node.soul(as.data) || (as.via.back('opt.uuid') || Gun.text.random)());
-		as.via._.stun = {};
-		if(!as.soul){ // polyfill async uuid for SEA
-			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
-				if(err){ return Gun.log(err) } // TODO: Handle error!
-				(as.ref||as.$).put(as.data, as.soul = soul, as);
-			});
-			return gun;
-		}
-		as.$ = root.get(as.soul);
-		as.ref = as.$;
-		ify(as);
-		return gun;
-	}
-	as.via._.stun = {};
-	if(Gun.is(data)){
-		data.get(function(soul, o, msg){
-			if(!soul){
-				delete as.via._.stun;
-				return Gun.log("The reference you are saving is a", typeof msg.put, '"'+ msg.put +'", not a node (object)!');
-			}
-			gun.put(Gun.val.link.ify(soul), cb, as);
-		}, true);
-		return gun;
-	}
-	if(at.has && (tmp = Gun.val.link.is(data))){ at.dub = tmp }
-	as.ref = as.ref || (root._ === (tmp = at.back))? gun : tmp.$;
-	if(as.ref._.soul && Gun.val.is(as.data) && at.get){
-		as.data = obj_put({}, at.get, as.data);
-		as.ref.put(as.data, as.soul, as);
-		return gun;
-	}
-	as.ref.get(any, true, {as: as});
-	if(!as.out){
-		// TODO: Perf idea! Make a global lock, that blocks everything while it is on, but if it is on the lock it does the expensive lookup to see if it is a dependent write or not and if not then it proceeds full speed. Meh? For write heavy async apps that would be terrible.
-		as.res = as.res || stun; // Gun.on.stun(as.ref); // TODO: BUG! Deal with locking?
-		as.$._.stun = as.ref._.stun;
-	}
-	return gun;
-};
-/*Gun.chain.put = function(data, cb, as){ // don't rewrite! :(
-	var gun = this, at = gun._;
-	as = as || {};
+	as.root = at.root;
+	as.run || (as.run = root.once);
+	stun(as, at.id); // set a flag for reads to check if this chain is writing.
+	as.ack = as.ack || cb;
+	as.via = as.via || gun;
+	as.data = as.data || data;
 	as.soul || (as.soul = at.soul || ('string' == typeof cb && cb));
-	if(!as.soul){ return get(data, cb, as) }
-
+	var s = as.state = as.state || Gun.state();
+	if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
+	if(!as.soul){ return get(as), gun }
+	as.$ = root.$.get(as.soul); // TODO: This may not allow user chaining and similar?
+	as.todo = [{it: as.data, ref: as.$}];
+	as.turn = as.turn || turn;
+	as.ran = as.ran || ran;
+	// TODO: Perf! We only need to stun chains that are being modified, not necessarily written to.
+	(function walk(){
+		var to = as.todo, at = to.pop(), d = at.it, cid = at.ref && at.ref._.id, v, k, cat, tmp, g;
+		stun(as, at.ref);
+		if(tmp = at.todo){
+			k = tmp.pop(); d = d[k];
+			if(tmp.length){ to.push(at) }
+		}
+		k && (to.path || (to.path = [])).push(k);
+		if(!(v = valid(d)) && !(g = Gun.is(d))){
+			if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: as.err = Gun.log("Invalid data: " + ((d && (tmp = d.constructor) && tmp.name) || typeof d) + " at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.'))}); as.ran(as); return }
+			var seen = as.seen || (as.seen = []), i = seen.length;
+			while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
+		}
+		if(k && v){ at.node = state_ify(at.node, k, s, d) } // handle soul later.
+		else {
+			as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse(), path: (to.path||[]).slice(), up: at}); // Any perf reasons to CPU schedule this .keys( ?
+			at.node = state_ify(at.node, k, s, cat.link);
+			!g && cat.todo.length && to.push(cat);
+			// ---------------
+			var id = as.seen.length;
+			(as.wait || (as.wait = {}))[id] = '';
+			tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
+			(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, /*hatch: 0,*/ v2020:1, out:{get:{'.':' '}}}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded. // Fixed now?
+			function resolve(msg, eve){
+				if(cat.link['#']){ return as.ran(as) }
+				if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
+				// TODO: BUG maybe? Make sure this does not pick up a link change wipe, that it uses the changign link instead.
+				var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
+				stun(as, msg.$);
+				if(!soul && !at.link['#']){ // check soul link above us
+					(at.wait || (at.wait = [])).push(function(){ resolve(msg, eve) }) // wait
+					return;
+				}
+				if(!soul){
+					soul = [];
+					(msg.$$||msg.$).back(function(at){
+						if(tmp = at.soul || at.link){ return soul.push(tmp) }
+						soul.push(at.get);
+					});
+					soul = soul.reverse().join('/');
+				}
+				cat.link['#'] = soul;
+				!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
+				delete as.wait[id];
+				cat.wait && setTimeout.each(cat.wait, function(cb){ cb && cb() });
+				as.ran(as);
+			};
+			// ---------------
+		}
+		if(!to.length){ return as.ran(as) }
+		as.turn(walk);
+	}());
 	return gun;
-}*/
-
-function ify(as){
-	as.batch = batch;
-	var opt = as.opt||{}, env = as.env = Gun.state.map(map, opt.state);
-	env.soul = as.soul;
-	as.graph = Gun.graph.ify(as.data, env, as);
-	if(env.err){
-		(as.ack||noop).call(as, as.out = {err: Gun.log(env.err)});
-		if(as.res){ as.res() }
-		return;
-	}
-	as.batch();
 }
 
-function stun(cb){
-	if(cb){ cb() }
+function stun(as, id){
+	if(!id){ return } id = (id._||'').id||id;
+	var run = as.root.stun || (as.root.stun = {on: Gun.on}), test = {}, tmp;
+	as.stun || (as.stun = run.on('stun', function(){ }));
+	if(tmp = run.on(''+id)){ tmp.the.last.next(test) }
+	if(test.run >= as.run){ return }
+	run.on(''+id, function(test){
+		if(as.stun.end){
+			this.off();
+			this.to.next(test);
+			return;
+		}
+		test.run = test.run || as.run;
+		test.stun = test.stun || as.stun; return;
+		if(this.to.to){
+			this.the.last.next(test);
+			return;
+		}
+		test.stun = as.stun;
+	});
+}
+
+function ran(as){
+	if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
+	if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+	var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
+		root.on('ack', ack);
+		if(ack.err){ Gun.log(ack) }
+		if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
+		if(!as.ack){ return }
+		as.ack(ack, this);
+	}, as.opt), acks = 0, stun = as.stun, tmp;
+	(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
+		if(!stun){ return }
+		ran.end(stun, root);
+		//console.log("PUT HATCH END", as.run, Object.keys(stun.add||''));
+		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
+	}).hatch = tmp; // this is not official yet ^
+	//console.log(1, "PUT", as.run, as.graph);
+	(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
+}; ran.end = function(stun,root){
+	stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
+	if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
+	stun.off();
+}
+
+function get(as){
+	var at = as.via._, tmp;
+	as.via = as.via.back(function(at){
+		if(at.soul || !at.get){ return at.$ }
+		tmp = as.data; (as.data = {})[at.get] = tmp;
+	});
+	if(!as.via || !as.via._.soul){
+		as.via = at.root.$.get(((as.data||'')._||'')['#'] || at.$.back('opt.uuid')())
+	}
+	as.via.put(as.data, as.ack, as);
+	
+
 	return;
-	var as = this;
-	if(!as.ref){ return }
-	if(cb){
-		as.after = as.ref._.tag;
-		as.now = as.ref._.tag = {};
-		cb();
+	if(at.get && at.back.soul){
+		tmp = as.data;
+		as.via = at.back.$;
+		(as.data = {})[at.get] = tmp; 
+		as.via.put(as.data, as.ack, as);
 		return;
 	}
-	if(as.after){
-		as.ref._.tag = as.after;
-	}
 }
 
-function batch(){ var as = this;
-	if(!as.graph || !obj_empty(as.stun)){ return }
-	as.res = as.res || function(cb){ if(cb){ cb() } };
-	as.res(function(){
-		delete as.via._.stun;
-		var cat = (as.$.back(-1)._), ask = cat.ask(function(ack){
-			cat.root.on('ack', ack);
-			if(ack.err){ Gun.log(ack) }
-			if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
-			if(!as.ack){ return }
-			as.ack(ack, this);
-			//--C;
-		}, as.opt), acks = 0;
-		//C++;
-		// NOW is a hack to get synchronous replies to correctly call.
-		// and STOP is a hack to get async behavior to correctly call.
-		// neither of these are ideal, need to be fixed without hacks,
-		// but for now, this works for current tests. :/
-		var tmp = cat.root.now; obj.del(cat.root, 'now');
-		var mum = cat.root.mum; cat.root.mum = {};
-		(as.ref._).on('out', {
-			$: as.ref, put: as.out = as.env.graph, opt: as.opt, '#': ask
-		});
-		cat.root.mum = mum? obj.to(mum, cat.root.mum) : mum;
-		cat.root.now = tmp;
-		as.via._.on('res', {}); delete as.via._.tag.res; // emitting causes mem leak?
-	}, as);
-	if(as.res){ as.res() }
-} function no(v,k){ if(v){ return true } }
-
-function map(v,k,n, at){ var as = this;
-	var is = Gun.is(v);
-	if(k || !at.path.length){ return }
-	(as.res||iife)(function(){
-		var path = at.path, ref = as.ref, opt = as.opt;
-		var i = 0, l = path.length;
-		for(i; i < l; i++){
-			ref = ref.get(path[i]);
-		}
-		if(is){ ref = v }
-		//if(as.not){ (ref._).dub = Gun.text.random() } // This might optimize stuff? Maybe not needed anymore. Make sure it doesn't introduce bugs.
-		var id = (ref._).dub;
-		if(id || (id = Gun.node.soul(at.obj))){
-			ref.back(-1).get(id);
-			at.soul(id);
-			return;
-		}
-		(as.stun = as.stun || {})[path] = 1;
-		ref.get(soul, true, {as: {at: at, as: as, p:path, ref: ref}});
-	}, {as: as, at: at});
-	//if(is){ return {} }
-}
-var G = String.fromCharCode(31);
-function soul(id, as, msg, eve){
-	var as = as.as, path = as.p, ref = as.ref, cat = as.at; as = as.as;
-	var sat = ref.back(function(at){ return sat = at.soul || at.link || at.dub });
-	var pat = [sat || as.soul].concat(ref._.has || ref._.get || path)
-	var at = ((msg || {}).$ || {})._ || {};
-	id = at.dub = at.dub || id || Gun.node.soul(cat.obj) || Gun.node.soul(msg.put || at.put) || Gun.val.link.is(msg.put || at.put) || pat.join('/') /* || (function(){
-		return (as.soul+'.')+Gun.text.hash(path.join(G)).toString(32);
-	})(); // TODO: BUG!? Do we really want the soul of the object given to us? Could that be dangerous? What about copy operations? */
-	if(eve){ eve.stun = true }
-	if(!id){ // polyfill async uuid for SEA
-		as.via.back('opt.uuid')(function(err, id){ // TODO: improve perf without anonymous callback
-			if(err){ return Gun.log(err) } // TODO: Handle error.
-			solve(at, at.dub = at.dub || id, cat, as);
-		});
-		return;
-	}
-	solve(at, at.dub = id, cat, as);
-}
-
-function solve(at, id, cat, as){
-	at.$.back(-1).get(id);
-	cat.soul(id);
-	delete as.stun[cat.path];
-	as.batch();
-}
-
-function any(soul, as, msg, eve){
-	as = as.as;
-	if(!msg.$ || !msg.$._){ return } // TODO: Handle
-	if(msg.err){ // TODO: Handle
-		Gun.log("Please report this as an issue! Put.any.err");
-		return;
-	}
-	var at = (msg.$._), data = at.put, opt = as.opt||{}, root, tmp;
-	if((tmp = as.ref) && tmp._.now){ return }
-	if(eve){ eve.stun = true }
-	if(as.ref !== as.$){
-		tmp = (as.$._).get || at.get;
-		if(!tmp){ // TODO: Handle
-			delete as.via._.stun;
-			Gun.log("Please report this as an issue! Put.no.get"); // TODO: BUG!??
-			return;
-		}
-		as.data = obj_put({}, tmp, as.data);
-		tmp = null;
-	}
-	if(u === data){
-		if(!at.get){ delete as.via._.stun; return } // TODO: Handle
-		if(!soul){
-			tmp = at.$.back(function(at){
-				if(at.link || at.soul){ return at.link || at.soul }
-				as.data = obj_put({}, at.get, as.data);
-			});
-			as.not = true; // maybe consider this?
-		}
-		tmp = tmp || at.soul || at.link || at.dub;// || at.get;
-		at = tmp? (at.root.$.get(tmp)._) : at;
-		as.soul = tmp;
-		data = as.data;
-	}
-	if(!as.not && !(as.soul = as.soul || soul)){
-		if(as.path && obj_is(as.data)){
-			as.soul = (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
-		} else {
-			//as.data = obj_put({}, as.$._.get, as.data);
-			if(node_ == at.get){
-				as.soul = (at.put||empty)['#'] || at.dub;
-			}
-			as.soul = as.soul || at.soul || at.link || (opt.uuid || as.via.back('opt.uuid') || Gun.text.random)();
-		}
-		if(!as.soul){ // polyfill async uuid for SEA
-			as.via.back('opt.uuid')(function(err, soul){ // TODO: improve perf without anonymous callback
-				if(err){ delete as.via._.stun; return Gun.log(err) } // Handle error.
-				as.ref.put(as.data, as.soul = soul, as);
-			});
-			return;
-		}
-	}
-	as.ref.put(as.data, as.soul, as);
-}
-var obj = Gun.obj, obj_is = obj.is, obj_put = obj.put, obj_map = obj.map, obj_empty = obj.empty;
-var u, empty = {}, noop = function(){}, iife = function(fn,as){fn.call(as||empty)};
-var node_ = Gun.node._;
+var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
+var iife = function(fn,as){fn.call(as||empty)}
 	
