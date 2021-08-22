@@ -6,9 +6,9 @@
     var u;
 
     SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
-      var json = S.parse(data);
+      var json = await S.parse(data);
       if(false === pair){ // don't verify!
-        var raw = S.parse(json.m);
+        var raw = await S.parse(json.m);
         if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
         return raw;
       }
@@ -27,7 +27,7 @@
           return await SEA.opt.fall_verify(data, pair, cb, opt);
         }
       }
-      var r = check? S.parse(json.m) : u;
+      var r = check? await S.parse(json.m) : u;
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
@@ -55,20 +55,22 @@
       if(f === SEA.opt.fallback){ throw "Signature did not match" } f = f || 1;
       var tmp = data||'';
       data = SEA.opt.unpack(data) || data;
-      var json = S.parse(data), pub = pair.pub || pair, key = await SEA.opt.slow_leak(pub);
-      var hash = (f <= SEA.opt.fallback)? shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, new shim.TextEncoder().encode(S.parse(json.m)))) : await sha(json.m); // this line is old bad buggy code but necessary for old compatibility.
+      var json = await S.parse(data), pub = pair.pub || pair, key = await SEA.opt.slow_leak(pub);
+      var hash = (f <= SEA.opt.fallback)? shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, new shim.TextEncoder().encode(await S.parse(json.m)))) : await sha(json.m); // this line is old bad buggy code but necessary for old compatibility.
       var buf; var sig; var check; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
         sig = new Uint8Array(buf)
         check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
         if(!check){ throw "Signature did not match." }
-      }catch(e){
+      }catch(e){ try{
         buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
         sig = new Uint8Array(buf)
         check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
+        }catch(e){
         if(!check){ throw "Signature did not match." }
+        }
       }
-      var r = check? S.parse(json.m) : u;
+      var r = check? await S.parse(json.m) : u;
       O.fall_soul = tmp['#']; O.fall_key = tmp['.']; O.fall_val = data; O.fall_state = tmp['>'];
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;

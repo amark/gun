@@ -4,6 +4,17 @@
     const api = {Buffer: Buffer}
     var o = {};
 
+    // ideally we can move away from JSON entirely? unlikely due to compatibility issues... oh well.
+    JSON.parseAsync = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
+    JSON.stringifyAsync = JSON.stringifyAsync || function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
+
+    api.parse = function(t,r){ return new Promise(function(res, rej){
+      JSON.parseAsync(t,function(err, raw){ err? rej(err) : res(raw) },r);
+    })}
+    api.stringify = function(v,r,s){ return new Promise(function(res, rej){
+      JSON.stringifyAsync(v,function(err, raw){ err? rej(err) : res(raw) },r,s);
+    })}
+
     if(SEA.window){
       api.crypto = window.crypto || window.msCrypto
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
@@ -30,7 +41,7 @@
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("text-encoding and peculiar/nwebcrypto may not be included by default, please add it to your package.json!");
+      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
     }}
 
     module.exports = api
