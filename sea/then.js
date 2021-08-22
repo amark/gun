@@ -1,7 +1,6 @@
 
-    var Gun = require('./sea').Gun;
-    Gun.chain.then = function(cb, opt = {}){
-      opt = {wait: 200, ...opt}
+    var u, Gun = (''+u != typeof window)? (window.Gun||{chain:{}}) : require((''+u === typeof MODULE?'.':'')+'./gun', 1);
+    Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
         gun.once(res, opt);
       }));

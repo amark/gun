@@ -7,7 +7,8 @@
     SEA.verify = require('./verify');
     SEA.encrypt = require('./encrypt');
     SEA.decrypt = require('./decrypt');
-    SEA.opt.aeskey = require('./aeskey'); // not official!
+    SEA.certify = require('./certify');
+    //SEA.opt.aeskey = require('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
 
@@ -49,9 +50,9 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
-    Gun.SEA = SEA;
-    SEA.GUN = SEA.Gun = Gun;
+    ((SEA.window||{}).GUN||{}).SEA = SEA;
 
     module.exports = SEA
+    // -------------- END SEA MODULES --------------------
+    // -- BEGIN SEA+GUN MODULES: BUNDLED BY DEFAULT UNTIL OTHERS USE SEA ON OWN -------
   
