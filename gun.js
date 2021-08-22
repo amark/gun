@@ -378,7 +378,7 @@
 			}
 			function fire(ctx, msg){ var root;
 				if(ctx.stop){ return }
-				if(--ctx.stun !== 0 && !ctx.err){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
+				if(!ctx.err && 0 < --ctx.stun){ return } // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				ctx.stop = 1;
 				if(!(root = ctx.root)){ return }
 				var tmp = ctx.match; tmp.end = 1;
@@ -394,11 +394,15 @@
 				// TODO: check for the sharded message err and transfer it onto the original batch?
 				if(!(tmp = id._)){ /*console.log("TODO: handle ack id.");*/ return }
 				tmp.acks = (tmp.acks||0) + 1;
+				if(tmp.err = msg.err){
+					msg['@'] = tmp['#'];
+					--tmp.stun;
+				}
 				if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
 					root && root.on('in', {'@': tmp['#'], err: msg.err, ok: msg.err? u : 'shard'});
+					msg.err && fire(tmp);
 					return;
 				}
-				if(msg.err){ msg['@'] = tmp['#'] }
 			}
 
 			var ERR = "Error: Invalid graph!";
@@ -809,10 +813,11 @@
 		Gun.chain.get = function(key, cb, as){
 			var gun, tmp;
 			if(typeof key === 'string'){
-			        if(key.length == 0) {
-			              (as = this.chain())._.err = {err: Gun.log('Invalid zero length string key!', key)};
-			              return null
-			        }
+				if(key.length == 0) {	
+					(gun = this.chain())._.err = {err: Gun.log('0 length key!', key)};
+					if(cb){ cb.call(gun, gun._.err) }
+					return gun;
+				}
 				var back = this, cat = back._;
 				var next = cat.next || empty;
 				if(!(gun = next[key])){

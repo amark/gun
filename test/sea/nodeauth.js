@@ -5,6 +5,9 @@ const http = require("http");
 require("../../lib/promise");
 
 let gunClient, server;
+
+// MOVED TO SEA!!!!!!!
+
 describe("SEA node client auth", () => {
   it("should  start server", done => {
     server = http.createServer().listen(8765, done);
@@ -22,7 +25,7 @@ describe("SEA node client auth", () => {
 
   it("should create user", done => {
     gunClient.user().create("gun", "password", res => {
-      console.log({ res });
+      //console.log({ res });
       expect(res.err).to.equal(undefined);
       done();
     });
@@ -46,10 +49,10 @@ describe("SEA node client auth", () => {
     });
   });
 
-  xit("should not stuck on null node", async () => {
+  it("should not stuck on null node", async () => {
     const r1 = await gunClient
       .user()
-      .once(console.log)
+      //.once(console.log)
       .get("test")
       .promPut({ z: 1 });
 

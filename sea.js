@@ -37,7 +37,7 @@
       && location.host.indexOf('localhost') < 0
       && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
       && location.protocol.indexOf('file:') < 0){
-        console.warn('WebCrypto used by GUN SEA implementation does not work without HTTPS. Will automatically redirect.')
+        console.warn('HTTPS needed for WebCrypto in SEA, redirecting...');
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
     } }catch(e){}
@@ -857,11 +857,11 @@
 
     // Well first we have to actually create a user. That is what this function does.
     User.prototype.create = function(...args){
-      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
-      const alias = pair && (pair.pub || pair.epub) ? pair.pub : typeof args[0] === 'string' ? args[0] : null;
-      const pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
-      const cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
-      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
+      var pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
+      var alias = pair && (pair.pub || pair.epub) ? pair.pub : typeof args[0] === 'string' ? args[0] : null;
+      var pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
+      var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
+      var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
       
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
@@ -961,11 +961,11 @@
     var User = USE('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     // now that we have created a user, we want to authenticate them!
     User.prototype.auth = function(...args){ // TODO: this PR with arguments need to be cleaned up / refactored.
-      const pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
-      const alias = !pair && typeof args[0] === 'string' ? args[0] : null;
-      const pass = alias && typeof args[1] === 'string' ? args[1] : null;
-      const cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
-      const opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
+      var pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
+      var alias = !pair && typeof args[0] === 'string' ? args[0] : null;
+      var pass = alias && typeof args[1] === 'string' ? args[1] : null;
+      var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
+      var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
       
       var gun = this, cat = (gun._), root = gun.back(-1);
       
@@ -1029,7 +1029,7 @@
         at.sea = act.pair;
         cat.ing = false;
         try{if(pass && u == (obj_ify(cat.root.graph['~'+pair.pub].auth)||'')[':']){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
-        opt.change? act.z() : (cb || oop)(at);
+        opt.change? act.z() : (cb || noop)(at);
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
           try{var sS = {};
