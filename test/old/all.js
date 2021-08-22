@@ -11,8 +11,8 @@ describe('All', function(){
 		'emails/aquiva@gmail.com': 'asdf',
 		'emails/mark@gunDB.io': 'asdf',
 		'user/marknadal': 'asdf',
-		'emails/amber@cazzell.com': 'fdsa',
-		'user/ambernadal': 'fdsa',
+		'emails/timber@cazzell.com': 'fdsa',
+		'user/timbernadal': 'fdsa',
 		'user/forrest': 'abcd',
 		'emails/banana@gmail.com': 'qwert',
 		'user/marknadal/messages/asdf': 'rti',
@@ -29,7 +29,7 @@ describe('All', function(){
 		//console.log(r);
 		expect(r).to.be.eql({
 			'user/marknadal': { '#': 'asdf' },
-			'user/ambernadal': { '#': 'fdsa' },
+			'user/timbernadal': { '#': 'fdsa' },
 			'user/forrest': { '#': 'abcd' },
 			'user/marknadal/messages/asdf': { '#': 'rti' },
 			'user/marknadal/messages/fobar': { '#': 'yuoi' },
@@ -45,7 +45,7 @@ describe('All', function(){
 		//console.log('upto', r);
 		expect(r).to.be.eql({
 			'user/marknadal': { '#': 'asdf' },
-			'user/ambernadal': { '#': 'fdsa' },
+			'user/timbernadal': { '#': 'fdsa' },
 			'user/forrest': { '#': 'abcd' }
 		});
 	});
@@ -61,7 +61,7 @@ describe('All', function(){
 	it('map', function(done) { return done();
 		var users = gun.put({
 			a: {name: "Mark Nadal"},
-			b: {name: "Amber Nadal"},
+			b: {name: "timber Nadal"},
 			c: {name: "Charlie Chapman"},
 			d: {name: "Johnny Depp"},
 			e: {name: "Santa Clause"}

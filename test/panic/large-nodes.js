@@ -1,15 +1,7 @@
-/*
-This is the first in a series of basic networking correctness tests.
-Each test itself might be dumb and simple, but built up together,
-they prove desired end goals for behavior at scale.
-1. (this file) Is a browser write is confirmed as save by multiple peers even if by daisy chain.
-2. 
-*/
-
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
-	servers: 2,
+	servers: 1,
 	browsers: 2,
 	route: {
 		'/': __dirname + '/index.html',
@@ -38,7 +30,7 @@ manager.start({
 
 var servers = clients.filter('Node.js');
 var bob = servers.pluck(1);
-var carl = servers.excluding(bob).pluck(1);
+//var carl = servers.excluding(bob).pluck(1);
 var browsers = clients.excluding(servers);
 var alice = browsers.pluck(1);
 var dave = browsers.excluding(alice).pluck(1);
@@ -72,7 +64,7 @@ describe("Put ACK", function(){
 					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server, axe: false}); // not working with axe currently!
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, chunk: 1024 * 10});
 				server.listen(port, function(){
 					test.done();
 				});
@@ -82,7 +74,7 @@ describe("Put ACK", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+		console.log("PLEASE OPEN http://"+ config.IP +":"+ config.port +" IN "+ config.browsers +" BROWSER(S)!");
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -104,36 +96,20 @@ describe("Put ACK", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
 			test.async();
-			var c = test.props.acks, acks = {};
-			c = c < 2? 2 : c;
-			ref.put({hello: 'world'}, function(ack){
-				//console.log("acks:", ack, c);
-				acks[ack['#']] = 1;
-				if(Object.keys(acks).length == c){
-					wire();
-					return test.done();
-				}
-			}, {acks: c});
-			
-			function wire(){
-				ref.hear = ref.hear || [];
-				var hear = ref._.root.opt.mesh.hear;
-				ref._.root.opt.mesh.hear = function(raw, peer){
-					console.log('hear:', msg);
-					var msg = JSON.parse(raw);
-					hear(raw, peer);
-					ref.hear.push(msg);
-				}
-				var say = ref._.root.opt.mesh.say;
-				ref._.root.opt.mesh.say = function(raw, peer){
-					var yes = say(raw, peer);
-					if(yes === false){ return }
-					console.log("say:", msg, yes);
-					(ref.say || (ref.say = [])).push(JSON.parse(msg));
-				}
+			var i = test.props.each || 25000;
+			var put = {};
+			while(--i){
+				put[Gun.text.random(9)] = i;
 			}
+			var S = +new Date;
+			ref.put(put, function(ack){
+				console.log("acks:", +new Date - S, ack);
+				test.done();
+			});
+
 		}, {acks: config.servers});
 	});
+	return;
 
 	it("Get", function(){
 		/*
@@ -154,7 +130,7 @@ describe("Put ACK", function(){
 			ref.hear = ref.hear || [];
 			var hear = ref._.root.opt.mesh.hear;
 			ref._.root.opt.mesh.hear = function(raw, peer){
-				var msg = JSON.parse(raw);
+				var msg = Gun.obj.ify(raw);
 				console.log('hear:', msg);
 				hear(raw, peer);
 				ref.hear.push(msg);
@@ -188,7 +164,11 @@ describe("Put ACK", function(){
 	});
 
 	after("Everything shut down.", function(){
-		require('./util/open').cleanup();
+		browsers.run(function(){
+			//location.reload();
+			//setTimeout(function(){
+			//}, 15 * 1000);
+		});
 		return servers.run(function(){
 			process.exit();
 		});

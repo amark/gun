@@ -1,1 +1,1 @@
-web: node examples/http.js
+web: node --inspect examples/http.js

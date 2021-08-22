@@ -16,6 +16,7 @@
 		<script>mocha.setup({ui:'bdd',globals:[]});</script>
 		<script src="./expect.js"></script>
 		<script></script>
+		<script src="../lib/yson.js"></script>
 		<script src="../gun.js"></script>
 		<script src="../sea.js"></script>
 		
@@ -26,6 +27,7 @@
 
 		<script src="./rad/rad.js"></script>
 		<script src="./sea/sea.js"></script>
+
 		<script src="./common.js"></script>
 		<script>
 		if(location.search){
@@ -33,7 +35,7 @@
 			console.log('async?', Gun.debug);
 		}
 		var run = mocha.run(function(a,b,c){
-			//document.body.prepend("MARK! REMEMBER TO REMOVE RETURN!");return;
+			document.body.prepend("TODO: localStorage gun/gap ???");return;
 			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
 			if(yes){
 				if(location.search){

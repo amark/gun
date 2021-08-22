@@ -8,7 +8,7 @@
   "description": "Javascript, Offline-First Javascript Graph Database Server Peer",
   "env": {
     "NPM_CONFIG_PRODUCTION": {
-      "description": "If you don't want to serve the Gun landing page, set to \"true\".",
+      "description": "If you do not want default features, set to \"true\".",
       "value": "false"
     },
     "PEERS": {

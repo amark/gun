@@ -22,11 +22,23 @@
 	[contenteditable]:focus {
 		outline: none;
 	}
+
+	.meta-on, div:hover, ul:hover, ol:hover, li:hover, p:hover, span:hover, form:hover, button:hover, input:hover, textarea:hover, img:hover {
+		outline: 1px solid;
+		animation: meta-on 3s infinite;
+		transition: none !important;
+	} @keyframes meta-on {
+	  0%   {outline-color: magenta;}
+	  33% {outline-color: cyan;}
+	  66%  {outline-color: yellow;}
+	  100% {outline-color: magenta;}
+	}
 </style>
 
 <div class="hold full hue2">
-	<div id="page" class="max focus gap" style="padding-top: 9%;"></div>
+	<div id="page" class="max focus gap" style="margin-top: 9%;"></div>
 </div>
+
 <script src="../../gun/gun.js"></script>
 <script src="../../gun/lib/monotype.js"></script>
 <script src="../../gun/lib/meta.js"></script>
@@ -37,26 +49,45 @@
 <!-- script async src="https://edide.io/music.lib"></script -->
 
 <script>
-var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']);
+var gun = Gun();
+var page = {};
+//var gun = Gun(['https://guntest.herokuapp.com/gun', 'http://localhost:8765/gun']);
 
 ;(window.onhashchange = function(){
 	var file = (location.hash||'').slice(1);
 	var S = +new Date;
 	$('#page').empty().attr('contenteditable', 'false');
-	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i){
-		if(window.LOCK){ return }
+	gun.get('test/gun/docs/'+file).get('what').map().on(function render(data, i, msg, eve){
+		var tmp = page[i] || '';
+		var last = Gun.state.is(gun._.root.graph[msg.put['#']], i);
+		if(last < tmp.last){ return }
+	//});
+		//if(window.LOCK){ return }
 		var p = $('#page').children().get(i);
 		if(!p){
 			$('#page').append('<p>');
-			setTimeout(function(){ render(data, i) },0);
+			setTimeout(function(){ render(data, i, msg, eve) },0);
 			return;
 		}
+		var DBG = {s: +new Date};
 		var r = monotype(p);
+		DBG.mono = +new Date;
 		var safe = $.normalize(data);
-		p.outerHTML = safe;
+		DBG.norm = +new Date;
+		p.outerHTML = data;
+		DBG.html = +new Date;
 		r.restore();
+		DBG.rest = +new Date;
+		//console.log("mono:", DBG.mono - DBG.s, "norm:", DBG.norm - DBG.mono, 'html:', DBG.html - DBG.norm, 'rest:', DBG.rest - DBG.html, ':::', msg, eve);
 	});
 })();
+
+
+window.requestAnimationFrame = window.requestAnimationFrame || setTimeout;
+window.requestAnimationFrame(function frame(){
+	window.requestAnimationFrame(frame, 16);
+	
+}, 16);
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 meta.edit({
@@ -91,17 +122,28 @@ meta.edit({
       });
 		}).on('keyup.tmp', '[contenteditable]', function(eve){
 			//$('#debug').val(doc.html());
-			var p = $(window.getSelection().anchorNode).closest('p');
+			var p = $(window.getSelection().anchorNode).closest('p'), tmp;
+			(tmp = page[p.index()] || (page[p.index()] = {})).last = (+new Date) + 99;
+			clearTimeout(tmp.to); tmp.to = setTimeout(function(){
+			var DBG = {s: +new Date};
 			var r = monotype(p);
+			DBG.m = +new Date;
 			var html = p.html() || '';
+			DBG.g = +new Date;
 			if(!html && !p.prev().length && !p.next().length && !$('#page').html()){
 				edit.init();
 			}
+			DBG.i = +new Date;
 			var safe = $.normalize(html);
+			DBG.n = +new Date;
 			p.html(safe);
+			DBG.h = +new Date;
 			r.restore();
+			DBG.r = +new Date;
 			edit.save(p);
-		});
+			DBG.p = +new Date;
+			//console.log("save:", DBG.p - DBG.r, "rest:", DBG.r - DBG.h, "html:", DBG.h - DBG.n, "norm:", DBG.n - DBG.i, 'init:', DBG.i - DBG.g, 'grab:', DBG.g - DBG.m, 'mono:', DBG.m - DBG.s);
+		},50)});
 	},
 	up: function(){
 		console.log("UP");
@@ -120,6 +162,7 @@ meta.edit({
 		var i = p.index();// = Array.prototype.indexOf.call(parent.children, child);
 		var file = (location.hash||'').slice(1);
 		var data = (p.get(0)||{}).outerHTML||'';
+		//data = $.normalize(data); // GOOD TO DO SECURITY ON SENDING SIDE TOO!!!
 		window.LOCK = true;
 		gun.get('test/gun/docs/'+file).get('what').get(i).put(data);
 		window.LOCK = false;
@@ -144,26 +187,25 @@ meta.edit({
 
 ;(function(){
 
-	meta.edit({name: "Layout", combo: ['L']});
-
-	meta.edit({name: "Fill", combo: ['L','F'],
+	meta.edit({name: "Design", combo: ['D']});
+	meta.edit({name: "Fill", combo: ['D','F'], // TODO!
 		use: function(eve){},
 		on: function(eve){
 			var on = meta.tap();
 			meta.ask('Color name, code, or URL?', function(color){
 				on.css('background', color);
-			});
+			}, true);
 		},
 		up: function(eve){}
 	});
 
-	meta.edit({name: "Add", combo: ['L','A']});
-	meta.edit({name: "Row", combo: ['L','A', 'R'],
+	meta.edit({name: "Add", combo: ['D','A']});
+	meta.edit({name: "Row", combo: ['D','A', 'R'],
     on: function(eve){
 			meta.tap().append('<div style="min-height: 9em; padding: 2%;">');
     }
 	});
-	meta.edit({name: "Columns", combo: ['L','A','C'],
+	meta.edit({name: "Columns", combo: ['D','A','C'],
     on: function(eve){
 			var on = meta.tap().addClass('center'), tmp, c;
 			var html = '<div class="unit col" style="min-height: 9em; padding: 2%;"></div>';
@@ -174,14 +216,72 @@ meta.edit({
 			})
     }
 	});
-	meta.edit({name: "Text", combo: ['L','A','T'],
+	meta.edit({name: "Text", combo: ['D','A','T'],
     on: function(eve){
     	var tag = $('<p>text</p>');
 			meta.tap().append(tag);
 			tag.focus();
     }
 	});
+	meta.edit({name: "Delete", combo: ['D','A','D'],
+    on: function(eve){
+    	meta.tap().remove();
+    }
+	});
 
+	meta.edit({name: "Turn", combo: ['D','T']});
+	meta.edit({name: "Size", combo: ['D','S']});
+	meta.edit({name: "X", combo: ['D','S','X'],
+		on: function(eve){
+			var on = this.a = meta.tap().addClass('meta-on'), was = on.width();
+			$(document).on('mousemove.tmp', function(eve){
+				var be = was + ((eve.pageX||0) - was);
+				on.css({'max-width': be, width: '100%'});
+			});
+			meta.ask('Width in px, %, or other unit?', function(w){
+				if(!w){ return }
+				on.css({'max-width': w, width: '100%'});
+			}, true);
+		}, up: function(){
+			$(document).off('mousemove.tmp');
+			this.a.removeClass('meta-on');
+		}
+	});
+	meta.edit({name: "Y", combo: ['D','S','Y'],
+		//on: function(eve){ console.log('on Y') },
+		on: function(eve){ console.log('use Y')
+			var on = this.a = meta.tap().addClass('meta-on'), was = on.height();
+			$(document).on('mousemove.tmp', function(eve){
+				var be = was + ((eve.pageY||0) - was);
+				on.css({'min-height': be});
+			})
+		}, up: function(){ console.log('up Y')
+			$(document).off('mousemove.tmp');
+			this.a.removeClass('meta-on');
+		}
+	});
+}());
+
+;(function(){
+	var logic = {};
+
+	meta.edit({name: "Logic", combo: ['L']});
+
+	meta.edit({name: "Symbol", combo: ['L','S'],
+    on: function(eve){
+    	console.log(1);
+    }
+	});
+	meta.edit({name: "Action", combo: ['L','A'],
+    on: function(eve){
+    	console.log(2);
+    }
+	});
+	meta.edit({name: "Data", combo: ['L','D'],
+    on: function(eve){
+    	console.log(3);
+    }
+	});
 }());
 
 ;(function(){
@@ -232,9 +332,47 @@ meta.edit({
 	});
 
 	$(document).on('keydown', function(eve){
-		music.play(String.fromCharCode(eve.which));
+		if(eve.which === music.which){ return }
+		music.play(String.fromCharCode(music.which = eve.which));
 	});
 
+}());
+;(function(){
+/*
+	Edit
+		Bold
+		Italic
+		Link
+		?
+			Left
+			Middle
+			Right
+			Justify
+		?
+			Small
+			Normal
+			Header
+			Title
+	Design
+		Add
+			Row
+			Column
+			Text
+			Delete
+		Turn
+		Grab
+		Size
+			X
+			Y
+		Fill
+	Logic
+		Symbol
+		Action
+		Data
+*/
+/*
+
+*/
 }());
 </script>
 </body>

@@ -10,7 +10,8 @@ var config = {
 	}
 }
 
-var panic = require('panic-server');
+var panic; try{ panic = require('panic-server') } catch(e){ console.log("PANIC not installed! `npm install panic-server panic-manager panic-client`") }
+
 panic.server().on('request', function(req, res){
 	config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
 }).listen(config.port);
@@ -56,12 +57,12 @@ describe("The Holy Grail Test!", function(){
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
-			var Gun = require('gun');
+			var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
@@ -73,10 +74,8 @@ describe("The Holy Grail Test!", function(){
 		var tests = [], i = 0;
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
+				window.ENV = test.props;
 				localStorage.clear();
-				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
-				window.ref = gun.get('holy').get('grail');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -85,6 +84,9 @@ describe("The Holy Grail Test!", function(){
 	it("Write initial value", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], file: 'alicedata'});
+			window.ref = gun.get('holy').get('grail');
 			ref.put("value");
 			setTimeout(test.async(), 2000);
 		});
@@ -93,6 +95,9 @@ describe("The Holy Grail Test!", function(){
 	it("Read initial value", function(){
 		return bob.run(function(test){
 			console.log("I AM BOB");
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], file: 'bobdata'});
+			window.ref = gun.get('holy').get('grail');
 			test.async();
 			ref.on(function(data){
 				if("value" === data){
@@ -192,36 +197,45 @@ describe("The Holy Grail Test!", function(){
 		}, {i: 2, config: config}); 
 	});
 
-	it("Browsers re-initialized gun!", function(){
+	it("Browsers ready!", function(){
 		var tests = [], i = 0;
 		new panic.ClientList([again.alice, again.bob]).each(function(client, id){
 			tests.push(client.run(function(test){
+				window.ENV = test.props;
 				// NOTE: WE DO NOT CLEAR localStorage!
-				console.log(localStorage['gun/holy']);
-				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun');
-				window.ref = gun.get('holy').get('grail');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
 
+	it("Alice re-initialized gun!", function(){
+		return again.alice.run(function(test){
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun'], file: 'alicedata'});
+			window.ref = gun.get('holy').get('grail');
+		});
+	});
+
+	it("Bob re-initialized gun!", function(){
+		return again.bob.run(function(test){
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun'], file: 'bobdata'});
+			window.ref = gun.get('holy').get('grail');
+		});
+	});
+
 	it("Alice conflict.", function(){
 		return again.alice.run(function(test){
 			test.async();
-			var c = 0;
 			ref.on(function(data){
 				console.log("======", data);
 				window.stay = data;
-				if(!c){
-					c++;
-					if("Alice" == data){
-						setTimeout(function(){
-							window.ALICE = true;
-							test.done();
-						}, 2000);
-					}
-					return;
+				if("Bob" == data){
+					setTimeout(function(){
+						if(window.ALICE){ return }
+						window.ALICE = true;
+						test.done();
+					}, 1000);
 				}
 			});
 		});
@@ -230,22 +244,18 @@ describe("The Holy Grail Test!", function(){
 	it("Bob converged.", function(){
 		return again.bob.run(function(test){
 			test.async();
-			var c = 0;
 			ref.on(function(data){
 				console.log("======", data);
-				//return;
 				window.stay = data;
 				if("Bob" != data){
 					test.fail("wrong local value!");
 					return;
 				}
 				setTimeout(function(){
-					if(c){ return }
-					c++;
-					if("Bob" === data){
-						test.done();
-					}
-				}, 2000);
+					if(window.BOB){ return }
+					window.BOB = true;
+					test.done();
+				}, 1000);
 			});
 		});
 	});

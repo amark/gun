@@ -166,11 +166,11 @@
     function submit(e) {
       e.preventDefault();
 
-      var msg = { when: Gun.time.is() };
+      var msg = { when: Gun.state() };
 
       msg.who = $('.chat__name-input').val();
       if (!msg.who) {
-        msg.who = 'user' + Gun.text.random(3);
+        msg.who = 'user' + String.random(3);
         $('.chat__name-input').val(msg.who);
       }
 
@@ -181,7 +181,7 @@
       $('.chat__message-input').val('').focus();
     }
 
-    chat.map().val(function (msg, id) {
+    chat.map().once(function (msg, id) {
       if (!msg) { return }
       var messageList = $('.chat__message-list');
       var last = sort(msg.when, messageList.children('li').last());

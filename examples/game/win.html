@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- always start with these two lines to set a clean baseline for different devices -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="../style.css">
+<!-- link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/gun/examples/style.css" -->
+<script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+
+<title>Win</title>
+</head>
+<body class="black whitet">
+<style>
+	/*
+		Choose white text on a black background so you can add color in.
+		Pick your favorite font and choose a font size.
+	*/
+	@import url('https://fonts.googleapis.com/css?family=Montserrat');
+	html, body {
+		font-family: "Montserrat", sans-serif;
+	}
+
+	button, input {
+		padding: 1em;
+		background: transparent;
+		border: 1px solid white;
+		border-radius: 1.5em;
+		color: white;
+		margin: 0.5em;
+		margin-bottom: 0;
+		cursor: pointer;
+	}
+	button:hover, input:hover {
+		background: white;
+		color: black;
+		transform: scale(1.1);
+	}
+
+	.air { padding-top: 9%; }
+	.yak button { font-size: 80%; }
+	.wag {
+	  -webkit-animation: wag 3s infinite;
+	  animation: wag 3s infinite;
+	} @keyframes wag {
+	  0%   {transform: rotate(0deg);}
+	  50%  {transform: rotate(-1deg);}
+	  100% {transform: rotate(0deg);}
+	}
+	</style>
+</style>
+
+<!-- for educational sites, consider starting with a nice full screen welcome message -->
+<div class="home hold full huef center air">
+	<div class="focus row">
+		<p><i>how to</i></p>
+		<p class="shout wag">Win at Life!</p>
+		<p><i>success, fame, power.</i></p>
+		<p><i>sex, ethics, & integrity.</i></p>
+		<!-- just like in real life, say who you are and give a concise reason why you add value to someone's life and then make a call to action, if they want to learn more they can always scroll to learn more -->
+		<div>
+			<!-- a class="unit hold" href="#fullscreen"><button>WATCH TRAILER</button></a -->
+			<a class="unit yak gap" href="#breathe"><button>PLAY GAME</button></a>
+		</div>
+	</div>
+	<div class="focus center row leak">
+		<!-- just like in real life, looking pretty attracts attention, so show off and look glamorous! -->
+		<img class="unit blink" src="" style="min-width: 10em; width: 80%;">
+	</div>
+	<script>location.hash = ''</script>
+	<script src="https://cdn.jsdelivr.net/npm/gun/lib/fun.js"></script>
+</div>
+
+<div id="breathe" class="hold full green">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Step 1: Breathe</p>
+		<a class="unit yak" href="#water"><button>Yupe</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="water" class="hold full blue">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Step 2: Drink Water</p>
+		<p></p>
+		<a class="unit yak" href="#eat"><button>Next</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="eat" class="hold full red">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Step 3: Eat Once a Day</p>
+		<p>If you do not want to be eaten, do not eat things that would not want to be eaten.</p>
+		<a class="unit yak" href="#babies"><button>Got It</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="babies" class="hold full red">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Step 4: Babymaking* 😉</p>
+		<p>Find a willing player.</p>
+		<p><small> * This does not always make babies.</small></p>
+		<a class="unit yak" href="#make"><button>How?</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="make" class="hold full hue">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Step 5: Make Dance</p>
+		<p>Moving your body is how you express your thoughts.</p>
+		<p>What you do with your body is what others will come to know you for. So do well.</p>
+		<p>You can make art, songs, or stories; You can make science, tools, or discoveries.</p>
+		<p>Who are you?</p>
+		<a class="unit yak" href="#science"><button>I am a Scientist!</button></a>
+		<a class="unit yak" href="#art"><button>I am an Artist!</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="science" class="hold full hue">
+	<div class="story pad">
+		<p class="loud crack">Science: Knowing Games</p>
+		<p>If you must win one game, it should be the game of making games.</p>
+		<p>If you can make any game, then you will know how to win any game.</p>
+		<a class="unit yak" href="#games"><button>Games?</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="games" class="hold full hue">
+	<div class="story pad">
+		<p>Games have goals and play.</p>
+		<p>Play is a safe space to try new dances.</p>
+		<p>Goals try to get players to do a type of dance.</p>
+		<a class="unit yak" href="#swim"><button>Start</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="swim" class="hold full blue">
+	<style>
+	@import url('https://fonts.googleapis.com/css?family=Audiowide');
+	#hud {
+		opacity: 0.4;
+		font-family: 'Audiowide', cursive;
+		z-index: 999999999999;
+		transition: all 3s;
+	}
+	#hud .life {
+		position: fixed;
+		left: 50%;
+		bottom: 0px;
+		padding: 0.25em 1em 0.1em;
+		border-radius: 0.5em 0.5em 0 0;
+		transform: translateX(-50%);
+		background: black;
+		text-shadow: 0em -0.125em 0.75em white;
+	}
+	#hud .score {
+		position: fixed;
+		left: 50%;
+		top: 0px;
+		padding: 0.1em 1em 0.25em;
+		border-radius: 0 0 0.5em 0.5em;
+		transform: translateX(-50%);
+		background: black;
+		text-shadow: 0em 0.1em 0.75em white;
+	}
+	#hud .down {
+		bottom: -2em !important;
+	}
+	#hud .up {
+		top: -2em !important;
+	}
+	</style>
+	<div class="story pad">
+		<p>The simplest goal is to not "die" in the game.</p>
+		<p>Oh look, you've fallen into water and cannot breathe.</p>
+		<p>If you do not push the button to swim to the top, you'll lose the game.</p>
+		<a class="unit yak"><button>Swim</button></a>
+	</div>
+	<div id="hud">
+		<div class="score shade up">
+			SCORE: <span id="hudscore">0</span>%
+		</div>
+		<div class="life shade down">
+			LIFE: <span id="hudlife">100</span>%
+		</div>
+	</div>
+	<script>
+	;(function(){
+		var go, life = $('#hudlife').data();
+		$(window).on('hashchange', function(){
+			if(location.hash != '#swim'){ return }
+			$('#hudlife').text($('#hudlife').data().is = 100);
+			$('#hud .life').removeClass('down');
+			go = setInterval(function(){
+				if(0 >= life.is){
+					location.hash = 'die';
+					clearInterval(go);
+					go = false;
+					return;
+				}
+				$('#hudlife').text(life.is -= 1);
+			}, 100);
+		})
+		$('#swim a').on('click', function(){
+			$('#hudlife').text((life.is += 5) < 100? life.is : 100);
+			if(100 <= life.is){
+				location.hash = 'won';
+				clearInterval(go);
+				go = false;
+				return;
+			}
+		});
+	}());
+	</script>
+</div>
+
+<div id="won" class="hold full hue">
+	<div class="story pad">
+		<p>You won your first game! 🎉</p>
+		<p>See? I told you breathing is important.</p>
+		<p>You also learned the most basic dance: rapid poking.</p>
+		<p>The goal of the next game is to make the game you just won.</p>
+		<a class="unit yak" href="#won" style="z-index: 999999;"><button>Make</button></a>
+	</div>
+	<script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/meta.js"></script>
+	<script>
+		meta.edit({name: "Add", combo: ['A']});
+		meta.edit({
+			name: "Timer",
+			combo: ['A','T'],
+			on: function(){
+				console.log("up");
+				this.to = this.to || setInterval(this.on, 100);
+				$("html, body").stop().animate({ scrollTop: $(window).scrollTop()-100 }, 100);
+				p.css({top: --p.y +'%'});
+			},
+			use: function(){},
+			up: function(){ clearTimeout(this.to); this.to = 0 }
+		});
+		meta.edit({
+			name: "Delete",
+			combo: ['A','D'],
+			on: function(){
+				$(meta.tap.on).remove();
+			},
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Button",
+			combo: ['A','B'],
+			on: function(){
+				$(meta.tap.on).append("<a class='unit yak'><button>Button</button></a>")
+			},
+			use: function(){},
+			up: function(){}
+		});
+		meta.edit({
+			name: "Edit",
+			combo: ['E'],
+			on: function(){
+				$('body').attr('contenteditable', 'true' == $('body').attr('contenteditable')? false : true);
+			},
+			use: function(){},
+			up: function(){ }
+		});
+	</script>
+	<script>
+		window.requestAnimationFrame(function frame(){
+			return;
+			window.requestAnimationFrame(frame);
+			if(location.hash != '#won'){ return }
+			var p = $('#won a').offset();
+			var bx = p.left, by = p.top, mx = meta.tap.x, my = meta.tap.y;
+			bx = mx - bx; by = my - by;
+			var d = Math.sqrt(bx*bx + by*by);
+				console.log(bx, by, mx, my, d);
+			if(d > 250){ return }
+			$('#won a').css({position: 'fixed', left: bx + (Math.random()*100), top: by + (Math.random()*100)});
+		})
+	</script>
+</div>
+
+<div id="rules" class="hold full white blackt">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">Bend these Rules if it is more Moral to do so</p>
+		<p></p>
+		<a class="unit yak" href="#water"><button>Next</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+<div id="die" class="hold full red">
+	<style>
+	</style>
+	<div class="story pad">
+		<p class="loud crack">GAME OVER</p>
+		<p></p>
+		<a class="unit yak" href="#make"><button>Start Over</button></a>
+	</div>
+	<script>
+	</script>
+</div>
+
+</body>
+</html>

@@ -20,6 +20,7 @@
 	}
 
 	var gun = Gun({web: config.server.listen(config.port), peers: config.peers});
+
 	console.log('Relay peer started on port ' + config.port + ' with /gun');
 
 	module.exports = gun;
