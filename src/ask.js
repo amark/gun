@@ -15,7 +15,7 @@ module.exports = function ask(cb, as){
 		}
 		return true;
 	}
-	var id = (as && as['#']) || Math.random().toString(36).slice(2);
+	var id = (as && as['#']) || random(9);
 	if(!cb){ return id }
 	var to = this.on(id, cb, as);
 	to.err = to.err || setTimeout(function(){ to.off();
@@ -23,4 +23,5 @@ module.exports = function ask(cb, as){
 	}, lack);
 	return id;
 }
+var random = String.random || function(){ return Math.random().toString(36).slice(2) }
 	

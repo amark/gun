@@ -48,7 +48,7 @@ Object.keys = Object.keys || function(o){
 }
 ;(function(){ // max ~1ms or before stack overflow 
 	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-	sT.poll = sT.poll || function(f){
+	sT.poll = sT.poll || function(f){ //f(); return; // for testing
 		if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
 		sI(function(){ l = +new Date; f() },c=0)
 	}
