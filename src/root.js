@@ -39,6 +39,7 @@ Gun.ask = require('./ask');
 		return gun;
 	}
 	function universe(msg){
+		//if(!F){ var eve = this; setTimeout(function(){ universe.call(eve, msg,1) },Math.random() * 100);return; } // ADD F TO PARAMS!
 		if(!msg){ return }
 		if(msg.out === universe){ this.to.next(msg); return }
 		var eve = this, as = eve.as, at = as.at || as, gun = at.$, dup = at.dup, tmp, DBG = msg.DBG;
@@ -139,8 +140,8 @@ Gun.ask = require('./ask');
       	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
 		graph[soul] = state_ify(graph[soul], key, state, val, soul);
 		if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
-		eve.to.next(msg);
 		fire(ctx);
+		eve.to.next(msg);
 	}
 	function fire(ctx, msg){ var root;
 		if(ctx.stop){ return }
@@ -156,19 +157,20 @@ Gun.ask = require('./ask');
 		ctx.root.on('out', msg);
 	}
 	function ack(msg){ // aggregate ACKs.
-		var id = msg['@'] || '', root = (msg.$._||'').root, tmp;
-		// TODO: check for the sharded message err and transfer it onto the original batch?
-		if(!(tmp = id._)){ /*console.log("TODO: handle ack id.");*/ return }
-		tmp.acks = (tmp.acks||0) + 1;
-		if(tmp.err = msg.err){
-			msg['@'] = tmp['#'];
-			--tmp.stun;
+		var id = msg['@'] || '', ctx;
+		if(!(ctx = id._)){ return }
+		ctx.acks = (ctx.acks||0) + 1;
+		if(ctx.err = msg.err){
+			msg['@'] = ctx['#'];
+			fire(ctx); // TODO: BUG? How it skips/stops propagation of msg if any 1 item is error, this would assume a whole batch/resync has same malicious intent.
 		}
-		if(0 == tmp.stun && tmp.acks == tmp.all){ // TODO: if ack is synchronous this may not work?
-			root && root.on('in', {'@': tmp['#'], err: msg.err, ok: msg.err? u : 'shard'});
-			msg.err && fire(tmp);
-			return;
-		}
+		if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks
+		back(ctx);
+	}
+	function back(ctx){
+		if(!ctx || !ctx.root){ return }
+		if(ctx.stun || ctx.acks !== ctx.all){ return }
+		ctx.root.on('in', {'@': ctx['#'], err: ctx.err, ok: ctx.err? u : {'':1}});
 	}
 
 	var ERR = "Error: Invalid graph!";

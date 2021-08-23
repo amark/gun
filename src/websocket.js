@@ -2,6 +2,9 @@
 var Gun = require('../index');
 Gun.Mesh = require('./mesh');
 
+// TODO: resync upon reconnect online/offline
+//window.ononline = window.onoffline = function(){ console.log('online?', navigator.onLine) }
+
 Gun.on('opt', function(root){
 	this.to.next(root);
 	if(root.once){ return }

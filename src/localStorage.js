@@ -35,6 +35,7 @@ Gun.on('create', function lg(root){
 		disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 		if(!msg['@']){ acks.push(msg['#']) } // then ack any non-ack write. // TODO: use batch id.
 		if(to){ return }
+		//flush();return;
 		to = setTimeout(flush, opt.wait || 1); // that gets saved as a whole to disk every 1ms
 	});
 	function flush(){

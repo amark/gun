@@ -17,6 +17,7 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 	as.todo = [{it: as.data, ref: as.$}];
 	as.turn = as.turn || turn;
 	as.ran = as.ran || ran;
+	//var path = []; as.via.back(at => { at.get && path.push(at.get.slice(0,9)) }); path = path.reverse().join('.');
 	// TODO: Perf! We only need to stun chains that are being modified, not necessarily written to.
 	(function walk(){
 		var to = as.todo, at = to.pop(), d = at.it, cid = at.ref && at.ref._.id, v, k, cat, tmp, g;
@@ -41,12 +42,13 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 			(as.wait || (as.wait = {}))[id] = '';
 			tmp = (cat.ref = (g? d : k? at.ref.get(k) : at.ref))._;
 			(tmp = (d && (d._||'')['#']) || tmp.soul || tmp.link)? resolve({soul: tmp}) : cat.ref.get(resolve, {run: as.run, /*hatch: 0,*/ v2020:1, out:{get:{'.':' '}}}); // TODO: BUG! This should be resolve ONLY soul to prevent full data from being loaded. // Fixed now?
+			//setTimeout(function(){ if(F){ return } console.log("I HAVE NOT BEEN CALLED!", path, id, cat.ref._.id, k) }, 9000); var F; // MAKE SURE TO ADD F = 1 below!
 			function resolve(msg, eve){
-				if(cat.link['#']){ return as.ran(as) }
+				var end = cat.link['#'];
 				if(eve){ eve.off(); eve.rid(msg) } // TODO: Too early! Check all peers ack not found.
 				// TODO: BUG maybe? Make sure this does not pick up a link change wipe, that it uses the changign link instead.
-				var soul = msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
-				stun(as, msg.$);
+				var soul = end || msg.soul || (tmp = (msg.$$||msg.$)._||'').soul || tmp.link || ((tmp = tmp.put||'')._||'')['#'] || tmp['#'] || (((tmp = msg.put||'') && msg.$$)? tmp['#'] : (tmp['=']||tmp[':']||'')['#']);
+				!end && stun(as, msg.$);
 				if(!soul && !at.link['#']){ // check soul link above us
 					(at.wait || (at.wait = [])).push(function(){ resolve(msg, eve) }) // wait
 					return;
@@ -108,7 +110,6 @@ function ran(as){
 	(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 		if(!stun){ return }
 		ran.end(stun, root);
-		//console.log("PUT HATCH END", as.run, Object.keys(stun.add||''));
 		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 	}).hatch = tmp; // this is not official yet ^
 	//console.log(1, "PUT", as.run, as.graph);
