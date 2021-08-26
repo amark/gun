@@ -1,8 +1,7 @@
 
     const SEA = require('./root')
-    const Buffer = require('./buffer')
-    const api = {Buffer: Buffer}
-    var o = {};
+    const api = {Buffer: require('./buffer')}
+    var o = {}, u;
 
     // ideally we can move away from JSON entirely? unlikely due to compatibility issues... oh well.
     JSON.parseAsync = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
@@ -20,11 +19,11 @@
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
-      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))));
+      api.random = (len) => api.Buffer.from(api.crypto.getRandomValues(new Uint8Array(api.Buffer.alloc(len))));
     }
     if(!api.TextDecoder)
     {
-      const { TextEncoder, TextDecoder } = require('text-encoding');
+      const { TextEncoder, TextDecoder } = require((u+'' == typeof MODULE?'.':'')+'./lib/text-encoding', 1);
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
@@ -35,13 +34,13 @@
       var crypto = require('crypto', 1);
       Object.assign(api, {
         crypto,
-        random: (len) => Buffer.from(crypto.randomBytes(len))
+        random: (len) => api.Buffer.from(crypto.randomBytes(len))
       });      
       const { Crypto: WebCrypto } = require('@peculiar/webcrypto', 1);
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
+      console.log("Please add `@peculiar/webcrypto` to your package.json!");
     }}
 
     module.exports = api

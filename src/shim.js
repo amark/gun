@@ -66,13 +66,13 @@ Object.keys = Object.keys || function(o){
 }());
 ;(function(){
 	var u, sT = setTimeout, T = sT.turn;
-	sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
+	(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
 	  if(L = (s = (l||[]).splice(0,S)).length){
 	  	for(var i = 0; i < L; i++){
 	  		if(u !== (r = f(s[i]))){ break }
 	  	}
 	  	if(u === r){ T(t); return }
 	  } e && e(r);
-	}())}
+	}())})();
 }());
 	

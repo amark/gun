@@ -28,7 +28,7 @@
               throw new TypeError('Invalid first argument for type \'hex\'.')
             }
             buf = SeaArray.from(bytes)
-          } else if (enc === 'utf8') {
+          } else if (enc === 'utf8' || 'binary' === enc) { // EDIT BY MARK: I think this is safe, tested it against a couple "binary" strings. This lets SafeBuffer match NodeJS Buffer behavior more where it safely btoas regular strings.
             const length = input.length
             const words = new Uint16Array(length)
             Array.from({ length: length }, (_, i) => words[i] = input.charCodeAt(i))
@@ -39,8 +39,8 @@
             const bytes = new Uint8Array(length)
             Array.from({ length: length }, (_, i) => bytes[i] = dec.charCodeAt(i))
             buf = SeaArray.from(bytes)
-          } else if (enc === 'binary') {
-            buf = SeaArray.from(input)
+          } else if (enc === 'binary') { // deprecated by above comment
+            buf = SeaArray.from(input) // some btoas were mishandled.
           } else {
             console.info('SafeBuffer.from unknown encoding: '+enc)
           }

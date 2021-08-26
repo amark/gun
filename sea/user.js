@@ -3,7 +3,7 @@
     if(SEA.window){
       Gun = SEA.window.GUN || {chain:{}};
     } else {
-      Gun = require((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
+      Gun = require((u+'' == typeof MODULE?'.':'')+'./gun', 1);
     }
     SEA.GUN = Gun;
 

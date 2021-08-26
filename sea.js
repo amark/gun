@@ -21,12 +21,12 @@
 
     if(typeof window !== "undefined"){ module.window = window }
 
-    var tmp = module.window || module;
+    var tmp = module.window || module, u;
     var SEA = tmp.SEA || {};
 
     if(SEA.window = module.window){ SEA.window.SEA = SEA }
 
-    try{ if(typeof MODULE !== "undefined"){ MODULE.exports = SEA } }catch(e){}
+    try{ if(u+'' !== typeof MODULE){ MODULE.exports = SEA } }catch(e){}
     module.exports = SEA;
   })(USE, './root');
 
@@ -44,12 +44,13 @@
   })(USE, './https');
 
   ;USE(function(module){
-    if(typeof btoa === "undefined"){
-      if(typeof Buffer === "undefined") {
-        global.Buffer = require("buffer").Buffer
+    var u;
+    if(u+''== typeof btoa){
+      if(u+'' == typeof Buffer){
+        try{ global.Buffer = USE("buffer", 1).Buffer }catch(e){ console.log("Please add `buffer` to your package.json!") }
       }
-      global.btoa = function (data) { return Buffer.from(data, "binary").toString("base64"); };
-      global.atob = function (data) { return Buffer.from(data, "base64").toString("binary"); };
+      global.btoa = function(data){ return Buffer.from(data, "binary").toString("base64") };
+      global.atob = function(data){ return Buffer.from(data, "base64").toString("binary") };
     }
   })(USE, './base64');
 
@@ -109,7 +110,7 @@
               throw new TypeError('Invalid first argument for type \'hex\'.')
             }
             buf = SeaArray.from(bytes)
-          } else if (enc === 'utf8') {
+          } else if (enc === 'utf8' || 'binary' === enc) { // EDIT BY MARK: I think this is safe, tested it against a couple "binary" strings. This lets SafeBuffer match NodeJS Buffer behavior more where it safely btoas regular strings.
             const length = input.length
             const words = new Uint16Array(length)
             Array.from({ length: length }, (_, i) => words[i] = input.charCodeAt(i))
@@ -120,8 +121,8 @@
             const bytes = new Uint8Array(length)
             Array.from({ length: length }, (_, i) => bytes[i] = dec.charCodeAt(i))
             buf = SeaArray.from(bytes)
-          } else if (enc === 'binary') {
-            buf = SeaArray.from(input)
+          } else if (enc === 'binary') { // deprecated by above comment
+            buf = SeaArray.from(input) // some btoas were mishandled.
           } else {
             console.info('SafeBuffer.from unknown encoding: '+enc)
           }
@@ -161,9 +162,8 @@
 
   ;USE(function(module){
     const SEA = USE('./root')
-    const Buffer = USE('./buffer')
-    const api = {Buffer: Buffer}
-    var o = {};
+    const api = {Buffer: USE('./buffer')}
+    var o = {}, u;
 
     // ideally we can move away from JSON entirely? unlikely due to compatibility issues... oh well.
     JSON.parseAsync = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
@@ -181,11 +181,11 @@
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
       api.TextEncoder = window.TextEncoder;
       api.TextDecoder = window.TextDecoder;
-      api.random = (len) => Buffer.from(api.crypto.getRandomValues(new Uint8Array(Buffer.alloc(len))));
+      api.random = (len) => api.Buffer.from(api.crypto.getRandomValues(new Uint8Array(api.Buffer.alloc(len))));
     }
     if(!api.TextDecoder)
     {
-      const { TextEncoder, TextDecoder } = require('text-encoding');
+      const { TextEncoder, TextDecoder } = USE((u+'' == typeof MODULE?'.':'')+'./lib/text-encoding', 1);
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
@@ -196,13 +196,13 @@
       var crypto = USE('crypto', 1);
       Object.assign(api, {
         crypto,
-        random: (len) => Buffer.from(crypto.randomBytes(len))
+        random: (len) => api.Buffer.from(crypto.randomBytes(len))
       });      
       const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("text-encoding and @peculiar/webcrypto may not be included by default, please add it to your package.json!");
+      console.log("Please add `@peculiar/webcrypto` to your package.json!");
     }}
 
     module.exports = api
@@ -653,7 +653,7 @@
 
     // can this be replaced with settings.jwk?
     var keysToEcdhJwk = (pub, d) => { // d === priv
-      //var [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
+      //var [ x, y ] = shim.Buffer.from(pub, 'base64').toString('utf8').split(':') // old
       var [ x, y ] = pub.split('.') // new
       var jwk = d ? { d: d } : {}
       return [  // Use with spread returned value...
@@ -767,17 +767,17 @@
     // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
     SEA.keyid = SEA.keyid || (async (pub) => {
       try {
-        // base64('base64(x):base64(y)') => Buffer(xy)
-        const pb = Buffer.concat(
+        // base64('base64(x):base64(y)') => shim.Buffer(xy)
+        const pb = shim.Buffer.concat(
           pub.replace(/-/g, '+').replace(/_/g, '/').split('.')
-          .map((t) => Buffer.from(t, 'base64'))
+          .map((t) => shim.Buffer.from(t, 'base64'))
         )
         // id is PGPv4 compliant raw key
-        const id = Buffer.concat([
-          Buffer.from([0x99, pb.length / 0x100, pb.length % 0x100]), pb
+        const id = shim.Buffer.concat([
+          shim.Buffer.from([0x99, pb.length / 0x100, pb.length % 0x100]), pb
         ])
         const sha1 = await sha1hash(id)
-        const hash = Buffer.from(sha1, 'binary')
+        const hash = shim.Buffer.from(sha1, 'binary')
         return hash.toString('hex', hash.length - 8)  // 16-bit ID as hex
       } catch (e) {
         console.log(e)
@@ -805,7 +805,7 @@
     if(SEA.window){
       Gun = SEA.window.GUN || {chain:{}};
     } else {
-      Gun = USE((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
+      Gun = USE((u+'' == typeof MODULE?'.':'')+'./gun', 1);
     }
     SEA.GUN = Gun;
 

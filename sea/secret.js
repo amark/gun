@@ -36,7 +36,7 @@
 
     // can this be replaced with settings.jwk?
     var keysToEcdhJwk = (pub, d) => { // d === priv
-      //var [ x, y ] = Buffer.from(pub, 'base64').toString('utf8').split(':') // old
+      //var [ x, y ] = shim.Buffer.from(pub, 'base64').toString('utf8').split(':') // old
       var [ x, y ] = pub.split('.') // new
       var jwk = d ? { d: d } : {}
       return [  // Use with spread returned value...
