@@ -29,7 +29,12 @@ jobs:
     - name: Build
       run: |
         echo "SHA=$GITHUB_SHA"
-        docker build --build-arg SHA=$GITHUB_SHA \
+        docker build --build-arg \
+          SHA=$GITHUB_SHA \
+          BUILD_DATE=$(date +'%Y-%m-%d') \
+          VCS_REF=${GITHUB_REF/refs\/tags\/v/} \
+          VCS_URL=$GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+          VERSION=${GITHUB_REF/refs\/tags\/v/} \
           --label "sha=$GITHUB_SHA" \
           --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:${GITHUB_REF/refs\/tags\/v/} \
           --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:latest \
