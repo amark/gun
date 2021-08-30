@@ -2,10 +2,10 @@ name: dockerhub
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 env:
-  project: 'release-node'
+  project: 'gun'
 
 jobs:
 
@@ -26,10 +26,19 @@ jobs:
         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-    - name: Tag
+    - name: Build
       run: |
-        docker tag ${{ env.project }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:${GITHUB_REF/refs\/tags\/v/}
-        docker tag ${{ env.project }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:latest
+        echo "SHA=$GITHUB_SHA"
+        docker build --build-arg \
+          SHA=$GITHUB_SHA \
+          BUILD_DATE=$(date +'%Y-%m-%d') \
+          VCS_REF=${GITHUB_REF/refs\/tags\/v/} \
+          VCS_URL=$GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+          VERSION=${GITHUB_REF/refs\/tags\/v/} \
+          --label "sha=$GITHUB_SHA" \
+          --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:${GITHUB_REF/refs\/tags\/v/} \
+          --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}:latest \
+          .
 
     - name: Push
       run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.project }}
