@@ -11,13 +11,13 @@ on:
   push:
     branches: [ master ]
     # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
+    tags: [ 'latest' ]
   pull_request:
     branches: [ master ]
 
 env:
   # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
+  REGISTRY: docker.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
