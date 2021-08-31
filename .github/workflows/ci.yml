@@ -4,9 +4,6 @@ on:
   - push
   - pull_request
 
-env:
-  project: 'gun'
-
 jobs:
 
   test:
