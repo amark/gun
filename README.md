@@ -5,11 +5,15 @@
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
-**GUN** is an _ecosystem_  of tools that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and [encrypted applications](https://gun.eco/docs/Cartoon-Cryptography).
+**GUN** is an [ecosystem](https://gun.eco/docs/Ecosystem) of **tools** that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and [encrypted applications](https://gun.eco/docs/Cartoon-Cryptography) - like an Open Source Firebase or a Decentralized Dropbox.
 
-Currently, [Internet Archive](https://news.ycombinator.com/item?id=17685682) and [HackerNoon](https://www.coindesk.com/hacker-noon-is-storing-content-on-a-blockchain-after-ditching-medium) run GUN in production.
+The [Internet Archive](https://news.ycombinator.com/item?id=17685682), [HackerNoon](https://www.coindesk.com/hacker-noon-is-storing-content-on-a-blockchain-after-ditching-medium), and [100s of other apps](https://github.com/amark/gun/wiki/awesome-gun) run GUN in-production. GUN is also part of [Twitter's Bluesky](https://blueskycommunity.net/) initiative!
 
-Decentralized alternatives to [Zoom](https://www.zdnet.com/article/era-hatches-meething-an-open-source-browser-based-video-conferencing-system/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Wikipedia](https://news.ycombinator.com/item?id=17685682), etc. have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](http://chat.gun.eco/) creating a [free fun future for freedom](https://youtu.be/1HJdrBk3BlE):
+ + Multiplayer by default with realtime p2p state synchronization!
+ + Graph data let's you use key/value, tables, documents, videos, & more!
+ + Local-first, offline, and decentralized with end-to-end encryption.
+
+Decentralized alternatives to [Zoom](https://www.zdnet.com/article/era-hatches-meething-an-open-source-browser-based-video-conferencing-system/), [Reddit](https://notabug.io/t/whatever/comments/36588a16b9008da4e3f15663c2225e949eca4a15/gpu-bot-test), [Instagram](https://iris.to/), [Slack](https://iris.to/), [YouTube](https://d.tube/), [Stripe](https://twitter.com/marknadal/status/1422717427427647489), [Wikipedia](https://news.ycombinator.com/item?id=17685682), Facebook [Horizon](https://twitter.com/marknadal/status/1424476179189305347) and more have already pushed terabytes of daily P2P traffic on GUN. We are a [friendly community](http://chat.gun.eco/) creating a [free fun future for freedom](https://youtu.be/1HJdrBk3BlE):
 
 <table>
 <tr>
@@ -29,14 +33,9 @@ Decentralized alternatives to [Zoom](https://www.zdnet.com/article/era-hatches-m
 </tr>
 </table>
 
-The ecosystem is one nice stack of technologies that looks like this: (names -> use case)
-
-<div><img width="48%" src="https://gun.eco/see/stack.png"/>
-<img width="48%" align="right" src="https://gun.eco/see/layers.png"/></div>
-
-For now, it is best to start with GUN and _just use it_ to learn the basics, since it is _**so easy**_: (**or** want to read more? Skip ahead to the "[What is GUN?](#what-is-gun)" section.)
-
 ## Quickstart
+
+GUN is *super easy* to get started with:
 
  - Try the [interactive tutorial](https://gun.eco/docs/Todo-Dapp) in the browser (**5min** ~ average developer).
  - Or `npm install gun` and run the examples with `cd node_modules/gun && npm start` (**5min** ~ average developer).
@@ -80,7 +79,7 @@ gun.get('mark').get('boss').get('name').once(function(data, key){
 
 // traverse a graph of circular references!
 gun.get('mark').get('boss').get('slave').once(function(data, key){
-  console.log("Mark is the slave!", data);
+  console.log("Mark is the cat's slave!", data);
 });
 
 // add both of them to a table!
@@ -93,14 +92,19 @@ gun.get('list').map().once(function(data, key){
 });
 
 // live update the table!
-gun.get('list').set({type: "cucumber", goal: "scare cat"});
+gun.get('list').set({type: "cucumber", goal: "jumping cat"});
 ```
 
 Want to keep building more? **Jump to [THE DOCUMENTATION](#documentation)!**
 
-# What is GUN?
+# About
 
-First & foremost, GUN is **a community of the nicest and most helpful people** out there. So [I want to invite you](https://gitter.im/amark/gun) to come tell us about what **you** are working on & wanting to build (new or old school alike! Just be nice as well.) and ask us your questions directly. :)
+First & foremost, GUN is **a community of the nicest and most helpful people** out there. So [I want to invite you](http://chat.gun.eco) to come tell us about what **you** are working on & wanting to build (new or old school alike! Just be nice as well.) and ask us your questions directly. :)
+
+The GUN ecosystem stack is a collection of independent and modular tools covering everything from [CRDT](https://crdt.tech/) [conflict resolution](https://gun.eco/distributed/matters.html), [cryptographic security](https://gun.eco/docs/Cartoon-Cryptography) & [encryption](https://gun.eco/docs/SEA), [radix storage serialization](https://gun.eco/docs/RAD), [mesh networking](https://gun.eco/docs/DAM) & [routing algorithms](https://gun.eco/docs/Routing), to distributed systems [correctness & load testing](https://github.com/gundb/panic-server), CPU scheduled [JSON parser](https://github.com/amark/gun/blob/master/lib/yson.js) to prevent UI lag, and more!
+
+<div><img width="48%" src="https://gun.eco/see/stack.png"/>
+<img width="48%" align="right" src="https://gun.eco/see/layers.png"/></div>
 
 On that note, let's get some official shout outs covered first:
 
@@ -134,13 +138,14 @@ Thanks to:
 <a href="http://github.com/bmatusiak">Bradley Matusiak</a>,
 <a href="https://github.com/sjuxax">Jeff Cook</a>,
 <a href="https://github.com/nmauersberg">Nico</a>,
-<a href="https://github.com/ajartille">Aaron Artille</a>
+<a href="https://github.com/ajartille">Aaron Artille</a>,
+<a href="https://github.com/timjrobinson">Tim Robinson</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
  - Ask questions: http://stackoverflow.com/questions/tagged/gun ?
  - Found a bug? Report at: https://github.com/amark/gun/issues ;
- - **Need help**? Chat with us: https://gitter.im/amark/gun .
+ - **Need help**? Chat with us: http://chat.gun.eco .
 
 ### History
 
