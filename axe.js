@@ -48,7 +48,7 @@
 				tmp = peers[id = key] = peers[id] || {};
 				tmp.id = tmp.url = id;
 			});
-			tmp = peers[id = 'https://gun-ams1.maddiex.wtf:443/gun'] = peers[id] || {};
+			tmp = peers[id = 'https://ovh.era.eco/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root); // DAM!
