@@ -134,7 +134,8 @@ Thanks to:
 <a href="http://github.com/bmatusiak">Bradley Matusiak</a>,
 <a href="https://github.com/sjuxax">Jeff Cook</a>,
 <a href="https://github.com/nmauersberg">Nico</a>,
-<a href="https://github.com/ajartille">Aaron Artille</a>
+<a href="https://github.com/ajartille">Aaron Artille</a>,
+<a href="https://github.com/timjrobinson">Tim Robinson</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
