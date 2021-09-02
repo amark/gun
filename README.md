@@ -44,23 +44,25 @@ GUN is *super easy* to get started with:
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
 - An online demo of the examples are available here: http://gunjs.herokuapp.com/
-- Or write a quick app: ([try now in jsbin](http://jsbin.com/sovihaveso/edit?js,console))
+- Or write a quick app: ([try now in a playground](https://jsbin.com/kadobamevo/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
 // import GUN from 'gun'; // in ESM
-// Gun = require('gun'); // in NodeJS
-// Gun = require('gun/gun'); // in React
+// GUN = require('gun'); // in NodeJS
+// GUN = require('gun/gun'); // in React
 gun = GUN();
 
 gun.get('mark').put({
   name: "Mark",
-  email: "mark@gunDB.io",
+  email: "mark@gun.eco",
 });
 
-gun.get('mark').on(function(data, key){
-  console.log("update:", data);
+gun.get('mark').on((data, key) => {
+  console.log("realtime updates:", data);
 });
+
+setInterval(() => { gun.get('mark').get('live').put(Math.random()) }, 9);
 </script>
 ```
 - Or try something **mind blowing**, like saving circular references to a table of documents! ([play](http://jsbin.com/wefozepume/edit?js,console))
