@@ -99,8 +99,9 @@ gun.get('list').set({type: "cucumber", goal: "jumping cat"});
 Want to keep building more? **Jump to [THE DOCUMENTATION](#documentation)!**
 
 # About
-
 First & foremost, GUN is **a community of the nicest and most helpful people** out there. So [I want to invite you](http://chat.gun.eco) to come tell us about what **you** are working on & wanting to build (new or old school alike! Just be nice as well.) and ask us your questions directly. :)
+
+<p align="center"><a href="https://www.youtube.com/watch?v=oTQXzhm8w_8"><img width="250" src="https://img.youtube.com/vi/oTQXzhm8w_8/0.jpg"><br/>Watch the 100 second intro!</a></p>
 
 The GUN ecosystem stack is a collection of independent and modular tools covering everything from [CRDT](https://crdt.tech/) [conflict resolution](https://gun.eco/distributed/matters.html), [cryptographic security](https://gun.eco/docs/Cartoon-Cryptography) & [encryption](https://gun.eco/docs/SEA), [radix storage serialization](https://gun.eco/docs/RAD), [mesh networking](https://gun.eco/docs/DAM) & [routing algorithms](https://gun.eco/docs/Routing), to distributed systems [correctness & load testing](https://github.com/gundb/panic-server), CPU scheduled [JSON parser](https://github.com/amark/gun/blob/master/lib/yson.js) to prevent UI lag, and more!
 
