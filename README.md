@@ -48,9 +48,10 @@ GUN is *super easy* to get started with:
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
-// var Gun = require('gun'); // in NodeJS
-// var Gun = require('gun/gun'); // in React
-var gun = Gun();
+// import GUN from 'gun'; // in ESM
+// Gun = require('gun'); // in NodeJS
+// Gun = require('gun/gun'); // in React
+gun = GUN();
 
 gun.get('mark').put({
   name: "Mark",
@@ -64,8 +65,8 @@ gun.get('mark').on(function(data, key){
 ```
 - Or try something **mind blowing**, like saving circular references to a table of documents! ([play](http://jsbin.com/wefozepume/edit?js,console))
 ```javascript
-var cat = {name: "Fluffy", species: "kitty"};
-var mark = {boss: cat};
+cat = {name: "Fluffy", species: "kitty"};
+mark = {boss: cat};
 cat.slave = mark;
 
 // partial updates merge with existing data!
@@ -199,41 +200,49 @@ I am missing many others, apologies, will be adding them soon! This list is infi
 
 ## Testing
 
-Tests may be run with `npm test`. Tests will trigger persistent writes to the DB, so subsequent runs of the test will fail. You must clear the DB before running the tests again. This can be done by running the following command in the project directory.
+You will need to `npm install -g mocha` first. Then in the gun root folder run `npm test`. Tests will trigger persistent writes to the DB, so subsequent runs of the test will fail. You must clear the DB before running the tests again. This can be done by running `rm -rf *data*` command in the project directory.
 
-```bash
-rm -rf *data*
-```
-
-### Additional Cryptography Libraries
+## Shims
 
  > These are only needed for NodeJS & React Native, they shim the native Browser WebCrypto API.
 
 If you want to use [SEA](https://gun.eco/docs/SEA) for `User` auth and security, you will need to install:
 
-`npm install text-encoding @peculiar/webcrypto --save`
+`npm install @peculiar/webcrypto --save`
 
 Please see [our React Native docs](https://gun.eco/docs/React-Native) for installation instructions!
 
 Then you can require [SEA](https://gun.eco/docs/SEA) without an error:
 
 ```javascript
-var GUN = require('gun/gun');
-var SEA = require('gun/sea');
+GUN = require('gun/gun');
+SEA = require('gun/sea');
 ```
 
 ## Deploy
 
  > Note: The default examples that get auto-deployed on `npm start` CDN-ify all GUN files, modules, & storage.
  
+ > Note: Moving forward, AXE will start to automatically cluster your peer into a shared DHT. You may want to disable this to run an isolated network.
+ 
  > Note: When deploying a web application using GUN on a cloud provider, you may have to set `CI=false` in your `.env`. This prevents GUN-specific warnings from being treated as errors when deploying your app. You may also resolve this by modifying your webpack config to not try to build the GUN dependencies.
 
-To quickly spin up a GUN relay peer for your development team, utilize [Zeet](https://zeet.co), [Heroku](http://heroku.com), [Docker](http://docker.com), or any variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), [Flynn.io](http://flynn.io), [now.sh](https://zeit.co/now), etc. ! Or use all of them so your relays are decentralized too!
+To quickly spin up a GUN relay peer for your development team, utilize [Heroku](http://heroku.com), [Docker](http://docker.com), or any others listed below. Or some variant thereof [Dokku](http://dokku.viewdocs.io/dokku/), K8s, etc. ! Or use all of them so your relays are decentralized too!
 
-### [Zeet.co](https://www.zeet.co/)
+### Linux
 
-[![Deploy](https://deploy.zeet.co/gun.svg)](https://deploy.zeet.co/?url=https://github.com/amark/gun)
+`SSH` into the home directory of a clean OS install with `sudo` ability. Set any environment variables you need (see below), then do:
 
+```bash
+curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
+```
+
+ > Read [install.sh](https://github.com/amark/gun/blob/master/examples/install.sh) first!
+ > If `curl` is not found, *copy&paste* the contents of install.sh into your ssh.
+
+You can now safely `CTRL+A+D` to escape without stopping the peer. To stop everything `killall screen` or `killall node`.
+
+Environment variables may need to be set like `export HTTPS_CERT=~/cert.pem HTTPS_KEY=~/key.pem PORT=443`. You can also look at a sample [nginx](https://gun.eco/docs/nginx) config. For production deployments, you probably will want to use something like `pm2` or better to keep the peer alive after machine reboots.
 
 ### [Heroku](https://www.heroku.com/)
 
@@ -250,7 +259,11 @@ heroku create
 git push -f heroku HEAD:master
 ```
 
-Then visit the URL in the output of the 'heroku create' step, in a browser.
+Then visit the URL in the output of the 'heroku create' step, in a browser. Make sure to set any environment config vars in the settings tab.
+
+### [Zeet.co](https://www.zeet.co/)
+
+[![Deploy](https://deploy.zeet.co/gun.svg)](https://deploy.zeet.co/?url=https://github.com/amark/gun)
 
 ### [Now.sh](https://zeit.co/now/)
 
