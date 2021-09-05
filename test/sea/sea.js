@@ -700,7 +700,7 @@ describe('SEA', function(){
       })
     }())})
 
-    it('Certify: Advanced - Block', function(done){(async function(){
+    it.skip('Certify: Advanced - Block', function(done){(async function(){
       var alice = await SEA.pair()
       var dave = await SEA.pair()
       var bob = await SEA.pair()
@@ -712,15 +712,13 @@ describe('SEA', function(){
       // Alice points her block to Dave's graph
       await user.auth(alice)
       if (user.is) {
-        console.log("Alice")
-        await user.get('block').put({'#': '~'+dave.pub+'/block2'});
+        await user.get('block').put({'#': '~'+dave.pub+'/block'});
         await user.leave()
       }
 
       // Dave logins, he adds Bob to his block, which is connected to the certificate that Alice issued for Bob
       await user.auth(dave)
       if (user.is) {
-        console.log("Dave")
         await user.get('block').get(bob.pub).put(true)
         await user.leave()
       }
@@ -728,12 +726,11 @@ describe('SEA', function(){
       // Bob logins and tries to hack Alice
       await user.auth(bob)
       if (user.is) {
-        console.log("Bob")
         var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
             .get("private")
             .get("asdf")
-            // .get("qwerty")
+            .get("qwerty")
             .put(data, ack => {
               expect(ack.err).to.be.ok()
               user.leave()
