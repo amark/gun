@@ -4,9 +4,6 @@ on:
   - push
   - pull_request
 
-env:
-  project: 'gun'
-
 jobs:
 
   test:
@@ -48,7 +45,7 @@ jobs:
     - name: Test
       run: npm test
 
-  # only create a release for tags named 'v*'
+  # create github release
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [ test ]
@@ -58,5 +55,60 @@ jobs:
     # create github release (which triggers the release workflows)
     - name: Release
       uses: softprops/action-gh-release@v1
+      # env:
+      #   GITHUB_TOKEN: ${{ secrets.PAT }}
+
+  # publish latest master or release to dockerhub
+  dockerhub:
+    if: github.event_name == 'push'
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    env:
+      image: ${{ secrets.DOCKERHUB_USERNAME }}/gun
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Login
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      run: echo -n ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+    - name: Build
+      run: |
+        echo "SHA=$GITHUB_SHA"
+        docker build --build-arg SHA=$GITHUB_SHA \
+          BUILD_DATE=$(date +'%Y-%m-%dT%H:%M:%S') \
+          VCS_REF=${GITHUB_REF} \
+          VCS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+          VERSION=${GITHUB_REF##*/} \
+          SHA=$GITHUB_SHA \
+          --label "SHA=$GITHUB_SHA" \
+          --tag ${{ env.image }}:${GITHUB_REF##*/} \
+          --tag ${{ env.image }}:latest \
+          .
+
+    - name: Push
+      run: docker push ${{ env.image }}
+
+
+  # publish release to npm
+  npm:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [ test ]
+    # needs: [ release ]
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Publish
+      env:
+        NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      run: |
+        npm config set //registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN
+        npm install
+        npm publish --access=public
