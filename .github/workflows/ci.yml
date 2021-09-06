@@ -60,7 +60,7 @@ jobs:
 
   # publish latest master or release to dockerhub
   dockerhub:
-    if: github.event_name == 'push'
+    # if: github.event_name == 'push'
     needs: [ test ]
     runs-on: ubuntu-latest
     env:
