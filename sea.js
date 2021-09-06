@@ -674,23 +674,21 @@
     // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate authority's graph
     SEA.certify = SEA.certify || (async (certificants, policy = {}, authority, cb, opt = {}) => { try {
       /*
+      The Certify Protocol was made out of love by a Vietnamese code enthusiast. Vietnamese people around the world deserve respect!
       IMPORTANT: A Certificate is like a Signature. No one knows who (authority) created/signed a cert until you put it into their graph.
       "certificants": '*' or a String (Bob.pub) || an Object that contains "pub" as a key || an array of [object || string]. These people will have the rights.
       "policy": A string ('inbox'), or a RAD/LEX object {'*': 'inbox'}, or an Array of RAD/LEX objects or strings. RAD/LEX object can contain key "?" with indexOf("*") > -1 to force key equals certificant pub. This rule is used to check against soul+'/'+key using Gun.text.match or String.match.
       "authority": Key pair or priv of the certificate authority.
       "cb": A callback function after all things are done.
-      "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.blacklist is set, SEA will look for blacklist before syncing.
+      "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.block is set, SEA will look for block before syncing.
       */
       console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
         if (certificants) {
-          if ((typeof certificants === 'string' || Array.isArray(certificants)) && certificants.indexOf('*') !== -1) return '*'
-          if (typeof certificants === 'string') {
-            return certificants
-          }
-
+          if ((typeof certificants === 'string' || Array.isArray(certificants)) && certificants.indexOf('*') > -1) return '*'
+          if (typeof certificants === 'string') return certificants
           if (Array.isArray(certificants)) {
             if (certificants.length === 1 && certificants[0]) return typeof certificants[0] === 'object' && certificants[0].pub ? certificants[0].pub : typeof certificants[0] === 'string' ? certificants[0] : null
             certificants.map(certificant => {
@@ -702,7 +700,7 @@
           if (typeof certificants === 'object' && certificants.pub) return certificants.pub
           return data.length > 0 ? data : null
         }
-        return null
+        return
       })()
 
       if (!certificants) return console.log("No certificant found.")
@@ -710,8 +708,11 @@
       const expiry = opt.expiry && (typeof opt.expiry === 'number' || typeof opt.expiry === 'string') ? parseFloat(opt.expiry) : null
       const readPolicy = (policy || {}).read ? policy.read : null
       const writePolicy = (policy || {}).write ? policy.write : typeof policy === 'string' || Array.isArray(policy) || policy["+"] || policy["#"] || policy["."] || policy["="] || policy["*"] || policy[">"] || policy["<"] ? policy : null
-      const readBlacklist = ((opt || {}).blacklist || {}).read && (typeof opt.blacklist.read === 'string' || opt.blacklist.read['#']) ? opt.blacklist.read : null
-      const writeBlacklist = typeof (opt || {}).blacklist === 'string' || (((opt || {}).blacklist || {}).write || {})['#'] ? opt.blacklist : ((opt || {}).blacklist || {}).write && (typeof opt.blacklist.write === 'string' || opt.blacklist.write['#']) ? opt.blacklist.write : null
+      // The "blacklist" feature is now renamed to "block". Why ? BECAUSE BLACK LIVES MATTER!
+      // We can now use 3 keys: block, blacklist, ban
+      const block = (opt || {}).block || (opt || {}).blacklist || (opt || {}).ban || {}
+      const readBlock = block.read && (typeof block.read === 'string' || (block.read || {})['#']) ? block.read : null
+      const writeBlock = typeof block === 'string' ? block : block.write && (typeof block.write === 'string' || block.write['#']) ? block.write : null
 
       if (!readPolicy && !writePolicy) return console.log("No policy found.")
 
@@ -721,8 +722,8 @@
         ...(expiry ? {e: expiry} : {}), // inject expiry if possible
         ...(readPolicy ? {r: readPolicy }  : {}), // "r" stands for read, which means read permission.
         ...(writePolicy ? {w: writePolicy} : {}), // "w" stands for write, which means write permission.
-        ...(readBlacklist ? {rb: readBlacklist} : {}), // inject READ blacklist if possible
-        ...(writeBlacklist ? {wb: writeBlacklist} : {}), // inject WRITE blacklist if possible
+        ...(readBlock ? {rb: readBlock} : {}), // inject READ block if possible
+        ...(writeBlock ? {wb: writeBlock} : {}), // inject WRITE block if possible
       })
 
       const certificate = await SEA.sign(data, authority, null, {raw:1})
@@ -934,7 +935,7 @@
         if(!act.h.ok || !act.i.ok){ return }
         cat.ing = false;
         cb({ok: 0, pub: act.pair.pub}); // callback that the user has been created. (Note: ok = 0 because we didn't wait for disk to ack)
-        if(noop === cb){ pair? gun.auth(pair) : gun.auth(alias, pass) } // if no callback is passed, auto-login after signing up.
+        if(noop === cb){ pair ? gun.auth(pair) : gun.auth(alias, pass) } // if no callback is passed, auto-login after signing up.
       }
       root.get('~@'+alias).once(act.a);
       return gun;
@@ -1025,7 +1026,7 @@
         at = user._ = root.get('~'+pair.pub)._;
         at.opt = upt;
         // add our credentials in-memory only to our root user instance
-        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair};
+        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair.pub};
         at.sea = act.pair;
         cat.ing = false;
         try{if(pass && u == (obj_ify(cat.root.graph['~'+pair.pub].auth)||'')[':']){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
@@ -1368,12 +1369,12 @@
                 if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
                   // is Certificant forced to present in Path
                   if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
-                  // path is allowed, but is there any WRITE blacklist? Check it out
-                  if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE blacklist
-                    var root = at.$.back(-1)
+                  // path is allowed, but is there any WRITE block? Check it out
+                  if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE block
+                    var root = eve.as.root.$.back(-1)
                     if (typeof data.wb === 'string' && '~' !== data.wb.slice(0, 1)) root = root.get('~' + pub)
                     return root.get(data.wb).get(certificant).once(value => {
-                      if (value && (value === 1 || value === true)) return no("Certificant blacklisted.")
+                      if (value && (value === 1 || value === true)) return no(`Certificant ${certificant} blocked.`)
                       return cb(data)
                     })
                   }
