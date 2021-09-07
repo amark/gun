@@ -1,3 +1,5 @@
+import { IGunCryptoKeyPair } from "../types";
+
 /** @see https://gun.eco/docs/SEA */
 export interface IGunStaticSEA {
 
@@ -32,33 +34,33 @@ export interface IGunStaticSEA {
      * You will need this for most of SEA's API, see those method's examples.
      * The default cryptographic primitives for the asymmetric keys are ECDSA for signing and ECDH for encryption.
      */
-    pair(cb: (data: CryptoKeyPair) => void, opt?: {}): Promise<CryptoKeyPair | undefined>;
+    pair(cb: (data: IGunCryptoKeyPair) => void, opt?: {}): Promise<IGunCryptoKeyPair | undefined>;
 
     /**
      * Adds a signature to a message, for data that you want to prevent attackers tampering with.
      * @param data is the content that you want to prove is authorized.
      * @param pair is from .pair.
      */
-    sign(data: any, pair: CryptoKeyPair): Promise<string | undefined>;
+    sign(data: any, pair: IGunCryptoKeyPair): Promise<string | undefined>;
 
     /**
      * Gets the data if and only if the message can be verified as coming from the person you expect.
      * @param message is what comes from .sign.
      * @param pair from .pair or its public key text (pair.pub).
      */
-    verify(message: any, pair: CryptoKeyPair | string): Promise<unknown>;
+    verify(message: any, pair: IGunCryptoKeyPair | string): Promise<unknown>;
 
     /**
      * Takes some data that you want to keep secret and encrypts it so nobody else can read it.
      * @param data is the content that you want to encrypt.
      * @param pair from .pair or a passphrase you want to use as a cypher to encrypt with.
      */
-    encrypt(data: any, pair: CryptoKeyPair | string): Promise<string>;
+    encrypt(data: any, pair: IGunCryptoKeyPair | string): Promise<string>;
 
     /**
      * Read the secret data, if and only if you are allowed to.
      * @param message is what comes from .encrypt.
      * @param pair from .pair or the passphrase to decypher the message.
      */
-    decrypt(message: any, pair: CryptoKeyPair | string): Promise<unknown>;
+    decrypt(message: any, pair: IGunCryptoKeyPair | string): Promise<unknown>;
 }
