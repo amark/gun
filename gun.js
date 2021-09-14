@@ -347,7 +347,8 @@
 					++ni; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
-			console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
+			// TODO: MARK!!! clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
+			// WASIS BUG! first .once( undef 2nd good. .off othe rpeople: .open
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -1188,6 +1189,7 @@
 				if(eve.stun){ return } if('' === one[id]){ return }
 				if(true === (tmp = Gun.valid(data))){ once(); return }
 				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
+				clearTimeout((cat.one||'')[id]); // clear "not found" since they only get set on cat.
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 				function once(){
 					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.

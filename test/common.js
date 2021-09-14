@@ -3900,6 +3900,38 @@ describe('Gun', function(){
 			},100);
 		});
 
+		it.skip('do not refire', function(done){ // for Wasis @yokowasis ! Thanks for finding.
+			var gun = Gun();
+
+			for (i=0;i<=100;i++) {
+			  gun.get("something").get("level1").put({
+			    [i]: i
+			  })
+			}
+
+			for (i=0;i<=100;i++) {
+			  gun.get("something").get("level1").get("level2").put({
+			    [i]: i
+			  })
+			}
+
+			var c = 0;
+			setTimeout(function(){
+				gun.get("something").get("level1").on(()=>{
+					c++;
+				});
+
+				setTimeout(function(){
+					gun.get("something").get("level1").once(function(x){
+						
+						setTimeout(function(){
+							expect(c).to.be(1);
+							nopasstun(done, gun);
+						},100);
+					});
+				},100);
+			},100);
+		});
 		/*it.skip('Memory management', function(done){
 			this.timeout(9999999);
 			var gun = Gun(), c = 100000, big = "big";

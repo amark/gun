@@ -25,16 +25,12 @@ a, button, input, textarea {
   text-decoration: inherit;
   outline: none;
 }
-a:focus, button:focus, input[type=button]:focus, input[type=submit]:focus {
-  animation: pulse 2s infinite;
-}
-
 input:not([type=button]):not([type=submit]), textarea {
 	width: 100%;
 }
-::placeholder, .hint {
-  color: inherit;
-  opacity: 0.3;
+
+a:focus, button:focus, input[type=button]:focus, input[type=submit]:focus {
+  animation: pulse 2s infinite;
 }
 
 ul, li {
@@ -51,6 +47,10 @@ p + p {
 [contenteditable=true]:empty:before {
   content: attr(placeholder);
 }
+::placeholder, .hint {
+  color: inherit;
+  opacity: 0.3;
+}
 
 .model, .none { display: none }
 .hide { 
@@ -59,11 +59,10 @@ p + p {
   transition: all 2s;
 }
 
-.full, .page {
+.full {
   width: 100%;
   min-height: 100vh;
 }
-
 .max {
   max-width: 48em;
 }
@@ -77,6 +76,25 @@ p + p {
   min-width: 12em;
 }
 
+.row {
+  width: 100%;
+}
+.row::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+.col {
+  max-width: 24em;
+  min-width: 12em;
+}
+
+.center {
+  text-align: center;
+  vertical-align: middle;
+  margin-left: auto;
+  margin-right: auto;
+}
 .right {
   float: right;
   text-align: right;
@@ -84,12 +102,6 @@ p + p {
 .left {
   float: left;
   text-align: left;
-}
-.center {
-  text-align: center;
-  vertical-align: middle;
-  margin-left: auto;
-  margin-right: auto;
 }
 .mid { 
   margin-left: auto;
@@ -110,12 +122,6 @@ p + p {
 .stack { line-height: 0; }
 .crack { margin-bottom: 1%; }
 .sit { margin-bottom: 0; }
-
-.row { width: 100%; }
-.col {
-  max-width: 24em;
-  min-width: 12em;
-}
 
 .focus {
   margin-left: auto;
