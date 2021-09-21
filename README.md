@@ -264,7 +264,7 @@ git push -f heroku HEAD:master
 
 Then visit the URL in the output of the 'heroku create' step, in a browser. Make sure to set any environment config vars in the settings tab.
 
-### [Zeet.co](https://www.zeet.co/)
+### [Zeet.co](https://zeet.co/)
 
 [![Deploy](https://deploy.zeet.co/gun.svg)](https://deploy.zeet.co/?url=https://github.com/amark/gun)
 
