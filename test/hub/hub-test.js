@@ -6,5 +6,4 @@ gun.get('hub').on(data => {
 })
 
 const hub = require('../../lib/hub');
-hub.watch(__dirname, {msg: true, hubignore: true})
-//
+hub.watch(__dirname, {msg: true, hubignore: true, alias:require('os').userInfo().username})
