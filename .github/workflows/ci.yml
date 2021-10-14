@@ -58,40 +58,40 @@ jobs:
       # env:
       #   GITHUB_TOKEN: ${{ secrets.PAT }}
 
-  # publish latest master or release to dockerhub
-  dockerhub:
-    if: github.event_name == 'push'
-    needs: [ test ]
-    runs-on: ubuntu-latest
-    env:
-      image: ${{ secrets.DOCKERHUB_USERNAME }}/gun
-    steps:
+#   # publish latest master or release to dockerhub
+#   dockerhub:
+#     if: github.event_name == 'push'
+#     needs: [ test ]
+#     runs-on: ubuntu-latest
+#     env:
+#       image: ${{ secrets.DOCKERHUB_USERNAME }}/gun
+#     steps:
 
-    - name: Checkout
-      uses: actions/checkout@v2
+#     - name: Checkout
+#       uses: actions/checkout@v2
 
-    - name: Login
-      env:
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: echo -n ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+#     - name: Login
+#       env:
+#         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+#         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+#       run: echo -n ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-    - name: Build
-      run: |
-        echo "SHA=$GITHUB_SHA"
-        docker build --build-arg SHA=$GITHUB_SHA \
-          BUILD_DATE=$(date +'%Y-%m-%dT%H:%M:%S') \
-          VCS_REF=${GITHUB_REF} \
-          VCS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
-          VERSION=${GITHUB_REF##*/} \
-          SHA=$GITHUB_SHA \
-          --label "SHA=$GITHUB_SHA" \
-          --tag ${{ env.image }}:${GITHUB_REF##*/} \
-          --tag ${{ env.image }}:latest \
-          .
+#     - name: Build
+#       run: |
+#         echo "SHA=$GITHUB_SHA"
+#         docker build --build-arg SHA=$GITHUB_SHA \
+#           BUILD_DATE=$(date +'%Y-%m-%dT%H:%M:%S') \
+#           VCS_REF=${GITHUB_REF} \
+#           VCS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+#           VERSION=${GITHUB_REF##*/} \
+#           SHA=$GITHUB_SHA \
+#           --label "SHA=$GITHUB_SHA" \
+#           --tag ${{ env.image }}:${GITHUB_REF##*/} \
+#           --tag ${{ env.image }}:latest \
+#           .
 
-    - name: Push
-      run: docker push ${{ env.image }}
+#     - name: Push
+#       run: docker push ${{ env.image }}
 
 
   # publish release to npm
