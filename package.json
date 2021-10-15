@@ -58,7 +58,6 @@
     "directory": "types"
   },
   "dependencies": {
-    "chokidar": "^3.5.2",
     "ws": "^7.2.1"
   },
   "optionalDependencies": {
