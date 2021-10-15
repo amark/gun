@@ -268,29 +268,13 @@ Then visit the URL in the output of the 'heroku create' step, in a browser. Make
 
 [![Deploy](https://deploy.zeet.co/gun.svg)](https://deploy.zeet.co/?url=https://github.com/amark/gun)
 
-### [Now.sh](https://zeit.co/now/)
-
-```bash
-npm install -g now
-now --npm amark/gun
-```
-
 Then visit the URL in the output of the 'now --npm' step, in your browser.
-
-### [Unubo](https://unubo.app/)
-
-Fork this GUN repo (Unubo only deploys from your own GitHub repo's).  
-Add a Node.js app, select your GUN fork, set `npm start` start as the command and deploy. 
-
-From the experience of [genderev](https://github.com/genderev), this only works if you set your country to the United States.
-
-Visit the deployed app by following the 'view app' button, in your browser.
 
 ### [Docker](https://www.docker.com/)
 
  > Warning: Docker image is community contributed and may be old with missing security updates, please check version numbers to compare.
 
-[![Docker Automated buil](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
+[![Docker Automated build](https://img.shields.io/docker/automated/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/image/gundb/gun.svg)](https://microbadger.com/images/gundb/gun "Get your own image badge on microbadger.com") [![Docker Pulls](https://img.shields.io/docker/pulls/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/) [![Docker Stars](https://img.shields.io/docker/stars/gundb/gun.svg)](https://hub.docker.com/r/gundb/gun/)
 
 Pull from the [Docker Hub](https://hub.docker.com/r/gundb/gun/) [![](https://images.microbadger.com/badges/commit/gundb/gun.svg)](https://microbadger.com/images/gundb/gun). Or:
 
