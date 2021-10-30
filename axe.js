@@ -42,8 +42,8 @@
 			tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
 			tmp.id = tmp.url = id;
 			tmp.retry = tmp.retry || 0; // BUG: Check 0?
-			console.log("AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) hard coded peers.");
-			console.log("Warning: AXE alpha became super slow & laggy, now in testing only mode!");
+			Gun.log.once("AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) hard coded peers.");
+			Gun.log.once("Warning: AXE alpha became super slow & laggy, now in testing only mode!");
 			var last = JSON.parse((localStorage||'')[(opt.file||'')+'axe/']||null) || {};
 			Object.keys(last.peers||'').forEach(function(key){
 				tmp = peers[id = key] = peers[id] || {};

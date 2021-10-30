@@ -1766,7 +1766,7 @@
 ;(function(){
 	var u;
 	if(''+u == typeof Gun){ return }
-	var DEP = function(n){ console.log("Warning! Deprecated internal utility will break in next version:", n) }
+	var DEP = function(n){ console.warn("Warning! Deprecated internal utility will break in next version:", n) }
 	// Generic javascript utilities.
 	var Type = Gun;
 	//Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}
