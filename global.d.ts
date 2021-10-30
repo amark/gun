@@ -1,4 +1,4 @@
-import { IGunStatic } from './types/static';
+import { IGun } from './types/gun/IGun';
 declare global {
-    var Gun: IGunStatic;
+    var Gun: IGun;
 }
