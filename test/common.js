@@ -80,12 +80,10 @@ describe('Gun', function(){
 			});
 			it('stringify', function(done){
 				function Foo(){}; Foo.prototype.toJSON = function(){};
-				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
-				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
-				obj = [{x:"test",a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
+				var obj = [{x:"test\\",a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
 				JSON.stringifyAsync(obj, function(err, text){
 					JSON.parseAsync(text, function(err, data){
-						expect(data).to.be.eql([{x:"test",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
+						expect(data).to.be.eql([{x:"test\\",a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
 
 						var obj = {a: [], b: [""], c: ["", 1], d: [1, ""], e: {"":[]}, "a\"b": {0: 1}, wow: {'': {cool: 1}}};obj.lol = {0: {sweet: 9}};obj.wat = {"": 'cool'};obj.oh = {phew: {}, "": {}};
 						JSON.stringifyAsync(obj, function(err, text2){
