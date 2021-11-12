@@ -43,7 +43,6 @@ GUN is *super easy* to get started with:
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
-- An online demo of the examples are available here: http://gunjs.herokuapp.com/
 - Or write a quick app: ([try now in a playground](https://jsbin.com/kadobamevo/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
