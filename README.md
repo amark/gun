@@ -121,6 +121,7 @@ Thanks to:
 <td vlign="center"><a href="https://mozilla.org/builders"><img height="100" src="https://user-images.githubusercontent.com/1423657/81992335-85346480-9643-11ea-8754-8275e98e06bc.png"></a></td>
 <td vlign="center"><a href="http://unstoppabledomains.com/"><img src="https://gun.eco/img/unstoppable.png"></a></td>
 <td vlign="center"><a href="https://www.ajar.org/"><img src="https://www.ajar.org/logo.png" width="200"></a></td>
+<td vlign="center"><a href="https://ghostdrive.com/"><img src="https://gun.eco/img/ghostdrive.png" width="250"></a></td>
 </tr></table>
 
 <a href="https://github.com/robertheessels">Robert Heessels</a>,
