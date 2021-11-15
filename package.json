@@ -61,7 +61,7 @@
     "ws": "^7.2.1"
   },
   "optionalDependencies": {
-    "@peculiar/webcrypto": "^1.1.1",
+    "@peculiar/webcrypto": "^1.2.2",
     "emailjs": "^2.2.0"
   },
   "devDependencies": {

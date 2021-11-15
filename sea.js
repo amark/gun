@@ -1,8 +1,10 @@
 ;(function(){
 
   /* UNBUILD */
-  function USE(arg, req){
-    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+  var navigation = navigation || {};
+  var requireModule = navigation.platfom === "ReactNative" ? 1 : require;
+  function USE(arg, req) {
+    return req? requireModule(arg) : arg.slice? USE[R(arg)] : function(mod, path){
       arg(mod = {exports: {}});
       USE[R(path)] = mod.exports;
     }
@@ -47,7 +49,7 @@
     var u;
     if(u+''== typeof btoa){
       if(u+'' == typeof Buffer){
-        try{ global.Buffer = USE("buffer", 1).Buffer }catch(e){ console.log("Please `npm install buffer` or add it to your package.json !") }
+        try{ global.Buffer = require("buffer").Buffer }catch(e){ console.log("Please `npm install buffer` or add it to your package.json !") }
       }
       global.btoa = function(data){ return Buffer.from(data, "binary").toString("base64") };
       global.atob = function(data){ return Buffer.from(data, "base64").toString("binary") };
@@ -185,7 +187,7 @@
     }
     if(!api.TextDecoder)
     {
-      const { TextEncoder, TextDecoder } = USE((u+'' == typeof MODULE?'.':'')+'./lib/text-encoding', 1);
+      const { TextEncoder, TextDecoder } = require('text-encoding');
       api.TextDecoder = TextDecoder;
       api.TextEncoder = TextEncoder;
     }
