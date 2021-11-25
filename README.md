@@ -122,6 +122,7 @@ Thanks to:
 <td vlign="center"><a href="http://unstoppabledomains.com/"><img src="https://gun.eco/img/unstoppable.png"></a></td>
 <td vlign="center"><a href="https://www.ajar.org/"><img src="https://www.ajar.org/logo.png" width="200"></a></td>
 <td vlign="center"><a href="https://ghostdrive.com/"><img src="https://gun.eco/img/ghostdrive.png" width="250"></a></td>
+<td vlign="center"><a href="https://mask.io/"><img src="https://dimensiondev.github.io/Mask-VI/assets/Logo/MB--Logo--CombH-Circle--Blue.svg" width="250"></a></td>
 </tr></table>
 
 <a href="https://github.com/robertheessels">Robert Heessels</a>,
