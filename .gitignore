@@ -16,5 +16,6 @@ isolate*.log
 .localStorage
 /types/**/*.ts
 !/types/**/*.d.ts
+!/types/**/*.test-d.ts
 /gun.ts
 /temp/
