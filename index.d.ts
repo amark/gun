@@ -1,3 +1,3 @@
-import { IGunStatic } from './types/static';
-declare const Gun: IGunStatic;
+import { IGun } from './types/gun/IGun';
+declare const Gun: IGun;
 export = Gun;

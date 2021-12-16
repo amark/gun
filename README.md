@@ -121,6 +121,8 @@ Thanks to:
 <td vlign="center"><a href="https://mozilla.org/builders"><img height="100" src="https://user-images.githubusercontent.com/1423657/81992335-85346480-9643-11ea-8754-8275e98e06bc.png"></a></td>
 <td vlign="center"><a href="http://unstoppabledomains.com/"><img src="https://gun.eco/img/unstoppable.png"></a></td>
 <td vlign="center"><a href="https://www.ajar.org/"><img src="https://www.ajar.org/logo.png" width="200"></a></td>
+<td vlign="center"><a href="https://ghostdrive.com/"><img src="https://gun.eco/img/ghostdrive.png" width="250"></a></td>
+<td vlign="center"><a href="https://mask.io/"><img src="https://dimensiondev.github.io/Mask-VI/assets/Logo/MB--Logo--CombH-Circle--Blue.svg" width="250"></a></td>
 </tr></table>
 
 <a href="https://github.com/robertheessels">Robert Heessels</a>,
@@ -143,7 +145,9 @@ Thanks to:
 <a href="https://github.com/sjuxax">Jeff Cook</a>,
 <a href="https://github.com/nmauersberg">Nico</a>,
 <a href="https://github.com/ajartille">Aaron Artille</a>,
-<a href="https://github.com/timjrobinson">Tim Robinson</a>
+<a href="https://github.com/timjrobinson">Tim Robinson</a>,
+<a href="https://github.com/hibas123">Fabian Stamm</a>,
+<a href="https://twitter.com/mikestaub">Mike Staub</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
