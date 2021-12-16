@@ -3883,12 +3883,12 @@ describe('Gun', function(){
 			var C = 0;
 
 			app.get('watcher/1').get('stats').on(function (v, k) {
-			  //console.log('v:', k, v);
 				if(++C === 1){
 					expect(v.num).to.be(3);
 					return;
 				}
 				expect(v.num).to.be(4);
+				if(done.c){ return } done.c = 1;
 				nopasstun(done, gun);
 			});
 			//return;
@@ -3899,6 +3899,7 @@ describe('Gun', function(){
 			  
 			},100);
 		});
+		//return;
 
 		it.skip('do not refire', function(done){ // for Wasis @yokowasis ! Thanks for finding.
 			var gun = Gun();
@@ -4083,7 +4084,31 @@ describe('Gun', function(){
 				nopasstun(done, gun); 
 			});
 			}, 1000);
-		});return;
+		});
+
+		it('once on link to nothing @mimiza', function(done){
+
+			gun.get('oltn').put({"#": "this-does-not-exist"})
+
+			gun.get('oltn').once(response => {
+				//console.log('did we call?', response) ;
+				expect(response).to.not.be.ok();
+				nopasstun(done, gun);
+			})
+		});
+
+		it('once on link to nothing deep @mimiza', function(done){
+
+			gun.get('oltnd').get('deep').put({"#": "this-does-not-exist"})
+
+			gun.get('oltnd').get('deep').once(response => {
+				//console.log('did we call?', response) ;
+				expect(response).to.not.be.ok();
+				nopasstun(done, gun);
+			})
+		});
+
+		return;
 
 		it('get get any parallel later', function(done){
 			Gun.statedisk({ bob: { age: 29, name: "Bob!" } }, 'parallel/get/get/later', function(){
