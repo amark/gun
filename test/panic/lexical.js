@@ -235,6 +235,33 @@ describe('RAD Lexical search Test!           ', function() {
       config: config
     });
   });
+  it('Query server - Prefix Higher match(* >)         ', function() {
+    var i=0;
+    return server.run(function(test) {
+      var env = test.props;
+      var t = setTimeout(function() { test.fail('Error: No response.');}, 5000);
+      var results = [];
+      var query = { '%': 100000, '.': { '*': '2020-10-', '>': '2020-10-16' } };
+      test.async();
+      ref.get(query).map().once(function(v, k) {
+         if (k && v) { results.push(k); }
+      });
+      var t2 = setTimeout(function() {
+        var len = 16; /// expected number of results
+        var results_unique = results.filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
+        clearTimeout(t);
+        if (results_unique.length === len) {
+          test.done();
+        } else {
+          console.log('RESULTS Query server - Prefix Higher match(* >): ', results_unique.length, results_unique);
+          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+        }
+      }, env.config.wait_map);
+    }, {
+      i: i += 1,
+      config: config
+    });
+  });
 
   it(config.browsers + ' browser(s) have joined!              ', function() {
     console.log('PLEASE OPEN http://' + config.IP + ':' + config.port + ' IN ' + config.browsers + ' BROWSER(S)!');
@@ -412,6 +439,36 @@ describe('RAD Lexical search Test!           ', function() {
         });
         var t2 = setTimeout(function() {
           var len = 31; /// expected number of results
+          var results_unique = results.filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
+          clearTimeout(t);
+          if (results_unique.length === len) {
+            test.done();
+          } else {
+            console.log('RESULTS Query browser - Prefix match(*): ', results_unique.length, results_unique);
+            test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          }
+        }, env.config.wait_map);
+      }, {
+        i: i += 1,
+        config: config
+      }));
+    });
+    return Promise.all(tests);
+  });
+  it('Query browser - Prefix Higher match(* >)        ', function() {
+    var tests = [], i = 0;
+    browsers.each(function(client, id) {
+      tests.push(client.run(function(test) {
+        var env = test.props;
+        var t = setTimeout(function() { test.fail('Error: No response.');}, 5000);
+        var results = [];
+        var query = { '%': 100000, '.': { '*': '2020-10-', '>': '2020-10-16' } };
+        test.async();
+        ref.get(query).map().once(function(v, k) {
+          if (k && v) { results.push(k); }
+        });
+        var t2 = setTimeout(function() {
+          var len = 16; /// expected number of results
           var results_unique = results.filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
           clearTimeout(t);
           if (results_unique.length === len) {
