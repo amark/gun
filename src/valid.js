@@ -1,6 +1,3 @@
-
-require('./shim');
-
 // Valid values are a subset of JSON: null, binary, number (!Infinity), text,
 // or a soul relation. Arrays need special algorithms to handle concurrency,
 // so they are not supported directly. Use an extension that supports them if
