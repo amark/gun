@@ -518,6 +518,7 @@ describe('Gun', function(){
 				expect(Gun.is('')).to.be(false);
 				expect(Gun.is('a')).to.be(false);
 				expect(Gun.is(Infinity)).to.be(false);
+				expect(Gun.is(-Infinity)).to.be(false);
 				expect(Gun.is(NaN)).to.be(false);
 				expect(Gun.is([])).to.be(false);
 				expect(Gun.is([1])).to.be(false);
@@ -535,6 +536,7 @@ describe('Gun', function(){
 				expect(Gun.valid({'#':'somesoulidhere'})).to.be('somesoulidhere');
 				expect(Gun.valid({'#':'somesoulidhere', and: 'nope'})).to.be(false);
 				expect(Gun.valid(Infinity)).to.be(false); // boohoo :(
+				expect(Gun.valid(-Infinity)).to.be(false); // boohoo :(
 				expect(Gun.valid(NaN)).to.be(false);
 				expect(Gun.valid([])).to.be(false);
 				expect(Gun.valid([1])).to.be(false);
@@ -554,6 +556,7 @@ describe('Gun', function(){
 				expect('string' == typeof Gun.valid(0)).to.be(false);
 				expect('string' == typeof Gun.valid(1)).to.be(false);
 				expect('string' == typeof Gun.valid(Infinity)).to.be(false); // boohoo :(
+				expect('string' == typeof Gun.valid(-Infinity)).to.be(false); // boohoo :(
 				expect('string' == typeof Gun.valid(NaN)).to.be(false);
 				expect('string' == typeof Gun.valid([])).to.be(false);
 				expect('string' == typeof Gun.valid([1])).to.be(false);
