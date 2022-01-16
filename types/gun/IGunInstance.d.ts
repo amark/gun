@@ -35,7 +35,7 @@ export interface IGunInstance<
              * @param data You do not need to re-save the entire object every time,
              * gun will automatically merge your data into what already exists as a "partial" update.
              *
-             * * `undefined`, `NaN`, `Infinity`, `array`, will be rejected.
+             * * `NaN`, `Infinity`, `array`, will be rejected.
              * * Traditional arrays are dangerous in real-time apps. Use `gun.set` instead.
              *
              * @param callback invoked on each acknowledgment

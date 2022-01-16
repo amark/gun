@@ -527,6 +527,8 @@ describe('Gun', function(){
 				expect(Gun.is(function(){})).to.be(false);
 			});
 			it('valid',function(){
+				expect(Gun.valid(undefined)).to.be(true);
+				expect(Gun.valid(null)).to.be(true);
 				expect(Gun.valid(false)).to.be(true);
 				expect(Gun.valid(true)).to.be(true);
 				expect(Gun.valid(0)).to.be(true);
@@ -549,6 +551,8 @@ describe('Gun', function(){
 				expect(Gun.valid({'#':'somethingelsehere'})).to.be('somethingelsehere');
 				expect('string' == typeof Gun.valid({'#':'somesoulidhere', and: 'nope'})).to.be(false);
 				expect('string' == typeof Gun.valid({or: 'nope', '#':'somesoulidhere'})).to.be(false);
+				expect('string' == typeof Gun.valid(undefined)).to.be(false);
+				expect('string' == typeof Gun.valid(null)).to.be(false);
 				expect('string' == typeof Gun.valid(false)).to.be(false);
 				expect('string' == typeof Gun.valid(true)).to.be(false);
 				expect('string' == typeof Gun.valid('')).to.be(false);
@@ -594,7 +598,7 @@ describe('Gun', function(){
 		});
 
 		it('basic', function(done){
-			var data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null};
+			var data = {a: false, b: true, c: 0, d: 1, e: '', f: 'g', h: null, i: undefined};
 			Gun.ify(data, function(err, ctx){
 				expect(err).to.not.be.ok();
 				expect(ctx.err).to.not.be.ok();
@@ -626,14 +630,6 @@ describe('Gun', function(){
 			});
 		});
 
-		it('undefined', function(done){
-			var data = {z: undefined, x: 'bye'};
-			Gun.ify(data, function(err, ctx){
-				expect(err).to.be.ok();
-				done();
-			});
-		});
-
 		it('NaN', function(done){
 			var data = {a: NaN, b: 2};
 			Gun.ify(data, function(err, ctx){
@@ -644,6 +640,14 @@ describe('Gun', function(){
 
 		it('Infinity', function(done){ // SAD DAY PANDA BEAR :( :( :(... Mark wants Infinity. JSON won't allow.
 			var data = {a: 1, b: Infinity};
+			Gun.ify(data, function(err, ctx){
+				expect(err).to.be.ok();
+				done();
+			});
+		});
+
+		it('-Infinity', function(done){ // SAD DAY PANDA BEAR :( :( :(... Mark wants Infinity. JSON won't allow.
+			var data = {a: 1, b: -Infinity};
 			Gun.ify(data, function(err, ctx){
 				expect(err).to.be.ok();
 				done();

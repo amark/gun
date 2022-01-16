@@ -1,5 +1,4 @@
 import { ISEA } from '../sea/ISEA';
-import { AckCallback } from './AckCallback';
 import { IGunConstructorOptions } from './IGunConstructorOptions';
 import { IGunDataType } from './IGunDataType';
 import { IGunInstance } from './IGunInstance';
