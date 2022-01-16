@@ -1,17 +1,17 @@
 ;(function(){
 
-  /* UNBUILD */
-  function USE(arg, req){
-    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
-      arg(mod = {exports: {}});
-      USE[R(path)] = mod.exports;
-    }
-    function R(p){
-      return p.split('/').slice(-1).toString().replace('.js','');
-    }
-  }
-  if(typeof module !== "undefined"){ var MODULE = module }
-  /* UNBUILD */
+	/* UNBUILD */
+	function USE(arg, req){
+		return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+			arg(mod = {exports: {}});
+			USE[R(path)] = mod.exports;
+		}
+		function R(p){
+			return p.split('/').slice(-1).toString().replace('.js','');
+		}
+	}
+	if(typeof module !== "undefined"){ var MODULE = module }
+	/* UNBUILD */
 
 	;USE(function(module){
 		// Shim for generic javascript utilities.
@@ -41,15 +41,15 @@
 		}
 		String.hash = function(s, c){ // via SO
 			if(typeof s !== 'string'){ return }
-	    c = c || 0; // CPU schedule hashing by
-	    if(!s.length){ return c }
-	    for(var i=0,l=s.length,n; i<l; ++i){
-	      n = s.charCodeAt(i);
-	      c = ((c<<5)-c)+n;
-	      c |= 0;
-	    }
-	    return c;
-	  }
+			c = c || 0; // CPU schedule hashing by
+			if(!s.length){ return c }
+			for(var i=0,l=s.length,n; i<l; ++i){
+				n = s.charCodeAt(i);
+				c = ((c<<5)-c)+n;
+				c |= 0;
+			}
+			return c;
+		}
 		var has = Object.prototype.hasOwnProperty;
 		Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 		Object.empty = function(o, n){
@@ -82,12 +82,12 @@
 		;(function(){
 			var u, sT = setTimeout, T = sT.turn;
 			(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
-			  if(L = (s = (l||[]).splice(0,S)).length){
-			  	for(var i = 0; i < L; i++){
-			  		if(u !== (r = f(s[i]))){ break }
-			  	}
-			  	if(u === r){ T(t); return }
-			  } e && e(r);
+				if(L = (s = (l||[]).splice(0,S)).length){
+					for(var i = 0; i < L; i++){
+						if(u !== (r = f(s[i]))){ break }
+					}
+					if(u === r){ T(t); return }
+				} e && e(r);
 			}())})();
 		}());
 	})(USE, './shim');
@@ -135,14 +135,16 @@
 		// so they are not supported directly. Use an extension that supports them if
 		// needed but research their problems first.
 		module.exports = (v) =>
-		  // "deletes", nulling out keys.
-		  v === null ||
-		  "string" === typeof v ||
-		  "boolean" === typeof v ||
-		  // we want +/- Infinity to be, but JSON does not support it, sad face.
-		  // can you guess what v === v checks for? ;)
-		  ("number" === typeof v && v != Infinity && v != -Infinity && v === v) ||
-		  (v && "string" == typeof v["#"] && Object.keys(v).length === 1 && v["#"]);
+			// erases
+			v === undefined ||
+			// "deletes", nulling out keys.
+			v === null ||
+			"string" === typeof v ||
+			"boolean" === typeof v ||
+			// we want +/- Infinity to be, but JSON does not support it, sad face.
+			// can you guess what v === v checks for? ;)
+			("number" === typeof v && v != Infinity && v != -Infinity && v === v) ||
+			(v && "string" == typeof v["#"] && Object.keys(v).length === 1 && v["#"]);
 	})(USE, './valid');
 
 	;USE(function(module){
@@ -167,7 +169,7 @@
 			var tmp = n._['>'] || (n._['>'] = {}); // grab the states data.
 			if(u !== k && k !== '_'){
 				if('number' == typeof s){ tmp[k] = s } // add the valid state.
-				if(u !== v){ n[k] = v } // Note: Not its job to check for valid values!
+				n[k] = v; // Note: Not its job to check for valid values!
 			}
 			return n;
 		}
@@ -371,8 +373,8 @@
 			}
 			function map(msg){
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
-      	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
-      	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
+				var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+				if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
 				if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
 				fire(ctx);
@@ -659,7 +661,7 @@
 
 		function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to optimize functions with different parameter calls, so try to do benchmark to see if there is any actual difference.
 			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
-			if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || (u === tmp[':'] && u === tmp['=']) || u === tmp['>'])){ // convert from old format
+			if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || u === tmp['>'])){ // convert from old format
 				if(!valid(tmp)){
 					if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
 					gun = cat.root.$.get(soul);
@@ -840,7 +842,7 @@
 					if(any.stun){ return }
 					if((tmp = root.pass) && !tmp[id]){ return }
 					var at = msg.$._, sat = (msg.$$||'')._, data = (sat||at).put, odd = (!at.has && !at.soul), test = {}, link, tmp;
-					if(odd || u === data){ // handles non-core
+					if(odd){ // handles non-core
 						data = (u === ((tmp = msg.put)||'')['='])? (u === (tmp||'')[':'])? tmp : tmp[':'] : tmp['='];
 					}
 					if(link = ('string' == typeof (tmp = Gun.valid(data)))){
@@ -1433,13 +1435,13 @@
 					var S = +new Date;
 					json(msg.put, function hash(err, text){
 						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-					  h = String.hash(ss, h); s = s.slice(32768);
-					  if(s){ puff(hash, 0); return }
+						h = String.hash(ss, h); s = s.slice(32768);
+						if(s){ puff(hash, 0); return }
 						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
-					  msg._.$put = t;
-					  msg['##'] = h;
-					  say(msg, peer);
-					  delete msg._.$put;
+						msg._.$put = t;
+						msg['##'] = h;
+						say(msg, peer);
+						delete msg._.$put;
 					}, sort);
 				}
 				function sort(k, v){ var tmp;
@@ -1493,7 +1495,7 @@
 					}
 					// TODO: PERF: consider splitting function here, so say loops do less work.
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
-					if(id === peer.last){ return } peer.last = id;  // was it just sent?
+					if(id === peer.last){ return } peer.last = id;	// was it just sent?
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
@@ -1650,9 +1652,9 @@
 
 			return mesh;
 		}
-	  var empty = {}, ok = true, u;
+		var empty = {}, ok = true, u;
 
-	  try{ module.exports = Mesh }catch(e){}
+		try{ module.exports = Mesh }catch(e){}
 
 	})(USE, './mesh');
 
@@ -1818,14 +1820,14 @@
 	Type.text.hash = Type.text.hash || function(s, c){ // via SO
 		DEP('text.hash');
 		if(typeof s !== 'string'){ return }
-	  c = c || 0;
-	  if(!s.length){ return c }
-	  for(var i=0,l=s.length,n; i<l; ++i){
-	    n = s.charCodeAt(i);
-	    c = ((c<<5)-c)+n;
-	    c |= 0;
-	  }
-	  return c;
+		c = c || 0;
+		if(!s.length){ return c }
+		for(var i=0,l=s.length,n; i<l; ++i){
+			n = s.charCodeAt(i);
+			c = ((c<<5)-c)+n;
+			c |= 0;
+		}
+		return c;
 	}
 	Type.list = Type.list || {is: function(l){ DEP('list'); return (l instanceof Array) }}
 	Type.list.slit = Type.list.slit || Array.prototype.slice;

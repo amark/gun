@@ -20,9 +20,8 @@ State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 	var tmp = n._['>'] || (n._['>'] = {}); // grab the states data.
 	if(u !== k && k !== '_'){
 		if('number' == typeof s){ tmp[k] = s } // add the valid state.
-		if(u !== v){ n[k] = v } // Note: Not its job to check for valid values!
+		n[k] = v; // Note: Not its job to check for valid values!
 	}
 	return n;
 }
 module.exports = State;
-	

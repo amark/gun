@@ -27,7 +27,7 @@ Gun.chain.get = function(key, cb, as){
 			if(any.stun){ return }
 			if((tmp = root.pass) && !tmp[id]){ return }
 			var at = msg.$._, sat = (msg.$$||'')._, data = (sat||at).put, odd = (!at.has && !at.soul), test = {}, link, tmp;
-			if(odd || u === data){ // handles non-core
+			if(odd){ // handles non-core
 				data = (u === ((tmp = msg.put)||'')['='])? (u === (tmp||'')[':'])? tmp : tmp[':'] : tmp['='];
 			}
 			if(link = ('string' == typeof (tmp = Gun.valid(data)))){
