@@ -1,17 +1,17 @@
 ;(function(){
 
-	/* UNBUILD */
-	function USE(arg, req){
-		return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
-			arg(mod = {exports: {}});
-			USE[R(path)] = mod.exports;
-		}
-		function R(p){
-			return p.split('/').slice(-1).toString().replace('.js','');
-		}
-	}
-	if(typeof module !== "undefined"){ var MODULE = module }
-	/* UNBUILD */
+  /* UNBUILD */
+  function USE(arg, req){
+    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+      arg(mod = {exports: {}});
+      USE[R(path)] = mod.exports;
+    }
+    function R(p){
+      return p.split('/').slice(-1).toString().replace('.js','');
+    }
+  }
+  if(typeof module !== "undefined"){ var MODULE = module }
+  /* UNBUILD */
 
 	;USE(function(module){
 		// Shim for generic javascript utilities.
@@ -41,15 +41,15 @@
 		}
 		String.hash = function(s, c){ // via SO
 			if(typeof s !== 'string'){ return }
-			c = c || 0; // CPU schedule hashing by
-			if(!s.length){ return c }
-			for(var i=0,l=s.length,n; i<l; ++i){
-				n = s.charCodeAt(i);
-				c = ((c<<5)-c)+n;
-				c |= 0;
-			}
-			return c;
-		}
+	    c = c || 0; // CPU schedule hashing by
+	    if(!s.length){ return c }
+	    for(var i=0,l=s.length,n; i<l; ++i){
+	      n = s.charCodeAt(i);
+	      c = ((c<<5)-c)+n;
+	      c |= 0;
+	    }
+	    return c;
+	  }
 		var has = Object.prototype.hasOwnProperty;
 		Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 		Object.empty = function(o, n){
@@ -82,12 +82,12 @@
 		;(function(){
 			var u, sT = setTimeout, T = sT.turn;
 			(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
-				if(L = (s = (l||[]).splice(0,S)).length){
-					for(var i = 0; i < L; i++){
-						if(u !== (r = f(s[i]))){ break }
-					}
-					if(u === r){ T(t); return }
-				} e && e(r);
+			  if(L = (s = (l||[]).splice(0,S)).length){
+			  	for(var i = 0; i < L; i++){
+			  		if(u !== (r = f(s[i]))){ break }
+			  	}
+			  	if(u === r){ T(t); return }
+			  } e && e(r);
 			}())})();
 		}());
 	})(USE, './shim');
