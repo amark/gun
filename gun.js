@@ -373,8 +373,8 @@
 			}
 			function map(msg){
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
-				var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
-				if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
+      	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
+      	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
 				if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
 				fire(ctx);
@@ -1435,13 +1435,13 @@
 					var S = +new Date;
 					json(msg.put, function hash(err, text){
 						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-						h = String.hash(ss, h); s = s.slice(32768);
-						if(s){ puff(hash, 0); return }
+					  h = String.hash(ss, h); s = s.slice(32768);
+					  if(s){ puff(hash, 0); return }
 						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
-						msg._.$put = t;
-						msg['##'] = h;
-						say(msg, peer);
-						delete msg._.$put;
+					  msg._.$put = t;
+					  msg['##'] = h;
+					  say(msg, peer);
+					  delete msg._.$put;
 					}, sort);
 				}
 				function sort(k, v){ var tmp;
@@ -1495,7 +1495,7 @@
 					}
 					// TODO: PERF: consider splitting function here, so say loops do less work.
 					if(!peer.wire && mesh.wire){ mesh.wire(peer) }
-					if(id === peer.last){ return } peer.last = id;	// was it just sent?
+					if(id === peer.last){ return } peer.last = id;  // was it just sent?
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
 					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
@@ -1652,9 +1652,9 @@
 
 			return mesh;
 		}
-		var empty = {}, ok = true, u;
+	  var empty = {}, ok = true, u;
 
-		try{ module.exports = Mesh }catch(e){}
+	  try{ module.exports = Mesh }catch(e){}
 
 	})(USE, './mesh');
 
@@ -1820,14 +1820,14 @@
 	Type.text.hash = Type.text.hash || function(s, c){ // via SO
 		DEP('text.hash');
 		if(typeof s !== 'string'){ return }
-		c = c || 0;
-		if(!s.length){ return c }
-		for(var i=0,l=s.length,n; i<l; ++i){
-			n = s.charCodeAt(i);
-			c = ((c<<5)-c)+n;
-			c |= 0;
-		}
-		return c;
+	  c = c || 0;
+	  if(!s.length){ return c }
+	  for(var i=0,l=s.length,n; i<l; ++i){
+	    n = s.charCodeAt(i);
+	    c = ((c<<5)-c)+n;
+	    c |= 0;
+	  }
+	  return c;
 	}
 	Type.list = Type.list || {is: function(l){ DEP('list'); return (l instanceof Array) }}
 	Type.list.slit = Type.list.slit || Array.prototype.slice;
