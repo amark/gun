@@ -1373,7 +1373,7 @@
                   if (data.wb && (typeof data.wb === 'string' || ((data.wb || {})['#']))) { // "data.wb" = path to the WRITE block
                     var root = eve.as.root.$.back(-1)
                     if (typeof data.wb === 'string' && '~' !== data.wb.slice(0, 1)) root = root.get('~' + pub)
-                    return root.get(data.wb).get(certificant).once(value => {
+                    return root.get(data.wb).get(certificant).once(value => { // TODO: INTENT TO DEPRECATE.
                       if (value && (value === 1 || value === true)) return no(`Certificant ${certificant} blocked.`)
                       return cb(data)
                     })

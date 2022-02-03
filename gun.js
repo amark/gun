@@ -348,7 +348,7 @@
 				}());
 			} Gun.on.put = put;
 			// TODO: MARK!!! clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
-			// WASIS BUG! first .once( undef 2nd good. .off othe rpeople: .open
+			// WASIS BUG! local peer not ack. .off other people: .open
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -999,12 +999,13 @@
 				}
 				k && (to.path || (to.path = [])).push(k);
 				if(!(v = valid(d)) && !(g = Gun.is(d))){
-					if(!Object.plain(d)){ (as.ack||noop).call(as, as.out = {err: as.err = Gun.log("Invalid data: " + ((d && (tmp = d.constructor) && tmp.name) || typeof d) + " at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.'))}); as.ran(as); return }
+					if(!Object.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
 					var seen = as.seen || (as.seen = []), i = seen.length;
 					while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 				}
 				if(k && v){ at.node = state_ify(at.node, k, s, d) } // handle soul later.
 				else {
+					if(!as.seen){ ran.err(as, "Data at root of graph must be a node (an object)."); return }
 					as.seen.push(cat = {it: d, link: {}, todo: g? [] : Object.keys(d).sort().reverse(), path: (to.path||[]).slice(), up: at}); // Any perf reasons to CPU schedule this .keys( ?
 					at.node = state_ify(at.node, k, s, cat.link);
 					!g && cat.todo.length && to.push(cat);
@@ -1089,6 +1090,9 @@
 			stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 			if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
 			stun.off();
+		}; ran.err = function(as, err){
+			(as.ack||noop).call(as, as.out = { err: as.err = Gun.log(err) });
+			as.ran(as);
 		}
 
 		function get(as){
@@ -1112,6 +1116,7 @@
 				return;
 			}
 		}
+		function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
 		var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
 		var iife = function(fn,as){fn.call(as||empty)}
@@ -1191,13 +1196,21 @@
 				if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
 				clearTimeout((cat.one||'')[id]); // clear "not found" since they only get set on cat.
 				clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
-				function once(){
+				function once(f){
 					if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 					if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-					if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} }
+					if('string' == typeof Gun.valid(tmp)){
+						tmp = root.$.get(tmp)._.put;
+						if(tmp === u && !f){
+							one[id] = setTimeout(function(){ once(1) }, opt.wait||99); // TODO: Quick fix. Maybe use ack count for more predictable control?
+							return
+						}
+					}
+					//console.log("AND VANISHED", data);
 					if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
 					if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 					cb.call($, tmp, at.get);
+					clearTimeout(one[id]); // clear "not found" since they only get set on cat. // TODO: This was hackily added, is it necessary or important? Probably not, in future try removing this. Was added just as a safety for the `&& !f` check.
 				};
 			}, {on: 1});
 			return gun;
