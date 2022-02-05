@@ -1,3 +1,4 @@
-import Gun = require('../../index');
+import Gun from '../..';
+
 var gun = Gun();
-gun.user("publicKey").once(console.log)
+gun.user('publicKey');

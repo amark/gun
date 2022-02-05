@@ -1,6 +1,9 @@
-import Gun = require('../../index');
-Gun().get('users')
+import Gun from '../..';
+
+Gun()
+  .get('users')
   /* now change the context to alice */
   .get('alice')
   .put({})
-  .back().map(x=>x)
+  .back()
+  .map((x) => x);

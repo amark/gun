@@ -1,14 +1,11 @@
 //import { expectError } from 'tsd';
 
-import Gun = require('../../index');
-
+import Gun from '../..';
 
 //Documentation should work
 
-async function get(){
-    const gun = new Gun();
-    const alice = await gun.get('user').get('alice')
-
-    const gun2 = new Gun<{user:{alice:string}}>();
-    const alice2 = (await gun2.get('user')).alice
+async function get() {
+  const gun = new Gun();
+  gun.get('user').get('alice');
+  gun.get<{ alice: string }>('user');
 }

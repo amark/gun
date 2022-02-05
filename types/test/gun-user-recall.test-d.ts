@@ -1,3 +1,4 @@
-import Gun = require('../../index');
+import Gun from '../..';
+
 var gun = Gun();
-var user = gun.user().recall({sessionStorage: true});
+gun.user().recall({ sessionStorage: true });

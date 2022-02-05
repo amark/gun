@@ -1,3 +1,5 @@
-import Gun = require('../../index');
+import Gun from '../..';
 
-Gun().get('users').map(user => user.name === 'Mark'? user : undefined)
+Gun()
+  .get('users')
+  .map<{ name: string }>((user) => (user.name === 'Mark' ? user : undefined));
