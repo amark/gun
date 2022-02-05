@@ -22,22 +22,14 @@
 			while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
 			return s;
 		}
-		String.match = function(t, o){ var tmp, u;
-			if('string' !== typeof t){ return false }
-			if('string' == typeof o){ o = {'=': o} }
-			o = o || {};
-			tmp = (o['='] || o['*'] || o['>'] || o['<']);
-			if(t === tmp){ return true }
-			if(u !== o['=']){ return false }
-			tmp = (o['*'] || o['>']);
-			if(t.slice(0, (tmp||'').length) === tmp){ return true }
-			if(u !== o['*']){ return false }
-			if(u !== o['>'] && u !== o['<']){
-				return (t >= o['>'] && t <= o['<'])? true : false;
-			}
-			if(u !== o['>'] && t >= o['>']){ return true }
-			if(u !== o['<'] && t <= o['<']){ return true }
-			return false;
+		String.match = function(t, o){
+			return (
+				('string' === typeof t && (t === o || t === o['='])) ||
+				(o['='] === undefined &&
+					(o['>'] === undefined || t >= o['>']) &&
+					(o['<'] === undefined || t <= o['<']) &&
+					(o['*'] === undefined || t.slice(0, o['*'].length) === o['*']))
+			);
 		}
 		String.hash = function(s, c){ // via SO
 			if(typeof s !== 'string'){ return }
@@ -1799,22 +1791,14 @@
 		while(l > 0){ s += c.charAt(Math.floor(Math.random() * c.length)); l-- }
 		return s;
 	}
-	Type.text.match = Type.text.match || function(t, o){ var tmp, u; DEP('text.match');
-		if('string' !== typeof t){ return false }
-		if('string' == typeof o){ o = {'=': o} }
-		o = o || {};
-		tmp = (o['='] || o['*'] || o['>'] || o['<']);
-		if(t === tmp){ return true }
-		if(u !== o['=']){ return false }
-		tmp = (o['*'] || o['>'] || o['<']);
-		if(t.slice(0, (tmp||'').length) === tmp){ return true }
-		if(u !== o['*']){ return false }
-		if(u !== o['>'] && u !== o['<']){
-			return (t >= o['>'] && t <= o['<'])? true : false;
-		}
-		if(u !== o['>'] && t >= o['>']){ return true }
-		if(u !== o['<'] && t <= o['<']){ return true }
-		return false;
+	Type.text.match = Type.text.match || function(t, o){ DEP('text.match');
+		return (
+			('string' === typeof t && (t === o || t === o['='])) ||
+			(o['='] === undefined &&
+				(o['>'] === undefined || t >= o['>']) &&
+				(o['<'] === undefined || t <= o['<']) &&
+				(o['*'] === undefined || t.slice(0, o['*'].length) === o['*']))
+		);
 	}
 	Type.text.hash = Type.text.hash || function(s, c){ // via SO
 		DEP('text.hash');
