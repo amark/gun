@@ -4,10 +4,7 @@ import {} from '../types/gun/IGunChain';
 declare module '../types/gun/IGunChain' {
   export interface IGunChain {
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/later.js')` or
-     *  `<script src="/gun/lib/open.js"></script>`
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/later.js"></script>`!
+     * > Warning: Dependency script for browser: <script src="/gun/lib/open.js"></script>`
      *
      * Exact timing is not guaranteed! Because it uses `setTimeout` underneath. Further, after
      *  the timeout, it must then open and load the snapshot, this will likely add at least 1ms

@@ -15,10 +15,6 @@ import {} from '../types/gun/IGunInstance';
 declare module '../types/gun/IGunInstance' {
   export interface IGunInstance {
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/promise.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/promise.js"></script>`!
-     *
      * @param value the data to save
      * @param options `put` options
      */
@@ -31,10 +27,6 @@ declare module '../types/gun/IGunInstance' {
     }>;
 
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/promise.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/promise.js"></script>`!
-     *
      * @param limit due to promises resolving too fast if we do not set a timer we will not be
      *  able receive any data back from gun before returning the promise works both following a
      *  `Chain.get` and a `Chain.map` (limit only applies to map). If no limit is chosen,
@@ -51,10 +43,6 @@ declare module '../types/gun/IGunInstance' {
     }>;
 
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/promise.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/promise.js"></script>`!
-     *
      * @param value the data to save
      * @param options `put` options
      */
@@ -67,10 +55,6 @@ declare module '../types/gun/IGunInstance' {
     }>;
 
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/promise.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/promise.js"></script>`!
-     *
      * @param value the data to save
      * @param options `put` options
      */
@@ -83,10 +67,6 @@ declare module '../types/gun/IGunInstance' {
     }>;
 
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/promise.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/promise.js"></script>`!
-     *
      * @param callback function to be called upon changes to data
      * @param options `put` options
      */

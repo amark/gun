@@ -4,10 +4,6 @@ import {} from '../types/gun/IGunChain';
 declare module '../types/gun/IGunChain' {
   export interface IGunChain {
     /**
-     * > Warning: Not included by default! You must include it yourself via
-     *  `require('gun/lib/open.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/open.js"></script>`!
-     *
      * Note: This will automatically load everything it can find on the context. This may sound
      *  convenient, but may be unnecessary and excessive - resulting in more bandwidth and
      *  slower load times for larger data. It could also result in your entire database being

@@ -6,10 +6,6 @@ declare module '../types/gun/IGunInstance' {
     /**
      * > Warning: This extension was removed from core, you probably shouldn't be using it!
      *
-     * > Warning: Not included by default! You must
-     *  include it yourself via `require('gun/lib/path.js')` or
-     *  `<script src="https://cdn.jsdelivr.net/npm/gun/lib/path.js"></script>`!
-     *
      * Path does the same thing as get but has some conveniences built in
      *
      * Once you've changed the context, you can read, write, and path again from that field.
