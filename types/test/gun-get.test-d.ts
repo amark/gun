@@ -1,11 +1,5 @@
-//import { expectError } from 'tsd';
-
 import Gun from '../..';
 
-//Documentation should work
+new Gun<{ a: { b: number; c: number } }>().get('a').get('b');
 
-async function get() {
-  const gun = new Gun();
-  gun.get('user').get('alice');
-  gun.get<{ alice: string }>('user');
-}
+new Gun().get<{ b: number; c: number }>('a').get('b');

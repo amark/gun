@@ -1,8 +1,8 @@
-import { IGunChain } from '../types/gun';
+import { IGunChain, GunSchema } from '../types/gun';
 
 import {} from '../types/gun/IGunInstance';
 declare module '../types/gun/IGunInstance' {
-  export interface IGunInstance {
+  export interface IGunInstance<TNode> {
     /**
      * > Warning: This extension was removed from core, you probably shouldn't be using it!
      *
@@ -20,13 +20,15 @@ declare module '../types/gun/IGunInstance' {
      *
      * This can be especially confusing as the chain might never resolve to a value
      */
-    path(value: string | string[]): IGunChain;
+    path<T extends GunSchema & Record<string, GunSchema>>(
+      value: string | string[]
+    ): IGunChain<T, any, IGunInstance<TNode>, string>;
   }
 }
 
 import {} from '../types/gun/IGunChain';
 declare module '../types/gun/IGunChain' {
-  export interface IGunChain {
+  export interface IGunChain<TNode, TChainParent, TGunInstance, TKey> {
     /**
      * > Warning: This extension was removed from core, you probably shouldn't be using it!
      *
@@ -48,6 +50,8 @@ declare module '../types/gun/IGunChain' {
      *
      * This can be especially confusing as the chain might never resolve to a value
      */
-    path(value: string | string[]): IGunChain;
+    path<T extends GunSchema & Record<string, GunSchema>>(
+      value: string | string[]
+    ): IGunChain<T, any, TGunInstance, string>;
   }
 }

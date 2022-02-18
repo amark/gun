@@ -1,6 +1,6 @@
-import { GunValuePlain, GunDataFlat, GunDataGet } from '.';
+import { GunDataNode, GunSchema } from '.';
 
-export type GunCallbackOnce<T extends GunValuePlain | GunDataFlat | never> = (
-  data: GunDataGet<T>,
-  key: string
+export type GunCallbackOnce<V extends GunSchema, K extends string> = (
+  data: GunDataNode<V>,
+  key: K
 ) => void;

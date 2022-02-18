@@ -1,21 +1,29 @@
 import {
   _GunRoot,
-  GunDataPut,
   GunCallbackPut,
   GunOptionsPut,
-  GunValuePlain,
-  GunDataFlat,
   LEXQuery,
-  GunCallbackGet,
-  IGunInstance,
   GunCallbackOn,
   GunOptionsOn,
   GunCallbackOnce,
   GunOptionsOnce,
-  GunDataGet,
+  GunSchema,
+  GunDataNode,
+  GunCallbackGet,
+  IGunInstanceRoot,
+  GunSoul,
+  GunCallbackMap,
 } from '.';
+import { IGunChain2TNode } from '../utils';
 
-export interface IGunChain {
+export interface IGunChain<
+  TNode extends GunSchema,
+  TChainParent extends
+    | IGunChain<any, any, any, any>
+    | IGunInstanceRoot<any, any> = any,
+  TGunInstance extends IGunInstanceRoot<any, any> = any,
+  TKey extends string = any
+> {
   _: _GunRoot;
 
   /**
@@ -25,11 +33,17 @@ export interface IGunChain {
    * @param callback an optional callback, invoked on each acknowledgment
    * @param options `put` options
    */
-  put(
-    value: GunDataPut,
+  put<
+    V extends
+      | (TNode extends object ? Partial<TNode> : TNode)
+      | GunSoul<TNode>
+      | IGunChain<TNode, any, any, any>
+      | IGunChain<NonNullable<TNode>, any, any, any>
+  >(
+    value: V,
     callback?: GunCallbackPut,
     options?: GunOptionsPut
-  ): IGunChain;
+  ): IGunChain<TNode, TChainParent, TGunInstance, TKey>;
 
   /**
    * Where to read data from
@@ -41,10 +55,37 @@ export interface IGunChain {
    *  streaming architecture. Generally, you'll find `.not`, `.on`, and `.once` as more
    *  convenient for every day use
    */
-  get<T extends GunValuePlain | GunDataFlat | never = never>(
-    key: string | LEXQuery,
-    callback?: GunCallbackGet<T>
-  ): IGunChain;
+  get<V extends N[K], K extends keyof N & string, N extends TNode>(
+    key: K,
+    callback?: GunCallbackGet<N, K>
+  ): V extends GunSchema
+    ? IGunChain<
+        V,
+        IGunChain<N, TChainParent, TGunInstance, TKey>,
+        TGunInstance,
+        K
+      >
+    : never;
+
+  /**
+   * Where to read data from
+   *
+   * @param query LEX query
+   * @param callback The callback is a listener for read errors, not found, and updates.
+   *  It may be called multiple times for a single request, since gun uses a reactive
+   *  streaming architecture. Generally, you'll find `.not`, `.on`, and `.once` as more
+   *  convenient for every day use
+   */
+  get<
+    V extends N[K],
+    K extends keyof TNode & string = keyof TNode & string,
+    N extends TNode = TNode
+  >(
+    query: LEXQuery<K>,
+    callback?: GunCallbackGet<N, TKey>
+  ): Record<K, V> extends GunSchema
+    ? IGunChain<Record<K, V>, TChainParent, TGunInstance, TKey>
+    : never;
 
   /**
    * Add a unique item to an unordered list. Works like a mathematical set, where each
@@ -55,7 +96,26 @@ export interface IGunChain {
    * @param callback the callback is invoked exactly the same as `.put`, since `.set` is
    *  just a convenience wrapper around `.put`
    */
-  set(value: GunDataPut | GunValuePlain, callback?: GunCallbackPut): IGunChain;
+  set<
+    V extends Partial<N> | GunSoul<N> | IGunChain<N, any, any, any>,
+    K extends keyof TNode & string,
+    N extends TNode[K] & Record<string, GunSchema>
+  >(
+    value: V,
+    callback?: GunCallbackPut
+  ): V extends GunSchema
+    ? IGunChain<
+        N,
+        IGunChain<TNode, TChainParent, TGunInstance, TKey>,
+        TGunInstance,
+        K
+      >
+    : IGunChain<
+        IGunChain2TNode<V>,
+        IGunChain<TNode, TChainParent, TGunInstance, TKey>,
+        TGunInstance,
+        K
+      >;
 
   /**
    * Move up to the parent context on the chain. Every time a new chain is created, a
@@ -64,9 +124,12 @@ export interface IGunChain {
    * @param amount The number of times you want to go back up the chain. `-1` will take you
    *  to the root. `Infinity` is not yet supported in TypeScript
    */
-  back(amount: -1): IGunInstance;
-  back(amount: number): IGunChain;
-  back(): IGunChain;
+  back<GI extends TGunInstance>(amount: -1): GI;
+  back<CP extends TChainParent>(): CP;
+  back<N extends GunSchema>(): IGunChain<N, any, TGunInstance, string>;
+  back<N extends GunSchema>(
+    amount: number
+  ): IGunChain<N, any, TGunInstance, string>;
 
   /**
    * Subscribe to updates and changes on a node or property in realtime
@@ -80,15 +143,15 @@ export interface IGunChain {
    *  changes, you'll instead be passed a node with a single property representing that
    *  change rather than the full node every time
    */
-  on<T extends GunValuePlain | GunDataFlat | never = never>(
-    callback?: GunCallbackOn<T>,
+  on<V extends TNode>(
+    callback?: GunCallbackOn<V, TKey>,
     options?: GunOptionsOn
-  ): IGunChain;
+  ): IGunChain<V, TChainParent, TGunInstance, TKey>;
 
   /**
    * Removes all listeners
    */
-  off(): IGunChain;
+  off(): IGunChain<TNode, TChainParent, TGunInstance, TKey>;
 
   /**
    * Get the current data without subscribing to updates. Or undefined if it cannot be
@@ -109,10 +172,10 @@ export interface IGunChain {
    *  And the key is the last property name or ID of the node
    * @param options `once` options
    */
-  once<T extends GunValuePlain | GunDataFlat | never = never>(
-    callback?: GunCallbackOnce<T>,
+  once<V extends TNode>(
+    callback?: GunCallbackOnce<V, TKey>,
     options?: GunOptionsOnce
-  ): IGunChain;
+  ): IGunChain<V, TChainParent, TGunInstance, TKey>;
 
   /**
    * Iterates over each property and item on a node, passing it down the chain, behaving
@@ -142,7 +205,14 @@ export interface IGunChain {
    * - `users.once().map().once(cb)` gets the user list once, gets each of those users
    *  only once (not added ones).
    */
-  map<T extends GunValuePlain | GunDataFlat | never = never>(
-    callback?: (data: GunDataGet<T>, key: string) => any
-  ): IGunChain;
+  map<V extends N[K], K extends keyof N & string, N extends TNode>(
+    callback?: GunCallbackMap<V, K, N>
+  ): V extends GunSchema
+    ? IGunChain<
+        V,
+        IGunChain<TNode, TChainParent, TGunInstance, TKey>,
+        TGunInstance,
+        K
+      >
+    : never;
 }

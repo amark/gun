@@ -1,3 +1,3 @@
 import { LEX } from '.';
 
-export type LEXQuery = { '.': LEX; ':'?: number };
+export type LEXQuery<T extends string = string> = { '.': LEX<T>; ':'?: number };

@@ -1,12 +1,18 @@
-import { GunValuePlain, GunDataFlat, GunDataGet } from '.';
+import { GunDataNode, GunSchema, GunSoul } from '.';
+import { GunSoul2Soul } from '../utils';
 
-type GunMessageGet<T extends GunValuePlain | GunDataFlat | never> = {
+type GunMessageGet<
+  N extends GunSchema,
+  K extends (keyof N & string) | GunSoul2Soul<GunSoul<N>>,
+  V = K extends keyof N & string ? N[K] : N
+> = {
   /** key */
-  get: string;
+  get: K;
   /** value */
-  put: GunDataGet<T>;
+  put: GunDataNode<V extends GunSchema ? V : N>;
 };
 
-export type GunCallbackGet<T extends GunValuePlain | GunDataFlat | never> = (
-  ack: GunMessageGet<T>
-) => void;
+export type GunCallbackGet<
+  N extends GunSchema,
+  K extends (keyof N & string) | GunSoul2Soul<GunSoul<N>>
+> = (ack: GunMessageGet<N, K>) => void;

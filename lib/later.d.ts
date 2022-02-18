@@ -1,8 +1,6 @@
-import { GunDataFlat, GunDataGet, GunValuePlain } from '..';
-
 import {} from '../types/gun/IGunChain';
 declare module '../types/gun/IGunChain' {
-  export interface IGunChain {
+  export interface IGunChain<TNode, TChainParent, TGunInstance, TKey> {
     /**
      * > Warning: Dependency script for browser: <script src="/gun/lib/open.js"></script>`
      *
@@ -20,14 +18,14 @@ declare module '../types/gun/IGunChain' {
      *
      * @param seconds the number of seconds you want to wait before firing the callback
      */
-    later<T extends GunValuePlain | GunDataFlat | never>(
+    later(
       /**
        * @param data a safe snapshot of what you saved, including full depth documents or circular
        *  graphs, without any of the metadata
        * @param key name of the data
        */
-      callback: (data: GunDataGet<T>, key: string) => void,
+      callback: (data: TNode, key: string) => void,
       seconds: number
-    ): IGunChain;
+    ): IGunChain<TNode, TChainParent, TGunInstance, TKey>;
   }
 }

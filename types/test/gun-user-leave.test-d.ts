@@ -2,6 +2,6 @@ import Gun from '../..';
 
 //Documentation should work
 
-const gun = Gun();
+const gun = new Gun();
 
 gun.user().leave();

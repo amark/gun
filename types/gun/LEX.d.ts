@@ -1,6 +1,6 @@
-export type LEX = {
+export type LEX<T extends string = string> = {
   /** exact match */
-  '='?: string;
+  '='?: T;
   /** prefix match */
   '*'?: string;
   /** gte match */

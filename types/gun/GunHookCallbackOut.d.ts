@@ -1,4 +1,4 @@
-import { IGunHookContext, pany, GunDataGet, GunNodeGet, _GunRoot } from '.';
+import { IGunHookContext, pany, GunDataNode, GunNodeGet, _GunRoot } from '.';
 
 export type GunHookMessageOut<
   MessageExtension extends pany,
@@ -7,7 +7,7 @@ export type GunHookMessageOut<
   $: { _: _GunRoot };
   '#': string;
   get?: GunNodeGet;
-  put?: { [nodePath: string]: GunDataGet<pany> & { _: MetaExtension } };
+  put?: { [nodePath: string]: GunDataNode<pany> & { _: MetaExtension } };
 } & Partial<MessageExtension>;
 
 export type GunHookCallbackOut<

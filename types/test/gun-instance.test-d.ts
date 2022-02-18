@@ -1,8 +1,8 @@
 import Gun from '../..';
 
-Gun();
-Gun(['http://server1.com/gun', 'http://server2.com/gun']);
-Gun({
+new Gun();
+new Gun(['http://server1.com/gun', 'http://server2.com/gun']);
+new Gun({
   s3: {
     key: '',
     secret: '',

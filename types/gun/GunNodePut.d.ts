@@ -1,9 +1,8 @@
-import { GunValuePlain } from '.';
-import { GunNodeGet } from '.';
+import { GunNodeGet, GunValueSimple } from '.';
 
 export type GunNodePut = GunNodeGet & {
   /** Leaf value */
-  ':': GunValuePlain;
+  ':': GunValueSimple;
   /** Leaf timestamp */
   '>': number;
 };

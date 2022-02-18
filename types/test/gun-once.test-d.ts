@@ -1,7 +1,13 @@
 import Gun from '../..';
 
-const gun = Gun();
+const gun = new Gun<{
+  peer: { userID: { profile: {} } };
+  IoT: { temperature: number };
+  something: string;
+}>();
+
 let view: any;
+
 gun
   .get('peer')
   .get('userID')
@@ -19,5 +25,11 @@ gun
   });
 
 gun.get('something').once(function (_data, _key) {
-  gun.get('something').put({ something: 'something' });
+  gun.put({ something: 'something' });
+  gun.get('something').put('something');
+});
+
+new Gun().get('something').once<string>(function (data, _key) {
+  gun.put({ something: data });
+  gun.get('something').put(data);
 });

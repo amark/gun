@@ -1,4 +1,4 @@
 import Gun from '../..';
 
-var gun = Gun();
+var gun = new Gun();
 gun.user('publicKey');

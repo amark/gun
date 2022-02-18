@@ -3,16 +3,16 @@ import Gun from '../..';
 /*Documentation example*/
 async function certify() {
   const SEA = Gun.SEA;
-  const gun = Gun();
+  const gun = new Gun();
   const user = gun.user();
-  var Alice = await SEA.pair();
-  var AliceHusband = await SEA.pair();
-  var Bob = await SEA.pair();
-  var Dave = await SEA.pair();
+  const Alice = await SEA.pair();
+  const AliceHusband = await SEA.pair();
+  const Bob = await SEA.pair();
+  const Dave = await SEA.pair();
 
   // Alice wants to allow Bob and Dave to use write to her "inbox" and "stories" UNTIL TOMORROW
   // On Alice's side:
-  var certificate = await SEA.certify(
+  const certificate = await SEA.certify(
     [Bob.pub, Dave.pub],
     [{ '*': 'inbox', '+': '*' }, { '*': 'stories' }],
     Alice,

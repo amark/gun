@@ -1,4 +1,4 @@
 import Gun from '../..';
 
-var gun = Gun();
+const gun = new Gun();
 gun.user().recall({ sessionStorage: true });

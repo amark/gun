@@ -1,22 +1,23 @@
 import {
   GunOptions,
   IGunInstance,
-  IGunChain,
   _GunRoot,
   GunHookCallbackCreate,
   GunHookCallbackOpt,
+  GunSchema,
+  IGunChain,
 } from '.';
 
 export interface IGun {
-  (options?: GunOptions): IGunInstance;
-  new (options?: GunOptions): IGunInstance;
+  <TNode extends Record<string, GunSchema> = any>(options?: GunOptions): IGunInstance<TNode>;
+  new <TNode extends Record<string, GunSchema> = any>(options?: GunOptions): IGunInstance<TNode>;
 
   /**
    * Returns GUN state timestamp
    */
   state(): number;
 
-  chain: IGunChain;
+  chain: IGunChain<any> & IGunInstance<any>;
 
   /**
    * Listener for a GUN instance creation

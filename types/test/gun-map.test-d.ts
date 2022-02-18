@@ -1,5 +1,11 @@
 import Gun from '../..';
 
-Gun()
+new Gun<{ users: Record<string, { name: string }> }>()
   .get('users')
-  .map<{ name: string }>((user) => (user.name === 'Mark' ? user : undefined));
+  .on()
+  .map((user) => (user.name === 'Mark' ? user : undefined));
+
+new Gun()
+  .get<Record<string, { name: string }>>('users')
+  .map((user) => (user.name === 'Mark' ? user : undefined))
+  .once((user) => console.log(user.name));

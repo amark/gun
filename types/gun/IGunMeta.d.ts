@@ -1,4 +1,4 @@
-export interface IGunMeta<T extends Record<string, any>> {
+export interface IGunMeta<T extends object> {
   _: {
     '#': string;
     '>': {

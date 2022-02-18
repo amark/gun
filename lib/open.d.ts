@@ -1,8 +1,6 @@
-import { GunDataFlat, GunValuePlain } from '..';
-
 import {} from '../types/gun/IGunChain';
 declare module '../types/gun/IGunChain' {
-  export interface IGunChain {
+  export interface IGunChain<TNode, TChainParent, TGunInstance, TKey> {
     /**
      * Note: This will automatically load everything it can find on the context. This may sound
      *  convenient, but may be unnecessary and excessive - resulting in more bandwidth and
@@ -18,6 +16,8 @@ declare module '../types/gun/IGunChain' {
      *  give you a node. It gives you a copy of your data with all metadata removed. Updates to
      *  the callback will return the same data, with changes modified onto it
      */
-    open(callback: (data: GunValuePlain | GunDataFlat) => void): IGunChain;
+    open(
+      callback: (data: TNode) => void
+    ): IGunChain<TNode, TChainParent, TGunInstance, TKey>;
   }
 }
