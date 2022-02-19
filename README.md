@@ -76,7 +76,7 @@ gun.get('mark').put(mark);
 
 // access the data as if it is a document.
 gun.get('mark').get('boss').get('name').once(function(data, key){
-  // `val` grabs the data once, no subscriptions.
+  // `once` grabs the data once, no subscriptions.
   console.log("Mark's boss is", data);
 });
 
