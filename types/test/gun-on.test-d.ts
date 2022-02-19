@@ -1,23 +1,39 @@
+import Gun from '../..';
 
-import Gun = require('../../index');
-const gun = Gun()
-var listenerHandler = (value, key, _msg, _ev) => {
+type TOnlinable = { online: boolean };
 
-}
+const gun = new Gun<{
+  users: Record<string, TOnlinable>;
+  foo: TOnlinable;
+  home: { lights: TOnlinable };
+}>();
 
-Gun().on(listenerHandler)
+var listenerHandler = (_value, _key, _msg, _ev) => {};
 
 // add listener to foo
-gun.get('foo').on(listenerHandler, true)
+gun.get('foo').on(listenerHandler, true);
 
 // remove listener to foo
-gun.get('foo').off()
+gun.get('foo').off();
 
-gun.get('users').get('username').on(function(user : any){
+gun
+  .get('users')
+  .get('username')
+  .on(function (user) {
     // update in real-time
     if (user.online) {
     } else {
     }
-  })
+  });
 
-  gun.get('home').get('lights').on(listenerHandler,true);
+gun.get('home').get('lights').on(listenerHandler, true);
+
+new Gun()
+  .get('home')
+  .get('lights')
+  .on<TOnlinable>(function (user) {
+    // update in real-time
+    if (user.online) {
+    } else {
+    }
+  });
