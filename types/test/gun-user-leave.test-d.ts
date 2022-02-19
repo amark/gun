@@ -1,8 +1,7 @@
-import Gun = require('../../index');
-
+import Gun from '../..';
 
 //Documentation should work
 
-const gun = Gun()
+const gun = new Gun();
 
-gun.user().leave()
+gun.user().leave();
