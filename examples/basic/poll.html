@@ -70,7 +70,7 @@
 	(window.onhashchange = async function(){
 		app.poll = app.data.get(location.hash.slice(1));
 		app.poll.map().on(function(data, id){
-			app.render(id = 'p'+String.hash(id), '.q', '#poll', data).css({order: data.how}).data('as',{$:this});
+			app.render(id = 'p'+Gun.__utils__.hash(id), '.q', '#poll', data).css({order: data.how}).data('as',{$:this});
 			console.log("poll?", id, data);
 		});
 	})();

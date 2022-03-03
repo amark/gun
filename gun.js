@@ -38,19 +38,19 @@
 				if(u !== o['>'] && t >= o['>']){ return true }
 				if(u !== o['<'] && t <= o['<']){ return true }
 				return false;
+			},
+			hash: function(s, c){ // via SO
+				if(typeof s !== 'string'){ return }
+				c = c || 0; // CPU schedule hashing by
+				if(!s.length){ return c }
+				for(var i=0,l=s.length,n; i<l; ++i){
+					n = s.charCodeAt(i);
+					c = ((c<<5)-c)+n;
+					c |= 0;
+				}
+				return c;
 			}
 		}
-		String.hash = function(s, c){ // via SO
-			if(typeof s !== 'string'){ return }
-	    c = c || 0; // CPU schedule hashing by
-	    if(!s.length){ return c }
-	    for(var i=0,l=s.length,n; i<l; ++i){
-	      n = s.charCodeAt(i);
-	      c = ((c<<5)-c)+n;
-	      c |= 0;
-	    }
-	    return c;
-	  }
 		var has = Object.prototype.hasOwnProperty;
 		Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 		Object.empty = function(o, n){
@@ -1435,7 +1435,7 @@
 					var S = +new Date;
 					json(msg.put, function hash(err, text){
 						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-					  h = String.hash(ss, h); s = s.slice(32768);
+					  h = utils.hash(ss, h); s = s.slice(32768);
 					  if(s){ puff(hash, 0); return }
 						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 					  msg._.$put = t;
@@ -1645,7 +1645,7 @@
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
 				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-					tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
+					tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 					mesh.say({'##': tmp, get: {'#': soul}}, peer);
 				});
 			});

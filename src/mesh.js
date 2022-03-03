@@ -100,7 +100,7 @@ function Mesh(root){
 			var S = +new Date;
 			json(msg.put, function hash(err, text){
 				var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-			  h = String.hash(ss, h); s = s.slice(32768);
+			  h = utils.hash(ss, h); s = s.slice(32768);
 			  if(s){ puff(hash, 0); return }
 				console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 			  msg._.$put = t;
@@ -310,7 +310,7 @@ function Mesh(root){
 		if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
 		setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-			tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
+			tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 			mesh.say({'##': tmp, get: {'#': soul}}, peer);
 		});
 	});

@@ -23,19 +23,19 @@ module.exports = {
 		if(u !== o['>'] && t >= o['>']){ return true }
 		if(u !== o['<'] && t <= o['<']){ return true }
 		return false;
+	},
+	hash: function(s, c){ // via SO
+		if(typeof s !== 'string'){ return }
+		c = c || 0; // CPU schedule hashing by
+		if(!s.length){ return c }
+		for(var i=0,l=s.length,n; i<l; ++i){
+			n = s.charCodeAt(i);
+			c = ((c<<5)-c)+n;
+			c |= 0;
+		}
+		return c;
 	}
 }
-String.hash = function(s, c){ // via SO
-	if(typeof s !== 'string'){ return }
-	    c = c || 0; // CPU schedule hashing by
-	    if(!s.length){ return c }
-	    for(var i=0,l=s.length,n; i<l; ++i){
-	      n = s.charCodeAt(i);
-	      c = ((c<<5)-c)+n;
-	      c |= 0;
-	    }
-	    return c;
-	  }
 var has = Object.prototype.hasOwnProperty;
 Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 Object.empty = function(o, n){
