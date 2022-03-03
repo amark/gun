@@ -1,3 +1,4 @@
+"use strict";
 
 // Valid values are a subset of JSON: null, binary, number (!Infinity), text,
 // or a soul relation. Arrays need special algorithms to handle concurrency,

@@ -1,3 +1,4 @@
+"use strict";
 
 var Gun = require('./root');
 Gun.chain.get = function(key, cb, as){

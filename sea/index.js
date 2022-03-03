@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./sea'), S = require('./settings'), noop = function() {}, u;
     var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : require((''+u === typeof MODULE?'.':'')+'./gun', 1);

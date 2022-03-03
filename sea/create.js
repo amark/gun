@@ -1,3 +1,4 @@
+"use strict";
 
     var User = require('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
 

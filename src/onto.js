@@ -1,3 +1,4 @@
+"use strict";
 
 // On event emitter generic javascript utility.
 module.exports = function onto(tag, arg, as){

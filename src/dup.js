@@ -1,3 +1,4 @@
+"use strict";
 
 require('./utils');
 function Dup(opt){

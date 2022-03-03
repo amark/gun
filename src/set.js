@@ -1,3 +1,4 @@
+"use strict";
 
 var Gun = require('./index');
 Gun.chain.set = function(item, cb, opt){

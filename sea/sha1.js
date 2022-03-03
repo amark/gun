@@ -1,3 +1,4 @@
+"use strict";
 
     // This internal func returns SHA-1 hashed data for KeyID generation
     const __shim = require('./shim')

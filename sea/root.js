@@ -1,3 +1,4 @@
+"use strict";
 
     // Security, Encryption, and Authorization: SEA.js
     // MANDATORY READING: https://gun.eco/explainers/data/security.html

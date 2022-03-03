@@ -1,3 +1,4 @@
+"use strict";
 
 if(typeof Gun === 'undefined'){ return }
 

@@ -1,3 +1,4 @@
+"use strict";
 
     var u;
     if(u+''== typeof btoa){

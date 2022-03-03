@@ -1,3 +1,4 @@
+"use strict";
 
     var shim = require('./shim');
     var S = require('./settings');

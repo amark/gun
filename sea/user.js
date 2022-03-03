@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./sea'), Gun, u;
     if(SEA.window){

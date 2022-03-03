@@ -1,3 +1,4 @@
+"use strict";
 
     const SEA = require('./root')
     const api = {Buffer: require('./buffer')}

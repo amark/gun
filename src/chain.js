@@ -1,3 +1,4 @@
+"use strict";
 
 // WARNING: GUN is very simple, but the JavaScript chaining API around GUN
 // is complicated and was extremely hard to build. If you port GUN to another

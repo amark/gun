@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./root');
     try{ if(SEA.window){

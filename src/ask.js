@@ -1,3 +1,4 @@
+"use strict";
 
 // request / response module, for asking and acking messages.
 require('./onto'); // depends upon onto!
