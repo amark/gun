@@ -134,13 +134,13 @@ function get(as){
 		as.via = at.root.$.get(((as.data||'')._||'')['#'] || at.$.back('opt.uuid')())
 	}
 	as.via.put(as.data, as.ack, as);
-	
+
 
 	return;
 	if(at.get && at.back.soul){
 		tmp = as.data;
 		as.via = at.back.$;
-		(as.data = {})[at.get] = tmp; 
+		(as.data = {})[at.get] = tmp;
 		as.via.put(as.data, as.ack, as);
 		return;
 	}

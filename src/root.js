@@ -117,7 +117,7 @@ Gun.ask = require('./ask');
 	function ham(val, key, soul, state, msg){
 		var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 		var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
-		
+
 		var DBG = ctx.DBG; if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
 		var now = State(), u;
@@ -152,7 +152,7 @@ Gun.ask = require('./ask');
 		var tmp = ctx.match; tmp.end = 1;
 		if(tmp === root.hatch){ if(!(tmp = ctx.latch) || tmp.end){ delete root.hatch } else { root.hatch = tmp } }
 		ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-		setTimeout.each(ctx.match, function(cb){cb && cb()}); 
+		setTimeout.each(ctx.match, function(cb){cb && cb()});
 		if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 		msg.out = universe;
 		ctx.root.on('out', msg);

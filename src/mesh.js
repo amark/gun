@@ -24,7 +24,7 @@ function Mesh(root){
 			/*if('string' == typeof raw){ try{
 				var stat = console.STAT || {};
 				//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
-				
+
 				//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 			}catch(e){ console.log('DBG err', e) }}*/
 			hear.d += raw.length||0 ; ++hear.c } // STATS!
@@ -46,7 +46,7 @@ function Mesh(root){
 					puff(go, 0);
 				}());
 			});
-			raw = ''; // 
+			raw = ''; //
 			return;
 		}
 		if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){

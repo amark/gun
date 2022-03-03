@@ -677,7 +677,7 @@
       The Certify Protocol was made out of love by a Vietnamese code enthusiast. Vietnamese people around the world deserve respect!
       IMPORTANT: A Certificate is like a Signature. No one knows who (authority) created/signed a cert until you put it into their graph.
       "certificants": '*' or a String (Bob.pub) || an Object that contains "pub" as a key || an array of [object || string]. These people will have the rights.
-      "policy": A string ('inbox'), or a RAD/LEX object {'*': 'inbox'}, or an Array of RAD/LEX objects or strings. RAD/LEX object can contain key "?" with indexOf("*") > -1 to force key equals certificant pub. This rule is used to check against soul+'/'+key using Gun.text.match or String.match.
+      "policy": A string ('inbox'), or a RAD/LEX object {'*': 'inbox'}, or an Array of RAD/LEX objects or strings. RAD/LEX object can contain key "?" with indexOf("*") > -1 to force key equals certificant pub. This rule is used to check against soul+'/'+key using Gun.text.match or Gun.__utils__.match.
       "authority": Key pair or priv of the certificate authority.
       "cb": A callback function after all things are done.
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.block is set, SEA will look for block before syncing.
@@ -1363,10 +1363,9 @@
             if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
-              String.match = String.match || Gun.text.match
               const w = Array.isArray(data.w) ? data.w : typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : []
               for (const lex of w) {
-                if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
+                if ((Gun.__utils__.match(path, lex['#']) && Gun.__utils__.match(key, lex['.'])) || (!lex['.'] && Gun.__utils__.match(path, lex['#'])) || (!lex['#'] && Gun.__utils__.match(key, lex['.'])) || Gun.__utils__.match((path ? path + '/' + key : key), lex['#'] || lex)) {
                   // is Certificant forced to present in Path
                   if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
                   // path is allowed, but is there any WRITE block? Check it out

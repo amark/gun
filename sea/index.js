@@ -36,7 +36,7 @@
           put['='] = SEA.opt.unpack(data);
           eve.to.next(msg);
         })})
-        return 
+        return
       }
       var no = function(why){ at.on('in', {'@': id, err: msg.err = why}) }; // exploit internal relay stun for now, maybe violates spec, but testing for now. // Note: this may be only the sharded message, not original batch.
       //var no = function(why){ msg.ack(why) };
@@ -49,7 +49,7 @@
           return; // omit!
         }
       }
-      
+
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -62,7 +62,7 @@
       }
       if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
-      } 
+      }
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
@@ -94,10 +94,10 @@
             if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
-              String.match = String.match || Gun.text.match
+              Gun.__utils__.match = Gun.__utils__.match || Gun.text.match
               const w = Array.isArray(data.w) ? data.w : typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : []
               for (const lex of w) {
-                if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
+                if ((Gun.__utils__.match(path, lex['#']) && Gun.__utils__.match(key, lex['.'])) || (!lex['.'] && Gun.__utils__.match(path, lex['#'])) || (!lex['#'] && Gun.__utils__.match(key, lex['.'])) || Gun.__utils__.match((path ? path + '/' + key : key), lex['#'] || lex)) {
                   // is Certificant forced to present in Path
                   if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
                   // path is allowed, but is there any WRITE blacklist? Check it out
@@ -117,7 +117,7 @@
           })
         return
       }
-      
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
@@ -129,7 +129,7 @@
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
-  
+
             // if writing to own graph, just allow it
             if (pub === user.is.pub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
@@ -140,7 +140,7 @@
               })
               return
             }
-  
+
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
             if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
@@ -167,7 +167,7 @@
           data = SEA.opt.unpack(data);
           if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
           if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-          
+
           // check if cert ('+') and putter's pub ('*') exist
           if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
             // now verify certificate
@@ -237,5 +237,3 @@
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
-
-  

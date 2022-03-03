@@ -6,24 +6,24 @@ module.exports = {
 		c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
 		while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
 		return s;
+	},
+	match: function(t, o){ var tmp, u;
+		if('string' !== typeof t){ return false }
+		if('string' == typeof o){ o = {'=': o} }
+		o = o || {};
+		tmp = (o['='] || o['*'] || o['>'] || o['<']);
+		if(t === tmp){ return true }
+		if(u !== o['=']){ return false }
+		tmp = (o['*'] || o['>']);
+		if(t.slice(0, (tmp||'').length) === tmp){ return true }
+		if(u !== o['*']){ return false }
+		if(u !== o['>'] && u !== o['<']){
+			return (t >= o['>'] && t <= o['<'])? true : false;
+		}
+		if(u !== o['>'] && t >= o['>']){ return true }
+		if(u !== o['<'] && t <= o['<']){ return true }
+		return false;
 	}
-}
-String.match = function(t, o){ var tmp, u;
-	if('string' !== typeof t){ return false }
-	if('string' == typeof o){ o = {'=': o} }
-	o = o || {};
-	tmp = (o['='] || o['*'] || o['>'] || o['<']);
-	if(t === tmp){ return true }
-	if(u !== o['=']){ return false }
-	tmp = (o['*'] || o['>']);
-	if(t.slice(0, (tmp||'').length) === tmp){ return true }
-	if(u !== o['*']){ return false }
-	if(u !== o['>'] && u !== o['<']){
-		return (t >= o['>'] && t <= o['<'])? true : false;
-	}
-	if(u !== o['>'] && t >= o['>']){ return true }
-	if(u !== o['<'] && t <= o['<']){ return true }
-	return false;
 }
 String.hash = function(s, c){ // via SO
 	if(typeof s !== 'string'){ return }
@@ -47,7 +47,7 @@ Object.keys = Object.keys || function(o){
 	for(var k in o){ if(has.call(o, k)){ l.push(k) } }
 	return l;
 }
-;(function(){ // max ~1ms or before stack overflow 
+;(function(){ // max ~1ms or before stack overflow
 	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
 	sT.poll = sT.poll || function(f){ //f(); return; // for testing
 		if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }

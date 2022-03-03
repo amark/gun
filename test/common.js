@@ -107,18 +107,18 @@ describe('Gun', function(){
 				t.tr = Gun.__utils__.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
 			});
 			it('match text',function(){
-				expect(String.match("user/mark", 'user/mark')).to.be.ok();
-				expect(String.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
-				expect(String.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
-				expect(String.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
-				expect(String.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/c', '<': 'user/j'})).to.not.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/m', '<': 'user/u'})).to.be.ok();
-				expect(String.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
-				expect(String.match("mary", {'<': 'm'})).to.not.be.ok();
-				expect(String.match("mary", {'>': 'm'})).to.be.ok();
-				expect(String.match("m", {'>': 'm'})).to.be.ok(); // lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
-				expect(String.match("m", {'<': 'm'})).to.be.ok();  // lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
+				expect(Gun.__utils__.match("user/mark", 'user/mark')).to.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
+				expect(Gun.__utils__.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
+				expect(Gun.__utils__.match("user/timber/nadal", {'>': 'user/c', '<': 'user/j'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/timber/nadal", {'>': 'user/m', '<': 'user/u'})).to.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
+				expect(Gun.__utils__.match("mary", {'<': 'm'})).to.not.be.ok();
+				expect(Gun.__utils__.match("mary", {'>': 'm'})).to.be.ok();
+				expect(Gun.__utils__.match("m", {'>': 'm'})).to.be.ok(); // lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
+				expect(Gun.__utils__.match("m", {'<': 'm'})).to.be.ok();  // lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
 				return; // below is OLD bloat, still available in lib/match.js
 			});
 			it('plain object',function(){
