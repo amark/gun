@@ -57,11 +57,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             radix(v, i)
         });
-        expect(Object.empty(all)).to.not.be.ok();
+        expect(Gun.__utils__.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k){
             delete all[k];
         });
-        expect(Object.empty(all)).to.be.ok();
+        expect(Gun.__utils__.empty(all)).to.be.ok();
         done();
     });
 
@@ -72,11 +72,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Object.empty(all)).to.not.be.ok();
+        expect(Gun.__utils__.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k){
             delete all[k];
         });
-        expect(Object.empty(all)).to.be.ok();
+        expect(Gun.__utils__.empty(all)).to.be.ok();
         done();
     });
 
@@ -89,12 +89,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Object.empty(all)).to.not.be.ok();
+        expect(Gun.__utils__.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k, a,b){
             //if(!all[k]){ throw "out of range!" }
             delete all[k];
         }, {start: start, end: end});
-        expect(Object.empty(all)).to.be.ok();
+        expect(Gun.__utils__.empty(all)).to.be.ok();
         done();
     });
 
@@ -107,15 +107,15 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Object.empty(all)).to.not.be.ok();
+        expect(Gun.__utils__.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k, a,b){
             //if(!all[k]){ throw "out of range!" }
             delete all[k];
         }, {start: start, end: end});
-        expect(Object.empty(all)).to.be.ok();
+        expect(Gun.__utils__.empty(all)).to.be.ok();
         done();
     });
- 
+
     it('radix reverse item', function(done){
         var opt = {reverse: 1, end: 'iesogon'};
         Radix.map(radix, function(v,k, a,b){
@@ -188,7 +188,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             rad(v, i, function(err, ok){
                 expect(err).to.not.be.ok();
                 delete all[v];
-                if(!Object.empty(all)){ return }
+                if(!Gun.__utils__.empty(all)){ return }
                 done();
             })
         })
@@ -214,7 +214,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 //console.log(k, v);
                 delete all[k];
             });
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             done();
         }, opt);
     });
@@ -238,7 +238,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 //console.log(k, v);
                 delete all[k];
             });
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             done();
         }, opt);
     });
@@ -259,7 +259,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 //console.log(find+k, v);
                 delete all[find+k];
             });
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             if(!data){ return } // in case there is "more" that returned empty
             done();
         }, opt);
@@ -277,7 +277,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             done();
         });
     });
@@ -292,7 +292,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             done();
         });
     });
@@ -310,7 +310,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             });
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.not.be.ok();
+                expect(Gun.__utils__.empty(all)).to.not.be.ok();
                 done();
             },100);
         }, {limit: 1});
@@ -344,12 +344,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         names.forEach(function(v,i){
             all[++i] = true;
             tmp = v.toLowerCase();
-            //console.only.i=1;console.log("save", tmp, v, i);
+            //Gun.log.only.i=1;console.log("save", tmp, v, i);
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
                 //console.log("???", ack);
                 expect(ack.err).to.not.be.ok();
                 delete all[i];
-                if(!Object.empty(all)){ return }
+                if(!Gun.__utils__.empty(all)){ return }
                 done();
             })
         });
@@ -363,7 +363,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
                 expect(ack.err).to.not.be.ok();
                 delete all[i];
-                if(!Object.empty(all)){ return }
+                if(!Gun.__utils__.empty(all)){ return }
                 done();
             })
         })
@@ -385,7 +385,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         gun.get('users').get('alice').put({cool: 'beans'});
         gun.get('users').get('alexander').put({nice: 'beans'});
         gun.get('users').get('bob').put({lol: 'beans'});
-        //console.log("=================");console.only.i=1;
+        //console.log("=================");Gun.log.only.i=1;
         gun.get('users').get({'.': {'*': 'a'}, '%': 1000 * 100}).map().on(function(d,k){
             //console.log("small range:", k, d);
             expect('a' === k[0]).to.be.ok();
@@ -404,7 +404,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         gun.get('people').get('alexander').put({nice: 'beans'});
         gun.get('people').get('bob').put({lol: 'beans'});
         //setTimeout(function(){
-        console.only.i=1;
+        Gun.log.only.i=1;
         console.log("==================");
         console.log("==================");
         console.log("==================");
@@ -434,7 +434,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             }
         });
     });
-    
+
     it('small range twice', function(done){
         var check = {};
         var gun = Gun();
@@ -476,7 +476,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.be.ok();
+                expect(Gun.__utils__.empty(all)).to.be.ok();
                 done();
             },100);
         });
@@ -495,7 +495,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.be.ok();
+                expect(Gun.__utils__.empty(all)).to.be.ok();
                 done();
             },300);
         });
@@ -512,10 +512,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
-            if(!Object.empty(all)){ return }
+            if(!Gun.__utils__.empty(all)){ return }
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.be.ok();
+                expect(Gun.__utils__.empty(all)).to.be.ok();
                 done();
                 setTimeout(function(){
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
@@ -541,7 +541,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.be.ok();
+                expect(Gun.__utils__.empty(all)).to.be.ok();
                 done();
             },100);
         });
@@ -558,7 +558,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Object.empty(all)).to.be.ok();
+                expect(Gun.__utils__.empty(all)).to.be.ok();
                 done();
             },100);
         });

@@ -54,7 +54,7 @@
         if (connection.next > now) return;
         mesh.say({
           dam,
-          '#': String.random(3),
+          '#': Gun.__utils__.random(3),
           nts: [now],
         });
       });

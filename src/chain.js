@@ -1,3 +1,4 @@
+"use strict";
 
 // WARNING: GUN is very simple, but the JavaScript chaining API around GUN
 // is complicated and was extremely hard to build. If you port GUN to another
@@ -101,7 +102,7 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 		if(!valid(tmp)){
 			if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
 			gun = cat.root.$.get(soul);
-			return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+			return Gun.__utils__.setTimeoutEach(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if('_' == k || u === (state = state_is(tmp, k))){ return }
 				cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
 			});
@@ -137,11 +138,11 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 
 	this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 	// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
-	cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-	cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+	cat.any && Gun.__utils__.setTimeoutEach(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+	cat.echo && Gun.__utils__.setTimeoutEach(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 	if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
-		// is there cases where it is a $$ that we do NOT want to do the following? 
+		// is there cases where it is a $$ that we do NOT want to do the following?
 		if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ionmap` code set a sat? // TODO: Maybe we should do `cat.ask` instead? I guess does not matter.
 			tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 			tmp.$ = (msg.$$||msg.$).get(tmp.get = key); delete tmp.$$; delete tmp.$$$;
@@ -162,7 +163,7 @@ function link(msg, cat){ cat = cat || this.as || msg.$._;
 		return; // by default do not link to data that is not a link.
 	}
 	if((tat.echo || (tat.echo = {}))[cat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
-		&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
+		&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down.
 	if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
 
 	(tat.echo||(tat.echo={}))[cat.id] = cat; // set ourself up for the echo! // TODO: BUG? Echo to self no longer causes problems? Confirm.
@@ -174,7 +175,7 @@ function link(msg, cat){ cat = cat || this.as || msg.$._;
 	if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
 		sat.on('out', {get: {'#': link}});
 	}
-	setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+	Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 		if(!get || !(sat = tmp[get])){ return }
 		sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 	},0,99);
@@ -198,7 +199,7 @@ function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior
 		}
 		cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 		// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-		setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
+		Gun.__utils__.setTimeoutEach(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 			if(!(sat = cat.next[get])){ return }
 			//if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
 			if(link){ delete (root.$.get(link).get(get)._.echo||'')[sat.id] }
@@ -235,7 +236,7 @@ function ack(msg, ev){
 			$: at.$,
 			'@': msg['@']
 		});
-		/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+		/*(tmp = at.Q) && Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
 			Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
 			root.on('in', tmp);
 		}); delete at.Q;*/
@@ -246,5 +247,5 @@ function ack(msg, ev){
 	return; // eom
 }
 
-var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
+var empty = {}, u, text_rand = Gun.__utils__.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
 	

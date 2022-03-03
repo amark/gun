@@ -1,3 +1,4 @@
+"use strict";
 
     var u, Gun = (''+u != typeof window)? (window.Gun||{chain:{}}) : require((''+u === typeof MODULE?'.':'')+'./gun', 1);
     Gun.chain.then = function(cb, opt){

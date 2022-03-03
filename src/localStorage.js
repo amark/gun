@@ -1,3 +1,4 @@
+"use strict";
 
 if(typeof Gun === 'undefined'){ return }
 
@@ -20,7 +21,7 @@ Gun.on('create', function lg(root){
 		var lex = msg.get, soul, data, tmp, u;
 		if(!lex || !(soul = lex['#'])){ return }
 		data = disk[soul] || u;
-		if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
+		if(data && (tmp = lex['.']) && !Gun.__utils__.plain(tmp)){ // pluck!
 			data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 		}
 		//if(data){ (tmp = {})[soul] = data } // back into a graph.
@@ -45,8 +46,8 @@ Gun.on('create', function lg(root){
 			Gun.log((err = (e || "localStorage failure")) + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 			root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 		}
-		if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
-		setTimeout.each(ack, function(id){
+		if(!err && !Gun.__utils__.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
+		Gun.__utils__.setTimeoutEach(ack, function(id){
 			root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 		});
 	}

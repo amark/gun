@@ -1,3 +1,4 @@
+"use strict";
 
     var shim = require('./shim');
     module.exports = async function(d, o){

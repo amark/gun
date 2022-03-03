@@ -1,5 +1,6 @@
+"use strict";
 
-require('./shim');
+var utils = require('./utils');
 
 function Mesh(root){
 	var mesh = function(){};
@@ -9,9 +10,9 @@ function Mesh(root){
 	opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 	opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 	opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
-	var puff = setTimeout.turn || setTimeout;
-	var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
-	var json = JSON.stringifyAsync || function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
+	var puff = Gun.__utils__.setTimeoutTurn || setTimeout;
+	var parse = Gun.__utils__.parseAsync
+	var json = Gun.__utils__.stringifyAsync
 
 	var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
@@ -24,8 +25,8 @@ function Mesh(root){
 			/*if('string' == typeof raw){ try{
 				var stat = console.STAT || {};
 				//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
-				
-				//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
+
+				//console.log(Gun.__utils__.setTimeoutTurn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 			}catch(e){ console.log('DBG err', e) }}*/
 			hear.d += raw.length||0 ; ++hear.c } // STATS!
 		var S = peer.SH = +new Date;
@@ -46,10 +47,10 @@ function Mesh(root){
 					puff(go, 0);
 				}());
 			});
-			raw = ''; // 
+			raw = ''; //
 			return;
 		}
-		if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
+		if('{' === tmp || ((raw['#'] || utils.plain(raw)) && (msg = raw))){
 			if(msg){ return hear.one(msg, peer, S) }
 			parse(raw, function(err, msg){
 				if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -63,7 +64,7 @@ function Mesh(root){
 		if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 		DBG && (DBG.h = S);
 		DBG && (DBG.hp = +new Date);
-		if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+		if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 		if(tmp = dup_check(id)){ return }
 		// DAM logic:
 		if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
@@ -100,7 +101,7 @@ function Mesh(root){
 			var S = +new Date;
 			json(msg.put, function hash(err, text){
 				var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-			  h = String.hash(ss, h); s = s.slice(32768);
+			  h = utils.hash(ss, h); s = s.slice(32768);
 			  if(s){ puff(hash, 0); return }
 				console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 			  msg._.$put = t;
@@ -122,7 +123,7 @@ function Mesh(root){
 //if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 			var meta = msg._||(msg._=function(){});
 			var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
-			if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+			if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 			!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 			if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 			if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
@@ -137,7 +138,7 @@ function Mesh(root){
 			if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 			DBG && (DBG.yr = +new Date);
 			if(!peer || !peer.id){
-				if(!Object.plain(peer || opt.peers)){ return false }
+				if(!utils.plain(peer || opt.peers)){ return false }
 				var S = +new Date;
 				var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
 				console.STAT && console.STAT(S, +new Date - S, 'peer keys');
@@ -257,7 +258,7 @@ function Mesh(root){
 		if(peer.id){
 			opt.peers[peer.url || peer.id] = peer;
 		} else {
-			tmp = peer.id = peer.id || String.random(9);
+			tmp = peer.id = peer.id || utils.random(9);
 			mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 			delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 		}
@@ -265,7 +266,7 @@ function Mesh(root){
 		if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
 		// @rogowski I need this here by default for now to fix go1dfish's bug
 		tmp = peer.queue; peer.queue = [];
-		setTimeout.each(tmp||[],function(msg){
+		Gun.__utils__.setTimeoutEach(tmp||[],function(msg){
 			send(msg, peer);
 		},0,9);
 		//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
@@ -286,7 +287,7 @@ function Mesh(root){
 	}
 
 	root.on('create', function(root){
-		root.opt.pid = root.opt.pid || String.random(9);
+		root.opt.pid = root.opt.pid || utils.random(9);
 		this.to.next(root);
 		root.on('out', mesh.say);
 	});
@@ -309,8 +310,8 @@ function Mesh(root){
 		if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
 		if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
-		setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-			tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
+		Gun.__utils__.setTimeoutEach(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
+			tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 			mesh.say({'##': tmp, get: {'#': soul}}, peer);
 		});
 	});

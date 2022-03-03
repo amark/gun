@@ -1,3 +1,4 @@
+"use strict";
 
     var shim = require('./shim');
     // Practical examples about usage found in tests.

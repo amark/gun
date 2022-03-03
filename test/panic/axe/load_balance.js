@@ -2,7 +2,7 @@
  * AXE test loadbalance
  *
  * Bob, Carl, Dave, Ed, subscribed to Zebra(relay).
- * 
+ *
  * Test case 3) Bob Carl Dave Ed browser peers, all subscribed to Zebra(Relay). Alice joins, gets Zebra. Relay should only load balance GET to 3 other peers, as acks will have matching hashes and therefore stop propagating. (if acks are inconsistent, it will keep propagating, but we're not testing that here). The tricky thing is you'll have to hijack requests to make sure the 4th peer doesn't get the GET.
  */
 
@@ -59,7 +59,7 @@ describe("AXE Test: LOADBALANCE", function(){
 
 			});
 			server.listen(port, function(){ test.done(); });
-			gun.get('ref_soul').put({ 'hi':'value_'+String.random(3) });
+			gun.get('ref_soul').put({ 'hi':'value_'+Gun.__utils__.random(3) });
 		}, {i: 1, config: config});
 	});
 
@@ -74,7 +74,7 @@ describe("AXE Test: LOADBALANCE", function(){
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
 				localStorage.clear(); //console.log('Clear localStorage!!!');
-				window.uuid = function(l){ return new Date(Gun.state()).toISOString() + '/' + String.random(l||3) };
+				window.uuid = function(l){ return new Date(Gun.state()).toISOString() + '/' + Gun.__utils__.random(l||3) };
 				var env = test.props;
 				var opt = {
 					peers:['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'],
@@ -100,7 +100,7 @@ describe("AXE Test: LOADBALANCE", function(){
 		});
 		return Promise.all(tests);
 	});
-	
+
 	it("Peers subscribe", function(){
 		var tests = [], i=0;
 		browsers.each(function(client, id){
@@ -163,7 +163,7 @@ describe("AXE Test: LOADBALANCE", function(){
 
 	after("Everything shut down.", function(){
 	 require('../util/open').cleanup() ||	browsers.run(function(){
-			setTimeout(function(){ 
+			setTimeout(function(){
 				location.reload();
 			}, 15 * 1000);
 		});

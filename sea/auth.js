@@ -1,3 +1,4 @@
+"use strict";
 
     var User = require('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     // now that we have created a user, we want to authenticate them!
@@ -7,15 +8,15 @@
       var pass = alias && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+
       var gun = this, cat = (gun._), root = gun.back(-1);
-      
+
       if(cat.ing){
         (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      
+
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -30,7 +31,7 @@
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
-          return act.err('Wrong user or password.') 
+          return act.err('Wrong user or password.')
         }
         root.get(get).once(act.a);
       }
@@ -66,7 +67,7 @@
         at = user._ = root.get('~'+pair.pub)._;
         at.opt = upt;
         // add our credentials in-memory only to our root user instance
-        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair};
+        user.is = {pub: pair.pub, epub: pair.epub, alias: alias || pair.pub};
         at.sea = act.pair;
         cat.ing = false;
         try{if(pass && u == (obj_ify(cat.root.graph['~'+pair.pub].auth)||'')[':']){ opt.shuffle = opt.change = pass; } }catch(e){} // migrate UTF8 & Shuffle!
@@ -74,7 +75,7 @@
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
           try{var sS = {};
-          sS = window.sessionStorage;
+          sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
           sS.recall = true;
           sS.pair = JSON.stringify(pair); // auth using pair is more reliable than alias/pass
           }catch(e){}
@@ -90,7 +91,7 @@
       }
       act.z = function(){
         // password update so encrypt private key using new pwd + salt
-        act.salt = String.random(64); // pseudo-random
+        act.salt = Gun.__utils__.random(64); // pseudo-random
         SEA.work(opt.change, act.salt, act.y);
       }
       act.y = function(proof){

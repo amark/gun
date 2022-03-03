@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./root');
     var shim = require('./shim');
@@ -30,7 +31,7 @@
       var r = await S.parse(new shim.TextDecoder('utf8').decode(ct));
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
       console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }

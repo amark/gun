@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./sea'), Gun, u;
     if(SEA.window){
@@ -7,7 +8,7 @@
     }
     SEA.GUN = Gun;
 
-    function User(root){ 
+    function User(root){
       this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill

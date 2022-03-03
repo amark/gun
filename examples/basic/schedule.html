@@ -5,7 +5,7 @@
   <link href='https://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  
+
 <h1><button id="left">&larr;</button> <span id="date"></span> Schedule <button id="right">&rarr;</button></h1>
 
 <form id="add">
@@ -60,7 +60,7 @@ $('#add').on('submit', function(event){
   if(!(event.what = what.value)){ return err.innerText = "No description!" }
   if(!(event.where = where.value)){ return err.innerText = "No location!" }
   var day = gun.get(name+now(event.when));
-  day.get(id.value || String.random(9)).put(event);
+  day.get(id.value || Gun.__utils__.random(9)).put(event);
   what.value = where.value = id.value = err.innerText = '';
   go.value = 'add';
   schedule(event.when);
@@ -88,7 +88,7 @@ function UI(event, id){
   if(!li){
     li = $('.model li').clone(true) // else create it
       .attr('id', 'cal-' + id);
-  } 
+  }
   li = (UI.last = sort(event.when, ul.children('li').last())[0])? $(li).insertAfter(UI.last) : $(li).prependTo(ul);
   li.find('.what').text(event.what);
   li.find('.where').text(event.where);

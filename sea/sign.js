@@ -1,3 +1,4 @@
+"use strict";
 
     var SEA = require('./root');
     var shim = require('./shim');

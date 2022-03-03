@@ -1,3 +1,4 @@
+"use strict";
 
 var Gun = require('./index');
 Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
@@ -44,7 +45,7 @@ Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 		}
 	};
 	one.at = cat;
-	(cat.act||(cat.act={}))[id = String.random(7)] = one;
+	(cat.act||(cat.act={}))[id = Gun.__utils__.random(7)] = one;
 	one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 	cat.on('out', {get: {}});*/
 	return gun;
@@ -55,20 +56,29 @@ Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 // 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 	if(!cb){ return none(this,opt) }
-	var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
+	var gun = this, cat = gun._, root = cat.root, data = cat.put, id = Gun.__utils__.random(7), one, tmp;
 	gun.get(function(data,key,msg,eve){
 		var $ = this, at = $._, one = (at.one||(at.one={}));
 		if(eve.stun){ return } if('' === one[id]){ return }
 		if(true === (tmp = Gun.valid(data))){ once(); return }
 		if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
+		clearTimeout((cat.one||'')[id]); // clear "not found" since they only get set on cat.
 		clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
-		function once(){
+		function once(f){
 			if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 			if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-			if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} }
+			if('string' == typeof Gun.valid(tmp)){
+				tmp = root.$.get(tmp)._.put;
+				if(tmp === u && !f){
+					one[id] = setTimeout(function(){ once(1) }, opt.wait||99); // TODO: Quick fix. Maybe use ack count for more predictable control?
+					return
+				}
+			}
+			//console.log("AND VANISHED", data);
 			if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
 			if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 			cb.call($, tmp, at.get);
+			clearTimeout(one[id]); // clear "not found" since they only get set on cat. // TODO: This was hackily added, is it necessary or important? Probably not, in future try removing this. Was added just as a safety for the `&& !f` check.
 		};
 	}, {on: 1});
 	return gun;

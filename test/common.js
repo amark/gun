@@ -83,13 +83,13 @@ describe('Gun', function(){
 				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
 				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
 				var obj = [{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
-				JSON.stringifyAsync(obj, function(err, text){
-					JSON.parseAsync(text, function(err, data){
+				Gun.__utils__.stringifyAsync(obj, function(err, text){
+					Gun.__utils__.parseAsync(text, function(err, data){
 						expect(data).to.be.eql([{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
 
 						var obj = {a: [], b: [""], c: ["", 1], d: [1, ""], e: {"":[]}, "a\"b": {0: 1}, wow: {'': {cool: 1}}};obj.lol = {0: {sweet: 9}};obj.wat = {"": 'cool'};obj.oh = {phew: {}, "": {}};
-						JSON.stringifyAsync(obj, function(err, text2){
-							JSON.parseAsync(text2, function(err, data){
+						Gun.__utils__.stringifyAsync(obj, function(err, text2){
+							Gun.__utils__.parseAsync(text2, function(err, data){
 								expect(data).to.be.eql(obj);
 								done();
 							})
@@ -101,58 +101,58 @@ describe('Gun', function(){
 
 		describe('Type Check', function(){
 			it('random text',function(){
-				expect(String.random().length).to.be(24);
-				expect(String.random(11).length).to.be(11);
-				expect(String.random(4).length).to.be(4);
-				t.tr = String.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
+				expect(Gun.__utils__.random().length).to.be(24);
+				expect(Gun.__utils__.random(11).length).to.be(11);
+				expect(Gun.__utils__.random(4).length).to.be(4);
+				t.tr = Gun.__utils__.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
 			});
 			it('match text',function(){
-				expect(String.match("user/mark", 'user/mark')).to.be.ok();
-				expect(String.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
-				expect(String.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
-				expect(String.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
-				expect(String.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/c', '<': 'user/j'})).to.not.be.ok();
-				expect(String.match("user/timber/nadal", {'>': 'user/m', '<': 'user/u'})).to.be.ok();
-				expect(String.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
-				expect(String.match("mary", {'<': 'm'})).to.not.be.ok();
-				expect(String.match("mary", {'>': 'm'})).to.be.ok();
-				expect(String.match("m", {'>': 'm'})).to.be.ok(); // lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
-				expect(String.match("m", {'<': 'm'})).to.be.ok();  // lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
+				expect(Gun.__utils__.match("user/mark", 'user/mark')).to.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'=': 'user/mark'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'*': 'user/'})).to.be.ok();
+				expect(Gun.__utils__.match("email/mark@gunDB.io", {'*': 'user/'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'>': 'user/j', '<': 'user/o'})).to.be.ok();
+				expect(Gun.__utils__.match("user/timber/nadal", {'>': 'user/c', '<': 'user/j'})).to.not.be.ok();
+				expect(Gun.__utils__.match("user/timber/nadal", {'>': 'user/m', '<': 'user/u'})).to.be.ok();
+				expect(Gun.__utils__.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
+				expect(Gun.__utils__.match("mary", {'<': 'm'})).to.not.be.ok();
+				expect(Gun.__utils__.match("mary", {'>': 'm'})).to.be.ok();
+				expect(Gun.__utils__.match("m", {'>': 'm'})).to.be.ok(); // lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
+				expect(Gun.__utils__.match("m", {'<': 'm'})).to.be.ok();  // lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
 				return; // below is OLD bloat, still available in lib/match.js
 			});
 			it('plain object',function(){
-				expect(Object.plain({})).to.be(true);
-				expect(Object.plain({a:1})).to.be(true);
-				expect(Object.plain(u)).to.be(false);
-				expect(Object.plain()).to.be(false);
-				expect(Object.plain(undefined)).to.be(false);
-				expect(Object.plain(null)).to.be(false);
-				expect(Object.plain(NaN)).to.be(false);
-				expect(Object.plain(0)).to.be(false);
-				expect(Object.plain(1)).to.be(false);
-				expect(Object.plain('')).to.be(false);
-				expect(Object.plain('a')).to.be(false);
-				expect(Object.plain([])).to.be(false);
-				expect(Object.plain([1])).to.be(false);
-				expect(Object.plain(false)).to.be(false);
-				expect(Object.plain(true)).to.be(false);
-				expect(Object.plain(function(){})).to.be(false);
-				expect(Object.plain(new Date())).to.be(false);
-				expect(Object.plain(/regex/)).to.be(false);
-				this.document && expect(Object.plain(document.createElement('div'))).to.be(false);
-				expect(Object.plain(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
+				expect(Gun.__utils__.plain({})).to.be(true);
+				expect(Gun.__utils__.plain({a:1})).to.be(true);
+				expect(Gun.__utils__.plain(u)).to.be(false);
+				expect(Gun.__utils__.plain()).to.be(false);
+				expect(Gun.__utils__.plain(undefined)).to.be(false);
+				expect(Gun.__utils__.plain(null)).to.be(false);
+				expect(Gun.__utils__.plain(NaN)).to.be(false);
+				expect(Gun.__utils__.plain(0)).to.be(false);
+				expect(Gun.__utils__.plain(1)).to.be(false);
+				expect(Gun.__utils__.plain('')).to.be(false);
+				expect(Gun.__utils__.plain('a')).to.be(false);
+				expect(Gun.__utils__.plain([])).to.be(false);
+				expect(Gun.__utils__.plain([1])).to.be(false);
+				expect(Gun.__utils__.plain(false)).to.be(false);
+				expect(Gun.__utils__.plain(true)).to.be(false);
+				expect(Gun.__utils__.plain(function(){})).to.be(false);
+				expect(Gun.__utils__.plain(new Date())).to.be(false);
+				expect(Gun.__utils__.plain(/regex/)).to.be(false);
+				this.document && expect(Gun.__utils__.plain(document.createElement('div'))).to.be(false);
+				expect(Gun.__utils__.plain(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
 			});
 			it('empty',function(){
-				expect(Object.empty()).to.be(true);
-				expect(Object.empty({a:false})).to.be(false);
-				expect(Object.empty({a:false},['a'])).to.be(true);
-				expect(Object.empty({a:false},['a'])).to.be(true);
-				expect(Object.empty({a:false,b:1},['a'])).to.be(false);
-				expect(Object.empty({a:false,b:1},['a'])).to.be(false);
-				expect(Object.empty({a:false,b:1},['a','b'])).to.be(true);
-				expect(Object.empty({a:false,b:1,c:3},['a','b'])).to.be(false);
-				expect(Object.empty({1:1},'danger')).to.be(false);
+				expect(Gun.__utils__.empty()).to.be(true);
+				expect(Gun.__utils__.empty({a:false})).to.be(false);
+				expect(Gun.__utils__.empty({a:false},['a'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false},['a'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false,b:1},['a'])).to.be(false);
+				expect(Gun.__utils__.empty({a:false,b:1},['a'])).to.be(false);
+				expect(Gun.__utils__.empty({a:false,b:1},['a','b'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false,b:1,c:3},['a','b'])).to.be(false);
+				expect(Gun.__utils__.empty({1:1},'danger')).to.be(false);
 			});
 		});
 		describe('Functions', function(){
@@ -1620,7 +1620,7 @@ describe('Gun', function(){
 							name: 'Alice2', age: 34,
 							b: {_:{'#':'2budn'}, c: {_:{'#':'2cudn'}, id: 'other', level: 3}, level: 2}
 						}, '2audn', function() {
-							//console.only.i=1;console.log('=============================');
+							//Gun.log.only.i=1;console.log('=============================');
 							gun.get('udn').put({
 								a: {'#':'2audn'}
 							});
@@ -2709,7 +2709,7 @@ describe('Gun', function(){
 					expect(data).to.be('yay!');
 
 					setTimeout(function(){
-						console.only(3, '.put z');
+						Gun.log.only(3, '.put z');
 						gun.get('opo').get('a').put('z');
 
 
@@ -2736,14 +2736,14 @@ describe('Gun', function(){
 			teams.blue.carl = carl;
 			teams.red.bob = bob;
 			teams.red.carl = carl;
-			console.only.i=1;console.log("===============");
+			Gun.log.only.i=1;console.log("===============");
 			Gun.statedisk(teams, 'gerema', function(ack){
 				console.log("VVVVVVVVVVVVVVVVVVV", ack);
 				setTimeout(function(){
 
 				gun.get('gerema').map().map().get('spouse').on(function(data){
-					console.only(2,'hi', data);
-					console.only(1,'hi', data);
+					Gun.log.only(2,'hi', data);
+					Gun.log.only(1,'hi', data);
 						console.log("*****************", data);return;
 				});
 			},500);});
@@ -2756,7 +2756,7 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
-			//console.only.i=1;console.log("=============", gun);
+			//Gun.log.only.i=1;console.log("=============", gun);
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//console.log("*****************", data, done.to);return;
@@ -2777,13 +2777,13 @@ describe('Gun', function(){
 
 			var parent = gun.get('parent');
 			var child = gun.get('child');
-			
+
 			child.put({
 				way: 'down'
 			});
-			
+
 			parent.get('sub').put(child);
-			//console.only.i=1;console.log("============================");
+			//Gun.log.only.i=1;console.log("============================");
 			parent.get('sub').on(function(data){
 				//console.log("*********sub", data);
 				done.sub = data;
@@ -2933,7 +2933,7 @@ describe('Gun', function(){
 
 		it('get get get set root get put', function(done){
 			var gun = Gun().get('app');
-			//console.only.i=1;console.log('---------------');
+			//Gun.log.only.i=1;console.log('---------------');
 			gun.get('alias').get('mark').set(
 				gun.back(-1).get('pub').put({
 					alias: 'mark',
@@ -3267,7 +3267,7 @@ describe('Gun', function(){
 					}
 				}
 			});
-			//console.only.i=1;console.log("--------------------", gun1._.next);
+			//Gun.log.only.i=1;console.log("--------------------", gun1._.next);
 			gun1.get('mmA').map().map().on(function(data, has){
 				check[has+1] = data;
 				//console.log('first test ONLY get called with C/asdf = pub:fdsa/pub:asdf......', has, data);
@@ -3289,7 +3289,7 @@ describe('Gun', function(){
 						}
 					}
 				}});
-				//console.only.i=101;console.log("------------------");
+				//Gun.log.only.i=101;console.log("------------------");
 				//console.log("CHAIN ID: 2mma = 2, 2mmA.nest = 3, map=4, map.map=5, 2mmaNBC=17, 2mma.nest.b.c=8, 2mmanest=9, 2mmanest.b=11", gun2._);
 
 				gun2.get('2mmA').get('nest').map().map().on(function(data, has){
@@ -3340,7 +3340,7 @@ describe('Gun', function(){
 			Gun.statedisk({ alias: { mark: { pub: {_:{'#':'PUB'}, pub: 'asdf', alias: 'mark', born: 1 } } } }, 'mult/times/part', function(){
 			var gun = Gun();
 			var app = gun.get('mult/times/part');
-			
+
 			//console.debug.i=1;console.log("===================");
 // 			app.get('alias').get('mark').once(function(alias){
 // 				console.log("***111 ", alias);
@@ -3516,7 +3516,7 @@ describe('Gun', function(){
 
 			var bb = b.get("key");
 			bb.put({msg: "hello"});
-				
+
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
@@ -3561,11 +3561,11 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('ds/safe').put({a: 1});
-			
+
 			gun.get('ds/safe').on(function(data){
 				data.b = 2;
 			});
-			
+
 			gun.get('ds/safe').once(function(data){
 				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
@@ -3694,7 +3694,7 @@ describe('Gun', function(){
 					c++;
 					clearTimeout(end); end = setTimeout(function(){
 						//console.log("?", c, check, Object.keys(check), gun._.graph);
-						if(!Object.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
+						if(!Gun.__utils__.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
 						nopasstun(done, gun);
 					},9);
 			});
@@ -3704,7 +3704,7 @@ describe('Gun', function(){
 			function run(i){
 				//if(i > 1){ return } // DEBUGGING!
 				//console.log("----", i, "----");
-				//2 === i && (console.only.i = 1) && console.only(1, '==========');
+				//2 === i && (Gun.log.only.i = 1) && Gun.log.only(1, '==========');
 				//(console.debug.i = console.debug.i || 1);
 				said.set({
 					what: i + " Hello world!",
@@ -3743,7 +3743,7 @@ describe('Gun', function(){
 			  largest = (largest < diff)? diff : largest;
 			  expect(diff > max).to.not.be.ok();
 			});
-			//console.only.i=1;
+			//Gun.log.only.i=1;
 			var turns = 0;
 			var many = setTimeout(function go(){ // TODO: NOTE: BUG? using setInterval caused poor CPU scheduling that did fail this test, it is possible actual apps might use that approach even tho for now they should use this adjusted version, so maybe we need to review a test in future for that?
 				if(turns > total || (diff || 0) > (max + 5)){
@@ -3864,7 +3864,7 @@ describe('Gun', function(){
 			});
 		});*/
 		it('Nested listener should be called', function(done){
-			
+
 			var gun = Gun();
 			/*
 			var app = gun.get('nl/app').get('bar');
@@ -3897,9 +3897,9 @@ describe('Gun', function(){
 			//return;
 
 			setTimeout(function(){
-			  
+
 			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
-			  
+
 			},100);
 		});
 		//return;
@@ -3927,7 +3927,7 @@ describe('Gun', function(){
 
 				setTimeout(function(){
 					gun.get("something").get("level1").once(function(x){
-						
+
 						setTimeout(function(){
 							expect(c).to.be(1);
 							nopasstun(done, gun);
@@ -3965,7 +3965,7 @@ describe('Gun', function(){
 			      context._.valid = false;
 			      chain._.on('in', {get: key, $: this});
 			      return false;
-			    } else { 
+			    } else {
 			     _tags = Gun.obj.ify(obj.tags);
 			      if(Array.isArray(filter)){
 			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
@@ -4084,7 +4084,7 @@ describe('Gun', function(){
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
 				if(done.c){ return } done.c = 1;
-				nopasstun(done, gun); 
+				nopasstun(done, gun);
 			});
 			}, 1000);
 		});
@@ -8118,7 +8118,7 @@ describe('Gun', function(){
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();
-			var text = String.random(1024 * 1024 * 6);
+			var text = Gun.__utils__.random(1024 * 1024 * 6);
 			gun.put({i: text}, function(ack){
 				var err = ack.err, ok = ack.ok;
 				if(done.c){ return }
@@ -8133,7 +8133,7 @@ describe('Gun', function(){
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();
-			var i = 999, obj = {}; while(--i){ obj[i] = String.random(99) }
+			var i = 999, obj = {}; while(--i){ obj[i] = Gun.__utils__.random(99) }
 			//console.log("save:", obj);
 			gun.get('lSack').put(obj, function(ack){
 				//console.log("ack:", ack)

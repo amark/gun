@@ -24,7 +24,7 @@ function spam(){
 	//spam.max = 100000; spam.left = spam.max; spam.wait = 20; spam.burst = 2; spam.c = 0; spam.s = (+new Date);
 	//spam.max = 100; spam.left = spam.max; spam.wait = 1; spam.burst = 1; spam.c = 0; spam.s = (+new Date);
 	spam.max = 100000; spam.left = spam.max; spam.wait = 100; spam.burst = 100; spam.c = 99; spam.s = (+new Date);
-	var S = +new Date, slow = 0; console.only.i = 1;
+	var S = +new Date, slow = 0; Gun.log.only.i = 1;
 	var to = setTimeout(function gap(){
 		if(spam.c >= spam.max){ clearTimeout(to); return; }
 		setTimeout(gap, Math.random() * 100);

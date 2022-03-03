@@ -1,3 +1,4 @@
+'use strict';
 ;(function(){
 
   /* UNBUILD */
@@ -14,63 +15,105 @@
   /* UNBUILD */
 
 	;USE(function(module){
-		// Shim for generic javascript utilities.
-		String.random = function(l, c){
-			var s = '';
-			l = l || 24; // you are not going to make a 0 length random number, so no need to check type
-			c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
-			while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
-			return s;
-		}
-		String.match = function(t, o){ var tmp, u;
-			if('string' !== typeof t){ return false }
-			if('string' == typeof o){ o = {'=': o} }
-			o = o || {};
-			tmp = (o['='] || o['*'] || o['>'] || o['<']);
-			if(t === tmp){ return true }
-			if(u !== o['=']){ return false }
-			tmp = (o['*'] || o['>']);
-			if(t.slice(0, (tmp||'').length) === tmp){ return true }
-			if(u !== o['*']){ return false }
-			if(u !== o['>'] && u !== o['<']){
-				return (t >= o['>'] && t <= o['<'])? true : false;
-			}
-			if(u !== o['>'] && t >= o['>']){ return true }
-			if(u !== o['<'] && t <= o['<']){ return true }
-			return false;
-		}
-		String.hash = function(s, c){ // via SO
-			if(typeof s !== 'string'){ return }
-	    c = c || 0; // CPU schedule hashing by
-	    if(!s.length){ return c }
-	    for(var i=0,l=s.length,n; i<l; ++i){
-	      n = s.charCodeAt(i);
-	      c = ((c<<5)-c)+n;
-	      c |= 0;
-	    }
-	    return c;
-	  }
 		var has = Object.prototype.hasOwnProperty;
-		Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
-		Object.empty = function(o, n){
-			for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
-			return true;
+		module.exports = {
+			random: function(l, c){
+				var s = '';
+				l = l || 24; // you are not going to make a 0 length random number, so no need to check type
+				c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
+				while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
+				return s;
+			},
+			match: function(t, o){ var tmp, u;
+				if('string' !== typeof t){ return false }
+				if('string' == typeof o){ o = {'=': o} }
+				o = o || {};
+				tmp = (o['='] || o['*'] || o['>'] || o['<']);
+				if(t === tmp){ return true }
+				if(u !== o['=']){ return false }
+				tmp = (o['*'] || o['>']);
+				if(t.slice(0, (tmp||'').length) === tmp){ return true }
+				if(u !== o['*']){ return false }
+				if(u !== o['>'] && u !== o['<']){
+					return (t >= o['>'] && t <= o['<'])? true : false;
+				}
+				if(u !== o['>'] && t >= o['>']){ return true }
+				if(u !== o['<'] && t <= o['<']){ return true }
+				return false;
+			},
+			hash: function(s, c){ // via SO
+				if(typeof s !== 'string'){ return }
+				c = c || 0; // CPU schedule hashing by
+				if(!s.length){ return c }
+				for(var i=0,l=s.length,n; i<l; ++i){
+					n = s.charCodeAt(i);
+					c = ((c<<5)-c)+n;
+					c |= 0;
+				}
+				return c;
+			},
+			plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false },
+			empty: function(o, n){
+				for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
+				return true;
+			},
+			// ideally we can move away from JSON entirely? unlikely due to compatibility issues... oh well.
+			parseAsync: function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } },
+			stringifyAsync: function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
 		}
-		Object.keys = Object.keys || function(o){
-			var l = [];
-			for(var k in o){ if(has.call(o, k)){ l.push(k) } }
-			return l;
+		// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+		if (!Object.keys) {
+			Object.keys = (function() {
+			'use strict';
+			var hasOwnProperty = Object.prototype.hasOwnProperty,
+				hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+				dontEnums = [
+					'toString',
+					'toLocaleString',
+					'valueOf',
+					'hasOwnProperty',
+					'isPrototypeOf',
+					'propertyIsEnumerable',
+					'constructor'
+				],
+				dontEnumsLength = dontEnums.length;
+
+			return function(obj) {
+				if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
+				throw new TypeError('Object.keys called on non-object');
+				}
+
+				var result = [], prop, i;
+
+				for (prop in obj) {
+				if (hasOwnProperty.call(obj, prop)) {
+					result.push(prop);
+				}
+				}
+
+				if (hasDontEnumBug) {
+				for (i = 0; i < dontEnumsLength; i++) {
+					if (hasOwnProperty.call(obj, dontEnums[i])) {
+					result.push(dontEnums[i]);
+					}
+				}
+				}
+				return result;
+			};
+			}());
 		}
-		;(function(){ // max ~1ms or before stack overflow 
+
+
+		var setTimeoutPoll = (function(){ // max ~1ms or before stack overflow
 			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-			sT.poll = sT.poll || function(f){ //f(); return; // for testing
+			return function(f){ //f(); return; // for testing
 				if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
 				sI(function(){ l = +new Date; f() },c=0)
 			}
 		}());
-		;(function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
-			var sT = setTimeout, t = sT.turn = sT.turn || function(f){ 1 == s.push(f) && p(T) }
-			, s = t.s = [], p = sT.poll, i = 0, f, T = function(){
+		var setTimeoutTurn = (function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
+			var t = module.exports.setTimeoutTurn = function(f){ 1 == s.push(f) && p(T) }
+			, s = t.s = [], p = setTimeoutPoll, i = 0, f, T = function(){
 				if(f = s[i++]){ f() }
 				if(i == s.length || 99 == i){
 					s = t.s = s.slice(i);
@@ -78,19 +121,21 @@
 				}
 				if(s.length){ p(T) }
 			}
+			return t;
 		}());
-		;(function(){
-			var u, sT = setTimeout, T = sT.turn;
-			(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
+		(function(){
+			var u, T = setTimeoutTurn;
+			(module.exports.setTimeoutEach = function(l,f,e,S){ S = S || 9; (function t(s,L,r){
 			  if(L = (s = (l||[]).splice(0,S)).length){
 			  	for(var i = 0; i < L; i++){
 			  		if(u !== (r = f(s[i]))){ break }
 			  	}
 			  	if(u === r){ T(t); return }
 			  } e && e(r);
-			}())})();
+			}())
+			})();
 		}());
-	})(USE, './shim');
+	})(USE, './utils');
 
 	;USE(function(module){
 		// On event emitter generic javascript utility.
@@ -147,7 +192,7 @@
 	})(USE, './valid');
 
 	;USE(function(module){
-		USE('./shim');
+		USE('./utils');
 		function State(){
 			var t = +new Date;
 			if(last < t){
@@ -176,7 +221,7 @@
 	})(USE, './state');
 
 	;USE(function(module){
-		USE('./shim');
+		USE('./utils');
 		function Dup(opt){
 			var dup = {s:{}}, s = dup.s;
 			opt = opt || {max: 999, age: 1000 * 9};//*/ 1000 * 9 * 3};
@@ -195,7 +240,7 @@
 				dup.now = +new Date;
 				var l = Object.keys(s);
 				console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys'); // prev ~20% CPU 7% RAM 300MB // now ~25% CPU 7% RAM 500MB
-				setTimeout.each(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
+				Gun.__utils__.setTimeoutEach(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
 					if(it && (age || opt.age) > (dup.now - it.was)){ return }
 					delete s[id];
 				},0,99);
@@ -208,6 +253,7 @@
 	;USE(function(module){
 		// request / response module, for asking and acking messages.
 		USE('./onto'); // depends upon onto!
+		var utils = USE('./utils');
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
 			var lack = (this.opt||{}).lack || 9000;
@@ -222,7 +268,7 @@
 				}
 				return true;
 			}
-			var id = (as && as['#']) || random(9);
+			var id = (as && as['#']) || utils.random(9);
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
 			to.err = to.err || setTimeout(function(){ to.off();
@@ -230,7 +276,6 @@
 			}, lack);
 			return id;
 		}
-		var random = String.random || function(){ return Math.random().toString(36).slice(2) }
 	})(USE, './ask');
 
 	;USE(function(module){
@@ -248,7 +293,7 @@
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
 
-		USE('./shim');
+		Gun.__utils__ = USE('./utils');
 		Gun.valid = USE('./valid');
 		Gun.state = USE('./state');
 		Gun.on = USE('./onto');
@@ -352,7 +397,7 @@
 			function ham(val, key, soul, state, msg){
 				var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 				var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
-				
+
 				var DBG = ctx.DBG; if(tmp = console.STAT){ if(!graph[soul] || !known){ tmp.has = (tmp.has || 0) + 1 } }
 
 				var now = State(), u;
@@ -387,7 +432,7 @@
 				var tmp = ctx.match; tmp.end = 1;
 				if(tmp === root.hatch){ if(!(tmp = ctx.latch) || tmp.end){ delete root.hatch } else { root.hatch = tmp } }
 				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-				setTimeout.each(ctx.match, function(cb){cb && cb()}); 
+				Gun.__utils__.setTimeoutEach(ctx.match, function(cb){cb && cb()});
 				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
@@ -472,7 +517,7 @@
 					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					if(!tmp){ return }
-					setTimeout.turn(go);
+					Gun.__utils__.setTimeoutTurn(go);
 				}());
 				if(!node){ root.on('in', {'@': msg['#']}) } // TODO: I don't think I like this, the default lS adapter uses this but "not found" is a sensitive issue, so should probably be handled more carefully/individually.
 			} Gun.on.get.ack = ack;
@@ -482,11 +527,11 @@
 			Gun.chain.opt = function(opt){
 				opt = opt || {};
 				var gun = this, at = gun._, tmp = opt.peers || opt;
-				if(!Object.plain(opt)){ opt = {} }
-				if(!Object.plain(at.opt)){ at.opt = opt }
+				if(!Gun.__utils__.plain(opt)){ opt = {} }
+				if(!Gun.__utils__.plain(at.opt)){ at.opt = opt }
 				if('string' == typeof tmp){ tmp = [tmp] }
 				if(tmp instanceof Array){
-					if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
+					if(!Gun.__utils__.plain(at.opt.peers)){ at.opt.peers = {}}
 					tmp.forEach(function(url){
 						var p = {}; p.id = p.url = url;
 						at.opt.peers[url] = at.opt.peers[url] || p;
@@ -494,17 +539,17 @@
 				}
 				at.opt.peers = at.opt.peers || {};
 				obj_each(opt, function each(k){ var v = this[k];
-					if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Object.empty(v)){ this[k] = v; return }
+					if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Gun.__utils__.empty(v)){ this[k] = v; return }
 					if(v && v.constructor !== Object && !(v instanceof Array)){ return }
 					obj_each(v, each);
 				});
 				Gun.on('opt', at);
-				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
+				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + Gun.__utils__.random(l||12) }
 				return gun;
 			}
 		}());
 
-		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = String.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
+		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 		Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 		Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
@@ -512,9 +557,10 @@
 		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof MODULE !== "undefined"){ MODULE.exports = Gun } }catch(e){}
 		module.exports = Gun;
-		
+
 		(Gun.window||{}).console = (Gun.window||{}).console || {log: function(){}};
-		(C = console).only = function(i, s){ return (C.only.i && i === C.only.i && C.only.i++) && (C.log.apply(C, arguments) || s) };
+		C = console;
+		Gun.log.only = function(i, s){ return (Gun.log.only.i && i === Gun.log.only.i && Gun.log.only.i++) && (C.log.apply(C, arguments) || s) };
 
 		;"Please do not remove welcome log unless you are paying for a monthly sponsorship, thanks!";
 		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, please ask for help on http://chat.gun.eco if anything takes you longer than 5min to figure out!");
@@ -664,7 +710,7 @@
 				if(!valid(tmp)){
 					if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
 					gun = cat.root.$.get(soul);
-					return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+					return Gun.__utils__.setTimeoutEach(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 						if('_' == k || u === (state = state_is(tmp, k))){ return }
 						cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
 					});
@@ -700,11 +746,11 @@
 
 			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
-			cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-			cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			cat.any && Gun.__utils__.setTimeoutEach(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			cat.echo && Gun.__utils__.setTimeoutEach(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
-				// is there cases where it is a $$ that we do NOT want to do the following? 
+				// is there cases where it is a $$ that we do NOT want to do the following?
 				if((sat = cat.next) && (sat = sat[key])){ // TODO: possible trick? Maybe have `ionmap` code set a sat? // TODO: Maybe we should do `cat.ask` instead? I guess does not matter.
 					tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 					tmp.$ = (msg.$$||msg.$).get(tmp.get = key); delete tmp.$$; delete tmp.$$$;
@@ -725,7 +771,7 @@
 				return; // by default do not link to data that is not a link.
 			}
 			if((tat.echo || (tat.echo = {}))[cat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
-				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down. 
+				&& !(root.pass||'')[cat.id]){ return } // if a new event listener was added, we need to make a pass through for it. The pass will be on the chain, not always the chain passed down.
 			if(tmp = root.pass){ if(tmp[link+cat.id]){ return } tmp[link+cat.id] = 1 } // But the above edge case may "pass through" on a circular graph causing infinite passes, so we hackily add a temporary check for that.
 
 			(tat.echo||(tat.echo={}))[cat.id] = cat; // set ourself up for the echo! // TODO: BUG? Echo to self no longer causes problems? Confirm.
@@ -737,7 +783,7 @@
 			if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
 				sat.on('out', {get: {'#': link}});
 			}
-			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+			Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if(!get || !(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 			},0,99);
@@ -761,7 +807,7 @@
 				}
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
+				Gun.__utils__.setTimeoutEach(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 					if(!(sat = cat.next[get])){ return }
 					//if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
 					if(link){ delete (root.$.get(link).get(get)._.echo||'')[sat.id] }
@@ -798,7 +844,7 @@
 					$: at.$,
 					'@': msg['@']
 				});
-				/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+				/*(tmp = at.Q) && Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
 					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
 					root.on('in', tmp);
 				}); delete at.Q;*/
@@ -809,7 +855,7 @@
 			return; // eom
 		}
 
-		var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
+		var empty = {}, u, text_rand = Gun.__utils__.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -817,7 +863,7 @@
 		Gun.chain.get = function(key, cb, as){
 			var gun, tmp;
 			if(typeof key === 'string'){
-				if(key.length == 0) {	
+				if(key.length == 0) {
 					(gun = this.chain())._.err = {err: Gun.log('0 length key!', key)};
 					if(cb){ cb.call(gun, gun._.err) }
 					return gun;
@@ -888,8 +934,8 @@
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
 				};
 				any.at = cat;
-				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = String.random(7)] = any; // maybe switch to this in future?
-				(cat.any||(cat.any={}))[id = String.random(7)] = any;
+				//(cat.any||(cat.any=function(msg){ Gun.__utils__.setTimeoutEach(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
+				(cat.any||(cat.any={}))[id = Gun.__utils__.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 				any.rid = rid; // logic from old version, can we clean it up now?
 				any.id = opt.run || ++root.once; // used in callback to check if we are earlier than a write. // will this ever cause an integer overflow?
@@ -999,7 +1045,7 @@
 				}
 				k && (to.path || (to.path = [])).push(k);
 				if(!(v = valid(d)) && !(g = Gun.is(d))){
-					if(!Object.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
+					if(!Gun.__utils__.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
 					var seen = as.seen || (as.seen = []), i = seen.length;
 					while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 				}
@@ -1036,7 +1082,7 @@
 						cat.link['#'] = soul;
 						!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 						delete as.wait[id];
-						cat.wait && setTimeout.each(cat.wait, function(cb){ cb && cb() });
+						cat.wait && Gun.__utils__.setTimeoutEach(cat.wait, function(cb){ cb && cb() });
 						as.ran(as);
 					};
 					// ---------------
@@ -1071,7 +1117,7 @@
 
 		function ran(as){
 			if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
-			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+			if(as.todo.length || as.end || !Gun.__utils__.empty(as.wait)){ return } as.end = 1;
 			var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 				root.on('ack', ack);
 				if(ack.err){ Gun.log(ack) }
@@ -1082,7 +1128,7 @@
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 				if(!stun){ return }
 				ran.end(stun, root);
-				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
+				Gun.__utils__.setTimeoutEach(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
@@ -1105,20 +1151,20 @@
 				as.via = at.root.$.get(((as.data||'')._||'')['#'] || at.$.back('opt.uuid')())
 			}
 			as.via.put(as.data, as.ack, as);
-			
+
 
 			return;
 			if(at.get && at.back.soul){
 				tmp = as.data;
 				as.via = at.back.$;
-				(as.data = {})[at.get] = tmp; 
+				(as.data = {})[at.get] = tmp;
 				as.via.put(as.data, as.ack, as);
 				return;
 			}
 		}
 		function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
-		var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
+		var u, empty = {}, noop = function(){}, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_ify = Gun.state.ify;
 		var iife = function(fn,as){fn.call(as||empty)}
 	})(USE, './put');
 
@@ -1177,7 +1223,7 @@
 				}
 			};
 			one.at = cat;
-			(cat.act||(cat.act={}))[id = String.random(7)] = one;
+			(cat.act||(cat.act={}))[id = Gun.__utils__.random(7)] = one;
 			one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 			cat.on('out', {get: {}});*/
 			return gun;
@@ -1188,7 +1234,7 @@
 		// 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 		Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 			if(!cb){ return none(this,opt) }
-			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
+			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = Gun.__utils__.random(7), one, tmp;
 			gun.get(function(data,key,msg,eve){
 				var $ = this, at = $._, one = (at.one||(at.one={}));
 				if(eve.stun){ return } if('' === one[id]){ return }
@@ -1266,11 +1312,11 @@
 	;USE(function(module){
 		var Gun = USE('./index'), next = Gun.chain.get.next;
 		Gun.chain.get.next = function(gun, lex){ var tmp;
-			if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
+			if(!Gun.__utils__.plain(lex)){ return (next||noop)(gun, lex) }
 			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
 			(tmp = gun.chain()._).lex = lex; // LEX!
 			gun.on('in', function(eve){
-				if(String.match(eve.get|| (eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
+				if(Gun.__utils__.match(eve.get|| (eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
 					tmp.on('in', eve);
 				}
 				this.to.next(eve);
@@ -1279,7 +1325,7 @@
 		}
 		Gun.chain.map = function(cb, opt, t){
 			var gun = this, cat = gun._, lex, chain;
-			if(Object.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
+			if(Gun.__utils__.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
 			if(!cb){
 				if(chain = cat.each){ return chain }
 				(cat.each = chain = gun.chain())._.lex = lex || chain._.lex || cat.lex;
@@ -1294,7 +1340,7 @@
 				if(u === next){ return }
 				if(data === next){ return chain._.on('in', msg) }
 				if(Gun.is(next)){ return chain._.on('in', next._) }
-				var tmp = {}; Object.keys(msg.put).forEach(function(k){ tmp[k] = msg.put[k] }, tmp); tmp['='] = next; 
+				var tmp = {}; Object.keys(msg.put).forEach(function(k){ tmp[k] = msg.put[k] }, tmp); tmp['='] = next;
 				chain._.on('in', {get: key, put: tmp});
 			});
 			return chain;
@@ -1302,7 +1348,7 @@
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
-			if((tmp = cat.lex) && !String.match(msg.get|| (put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
+			if((tmp = cat.lex) && !Gun.__utils__.match(msg.get|| (put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
@@ -1317,7 +1363,7 @@
 			if(soul = ((item||'')._||'')['#']){ (item = {})['#'] = soul } // check if node, make link.
 			if('string' == typeof (tmp = Gun.valid(item))){ return gun.get(soul = tmp).put(item, cb, opt) } // check if link
 			if(!Gun.is(item)){
-				if(Object.plain(item)){
+				if(Gun.__utils__.plain(item)){
 					item = root.get(soul = gun.back('opt.uuid')()).put(item);
 				}
 				return gun.get(soul || root.back('opt.uuid')(7)).put(item, cb, opt);
@@ -1333,7 +1379,7 @@
 	})(USE, './set');
 
 	;USE(function(module){
-		USE('./shim');
+		var utils = USE('./utils');
 
 		function Mesh(root){
 			var mesh = function(){};
@@ -1343,9 +1389,9 @@
 			opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 			opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
-			var puff = setTimeout.turn || setTimeout;
-			var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
-			var json = JSON.stringifyAsync || function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
+			var puff = Gun.__utils__.setTimeoutTurn || setTimeout;
+			var parse = Gun.__utils__.parseAsync
+			var json = Gun.__utils__.stringifyAsync
 
 			var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 
@@ -1358,8 +1404,8 @@
 					/*if('string' == typeof raw){ try{
 						var stat = console.STAT || {};
 						//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
-						
-						//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
+
+						//console.log(Gun.__utils__.setTimeoutTurn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 					}catch(e){ console.log('DBG err', e) }}*/
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var S = peer.SH = +new Date;
@@ -1380,10 +1426,10 @@
 							puff(go, 0);
 						}());
 					});
-					raw = ''; // 
+					raw = ''; //
 					return;
 				}
-				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
+				if('{' === tmp || ((raw['#'] || utils.plain(raw)) && (msg = raw))){
 					if(msg){ return hear.one(msg, peer, S) }
 					parse(raw, function(err, msg){
 						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -1397,7 +1443,7 @@
 				if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 				DBG && (DBG.h = S);
 				DBG && (DBG.hp = +new Date);
-				if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+				if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 				if(tmp = dup_check(id)){ return }
 				// DAM logic:
 				if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
@@ -1434,7 +1480,7 @@
 					var S = +new Date;
 					json(msg.put, function hash(err, text){
 						var ss = (s || (s = t = text||'')).slice(0, 32768); // 1024 * 32
-					  h = String.hash(ss, h); s = s.slice(32768);
+					  h = utils.hash(ss, h); s = s.slice(32768);
 					  if(s){ puff(hash, 0); return }
 						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 					  msg._.$put = t;
@@ -1456,7 +1502,7 @@
 //if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 					var meta = msg._||(msg._=function(){});
 					var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
-					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+					if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
@@ -1471,7 +1517,7 @@
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					DBG && (DBG.yr = +new Date);
 					if(!peer || !peer.id){
-						if(!Object.plain(peer || opt.peers)){ return false }
+						if(!utils.plain(peer || opt.peers)){ return false }
 						var S = +new Date;
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
 						console.STAT && console.STAT(S, +new Date - S, 'peer keys');
@@ -1591,7 +1637,7 @@
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = peer.id || String.random(9);
+					tmp = peer.id = peer.id || utils.random(9);
 					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
@@ -1599,7 +1645,7 @@
 				if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
 				// @rogowski I need this here by default for now to fix go1dfish's bug
 				tmp = peer.queue; peer.queue = [];
-				setTimeout.each(tmp||[],function(msg){
+				Gun.__utils__.setTimeoutEach(tmp||[],function(msg){
 					send(msg, peer);
 				},0,9);
 				//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
@@ -1620,7 +1666,7 @@
 			}
 
 			root.on('create', function(root){
-				root.opt.pid = root.opt.pid || String.random(9);
+				root.opt.pid = root.opt.pid || utils.random(9);
 				this.to.next(root);
 				root.on('out', mesh.say);
 			});
@@ -1643,8 +1689,8 @@
 				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
-				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-					tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
+				Gun.__utils__.setTimeoutEach(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
+					tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 					mesh.say({'##': tmp, get: {'#': soul}}, peer);
 				});
 			});
@@ -1739,7 +1785,7 @@
 				var lex = msg.get, soul, data, tmp, u;
 				if(!lex || !(soul = lex['#'])){ return }
 				data = disk[soul] || u;
-				if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
+				if(data && (tmp = lex['.']) && !Gun.__utils__.plain(tmp)){ // pluck!
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				//if(data){ (tmp = {})[soul] = data } // back into a graph.
@@ -1764,12 +1810,12 @@
 					Gun.log((err = (e || "localStorage failure")) + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 					root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 				}
-				if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
-				setTimeout.each(ack, function(id){
+				if(!err && !Gun.__utils__.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
+				Gun.__utils__.setTimeoutEach(ack, function(id){
 					root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 				});
 			}
-		
+
 		});
 	})(USE, './localStorage');
 
@@ -1843,14 +1889,14 @@
 	Type.obj = Type.boj || {is: function(o){ DEP('obj'); return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }}
 	Type.obj.put = Type.obj.put || function(o, k, v){ DEP('obj.put'); return (o||{})[k] = v, o }
 	Type.obj.has = Type.obj.has || function(o, k){ DEP('obj.has'); return o && Object.prototype.hasOwnProperty.call(o, k) }
-	Type.obj.del = Type.obj.del || function(o, k){ DEP('obj.del'); 
+	Type.obj.del = Type.obj.del || function(o, k){ DEP('obj.del');
 		if(!o){ return }
 		o[k] = null;
 		delete o[k];
 		return o;
 	}
 	Type.obj.as = Type.obj.as || function(o, k, v, u){ DEP('obj.as'); return o[k] = o[k] || (u === v? {} : v) }
-	Type.obj.ify = Type.obj.ify || function(o){ DEP('obj.ify'); 
+	Type.obj.ify = Type.obj.ify || function(o){ DEP('obj.ify');
 		if(obj_is(o)){ return o }
 		try{o = JSON.parse(o);
 		}catch(e){o={}};
@@ -1861,7 +1907,7 @@
 			if(obj_has(this,k) && u !== this[k]){ return }
 			this[k] = v;
 		}
-		Type.obj.to = Type.obj.to || function(from, to){ DEP('obj.to'); 
+		Type.obj.to = Type.obj.to || function(from, to){ DEP('obj.to');
 			to = to || {};
 			obj_map(from, map, to);
 			return to;
@@ -1875,7 +1921,7 @@
 			if(n && (i === n || (obj_is(n) && obj_has(n, i)))){ return }
 			if(u !== i){ return true }
 		}
-		Type.obj.empty = Type.obj.empty || function(o, n){ DEP('obj.empty'); 
+		Type.obj.empty = Type.obj.empty || function(o, n){ DEP('obj.empty');
 			if(!o){ return true }
 			return obj_map(o,empty,{n:n})? false : true;
 		}
@@ -1889,9 +1935,9 @@
 			} t.r = t.r || [];
 			t.r.push(k);
 		};
+		if (!Object.keys) { Object.keys = function(o){ return map(o, function(v,k,t){t(k)}) } }
 		var keys = Object.keys, map, u;
-		Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
-		Type.obj.map = map = Type.obj.map || function(l, c, _){ DEP('obj.map'); 
+		Type.obj.map = map = Type.obj.map || function(l, c, _){ DEP('obj.map');
 			var u, i = 0, x, r, ll, lle, f = 'function' == typeof c;
 			t.r = u;
 			if(keys && obj_is(l)){
@@ -2033,7 +2079,7 @@
 
 	var State = Type.state;
 	State.lex = function(){ DEP('state.lex'); return State().toString(36).replace('.','') }
-	State.to = function(from, k, to){ DEP('state.to'); 
+	State.to = function(from, k, to){ DEP('state.to');
 		var val = (from||{})[k];
 		if(obj_is(val)){
 			val = obj_copy(val);
@@ -2089,7 +2135,7 @@
 		}
 	}());
 	;(function(){
-		Graph.ify = function(obj, env, as){ DEP('graph.ify'); 
+		Graph.ify = function(obj, env, as){ DEP('graph.ify');
 			var at = {path: [], obj: obj};
 			if(!env){
 				env = {};
@@ -2190,13 +2236,13 @@
 			arr.push(at);
 		}
 	}());
-	Graph.node = function(node){ DEP('graph.node'); 
+	Graph.node = function(node){ DEP('graph.node');
 		var soul = Node.soul(node);
 		if(!soul){ return }
 		return obj_put({}, soul, node);
 	}
 	;(function(){
-		Graph.to = function(graph, root, opt){ DEP('graph.to'); 
+		Graph.to = function(graph, root, opt){ DEP('graph.to');
 			if(!graph){ return }
 			var obj = {};
 			opt = opt || {seen: {}};
