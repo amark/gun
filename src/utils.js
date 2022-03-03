@@ -42,11 +42,48 @@ Object.empty = function(o, n){
 	for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
 	return true;
 }
-Object.keys = Object.keys || function(o){
-	var l = [];
-	for(var k in o){ if(has.call(o, k)){ l.push(k) } }
-	return l;
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+	Object.keys = (function() {
+	'use strict';
+	var hasOwnProperty = Object.prototype.hasOwnProperty,
+		hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+		dontEnums = [
+			'toString',
+			'toLocaleString',
+			'valueOf',
+			'hasOwnProperty',
+			'isPrototypeOf',
+			'propertyIsEnumerable',
+			'constructor'
+		],
+		dontEnumsLength = dontEnums.length;
+
+	return function(obj) {
+		if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
+		throw new TypeError('Object.keys called on non-object');
+		}
+
+		var result = [], prop, i;
+
+		for (prop in obj) {
+		if (hasOwnProperty.call(obj, prop)) {
+			result.push(prop);
+		}
+		}
+
+		if (hasDontEnumBug) {
+		for (i = 0; i < dontEnumsLength; i++) {
+			if (hasOwnProperty.call(obj, dontEnums[i])) {
+			result.push(dontEnums[i]);
+			}
+		}
+		}
+		return result;
+	};
+	}());
 }
+  
 ;(function(){ // max ~1ms or before stack overflow
 	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
 	sT.poll = sT.poll || function(f){ //f(); return; // for testing
