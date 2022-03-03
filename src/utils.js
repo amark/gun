@@ -36,11 +36,11 @@ module.exports = {
 		}
 		return c;
 	},
-	plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
-}
-Object.empty = function(o, n){
-	for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
-	return true;
+	plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false },
+	empty: function(o, n){
+		for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
+		return true;
+	}
 }
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 if (!Object.keys) {
@@ -83,7 +83,7 @@ if (!Object.keys) {
 	};
 	}());
 }
-  
+
 ;(function(){ // max ~1ms or before stack overflow
 	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
 	sT.poll = sT.poll || function(f){ //f(); return; // for testing

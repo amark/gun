@@ -144,15 +144,15 @@ describe('Gun', function(){
 				expect(Gun.__utils__.plain(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
 			});
 			it('empty',function(){
-				expect(Object.empty()).to.be(true);
-				expect(Object.empty({a:false})).to.be(false);
-				expect(Object.empty({a:false},['a'])).to.be(true);
-				expect(Object.empty({a:false},['a'])).to.be(true);
-				expect(Object.empty({a:false,b:1},['a'])).to.be(false);
-				expect(Object.empty({a:false,b:1},['a'])).to.be(false);
-				expect(Object.empty({a:false,b:1},['a','b'])).to.be(true);
-				expect(Object.empty({a:false,b:1,c:3},['a','b'])).to.be(false);
-				expect(Object.empty({1:1},'danger')).to.be(false);
+				expect(Gun.__utils__.empty()).to.be(true);
+				expect(Gun.__utils__.empty({a:false})).to.be(false);
+				expect(Gun.__utils__.empty({a:false},['a'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false},['a'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false,b:1},['a'])).to.be(false);
+				expect(Gun.__utils__.empty({a:false,b:1},['a'])).to.be(false);
+				expect(Gun.__utils__.empty({a:false,b:1},['a','b'])).to.be(true);
+				expect(Gun.__utils__.empty({a:false,b:1,c:3},['a','b'])).to.be(false);
+				expect(Gun.__utils__.empty({1:1},'danger')).to.be(false);
 			});
 		});
 		describe('Functions', function(){
@@ -3694,7 +3694,7 @@ describe('Gun', function(){
 					c++;
 					clearTimeout(end); end = setTimeout(function(){
 						//console.log("?", c, check, Object.keys(check), gun._.graph);
-						if(!Object.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
+						if(!Gun.__utils__.empty(check)){ return } //if(Gun.obj.map(check, function(v){ if(v){ return v } })){ return }
 						nopasstun(done, gun);
 					},9);
 			});

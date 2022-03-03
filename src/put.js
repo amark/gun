@@ -100,7 +100,7 @@ function stun(as, id){
 
 function ran(as){
 	if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
-	if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+	if(as.todo.length || as.end || !Gun.__utils__.empty(as.wait)){ return } as.end = 1;
 	var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 		root.on('ack', ack);
 		if(ack.err){ Gun.log(ack) }

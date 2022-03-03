@@ -51,11 +51,11 @@
 				}
 				return c;
 			},
-			plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
-		}
-		Object.empty = function(o, n){
-			for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
-			return true;
+			plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false },
+			empty: function(o, n){
+				for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
+				return true;
+			}
 		}
 		// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 		if (!Object.keys) {
@@ -73,20 +73,20 @@
 					'constructor'
 				],
 				dontEnumsLength = dontEnums.length;
-		
+
 			return function(obj) {
 				if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
 				throw new TypeError('Object.keys called on non-object');
 				}
-		
+
 				var result = [], prop, i;
-		
+
 				for (prop in obj) {
 				if (hasOwnProperty.call(obj, prop)) {
 					result.push(prop);
 				}
 				}
-		
+
 				if (hasDontEnumBug) {
 				for (i = 0; i < dontEnumsLength; i++) {
 					if (hasOwnProperty.call(obj, dontEnums[i])) {
@@ -98,7 +98,7 @@
 			};
 			}());
 		}
-  
+
 		;(function(){ // max ~1ms or before stack overflow
 			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
 			sT.poll = sT.poll || function(f){ //f(); return; // for testing
@@ -532,7 +532,7 @@
 				}
 				at.opt.peers = at.opt.peers || {};
 				obj_each(opt, function each(k){ var v = this[k];
-					if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Object.empty(v)){ this[k] = v; return }
+					if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Gun.__utils__.empty(v)){ this[k] = v; return }
 					if(v && v.constructor !== Object && !(v instanceof Array)){ return }
 					obj_each(v, each);
 				});
@@ -1109,7 +1109,7 @@
 
 		function ran(as){
 			if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
-			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+			if(as.todo.length || as.end || !Gun.__utils__.empty(as.wait)){ return } as.end = 1;
 			var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 				root.on('ack', ack);
 				if(ack.err){ Gun.log(ack) }
@@ -1802,7 +1802,7 @@
 					Gun.log((err = (e || "localStorage failure")) + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 					root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 				}
-				if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
+				if(!err && !Gun.__utils__.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
 				setTimeout.each(ack, function(id){
 					root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 				});

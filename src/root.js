@@ -259,7 +259,7 @@ Gun.ask = require('./ask');
 		}
 		at.opt.peers = at.opt.peers || {};
 		obj_each(opt, function each(k){ var v = this[k];
-			if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Object.empty(v)){ this[k] = v; return }
+			if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Gun.__utils__.empty(v)){ this[k] = v; return }
 			if(v && v.constructor !== Object && !(v instanceof Array)){ return }
 			obj_each(v, each);
 		});
