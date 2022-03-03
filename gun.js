@@ -1928,8 +1928,8 @@
 			} t.r = t.r || [];
 			t.r.push(k);
 		};
+		if (!Object.keys) { Object.keys = function(o){ return map(o, function(v,k,t){t(k)}) } }
 		var keys = Object.keys, map, u;
-		Object.keys = Object.keys || function(o){ return map(o, function(v,k,t){t(k)}) }
 		Type.obj.map = map = Type.obj.map || function(l, c, _){ DEP('obj.map');
 			var u, i = 0, x, r, ll, lle, f = 'function' == typeof c;
 			t.r = u;
