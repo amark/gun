@@ -186,7 +186,7 @@ describe('SEA', function(){
       done();
       });});});});});});});});});});});});});});});});});});});});});});});});});});});
     })
-    
+
     /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
       var pair, s, v;
       SEA.pair(function(pair){
@@ -196,7 +196,7 @@ describe('SEA', function(){
       done();
       });});});
     })*/
-    
+
     it('legacy', function(done){ (async function(){
       var pw = 'test123';
       // https://cdn.jsdelivr.net/npm/gun@0.9.99999/sea.js !
@@ -222,7 +222,7 @@ describe('SEA', function(){
         done();
       });
     }())});
-    
+
     it('legacy []', function(done){ (async function(){
       var pw = 'test123';
       // https://cdn.jsdelivr.net/npm/gun@0.9.99999/sea.js !
@@ -459,7 +459,7 @@ describe('SEA', function(){
         user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
           var notsigned = [];
           //Gun.obj.map(gun._.graph, function(v,k) {
-          Object.keys(gun._.graph).forEach(function(k,v){ v = gun._.graph[k]; 
+          Object.keys(gun._.graph).forEach(function(k,v){ v = gun._.graph[k];
             if (k[0]==='~' || k.indexOf('~', 1)!==-1) { return; } /// ignore '~pubkey' and '~@alias'
             notsigned.push(k);
           });
@@ -502,7 +502,7 @@ describe('SEA', function(){
           var c = 0, go = function(){ check(++c) }
           var ref = gun.user().get('zasdf').put({a: 9}, go);
           //ref._.REF = 'ref!';
-          //console.only.i=1;console.log("=================");
+          //Gun.log.only.i=1;console.log("=================");
           var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref, go);
           //ref._.DAT = 'dat!';
           at.get('foo').get('bar').put('yay', go);
@@ -528,7 +528,7 @@ describe('SEA', function(){
         });
         gun.user().auth(alice);
       });
-      
+
       it('user thread', function(done){
         // grr this doesn't properly replicate the issue I saw before
         var gun = Gun();
@@ -568,7 +568,7 @@ describe('SEA', function(){
       var bob = await SEA.pair()
       var dave = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private"}, alice)
-      
+
       user.leave()
       user.auth(bob, () => {
         var data = Gun.state().toString(36)
@@ -611,7 +611,7 @@ describe('SEA', function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private"}, alice);
-      
+
       user.leave()
       user.auth(bob, () => {
         var data = Gun.state().toString(36)
@@ -747,7 +747,7 @@ describe('SEA', function(){
       var user = gun.user();
 
       user.create('alice/as', 'password');
-      
+
       gun.on('auth', async function(){
 
         user.put({name: "Alice", country: "USA"});

@@ -5,7 +5,7 @@
 var Trace = function() {}
 Trace.traces=[];
 Trace.log = function(evname, msg) {
-  //if(!(console.only.i)){ return }
+  //if(!(Gun.log.only.i)){ return }
 //   clearTimeout(Trace.log.to);
 //   Trace.log.to = setTimeout(function(){
 //     Trace.on('trace.end', {code: Trace.traces.join('\n')});
@@ -31,7 +31,7 @@ Trace.log = function(evname, msg) {
   var ram = (!msg||!msg.ram ? '' : ('ram:'+msg.ram));
   var get = (!msg||!msg.get ? '' : ('get:'+Trace.clean(msg.get)).slice(0,15)+'');
   var put = !(typeof msg === 'object' && ('put' in msg)) ? '' : ('put:'+Trace.clean(msg&&msg.put?msg.put:'')).slice(0,30)+'...';
-  
+
 //   Trace.loglastevdt Trace.loglastev;
 //   Trace.loglastevdt = +new Date();
 
@@ -52,7 +52,7 @@ Trace.log = function(evname, msg) {
     Trace.traces.push(`${Trace.loglastev}->${evname}: (${Trace.log.i})  {${keys}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
   } else {
     //Trace.traces.push(`${Trace.loglastev}->${evname}: (${Trace.log.i})  {${keys.slice(0,15)}} ${get} ${put} ${__} ${dam} ${ram} ${id} ${at} ${lS}`);
-//     Trace.traces.push(Trace.loglastev+'->'+evname+': '+(Trace.log.i+') '+(console.only.i||''))+' '+__+' '+at);
+//     Trace.traces.push(Trace.loglastev+'->'+evname+': '+(Trace.log.i+') '+(Gun.log.only.i||''))+' '+__+' '+at);
       Trace.traces.push(Trace.loglastev+'->'+evname+': '+ Trace.log.i+') '+__+' '+at);
 //     Trace.traces.push(`${Trace.loglastev}->${evname}: (${Trace.log.i}) {${!keys?'this':keys}}`);
   }

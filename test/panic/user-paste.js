@@ -83,7 +83,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 					test.done();
 				});
 				//setInterval(function(){ console.log("CPU turns stacked:", setTimeout.turn.s.length) },1000);
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		// NOW, this is very important:
 		// Do not proceed to the next test until
@@ -113,7 +113,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 						test.done();
 					});
 				});
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
@@ -127,7 +127,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				var env = test.props;
 				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
 				window.gun = gun;
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
@@ -147,7 +147,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 		return bob.run(function(test){
 			console.log("I AM BOB");
 			test.async();
-			console.only.i=1;console.log("====================");
+			Gun.log.only.i=1;console.log("====================");
 			gun.user().auth('alice','password', function(ack){
 				if(ack.err){ _bad_login_ }
 				test.done();

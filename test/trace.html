@@ -96,11 +96,11 @@ body {
 <script>
 ;(function(){
   // OVERLOAD GUN FUNCTIONS THAT WE WANT TO TRACE:
-  
+
   /// GUN protocolo
   var _get = Gun.on._get; Gun.on._get = function(a,b,c,d,e){ Trace.log('GET', a); _get.call(this, a,b,c,d,e) } /// PROTOCOL
   var _put = Gun.on.put; Gun.on.put = function(a,b,c,d,e){ Trace.log('PUT', a); _put.call(this, a,b,c,d,e) } /// PROTOCOL
-  
+
   /// GUN chain
 //   var get = Gun.chain.get; Gun.chain.get = function(a,b,c,d,e){ Trace.log('.get', a); return get.call(this, a,b,c,d,e) } /// chain
 //   var put = Gun.chain.put; Gun.chain.put = function(a,b,c,d,e){ Trace.log('.put', a); return put.call(this, a,b,c,d,e) } /// chain
@@ -113,7 +113,7 @@ body {
 
   var output = Gun.on.out; Gun.on.out = function(a,b,c,d,e){ Trace.log('out', a); output.call(this, a,b,c,d,e) } /// EVENT
 
-//   var only = console.only; console.only = function(a,b,c,d,e,f,g){ Trace.log('ONLY'); return only.apply(console,arguments) }
+//   var only = Gun.log.only; Gun.log.only = function(a,b,c,d,e,f,g){ Trace.log('ONLY'); return only.apply(console,arguments) }
 //   var start = +new Date;
 //   setTimeout(function log(){
 //     if((+new Date - start) > 100){ return }
@@ -135,7 +135,7 @@ bob.pet = cat;
 cat.slave = bob;
 Trace.log('START');
 // Gun.statedisk(user, 'nodecircle', function(){
-console.only.i=1;console.log("=============", gun);
+Gun.log.only.i=1;console.log("=============", gun);
 
 // gun.get('nodecircle').put(user, function(ack) { Trace.log('ACK', ack); });
 // gun.get('nodecircle').on(function(ack) { Trace.log('END', ack); });

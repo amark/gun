@@ -1620,7 +1620,7 @@ describe('Gun', function(){
 							name: 'Alice2', age: 34,
 							b: {_:{'#':'2budn'}, c: {_:{'#':'2cudn'}, id: 'other', level: 3}, level: 2}
 						}, '2audn', function() {
-							//console.only.i=1;console.log('=============================');
+							//Gun.log.only.i=1;console.log('=============================');
 							gun.get('udn').put({
 								a: {'#':'2audn'}
 							});
@@ -2709,7 +2709,7 @@ describe('Gun', function(){
 					expect(data).to.be('yay!');
 
 					setTimeout(function(){
-						console.only(3, '.put z');
+						Gun.log.only(3, '.put z');
 						gun.get('opo').get('a').put('z');
 
 
@@ -2736,14 +2736,14 @@ describe('Gun', function(){
 			teams.blue.carl = carl;
 			teams.red.bob = bob;
 			teams.red.carl = carl;
-			console.only.i=1;console.log("===============");
+			Gun.log.only.i=1;console.log("===============");
 			Gun.statedisk(teams, 'gerema', function(ack){
 				console.log("VVVVVVVVVVVVVVVVVVV", ack);
 				setTimeout(function(){
 
 				gun.get('gerema').map().map().get('spouse').on(function(data){
-					console.only(2,'hi', data);
-					console.only(1,'hi', data);
+					Gun.log.only(2,'hi', data);
+					Gun.log.only(1,'hi', data);
 						console.log("*****************", data);return;
 				});
 			},500);});
@@ -2756,7 +2756,7 @@ describe('Gun', function(){
 			bob.pet = cat;
 			cat.slave = bob;
 			Gun.statedisk(user, 'nodecircle', function(){
-			//console.only.i=1;console.log("=============", gun);
+			//Gun.log.only.i=1;console.log("=============", gun);
 			//gun.get('nodecircle').get('bob').once(function(data){
 			gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(data){
 				//console.log("*****************", data, done.to);return;
@@ -2783,7 +2783,7 @@ describe('Gun', function(){
 			});
 
 			parent.get('sub').put(child);
-			//console.only.i=1;console.log("============================");
+			//Gun.log.only.i=1;console.log("============================");
 			parent.get('sub').on(function(data){
 				//console.log("*********sub", data);
 				done.sub = data;
@@ -2933,7 +2933,7 @@ describe('Gun', function(){
 
 		it('get get get set root get put', function(done){
 			var gun = Gun().get('app');
-			//console.only.i=1;console.log('---------------');
+			//Gun.log.only.i=1;console.log('---------------');
 			gun.get('alias').get('mark').set(
 				gun.back(-1).get('pub').put({
 					alias: 'mark',
@@ -3267,7 +3267,7 @@ describe('Gun', function(){
 					}
 				}
 			});
-			//console.only.i=1;console.log("--------------------", gun1._.next);
+			//Gun.log.only.i=1;console.log("--------------------", gun1._.next);
 			gun1.get('mmA').map().map().on(function(data, has){
 				check[has+1] = data;
 				//console.log('first test ONLY get called with C/asdf = pub:fdsa/pub:asdf......', has, data);
@@ -3289,7 +3289,7 @@ describe('Gun', function(){
 						}
 					}
 				}});
-				//console.only.i=101;console.log("------------------");
+				//Gun.log.only.i=101;console.log("------------------");
 				//console.log("CHAIN ID: 2mma = 2, 2mmA.nest = 3, map=4, map.map=5, 2mmaNBC=17, 2mma.nest.b.c=8, 2mmanest=9, 2mmanest.b=11", gun2._);
 
 				gun2.get('2mmA').get('nest').map().map().on(function(data, has){
@@ -3704,7 +3704,7 @@ describe('Gun', function(){
 			function run(i){
 				//if(i > 1){ return } // DEBUGGING!
 				//console.log("----", i, "----");
-				//2 === i && (console.only.i = 1) && console.only(1, '==========');
+				//2 === i && (Gun.log.only.i = 1) && Gun.log.only(1, '==========');
 				//(console.debug.i = console.debug.i || 1);
 				said.set({
 					what: i + " Hello world!",
@@ -3743,7 +3743,7 @@ describe('Gun', function(){
 			  largest = (largest < diff)? diff : largest;
 			  expect(diff > max).to.not.be.ok();
 			});
-			//console.only.i=1;
+			//Gun.log.only.i=1;
 			var turns = 0;
 			var many = setTimeout(function go(){ // TODO: NOTE: BUG? using setInterval caused poor CPU scheduling that did fail this test, it is possible actual apps might use that approach even tho for now they should use this adjusted version, so maybe we need to review a test in future for that?
 				if(turns > total || (diff || 0) > (max + 5)){

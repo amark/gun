@@ -344,7 +344,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         names.forEach(function(v,i){
             all[++i] = true;
             tmp = v.toLowerCase();
-            //console.only.i=1;console.log("save", tmp, v, i);
+            //Gun.log.only.i=1;console.log("save", tmp, v, i);
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
                 //console.log("???", ack);
                 expect(ack.err).to.not.be.ok();
@@ -385,7 +385,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         gun.get('users').get('alice').put({cool: 'beans'});
         gun.get('users').get('alexander').put({nice: 'beans'});
         gun.get('users').get('bob').put({lol: 'beans'});
-        //console.log("=================");console.only.i=1;
+        //console.log("=================");Gun.log.only.i=1;
         gun.get('users').get({'.': {'*': 'a'}, '%': 1000 * 100}).map().on(function(d,k){
             //console.log("small range:", k, d);
             expect('a' === k[0]).to.be.ok();
@@ -404,7 +404,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         gun.get('people').get('alexander').put({nice: 'beans'});
         gun.get('people').get('bob').put({lol: 'beans'});
         //setTimeout(function(){
-        console.only.i=1;
+        Gun.log.only.i=1;
         console.log("==================");
         console.log("==================");
         console.log("==================");
