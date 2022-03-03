@@ -61,14 +61,23 @@ Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 		if(eve.stun){ return } if('' === one[id]){ return }
 		if(true === (tmp = Gun.valid(data))){ once(); return }
 		if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
+		clearTimeout((cat.one||'')[id]); // clear "not found" since they only get set on cat.
 		clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
-		function once(){
+		function once(f){
 			if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.
 			if(u === (tmp = at.put)){ tmp = ((msg.$$||'')._||'').put }
-			if('string' == typeof Gun.valid(tmp)){ tmp = root.$.get(tmp)._.put; if(tmp === u){return} }
+			if('string' == typeof Gun.valid(tmp)){
+				tmp = root.$.get(tmp)._.put;
+				if(tmp === u && !f){
+					one[id] = setTimeout(function(){ once(1) }, opt.wait||99); // TODO: Quick fix. Maybe use ack count for more predictable control?
+					return
+				}
+			}
+			//console.log("AND VANISHED", data);
 			if(eve.stun){ return } if('' === one[id]){ return } one[id] = '';
 			if(cat.soul || cat.has){ eve.off() } // TODO: Plural chains? // else { ?.off() } // better than one check?
 			cb.call($, tmp, at.get);
+			clearTimeout(one[id]); // clear "not found" since they only get set on cat. // TODO: This was hackily added, is it necessary or important? Probably not, in future try removing this. Was added just as a safety for the `&& !f` check.
 		};
 	}, {on: 1});
 	return gun;
