@@ -2,7 +2,7 @@
     var SEA = require('./root');
     var shim = require('./shim');
     var S = require('./settings');
-    // Derive shared secret from other's pub and my epub/epriv 
+    // Derive shared secret from other's pub and my epub/epriv
     SEA.secret = SEA.secret || (async (key, pair, cb, opt) => { try {
       opt = opt || {};
       if(!pair || !pair.epriv || !pair.epub){

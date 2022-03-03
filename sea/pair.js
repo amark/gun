@@ -33,7 +33,7 @@
         // but split on a non-base64 letter.
         return key;
       })
-      
+
       // To include PGPv4 kind of keyId:
       // const pubId = await SEA.keyid(keys.pub)
       // Next: ECDH keys for encryption/decryption...

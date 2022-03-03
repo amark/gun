@@ -18,6 +18,7 @@
     "docker": "hooks/build",
     "minify": "uglifyjs gun.js -o gun.min.js -c -m",
     "unbuild": "node lib/unbuild.js & npm run minify",
+    "unbuild-sea": "node lib/unbuild.js sea",
     "unbuildMeta": "node lib/unbuild.js lib/meta"
   },
   "repository": {

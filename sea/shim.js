@@ -35,12 +35,12 @@
       Object.assign(api, {
         crypto,
         random: (len) => api.Buffer.from(crypto.randomBytes(len))
-      });      
+      });
       const { Crypto: WebCrypto } = require('@peculiar/webcrypto', 1);
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("Please add `@peculiar/webcrypto` to your package.json!");
+      console.log("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
     }}
 
     module.exports = api
