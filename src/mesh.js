@@ -1,5 +1,5 @@
 
-require('./shim');
+require('./utils');
 
 function Mesh(root){
 	var mesh = function(){};

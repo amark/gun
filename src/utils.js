@@ -1,5 +1,4 @@
 
-// Shim for generic javascript utilities.
 String.random = function(l, c){
 	var s = '';
 	l = l || 24; // you are not going to make a 0 length random number, so no need to check type

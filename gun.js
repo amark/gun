@@ -14,7 +14,6 @@
   /* UNBUILD */
 
 	;USE(function(module){
-		// Shim for generic javascript utilities.
 		String.random = function(l, c){
 			var s = '';
 			l = l || 24; // you are not going to make a 0 length random number, so no need to check type
@@ -90,7 +89,7 @@
 			  } e && e(r);
 			}())})();
 		}());
-	})(USE, './shim');
+	})(USE, './utils');
 
 	;USE(function(module){
 		// On event emitter generic javascript utility.
@@ -147,7 +146,7 @@
 	})(USE, './valid');
 
 	;USE(function(module){
-		USE('./shim');
+		USE('./utils');
 		function State(){
 			var t = +new Date;
 			if(last < t){
@@ -176,7 +175,7 @@
 	})(USE, './state');
 
 	;USE(function(module){
-		USE('./shim');
+		USE('./utils');
 		function Dup(opt){
 			var dup = {s:{}}, s = dup.s;
 			opt = opt || {max: 999, age: 1000 * 9};//*/ 1000 * 9 * 3};
@@ -248,7 +247,7 @@
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
 
-		USE('./shim');
+		USE('./utils');
 		Gun.valid = USE('./valid');
 		Gun.state = USE('./state');
 		Gun.on = USE('./onto');
@@ -1333,7 +1332,7 @@
 	})(USE, './set');
 
 	;USE(function(module){
-		USE('./shim');
+		USE('./utils');
 
 		function Mesh(root){
 			var mesh = function(){};

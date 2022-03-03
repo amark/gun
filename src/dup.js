@@ -1,5 +1,5 @@
 
-require('./shim');
+require('./utils');
 function Dup(opt){
 	var dup = {s:{}}, s = dup.s;
 	opt = opt || {max: 999, age: 1000 * 9};//*/ 1000 * 9 * 3};

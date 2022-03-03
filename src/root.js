@@ -13,7 +13,7 @@ Gun.version = 0.2020;
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
 
-require('./shim');
+require('./utils');
 Gun.valid = require('./valid');
 Gun.state = require('./state');
 Gun.on = require('./onto');
