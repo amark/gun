@@ -33,11 +33,8 @@
   ;USE(function(module){
     var SEA = USE('./root');
     try{ if(SEA.window){
-      if(location.protocol.indexOf('s') < 0
-      && location.host.indexOf('localhost') < 0
-      && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
-      && location.protocol.indexOf('file:') < 0){
-        console.warn('HTTPS needed for WebCrypto in SEA, redirecting...');
+      if(!window.isSecureContext && location.protocol == 'http:'){
+        console.warn('WebCrypto only available in secure context in SEA, redirecting to https...');
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
     } }catch(e){}
