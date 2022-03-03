@@ -83,7 +83,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 					// It has successfully launched.
 					test.done();
 				});
-				//setInterval(function(){ console.log("CPU turns stacked:", setTimeout.turn.s.length) },1000);
+				//setInterval(function(){ console.log("CPU turns stacked:", Gun.__utils__.setTimeoutTurn.s.length) },1000);
 			}, {i: i += 1, config: config}));
 		});
 		// NOW, this is very important:

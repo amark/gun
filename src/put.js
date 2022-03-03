@@ -66,7 +66,7 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 				cat.link['#'] = soul;
 				!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 				delete as.wait[id];
-				cat.wait && setTimeout.each(cat.wait, function(cb){ cb && cb() });
+				cat.wait && Gun.__utils__.setTimeoutEach(cat.wait, function(cb){ cb && cb() });
 				as.ran(as);
 			};
 			// ---------------
@@ -112,7 +112,7 @@ function ran(as){
 	(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 		if(!stun){ return }
 		ran.end(stun, root);
-		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
+		Gun.__utils__.setTimeoutEach(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 	}).hatch = tmp; // this is not official yet ^
 	//console.log(1, "PUT", as.run, as.graph);
 	(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
@@ -148,6 +148,6 @@ function get(as){
 }
 function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
-var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
+var u, empty = {}, noop = function(){}, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_ify = Gun.state.ify;
 var iife = function(fn,as){fn.call(as||empty)}
 	

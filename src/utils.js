@@ -88,16 +88,17 @@ if (!Object.keys) {
 	}());
 }
 
-;(function(){ // max ~1ms or before stack overflow
+
+var setTimeoutPoll = (function(){ // max ~1ms or before stack overflow
 	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-	sT.poll = sT.poll || function(f){ //f(); return; // for testing
+	return function(f){ //f(); return; // for testing
 		if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
 		sI(function(){ l = +new Date; f() },c=0)
 	}
 }());
-;(function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
-	var sT = setTimeout, t = sT.turn = sT.turn || function(f){ 1 == s.push(f) && p(T) }
-	, s = t.s = [], p = sT.poll, i = 0, f, T = function(){
+var setTimeoutTurn = (function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
+	var t = module.exports.setTimeoutTurn = function(f){ 1 == s.push(f) && p(T) }
+	, s = t.s = [], p = setTimeoutPoll, i = 0, f, T = function(){
 		if(f = s[i++]){ f() }
 		if(i == s.length || 99 == i){
 			s = t.s = s.slice(i);
@@ -105,16 +106,18 @@ if (!Object.keys) {
 		}
 		if(s.length){ p(T) }
 	}
+	return t;
 }());
-;(function(){
-	var u, sT = setTimeout, T = sT.turn;
-	(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
+(function(){
+	var u, T = setTimeoutTurn;
+	(module.exports.setTimeoutEach = function(l,f,e,S){ S = S || 9; (function t(s,L,r){
 	  if(L = (s = (l||[]).splice(0,S)).length){
 	  	for(var i = 0; i < L; i++){
 	  		if(u !== (r = f(s[i]))){ break }
 	  	}
 	  	if(u === r){ T(t); return }
 	  } e && e(r);
-	}())})();
+	}())
+	})();
 }());
 	

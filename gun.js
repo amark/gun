@@ -103,16 +103,17 @@
 			}());
 		}
 
-		;(function(){ // max ~1ms or before stack overflow
+
+		var setTimeoutPoll = (function(){ // max ~1ms or before stack overflow
 			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-			sT.poll = sT.poll || function(f){ //f(); return; // for testing
+			return function(f){ //f(); return; // for testing
 				if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
 				sI(function(){ l = +new Date; f() },c=0)
 			}
 		}());
-		;(function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
-			var sT = setTimeout, t = sT.turn = sT.turn || function(f){ 1 == s.push(f) && p(T) }
-			, s = t.s = [], p = sT.poll, i = 0, f, T = function(){
+		var setTimeoutTurn = (function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
+			var t = module.exports.setTimeoutTurn = function(f){ 1 == s.push(f) && p(T) }
+			, s = t.s = [], p = setTimeoutPoll, i = 0, f, T = function(){
 				if(f = s[i++]){ f() }
 				if(i == s.length || 99 == i){
 					s = t.s = s.slice(i);
@@ -120,17 +121,19 @@
 				}
 				if(s.length){ p(T) }
 			}
+			return t;
 		}());
-		;(function(){
-			var u, sT = setTimeout, T = sT.turn;
-			(sT.each = sT.each || function(l,f,e,S){ S = S || 9; (function t(s,L,r){
+		(function(){
+			var u, T = setTimeoutTurn;
+			(module.exports.setTimeoutEach = function(l,f,e,S){ S = S || 9; (function t(s,L,r){
 			  if(L = (s = (l||[]).splice(0,S)).length){
 			  	for(var i = 0; i < L; i++){
 			  		if(u !== (r = f(s[i]))){ break }
 			  	}
 			  	if(u === r){ T(t); return }
 			  } e && e(r);
-			}())})();
+			}())
+			})();
 		}());
 	})(USE, './utils');
 
@@ -237,7 +240,7 @@
 				dup.now = +new Date;
 				var l = Object.keys(s);
 				console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys'); // prev ~20% CPU 7% RAM 300MB // now ~25% CPU 7% RAM 500MB
-				setTimeout.each(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
+				Gun.__utils__.setTimeoutEach(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
 					if(it && (age || opt.age) > (dup.now - it.was)){ return }
 					delete s[id];
 				},0,99);
@@ -429,7 +432,7 @@
 				var tmp = ctx.match; tmp.end = 1;
 				if(tmp === root.hatch){ if(!(tmp = ctx.latch) || tmp.end){ delete root.hatch } else { root.hatch = tmp } }
 				ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-				setTimeout.each(ctx.match, function(cb){cb && cb()});
+				Gun.__utils__.setTimeoutEach(ctx.match, function(cb){cb && cb()});
 				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
@@ -514,7 +517,7 @@
 					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					if(!tmp){ return }
-					setTimeout.turn(go);
+					Gun.__utils__.setTimeoutTurn(go);
 				}());
 				if(!node){ root.on('in', {'@': msg['#']}) } // TODO: I don't think I like this, the default lS adapter uses this but "not found" is a sensitive issue, so should probably be handled more carefully/individually.
 			} Gun.on.get.ack = ack;
@@ -546,7 +549,7 @@
 			}
 		}());
 
-		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
+		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 		Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 		Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
@@ -707,7 +710,7 @@
 				if(!valid(tmp)){
 					if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
 					gun = cat.root.$.get(soul);
-					return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+					return Gun.__utils__.setTimeoutEach(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 						if('_' == k || u === (state = state_is(tmp, k))){ return }
 						cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
 					});
@@ -743,8 +746,8 @@
 
 			this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 			// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
-			cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-			cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			cat.any && Gun.__utils__.setTimeoutEach(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+			cat.echo && Gun.__utils__.setTimeoutEach(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 			if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 				// is there cases where it is a $$ that we do NOT want to do the following?
@@ -780,7 +783,7 @@
 			if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
 				sat.on('out', {get: {'#': link}});
 			}
-			setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+			Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if(!get || !(sat = tmp[get])){ return }
 				sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 			},0,99);
@@ -804,7 +807,7 @@
 				}
 				cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 				// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-				setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
+				Gun.__utils__.setTimeoutEach(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 					if(!(sat = cat.next[get])){ return }
 					//if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
 					if(link){ delete (root.$.get(link).get(get)._.echo||'')[sat.id] }
@@ -841,7 +844,7 @@
 					$: at.$,
 					'@': msg['@']
 				});
-				/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+				/*(tmp = at.Q) && Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
 					Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
 					root.on('in', tmp);
 				}); delete at.Q;*/
@@ -931,7 +934,7 @@
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
 				};
 				any.at = cat;
-				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
+				//(cat.any||(cat.any=function(msg){ Gun.__utils__.setTimeoutEach(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
 				(cat.any||(cat.any={}))[id = Gun.__utils__.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 				any.rid = rid; // logic from old version, can we clean it up now?
@@ -1079,7 +1082,7 @@
 						cat.link['#'] = soul;
 						!g && (((as.graph || (as.graph = {}))[soul] = (cat.node || (cat.node = {_:{}})))._['#'] = soul);
 						delete as.wait[id];
-						cat.wait && setTimeout.each(cat.wait, function(cb){ cb && cb() });
+						cat.wait && Gun.__utils__.setTimeoutEach(cat.wait, function(cb){ cb && cb() });
 						as.ran(as);
 					};
 					// ---------------
@@ -1125,7 +1128,7 @@
 			(tmp = function(){ // this is not official yet, but quick solution to hack in for now.
 				if(!stun){ return }
 				ran.end(stun, root);
-				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
+				Gun.__utils__.setTimeoutEach(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
 			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
@@ -1161,7 +1164,7 @@
 		}
 		function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
-		var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
+		var u, empty = {}, noop = function(){}, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_ify = Gun.state.ify;
 		var iife = function(fn,as){fn.call(as||empty)}
 	})(USE, './put');
 
@@ -1386,7 +1389,7 @@
 			opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 			opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 			opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
-			var puff = setTimeout.turn || setTimeout;
+			var puff = Gun.__utils__.setTimeoutTurn || setTimeout;
 			var parse = Gun.__utils__.parseAsync
 			var json = Gun.__utils__.stringifyAsync
 
@@ -1402,7 +1405,7 @@
 						var stat = console.STAT || {};
 						//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 
-						//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
+						//console.log(Gun.__utils__.setTimeoutTurn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 					}catch(e){ console.log('DBG err', e) }}*/
 					hear.d += raw.length||0 ; ++hear.c } // STATS!
 				var S = peer.SH = +new Date;
@@ -1642,7 +1645,7 @@
 				if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
 				// @rogowski I need this here by default for now to fix go1dfish's bug
 				tmp = peer.queue; peer.queue = [];
-				setTimeout.each(tmp||[],function(msg){
+				Gun.__utils__.setTimeoutEach(tmp||[],function(msg){
 					send(msg, peer);
 				},0,9);
 				//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
@@ -1686,7 +1689,7 @@
 				if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
 				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
-				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
+				Gun.__utils__.setTimeoutEach(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
 					tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 					mesh.say({'##': tmp, get: {'#': soul}}, peer);
 				});
@@ -1808,7 +1811,7 @@
 					root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 				}
 				if(!err && !Gun.__utils__.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
-				setTimeout.each(ack, function(id){
+				Gun.__utils__.setTimeoutEach(ack, function(id){
 					root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 				});
 			}

@@ -47,7 +47,7 @@ Gun.on('create', function lg(root){
 			root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 		}
 		if(!err && !Gun.__utils__.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
-		setTimeout.each(ack, function(id){
+		Gun.__utils__.setTimeoutEach(ack, function(id){
 			root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 		});
 	}

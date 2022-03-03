@@ -102,7 +102,7 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 		if(!valid(tmp)){
 			if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
 			gun = cat.root.$.get(soul);
-			return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+			return Gun.__utils__.setTimeoutEach(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if('_' == k || u === (state = state_is(tmp, k))){ return }
 				cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
 			});
@@ -138,8 +138,8 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 
 	this.to && this.to.next(msg); // 1st API job is to call all chain listeners.
 	// TODO: Make input more reusable by only doing these (some?) calls if we are a chain we recognize? This means each input listener would be responsible for when listeners need to be called, which makes sense, as they might want to filter.
-	cat.any && setTimeout.each(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
-	cat.echo && setTimeout.each(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+	cat.any && Gun.__utils__.setTimeoutEach(Object.keys(cat.any), function(any){ (any = cat.any[any]) && any(msg) },0,99); // 1st API job is to call all chain listeners. // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
+	cat.echo && Gun.__utils__.setTimeoutEach(Object.keys(cat.echo), function(lat){ (lat = cat.echo[lat]) && lat.on('in', msg) },0,99); // & linked at chains // TODO: .keys( is slow // BUG: Some re-in logic may depend on this being sync.
 
 	if(((msg.$$||'')._||at).soul){ // comments are linear, but this line of code is non-linear, so if I were to comment what it does, you'd have to read 42 other comments first... but you can't read any of those comments until you first read this comment. What!? // shouldn't this match link's check?
 		// is there cases where it is a $$ that we do NOT want to do the following?
@@ -175,7 +175,7 @@ function link(msg, cat){ cat = cat || this.as || msg.$._;
 	if(tmp[''] || cat.lex){ // we might need to load the whole thing // TODO: cat.lex probably has edge case bugs to it, need more test coverage.
 		sat.on('out', {get: {'#': link}});
 	}
-	setTimeout.each(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
+	Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(get, sat){ // if sub chains are asking for data. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 		if(!get || !(sat = tmp[get])){ return }
 		sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 	},0,99);
@@ -199,7 +199,7 @@ function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior
 		}
 		cat.put = u; // empty out the cache if, for example, alice's car's color no longer exists (relative to alice) if alice no longer has a car.
 		// TODO: BUG! For maps, proxy this so the individual sub is triggered, not all subs.
-		setTimeout.each(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
+		Gun.__utils__.setTimeoutEach(Object.keys(cat.next||''), function(get, sat){ // empty out all sub chains. // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync? // TODO: BUG? This will trigger deeper put first, does put logic depend on nested order? // TODO: BUG! For map, this needs to be the isolated child, not all of them.
 			if(!(sat = cat.next[get])){ return }
 			//if(cat.has && u === sat.put && !(root.pass||'')[sat.id]){ return } // if we are already unlinked, do not call again, unless edge case. // TODO: BUG! This line should be deleted for "unlink deeply nested".
 			if(link){ delete (root.$.get(link).get(get)._.echo||'')[sat.id] }
@@ -236,7 +236,7 @@ function ack(msg, ev){
 			$: at.$,
 			'@': msg['@']
 		});
-		/*(tmp = at.Q) && setTimeout.each(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
+		/*(tmp = at.Q) && Gun.__utils__.setTimeoutEach(Object.keys(tmp), function(id){ // TODO: Temporary testing, not integrated or being used, probably delete.
 			Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] }, tmp = {}); tmp['@'] = id; // copy message
 			root.on('in', tmp);
 		}); delete at.Q;*/

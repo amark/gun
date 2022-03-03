@@ -19,7 +19,7 @@ function Dup(opt){
 		dup.now = +new Date;
 		var l = Object.keys(s);
 		console.STAT && console.STAT(dup.now, +new Date - dup.now, 'dup drop keys'); // prev ~20% CPU 7% RAM 300MB // now ~25% CPU 7% RAM 500MB
-		setTimeout.each(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
+		Gun.__utils__.setTimeoutEach(l, function(id){ var it = s[id]; // TODO: .keys( is slow?
 			if(it && (age || opt.age) > (dup.now - it.was)){ return }
 			delete s[id];
 		},0,99);

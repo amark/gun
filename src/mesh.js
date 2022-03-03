@@ -10,7 +10,7 @@ function Mesh(root){
 	opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 	opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 	opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
-	var puff = setTimeout.turn || setTimeout;
+	var puff = Gun.__utils__.setTimeoutTurn || setTimeout;
 	var parse = Gun.__utils__.parseAsync
 	var json = Gun.__utils__.stringifyAsync
 
@@ -26,7 +26,7 @@ function Mesh(root){
 				var stat = console.STAT || {};
 				//console.log('HEAR:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 
-				//console.log(setTimeout.turn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
+				//console.log(Gun.__utils__.setTimeoutTurn.s.length, 'stacks', parseFloat((-(LT - (LT = +new Date))/1000).toFixed(3)), 'sec', parseFloat(((LT-ST)/1000 / 60).toFixed(1)), 'up', stat.peers||0, 'peers', stat.has||0, 'has', stat.memhused||0, stat.memused||0, stat.memax||0, 'heap mem max');
 			}catch(e){ console.log('DBG err', e) }}*/
 			hear.d += raw.length||0 ; ++hear.c } // STATS!
 		var S = peer.SH = +new Date;
@@ -266,7 +266,7 @@ function Mesh(root){
 		if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
 		// @rogowski I need this here by default for now to fix go1dfish's bug
 		tmp = peer.queue; peer.queue = [];
-		setTimeout.each(tmp||[],function(msg){
+		Gun.__utils__.setTimeoutEach(tmp||[],function(msg){
 			send(msg, peer);
 		},0,9);
 		//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
@@ -310,7 +310,7 @@ function Mesh(root){
 		if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
 		if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
-		setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
+		Gun.__utils__.setTimeoutEach(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
 			tmp = {}; tmp[soul] = root.graph[soul]; tmp = utils.hash(tmp); // TODO: BUG! This is broken.
 			mesh.say({'##': tmp, get: {'#': soul}}, peer);
 		});

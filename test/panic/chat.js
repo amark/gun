@@ -148,12 +148,12 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					$('b').text('');
 					return;
 				}
-				setTimeout.turn(gen);
+				Gun.__utils__.setTimeoutTurn(gen);
 			}
 			gen();
 			//window.chat = chat;
 			//console.log(JSON.stringify(chat,null,2));
-			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
+			setInterval(function(){ $('u').text(Gun.__utils__.setTimeoutTurn.s.length) },1000);
 		}, config);
 	});
 
@@ -183,7 +183,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				$msg.val(V);
 				$i.text(I);
 			}, 16);
-			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
+			setInterval(function(){ $('u').text(Gun.__utils__.setTimeoutTurn.s.length) },1000);
 		}, config);
 	});
 

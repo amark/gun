@@ -75,7 +75,7 @@ Gun.chain.get = function(key, cb, as){
 			opt.ok.call(opt.as, msg, eve || any); // is this the right
 		};
 		any.at = cat;
-		//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
+		//(cat.any||(cat.any=function(msg){ Gun.__utils__.setTimeoutEach(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
 		(cat.any||(cat.any={}))[id = Gun.__utils__.random(7)] = any;
 		any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 		any.rid = rid; // logic from old version, can we clean it up now?

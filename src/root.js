@@ -153,7 +153,7 @@ Gun.ask = require('./ask');
 		var tmp = ctx.match; tmp.end = 1;
 		if(tmp === root.hatch){ if(!(tmp = ctx.latch) || tmp.end){ delete root.hatch } else { root.hatch = tmp } }
 		ctx.hatch && ctx.hatch(); // TODO: rename/rework how put & this interact.
-		setTimeout.each(ctx.match, function(cb){cb && cb()});
+		Gun.__utils__.setTimeoutEach(ctx.match, function(cb){cb && cb()});
 		if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 		msg.out = universe;
 		ctx.root.on('out', msg);
@@ -238,7 +238,7 @@ Gun.ask = require('./ask');
 			root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
 			console.STAT && console.STAT(S, +new Date - S, 'got in');
 			if(!tmp){ return }
-			setTimeout.turn(go);
+			Gun.__utils__.setTimeoutTurn(go);
 		}());
 		if(!node){ root.on('in', {'@': msg['#']}) } // TODO: I don't think I like this, the default lS adapter uses this but "not found" is a sensitive issue, so should probably be handled more carefully/individually.
 	} Gun.on.get.ack = ack;
@@ -270,7 +270,7 @@ Gun.ask = require('./ask');
 	}
 }());
 
-var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
+var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = Gun.__utils__.setTimeoutTurn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
