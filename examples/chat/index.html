@@ -170,7 +170,7 @@
 
       msg.who = $('.chat__name-input').val();
       if (!msg.who) {
-        msg.who = 'user' + String.random(3);
+        msg.who = 'user' + Gun.__utils__.random(3);
         $('.chat__name-input').val(msg.who);
       }
 

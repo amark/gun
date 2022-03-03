@@ -178,7 +178,7 @@
             });
             $('#share').addClass("hide");
           } else {
-            document.cookie = 'gps=' + (gps.track = (document.cookie.match(/gps\=(.*?)(\&|$|\;)/i)||[])[1] || String.random(5)); // trick with cookies!
+            document.cookie = 'gps=' + (gps.track = (document.cookie.match(/gps\=(.*?)(\&|$|\;)/i)||[])[1] || Gun.__utils__.random(5)); // trick with cookies!
             gps.ref = gun.get('gps/' + gps.track);
             gps.opt.track = function(pos){
               pos = pos.latlng;

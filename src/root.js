@@ -13,7 +13,7 @@ Gun.version = 0.2020;
 Gun.chain = Gun.prototype;
 Gun.chain.toJSON = function(){};
 
-require('./utils');
+Gun.__utils__ = require('./utils');
 Gun.valid = require('./valid');
 Gun.state = require('./state');
 Gun.on = require('./onto');
@@ -264,12 +264,12 @@ Gun.ask = require('./ask');
 			obj_each(v, each);
 		});
 		Gun.on('opt', at);
-		at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
+		at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + Gun.__utils__.random(l||12) }
 		return gun;
 	}
 }());
 
-var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = String.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
+var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };

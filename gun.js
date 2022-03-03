@@ -14,12 +14,14 @@
   /* UNBUILD */
 
 	;USE(function(module){
-		String.random = function(l, c){
-			var s = '';
-			l = l || 24; // you are not going to make a 0 length random number, so no need to check type
-			c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
-			while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
-			return s;
+		module.exports = {
+			random: function(l, c){
+				var s = '';
+				l = l || 24; // you are not going to make a 0 length random number, so no need to check type
+				c = c || '0123456789ABCDEFGHIJKLMNOPQRSTUVWXZabcdefghijklmnopqrstuvwxyz';
+				while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
+				return s;
+			}
 		}
 		String.match = function(t, o){ var tmp, u;
 			if('string' !== typeof t){ return false }
@@ -207,6 +209,7 @@
 	;USE(function(module){
 		// request / response module, for asking and acking messages.
 		USE('./onto'); // depends upon onto!
+		var utils = USE('./utils');
 		module.exports = function ask(cb, as){
 			if(!this.on){ return }
 			var lack = (this.opt||{}).lack || 9000;
@@ -221,7 +224,7 @@
 				}
 				return true;
 			}
-			var id = (as && as['#']) || random(9);
+			var id = (as && as['#']) || utils.random(9);
 			if(!cb){ return id }
 			var to = this.on(id, cb, as);
 			to.err = to.err || setTimeout(function(){ to.off();
@@ -229,7 +232,6 @@
 			}, lack);
 			return id;
 		}
-		var random = String.random || function(){ return Math.random().toString(36).slice(2) }
 	})(USE, './ask');
 
 	;USE(function(module){
@@ -247,7 +249,7 @@
 		Gun.chain = Gun.prototype;
 		Gun.chain.toJSON = function(){};
 
-		USE('./utils');
+		Gun.__utils__ = USE('./utils');
 		Gun.valid = USE('./valid');
 		Gun.state = USE('./state');
 		Gun.on = USE('./onto');
@@ -498,12 +500,12 @@
 					obj_each(v, each);
 				});
 				Gun.on('opt', at);
-				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
+				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + Gun.__utils__.random(l||12) }
 				return gun;
 			}
 		}());
 
-		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = String.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
+		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = Gun.__utils__.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 		Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 		Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
@@ -808,7 +810,7 @@
 			return; // eom
 		}
 
-		var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
+		var empty = {}, u, text_rand = Gun.__utils__.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
 	})(USE, './chain');
 
 	;USE(function(module){
@@ -887,8 +889,8 @@
 					opt.ok.call(opt.as, msg, eve || any); // is this the right
 				};
 				any.at = cat;
-				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = String.random(7)] = any; // maybe switch to this in future?
-				(cat.any||(cat.any={}))[id = String.random(7)] = any;
+				//(cat.any||(cat.any=function(msg){ setTimeout.each(Object.keys(cat.any||''), function(act){ (act = cat.any[act]) && act(msg) },0,99) }))[id = Gun.__utils__.random(7)] = any; // maybe switch to this in future?
+				(cat.any||(cat.any={}))[id = Gun.__utils__.random(7)] = any;
 				any.off = function(){ any.stun = 1; if(!cat.any){ return } delete cat.any[id] }
 				any.rid = rid; // logic from old version, can we clean it up now?
 				any.id = opt.run || ++root.once; // used in callback to check if we are earlier than a write. // will this ever cause an integer overflow?
@@ -1176,7 +1178,7 @@
 				}
 			};
 			one.at = cat;
-			(cat.act||(cat.act={}))[id = String.random(7)] = one;
+			(cat.act||(cat.act={}))[id = Gun.__utils__.random(7)] = one;
 			one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 			cat.on('out', {get: {}});*/
 			return gun;
@@ -1187,7 +1189,7 @@
 		// 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 		Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 			if(!cb){ return none(this,opt) }
-			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
+			var gun = this, cat = gun._, root = cat.root, data = cat.put, id = Gun.__utils__.random(7), one, tmp;
 			gun.get(function(data,key,msg,eve){
 				var $ = this, at = $._, one = (at.one||(at.one={}));
 				if(eve.stun){ return } if('' === one[id]){ return }
@@ -1332,7 +1334,7 @@
 	})(USE, './set');
 
 	;USE(function(module){
-		USE('./utils');
+		var utils = USE('./utils');
 
 		function Mesh(root){
 			var mesh = function(){};
@@ -1396,7 +1398,7 @@
 				if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 				DBG && (DBG.h = S);
 				DBG && (DBG.hp = +new Date);
-				if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+				if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 				if(tmp = dup_check(id)){ return }
 				// DAM logic:
 				if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
@@ -1455,7 +1457,7 @@
 //if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 					var meta = msg._||(msg._=function(){});
 					var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
-					if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+					if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
@@ -1590,7 +1592,7 @@
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = peer.id || String.random(9);
+					tmp = peer.id = peer.id || utils.random(9);
 					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
@@ -1619,7 +1621,7 @@
 			}
 
 			root.on('create', function(root){
-				root.opt.pid = root.opt.pid || String.random(9);
+				root.opt.pid = root.opt.pid || utils.random(9);
 				this.to.next(root);
 				root.on('out', mesh.say);
 			});

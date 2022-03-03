@@ -44,7 +44,7 @@ Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 		}
 	};
 	one.at = cat;
-	(cat.act||(cat.act={}))[id = String.random(7)] = one;
+	(cat.act||(cat.act={}))[id = Gun.__utils__.random(7)] = one;
 	one.off = function(){ one.stun = 1; if(!cat.act){ return } delete cat.act[id] }
 	cat.on('out', {get: {}});*/
 	return gun;
@@ -55,7 +55,7 @@ Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 // 3. If the same callback passed to many different once chains, each should resolve - an unsubscribe from the same callback should not effect the state of the other resolving chains, if you do want to cancel them all early you should mutate the callback itself with a flag & check for it at top of callback
 Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 	if(!cb){ return none(this,opt) }
-	var gun = this, cat = gun._, root = cat.root, data = cat.put, id = String.random(7), one, tmp;
+	var gun = this, cat = gun._, root = cat.root, data = cat.put, id = Gun.__utils__.random(7), one, tmp;
 	gun.get(function(data,key,msg,eve){
 		var $ = this, at = $._, one = (at.one||(at.one={}));
 		if(eve.stun){ return } if('' === one[id]){ return }

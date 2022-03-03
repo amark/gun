@@ -101,10 +101,10 @@ describe('Gun', function(){
 
 		describe('Type Check', function(){
 			it('random text',function(){
-				expect(String.random().length).to.be(24);
-				expect(String.random(11).length).to.be(11);
-				expect(String.random(4).length).to.be(4);
-				t.tr = String.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
+				expect(Gun.__utils__.random().length).to.be(24);
+				expect(Gun.__utils__.random(11).length).to.be(11);
+				expect(Gun.__utils__.random(4).length).to.be(4);
+				t.tr = Gun.__utils__.random(2,'as'); expect((t.tr=='as'||t.tr=='aa'||t.tr=='sa'||t.tr=='ss')).to.be.ok();
 			});
 			it('match text',function(){
 				expect(String.match("user/mark", 'user/mark')).to.be.ok();
@@ -2777,11 +2777,11 @@ describe('Gun', function(){
 
 			var parent = gun.get('parent');
 			var child = gun.get('child');
-			
+
 			child.put({
 				way: 'down'
 			});
-			
+
 			parent.get('sub').put(child);
 			//console.only.i=1;console.log("============================");
 			parent.get('sub').on(function(data){
@@ -3340,7 +3340,7 @@ describe('Gun', function(){
 			Gun.statedisk({ alias: { mark: { pub: {_:{'#':'PUB'}, pub: 'asdf', alias: 'mark', born: 1 } } } }, 'mult/times/part', function(){
 			var gun = Gun();
 			var app = gun.get('mult/times/part');
-			
+
 			//console.debug.i=1;console.log("===================");
 // 			app.get('alias').get('mark').once(function(alias){
 // 				console.log("***111 ", alias);
@@ -3516,7 +3516,7 @@ describe('Gun', function(){
 
 			var bb = b.get("key");
 			bb.put({msg: "hello"});
-				
+
 			d = Gun({file: "ddata"});
 			var db = d.get("key");
 			db.map().on(function(val,field){
@@ -3561,11 +3561,11 @@ describe('Gun', function(){
 			var gun = Gun();
 
 			gun.get('ds/safe').put({a: 1});
-			
+
 			gun.get('ds/safe').on(function(data){
 				data.b = 2;
 			});
-			
+
 			gun.get('ds/safe').once(function(data){
 				expect(gun.back(-1)._.graph['ds/safe'].b).to.not.be.ok();
 				if(done.c){ return } done.c = 1;
@@ -3864,7 +3864,7 @@ describe('Gun', function(){
 			});
 		});*/
 		it('Nested listener should be called', function(done){
-			
+
 			var gun = Gun();
 			/*
 			var app = gun.get('nl/app').get('bar');
@@ -3897,9 +3897,9 @@ describe('Gun', function(){
 			//return;
 
 			setTimeout(function(){
-			  
+
 			  app.get('watcher/1').put({"stats":{"num":4},"name":"trexxx"});
-			  
+
 			},100);
 		});
 		//return;
@@ -3927,7 +3927,7 @@ describe('Gun', function(){
 
 				setTimeout(function(){
 					gun.get("something").get("level1").once(function(x){
-						
+
 						setTimeout(function(){
 							expect(c).to.be(1);
 							nopasstun(done, gun);
@@ -3965,7 +3965,7 @@ describe('Gun', function(){
 			      context._.valid = false;
 			      chain._.on('in', {get: key, $: this});
 			      return false;
-			    } else { 
+			    } else {
 			     _tags = Gun.obj.ify(obj.tags);
 			      if(Array.isArray(filter)){
 			        context._.valid = filter.every(function(f){ return ( _tags[f] && _tags[f]==1) });
@@ -4084,7 +4084,7 @@ describe('Gun', function(){
 				expect(data.age).to.be(29);
 				expect(data.name).to.be('Bob!');
 				if(done.c){ return } done.c = 1;
-				nopasstun(done, gun); 
+				nopasstun(done, gun);
 			});
 			}, 1000);
 		});
@@ -8118,7 +8118,7 @@ describe('Gun', function(){
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();
-			var text = String.random(1024 * 1024 * 6);
+			var text = Gun.__utils__.random(1024 * 1024 * 6);
 			gun.put({i: text}, function(ack){
 				var err = ack.err, ok = ack.ok;
 				if(done.c){ return }
@@ -8133,7 +8133,7 @@ describe('Gun', function(){
 			var localStorage = localStorage || {clear:function(){}};
 			localStorage.clear();
 			var gun = Gun();
-			var i = 999, obj = {}; while(--i){ obj[i] = String.random(99) }
+			var i = 999, obj = {}; while(--i){ obj[i] = Gun.__utils__.random(99) }
 			//console.log("save:", obj);
 			gun.get('lSack').put(obj, function(ack){
 				//console.log("ack:", ack)

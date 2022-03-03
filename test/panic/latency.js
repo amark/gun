@@ -84,7 +84,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 					test.done();
 				});
 				//setInterval(function(){ console.log("CPU turns stacked:", setTimeout.turn.s.length) },1000);
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		// NOW, this is very important:
 		// Do not proceed to the next test until
@@ -107,7 +107,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				var env = test.props;
 				var gun = Gun({retry: 2, peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
 				window.gun = gun;
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
@@ -121,12 +121,12 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 				var config = test.props.config;
 
 				gun.get('test').get('latency').put("hello world");
-				
+
 				var go = setInterval(function(){
 					var burst = config.burst;
 					while(--burst){
 						console.log(burst);
-						gun.get(String.random(Math.random()*100)).get(String.random(Math.random()*10)).put(String.random(Math.random()*1000))
+						gun.get(Gun.__utils__.random(Math.random()*100)).get(Gun.__utils__.random(Math.random()*10)).put(Gun.__utils__.random(Math.random()*1000))
 					}
 				},config.wait);
 
@@ -134,7 +134,7 @@ describe("Test vanishing property "+ config.browsers +" browser(s) across "+ con
 					test.done();
 					setTimeout(function(){ clearInterval(go) }, 2000);
 				}, 1000 * 10);
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});

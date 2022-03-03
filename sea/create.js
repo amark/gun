@@ -8,7 +8,7 @@
       var pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
       opt = opt || {};
@@ -37,7 +37,7 @@
           gun.leave();
           return;
         }
-        act.salt = String.random(64); // pseudo-randomly create a salt, then use PBKDF2 function to extend the password with it.
+        act.salt = Gun.__utils__.random(64); // pseudo-randomly create a salt, then use PBKDF2 function to extend the password with it.
         SEA.work(pass, act.salt, act.b); // this will take some short amount of time to produce a proof, which slows brute force attacks.
       }
       act.b = function(proof){
@@ -60,11 +60,11 @@
         act.e();
       }
       act.e = function(){
-        act.data.epub = act.pair.epub; 
+        act.data.epub = act.pair.epub;
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f, {raw:1}); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
-        act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
+        act.data.auth = JSON.stringify({ek: auth, s: act.salt});
         act.g(act.data.auth);
       }
       act.g = function(auth){ var tmp;
@@ -101,4 +101,3 @@
       }
       return gun;
     }
-  

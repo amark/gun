@@ -96,7 +96,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 					// It has successfully launched.
 					test.done();
 				});
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		// NOW, this is very important:
 		// Do not proceed to the next test until
@@ -121,7 +121,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				var gun = Gun({localStorage: false, radisk: false, peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'});
 				window.gun = gun;
 				window.ref = gun.get('chat');
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
@@ -131,7 +131,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			console.log("I AM CARL");
 			$('body').append("<div>CPU turns stacked: <u></u> <button onclick='this.innerText = Math.random();'>Can you click me?</button><input id='msg' style='width:100%;'><b></b></div>");
 			test.async();
-			var rand = String.random || Gun.text.random;
+			var rand = Gun.__utils__.random || Gun.text.random;
 			var i = test.props.each, chat = {}, S = Gun.state();
 			var tmp = "generating " + i + " records..."; console.log(tmp); $('b').text(tmp);
 			var big = rand(test.props.size || 1); //1000 * 10);
@@ -168,7 +168,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			ref.map().once(function(v,k){
 				S && console.log('first:', $('span').text(tmp = (+new Date - S)/1000) && tmp) || (S = null);
 				if(!v){ no_data }
-				V = v; 
+				V = v;
 				I = ++i;
 				//console.log(i, "chat:",k,v);
 				if(i === t){
@@ -186,7 +186,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 			setInterval(function(){ $('u').text(setTimeout.turn.s.length) },1000);
 		}, config);
 	});
-	
+
 	after("Everything shut down.", function(){
 		// which is to shut down all the browsers.
 		require('./util/open').cleanup() || browsers.run(function(){

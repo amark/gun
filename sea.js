@@ -197,7 +197,7 @@
       Object.assign(api, {
         crypto,
         random: (len) => api.Buffer.from(crypto.randomBytes(len))
-      });      
+      });
       const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
@@ -228,7 +228,7 @@
       if(d){ jwk.d = d }
       return jwk;
     };
-    
+
     s.keyToJwk = function(keyBytes) {
       const keyB64 = keyBytes.toString('base64');
       const k = keyB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
@@ -303,7 +303,7 @@
       var r = shim.Buffer.from(work, 'binary').toString(opt.encode || 'base64')
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
       console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -349,7 +349,7 @@
         // but split on a non-base64 letter.
         return key;
       })
-      
+
       // To include PGPv4 kind of keyId:
       // const pubId = await SEA.keyid(keys.pub)
       // Next: ECDH keys for encryption/decryption...
@@ -524,8 +524,8 @@
       opt = opt || {};
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      
-      const jwkKey = S.keyToJwk(hash)      
+
+      const jwkKey = S.keyToJwk(hash)
       return await shim.subtle.importKey('jwk', jwkKey, {name:'AES-GCM'}, false, ['encrypt', 'decrypt'])
     }
     module.exports = importGen;
@@ -561,7 +561,7 @@
 
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
       console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -604,7 +604,7 @@
       var r = await S.parse(new shim.TextDecoder('utf8').decode(ct));
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
-    } catch(e) { 
+    } catch(e) {
       console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -619,7 +619,7 @@
     var SEA = USE('./root');
     var shim = USE('./shim');
     var S = USE('./settings');
-    // Derive shared secret from other's pub and my epub/epriv 
+    // Derive shared secret from other's pub and my epub/epriv
     SEA.secret = SEA.secret || (async (key, pair, cb, opt) => { try {
       opt = opt || {};
       if(!pair || !pair.epriv || !pair.epub){
@@ -810,7 +810,7 @@
     }
     SEA.GUN = Gun;
 
-    function User(root){ 
+    function User(root){
       this._ = {$: this};
     }
     User.prototype = (function(){ function F(){}; F.prototype = Gun.chain; return new F() }()) // Object.create polyfill
@@ -863,7 +863,7 @@
       var pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
       opt = opt || {};
@@ -892,7 +892,7 @@
           gun.leave();
           return;
         }
-        act.salt = String.random(64); // pseudo-randomly create a salt, then use PBKDF2 function to extend the password with it.
+        act.salt = Gun.__utils__.random(64); // pseudo-randomly create a salt, then use PBKDF2 function to extend the password with it.
         SEA.work(pass, act.salt, act.b); // this will take some short amount of time to produce a proof, which slows brute force attacks.
       }
       act.b = function(proof){
@@ -915,11 +915,11 @@
         act.e();
       }
       act.e = function(){
-        act.data.epub = act.pair.epub; 
+        act.data.epub = act.pair.epub;
         SEA.encrypt({priv: act.pair.priv, epriv: act.pair.epriv}, act.proof, act.f, {raw:1}); // to keep the private key safe, we AES encrypt it with the proof of work!
       }
       act.f = function(auth){
-        act.data.auth = JSON.stringify({ek: auth, s: act.salt}); 
+        act.data.auth = JSON.stringify({ek: auth, s: act.salt});
         act.g(act.data.auth);
       }
       act.g = function(auth){ var tmp;
@@ -967,15 +967,15 @@
       var pass = alias && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+
       var gun = this, cat = (gun._), root = gun.back(-1);
-      
+
       if(cat.ing){
         (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      
+
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -990,7 +990,7 @@
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
-          return act.err('Wrong user or password.') 
+          return act.err('Wrong user or password.')
         }
         root.get(get).once(act.a);
       }
@@ -1050,7 +1050,7 @@
       }
       act.z = function(){
         // password update so encrypt private key using new pwd + salt
-        act.salt = String.random(64); // pseudo-random
+        act.salt = Gun.__utils__.random(64); // pseudo-random
         SEA.work(opt.change, act.salt, act.y);
       }
       act.y = function(proof){
@@ -1305,7 +1305,7 @@
           put['='] = SEA.opt.unpack(data);
           eve.to.next(msg);
         })})
-        return 
+        return
       }
       var no = function(why){ at.on('in', {'@': id, err: msg.err = why}) }; // exploit internal relay stun for now, maybe violates spec, but testing for now. // Note: this may be only the sharded message, not original batch.
       //var no = function(why){ msg.ack(why) };
@@ -1318,7 +1318,7 @@
           return; // omit!
         }
       }
-      
+
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -1331,7 +1331,7 @@
       }
       if(0 <= soul.indexOf('#')){ // special case for content addressing immutable hashed data.
         check.hash(eve, msg, val, key, soul, at, no); return;
-      } 
+      }
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
@@ -1386,7 +1386,7 @@
           })
         return
       }
-      
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
@@ -1398,7 +1398,7 @@
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
-  
+
             // if writing to own graph, just allow it
             if (pub === user.is.pub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
@@ -1409,7 +1409,7 @@
               })
               return
             }
-  
+
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
             if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
@@ -1436,7 +1436,7 @@
           data = SEA.opt.unpack(data);
           if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
           if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-          
+
           // check if cert ('+') and putter's pub ('*') exist
           if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
             // now verify certificate

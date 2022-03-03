@@ -1,5 +1,5 @@
 
-require('./utils');
+var utils = require('./utils');
 
 function Mesh(root){
 	var mesh = function(){};
@@ -63,7 +63,7 @@ function Mesh(root){
 		if(msg.DBG){ msg.DBG = DBG = {DBG: msg.DBG} }
 		DBG && (DBG.h = S);
 		DBG && (DBG.hp = +new Date);
-		if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+		if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 		if(tmp = dup_check(id)){ return }
 		// DAM logic:
 		if(!(hash = msg['##']) && false && u !== msg.put){ /*hash = msg['##'] = Type.obj.hash(msg.put)*/ } // disable hashing for now // TODO: impose warning/penalty instead (?)
@@ -122,7 +122,7 @@ function Mesh(root){
 //if(opt.super && (!ack || !msg.put)){ return } // TODO: MANHATTAN STUB //OBVIOUSLY BUG! But squelch relay. // :( get only is 100%+ CPU usage :(
 			var meta = msg._||(msg._=function(){});
 			var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
-			if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
+			if(!(id = msg['#'])){ id = msg['#'] = utils.random(9) }
 			!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 			if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 			if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
@@ -257,7 +257,7 @@ function Mesh(root){
 		if(peer.id){
 			opt.peers[peer.url || peer.id] = peer;
 		} else {
-			tmp = peer.id = peer.id || String.random(9);
+			tmp = peer.id = peer.id || utils.random(9);
 			mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 			delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 		}
@@ -286,7 +286,7 @@ function Mesh(root){
 	}
 
 	root.on('create', function(root){
-		root.opt.pid = root.opt.pid || String.random(9);
+		root.opt.pid = root.opt.pid || utils.random(9);
 		this.to.next(root);
 		root.on('out', mesh.say);
 	});
