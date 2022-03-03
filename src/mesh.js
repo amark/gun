@@ -11,8 +11,8 @@ function Mesh(root){
 	opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
 	opt.puff = opt.puff || 9; // IDEA: do a start/end benchmark, divide ops/result.
 	var puff = setTimeout.turn || setTimeout;
-	var parse = JSON.parseAsync || function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } }
-	var json = JSON.stringifyAsync || function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
+	var parse = Gun.__utils__.parseAsync
+	var json = Gun.__utils__.stringifyAsync
 
 	var dup = root.dup, dup_check = dup.check, dup_track = dup.track;
 

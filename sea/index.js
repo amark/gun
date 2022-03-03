@@ -133,7 +133,7 @@
             // if writing to own graph, just allow it
             if (pub === user.is.pub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-              JSON.stringifyAsync(msg.put[':'], function(err,s){
+              Gun.__utils__.stringifyAsync(msg.put[':'], function(err,s){
                 if(err){ return no(err || "Stringify error.") }
                 msg.put[':'] = s;
                 return eve.to.next(msg);
@@ -149,7 +149,7 @@
                 verify(cert, user.is.pub, _ => {
                   msg.put[':']['+'] = cert // '+' is a certificate
                   msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
-                  JSON.stringifyAsync(msg.put[':'], function(err,s){
+                  Gun.__utils__.stringifyAsync(msg.put[':'], function(err,s){
                     if(err){ return no(err || "Stringify error.") }
                     msg.put[':'] = s;
                     return eve.to.next(msg);
@@ -212,7 +212,7 @@
     SEA.opt.pack = function(d,cb,k, n,s){ var tmp, f; // pack for verifying
       if(SEA.opt.check(d)){ return cb(d) }
       if(d && d['#'] && d['.'] && d['>']){ tmp = d[':']; f = 1 }
-      JSON.parseAsync(f? tmp : d, function(err, meta){
+      Gun.__utils__.parseAsync(f? tmp : d, function(err, meta){
         var sig = ((u !== (meta||'')[':']) && (meta||'')['~']); // or just ~ check?
         if(!sig){ cb(d); return }
         cb({m: {'#':s||d['#'],'.':k||d['.'],':':(meta||'')[':'],'>':d['>']||Gun.state.is(n, k)}, s: sig});

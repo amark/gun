@@ -41,7 +41,10 @@ module.exports = {
 	empty: function(o, n){
 		for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
 		return true;
-	}
+	},
+	// ideally we can move away from JSON entirely? unlikely due to compatibility issues... oh well.
+	parseAsync: function(t,cb,r){ var u; try{ cb(u, JSON.parse(t,r)) }catch(e){ cb(e) } },
+	stringifyAsync: function(v,cb,r,s){ var u; try{ cb(u, JSON.stringify(v,r,s)) }catch(e){ cb(e) } }
 }
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 if (!Object.keys) {
