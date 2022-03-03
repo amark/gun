@@ -247,11 +247,11 @@ Gun.ask = require('./ask');
 	Gun.chain.opt = function(opt){
 		opt = opt || {};
 		var gun = this, at = gun._, tmp = opt.peers || opt;
-		if(!Object.plain(opt)){ opt = {} }
-		if(!Object.plain(at.opt)){ at.opt = opt }
+		if(!Gun.__utils__.plain(opt)){ opt = {} }
+		if(!Gun.__utils__.plain(at.opt)){ at.opt = opt }
 		if('string' == typeof tmp){ tmp = [tmp] }
 		if(tmp instanceof Array){
-			if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
+			if(!Gun.__utils__.plain(at.opt.peers)){ at.opt.peers = {}}
 			tmp.forEach(function(url){
 				var p = {}; p.id = p.url = url;
 				at.opt.peers[url] = at.opt.peers[url] || p;

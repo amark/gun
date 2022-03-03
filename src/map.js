@@ -1,7 +1,7 @@
 
 var Gun = require('./index'), next = Gun.chain.get.next;
 Gun.chain.get.next = function(gun, lex){ var tmp;
-	if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
+	if(!Gun.__utils__.plain(lex)){ return (next||noop)(gun, lex) }
 	if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
 	(tmp = gun.chain()._).lex = lex; // LEX!
 	gun.on('in', function(eve){
@@ -14,7 +14,7 @@ Gun.chain.get.next = function(gun, lex){ var tmp;
 }
 Gun.chain.map = function(cb, opt, t){
 	var gun = this, cat = gun._, lex, chain;
-	if(Object.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
+	if(Gun.__utils__.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
 	if(!cb){
 		if(chain = cat.each){ return chain }
 		(cat.each = chain = gun.chain())._.lex = lex || chain._.lex || cat.lex;

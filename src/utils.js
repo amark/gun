@@ -1,4 +1,5 @@
 
+var has = Object.prototype.hasOwnProperty;
 module.exports = {
 	random: function(l, c){
 		var s = '';
@@ -34,10 +35,9 @@ module.exports = {
 			c |= 0;
 		}
 		return c;
-	}
+	},
+	plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 }
-var has = Object.prototype.hasOwnProperty;
-Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 Object.empty = function(o, n){
 	for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
 	return true;

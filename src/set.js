@@ -7,7 +7,7 @@ Gun.chain.set = function(item, cb, opt){
 	if(soul = ((item||'')._||'')['#']){ (item = {})['#'] = soul } // check if node, make link.
 	if('string' == typeof (tmp = Gun.valid(item))){ return gun.get(soul = tmp).put(item, cb, opt) } // check if link
 	if(!Gun.is(item)){
-		if(Object.plain(item)){
+		if(Gun.__utils__.plain(item)){
 			item = root.get(soul = gun.back('opt.uuid')()).put(item);
 		}
 		return gun.get(soul || root.back('opt.uuid')(7)).put(item, cb, opt);

@@ -14,6 +14,7 @@
   /* UNBUILD */
 
 	;USE(function(module){
+		var has = Object.prototype.hasOwnProperty;
 		module.exports = {
 			random: function(l, c){
 				var s = '';
@@ -49,10 +50,9 @@
 					c |= 0;
 				}
 				return c;
-			}
+			},
+			plain: function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 		}
-		var has = Object.prototype.hasOwnProperty;
-		Object.plain = function(o){ return o? (o instanceof Object && o.constructor === Object) || Object.prototype.toString.call(o).match(/^\[object (\w+)\]$/)[1] === 'Object' : false }
 		Object.empty = function(o, n){
 			for(var k in o){ if(has.call(o, k) && (!n || -1==n.indexOf(k))){ return false } }
 			return true;
@@ -483,11 +483,11 @@
 			Gun.chain.opt = function(opt){
 				opt = opt || {};
 				var gun = this, at = gun._, tmp = opt.peers || opt;
-				if(!Object.plain(opt)){ opt = {} }
-				if(!Object.plain(at.opt)){ at.opt = opt }
+				if(!Gun.__utils__.plain(opt)){ opt = {} }
+				if(!Gun.__utils__.plain(at.opt)){ at.opt = opt }
 				if('string' == typeof tmp){ tmp = [tmp] }
 				if(tmp instanceof Array){
-					if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
+					if(!Gun.__utils__.plain(at.opt.peers)){ at.opt.peers = {}}
 					tmp.forEach(function(url){
 						var p = {}; p.id = p.url = url;
 						at.opt.peers[url] = at.opt.peers[url] || p;
@@ -1000,7 +1000,7 @@
 				}
 				k && (to.path || (to.path = [])).push(k);
 				if(!(v = valid(d)) && !(g = Gun.is(d))){
-					if(!Object.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
+					if(!Gun.__utils__.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
 					var seen = as.seen || (as.seen = []), i = seen.length;
 					while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 				}
@@ -1267,7 +1267,7 @@
 	;USE(function(module){
 		var Gun = USE('./index'), next = Gun.chain.get.next;
 		Gun.chain.get.next = function(gun, lex){ var tmp;
-			if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
+			if(!Gun.__utils__.plain(lex)){ return (next||noop)(gun, lex) }
 			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
 			(tmp = gun.chain()._).lex = lex; // LEX!
 			gun.on('in', function(eve){
@@ -1280,7 +1280,7 @@
 		}
 		Gun.chain.map = function(cb, opt, t){
 			var gun = this, cat = gun._, lex, chain;
-			if(Object.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
+			if(Gun.__utils__.plain(cb)){ lex = cb['.']? cb : {'.': cb}; cb = u }
 			if(!cb){
 				if(chain = cat.each){ return chain }
 				(cat.each = chain = gun.chain())._.lex = lex || chain._.lex || cat.lex;
@@ -1318,7 +1318,7 @@
 			if(soul = ((item||'')._||'')['#']){ (item = {})['#'] = soul } // check if node, make link.
 			if('string' == typeof (tmp = Gun.valid(item))){ return gun.get(soul = tmp).put(item, cb, opt) } // check if link
 			if(!Gun.is(item)){
-				if(Object.plain(item)){
+				if(Gun.__utils__.plain(item)){
 					item = root.get(soul = gun.back('opt.uuid')()).put(item);
 				}
 				return gun.get(soul || root.back('opt.uuid')(7)).put(item, cb, opt);
@@ -1384,7 +1384,7 @@
 					raw = ''; //
 					return;
 				}
-				if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
+				if('{' === tmp || ((raw['#'] || utils.plain(raw)) && (msg = raw))){
 					if(msg){ return hear.one(msg, peer, S) }
 					parse(raw, function(err, msg){
 						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -1472,7 +1472,7 @@
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 					DBG && (DBG.yr = +new Date);
 					if(!peer || !peer.id){
-						if(!Object.plain(peer || opt.peers)){ return false }
+						if(!utils.plain(peer || opt.peers)){ return false }
 						var S = +new Date;
 						var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
 						console.STAT && console.STAT(S, +new Date - S, 'peer keys');
@@ -1740,7 +1740,7 @@
 				var lex = msg.get, soul, data, tmp, u;
 				if(!lex || !(soul = lex['#'])){ return }
 				data = disk[soul] || u;
-				if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
+				if(data && (tmp = lex['.']) && !Gun.__utils__.plain(tmp)){ // pluck!
 					data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 				}
 				//if(data){ (tmp = {})[soul] = data } // back into a graph.

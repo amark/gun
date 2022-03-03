@@ -122,26 +122,26 @@ describe('Gun', function(){
 				return; // below is OLD bloat, still available in lib/match.js
 			});
 			it('plain object',function(){
-				expect(Object.plain({})).to.be(true);
-				expect(Object.plain({a:1})).to.be(true);
-				expect(Object.plain(u)).to.be(false);
-				expect(Object.plain()).to.be(false);
-				expect(Object.plain(undefined)).to.be(false);
-				expect(Object.plain(null)).to.be(false);
-				expect(Object.plain(NaN)).to.be(false);
-				expect(Object.plain(0)).to.be(false);
-				expect(Object.plain(1)).to.be(false);
-				expect(Object.plain('')).to.be(false);
-				expect(Object.plain('a')).to.be(false);
-				expect(Object.plain([])).to.be(false);
-				expect(Object.plain([1])).to.be(false);
-				expect(Object.plain(false)).to.be(false);
-				expect(Object.plain(true)).to.be(false);
-				expect(Object.plain(function(){})).to.be(false);
-				expect(Object.plain(new Date())).to.be(false);
-				expect(Object.plain(/regex/)).to.be(false);
-				this.document && expect(Object.plain(document.createElement('div'))).to.be(false);
-				expect(Object.plain(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
+				expect(Gun.__utils__.plain({})).to.be(true);
+				expect(Gun.__utils__.plain({a:1})).to.be(true);
+				expect(Gun.__utils__.plain(u)).to.be(false);
+				expect(Gun.__utils__.plain()).to.be(false);
+				expect(Gun.__utils__.plain(undefined)).to.be(false);
+				expect(Gun.__utils__.plain(null)).to.be(false);
+				expect(Gun.__utils__.plain(NaN)).to.be(false);
+				expect(Gun.__utils__.plain(0)).to.be(false);
+				expect(Gun.__utils__.plain(1)).to.be(false);
+				expect(Gun.__utils__.plain('')).to.be(false);
+				expect(Gun.__utils__.plain('a')).to.be(false);
+				expect(Gun.__utils__.plain([])).to.be(false);
+				expect(Gun.__utils__.plain([1])).to.be(false);
+				expect(Gun.__utils__.plain(false)).to.be(false);
+				expect(Gun.__utils__.plain(true)).to.be(false);
+				expect(Gun.__utils__.plain(function(){})).to.be(false);
+				expect(Gun.__utils__.plain(new Date())).to.be(false);
+				expect(Gun.__utils__.plain(/regex/)).to.be(false);
+				this.document && expect(Gun.__utils__.plain(document.createElement('div'))).to.be(false);
+				expect(Gun.__utils__.plain(new (function Class(){ this.x = 1; this.y = 2 })())).to.be(true);
 			});
 			it('empty',function(){
 				expect(Object.empty()).to.be(true);

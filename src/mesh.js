@@ -49,7 +49,7 @@ function Mesh(root){
 			raw = ''; //
 			return;
 		}
-		if('{' === tmp || ((raw['#'] || Object.plain(raw)) && (msg = raw))){
+		if('{' === tmp || ((raw['#'] || utils.plain(raw)) && (msg = raw))){
 			if(msg){ return hear.one(msg, peer, S) }
 			parse(raw, function(err, msg){
 				if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -137,7 +137,7 @@ function Mesh(root){
 			if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
 			DBG && (DBG.yr = +new Date);
 			if(!peer || !peer.id){
-				if(!Object.plain(peer || opt.peers)){ return false }
+				if(!utils.plain(peer || opt.peers)){ return false }
 				var S = +new Date;
 				var P = opt.puff, ps = opt.peers, pl = Object.keys(peer || opt.peers || {}); // TODO: .keys( is slow
 				console.STAT && console.STAT(S, +new Date - S, 'peer keys');

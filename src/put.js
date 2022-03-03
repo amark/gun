@@ -28,7 +28,7 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 		}
 		k && (to.path || (to.path = [])).push(k);
 		if(!(v = valid(d)) && !(g = Gun.is(d))){
-			if(!Object.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
+			if(!Gun.__utils__.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
 			var seen = as.seen || (as.seen = []), i = seen.length;
 			while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
 		}

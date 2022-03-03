@@ -20,7 +20,7 @@ Gun.on('create', function lg(root){
 		var lex = msg.get, soul, data, tmp, u;
 		if(!lex || !(soul = lex['#'])){ return }
 		data = disk[soul] || u;
-		if(data && (tmp = lex['.']) && !Object.plain(tmp)){ // pluck!
+		if(data && (tmp = lex['.']) && !Gun.__utils__.plain(tmp)){ // pluck!
 			data = Gun.state.ify({}, tmp, Gun.state.is(data, tmp), data[tmp], soul);
 		}
 		//if(data){ (tmp = {})[soul] = data } // back into a graph.
