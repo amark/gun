@@ -70,7 +70,7 @@ describe('Gun', function(){
 		} );
 		*/
 
-		describe('YSON', function(){
+		describe.only('YSON', function(){
 			it('parse', function(){
 				//var json = require('fs').readFileSync('./radix.json').toString();
 				//var json = require('fs').readFileSync('./data.json').toString();
@@ -78,15 +78,38 @@ describe('Gun', function(){
 				//var json = require('fs').readFileSync('./stats.json').toString();
 				//var json = require('fs').readFileSync('./video.json').toString();
 			});
+			it('backslash', function(done){
+				var o = {z:"test\"wow\\"};
+				JSON.stringifyAsync(o, function(err,t){
+					JSON.parseAsync(t, function(err,data){
+						expect(data).to.be.eql(o);
+						next();
+					})
+				});
+				function next(){
+					JSON.parseAsync('{"webRTCsdp":"v=0\r\no=-"}', function(err,data){
+						var o = {webRTCsdp: 'v=0\r\no=-'};
+						expect(data).to.be.eql(o);
+						JSON.stringifyAsync(o, function(err,t){
+							expect(JSON.parse(t)).to.be.eql(o);
+							expect(t).to.be(JSON.stringify(o));
+							expect(t).to.be('{"webRTCsdp":"v=0\\r\\no=-"}');
+							JSON.parseAsync(t, function(err,d){
+								expect(d).to.be.eql(o);
+								done();
+							})
+						});
+					})
+				}
+			});
 			it('stringify', function(done){
 				function Foo(){}; Foo.prototype.toJSON = function(){};
 				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
 				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
-				var obj = [{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
+				var obj = [{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}, {webRTCsdp: "v=0\r\no=-"}, [[]], 10e9];
 				JSON.stringifyAsync(obj, function(err, text){
 					JSON.parseAsync(text, function(err, data){
-						expect(data).to.be.eql([{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
-
+						expect(data).to.be.eql([{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}, {webRTCsdp: "v=0\r\no=-"}, [[]], 10e9]);
 						var obj = {a: [], b: [""], c: ["", 1], d: [1, ""], e: {"":[]}, "a\"b": {0: 1}, wow: {'': {cool: 1}}};obj.lol = {0: {sweet: 9}};obj.wat = {"": 'cool'};obj.oh = {phew: {}, "": {}};
 						JSON.stringifyAsync(obj, function(err, text2){
 							JSON.parseAsync(text2, function(err, data){

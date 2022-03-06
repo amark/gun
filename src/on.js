@@ -61,6 +61,7 @@ Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 		if(eve.stun){ return } if('' === one[id]){ return }
 		if(true === (tmp = Gun.valid(data))){ once(); return }
 		if('string' == typeof tmp){ return } // TODO: BUG? Will this always load?
+		clearTimeout((cat.one||'')[id]); // clear "not found" since they only get set on cat.
 		clearTimeout(one[id]); one[id] = setTimeout(once, opt.wait||99); // TODO: Bug? This doesn't handle plural chains.
 		function once(){
 			if(!at.has && !at.soul){ at = {put: data, get: key} } // handles non-core messages.

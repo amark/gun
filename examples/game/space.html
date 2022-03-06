@@ -10,12 +10,12 @@
 	<p id="debug" style="position: fixed; bottom: 0px; color: white; height: 1em;"></p>
 	<script src="../jquery.js"></script>
 	<script src="../../../gun/gun.js"></script>
-	<script src="../../../gun/nts.js"></script>
+	<!-- script src="../../../gun/nts.js"></script -->
 	<script src="../../../gun/lib/webrtc.js"></script>
 	<script>
 		// Thanks to https://github.com/dmcinnes/HTML5-Asteroids
 		//var gun = Gun();
-		var gun = Gun(location.host? location.origin+'/gun' : 'http://localhost:8765/gun');
+		var gun = GUN(location.origin + '/gun');
 		var game = {gun: gun.get('example/game/space'), area: {}, ships: {}};
 		game.keys = {38: 'up', 37: 'left', 39: 'right', 40: 'down', 32: 'space'};
 		$(document).on('keydown', function(e){
@@ -50,7 +50,7 @@
 		}
 		game.ship = function(d, el){
 			if(!d){ // spawn our ship
-				var id = Gun.text.random(1, 'abcdefghijklmno');
+				var id = String.random(1, 'abcdefghijklmno');
 				game.me = game.ships[id] = {data: d = {id: id, t: game.now}};
 				game.me.gun = game.gun.get('players').get(d.id).put(d);
 				return;
@@ -101,7 +101,8 @@
 		      s.ay = 0;
 		    }
 
-		    Gun.obj.map(game.ships, function(ship){
+		    Object.keys(game.ships).forEach(function(key, ship){
+		    	ship = game.ships[key];
 		    	if(ship.gun){ return }
 		    	if(!ship.l){ return }
 		    	if(ship.x-50 <= s.x && s.x <= ship.x+50
@@ -131,7 +132,7 @@
 		    var d = s.data;
 		    var dt = (now - d.t) || 0;
 		    if(dt > 30 * 1000){
-		    	Gun.obj.del(game.ships, d.id);
+		    	delete game.ships[d.id];
 		    	s.$.remove();
 		    	return true;
 		    }
@@ -164,7 +165,8 @@
 			if(!me || me.boom){ return }
 			var keys = game.keys;
 			if(shoot || keys.up || keys.right || keys.left || keys.down){
-				var data = Gun.obj.to(me.data);
+				var data = {};
+				Object.keys(me.data).forEach(function(k){ data[k] = me.data[k] }); // 1 layer clone.
 				data.x = data.x / game.area.x;
 				data.y = data.y / game.area.y;
 				me.gun.put(data);
@@ -181,7 +183,7 @@
 			game.resize();
 			game.ship();
 			game.gun.get('players').map().on(function(data, id){
-				data = Gun.obj.copy(data);
+				data = JSON.parse(JSON.stringify(data)); // clone object, this is bad perf tho.
 				data.x = data.x * game.area.x;
 				data.y = data.y * game.area.y;
 				data.id = data.id || id;
@@ -195,7 +197,8 @@
 		    now = game.now = Gun.state();
 		    diff = now - last;
 		    last = now;
-		    Gun.obj.map(ships, function(ship){
+		    Object.keys(ships).forEach(function(key, ship){
+		    	ship = ships[key];
 		    	if(!ship.frame){ return }
 					ship.frame(diff, now);
 		    });
@@ -209,7 +212,9 @@
 		gun.on('hi', function(peer){
 			console.log("hi!", peer);
 			if(peer.url){ return }
-			Gun.obj.map(gun.back('opt.peers'), function(peer){
+			var peers = gun.back('opt.peers');
+			Object.keys(peers).forEach(function(id, peer){
+				peer = peers[id];
 				if(!peer.url || !peer.wire){ return }
 				peer.wire._send = peer.wire.send;
 				peer.wire.send = send;
