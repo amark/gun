@@ -112,7 +112,8 @@ Gun.ask = require('./ask');
 			++ni; kl = null; pop(o);
 		}());
 	} Gun.on.put = put;
-	console.log("BEWARE: BETA VERSION OF NEW GUN! NOT ALL FEATURES FINISHED!"); // clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
+	// TODO: MARK!!! clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
+	// WASIS BUG! first .once( undef 2nd good. .off othe rpeople: .open
 	function ham(val, key, soul, state, msg){
 		var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 		var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
