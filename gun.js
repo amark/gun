@@ -1781,7 +1781,7 @@ if(!GUN.window){ return } // disable
 if(GUN.version < 0.2022){ return } // disable
 if(GUN.noAB || u !== GUN.testAXE){ return } // diable
 if(localStorage.noTest){ return } // disable
-if(Math.random() > 0.01){ return } // reached ulimit, shrink sample size.
+//if(Math.random() > 0.01){ return } // reached ulimit, shrink sample size.
 console.log("Debugging p2p 'torrent' latency. Disable with `localStorage.noTest=1`.");
 // TEST 1: Check if Rust has memory leak as idle websockets come/go.
 var s = +new Date, ws = new WebSocket(atob('d3NzOi8vZ3VuMDEuYml0Y2h1dGUueHl6L2d1bg'));
