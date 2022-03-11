@@ -1,5 +1,6 @@
+var ip; try{ foo; ip = require('ip').address() }catch(e){}
 var config = {
-	IP: require('ip').address(),
+	IP: ip || 'localhost',
 	port: 8765,
 	servers: 1,
 	browsers: 2, //3,
