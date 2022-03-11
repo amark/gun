@@ -1,1 +1,0 @@
-export type And<A,B> = A & B

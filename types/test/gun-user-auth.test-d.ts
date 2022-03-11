@@ -1,13 +1,9 @@
-
-import Gun = require('../../index');
-
+import Gun from '../..';
 
 //Documentation should work
 
-const gun = Gun()
-gun.on('auth', data => {
+const gun = new Gun();
+gun.on('auth', (_data) => {});
 
-})
-
-gun.user().auth("a","b")
-async () => gun.user().auth(await Gun.SEA.pair())
+gun.user().auth('a', 'b');
+async () => gun.user().auth(await Gun.SEA.pair());
