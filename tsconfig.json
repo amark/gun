@@ -4,14 +4,14 @@
     "declaration": true,
   },
   "include": [
-     // only compile the type definitions by default.
-     // That is, ignore the files in 'examples/**'
-    "types/**.d.ts"
+    // only compile the type definitions by default.
+    // That is, ignore the files in 'examples/**'
+    "**/*.d.ts"
   ],
   "exclude": [
     // Among the type definitions, don't try to compile
     // the test file which implements bad types.
     // It implements bad types for testing purposes.
-    "types/index.test-d.ts"
+    "**/*.test-d.ts"
   ]
 }
