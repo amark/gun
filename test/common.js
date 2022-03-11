@@ -70,7 +70,7 @@ describe('Gun', function(){
 		} );
 		*/
 
-		describe.only('YSON', function(){
+		describe('YSON', function(){
 			it('parse', function(){
 				//var json = require('fs').readFileSync('./radix.json').toString();
 				//var json = require('fs').readFileSync('./data.json').toString();
