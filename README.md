@@ -1,8 +1,7 @@
 <p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![](https://data.jsdelivr.com/v1/package/npm/gun/badge?style=rounded)](https://www.jsdelivr.com/package/npm/gun)
+[![](https://data.jsdelivr.com/v1/package/gh/amark/gun/badge?style=rounded)](https://data.jsdelivr.com/v1/package/gh/amark/gun/stats)
 ![Build](https://github.com/amark/gun/actions/workflows/ci.yml/badge.svg)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun.svg?size=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Famark%2Fgun?ref=badge_shield)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
 **GUN** is an [ecosystem](https://gun.eco/docs/Ecosystem) of **tools** that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and [encrypted applications](https://gun.eco/docs/Cartoon-Cryptography) - like an Open Source Firebase or a Decentralized Dropbox.
