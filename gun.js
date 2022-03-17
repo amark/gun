@@ -306,7 +306,7 @@
 				}
 				ctx.latch = root.hatch; ctx.match = root.hatch = [];
 				var put = msg.put;
-				var DBG = ctx.DBG = msg.DBG, S = +new Date;
+				var DBG = ctx.DBG = msg.DBG, S = +new Date; CT = CT || S;
 				if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
 				DBG && (DBG.p = S);
 				ctx['#'] = msg['#'];
@@ -343,6 +343,7 @@
 						if(!valid(val)){ err = ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val); break }
 						//ctx.all++; //ctx.ack[soul+key] = '';
 						ham(val, key, soul, state, msg);
+						++C; // courtesy count;
 					}
 					if((kl = kl.slice(i)).length){ turn(pop); return }
 					++ni; kl = null; pop(o);
@@ -392,6 +393,8 @@
 				if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 				msg.out = universe;
 				ctx.root.on('out', msg);
+
+				CF(); // courtesy check;
 			}
 			function ack(msg){ // aggregate ACKs.
 				var id = msg['@'] || '', ctx;
@@ -413,6 +416,7 @@
 			var ERR = "Error: Invalid graph!";
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 			var L = JSON.stringify, MD = 2147483647, State = Gun.state;
+			var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
 
 		}());
 
@@ -1339,7 +1343,7 @@
 		var noop = function(){}
 		var parse = JSON.parseAsync || function(t,cb,r){ var u, d = +new Date; try{ cb(u, JSON.parse(t,r), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
 		var json = JSON.stringifyAsync || function(v,cb,r,s){ var u, d = +new Date; try{ cb(u, JSON.stringify(v,r,s), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
-		json.sucks = function(d){ if(d > 99){ Gun.log("Warning: JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
+		json.sucks = function(d){ if(d > 99){ console.log("Warning: JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
 
 		function Mesh(root){
 			var mesh = function(){};
