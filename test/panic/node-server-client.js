@@ -4,7 +4,12 @@ var config = {
     servers: 2,
     browsers: 0,
     each: 1500,
-    wait: 1
+    wait: 1,
+    route: {
+        '/': __dirname + '/index.html',
+        '/gun.js': __dirname + '/../../gun.js',
+        '/jquery.js': __dirname + '/../../examples/jquery.js'
+    }
 }
 
 /*
@@ -69,7 +74,7 @@ describe("Load test " + config.browsers + " browser(s) across " + config.servers
 
              it("GUN server has spawned!", function () {
                  var tests = [], i = 0;
-                 var client = servers[0];
+                 var client = servers.get(Object.keys(servers.clients)[0]);
                  // for each server peer, tell it to run this code:
                  return client.run(function (test) {
                      // NOTE: Despite the fact this LOOKS like we're in a closure...
@@ -94,9 +99,9 @@ describe("Load test " + config.browsers + " browser(s) across " + config.servers
                          console.log(
                              "GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.")
                      }
-                     require('gun/lib/radix').file['radata'] = true;
                      // Attach the server to gun.
-                     var gun = Gun({file: false, web: server, localStorage: false, axe: false});
+                     var gun = Gun({file: false, web: server, localStorage: false, axe: false, radisk: false});
+                     this.set('gun', gun)
                      server.listen(env.config.port + env.i, function () {
                          // This server peer is now done with the test!
                          // It has successfully launched.
@@ -107,7 +112,7 @@ describe("Load test " + config.browsers + " browser(s) across " + config.servers
 
              it("GUN client has spawned!", function () {
                  var tests = [], i = 0;
-                 var client = servers[0];
+                 var client = servers.get(Object.keys(servers.clients)[1]);
                  // for each server peer, tell it to run this code:
                  return client.run(function (test) {
                      // NOTE: Despite the fact this LOOKS like we're in a closure...
@@ -132,40 +137,36 @@ describe("Load test " + config.browsers + " browser(s) across " + config.servers
                          console.log(
                              "GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.")
                      }
-                     require('gun/lib/radix').file['radata'] = true;
                      // Attach the server to gun.
                      var gun = Gun({
                                        file: false,
                                        localStorage: false,
                                        axe: false,
-                                       peers: [`http://localhost:${env.config.port + env.i}`]
+                                       peers: [`http://localhost:${env.config.port + env.i}`],
+                                       radisk: false
                                    });
-                 });
-             }, {i: i += 1, config: config});
+                     this.set('gun', gun)
+                     test.done();
+                 }, {i: i += 1, config: config});
+             });
 
              it("Run tests", function () {
                  // This is where it gets good!
                  var tests = [], ids = {}, i = 0;
 
-                 tests.push(servers[0].run(function (test) {
+                 var client = servers.get(Object.keys(servers.clients)[1]);
+                 var server = servers.get(Object.keys(servers.clients)[0]);
+                 tests.push(server.run(function (test) {
                      test.async();
+                     var gun = this.get('gun');
                      gun.get("a").get("abc").on(function (args) {
                          console.log(args);
                          test.done();
                      });
-                     gun.get("a").get("abc").put({
-                                                     a: "b",
-                                                     c: "d",
-                                                     e: "e"
-                                                 }, function (ack) {
-                         if (ack.err) {
-                             test.fail(ack.err);
-                         }
-                         test.done();
-                     });
                  }));
-                 tests.push(servers[1].run(function (test) {
+                 tests.push(client.run(function (test) {
                      test.async();
+                     var gun = this.get('gun');
                      gun.get("a").get("abc").put({
                                                      a: "b",
                                                      c: "d",
