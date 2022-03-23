@@ -1380,7 +1380,7 @@
 						var P = opt.puff;
 						(function go(){
 							var S = +new Date;
-							var i = 0, m; while(i < P && (m = msg[i++])){ hear(m, peer) }
+							var i = 0, m; while(i < P && (m = msg[i++])){ mesh.hear(m, peer) }
 							msg = msg.slice(i); // slicing after is faster than shifting during.
 							console.STAT && console.STAT(S, +new Date - S, 'hear loop');
 							flush(peer); // force send all synchronously batched acks.
@@ -1446,7 +1446,7 @@
 						console.STAT && console.STAT(S, +new Date - S, 'say json+hash');
 					  msg._.$put = t;
 					  msg['##'] = h;
-					  say(msg, peer);
+					  mesh.say(msg, peer);
 					  delete msg._.$put;
 					}, sort);
 				}
@@ -1488,7 +1488,7 @@
 							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 							var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
 								if(!(p = ps[p])){ continue }
-								say(msg, p);
+								mesh.say(msg, p);
 							}
 							meta.raw = wr; loop = 0;
 							pl = pl.slice(i); // slicing after is faster than shifting during.
@@ -1562,7 +1562,7 @@
 					function res(err, raw){
 						if(err){ return } // TODO: Handle!!
 						meta.raw = raw; //if(meta && (raw||'').length < (999 * 99)){ meta.raw = raw } // HNPERF: If string too big, don't keep in memory.
-						say(msg, peer);
+						mesh.say(msg, peer);
 					}
 				}
 			}());
@@ -1621,6 +1621,7 @@
 				if(msg.pid){
 					if(!peer.pid){ peer.pid = msg.pid }
 					if(msg['@']){ return }
+					if(msg.pid === opt.pid){ mesh.bye(peer) }
 				}
 				mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 				delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
@@ -1712,6 +1713,7 @@
 			var wait = 2 * 999;
 			function reconnect(peer){
 				clearTimeout(peer.defer);
+				if(!opt.peers[peer.url]){ return }
 				if(doc && peer.retry <= 0){ return }
 				peer.retry = (peer.retry || opt.retry+1 || 60) - ((-peer.tried + (peer.tried = +new Date) < wait*4)?1:0);
 				peer.defer = setTimeout(function to(){
