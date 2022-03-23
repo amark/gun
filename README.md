@@ -151,7 +151,8 @@ Thanks to:
 <a href="https://github.com/ajartille">Aaron Artille</a>,
 <a href="https://github.com/timjrobinson">Tim Robinson</a>,
 <a href="https://github.com/hibas123">Fabian Stamm</a>,
-<a href="https://twitter.com/mikestaub">Mike Staub</a>
+<a href="https://twitter.com/mikestaub">Mike Staub</a>,
+<a href="https://hunterowens.com/">Hunter Owens</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
