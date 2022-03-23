@@ -14,7 +14,7 @@ describe('Gun', function(){
 			root.Gun = root.Gun;
 			root.Gun.TESTING = true;
 		} else {
-			require('../lib/ison');
+			require('../lib/yson');
 			root.Gun = require('../gun');
 			root.Gun.TESTING = true;
 	    require('../lib/store');

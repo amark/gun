@@ -1,16 +1,17 @@
 /*
-This is the first in a series of basic networking correctness tests.
-Each test itself might be dumb and simple, but built up together,
-they prove desired end goals for behavior at scale.
-1. (this file) Is a browser write is confirmed as save by multiple peers even if by daisy chain.
-2. 
+This test is almost the opposite of the first test.
+1. Alice saves data ""offline"" so nobody knows it exists.
+2. Then Carl & Dave simultaneously ask for it, even tho they are not connected to Alice and Bob does not know where it is.
+3. They must receive the data, and their requests must conflict or cause the other's to drop.
+4. Optionally: Then Ed comes along and asks for the data again, he must receive it from the closest cached peer.
 */
 
+// <-- PANIC template, copy & paste, tweak a few settings if needed...
 var config = {
 	IP: require('ip').address(),
 	port: 8765,
 	servers: 1,
-	browsers: 3,
+	browsers: 4,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -43,8 +44,10 @@ var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
 var dave = browsers.excluding([alice, carl]).pluck(1);
 var cd = new panic.ClientList([carl, dave]);
+var ed = browsers.excluding([alice, carl, dave]).pluck(1);
 
-describe("Put ACK", function(){
+// continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
+describe("GET GET", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
@@ -59,7 +62,7 @@ describe("Put ACK", function(){
 				var env = test.props;
 				test.async();
 				try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
-  			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
+  				try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 				var server = require('http').createServer(function(req, res){
 					res.end("I am "+ env.i +"!");
 				});
@@ -77,6 +80,15 @@ describe("Put ACK", function(){
 				server.listen(port, function(){
 					test.done();
 				});
+
+				/* BELOW IS HACKY NON-STANDARD TEST STUFF, DO NOT REUSE */
+				setInterval(function(){
+					var tmp = gun._.graph.a;
+					if(!tmp || !tmp.hello){ return }
+					tmp.hello = "bob_cache";
+				}, 1);
+				// END HACKY STUFF.
+
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -94,7 +106,7 @@ describe("Put ACK", function(){
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
+				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun', localStorage: false});
 				window.gun = gun;
 				window.ref = gun.get('a');
 			}, {i: i += 1, config: config})); 
@@ -102,6 +114,7 @@ describe("Put ACK", function(){
 		return Promise.all(tests);
 	});
 
+// end PANIC template -->
 
 	it("connect", function(){
 		return alice.run(function(test){
@@ -119,14 +132,15 @@ describe("Put ACK", function(){
 		return alice.run(function(test){
 			test.async();
 			
-			var say = ref._.root.opt.mesh.say;
-			ref._.root.opt.mesh.say = function(){}; // prevent from syncing
+			var dam = ref.back('opt.mesh');
+			var say = dam.say;
+			dam.say = function(){}; // prevent from syncing
 
 			var c = 0;
-			ref.put({hello: 'world'}, function(ack){ ++c });
+			ref.put({hello: 'world'}, function(ack){ ++c }); // count acks, which should be none because disconnected
 			setTimeout(function(){
-				ref._.root.opt.mesh.say = say;
-				if(c){ should_not_have_ack }
+				if(c){ return should_not_have_ack } // make sure there were none.
+				dam.say = say; // restore normal code
 				test.done();
 			}, 1000);
 		});
@@ -136,11 +150,25 @@ describe("Put ACK", function(){
 		return cd.run(function(test){
 			test.async();
 			console.log("I am Carl or Dave");
-			ref.get(function(ack){
-				console.log('ack', ack);
+			ref.get(function(ack){ // this makes sure data was found p2p, even without subscription knowledge.
 				if(ack.put){
 					test.done();
 				}
+			});
+		});
+	});
+
+	it("Get Cached", function(){
+		return ed.run(function(test){
+			test.async();
+
+			ref.get(function(ack){ // the data should reply from a cache in the daisy chain now.
+				if(test.c){ return }
+				if(ack.put.hello !== 'bob_cache'){
+					console.log("FAIL: we_want_bob_only");
+					return we_want_bob_only;
+				}
+				test.done();test.c=1;
 			});
 		});
 	});
