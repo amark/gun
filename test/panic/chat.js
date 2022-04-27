@@ -1,19 +1,3 @@
-var ip; try{ foo; ip = require('ip').address() }catch(e){}
-var config = {
-	IP: ip || 'localhost',
-	port: 8765,
-	servers: 1,
-	browsers: 2, //3,
-	each: 100000,
-	size: 1,
-	wait: 1,
-	route: {
-		'/': __dirname + '/index.html',
-		'/gun.js': __dirname + '/../../gun.js',
-		'/jquery.js': __dirname + '/../../examples/jquery.js'
-	}
-}
-
 /*
 Assume we have 3 peers in a star topology,
 
@@ -30,6 +14,23 @@ C -> PUT chat -> B (relay) -> A got.
 Using the WebRTC module, C <-> A directly, no need for a relay!
 But we're wanting to test the performance of the whole network.
 */
+
+// <-- PANIC template, copy & paste, tweak a few settings if needed...
+var ip; try{ ip = require('ip').address() }catch(e){}
+var config = {
+	IP: ip || 'localhost',
+	port: 8765,
+	servers: 1,
+	browsers: 2, //3,
+	each: 100000,
+	size: 1,
+	wait: 1,
+	route: {
+		'/': __dirname + '/index.html',
+		'/gun.js': __dirname + '/../../gun.js',
+		'/jquery.js': __dirname + '/../../examples/jquery.js'
+	}
+}
 
 var panic; try{ panic = require('panic-server') } catch(e){ console.log("PANIC not installed! `npm install panic-server panic-manager panic-client`") }
 

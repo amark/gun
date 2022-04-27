@@ -63,8 +63,9 @@
 		}
 		;(function(){ // max ~1ms or before stack overflow 
 			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
+			sT.hold = sT.hold || 9;
 			sT.poll = sT.poll || function(f){ //f(); return; // for testing
-				if((1 >= (+new Date - l)) && c++ < 3333){ f(); return }
+				if((sT.hold >= (+new Date - l)) && c++ < 3333){ f(); return }
 				sI(function(){ l = +new Date; f() },c=0)
 			}
 		}());
@@ -490,19 +491,20 @@
 				if(!Object.plain(opt)){ opt = {} }
 				if(!Object.plain(at.opt)){ at.opt = opt }
 				if('string' == typeof tmp){ tmp = [tmp] }
+				if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
 				if(tmp instanceof Array){
-					if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
+					opt.peers = {};
 					tmp.forEach(function(url){
 						var p = {}; p.id = p.url = url;
-						at.opt.peers[url] = at.opt.peers[url] || p;
+						opt.peers[url] = at.opt.peers[url] = at.opt.peers[url] || p;
 					})
 				}
-				at.opt.peers = at.opt.peers || {};
 				obj_each(opt, function each(k){ var v = this[k];
 					if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Object.empty(v)){ this[k] = v; return }
 					if(v && v.constructor !== Object && !(v instanceof Array)){ return }
 					obj_each(v, each);
 				});
+				at.opt.from = opt;
 				Gun.on('opt', at);
 				at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
 				return gun;
@@ -1580,7 +1582,6 @@
 			}
 			// for now - find better place later.
 			function send(raw, peer){ try{
-				//console.log('SAY:', peer.id, (raw||'').slice(0,250), ((raw||'').length / 1024 / 1024).toFixed(4));
 				var wire = peer.wire;
 				if(peer.say){
 					peer.say(raw);
@@ -1594,7 +1595,8 @@
 			}}
 
 			mesh.hi = function(peer){
-				var tmp = peer.wire || {};
+				var wire = peer.wire, tmp;
+				if(!wire){ mesh.wire((peer.length && {url: peer}) || peer); return }
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
@@ -1603,7 +1605,7 @@
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
 				peer.met = peer.met || +(new Date);
-				if(!tmp.hied){ root.on(tmp.hied = 'hi', peer) }
+				if(!wire.hied){ root.on(wire.hied = 'hi', peer) }
 				// @rogowski I need this here by default for now to fix go1dfish's bug
 				tmp = peer.queue; peer.queue = [];
 				setTimeout.each(tmp||[],function(msg){
@@ -1621,7 +1623,6 @@
 				if(msg.pid){
 					if(!peer.pid){ peer.pid = msg.pid }
 					if(msg['@']){ return }
-					if(msg.pid === opt.pid){ mesh.bye(peer) }
 				}
 				mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 				delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
@@ -1744,9 +1745,9 @@
 			var opt = root.opt, graph = root.graph, acks = [], disk, to, size, stop;
 			if(false === opt.localStorage){ return }
 			opt.prefix = opt.file || 'gun/';
-			try{ disk = lg[opt.prefix] = lg[opt.prefix] || JSON.parse(to = store.getItem(opt.prefix)) || {}; // TODO: Perf! This will block, should we care, since limited to 5MB anyways?
+			try{ disk = lg[opt.prefix] = lg[opt.prefix] || JSON.parse(size = store.getItem(opt.prefix)) || {}; // TODO: Perf! This will block, should we care, since limited to 5MB anyways?
 			}catch(e){ disk = lg[opt.prefix] = {}; }
-			size = (to||'').length;
+			size = (size||'').length;
 
 			root.on('get', function(msg){
 				this.to.next(msg);

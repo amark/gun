@@ -1,5 +1,7 @@
+// <-- PANIC template, copy & paste, tweak a few settings if needed...
+var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
-	IP: require('ip').address(),
+	IP: ip || 'localhost',
 	port: 8765,
 	servers: 2,
 	browsers: 2,
@@ -37,6 +39,7 @@ var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
 var again = {};
 
+// continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
 describe("The Holy Grail Test!", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
@@ -80,6 +83,7 @@ describe("The Holy Grail Test!", function(){
 		});
 		return Promise.all(tests);
 	});
+// end PANIC template --> 
 
 	it("Write initial value", function(){
 		return alice.run(function(test){
