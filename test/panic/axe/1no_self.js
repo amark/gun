@@ -1,14 +1,17 @@
 /*
-
+It is possible to connect to yourself, which just wastes bandwidth, so this test checks that we disconnect from ourselves.
 */
 
+// <-- PANIC template, copy & paste, tweak a few settings if needed...
+var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
-	IP: require('ip').address(),
+	IP: ip || 'localhost',
 	port: 8765,
 	servers: 1
 }
 
-var panic = require('panic-server');
+var panic; try{ panic = require('panic-server') } catch(e){ console.log("PANIC not installed! `npm install panic-server panic-manager panic-client`") }
+
 panic.server().on('request', function(req, res){
 	//config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
 }).listen(config.port);
@@ -29,7 +32,7 @@ manager.start({
 var servers = clients.filter('Node.js');
 var alice = servers.pluck(1);
 
-
+// continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
 describe("Do not connect to self", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
@@ -50,10 +53,10 @@ describe("Do not connect to self", function(){
 					res.end("I am "+ env.i +"!");
 				});
 				var port = env.config.port + env.i;
-				var Gun = require('gun');
-
+				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 				var peers = [], i = env.config.servers;
 				global.self_url = 'http://'+ env.config.IP + ':' + port + '/gun';
+				// make sure to connect to self/same.
 				peers.push(self_url);
 				console.log(port, " connect to ", peers);
 				var gun = Gun({file: env.i+'data', peers: peers, web: server, multicast: false});
@@ -65,6 +68,7 @@ describe("Do not connect to self", function(){
 		});
 		return Promise.all(tests);
 	});
+// end PANIC template -->
 
 	it("Drop self", function(){
 		var tests = [], i = 0;

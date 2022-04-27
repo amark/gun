@@ -7,8 +7,9 @@ This test is almost the opposite of the first test.
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
+var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
-	IP: require('ip').address(),
+	IP: ip || 'localhost',
 	port: 8765,
 	servers: 1,
 	browsers: 4,
@@ -19,7 +20,8 @@ var config = {
 	}
 }
 
-var panic = require('panic-server');
+var panic; try{ panic = require('panic-server') } catch(e){ console.log("PANIC not installed! `npm install panic-server panic-manager panic-client`") }
+
 panic.server().on('request', function(req, res){
 	config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
 }).listen(config.port);
@@ -67,7 +69,7 @@ describe("GET GET", function(){
 					res.end("I am "+ env.i +"!");
 				});
 				var port = env.config.port + env.i;
-				var Gun = require('gun');
+				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 				var peers = [], i = env.config.servers;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
@@ -113,7 +115,6 @@ describe("GET GET", function(){
 		});
 		return Promise.all(tests);
 	});
-
 // end PANIC template -->
 
 	it("connect", function(){

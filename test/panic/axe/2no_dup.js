@@ -1,7 +1,5 @@
 /*
-Make sure that our writes are all saved by the other browser.
-// Note: This test has many manual adjustments: Many features disabled, etc. consider some variations.
-// Bug: Failing due to lS ack disabled if peered, need to fix with advanced probabilistic mode.
+If Alice calls Bob and Bob calls Alice, 2 connections will be formed, which wastes bandwidth. This test checks for that and deduplicates the connections.
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
@@ -9,9 +7,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 1,
-	browsers: 2,
-	puts: 1000,
+	servers: 3,
 	route: {
 		'/': __dirname + '/index.html',
 		'/gun.js': __dirname + '/../../gun.js',
@@ -39,10 +35,6 @@ manager.start({
 });
 
 var servers = clients.filter('Node.js');
-var bob = servers.pluck(1);
-var browsers = clients.excluding(servers);
-var alice = browsers.pluck(1);
-var carl = browsers.excluding(alice).pluck(1);
 
 // continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
 describe("Put ACK", function(){
@@ -67,14 +59,14 @@ describe("Put ACK", function(){
 				var port = env.config.port + env.i;
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 				var peers = [], i = env.config.servers;
-				while(i--){
+				while(i--){ // make sure to connect to self/same.
 					var tmp = (env.config.port + (i + 1));
-					if(port != tmp){ // ignore ourselves
-						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
-					}
+					peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 				}
-				console.log(port, " connect to ", peers);
-				var gun = Gun({file: false, rad: false, localStorage: false, file: env.i+'data', peers: peers, web: server, axe: false});
+				global.peerID = String.fromCharCode(64 + env.i);
+				console.log(env.i, port, " connect to ", peers);
+				var gun = Gun({file: env.i+'data', pid: peerID, peers: peers, web: server});
+				global.gun = gun;
 				server.listen(port, function(){
 					test.done();
 				});
@@ -82,60 +74,46 @@ describe("Put ACK", function(){
 		});
 		return Promise.all(tests);
 	});
-
-	it(config.browsers +" browser(s) have joined!", function(){
-		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
-		return browsers.atLeast(config.browsers);
-	});
 // end PANIC template -->
 
-	it("Alice", function(){
-		return alice.run(function(test){
-			window.ALICE = 1;
-		}, {puts: config.puts});
-	});
-
-	it("Browsers initialized gun!", function(){
+	it("Drop duplicates", function(){
 		var tests = [], i = 0;
-		browsers.each(function(client, id){
+		servers.each(function(client){
 			tests.push(client.run(function(test){
-				try{ localStorage.clear() }catch(e){}
-				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
-				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun', localStorage: window.ALICE? false : true});
-				window.ref = gun.get('test').on(function(){ });
+				test.async();
+				var peers = gun.back('opt.peers');
+
+				gun.get('test').on(function(a){ }); // connections are lazy, so trigger a read. A feature, tho also a bug in this case, should probably have its own tests to determine if this ought be intended or not.
+
+				setTimeout(function(){
+					var p = [], o = {}, err; Object.keys(peers).forEach(function(id){
+						id = peers[id];
+						p.push(id.pid);
+						err = err || (o[id.pid] = (o[id.pid] || 0) + 1) - 1;
+					});
+					console.log(peerID, 'connected to:', p);
+					if(p.length > 2 || err){
+						console.log("FAIL: too_many_connections");
+						too_many_connections;
+						return;
+					}
+					test.done();
+				},2000);
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
-	});
-
-	it("Puts", function(){
-		return alice.run(function(test){
-			console.log("I AM ALICE");
-			test.async();
-			var i = test.props.puts, d = 0;
-			while(i--){ go(i) }
-			function go(i){
-				ref.get(i).put({hello: 'world'}, function(ack){
-					//console.log("acked:", JSON.stringify(ack.ok) || ('err:'+ack.err));
-					if(ack.err){ put_failed }
-					if(++d !== test.props.puts){ return }
-					console.log("all success", d);
-					test.done();
-				});
-			}
-		}, {puts: config.puts});
 	});
 
 	it("All finished!", function(done){
 		console.log("Done! Cleaning things up...");
 		setTimeout(function(){
 			done();
-		},1000);
+		},1);
 	});
 
 	after("Everything shut down.", function(){
-		require('./util/open').cleanup();
+		require('../util/open').cleanup();
 		return servers.run(function(){
 			process.exit();
 		});
