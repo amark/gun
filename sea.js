@@ -964,7 +964,7 @@
     User.prototype.auth = function(...args){ // TODO: this PR with arguments need to be cleaned up / refactored.
       var pair = typeof args[0] === 'object' && (args[0].pub || args[0].epub) ? args[0] : typeof args[1] === 'object' && (args[1].pub || args[1].epub) ? args[1] : null;
       var alias = !pair && typeof args[0] === 'string' ? args[0] : null;
-      var pass = alias && typeof args[1] === 'string' ? args[1] : null;
+      var pass = (alias || (pair && !(pair.priv && pair.epriv))) && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
       
@@ -1048,6 +1048,14 @@
           Gun.log("Your 'auth' callback crashed with:", e);
         }
       }
+      act.h = function(data){
+        if(!data){ return act.b() }
+        if(!data.alias && !data.auth){
+          return act.g(pair);
+        }
+        alias = data.alias;
+        act.c((act.data = data).auth);
+      }
       act.z = function(){
         // password update so encrypt private key using new pwd + salt
         act.salt = String.random(64); // pseudo-random
@@ -1084,7 +1092,10 @@
         act.b(tmp);
       }
       if(pair){
-        act.g(pair);
+        if(pair.priv && pair.epriv)
+          act.g(pair);
+        else
+          root.get('~'+pair.pub).once(act.h);
       } else
       if(alias){
         root.get('~@'+alias).once(act.a);
