@@ -1050,10 +1050,13 @@
       }
       act.h = function(data){
         if(!data){ return act.b() }
-        if(!data.alias && !data.auth){
+        alias = data.alias
+        if(!alias)
+          alias = data.alias = "~" + pair.pub        
+        if(!data.auth){
           return act.g(pair);
         }
-        alias = data.alias;
+        pair = null;
         act.c((act.data = data).auth);
       }
       act.z = function(){
