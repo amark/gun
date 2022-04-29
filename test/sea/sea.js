@@ -331,6 +331,15 @@ describe('SEA', function(){
       })
     })
 
+    it('logout, login via {pub}', function(done){
+      var pub = user.is.pub;
+      user.leave();
+      user.auth({pub:pub}, 'testing123', function(ack){
+        expect(ack.err).to.not.be.ok();
+        done();
+      })
+    })
+
     it('save data', function(done){
       user.get('a').get('b').put(0, function(ack){
         expect(ack.err).to.not.be.ok();
@@ -765,3 +774,4 @@ describe('SEA', function(){
 })
 
 }());
+
