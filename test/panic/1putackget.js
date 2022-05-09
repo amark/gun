@@ -21,7 +21,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 2,
+	relays: 2,
 	browsers: 2,
 	route: {
 		'/': __dirname + '/index.html',
@@ -40,7 +40,7 @@ var clients = panic.clients;
 var manager = require('panic-manager')();
 
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){
+    clients: Array(config.relays).fill().map(function(u, i){
 			return {
 				type: 'node',
 				port: config.port + (i + 1)
@@ -49,10 +49,10 @@ manager.start({
     panic: 'http://' + config.IP + ':' + config.port
 });
 
-var servers = clients.filter('Node.js');
-var bob = servers.pluck(1);
-var carl = servers.excluding(bob).pluck(1);
-var browsers = clients.excluding(servers);
+var relays = clients.filter('Node.js');
+var bob = relays.pluck(1);
+var carl = relays.excluding(bob).pluck(1);
+var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var dave = browsers.excluding(alice).pluck(1);
 
@@ -61,13 +61,13 @@ describe("Put ACK", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
-	it("Servers have joined!", function(){
-		return servers.atLeast(config.servers);
+	it("Relays have joined!", function(){
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN started!", function(){
 		var tests = [], i = 0;
-		servers.each(function(client){
+		relays.each(function(client){
 			tests.push(client.run(function(test){
 				var env = test.props;
 				test.async();
@@ -78,7 +78,7 @@ describe("Put ACK", function(){
 				});
 				var port = env.config.port + env.i;
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
-				var peers = [], i = env.config.servers;
+				var peers = [], i = env.config.relays;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
 					if(port != tmp){ // ignore ourselves
@@ -138,10 +138,10 @@ describe("Put ACK", function(){
 				var dam = ref.back('opt.mesh');
 				var hear = dam.hear;
 				dam.hear = function(raw, peer){ // hijack the listener
-					try{var msg = JSON.parse(raw);
+					var msg; try{msg = JSON.parse(raw);
 					}catch(e){ console.log("Note: This test not support RAD serialization format yet, use JSON.") }
 					hear(raw, peer);
-					ref.hear.push(msg); // add to count
+					ref.hear.push(msg || raw); // add to count
 				}
 				var say = dam.say;
 				dam.say = function(raw, peer){
@@ -151,7 +151,7 @@ describe("Put ACK", function(){
 					(ref.say || (ref.say = [])).push(JSON.parse(msg)); // add to count.
 				}
 			}
-		}, {acks: config.servers});
+		}, {acks: config.relays});
 	});
 
 	it("Get", function(){
@@ -191,7 +191,7 @@ describe("Put ACK", function(){
 				clearTimeout(to);
 				to = setTimeout(test.done, 1000);
 			});
-		}, {acks: config.servers});
+		}, {acks: config.relays});
 	});
 
 	it("DAM", function(){
@@ -200,7 +200,7 @@ describe("Put ACK", function(){
 			if(ref.hear.length > 1){ return heard_to_much } // Alice should hear the GET
 			if(ref.say){ return said_too_much } // But should not reply because their reply hash dedups with an earlier reply that was added to the GET.
 			test.done()
-		}, {acks: config.servers});
+		}, {acks: config.relays});
 	});
 
 	it("All finished!", function(done){
@@ -212,7 +212,7 @@ describe("Put ACK", function(){
 
 	after("Everything shut down.", function(){
 		require('./util/open').cleanup();
-		return servers.run(function(){
+		return relays.run(function(){
 			process.exit();
 		});
 	});

@@ -1596,7 +1596,7 @@
 
 			mesh.hi = function(peer){
 				var wire = peer.wire, tmp;
-				if(!wire){ mesh.wire((peer.length && {url: peer}) || peer); return }
+				if(!wire){ mesh.wire((peer.length && {url: peer, id: peer}) || peer); return }
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {

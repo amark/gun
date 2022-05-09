@@ -20,7 +20,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 1,
+	relays: 1,
 	browsers: 2, //3,
 	each: 100000,
 	size: 1,
@@ -42,40 +42,40 @@ panic.server().on('request', function(req, res){ // Static server
 // We need a way to reference all of them.
 var clients = panic.clients;
 
-// Some of the clients may be NodeJS servers on different machines.
+// Some of the clients may be NodeJS relays on different machines.
 // PANIC manager is a nifty tool that lets us remotely spawn them.
 var manager = require('panic-manager')();
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){ // Create a bunch of servers.
+    clients: Array(config.relays).fill().map(function(u, i){ // Create a bunch of relays.
 			return {
 				type: 'node',
-				port: config.port + (i + 1) // They'll need unique ports to start their servers on, if we run the test on 1 machine.
+				port: config.port + (i + 1) // They'll need unique ports to start on, if we run the test on 1 machine.
 			}
     }),
     panic: 'http://' + config.IP + ':' + config.port // Auto-connect to our panic server.
 });
 
-// Now lets divide our clients into "servers" and "browsers".
-var servers = clients.filter('Node.js');
-var browsers = clients.excluding(servers);
+// Now lets divide our clients into "relays" and "browsers".
+var relays = clients.filter('Node.js');
+var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
 
-describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +" server(s)!", function(){
+describe("Load test "+ config.browsers +" browser(s) across "+ config.relays +" server(s)!", function(){
 
 	// We'll have to manually launch the browsers,
 	// So lets up the timeout so we have time to do that.
 	this.timeout(50 * 60 * 1000);
 
-	it("Servers have joined!", function(){
+	it("Relays have joined!", function(){
 		// Alright, lets wait until enough gun server peers are connected.
-		return servers.atLeast(config.servers);
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN has spawned!", function(){
 		// Once they are, we need to actually spin up the gun server.
 		var tests = [], i = 0;
-		servers.each(function(client){
+		relays.each(function(client){
 			// for each server peer, tell it to run this code:
 			tests.push(client.run(function(test){
 				// NOTE: Despite the fact this LOOKS like we're in a closure...
@@ -92,7 +92,7 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				// Launch the server and start gun!
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 				// Attach the server to gun.
-				var gun = Gun({file: env.i+'data', web: server, axe: false, localStorage: false, radisk: false});
+				var gun = Gun({file: env.i+'data', web: server, localStorage: false, radisk: false});
 				server.listen(env.config.port + env.i, function(){
 					// This server peer is now done with the test!
 					// It has successfully launched.
@@ -196,8 +196,8 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.servers +"
 				location.reload();
 			}, 15 * 1000);
 		});
-		// And shut down all the servers.
-		return servers.run(function(){
+		// And shut down all the relays.
+		return relays.run(function(){
 			process.exit();
 		});
 	});

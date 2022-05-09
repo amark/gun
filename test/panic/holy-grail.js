@@ -3,7 +3,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 2,
+	relays: 2,
 	browsers: 2,
 	route: {
 		'/': __dirname + '/index.html',
@@ -22,7 +22,7 @@ var clients = panic.clients;
 var manager = require('panic-manager')();
 
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){
+    clients: Array(config.relays).fill().map(function(u, i){
 			return {
 				type: 'node',
 				port: config.port + (i + 1)
@@ -31,10 +31,10 @@ manager.start({
     panic: 'http://' + config.IP + ':' + config.port
 });
 
-var servers = clients.filter('Node.js');
-var server = servers.pluck(1);
-var spawn = servers.excluding(server).pluck(1);
-var browsers = clients.excluding(servers);
+var relays = clients.filter('Node.js');
+var relay = relays.pluck(1);
+var spawn = relays.excluding(relay).pluck(1);
+var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
 var again = {};
@@ -44,12 +44,12 @@ describe("The Holy Grail Test!", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
-	it("Servers have joined!", function(){
-		return servers.atLeast(config.servers);
+	it("relays have joined!", function(){
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN started!", function(){
-		return server.run(function(test){
+		return relay.run(function(test){
 			var env = test.props;
 			test.async();
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
@@ -111,8 +111,8 @@ describe("The Holy Grail Test!", function(){
 		})
 	});
 
-	it("Server has crashed and been wiped!", function(){
-		return server.run(function(test){
+	it("Relay has crashed and been wiped!", function(){
+		return relay.run(function(test){
 			console.log(3);
 			var env = test.props;
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
@@ -133,7 +133,7 @@ describe("The Holy Grail Test!", function(){
 				var err;
 				try{ new WebSocket('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun') }catch(e){ err = e }
 				if(!err){
-					test.fail("Server did not crash.");
+					test.fail("Relay did not crash.");
 				}
 			}
 			ref.put("Alice");
@@ -148,7 +148,7 @@ describe("The Holy Grail Test!", function(){
 				var err;
 				try{ new WebSocket('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun') }catch(e){ err = e }
 				if(!err){
-					test.fail("Server did not crash.");
+					test.fail("Relay did not crash.");
 				}
 			}
 			ref.put("Bob");
@@ -282,7 +282,7 @@ describe("The Holy Grail Test!", function(){
 
 	after("Everything shut down.", function(){
 		require('./util/open').cleanup();
-		return servers.run(function(){
+		return relays.run(function(){
 			process.exit();
 		});
 	});
