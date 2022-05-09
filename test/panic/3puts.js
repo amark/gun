@@ -9,7 +9,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 1,
+	relays: 1,
 	browsers: 2,
 	puts: 1000,
 	route: {
@@ -29,7 +29,7 @@ var clients = panic.clients;
 var manager = require('panic-manager')();
 
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){
+    clients: Array(config.relays).fill().map(function(u, i){
 			return {
 				type: 'node',
 				port: config.port + (i + 1)
@@ -38,9 +38,9 @@ manager.start({
     panic: 'http://' + config.IP + ':' + config.port
 });
 
-var servers = clients.filter('Node.js');
-var bob = servers.pluck(1);
-var browsers = clients.excluding(servers);
+var relays = clients.filter('Node.js');
+var bob = relays.pluck(1);
+var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
 
@@ -49,13 +49,13 @@ describe("Put ACK", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
-	it("Servers have joined!", function(){
-		return servers.atLeast(config.servers);
+	it("Relays have joined!", function(){
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN started!", function(){
 		var tests = [], i = 0;
-		servers.each(function(client){
+		relays.each(function(client){
 			tests.push(client.run(function(test){
 				var env = test.props;
 				test.async();
@@ -66,7 +66,7 @@ describe("Put ACK", function(){
 				});
 				var port = env.config.port + env.i;
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
-				var peers = [], i = env.config.servers;
+				var peers = [], i = env.config.relays;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
 					if(port != tmp){ // ignore ourselves
@@ -136,7 +136,7 @@ describe("Put ACK", function(){
 
 	after("Everything shut down.", function(){
 		require('./util/open').cleanup();
-		return servers.run(function(){
+		return relays.run(function(){
 			process.exit();
 		});
 	});
