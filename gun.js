@@ -1667,7 +1667,7 @@
 	})(USE, './mesh');
 
 	;USE(function(module){
-		var Gun = USE('../index');
+		var Gun = USE('./index');
 		Gun.Mesh = USE('./mesh');
 
 		// TODO: resync upon reconnect online/offline
