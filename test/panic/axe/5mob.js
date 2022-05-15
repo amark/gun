@@ -13,12 +13,12 @@ But then 300K peers connect to the 1st one.
 We want to then see the peers move to the other relays, such that the 3 have 100K peers each.
 
 (1) To simulate this, we will have 3 peers connect starting like this:
-  ..s1-----s2--s3
+  ..r1-----r2--r3
   ./\.\..........
   b1.b2.b3.......
 
 (2) By the end of the test, the "mob" logic should rebalance the load to look like this:
-  ..s1--s2--s3..
+  ..r1--r2--r3..
   ./....|.....\.
   b1....b2....b3
 
@@ -32,7 +32,7 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	servers: 3,
+	relays: 3,
 	browsers: 3,
 	route: {
 		'/': __dirname + '/../index.html',
@@ -51,7 +51,7 @@ var clients = panic.clients;
 var manager = require('panic-manager')();
 
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){
+    clients: Array(config.relays).fill().map(function(u, i){
 			return {
 				type: 'node',
 				port: config.port + (i + 1)
@@ -60,39 +60,39 @@ manager.start({
     panic: 'http://' + config.IP + ':' + config.port
 });
 
-var servers = clients.filter('Node.js');
-var s1 = servers.pluck(1);
-var s2 = servers.excluding(s1).pluck(1);
-var s3 = servers.excluding([s1,s2]).pluck(1);
+var relays = clients.filter('Node.js');
+var r1 = relays.pluck(1);
+var r2 = relays.excluding(r1).pluck(1);
+var r3 = relays.excluding([r1,r2]).pluck(1);
 
-var browsers = clients.excluding(servers);
+var browsers = clients.excluding(relays);
 var b1 = browsers.pluck(1);
-var b2 = servers.excluding(b1).pluck(1);
-var b3 = servers.excluding([b1,b2]).pluck(1);
+var b2 = relays.excluding(b1).pluck(1);
+var b3 = relays.excluding([b1,b2]).pluck(1);
 
 // continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
-describe("Put ACK", function(){
+describe("Mob test.", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
-	it("Servers have joined!", function(){
-		return servers.atLeast(config.servers);
+	it("Relays have joined!", function(){
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN started!", function(){
 		var tests = [], i = 0;
-		servers.each(function(client){
+		relays.each(function(client){
 			tests.push(client.run(function(test){
 				var env = test.props;
 				test.async();
 				try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
-  				try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
+  			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 				var server = require('http').createServer(function(req, res){
 					res.end("I am "+ env.i +"!");
 				});
 				var port = env.config.port + env.i;
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
-				var peers = [], i = env.config.servers;
+				var peers = [], i = env.config.relays;
 				while(i--){ // make sure to connect to self/same.
 					var tmp = (env.config.port + (i + 1));
 					peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
@@ -100,9 +100,7 @@ describe("Put ACK", function(){
 				console.log(port, " connect to ", peers);
 				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 3, multicast: false});
 				global.gun = gun;
-				Object.port = port;
 				server.listen(port, function(){
-					console.log(port, 'DONE');
 					test.done();
 				});
 				
@@ -125,7 +123,6 @@ describe("Put ACK", function(){
 				test.async();
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
-				Object.tid = test.props.i;
 				
 				// start with the first peer:
 				var env = test.props;
@@ -135,11 +132,10 @@ describe("Put ACK", function(){
 				var mesh = gun.back('opt.mesh'); // overload...
 				mesh.hear['mob'] = function(msg, peer){
 					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
-					gun.CHANGED = 1;
 					clearTimeout(gun.TO); gun.TO = setTimeout(end, 2000);
-					console.log(1111, 'Browser', env.i, 'choose', one, 'of', JSON.stringify(msg.peers), 'got from', peer.url);//, 'from', msg.peers+'');
 					if(!msg.peers){ return }
 					var one = msg.peers[Math.floor(Math.random()*msg.peers.length)];
+					console.log('Browser', env.i, 'chooses', one, 'from', JSON.stringify(msg.peers), 'that', peer.url, 'suggested, because it is mobbed.');//, 'from', msg.peers+'');
 					mesh.bye(peer); // Idea: Should keep track of failed ones to reduce repeats. For another feature/module that deserves its own separate test.
 					mesh.hi(one);
 				}
@@ -167,8 +163,6 @@ describe("Put ACK", function(){
 		browsers.each(function(browser, id){
 			tests.push(browser.run(function(test){
 				test.async();
-				
-				//console.log(2222222, "I don't understand", test.props.i, 'how can I have non URL peers?', ''+Object.keys(gun.back('opt.peers')));
 				ref.get('b'+test.props.i).put(''+Object.keys(gun.back('opt.peers')));
 				// NOTE: Above line was put here as a workaround. Even if this line was in the prior step, this test should still pass. Make sure there is another test that correctly checks for reconnect logic properly restoring sync.
 
@@ -176,7 +170,7 @@ describe("Put ACK", function(){
 					if(!data.b1 || !data.b2 || !data.b3){ return }
 					clearTimeout(test.to);
 					test.to = setTimeout(function(){
-						//var d = {...data}; delete d._; console.log(test.props.i, "update:", JSON.stringify(d));
+						var d = {}; Object.keys(data).sort().forEach(function(i){ d[i] = data[i] }); delete d._; console.log(test.props.i, "sees", JSON.stringify(d));
 						var now = Object.keys(gun.back('opt.peers'));
 						if(now.length > 1){
 							console.log("FAIL: too_many_connections");
@@ -216,7 +210,7 @@ describe("Put ACK", function(){
 
 	after("Everything shut down.", function(){
 		require('../util/open').cleanup();
-		return servers.run(function(){
+		return relays.run(function(){
 			process.exit();
 		});
 	});
