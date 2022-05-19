@@ -370,6 +370,7 @@
 				}
 				ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 				var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; id.toJSON = id.toString; // this *trick* makes it compatible between old & new versions.
+				root.dup.track(id)['#'] = msg['#']; // fixes new OK acks for RPC like RTC.
 				DBG && (DBG.ph = DBG.ph || +new Date);
 				root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 			}
@@ -399,13 +400,18 @@
 			}
 			function ack(msg){ // aggregate ACKs.
 				var id = msg['@'] || '', ctx;
-				if(!(ctx = id._)){ return }
+				if(!(ctx = id._)){
+					var dup = (dup = msg.$) && (dup = dup._) && (dup = dup.root) && (dup = dup.dup);
+					if(!(dup = dup.check(id))){ return }
+					msg['@'] = dup['#'] || msg['@'];
+					return;
+				}
 				ctx.acks = (ctx.acks||0) + 1;
 				if(ctx.err = msg.err){
 					msg['@'] = ctx['#'];
 					fire(ctx); // TODO: BUG? How it skips/stops propagation of msg if any 1 item is error, this would assume a whole batch/resync has same malicious intent.
 				}
-				if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks
+				if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks. NOTE: If a storage peer ACKs synchronously then the PUT loop has not even counted up how many items need to be processed, so ctx.STOP flags this and adds only 1 callback to the end of the PUT loop.
 				back(ctx);
 			}
 			function back(ctx){
@@ -1092,7 +1098,7 @@
 				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
-			(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
+			(as.via._).on('out', {put: as.out = as.graph, ok: as.ok || as.opt, opt: as.opt, '#': ask, _: tmp});
 		}; ran.end = function(stun,root){
 			stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 			if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }

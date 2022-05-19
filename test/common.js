@@ -4045,6 +4045,76 @@ describe('Gun', function(){
 				nopasstun(0, gunB);
 				nopasstun(done, gunC);
 			}, 100);
+		});		
+
+		it('ack aggregation bypass', function(done){
+			var alice = GUN({localStorage: false});
+			var bob = GUN({localStorage: false});
+			var carl = GUN({localStorage: false});
+
+			var adam = alice.back('opt.mesh');
+			var asay = adam.say;
+
+			var bdam = bob.back('opt.mesh');
+			var bsay = bdam.say;
+
+			var cdam = carl.back('opt.mesh');
+			var csay = cdam.say;
+
+			//console.only.i = 1;
+			adam.say = function(raw, peer){
+				console.only(2, 'adam says:', raw);
+				console.only(1, '...');
+				bdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				asay(raw, peer);
+			}
+			bdam.say = function(raw, peer){
+				console.only(7, "bob the relay is like YO", raw);
+				adam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				cdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				bsay(raw, peer);
+			}
+			cdam.say = function(raw, peer){
+				console.only(4, "carl speaks out:", raw);
+				console.only(3, "...");
+				bdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				csay(raw, peer);
+			}
+
+			carl.on('put', async function(msg){
+				this.to.next(msg);
+
+				var tmp = msg.put;
+				
+				//if(Math.random() > 0.5){ return; }
+				//console.log(msg.put);
+
+				//localStorage[tmp['#']+tmp['.']] = tmp[':'];
+
+				setTimeout(function(){
+					carl.on('out', {'@': msg['#']+'', ok: {BANANA: 9}});
+				}, 10);
+			});
+
+			alice.on('get', function(msg){ setTimeout(function(){ Gun.on.get.ack(msg); },9) })
+
+
+			setTimeout(async function(){
+				var pair = await SEA.pair();
+				var user = alice.user();
+				setTimeout(function(){
+					var c = 0;
+					//alice.on('auth', function(){
+					alice.get('test').put({a: 1, b: 2, c: 3}, function(ack){
+						//console.log("my data got saved?", ack);
+						
+						if(ack.ok.BANANA && ++c === c){
+							done();
+						}
+					}, {acks: 99});
+					//}); user.auth(pair);
+				},10);
+			}, 100);
 		});
 
 		/*it.only('Make sure circular contexts are not copied', function(done){
