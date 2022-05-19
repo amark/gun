@@ -1,5 +1,5 @@
 
-var Gun = require('../index');
+var Gun = require('./index');
 Gun.Mesh = require('./mesh');
 
 // TODO: resync upon reconnect online/offline
