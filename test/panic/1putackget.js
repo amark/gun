@@ -86,7 +86,7 @@ describe("Put ACK", function(){
 					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server, axe: false}); // not working with axe currently!
+				var gun = Gun({file: env.i+'data', peers: peers, web: server}); // Note: test with AXE on & off.
 				server.listen(port, function(){
 					test.done();
 				});

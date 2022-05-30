@@ -25,6 +25,8 @@ We want to then see the peers move to the other relays, such that the 3 have 100
 If it does, the test passes.
 
 (Note: At the end of this test, it uses GUN to sync data about what peers are connected to whom. While this is useful in that it also verifies that sync between b1 <-> b3 works regardless of whether direct or indirect connections, as such it could result in errors: If GUN has a bug, the AXE test may fail even if it is not the fault of AXE, and likewise - the usage of GUN in this test is contrived, it passing has 0 correlation that GUN is correctly handling the sync logic. In fact, assume it is not, make sure you use another test to verify that.)
+
+Thanks @Drader for helping with these tests!!!!
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
@@ -133,9 +135,10 @@ describe("Mob test.", function(){
 				mesh.hear['mob'] = function(msg, peer){
 					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
 					clearTimeout(gun.TO); gun.TO = setTimeout(end, 2000);
+					console.log("getting mobbed", msg);
 					if(!msg.peers){ return }
-					var one = msg.peers[Math.floor(Math.random()*msg.peers.length)];
-					console.log('Browser', env.i, 'chooses', one, 'from', JSON.stringify(msg.peers), 'that', peer.url, 'suggested, because it is mobbed.');//, 'from', msg.peers+'');
+					var peers = Object.keys(msg.peers), one = peers[Math.floor(Math.random()*peers.length)];
+					console.log('Browser', env.i, 'chooses', one, 'from', JSON.stringify(peers), 'that', peer.url, 'suggested, because it is mobbed.');//, 'from', msg.peers+'');
 					mesh.bye(peer); // Idea: Should keep track of failed ones to reduce repeats. For another feature/module that deserves its own separate test.
 					mesh.hi(one);
 				}
