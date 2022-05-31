@@ -1,20 +1,21 @@
 /**
+ * Heroku CLI REQUIRED!
+ * 
  * NOTE: Does not work with npm installed heroku-cli
+ *  - Uninstall with: npm uninstall heroku -g
+ *  - Install Heroku with: curl https://cli-assets.heroku.com/install.sh | sh
  * 
- * Heroku CLI REQUIRED! Uninstall with: npm uninstall heroku -g
- * Install Heroku with: curl https://cli-assets.heroku.com/install.sh | sh
- * Login Heroku with: heroku login
+ * 1. Login Heroku with: heroku login
+ * 2. After login you can run test
+ *    like: $ mocha test/bug/1243.js 
  * 
- * after login you can run test
- * like: $ mocha test/bug/1243.js 
- * 
- */
- const { exec } = require('child_process');
- const expect = require('../expect');
- const path = require('path');
- const http = require("https");
+*/
 
- const outputData = false;
+const expect = require('../expect');
+const path = require('path');
+const http = require("https");
+
+const outputData = false;
 
 function request(hostname, done){
   http.get('https://'+hostname+'/',{
