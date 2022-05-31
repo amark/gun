@@ -1067,6 +1067,37 @@ describe('Gun', function(){
 		});
 	});
 
+	describe('API Chain Features', function(){
+
+		describe('Gun.chain.fork', function(){
+			var gun = Gun();
+			var fork;
+			it('create fork', function(done){
+				fork = gun.fork().wire();
+				done();
+			});			
+			it('put data via fork', function(done){								
+				fork.get("fork-test").get("fork").put("test123").once(()=>done());				
+			});			
+			it('get data via main', function(done){								
+				gun.get("fork-test").get("fork").once((data)=>{
+					expect(data).to.be("test123");
+					done();
+				});				
+			});			
+			it('put data via main', function(done){								
+				gun.get("fork-test").get("main").put("test321").once(()=>done());				
+			});			
+			it('get data via fork', function(done){								
+				fork.get("fork-test").get("main").once((data)=>{
+					expect(data).to.be("test321");
+					done();
+				});				
+			});
+		})
+
+	})
+
 	describe('API', function(){
 		var gopt = {wire:{put:function(n,cb){cb()},get:function(k,cb){cb()}}};
 		if(Gun.window && location.search){
