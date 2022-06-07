@@ -39,6 +39,7 @@ Gun.ask = require('./ask');
 		return gun;
 	}
 	function universe(msg){
+		// TODO: BUG! msg.out = null being set!
 		//if(!F){ var eve = this; setTimeout(function(){ universe.call(eve, msg,1) },Math.random() * 100);return; } // ADD F TO PARAMS!
 		if(!msg){ return }
 		if(msg.out === universe){ this.to.next(msg); return }
@@ -70,7 +71,7 @@ Gun.ask = require('./ask');
 		}
 		ctx.latch = root.hatch; ctx.match = root.hatch = [];
 		var put = msg.put;
-		var DBG = ctx.DBG = msg.DBG, S = +new Date;
+		var DBG = ctx.DBG = msg.DBG, S = +new Date; CT = CT || S;
 		if(put['#'] && put['.']){ /*root && root.on('put', msg);*/ return } // TODO: BUG! This needs to call HAM instead.
 		DBG && (DBG.p = S);
 		ctx['#'] = msg['#'];
@@ -107,13 +108,14 @@ Gun.ask = require('./ask');
 				if(!valid(val)){ err = ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val); break }
 				//ctx.all++; //ctx.ack[soul+key] = '';
 				ham(val, key, soul, state, msg);
+				++C; // courtesy count;
 			}
 			if((kl = kl.slice(i)).length){ turn(pop); return }
 			++ni; kl = null; pop(o);
 		}());
 	} Gun.on.put = put;
 	// TODO: MARK!!! clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
-	// WASIS BUG! first .once( undef 2nd good. .off othe rpeople: .open
+	// WASIS BUG! local peer not ack. .off other people: .open
 	function ham(val, key, soul, state, msg){
 		var ctx = msg._||'', root = ctx.root, graph = root.graph, lot, tmp;
 		var vertex = graph[soul] || empty, was = state_is(vertex, key, 1), known = vertex[key];
@@ -132,6 +134,7 @@ Gun.ask = require('./ask');
 		}
 		ctx.stun++; // TODO: 'forget' feature in SEA tied to this, bad approach, but hacked in for now. Any changes here must update there.
 		var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; id.toJSON = id.toString; // this *trick* makes it compatible between old & new versions.
+		root.dup.track(id)['#'] = msg['#']; // fixes new OK acks for RPC like RTC.
 		DBG && (DBG.ph = DBG.ph || +new Date);
 		root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
 	}
@@ -156,16 +159,23 @@ Gun.ask = require('./ask');
 		if(!(msg = ctx.msg) || ctx.err || msg.err){ return }
 		msg.out = universe;
 		ctx.root.on('out', msg);
+
+		CF(); // courtesy check;
 	}
 	function ack(msg){ // aggregate ACKs.
 		var id = msg['@'] || '', ctx;
-		if(!(ctx = id._)){ return }
+		if(!(ctx = id._)){
+			var dup = (dup = msg.$) && (dup = dup._) && (dup = dup.root) && (dup = dup.dup);
+			if(!(dup = dup.check(id))){ return }
+			msg['@'] = dup['#'] || msg['@'];
+			return;
+		}
 		ctx.acks = (ctx.acks||0) + 1;
 		if(ctx.err = msg.err){
 			msg['@'] = ctx['#'];
 			fire(ctx); // TODO: BUG? How it skips/stops propagation of msg if any 1 item is error, this would assume a whole batch/resync has same malicious intent.
 		}
-		if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks
+		if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks. NOTE: If a storage peer ACKs synchronously then the PUT loop has not even counted up how many items need to be processed, so ctx.STOP flags this and adds only 1 callback to the end of the PUT loop.
 		back(ctx);
 	}
 	function back(ctx){
@@ -177,6 +187,7 @@ Gun.ask = require('./ask');
 	var ERR = "Error: Invalid graph!";
 	var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 	var L = JSON.stringify, MD = 2147483647, State = Gun.state;
+	var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
 
 }());
 
@@ -250,19 +261,20 @@ Gun.ask = require('./ask');
 		if(!Object.plain(opt)){ opt = {} }
 		if(!Object.plain(at.opt)){ at.opt = opt }
 		if('string' == typeof tmp){ tmp = [tmp] }
+		if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
 		if(tmp instanceof Array){
-			if(!Object.plain(at.opt.peers)){ at.opt.peers = {}}
+			opt.peers = {};
 			tmp.forEach(function(url){
 				var p = {}; p.id = p.url = url;
-				at.opt.peers[url] = at.opt.peers[url] || p;
+				opt.peers[url] = at.opt.peers[url] = at.opt.peers[url] || p;
 			})
 		}
-		at.opt.peers = at.opt.peers || {};
 		obj_each(opt, function each(k){ var v = this[k];
 			if((this && this.hasOwnProperty(k)) || 'string' == typeof v || Object.empty(v)){ this[k] = v; return }
 			if(v && v.constructor !== Object && !(v instanceof Array)){ return }
 			obj_each(v, each);
 		});
+		at.opt.from = opt;
 		Gun.on('opt', at);
 		at.opt.uuid = at.opt.uuid || function uuid(l){ return Gun.state().toString(36).replace('.','') + String.random(l||12) }
 		return gun;
