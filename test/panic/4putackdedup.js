@@ -1,5 +1,5 @@
 /*
-Assume we have 5000 peers in a star topology,
+Assume we have 5000 peers in a star topology:
 
  ..______r1______..
  ./.../..|...\...\.
