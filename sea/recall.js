@@ -7,7 +7,7 @@
         if(SEA.window){
           try{
             var sS = {};
-            sS = window.sessionStorage;
+            sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
             if(sS){
               (root._).opt.remember = true;
               ((gun.back('user')._).opt||opt).remember = true;
