@@ -3,8 +3,8 @@ This is the first in a series of basic networking correctness tests.
 Each test itself might be dumb and simple, but built up together,
 they prove desired end goals for behavior at scale.
 
-1. (this file) Makes sure that a browser receives daisy chain acks that data was saved.
-2. (this file) Makes sure the browser receives a deduplicated ACK when data is requested across the daisy chains.
+1. (this file) When Alice saves data, acks should daisy chain back to her.
+2. (this file) When Dave asks for data, Bob & Alice do not need to reply because it would be the same as Carl's reply.
 
 Assume we have a 4 peer federated-like topology,
 
@@ -86,7 +86,7 @@ describe("Put ACK", function(){
 					}
 				}
 				console.log(port, " connect to ", peers);
-				var gun = Gun({file: env.i+'data', peers: peers, web: server}); // Note: test with AXE on & off.
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, axe: false}); // Note: test with AXE on & off.
 				server.listen(port, function(){
 					test.done();
 				});
@@ -107,8 +107,10 @@ describe("Put ACK", function(){
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
+
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
 				window.ref = gun.get('a');
+
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -122,34 +124,34 @@ describe("Put ACK", function(){
 			var c = test.props.acks, acks = {}, tmp;
 			c = c < 2? 2 : c; // at least 2 acks.
 			ref.put({hello: 'world'}, function(ack){
-				//console.log("ack:", ack['#']);
 				acks[ack['#']] = 1; // uniquely list all the ack IDs.
 				tmp = Object.keys(acks).length;
-				console.log(tmp, "save");
 				if(tmp >= c){ // when there are enough
-					test.done(); // confirm test passes
-					wire(); // start sniffing for future tests
+					setTimeout(function(){
+						test.done(); // confirm test passes
+						wire(); // start sniffing for future tests
+					}, 1000 * 2);
 					return;
 				}
-			}, {acks: c});
+			}, {acks: c,  ok: c*10}); // TODO: Upon breaking change (> 2020) update this test with the deprecated `acks` behavior.
 			
 			function wire(){ // for the future tests, track how many wire messages are heard/sent.
 				ref.hear = ref.hear || [];
 				var dam = ref.back('opt.mesh');
 				var hear = dam.hear;
-				dam.hear = function(raw, peer){ // hijack the listener
-					var msg; try{msg = JSON.parse(raw);
-					}catch(e){ console.log("Note: This test not support RAD serialization format yet, use JSON.") }
+				dam.hear = function(raw, peer){
 					hear(raw, peer);
-					ref.hear.push(msg || raw); // add to count
+					ref.hear.push(raw);
 				}
-				var say = dam.say;
-				dam.say = function(raw, peer){
-					var yes = say(raw, peer);
-					if(yes === false){ return }
-					console.log(msg);
-					(ref.say || (ref.say = [])).push(JSON.parse(msg)); // add to count.
-				}
+
+				var peers = ref.back('opt.peers');
+				Object.keys(peers).forEach(function(peer){
+					peer = peers[peer];
+					peer.say = function(raw){
+						(ref.say || (ref.say = [])).push(raw); // add to count.
+						peer.wire.send(raw);
+					}
+				});
 			}
 		}, {acks: config.relays});
 	});
@@ -176,7 +178,7 @@ describe("Put ACK", function(){
 			var hear = dam.hear;
 			dam.hear = function(raw, peer){ // hijack listener
 				var msg = JSON.parse(raw);
-				console.log('hear:', msg);
+				//console.log('hear:', msg);
 				hear(raw, peer);
 				ref.hear.push(msg);
 

@@ -1086,9 +1086,10 @@
 		function ran(as){
 			if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
 			if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+			//(as.retry = function(){ as.acks = 0;
 			var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 				root.on('ack', ack);
-				if(ack.err && as.ok){ Gun.log(ack) }
+				if(ack.err && !ack.lack){ Gun.log(ack) }
 				if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 				if(!as.ack){ return }
 				as.ack(ack, this);
@@ -1099,7 +1100,9 @@
 				setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 			}).hatch = tmp; // this is not official yet ^
 			//console.log(1, "PUT", as.run, as.graph);
+			if(as.ack && !as.ok){ as.ok = as.acks || 9 } // TODO: In future! Remove this! This is just old API support.
 			(as.via._).on('out', {put: as.out = as.graph, ok: as.ok && {'@': as.ok+1}, opt: as.opt, '#': ask, _: tmp});
+			//})();
 		}; ran.end = function(stun,root){
 			stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 			if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
@@ -1479,11 +1482,10 @@
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
 					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
 					if(!peer && ack){ // still no peer, then ack daisy chain 'tunnel' got lost.
-						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to self, ignore.
-						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
+						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to ourself, ignore.
+						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to'); // TODO: Delete this now. Dropping lost ACKs is protocol fine now.
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
-					if(msg.put && (tmp = msg.ok)){ msg.ok = {'@':(tmp['@']||1)-1, '/': (tmp['/']==msg._.near)? mesh.near : tmp['/']}; }
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
@@ -1557,6 +1559,7 @@
 						}
 						if(i > 1){ msg['><'] = to.join() } // TODO: BUG! This gets set regardless of peers sent to! Detect?
 					}
+					if(msg.put && (tmp = msg.ok)){ msg.ok = {'@':(tmp['@']||1)-1, '/': (tmp['/']==msg._.near)? mesh.near : tmp['/']}; }
 					if(put = meta.$put){
 						tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 						tmp.put = ':])([:';
@@ -1603,7 +1606,7 @@
 				(peer.queue = peer.queue || []).push(raw);
 			}}
 
-			mesh.near = 0; // TODO: BUG! Mesh.near buggy, FIX!
+			mesh.near = 0;
 			mesh.hi = function(peer){
 				var wire = peer.wire, tmp;
 				if(!wire){ mesh.wire((peer.length && {url: peer, id: peer}) || peer); return }
@@ -1614,8 +1617,11 @@
 					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
-				peer.met = peer.met || +(new Date);
-				if(!wire.hied){ root.on(wire.hied = 'hi', peer) }
+				if(!peer.met){
+					mesh.near++;
+					peer.met = +(new Date);
+					root.on('hi', peer)
+				}
 				// @rogowski I need this here by default for now to fix go1dfish's bug
 				tmp = peer.queue; peer.queue = [];
 				setTimeout.each(tmp||[],function(msg){
@@ -1624,7 +1630,8 @@
 				//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
 			}
 			mesh.bye = function(peer){
-				--mesh.near;
+				peer.met && --mesh.near;
+				delete peer.met;
 				root.on('bye', peer);
 				var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 				mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
@@ -1637,6 +1644,13 @@
 				}
 				mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 				delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
+			}
+			mesh.hear['mob'] = function(msg, peer){ // NOTE: AXE will overload this with better logic.
+				if(!msg.peers){ return }
+				var peers = Object.keys(msg.peers), one = peers[Math.floor(Math.random()*peers.length)];
+				if(!one){ return }
+				mesh.bye(peer);
+				mesh.hi(one);
 			}
 
 			root.on('create', function(root){
@@ -1776,10 +1790,11 @@
 
 			root.on('put', function(msg){
 				this.to.next(msg); // remember to call next middleware adapter
-				var put = msg.put, soul = put['#'], key = put['.'], id = msg['#'], tmp; // pull data off wire envelope
+				var put = msg.put, soul = put['#'], key = put['.'], id = msg['#'], ok = msg.ok||'', tmp; // pull data off wire envelope
 				disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 				if(stop && size > (4999880)){ root.on('in', {'@': id, err: "localStorage max!"}); return; }
-				if(!msg['@']){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
+				//if(!msg['@']){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
+				if(!msg['@'] && (!msg._.via || Math.random() < (ok['@'] / ok['/']))){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
 				if(to){ return }
 				to = setTimeout(flush, 9+(size / 333)); // 0.1MB = 0.3s, 5MB = 15s 
 			});
@@ -1795,7 +1810,7 @@
 					}
 					size = tmp.length;
 
-					if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
+					//if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
 					setTimeout.each(ack, function(id){
 						root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 					},0,99);

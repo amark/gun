@@ -131,17 +131,18 @@ describe("Mob test.", function(){
 				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
 
 				// NOTE: This "mob" logic will be moved into axe.js (or maybe gun.js itself), but while we're building the logic it is easier to quickly hack/iterate by prototyping here in the test itself until it passes. But it needs to be refactored into the actual code or else you might have false positives of this test overloading "mob" logic.
+				// ^^^^^^^^^ THIS HAS BEEN MOVED TO GUN CORE, HOWEVER,
+				// ^^^^^^^^^ EXPERIMENT WITH MORE ADVANCED LOGIC THAT AXE OVERLOADS CORE.
 				var mesh = gun.back('opt.mesh'); // overload...
-				mesh.hear['mob'] = function(msg, peer){
+				/*mesh.hear['mob'] = function(msg, peer){
 					// TODO: NOTE, code AXE DHT to aggressively drop new peers AFTER superpeer sends this rebalance/disconnect message that contains some other superpeers.
 					clearTimeout(gun.TO); gun.TO = setTimeout(end, 2000);
-					console.log("getting mobbed", msg);
 					if(!msg.peers){ return }
 					var peers = Object.keys(msg.peers), one = peers[Math.floor(Math.random()*peers.length)];
 					console.log('Browser', env.i, 'chooses', one, 'from', JSON.stringify(peers), 'that', peer.url, 'suggested, because it is mobbed.');//, 'from', msg.peers+'');
 					mesh.bye(peer); // Idea: Should keep track of failed ones to reduce repeats. For another feature/module that deserves its own separate test.
 					mesh.hi(one);
-				}
+				}*/
 
 				//console.log('Browser', env.i, "started with:", Object.keys(gun._.opt.peers)+'');
 				window.gun = gun;
