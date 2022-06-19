@@ -153,7 +153,8 @@ Thanks to:
 <a href="https://github.com/hibas123">Fabian Stamm</a>,
 <a href="https://twitter.com/mikestaub">Mike Staub</a>,
 <a href="https://hunterowens.com/">Hunter Owens</a>,
-<a href="https://github.com/JacobMillner">Jacob Millner</a>
+<a href="https://github.com/JacobMillner">Jacob Millner</a>,
+<a href="https://github.com/b-lack">Gerrit Balindt</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
