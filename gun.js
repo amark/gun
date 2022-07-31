@@ -1718,10 +1718,10 @@
 				var url = peer.url.replace(/^http/, 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
-					opt.mesh.bye(peer);
 					reconnect(peer);
+					opt.mesh.bye(peer);
 				};
-				wire.onerror = function(error){
+				wire.onerror = function(err){
 					reconnect(peer);
 				};
 				wire.onopen = function(){
@@ -1732,7 +1732,7 @@
 					opt.mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
-			}catch(e){}}
+			}catch(e){ opt.mesh.bye(peer) }}
 
 			setTimeout(function(){ !opt.super && root.on('out', {dam:'hi'}) },1); // it can take a while to open a socket, so maybe no longer lazy load for perf reasons?
 
