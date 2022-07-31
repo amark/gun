@@ -1653,7 +1653,7 @@
 			}
 			mesh.hear['mob'] = function(msg, peer){ // NOTE: AXE will overload this with better logic.
 				if(!msg.peers){ return }
-				var peers = Object.keys(msg.peers), one = peers[Math.floor(Math.random()*peers.length)];
+				var peers = Object.keys(msg.peers), one = peers[(Math.random()*peers.length) >> 0];
 				if(!one){ return }
 				mesh.bye(peer);
 				mesh.hi(one);
