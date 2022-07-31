@@ -1675,11 +1675,16 @@
 			});
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
 				if(tmp = console.STAT){ tmp.peers = mesh.near }
-				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
-				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-					tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
-					mesh.say({'##': tmp, get: {'#': soul}}, peer);
+				var souls = Object.keys(root.next||''); // TODO: .keys( is slow
+				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+				setTimeout.each(souls, function(soul){ var node = root.next[soul];
+					if((node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
+					setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
+						// is the lack of ## a !onion hint?
+						mesh.say({'##': String.hash((root.graph[soul]||'')[key]), get: {'#': soul, '.': key}}, peer);
+						// TODO: Switch this so Book could route?
+					})
 				});
 			});
 
