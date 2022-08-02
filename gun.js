@@ -1685,7 +1685,7 @@
 				var souls = Object.keys(root.next||''); // TODO: .keys( is slow
 				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
 				setTimeout.each(souls, function(soul){ var node = root.next[soul];
-					if((node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
+					if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
 					setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
 						// is the lack of ## a !onion hint?
 						mesh.say({'##': String.hash((root.graph[soul]||'')[key]), get: {'#': soul, '.': key}}, peer);
