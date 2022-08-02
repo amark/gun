@@ -1377,10 +1377,13 @@
             if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
-              String.match = String.match || Gun.text.match
+              const match = function(t, o){ 
+                o = o || {};
+                return t.slice(0, (o['*']||'').length) === o['*']
+              }
               const w = Array.isArray(data.w) ? data.w : typeof data.w === 'object' || typeof data.w === 'string' ? [data.w] : []
               for (const lex of w) {
-                if ((String.match(path, lex['#']) && String.match(key, lex['.'])) || (!lex['.'] && String.match(path, lex['#'])) || (!lex['#'] && String.match(key, lex['.'])) || String.match((path ? path + '/' + key : key), lex['#'] || lex)) {
+                if ((match(path, lex['#']) && match(key, lex['.'])) || (!lex['.'] && match(path, lex['#'])) || (!lex['#'] && match(key, lex['.'])) || match((path ? path + '/' + key : key), lex['#'] || lex)) {
                   // is Certificant forced to present in Path
                   if (lex['+'] && lex['+'].indexOf('*') > -1 && path && path.indexOf(certificant) == -1 && key.indexOf(certificant) == -1) return no(`Path "${path}" or key "${key}" must contain string "${certificant}".`)
                   // path is allowed, but is there any WRITE block? Check it out

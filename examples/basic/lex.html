@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+<style>
+  #app
+{
+  padding: 20px;
+  border: 1px solid red;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px black;
+}
+</style>
+
+<h1>LEX</h1>
+
+<div id="app"></div>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/sea.js"></script>
+
+<script>
+var gun = GUN();
+var gun2 = GUN();
+
+var date = new Date().toISOString();
+var Alice = {pub: 'GJeqY1ehreDAZClgW-PhVtksbGJdQDpv0xJK2pNT9I0.97QmEMb03NNqwnTnybZ9qXfRsFTyllY2SYq4tiCKMQQ', priv: 'NPN5_kzpgFpMPxZ5dGuGoUtTyjvS0P0FErSW_Jntboc', epub: 'MrNEMSY-ivK3wYJPABepgs-XtJNQ38YZdBbU8bfSzys.5yT3CpSRJbtaIpxG7W-FdTqIvPetdXBrWLUBAYQUsWc', epriv: 'kYBlQ3NFlk-dNFMsZ_q4u24E91X-91tlVcYqiX8Zz-4'};
+var Bob = {pub: '71ovADGEThMmJulYtzPR4kXvZBqvIO2MU3-55dPxeyw.sm_mNTSiFOyDVHXLH-BbMqREnyLIrm7ZuVyfITweG8M', priv: 'wEmX7hysN3hImd5taexKaRA246roFvRplrJeTKp8OXo', epub: 'Xa42tyohvvp6ynH1wm_6gOjNA7X76dTH7icS5QSCHlc.lDhFr7YTzIhCCJm-B5FFXNYdbsY_AF84EiXBC_6Sk4I', epriv: '0WeVu6Eck5QpkipVgkb_IYTICdIA_lSSmaIe64YmMas'};
+
+gun.user().auth(Alice);
+
+(async () => {
+ // Creates a new url record to be added to the list
+var url = { url: 'https://gun.eco' }
+
+// Stringifies the object and uses SEA.work to generate a base64 hash for it
+var text = JSON.stringify(url);
+var operator = '<';
+var matchDate = date;
+// var matchDate = '2022-07-29T12:27:24.996Z';
+
+var certificate = await SEA.certify(Alice.pub, { '*':'list' }, Bob);
+
+gun
+  .user(Bob.pub)
+  .get('list')
+  .get(date) 
+  .put(text, ack => {
+  	if (ack.err) {
+      document.querySelector('#app').innerHTML += '<br/><br/>';
+		  document.querySelector('#app').innerHTML += ` ${ack.err} `;
+    }
+  }, {opt: {cert: certificate}});
+  
+  document.querySelector('#app').innerHTML += date;
+  document.querySelector('#app').innerHTML += ` ${operator} `;
+  document.querySelector('#app').innerHTML += matchDate;
+  
+  const match = {
+      // lexical queries are kind of like a limited RegEx or Glob.
+      '.': {
+        // property selector
+        [operator]: matchDate, // find any indexed property larger ~3 hours ago
+
+      },
+    };
+  
+  gun
+  .user(Bob.pub)
+  .get('list')
+  .get(match)
+  .map()
+  .once((d,k)=> {
+    document.querySelector('#app').innerHTML += '<br/><br/>';
+    document.querySelector('#app').innerHTML += `${k} - ${d}`;
+ })
+})();
+
+
+</script>

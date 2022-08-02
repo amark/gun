@@ -22,22 +22,14 @@
 			while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
 			return s;
 		}
-		String.match = function(t, o){ var tmp, u;
-			if('string' !== typeof t){ return false }
-			if('string' == typeof o){ o = {'=': o} }
-			o = o || {};
-			tmp = (o['='] || o['*'] || o['>'] || o['<']);
-			if(t === tmp){ return true }
-			if(u !== o['=']){ return false }
-			tmp = (o['*'] || o['>']);
-			if(t.slice(0, (tmp||'').length) === tmp){ return true }
-			if(u !== o['*']){ return false }
-			if(u !== o['>'] && u !== o['<']){
-				return (t >= o['>'] && t <= o['<'])? true : false;
-			}
-			if(u !== o['>'] && t >= o['>']){ return true }
-			if(u !== o['<'] && t <= o['<']){ return true }
-			return false;
+		String.match = function(t, o){
+			return (
+				('string' === typeof t && (t === o || t === o['='])) ||
+				(o['='] === undefined &&
+					(o['>'] === undefined || t > o['>']) &&
+					(o['<'] === undefined || t < o['<']) &&
+					(o['*'] === undefined || t.startsWith(o['*'])))
+			);
 		}
 		String.hash = function(s, c){ // via SO
 			if(typeof s !== 'string'){ return }
@@ -1293,7 +1285,7 @@
 			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
 			(tmp = gun.chain()._).lex = lex; // LEX!
 			gun.on('in', function(eve){
-				if(String.match(eve.get|| (eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
+				if(eve.get || String.match((eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
 					tmp.on('in', eve);
 				}
 				this.to.next(eve);
@@ -1325,7 +1317,7 @@
 		function map(msg){ this.to.next(msg);
 			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
-			if((tmp = cat.lex) && !String.match(msg.get|| (put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
+			if((tmp = cat.lex) && !msg.get && !String.match((put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;
