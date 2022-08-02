@@ -140,8 +140,8 @@ describe('Gun', function(){
 				expect(String.match("user/mark/nadal", {'>': 'user/a', '<': 'user/c'})).to.not.be.ok();
 				expect(String.match("mary", {'<': 'm'})).to.not.be.ok();
 				expect(String.match("mary", {'>': 'm'})).to.be.ok();
-				expect(String.match("m", {'>': 'm'})).to.not.be.ok(); // UPDATED lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
-				expect(String.match("m", {'<': 'm'})).to.not.be.ok();  // UPDATED lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
+				expect(String.match("m", {'>': 'm'})).to.not.be.ok(); // UPDATED (August 2, 2022 - ok to change) lex is inclusive because it evaluates stricter (=) to looser (>) comparisons, see docs.
+				expect(String.match("m", {'<': 'm'})).to.not.be.ok();  // UPDATED (August 2, 2022 - ok to change) lex is inclusive because it evaluates stricter (=) to looser (<) comparisons, see docs.
 				return; // below is OLD bloat, still available in lib/match.js
 			});
 			it('plain object',function(){

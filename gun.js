@@ -23,13 +23,13 @@
 			return s;
 		}
 		String.match = function(t, o){
-			return (
-				('string' === typeof t && (t === o || t === o['='])) ||
-				(o['='] === undefined &&
-					(o['>'] === undefined || t > o['>']) &&
-					(o['<'] === undefined || t < o['<']) &&
-					(o['*'] === undefined || t.startsWith(o['*'])))
-			);
+			if(typeof o === 'string'){ o = {'=': o} }
+			o = o || {};
+			return (typeof t === 'string' && Object.keys(o).every((e) => {
+				if (e === '*') { return t.slice(0, (o[e]||'').length) === o[e] }
+				else if (e === '=') { return eval(`"${t}" === "${o[e]}"`) }
+				else { return eval(`"${t}" ${e} "${o[e]}"`) }
+			}))
 		}
 		String.hash = function(s, c){ // via SO
 			if(typeof s !== 'string'){ return }
@@ -1315,9 +1315,13 @@
 			return chain;
 		}
 		function map(msg){ this.to.next(msg);
-			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp;
+			var cat = this.as, gun = msg.$, at = gun._, put = msg.put, tmp, n;
 			if(!at.soul && !msg.$$){ return } // this line took hundreds of tries to figure out. It only works if core checks to filter out above chains during link tho. This says "only bother to map on a node" for this layer of the chain. If something is not a node, map should not work.
-			if((tmp = cat.lex) && !msg.get && !String.match((put||'')['.'], tmp['.'] || tmp['#'] || tmp)){ return }
+
+			if (tmp = cat.lex) {
+				n = (typeof at.back.get === 'undefined' || at.back.get.charAt(0) === '~') ? (put||'')['.'] : msg.get; // Check if user or public graph
+				if(!String.match(n, tmp['.'] || tmp['#'] || tmp)){ return }
+			}
 			Gun.on.link(msg, cat);
 		}
 		var noop = function(){}, event = {stun: noop, off: noop}, u;

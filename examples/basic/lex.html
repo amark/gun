@@ -23,10 +23,10 @@ var gun = GUN();
 var gun2 = GUN();
 
 var date = new Date().toISOString();
-var Alice = {pub: 'GJeqY1ehreDAZClgW-PhVtksbGJdQDpv0xJK2pNT9I0.97QmEMb03NNqwnTnybZ9qXfRsFTyllY2SYq4tiCKMQQ', priv: 'NPN5_kzpgFpMPxZ5dGuGoUtTyjvS0P0FErSW_Jntboc', epub: 'MrNEMSY-ivK3wYJPABepgs-XtJNQ38YZdBbU8bfSzys.5yT3CpSRJbtaIpxG7W-FdTqIvPetdXBrWLUBAYQUsWc', epriv: 'kYBlQ3NFlk-dNFMsZ_q4u24E91X-91tlVcYqiX8Zz-4'};
-var Bob = {pub: '71ovADGEThMmJulYtzPR4kXvZBqvIO2MU3-55dPxeyw.sm_mNTSiFOyDVHXLH-BbMqREnyLIrm7ZuVyfITweG8M', priv: 'wEmX7hysN3hImd5taexKaRA246roFvRplrJeTKp8OXo', epub: 'Xa42tyohvvp6ynH1wm_6gOjNA7X76dTH7icS5QSCHlc.lDhFr7YTzIhCCJm-B5FFXNYdbsY_AF84EiXBC_6Sk4I', epriv: '0WeVu6Eck5QpkipVgkb_IYTICdIA_lSSmaIe64YmMas'};
+var Bob = {pub: 'GJeqY1ehreDAZClgW-PhVtksbGJdQDpv0xJK2pNT9I0.97QmEMb03NNqwnTnybZ9qXfRsFTyllY2SYq4tiCKMQQ', priv: 'NPN5_kzpgFpMPxZ5dGuGoUtTyjvS0P0FErSW_Jntboc', epub: 'MrNEMSY-ivK3wYJPABepgs-XtJNQ38YZdBbU8bfSzys.5yT3CpSRJbtaIpxG7W-FdTqIvPetdXBrWLUBAYQUsWc', epriv: 'kYBlQ3NFlk-dNFMsZ_q4u24E91X-91tlVcYqiX8Zz-4'};
+var Alice = {pub: '71ovADGEThMmJulYtzPR4kXvZBqvIO2MU3-55dPxeyw.sm_mNTSiFOyDVHXLH-BbMqREnyLIrm7ZuVyfITweG8M', priv: 'wEmX7hysN3hImd5taexKaRA246roFvRplrJeTKp8OXo', epub: 'Xa42tyohvvp6ynH1wm_6gOjNA7X76dTH7icS5QSCHlc.lDhFr7YTzIhCCJm-B5FFXNYdbsY_AF84EiXBC_6Sk4I', epriv: '0WeVu6Eck5QpkipVgkb_IYTICdIA_lSSmaIe64YmMas'};
 
-gun.user().auth(Alice);
+gun.user().auth(Bob);
 
 (async () => {
  // Creates a new url record to be added to the list
@@ -36,12 +36,12 @@ var url = { url: 'https://gun.eco' }
 var text = JSON.stringify(url);
 var operator = '<';
 var matchDate = date;
-// var matchDate = '2022-07-29T12:27:24.996Z';
+// var matchDate = '2022-08-02T21:15:10.382Z';
 
-var certificate = await SEA.certify(Alice.pub, { '*':'list' }, Bob);
+var certificate = await SEA.certify(Bob.pub, { '*':'list' }, Alice);
 
 gun
-  .user(Bob.pub)
+  .user(Alice.pub)
   .get('list')
   .get(date) 
   .put(text, ack => {
@@ -60,12 +60,11 @@ gun
       '.': {
         // property selector
         [operator]: matchDate, // find any indexed property larger ~3 hours ago
-
       },
     };
   
   gun
-  .user(Bob.pub)
+  .user(Alice.pub)
   .get('list')
   .get(match)
   .map()
@@ -74,6 +73,5 @@ gun
     document.querySelector('#app').innerHTML += `${k} - ${d}`;
  })
 })();
-
 
 </script>
