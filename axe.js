@@ -20,44 +20,40 @@
 		if(!Gun.window){ return } // handled by ^ lib/axe.js
 		var axe = root.axe = {}, tmp, id;
 		var mesh = opt.mesh = opt.mesh || Gun.Mesh(root); // DAM!
-		axe.fall = {};
 
 		tmp = peers[id = location.origin + '/gun'] = peers[id] || {};
 		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;
-		/*tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
-		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;*/
+		tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
+		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;
 		Gun.log.once("AXE", "AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) a URL parameter, and last (4) hard coded peers.");
 		Gun.log.once("AXEWarn", "Warning: AXE alpha became super slow & laggy, now in testing only mode!");
-		var last = (localStorage||'')['peers'] || '';
+		var last = (localStorage||'')['peers'] || ''; if(last){ last += ' ' }
 		last += (location.search.split('peers=')[1]||'').split('&')[0];
 
 		root.on('bye', function(peer){
 			this.to.next(peer);
 			if(peer.retry){ return }
-			//delete axe.fall[peer.id || peer.url];
+			if(axe.fall){ delete axe.fall[peer.id || peer.url] }
 			(function attempt(){
 				clearTimeout(peer.attempt);
-				var fall = Object.keys(axe.fall), one = fall[(Math.random()*fall.length) >> 0];
-				//console.log("fall???", one, fall);
-				if(!one){
-					peer.attempt = setTimeout(attempt, 9);
-					return;
-				}
-				//console.log("attempt", one);
+				var fall = Object.keys(axe.fall||''), one = fall[(Math.random()*fall.length) >> 0];
+				if(axe.fall && !fall.length){ return }
+				if(peers[one]){ attempt(); return }
+				if(!one){ peer.attempt = setTimeout(attempt, 9); return }
 				mesh.hi(one);
 			}());
 		});
 
 		function found(text){
-			console.log(text, axe.fall);
 
+			axe.fall = {};
 			((text||'').match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig)||[]).forEach(function(url){
 				axe.fall[url] = {url: url, id: url, retry: 0}; // RETRY
 			});
 			
-			//axe.fall = {'https://relay.peer.ooo/gun': {id: 'https://relay.peer.ooo/gun', url: 'https://relay.peer.ooo/gun', retry: 0}};
 			return;
-		  var urls = getUrls(urls);
+
+			// TODO: Finish porting below? Maybe not.
 
 			Object.keys(last.peers||'').forEach(function(key){
 				tmp = peers[id = key] = peers[id] || {};
