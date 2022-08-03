@@ -40,7 +40,7 @@
 			(function next(){
 				if(!axe.fall){ setTimeout(next, 9); return } // not found yet
 				var fall = Object.keys(axe.fall||''), one = fall[(Math.random()*fall.length) >> 0];
-				if(!fall.length){ lS.peers = ''; return } // out of peers
+				if(!fall.length){ lS.peers = ''; one = 'https://gunjs.herokuapp.com/gun' } // out of peers
 				if(peers[one]){ next(); return } // already choose
 				mesh.hi(one);
 			}());

@@ -384,8 +384,13 @@
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
       	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
+      	//var bytes = ((graph[soul]||'')[key]||'').length||1;
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
-				if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
+				if(tmp = (root.next||'')[soul]){
+					//tmp.bytes = (tmp.bytes||0) + ((val||'').length||1) - bytes;
+					//if(tmp.bytes > 2**13){ Gun.log.once('byte-limit', "Note: In the future, GUN peers will enforce a ~4KB query limit. Please see https://gun.eco/docs/Page") }
+					tmp.on('in', msg)
+				}
 				fire(ctx);
 				eve.to.next(msg);
 			}
