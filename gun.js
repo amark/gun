@@ -1506,7 +1506,7 @@
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
 							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 							var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
-								if(!(p = ps[p])){ continue }
+								if(!(p = ps[p] || (peer||'')[p])){ continue }
 								mesh.say(msg, p);
 							}
 							meta.raw = wr; loop = 0;
@@ -1619,7 +1619,7 @@
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = peer.id || String.random(9);
+					tmp = peer.id = peer.id || peer.url || String.random(9);
 					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}

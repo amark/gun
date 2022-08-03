@@ -18,29 +18,44 @@
 		var opt = root.opt, peers = opt.peers;
 		if(false === opt.axe){ return }
 		if(!Gun.window){ return } // handled by ^ lib/axe.js
+		var w = Gun.window, lS = w.localStorage || opt.localStorage || {}, loc = w.location || opt.location || {}, nav = w.navigator || opt.navigator || {};
 		var axe = root.axe = {}, tmp, id;
 		var mesh = opt.mesh = opt.mesh || Gun.Mesh(root); // DAM!
 
-		tmp = peers[id = location.origin + '/gun'] = peers[id] || {};
+		tmp = peers[id = loc.origin + '/gun'] = peers[id] || {};
 		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;
 		tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
 		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;
 		Gun.log.once("AXE", "AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) a URL parameter, and last (4) hard coded peers.");
-		Gun.log.once("AXEWarn", "Warning: AXE alpha became super slow & laggy, now in testing only mode!");
-		var last = (localStorage||'')['peers'] || ''; if(last){ last += ' ' }
-		last += (location.search.split('peers=')[1]||'').split('&')[0];
+		Gun.log.once("AXEWarn", "Warning: AXE is in alpha, use only for testing!");
+		var last = lS.peers || ''; if(last){ last += ' ' }
+		last += ((loc.search||'').split('peers=')[1]||'').split('&')[0];
 
 		root.on('bye', function(peer){
 			this.to.next(peer);
+			if(!peer.url){ return } // ignore WebRTC disconnects for now.
+			if(!nav.onLine){ peer.retry = 1 }
 			if(peer.retry){ return }
-			if(axe.fall){ delete axe.fall[peer.id || peer.url] }
-			(function attempt(){
-				clearTimeout(peer.attempt);
+			if(axe.fall){ delete axe.fall[peer.url || peer.id] }
+			(function next(){
+				if(!axe.fall){ setTimeout(next, 9); return } // not found yet
 				var fall = Object.keys(axe.fall||''), one = fall[(Math.random()*fall.length) >> 0];
-				if(axe.fall && !fall.length){ return }
-				if(peers[one]){ attempt(); return }
-				if(!one){ peer.attempt = setTimeout(attempt, 9); return }
+				if(!fall.length){ lS.peers = ''; return } // out of peers
+				if(peers[one]){ next(); return } // already choose
 				mesh.hi(one);
+			}());
+		});
+
+		root.on('hi', function(peer){ // TEMPORARY! Try to connect all peers.
+			this.to.next(peer);
+			if(!peer.url){ return } // ignore WebRTC disconnects for now.
+			(function next(){
+				if(!peer.wire){ return }
+				if(!axe.fall){ setTimeout(next, 9); return } // not found yet
+				var one = (next.fall = next.fall || Object.keys(axe.fall||'')).pop();
+				if(!one){ return }
+				setTimeout(next, 99);
+				mesh.say({dam: 'opt', opt: {peers: one}}, peer);
 			}());
 		});
 
@@ -79,9 +94,11 @@
 		}
 
 		if(last){ found(last); return }
-		try{ fetch((location.search.split('axe=')[1]||'').split('&')[0] || location.axe || 'https://raw.githubusercontent.com/wiki/amark/gun/volunteer.dht.md').then(function(res){
+		try{ fetch(((loc.search||'').split('axe=')[1]||'').split('&')[0] || loc.axe || 'https://raw.githubusercontent.com/wiki/amark/gun/volunteer.dht.md').then(function(res){
 	  	return res.text()
-	  }).then(found).catch(function(){
+	  }).then(function(text){
+	  	found(lS.peers = text);
+	  }).catch(function(){
 	  	found(); // nothing
 	  })}catch(e){found()}
 	}
