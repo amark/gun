@@ -27,8 +27,10 @@
 			o = o || {};
 			return (typeof t === 'string' && Object.keys(o).every((e) => {
 				if (e === '*') { return t.slice(0, (o[e]||'').length) === o[e] }
-				else if (e === '=') { return eval(`"${t}" === "${o[e]}"`) }
-				else { return eval(`"${t}" ${e} "${o[e]}"`) }
+				else if (e === '=') { return t === o[e] }
+				else if (e === '>') { return t > o[e] }
+				else if (e === '<') { return t < o[e] }
+				else return true
 			}))
 		}
 		String.hash = function(s, c){ // via SO
