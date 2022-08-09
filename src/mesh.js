@@ -81,6 +81,7 @@ function Mesh(root){
 			dup_track(id);
 			return;
 		}
+		if(tmp = msg.ok){ msg._.near = tmp['/'] }
 		var S = +new Date;
 		DBG && (DBG.is = S); peer.SI = id;
 		root.on('in', mesh.last = msg);
@@ -126,12 +127,12 @@ function Mesh(root){
 			var DBG = msg.DBG, S = +new Date; meta.y = meta.y || S; if(!peer){ DBG && (DBG.y = S) }
 			if(!(id = msg['#'])){ id = msg['#'] = String.random(9) }
 			!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
-			if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
+			//if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 			if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
 			if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
-			if(!peer && ack){ // still no peer, then ack daisy chain lost.
-				if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to self, ignore.
-				console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to');
+			if(!peer && ack){ // still no peer, then ack daisy chain 'tunnel' got lost.
+				if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to ourself, ignore.
+				console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to'); // TODO: Delete this now. Dropping lost ACKs is protocol fine now.
 				return false;
 			} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
 			if(!peer && mesh.way){ return mesh.way(msg) }
@@ -148,7 +149,7 @@ function Mesh(root){
 					//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
 					loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 					var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
-						if(!(p = ps[p])){ continue }
+						if(!(p = ps[p] || (peer||'')[p])){ continue }
 						mesh.say(msg, p);
 					}
 					meta.raw = wr; loop = 0;
@@ -199,7 +200,7 @@ function Mesh(root){
 					if(!tmp['##']){ tmp['##'] = hash } // if none, add our hash to ask so anyone we relay to can dedup. // NOTE: May only check against 1st ack chunk, 2nd+ won't know and still stream back to relaying peers which may then dedup. Any way to fix this wasted bandwidth? I guess force rate limiting breaking change, that asking peer has to ask for next lexical chunk.
 				}
 			}
-			if(!msg.dam){
+			if(!msg.dam && !msg['@']){
 				var i = 0, to = []; tmp = opt.peers;
 				for(var k in tmp){ var p = tmp[k]; // TODO: Make it up peers instead!
 					to.push(p.url || p.pid || p.id);
@@ -207,6 +208,7 @@ function Mesh(root){
 				}
 				if(i > 1){ msg['><'] = to.join() } // TODO: BUG! This gets set regardless of peers sent to! Detect?
 			}
+			if(msg.put && (tmp = msg.ok)){ msg.ok = {'@':(tmp['@']||1)-1, '/': (tmp['/']==msg._.near)? mesh.near : tmp['/']}; }
 			if(put = meta.$put){
 				tmp = {}; Object.keys(msg).forEach(function(k){ tmp[k] = msg[k] });
 				tmp.put = ':])([:';
@@ -253,18 +255,22 @@ function Mesh(root){
 		(peer.queue = peer.queue || []).push(raw);
 	}}
 
+	mesh.near = 0;
 	mesh.hi = function(peer){
 		var wire = peer.wire, tmp;
 		if(!wire){ mesh.wire((peer.length && {url: peer, id: peer}) || peer); return }
 		if(peer.id){
 			opt.peers[peer.url || peer.id] = peer;
 		} else {
-			tmp = peer.id = peer.id || String.random(9);
+			tmp = peer.id = peer.id || peer.url || String.random(9);
 			mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 			delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 		}
-		peer.met = peer.met || +(new Date);
-		if(!wire.hied){ root.on(wire.hied = 'hi', peer) }
+		if(!peer.met){
+			mesh.near++;
+			peer.met = +(new Date);
+			root.on('hi', peer)
+		}
 		// @rogowski I need this here by default for now to fix go1dfish's bug
 		tmp = peer.queue; peer.queue = [];
 		setTimeout.each(tmp||[],function(msg){
@@ -273,6 +279,8 @@ function Mesh(root){
 		//Type.obj.native && Type.obj.native(); // dirty place to check if other JS polluted.
 	}
 	mesh.bye = function(peer){
+		peer.met && --mesh.near;
+		delete peer.met;
 		root.on('bye', peer);
 		var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 		mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
@@ -285,6 +293,13 @@ function Mesh(root){
 		}
 		mesh.say({dam: '?', pid: opt.pid, '@': msg['#']}, peer);
 		delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
+	}
+	mesh.hear['mob'] = function(msg, peer){ // NOTE: AXE will overload this with better logic.
+		if(!msg.peers){ return }
+		var peers = Object.keys(msg.peers), one = peers[(Math.random()*peers.length) >> 0];
+		if(!one){ return }
+		mesh.bye(peer);
+		mesh.hi(one);
 	}
 
 	root.on('create', function(root){
@@ -303,17 +318,22 @@ function Mesh(root){
 
 	var gets = {};
 	root.on('bye', function(peer, tmp){ this.to.next(peer);
-		if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) - 1; }
+		if(tmp = console.STAT){ tmp.peers = mesh.near; }
 		if(!(tmp = peer.url)){ return } gets[tmp] = true;
 		setTimeout(function(){ delete gets[tmp] },opt.lack || 9000);
 	});
 	root.on('hi', function(peer, tmp){ this.to.next(peer);
-		if(tmp = console.STAT){ tmp.peers = (tmp.peers || 0) + 1 }
-		if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
+		if(tmp = console.STAT){ tmp.peers = mesh.near }
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
-		setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-			tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
-			mesh.say({'##': tmp, get: {'#': soul}}, peer);
+		var souls = Object.keys(root.next||''); // TODO: .keys( is slow
+		if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+		setTimeout.each(souls, function(soul){ var node = root.next[soul];
+			if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
+			setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
+				// is the lack of ## a !onion hint?
+				mesh.say({'##': String.hash((root.graph[soul]||'')[key]), get: {'#': soul, '.': key}}, peer);
+				// TODO: Switch this so Book could route?
+			})
 		});
 	});
 
