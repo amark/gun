@@ -36,10 +36,11 @@ Gun.on('create', function lg(root){
 
 	root.on('put', function(msg){
 		this.to.next(msg); // remember to call next middleware adapter
-		var put = msg.put, soul = put['#'], key = put['.'], id = msg['#'], tmp; // pull data off wire envelope
+		var put = msg.put, soul = put['#'], key = put['.'], id = msg['#'], ok = msg.ok||'', tmp; // pull data off wire envelope
 		disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 		if(stop && size > (4999880)){ root.on('in', {'@': id, err: "localStorage max!"}); return; }
-		if(!msg['@']){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
+		//if(!msg['@']){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
+		if(!msg['@'] && (!msg._.via || Math.random() < (ok['@'] / ok['/']))){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
 		if(to){ return }
 		to = setTimeout(flush, 9+(size / 333)); // 0.1MB = 0.3s, 5MB = 15s 
 	});
@@ -55,7 +56,7 @@ Gun.on('create', function lg(root){
 			}
 			size = tmp.length;
 
-			if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
+			//if(!err && !Object.empty(opt.peers)){ return } // only ack if there are no peers. // Switch this to probabilistic mode
 			setTimeout.each(ack, function(id){
 				root.on('in', {'@': id, err: err, ok: 0}); // localStorage isn't reliable, so make its `ok` code be a low number.
 			},0,99);
