@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<style>html, body, textarea { width: 100%; height: 100%; padding: 0; margin: 0; }</style>
+<textarea id="view" placeholder="write here..."></textarea>
+<script src="../../../gun/gun.js"></script><script>
+	gun = GUN(location.origin + '/gun');
+	note = gun.get('note').get(location.hash.replace('#','')||1);
+	view.oninput = () => { note.put(view.value) };
+	note.on((data) => { view.value = data });
+</script>

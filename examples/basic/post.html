@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<h1>Posts</h1>
+
+<form id="sign">
+  <input id="alias" placeholder="username">
+  <input id="pass" type="password" placeholder="passphrase">
+  <input id="in" type="submit" value="sign in">
+  <input id="up" type="button" value="sign up">
+</form>
+
+<form id="said">
+  <input id="say" placeholder="write here...">
+  <input id="speak" type="submit" value="say">
+</form>
+
+<ul></ul>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/sea.js"></script>
+<script src="../../../gun/axe.js"></script>
+
+<script>
+gun = GUN(), user = gun.user().recall({sessionStorage: true});
+
+$('#sign').on('submit', login);
+$('#up').on('click', () => { user.create($('#alias').val(), $('#pass').val(), login) });
+function login(eve){
+  eve.preventDefault();
+  user.auth($('#alias').val(), $('#pass').val());
+};
+
+gun.on('auth', () => { $('#sign').hide(), user.get('said').map().on(show) });
+function show(data, id){
+  return ($('#' + id).get(0) || $('<li>').attr('id', id).prependTo('ul')).text(data);
+};
+
+$('#said').on('submit', (eve) => {
+  eve.preventDefault();
+  if(!user.is){ return }
+  user.get('said').set($('#say').val());
+  $('#say').val("");
+});
+</script>

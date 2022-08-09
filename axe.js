@@ -49,6 +49,7 @@
 		root.on('hi', function(peer){ // TEMPORARY! Try to connect all peers.
 			this.to.next(peer);
 			if(!peer.url){ return } // ignore WebRTC disconnects for now.
+			return; // DO NOT COMMIT THIS FEATURE YET! KEEP TESTING NETWORK PERFORMANCE FIRST!
 			(function next(){
 				if(!peer.wire){ return }
 				if(!axe.fall){ setTimeout(next, 9); return } // not found yet
