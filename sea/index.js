@@ -68,7 +68,14 @@
     }
     check.hash = function(eve, msg, val, key, soul, at, no){
       SEA.work(val, null, function(data){
+        function hexToBase64(hexStr) {
+          let base64 = "";
+          for(let i = 0; i < hexStr.length; i++) {
+            base64 += !(i - 1 & 1) ? String.fromCharCode(parseInt(hexStr.substring(i - 1, i + 1), 16)) : ""}
+          return btoa(base64);}  
         if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
+          else if (data && data === hexToBase64(key.split('#').slice(-1)[0])){ 
+          return eve.to.next(msg) }
         no("Data hash not same as hash!");
       }, {name: 'SHA-256'});
     }
