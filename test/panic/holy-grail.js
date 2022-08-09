@@ -51,12 +51,26 @@ describe("The Holy Grail Test!", function(){
 	it("GUN started!", function(){
 		return relay.run(function(test){
 			var env = test.props;
+			var port = env.config.port + env.i;
 			test.async();
+
+			if (process.env.ROD_PATH) {
+				console.log('testing with rod');
+				const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', port, '--sled-storage=false']);
+				sp.stdout.on('data', function(data){
+					console.log(data.toString());
+				});
+				sp.stderr.on('data', function(data){
+					console.log(data.toString());
+				});
+				test.done();
+				return;
+			}
+
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
 			try{ require('fs').unlinkSync((env.i+1)+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')((env.i+1)+'data') }catch(e){}
-			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
@@ -186,10 +200,25 @@ describe("The Holy Grail Test!", function(){
 	it("GUN spawned!", function(){
 		return spawn.run(function(test){
 			var env = test.props;
+			var port = env.config.port + env.i;
 			test.async();
+
+			if (process.env.ROD_PATH) {
+				console.log('testing with rod');
+				const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', port, '--sled-storage=false']);
+				sp.stdout.on('data', function(data){
+					console.log(data.toString());
+				});
+				sp.stderr.on('data', function(data){
+					console.log(data.toString());
+				});
+				test.done();
+				return;
+			}
+
+
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
-			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
@@ -287,3 +316,4 @@ describe("The Holy Grail Test!", function(){
 		});
 	});
 });
+
