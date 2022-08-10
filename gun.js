@@ -443,6 +443,9 @@
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'];
 				var next = root.next || (root.next = {}), at = next[soul];
+
+				// TODO: Azarattum bug, what is in graph is not same as what is in next. Fix!
+
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
 				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
@@ -1497,6 +1500,7 @@
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to'); // TODO: Delete this now. Dropping lost ACKs is protocol fine now.
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
+					if(ack && !msg.put && !hash && (ackit(ack)||'')['##']){ return false } // If we're saying 'not found' but a relay had data, do not bother sending our not found. // Is this correct, return false? // NOTE: ADD PANIC TEST FOR THIS!
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
@@ -1548,6 +1552,10 @@
 					console.STAT && (ack === peer.SI) && console.STAT(S, +new Date - peer.SH, 'say ack');
 				}
 				mesh.say.c = mesh.say.d = 0;
+				function ackit(ack){
+					var tmp = (dup.s[ack]||'').it || mesh.last || '';
+					if(ack === tmp['#']){ return tmp }
+				}
 				// TODO: this caused a out-of-memory crash!
 				mesh.raw = function(msg, peer){ // TODO: Clean this up / delete it / move logic out!
 					if(!msg){ return '' }
@@ -1558,6 +1566,7 @@
 					if(hash && ack){
 						if(!meta.via && dup_check(ack+hash)){ return false } // for our own out messages, memory & storage may ack the same thing, so dedup that. Tho if via another peer, we already tracked it upon hearing, so this will always trigger false positives, so don't do that!
 						if((tmp = (dup.s[ack]||'').it) || ((tmp = mesh.last) && ack === tmp['#'])){
+						//if(tmp = ackit(ack)){ // REPLACE ABOVE LINE WITH THIS? CHECK IF SAFE FIRST!
 							if(hash === tmp['##']){ return false } // if ask has a matching hash, acking is optional.
 							if(!tmp['##']){ tmp['##'] = hash } // if none, add our hash to ask so anyone we relay to can dedup. // NOTE: May only check against 1st ack chunk, 2nd+ won't know and still stream back to relaying peers which may then dedup. Any way to fix this wasted bandwidth? I guess force rate limiting breaking change, that asking peer has to ask for next lexical chunk.
 						}
