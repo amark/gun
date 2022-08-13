@@ -26,7 +26,7 @@ If it does, the test passes.
 
 (Note: At the end of this test, it uses GUN to sync data about what peers are connected to whom. While this is useful in that it also verifies that sync between b1 <-> b3 works regardless of whether direct or indirect connections, as such it could result in errors: If GUN has a bug, the AXE test may fail even if it is not the fault of AXE, and likewise - the usage of GUN in this test is contrived, it passing has 0 correlation that GUN is correctly handling the sync logic. In fact, assume it is not, make sure you use another test to verify that.)
 
-Thanks @Drader for helping with these tests!!!!
+Thanks @Draeder for helping with these tests!!!!
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
