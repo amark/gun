@@ -84,6 +84,22 @@ describe("Load test "+ config.browsers +" browser(s) across "+ config.relays +" 
 				var env = test.props;
 				// As a result, we have to manually pass it scope.
 				test.async();
+				if (process.env.ROD_PATH) {
+					try {
+						const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', env.config.port + env.i, '--sled-storage=false']);
+						sp.stdout.on('data', function(data){
+							console.log(data.toString());
+						});
+						sp.stderr.on('data', function(data){
+							console.log(data.toString());
+						});
+						test.done();
+					} catch (e) {
+						console.log(e);
+					}
+					return;
+				}
+
 				// Clean up from previous test.
 				try{ require('fs').unlinkSync(env.i+'data.json') }catch(e){}
 				var server = require('http').createServer(function(req, res){
