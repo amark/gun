@@ -74,6 +74,24 @@ describe("Put ACK", function(){
 					}
 				}
 				console.log(port, " connect to ", peers);
+
+				if (process.env.ROD_PATH) {
+					console.log('testing with rod');
+					var args = ['start', '--port', port, '--sled-storage=false'];
+					if (peers.length) {
+						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
+					}
+					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+
 				var gun = Gun({file: false, rad: false, localStorage: false, file: env.i+'data', peers: peers, web: server, axe: false});
 				server.listen(port, function(){
 					test.done();
