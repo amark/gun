@@ -86,6 +86,24 @@ describe("Dedup load balancing GETs", function(){
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 					}
 				}
+
+				if (process.env.ROD_PATH) {
+					console.log('testing with rod');
+					var args = ['start', '--port', port, '--sled-storage=false'];
+					if (peers.length) {
+						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
+					}
+					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+
 				var gun = Gun({peers: peers, web: server, rad: false, radisk: false, file: false, localStorage: false, axe: false});
 				server.listen(port, function(){
 					test.done();
