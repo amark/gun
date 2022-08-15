@@ -128,7 +128,7 @@ Gun.ask = require('./ask');
 			console.STAT && console.STAT(((DBG||ctx).Hf = +new Date), tmp, 'future');
 			return;
 		}
-		if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
+		if(state < was){ /*old;*/ if(true || !ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding. // TURNS OUT CACHE MISS WAS NOT NEEDED FOR NEW CHAINS ANYMORE!!! DANGER DANGER DANGER, ALWAYS RETURN! (or am I missing something?)
 		if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well? // Yes this was a bug, need to check cache miss for RAD tests, but should we care about the faith check now? Probably not.
 			if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(!ctx.miss){ return } } // same
 		}
@@ -136,14 +136,19 @@ Gun.ask = require('./ask');
 		var aid = msg['#']+ctx.all++, id = {toString: function(){ return aid }, _: ctx}; id.toJSON = id.toString; // this *trick* makes it compatible between old & new versions.
 		root.dup.track(id)['#'] = msg['#']; // fixes new OK acks for RPC like RTC.
 		DBG && (DBG.ph = DBG.ph || +new Date);
-		root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, _: ctx});
+		root.on('put', {'#': id, '@': msg['@'], put: {'#': soul, '.': key, ':': val, '>': state}, ok: msg.ok, _: ctx});
 	}
 	function map(msg){
 		var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
       	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
+      	//var bytes = ((graph[soul]||'')[key]||'').length||1;
 		graph[soul] = state_ify(graph[soul], key, state, val, soul);
-		if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
+		if(tmp = (root.next||'')[soul]){
+			//tmp.bytes = (tmp.bytes||0) + ((val||'').length||1) - bytes;
+			//if(tmp.bytes > 2**13){ Gun.log.once('byte-limit', "Note: In the future, GUN peers will enforce a ~4KB query limit. Please see https://gun.eco/docs/Page") }
+			tmp.on('in', msg)
+		}
 		fire(ctx);
 		eve.to.next(msg);
 	}
@@ -163,11 +168,11 @@ Gun.ask = require('./ask');
 		CF(); // courtesy check;
 	}
 	function ack(msg){ // aggregate ACKs.
-		var id = msg['@'] || '', ctx;
+		var id = msg['@'] || '', ctx, ok, tmp;
 		if(!(ctx = id._)){
 			var dup = (dup = msg.$) && (dup = dup._) && (dup = dup.root) && (dup = dup.dup);
 			if(!(dup = dup.check(id))){ return }
-			msg['@'] = dup['#'] || msg['@'];
+			msg['@'] = dup['#'] || msg['@']; // This doesn't do anything anymore, backtrack it to something else?
 			return;
 		}
 		ctx.acks = (ctx.acks||0) + 1;
@@ -175,13 +180,14 @@ Gun.ask = require('./ask');
 			msg['@'] = ctx['#'];
 			fire(ctx); // TODO: BUG? How it skips/stops propagation of msg if any 1 item is error, this would assume a whole batch/resync has same malicious intent.
 		}
+		ctx.ok = msg.ok || ctx.ok;
 		if(!ctx.stop && !ctx.crack){ ctx.crack = ctx.match && ctx.match.push(function(){back(ctx)}) } // handle synchronous acks. NOTE: If a storage peer ACKs synchronously then the PUT loop has not even counted up how many items need to be processed, so ctx.STOP flags this and adds only 1 callback to the end of the PUT loop.
 		back(ctx);
 	}
 	function back(ctx){
 		if(!ctx || !ctx.root){ return }
 		if(ctx.stun || ctx.acks !== ctx.all){ return }
-		ctx.root.on('in', {'@': ctx['#'], err: ctx.err, ok: ctx.err? u : {'':1}});
+		ctx.root.on('in', {'@': ctx['#'], err: ctx.err, ok: ctx.err? u : ctx.ok || {'':1}});
 	}
 
 	var ERR = "Error: Invalid graph!";

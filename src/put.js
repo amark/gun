@@ -101,9 +101,10 @@ function stun(as, id){
 function ran(as){
 	if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
 	if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+	//(as.retry = function(){ as.acks = 0;
 	var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 		root.on('ack', ack);
-		if(ack.err){ Gun.log(ack) }
+		if(ack.err && !ack.lack){ Gun.log(ack) }
 		if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 		if(!as.ack){ return }
 		as.ack(ack, this);
@@ -114,7 +115,9 @@ function ran(as){
 		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 	}).hatch = tmp; // this is not official yet ^
 	//console.log(1, "PUT", as.run, as.graph);
-	(as.via._).on('out', {put: as.out = as.graph, ok: as.ok || as.opt, opt: as.opt, '#': ask, _: tmp});
+	if(as.ack && !as.ok){ as.ok = as.acks || 9 } // TODO: In future! Remove this! This is just old API support.
+	(as.via._).on('out', {put: as.out = as.graph, ok: as.ok && {'@': as.ok+1}, opt: as.opt, '#': ask, _: tmp});
+	//})();
 }; ran.end = function(stun,root){
 	stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 	if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }

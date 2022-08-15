@@ -85,6 +85,21 @@ describe("Put ACK", function(){
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 					}
 				}
+
+				if (process.env.ROD_PATH) {
+					// currently fails because rod doesn't ack
+					console.log('testing with rod');
+					const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', port, '--sled-storage=false', '--peers', peers.join(',').replaceAll('http', 'ws')]);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+
 				console.log(port, " connect to ", peers);
 				var gun = Gun({file: env.i+'data', peers: peers, web: server, axe: false}); // Note: test with AXE on & off.
 				server.listen(port, function(){
