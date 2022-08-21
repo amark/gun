@@ -470,7 +470,9 @@
 				//console.log("GET:", get, node, has);
 				if(!node){ return root.on('get', msg) }
 				if(has){
-					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
+					if('string' != typeof has || u === node[has]){
+						if(!((at||'').next||'')[has]){ root.on('get', msg); return }
+					}
 					node = state_ify({}, has, state_is(node, has), node[has], soul);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
@@ -497,7 +499,7 @@
 					tmp = keys.length;
 					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
-					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
+					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG, FOO: 1});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					if(!tmp){ return }
 					setTimeout.turn(go);
@@ -620,6 +622,7 @@
 				if(at.lex){ Object.keys(at.lex).forEach(function(k){ tmp[k] = at.lex[k] }, tmp = msg.get = msg.get || {}) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
+					root.graph[get['#']] = root.graph[get['#']] || {_:{'#':get['#'],'>':{}}};
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 					back = (root.$.get(get['#'])._);
 					if(!(get = get['.'])){ // soul
@@ -953,6 +956,7 @@
 			next[at.get = key] = at;
 			if(back === cat.root.$){
 				at.soul = key;
+				//at.put = {};
 			} else
 			if(cat.soul || cat.has){
 				at.has = key;
