@@ -1,5 +1,3 @@
-const expect = require('../expect')
-
 var root;
 var Gun;
 (function(){
@@ -8,7 +6,7 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
-  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
+  //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
@@ -17,7 +15,6 @@ var Gun;
     try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
-    //require('../lib/file');
     require('../../lib/store');
     require('../../lib/rfs');
   }
@@ -29,16 +26,29 @@ var Gun;
   }
 }(this));
 
+
 ;(function(){
 Gun = root.Gun
 var SEA = Gun.SEA
 if(!SEA){ return }
 
 describe('SEA', function(){
+  this.timeout(1000 * 9);
   var user;
   var gun;
   var pub;
+
+  var prep = async function(d,k, n,s){ return {'#':s,'.':k,':': await SEA.opt.parse(d),'>':Gun.state.is(n, k)} }; // shim for old - prep for signing.
+  var pack = function(d,cb,k, n,s){ return new Promise(function(res, rej){ SEA.opt.pack(d, function(r){ res(r) }, k,n,s) }) }; // make easier to upgrade test, cb to await
   describe('Utility', function(){
+    it('deleting old SEA tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    });
+    it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
     /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
       console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
       SEA.opt.aeskey('x','x').then(k => {
@@ -74,13 +84,12 @@ describe('SEA', function(){
       SEA.sign('asdf', alice, function(data){
       SEA.verify(data, bob.pub, function(msg){
       expect(msg).to.be(undefined);
-      SEA.verify(data+1, alice.pub, function(msg){
+      SEA.verify(data.slice(0,20)+data.slice(21), alice.pub, function(msg){
       expect(msg).to.be(undefined);
-
       SEA.encrypt('secret', alice, function(enc){
       SEA.decrypt(enc, bob, function(dec){
       expect(dec).to.be(undefined);
-      SEA.decrypt(enc+1, alice, function(dec){
+      SEA.decrypt(enc.slice(0,20)+enc.slice(21), alice, function(dec){
       expect(dec).to.be(undefined);
       done();
       });});});});});});});});
@@ -199,14 +208,14 @@ describe('SEA', function(){
       expect(dec.priv).to.be(okey.priv);
       expect(dec.epriv).to.be(okey.epriv);
 
-      var gun = Gun({super: true}), tmp = Gun.node.soul(old);
+      var gun = Gun({super: true}), tmp = old._['#'];
       var graph = {};
-      graph[tmp] = old;
+      gun._.graph[tmp] = graph[tmp] = old;
       var alias = await SEA.verify(old.alias, false);
       expect(alias).to.be('bob');
-      alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
+      alias = Gun.state.ify({}, tmp, 1, {'#': tmp}, tmp = '~@'+alias);
       graph[tmp] = alias;
-      gun.on('test', {$: gun, put: graph});
+      gun._.graph[tmp] = alias;//gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('bob', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
@@ -220,14 +229,14 @@ describe('SEA', function(){
       var old = JSON.parse(atob("eyJfIjp7IiMiOiJ+VThkS0dySFJhX01sMFZ1YlR5OUZBYTlQS1ZlYlh0eTFjS05zWWxnYjduNC5QeVd5cUVVb0ZpYVduUElOV0Nad0xBbzFobjN1MldPWTU3SzZHZnpsNjhVIiwiPiI6eyJwdWIiOjE1NDY5MDI1MDQ5NzksImFsaWFzIjoxNTQ2OTAyNTA0OTc5LCJlcHViIjoxNTQ2OTAyNTA0OTc5LCJhdXRoIjoxNTQ2OTAyNTA0OTc5fX0sInB1YiI6IlU4ZEtHckhSYV9NbDBWdWJUeTlGQWE5UEtWZWJYdHkxY0tOc1lsZ2I3bjQuUHlXeXFFVW9GaWFXblBJTldDWndMQW8xaG4zdTJXT1k1N0s2R2Z6bDY4VSIsImFsaWFzIjoiU0VBe1wibVwiOltcIn5VOGRLR3JIUmFfTWwwVnViVHk5RkFhOVBLVmViWHR5MWNLTnNZbGdiN240LlB5V3lxRVVvRmlhV25QSU5XQ1p3TEFvMWhuM3UyV09ZNTdLNkdmemw2OFVcIixcImFsaWFzXCIsXCJhbGljZVwiLDE1NDY5MDI1MDQ5NzldLFwic1wiOlwienpuaGtIZjhZdFpZM2lGd3FVd0lJUldMTjhZMmlHbmNkcnVTaStGNDNmU1BLYWpSZlI0VzhXVHM4bElSMDBndGJmTWJxS0NjQkpGN3VNSkdGRC9WV2c9PVwifSIsImVwdWIiOiJTRUF7XCJtXCI6W1wiflU4ZEtHckhSYV9NbDBWdWJUeTlGQWE5UEtWZWJYdHkxY0tOc1lsZ2I3bjQuUHlXeXFFVW9GaWFXblBJTldDWndMQW8xaG4zdTJXT1k1N0s2R2Z6bDY4VVwiLFwiZXB1YlwiLFwiRkRzM1VvNTNFZEp6eFNocEpDaVctRGZPQ3lUS0M2U3cxeS1PZVJxam5ZRS5xVGdyYTlFQk1maEpNdVlMVmNaejRZYklLRm85enNBMHpMcV82dEVPMHI0XCIsMTU0NjkwMjUwNDk3OV0sXCJzXCI6XCJPZzRVVjY4OTluSjE4dC9ybWVnV0lkdnNqN01KaEpFc29ranZYQmdteVVRUXVNVjFTdnh4cXJqOFoyV1o2Q25XSkZnTlVDbEVYYWxuMURjUFE3M1R6UT09XCJ9IiwiYXV0aCI6IlNFQXtcIm1cIjpbXCJ+VThkS0dySFJhX01sMFZ1YlR5OUZBYTlQS1ZlYlh0eTFjS05zWWxnYjduNC5QeVd5cUVVb0ZpYVduUElOV0Nad0xBbzFobjN1MldPWTU3SzZHZnpsNjhVXCIsXCJhdXRoXCIsXCJ7XFxcImVrXFxcIjpcXFwiU0VBe1xcXFxcXFwiY3RcXFxcXFxcIjpcXFxcXFxcIi94ZnNPdVNkQUtrNkJiR00zbUV6MnVlSjI3Y0tJNThYMEtUL1FsaExSZXpWcjRkNzVZb2M5QlZNRjkzejl4QXI4N080S2FDNjJUWGVoeERQN0FFa2V4N1paaEpYL2hsVm9kK1FIcVFaaUZMK2lVQzFvL2hpUEJGWElBZmtINGRrcklGOFdqcEVaU3NIVmRSOVRhY2ZzbTB3aHN5NGJXN1ZLSEUySGc9PVxcXFxcXFwiLFxcXFxcXFwiaXZcXFxcXFxcIjpcXFxcXFxcIjhWekduTStEc1lTUktIU3Z4cSszTGc9PVxcXFxcXFwiLFxcXFxcXFwic1xcXFxcXFwiOlxcXFxcXFwibVVSSlJ4TzUvdXM9XFxcXFxcXCJ9XFxcIixcXFwic1xcXCI6XFxcImE1SlA3VFpuVE9jYjEwMGJOejlscEU4dnpqcUE3TWl0NHcwN3pjQTdIOFV0bml1WnVHSmdpZnNNQlFNSGdRdE5cXFwifVwiLDE1NDY5MDI1MDQ5NzldLFwic1wiOlwiSGFzMytJaHFEZTYyN016cElXZVE1cVFrZ2NOMlk3WHRpNGw0TFU3T2JyaktxSlBnSllrVWE2bk9YdlRmQkFzV1BPVzVnemh4Q2RPVGNFQm5icWlpWXc9PVwifSJ9"));
       var okey = {"pub":"U8dKGrHRa_Ml0VubTy9FAa9PKVebXty1cKNsYlgb7n4.PyWyqEUoFiaWnPINWCZwLAo1hn3u2WOY57K6Gfzl68U","epub":"FDs3Uo53EdJzxShpJCiW-DfOCyTKC6Sw1y-OeRqjnYE.qTgra9EBMfhJMuYLVcZz4YbIKFo9zsA0zLq_6tEO0r4","priv":"jMy7WfcldJ4esZEijAj4LTb99smtY_H0yKJLemJl2HI","epriv":"1DszMh-85pGTPLYtRunG-Q-xB78AE4k07PPkbedYYwk"}
 
-      var gun = Gun({super: true}), tmp = Gun.node.soul(old);
+      var gun = Gun({super: true}), tmp = old._['#'];//Gun.node.soul(old);
       var graph = {};
-      graph[tmp] = old;
+      gun._.graph[tmp] = graph[tmp] = old;
       var alias = SEA.opt.unpack(await SEA.verify(old.alias, false), 'alias', old);
       expect(alias).to.be('alice');
-      alias = Gun.state.ify({}, tmp, 1, Gun.val.rel.ify(tmp), tmp = '~@'+alias);
-      graph[tmp] = alias;
-      gun.on('test', {$: gun, put: graph});
+      alias = Gun.state.ify({}, tmp, 1, {'#': tmp}, tmp = '~@'+alias);
+      gun._.graph[tmp] = graph[tmp] = alias;
+      //gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('alice', 'test123', function(ack){
         expect(ack.err).to.not.be.ok();
@@ -235,20 +244,20 @@ describe('SEA', function(){
       });
     }())})
 
-    it('JSON escape', function(done){
+    it('JSON escape', function(done){ (async function(){
       var plain = "hello world";
       var json = JSON.stringify({hello:'world'});
 
       var n1 = Gun.state.ify({}, 'key', 1, plain, 'soul');
       var n2 = Gun.state.ify({}, 'key', 1, json, 'soul');
-      var tmp = SEA.opt.prep(plain, 'key', n1, 'soul');
+      var tmp = await prep(plain, 'key', n1, 'soul');
       expect(tmp[':']).to.be("hello world");
-      tmp = SEA.opt.prep(json, 'key', n2, 'soul');
+      tmp = await prep(json, 'key', n2, 'soul');
       expect(tmp[':'].hello).to.be("world");
       tmp = SEA.opt.unpack(tmp);
       expect(tmp.hello).to.be("world");
       done();
-    });
+    }())});
 
     it('double sign', function(done){ (async function(){
       var pair = await SEA.pair();
@@ -258,15 +267,15 @@ describe('SEA', function(){
 
       var json = JSON.stringify({hello:'world'});
       var n1 = Gun.state.ify({}, 'key', 1, json, 'soul');
-      var sig = await SEA.sign(SEA.opt.prep(json, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(json, 'key', n1, 'soul')});
-      var dup = await SEA.sign(SEA.opt.prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(sig, 'key', n1, 'soul')});
+      var sig = await SEA.sign(await prep(json, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(json, 'key', n1, 'soul')});
+      var dup = await SEA.sign(await prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(sig, 'key', n1, 'soul')});
       expect(dup).to.be.eql(sig);
 
       var json = JSON.stringify({hello:'world'});
       var n1 = Gun.state.ify({}, 'key', 1, json, 'soul');
       var bob = await SEA.pair();
-      var sig = await SEA.sign(SEA.opt.prep(json, 'key', n1, 'soul'), bob, null, {raw:1 , check: SEA.opt.pack(json, 'key', n1, 'soul')});
-      var dup = await SEA.sign(SEA.opt.prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: SEA.opt.pack(sig, 'key', n1, 'soul')});
+      var sig = await SEA.sign(await prep(json, 'key', n1, 'soul'), bob, null, {raw:1 , check: await pack(json, 'key', n1, 'soul')});
+      var dup = await SEA.sign(await prep(sig, 'key', n1, 'soul'), pair, null, {raw:1 , check: await pack(sig, 'key', n1, 'soul')});
       expect(dup).to.not.be.eql(sig);
 
       var json = JSON.stringify({hello:'world'});
@@ -288,8 +297,8 @@ describe('SEA', function(){
       SEA.pair(function(p){
         user.is = user._.sea = p;
         gtmp = gid = 'test~'+p.pub;
-        g.get(gid).put({yo: 'hi'}, function(ack){
-          var data = SEA.opt.parse(g._.graph[gid].yo);
+        g.get(gid).put({yo: 'hi'}, async function(ack){
+          var data = await SEA.opt.parse(g._.graph[gid].yo);
           expect(data[':']).to.be('hi');
           expect(data['~']).to.be.ok();
           g.get(gid).get('yo').once(function(r){
@@ -308,7 +317,7 @@ describe('SEA', function(){
     })
 
     it('register users', function(done){
-      user.create('carl', 'test123', function(ack){
+      user.create('carl', 'testing123', function(ack){
         pub = '~'+ack.pub;
         expect(ack.err).to.not.be.ok();
         done();
@@ -316,9 +325,18 @@ describe('SEA', function(){
     });
 
     it('login users', function(done){
-      user.auth('carl', 'test123', function(ack){
+      user.auth('carl', 'testing123', function(ack){
         expect(ack.err).to.not.be.ok();
         done()
+      })
+    })
+
+    it('logout, login via {pub}', function(done){
+      var pub = user.is.pub;
+      user.leave();
+      user.auth({pub:pub}, 'testing123', function(ack){
+        expect(ack.err).to.not.be.ok();
+        done();
       })
     })
 
@@ -328,7 +346,6 @@ describe('SEA', function(){
         done();
       });
     })
-
     it('read data', function(done){
       user.get('a').get('b').once(function(data){
         expect(data).to.be(0);
@@ -370,7 +387,7 @@ describe('SEA', function(){
       setTimeout(function(){
         gun = Gun();
         user = gun.user();
-        user.auth('carl', 'test123', function(ack){
+        user.auth('carl', 'testing123', function(ack){
           expect(ack.err).to.not.be.ok();
           done()
         })
@@ -407,7 +424,7 @@ describe('SEA', function(){
       })
     });
 
-    it('set user ref null override', function(done){
+    it('set user ref null override', function foo(done){
       this.timeout(9000);
       var gun = Gun();
       //user.leave();
@@ -415,23 +432,28 @@ describe('SEA', function(){
       var msg = {what: 'hello world'};
       user.create('xavier', 'password');
       gun.on('auth', function(){
+        //console.log(1);
         if(done.a){ return } done.a = 1;
-        var ref = user.get('who').get('all').set(msg);
+        var ref = user.get('who').get('all').set(msg, A);
         var stub = user.get('stub').put({});
-        var tmp = ref._.dub || ref._.link;
-        setTimeout(function(){
-          user.get('who').put(stub);
-          setTimeout(function(){
-            user.get('who').get('all').get(tmp).put({boom: 'ah'});
-            setTimeout(function(){
+        function A(){
+          //console.log(2);
+          user.get('who').put(stub, B);
+          function B(){
+            //console.log(3);
+            var tmp = ref._.has || ref._.soul;
+            user.get('who').get('all').get(tmp).put({boom: 'ah'}, C);
+            function C(){
+              //console.log(4);
               user.get('who').get('all').map().once(function(data){
+                //console.log(5);
                 expect(data).to.be.ok();
                 expect(data.what).to.not.be.ok();
                 done();
               });
-            },9);
-          },9);
-        },9);
+            }
+          }
+        };
       });
     });
 
@@ -441,11 +463,12 @@ describe('SEA', function(){
       this.timeout(9000);
       var gun = Gun();
       var user = gun.user();
-      user.auth('xavier', 'password');
+      user.create('xavier2', 'password2');
       gun.on('auth', function(){
         user.get("testauthed").get("arumf").set({"this": "is", "an": {"obj2": "again2"}}, function(ack) {
           var notsigned = [];
-          Gun.obj.map(gun._.graph, function(v,k) {
+          //Gun.obj.map(gun._.graph, function(v,k) {
+          Object.keys(gun._.graph).forEach(function(k,v){ v = gun._.graph[k]; 
             if (k[0]==='~' || k.indexOf('~', 1)!==-1) { return; } /// ignore '~pubkey' and '~@alias'
             notsigned.push(k);
           });
@@ -469,7 +492,6 @@ describe('SEA', function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
             var p = '~'+alice.pub+'/';
-            console.log(1);
             //console.log(p, g);
             expect(g[p+'z']).to.be.ok();
             expect(g[p+'z/y']).to.be.ok();
@@ -484,21 +506,34 @@ describe('SEA', function(){
 
       it('user mix', function(done){
         var gun = Gun();
-        gun.on('auth', function(){
+        gun.on('auth', async function(){
           if(done.a){ return } done.a = 1;
-          var ref = gun.user().get('zasdf').put({a: 9});
-          var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref);
-          at.get('foo').get('bar').put('yay');
-          ref.get('foo').get('ah').put(1, function(){setTimeout(function(){
+          var c = 0, go = function(){ check(++c) }
+          var ref = gun.user().get('zasdf').put({a: 9}, go);
+          //ref._.REF = 'ref!';
+          //console.only.i=1;console.log("=================");
+          var at = gun.user().get('zfdsa').get('y').get('x').get('c').put(ref, go);
+          //ref._.DAT = 'dat!';
+          at.get('foo').get('bar').put('yay', go);
+          ref.get('foo').get('ah').put(1, go);
+          function check(){
+            if(c !== 4){ return }
+            setTimeout(function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
-            var p = '~'+alice.pub+'/';
-            //console.log(p, g);
-            console.log(2);
-            expect(Object.keys(g[p+'zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
-            expect(Object.keys(g[p+'zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+            var p = '~'+alice.pub;
+            //console.log(g);
+            expect(Object.keys(g[p]).sort()).to.be.eql(['_', 'zasdf', 'zfdsa'].sort());
+            expect(Object.keys(g[p+'/zasdf']).sort()).to.be.eql(['_', 'a', 'foo'].sort());
+            expect(Object.keys(g[p+'/zasdf/foo']).sort()).to.be.eql(['_', 'bar', 'ah'].sort());
+            expect(Object.keys(g[p+'/zfdsa']).sort()).to.be.eql(['_', 'y'].sort());
+            expect(Object.keys(g[p+'/zfdsa/y']).sort()).to.be.eql(['_', 'x'].sort());
+            expect(Object.keys(g[p+'/zfdsa/y/x']).sort()).to.be.eql(['_', 'c'].sort());
+            expect(g[p+'/zfdsa'].y.indexOf('/zfdsa/y"') > 0).to.be.ok();
+            expect(g[p+'/zfdsa/y'].x.indexOf('/zfdsa/y/x"') > 0).to.be.ok();
+            expect(g[p+'/zfdsa/y/x'].c.indexOf('/zasdf"') > 0).to.be.ok();
             done();
-          },200)});
+          },100)};
         });
         gun.user().auth(alice);
       });
@@ -515,8 +550,7 @@ describe('SEA', function(){
             if(done.c){ return } done.c = 1;
             var g = gun._.graph;
             var p = '~'+alice.pub+'/';
-            console.log(3);
-            console.log(p, Object.keys(g[p+'pchat/their.pub/2020']||{}).sort());
+            //console.log(p, Object.keys(g[p+'pchat/their.pub/2020']||{}).sort());
             expect(Object.keys(g[p+'pchat/their.pub/2020']).sort()).to.be.eql(['_', 'msg'].sort());
             expect(g[p+'2020']).to.not.be.ok();
             done();
@@ -525,15 +559,28 @@ describe('SEA', function(){
         gun.user().auth(alice);
       });
     });
-    
+
+    describe('node', function(){
+      var u;
+      if(''+u === typeof process){ return }
+      console.log("REMEMBER TO RUN mocha test/sea/nodeauth !!!!");
+    });
+
+  });
+
+  describe('CERTIFY', function () {
+    var gun = Gun()
+    var user = gun.user()
+
     it('Certify: Simple', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
       var dave = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private"}, alice)
       
+      user.leave()
       user.auth(bob, () => {
-        var data = Gun.state.lex()
+        var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
           .get("private")
           .get("asdf")
@@ -559,6 +606,7 @@ describe('SEA', function(){
                   .get("asdf")
                   .get("qwerty").once(_data=>{
                     expect(_data).to.be(data)
+                    user.leave()
                     done()
                   })
                 })
@@ -571,16 +619,18 @@ describe('SEA', function(){
     it('Certify: Attack', function(done){(async function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
-      var cert = await SEA.certify(bob, {"*": "private"}, alice)
+      var cert = await SEA.certify(bob, {"*": "private"}, alice);
       
+      user.leave()
       user.auth(bob, () => {
-        var data = Gun.state.lex()
+        var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
           .get("wrongway")
           .get("asdf")
           .get("qwerty")
           .put(data, ack => {
             expect(ack.err).to.be.ok()
+            user.leave()
             done()
           }, { opt: { cert } })
       })
@@ -590,18 +640,19 @@ describe('SEA', function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
       var cert = await SEA.certify('*', [{"*": "test", "+": "*"}, {"*": "inbox", "+": "*"}], alice)
-      
+      user.leave()
       user.auth(bob, () => {
-        var data = Gun.state.lex()
+        var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
           .get("inbox")
           .get(user.is.pub)
           .put(data, ack => {
-            expect(ack.ok).to.be(1)
+            expect(ack.err).to.not.be.ok()
+            user.leave()
             done()
           }, { opt: { cert } })
       })
-    }())})
+    }())});
 
     it('Certify: Expiry', function(done){(async function(){
       var alice = await SEA.pair()
@@ -610,14 +661,16 @@ describe('SEA', function(){
         expiry: Gun.state() - 100, // expired 100 miliseconds ago
       })
 
+      user.leave()
       user.auth(bob, () => {
-        var data = Gun.state.lex()
+        var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
           .get("private")
           .get("asdf")
           .get("qwerty")
           .put(data, ack => {
             expect(ack.err).to.be.ok()
+            user.leave()
             done()
           }, { opt: { cert } })
       })
@@ -628,8 +681,9 @@ describe('SEA', function(){
       var bob = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private", "+": "*"}, alice)
 
+      user.leave()
       user.auth(bob, () => {
-        var data = Gun.state.lex()
+        var data = Gun.state().toString(36)
         gun.get("~" + alice.pub)
           .get("private")
           .get('wrongway')
@@ -640,13 +694,14 @@ describe('SEA', function(){
             .get(bob.pub)
             .get('today')
             .put(data, ack => {
-              expect(ack.ok).to.be.ok()
+              expect(ack.err).to.not.be.ok()
               gun.get("~" + alice.pub)
               .get("private")
               .get(bob.pub)
               .get('today')
               .once(_data => {
                 expect(_data).to.be(data)
+                user.leave();
                 done()
               })
             }, { opt: { cert } })
@@ -654,41 +709,69 @@ describe('SEA', function(){
       })
     }())})
 
-    it('Certify: Advanced - Blacklist', function(done){(async function(){
+    it('Certify: Advanced - Block', function(done){(async function(){
       var alice = await SEA.pair()
       var dave = await SEA.pair()
       var bob = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private"}, alice, null, {
         expiry: Gun.state() + 5000, // expires in 5 seconds
-        blacklist: 'blacklist' // path to blacklist in Alice's graph
+        block: 'block' // path to block in Alice's graph
       })
-    
-      // Alice points her blacklist to Dave's graph
-      user.auth(alice, async () => {
-        await user.get('blacklist').put({'#': '~'+dave.pub+'/blacklist'})
-        await user.leave()
 
-        // Dave logins, he adds Bob to his blacklist, which is connected to the certificate that Alice issued for Bob
-        user.auth(dave, async () => {
-          await user.get('blacklist').get(bob.pub).put(true)
-          await user.leave()
-          
-          // Bob logins and tries to hack Alice
-          user.auth(bob, async () => {
-            var data = Gun.state.lex()
-            gun.get("~" + alice.pub)
-              .get("private")
-              .get("asdf")
-              .get("qwerty")
-              .put(data, ack => {
-                expect(ack.err).to.be.ok()
-                done()
-              }, { opt: { cert } })
-          })
-        })
-      })
+      // Alice points her block to Dave's graph
+      await user.auth(alice)
+      if (user.is) {
+        await user.get('block').put({'#': '~'+dave.pub+'/block'});
+        await user.leave()
+      }
+
+      // Dave logins, he adds Bob to his block, which is connected to the certificate that Alice issued for Bob
+      await user.auth(dave)
+      if (user.is) {
+        await user.get('block').get(bob.pub).put(true)
+        await user.leave()
+      }
+
+      // Bob logins and tries to hack Alice
+      await user.auth(bob)
+      if (user.is) {
+        var data = Gun.state().toString(36)
+        gun.get("~" + alice.pub)
+            .get("private")
+            .get("asdf")
+            .get("qwerty")
+            .put(data, ack => {
+              expect(ack.err).to.be.ok()
+              user.leave()
+              done()
+            }, { opt: { cert } })
+      }
     }())})
+
+  });
+
+  describe.skip('Frozen', function () {
+    it('Across spaces', function(done){
+      var gun = Gun();
+      var user = gun.user();
+
+      user.create('alice/as', 'password');
+      
+      gun.on('auth', async function(){
+
+        user.put({name: "Alice", country: "USA"});
+
+        var data = "hello world";
+        var hash = await SEA.work(data, null, null, {name: "SHA-256"});
+        gun.get('#users').get(hash).put(data);
+
+        console.log(1);
+        gun.get('#users').map()/*.get('country')*/.on(data => console.log(data));
+
+      });
+    });
   });
 })
 
 }());
+

@@ -7,7 +7,8 @@
     SEA.verify = require('./verify');
     SEA.encrypt = require('./encrypt');
     SEA.decrypt = require('./decrypt');
-    SEA.opt.aeskey = require('./aeskey'); // not official!
+    SEA.certify = require('./certify');
+    //SEA.opt.aeskey = require('./aeskey'); // not official! // this causes problems in latest WebCrypto.
 
     SEA.random = SEA.random || shim.random;
 
@@ -23,17 +24,17 @@
     // Calculate public key KeyID aka PGPv4 (result: 8 bytes as hex string)
     SEA.keyid = SEA.keyid || (async (pub) => {
       try {
-        // base64('base64(x):base64(y)') => Buffer(xy)
-        const pb = Buffer.concat(
+        // base64('base64(x):base64(y)') => shim.Buffer(xy)
+        const pb = shim.Buffer.concat(
           pub.replace(/-/g, '+').replace(/_/g, '/').split('.')
-          .map((t) => Buffer.from(t, 'base64'))
+          .map((t) => shim.Buffer.from(t, 'base64'))
         )
         // id is PGPv4 compliant raw key
-        const id = Buffer.concat([
-          Buffer.from([0x99, pb.length / 0x100, pb.length % 0x100]), pb
+        const id = shim.Buffer.concat([
+          shim.Buffer.from([0x99, pb.length / 0x100, pb.length % 0x100]), pb
         ])
         const sha1 = await sha1hash(id)
-        const hash = Buffer.from(sha1, 'binary')
+        const hash = shim.Buffer.from(sha1, 'binary')
         return hash.toString('hex', hash.length - 8)  // 16-bit ID as hex
       } catch (e) {
         console.log(e)
@@ -49,9 +50,9 @@
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
     // Cheers! Tell me what you think.
-    var Gun = (SEA.window||{}).Gun || require((typeof MODULE == "undefined"?'.':'')+'./gun', 1);
-    Gun.SEA = SEA;
-    SEA.GUN = SEA.Gun = Gun;
+    ((SEA.window||{}).GUN||{}).SEA = SEA;
 
     module.exports = SEA
+    // -------------- END SEA MODULES --------------------
+    // -- BEGIN SEA+GUN MODULES: BUNDLED BY DEFAULT UNTIL OTHERS USE SEA ON OWN -------
   

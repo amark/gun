@@ -1,49 +1,83 @@
 ;(function(){
-	// NOTE: While the algorithm is P2P,
-	// the current implementation is one sided,
-	// only browsers self-modify, servers do not.
-	// Need to fix this! Since WebRTC is now working.
-	var env;
-	if(typeof global !== "undefined"){ env = global }
-	if(typeof window !== "undefined"){ var Gun = (env = window).Gun }
-	else {
-	if(typeof require !== "undefined"){ var Gun = require('./gun') }
-	}
+  var Gun  = (typeof window !== "undefined")? window.Gun : require('./gun');
+  var dam  = 'nts';
+  var smooth = 2;
 
-	Gun.on('opt', function(ctx){
-		this.to.next(ctx);
-		if(ctx.once){ return }
-		ctx.on('in', function(at){
-			if(!at.nts && !at.NTS){
-				return this.to.next(at);
-			}
-			if(at['@']){
-				(ask[at['@']]||noop)(at);
-				return;
-			}
-			if(env.window){
-				return this.to.next(at);
-			}
-			this.to.next({'@': at['#'], nts: Gun.time.is()});
-		});
-		var ask = {}, noop = function(){};
-		if(!env.window){ return }
+  Gun.on('create', function(root){ // switch to DAM, deprecated old
+    Gun.log.once("nts", "gun/nts is removed deprecated old");
+    this.to.next(root);
+  	return ; // stub out for now. TODO: IMPORTANT! re-add back in later.
+    var opt = root.opt, mesh = opt.mesh;
+    if(!mesh) return;
 
-		Gun.state.drift = Gun.state.drift || 0;
-		setTimeout(function ping(){
-			var NTS = {}, ack = Gun.text.random(), msg = {'#': ack, nts: true};
-			NTS.start = Gun.state();
-			ask[ack] = function(at){
-				NTS.end = Gun.state();
-				Gun.obj.del(ask, ack);
-				NTS.latency = (NTS.end - NTS.start)/2;
-				if(!at.nts && !at.NTS){ return }
-				NTS.calc = NTS.latency + (at.NTS || at.nts);
-				Gun.state.drift -= (NTS.end - NTS.calc)/2;
-				setTimeout(ping, 1000);
-			}
-			ctx.on('out', msg);
-		}, 1);
-	});
-	// test by opening up examples/game/nts.html on devices that aren't NTP synced.
+    // Track connections
+    var connections = [];
+    root.on('hi', function(peer) {
+      this.to.next(peer);
+      connections.push({peer, latency: 0, offset: 0, next: 0});
+    });
+    root.on('bye', function(peer) {
+      this.to.next(peer);
+      var found = connections.find(connection => connection.peer.id == peer.id);
+      if (!found) return;
+      connections.splice(connections.indexOf(found), 1);
+    });
+
+    function response(msg, connection) {
+      var now            = Date.now(); // Lack of drift intentional, provides more accurate RTT
+      connection.latency = (now - msg.nts[0]) / 2;
+      connection.offset  = (msg.nts[1] + connection.latency) - (now + Gun.state.drift);
+      console.log(connection.offset);
+      Gun.state.drift   += connection.offset / (connections.length + smooth);
+      console.log(`Update time by local: ${connection.offset} / ${connections.length + smooth}`);
+    }
+
+    // Handle echo & setting based on known connection latency as well
+    mesh.hear[dam] = function(msg, peer) {
+      console.log('MSG', msg);
+      var now   = Date.now() + Gun.state.drift;
+      var connection = connections.find(connection => connection.peer.id == peer.id);
+      if (!connection) return;
+      if (msg.nts.length >= 2) return response(msg, connection);
+      mesh.say({dam, '@': msg['#'], nts: msg.nts.concat(now)}, peer);
+      connection.offset = msg.nts[0] + connection.latency - now;
+      Gun.state.drift  += connection.offset / (connections.length + smooth);
+      console.log(`Update time by remote: ${connection.offset} / ${connections.length + smooth}`);
+    };
+
+    // Handle ping transmission
+    setTimeout(function trigger() {
+      console.log('TRIGGER');
+      if (!connections.length) return setTimeout(trigger, 100);
+      var now = Date.now(); // Lack of drift intentional, provides more accurate RTT & NTP reference
+
+      // Send pings
+      connections.forEach(function(connection) {
+        if (connection.next > now) return;
+        mesh.say({
+          dam,
+          '#': String.random(3),
+          nts: [now],
+        });
+      });
+
+      // Plan next round of pings
+      connections.forEach(function(connection) {
+        if (connection.next > now) return;
+        // https://discord.com/channels/612645357850984470/612645357850984473/755334349699809300
+        var delay = Math.min(2e4, Math.max(250, 150000 / Math.abs((connection.offset)||1)));
+        connection.next = now + delay;
+      });
+
+      // Plan next trigger round
+      // May overshoot by runtime of this function
+      var nextRound = Infinity;
+      connections.forEach(function(connection) {
+        nextRound = Math.min(nextRound, connection.next);
+      });
+      setTimeout(trigger, nextRound - now);
+      console.log(`Next sync round in ${(nextRound - now) / 1000} seconds`);
+    }, 1);
+  });
+
 }());

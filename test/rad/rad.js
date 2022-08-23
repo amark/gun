@@ -6,7 +6,7 @@ var Gun;
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
   try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
-  try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
+  //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
     root.Gun.TESTING = true;
@@ -15,7 +15,6 @@ var Gun;
     try{ require('../../lib/fsrm')('radatatest') }catch(e){}
     root.Gun = require('../../gun');
     root.Gun.TESTING = true;
-    //require('../lib/file');
     require('../../lib/store');
     require('../../lib/rfs');
   }
@@ -27,15 +26,7 @@ var Gun;
 ;(function(){
 Gun = root.Gun
 
-if(Gun.window && !Gun.window.RindexedDB){ return }
-
-var opt = {};
-opt.file = 'radatatest';
-var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
-opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
-opt.chunk = 1000;
-var Radix = Radisk.Radix;
-var rad = Radisk(opt), esc = String.fromCharCode(27);
+var Radix = (Gun.window && Gun.window.Radix) || require('../../lib/radix');
 
 describe('RAD', function(){
 
@@ -53,10 +44,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         rad('ab', {yes: 1});
         rad('node/circle.bob', 'awesome');
 
-        expect(Gun.obj.copy(rad('asdf.'))).to.be.eql({pub: {'': 'yum'}});
+        expect(JSON.parse(JSON.stringify(rad('asdf.')))).to.be.eql({pub: {'': 'yum'}});
         expect(rad('nv/foo.bar')).to.be(undefined);
         expect(rad('ab')).to.eql({yes: 1});
-        expect(Gun.obj.copy(rad())).to.be.eql({"a":{"sdf.pub":{"":"yum"},"b":{"lah":{"":"cool"},"":{"yes":1}}},"node/circle.bob":{"":"awesome"}});
+        expect(JSON.parse(JSON.stringify(rad()))).to.be.eql({"a":{"sdf.pub":{"":"yum"},"b":{"lah":{"":"cool"},"":{"yes":1}}},"node/circle.bob":{"":"awesome"}});
     });
 
     it('radix write read', function(done){
@@ -66,11 +57,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             radix(v, i)
         });
-        expect(Gun.obj.empty(all)).to.not.be.ok();
+        expect(Object.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k){
             delete all[k];
         });
-        expect(Gun.obj.empty(all)).to.be.ok();
+        expect(Object.empty(all)).to.be.ok();
         done();
     });
 
@@ -81,11 +72,11 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Gun.obj.empty(all)).to.not.be.ok();
+        expect(Object.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k){
             delete all[k];
         });
-        expect(Gun.obj.empty(all)).to.be.ok();
+        expect(Object.empty(all)).to.be.ok();
         done();
     });
 
@@ -98,12 +89,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Gun.obj.empty(all)).to.not.be.ok();
+        expect(Object.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k, a,b){
             //if(!all[k]){ throw "out of range!" }
             delete all[k];
         }, {start: start, end: end});
-        expect(Gun.obj.empty(all)).to.be.ok();
+        expect(Object.empty(all)).to.be.ok();
         done();
     });
 
@@ -116,12 +107,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             all[v] = v;
             //rad(v, i)
         });
-        expect(Gun.obj.empty(all)).to.not.be.ok();
+        expect(Object.empty(all)).to.not.be.ok();
         Radix.map(radix, function(v,k, a,b){
             //if(!all[k]){ throw "out of range!" }
             delete all[k];
         }, {start: start, end: end});
-        expect(Gun.obj.empty(all)).to.be.ok();
+        expect(Object.empty(all)).to.be.ok();
         done();
     });
  
@@ -140,9 +131,9 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         r('alice', 1);r('bob', 2);r('carl', 3);r('carlo',4);
         r('dave', 5);r('zach',6);r('zachary',7);
         var by = ['alice','bob','carl','carlo','dave','zach','zachary'];
-        Gun.obj.map(by, function(k,i){
+        /*Object.keys(by).forEach(function(i){ var k = by[i]; console.log(k, i);
             r(k,i);
-        });
+        });*/
         Radix.map(r, function(v,k, a,b){
             expect(by.pop()).to.be(k);
             tmp = v;
@@ -157,7 +148,17 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
   });
 
+  if(Gun.window && !Gun.window.RindexedDB){ return }
+
+  var opt = {};
+  opt.file = 'radatatest';
+  var Radisk = (Gun.window && Gun.window.Radisk) || require('../../lib/radisk');
+  opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
+  opt.chunk = 1000;
+  var rad = Radisk(opt), esc = String.fromCharCode(27);
+
   describe('Radisk', function(){
+    this.timeout(1000 * 9);
 
     /*it('parse', function(done){
         this.timeout(60000);
@@ -169,6 +170,15 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         return;
     });*/
 
+    it('deleting old RAD tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    });
+    it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        //await new Promise(function(res){ indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ res() } } );
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
 
     it('write contacts', function(done){
         var all = {}, to, start;
@@ -178,30 +188,60 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             rad(v, i, function(err, ok){
                 expect(err).to.not.be.ok();
                 delete all[v];
-                if(!Gun.obj.empty(all)){ return }
+                if(!Object.empty(all)){ return }
                 done();
             })
         })
     });
 
-    /*it('read contacts reverse', function(done){
+    it('read contacts reverse', function(done){
         var opt = {};
         opt.reverse = true;
         opt.end = 'nothing';
-        opt.start = 'marcy';
+        opt.start = 'keeley';
         var first, last;
+        var all = {}, start = opt.start.toLowerCase(), end = opt.end.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            //console.log(v, i);
+            all[v] = v;
+            //rad(v, i)
+        });
         rad('', function(err, data){
-            console.log("???", err, data);
-            return;
             Radix.map(data, function(v,k){
-                console.log(k, v);
-                //delete all[find+k];
+                //console.log(k, v);
+                delete all[k];
             });
-            //if(!Gun.obj.empty(all)){ return }
-            //done();
+            if(!Object.empty(all)){ return }
+            done();
         }, opt);
     });
-    console.log("UNDO THIS RETURN!!!");return;*/
+
+    it('read contacts range', function(done){
+        var opt = {};
+        opt.end = 'nothing';
+        opt.start = 'keeley';
+        var first, last;
+        var all = {}, start = opt.start.toLowerCase(), end = opt.end.toLowerCase();
+        names.forEach(function(v,i){
+            v = v.toLowerCase();
+            if(v < start){ return }
+            if(end < v){ return }
+            //console.log(v, i);
+            all[v] = v;
+            //rad(v, i)
+        });
+        rad('', function(err, data){
+            Radix.map(data, function(v,k){
+                //console.log(k, v);
+                delete all[k];
+            });
+            if(!Object.empty(all)){ return }
+            done();
+        }, opt);
+    });
 
     it('read contacts start end', function(done){
         var opt = {};
@@ -219,7 +259,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 //console.log(find+k, v);
                 delete all[find+k];
             });
-            if(!Gun.obj.empty(all)){ return }
+            if(!Object.empty(all)){ return }
             if(!data){ return } // in case there is "more" that returned empty
             done();
         }, opt);
@@ -237,7 +277,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
-            if(!Gun.obj.empty(all)){ return }
+            if(!Object.empty(all)){ return }
             done();
         });
     });
@@ -252,7 +292,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             Radix.map(data, function(v,k){
                 delete all[find+k];
             });
-            if(!Gun.obj.empty(all)){ return }
+            if(!Object.empty(all)){ return }
             done();
         });
     });
@@ -270,7 +310,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             });
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.not.be.ok();
+                expect(Object.empty(all)).to.not.be.ok();
                 done();
             },100);
         }, {limit: 1});
@@ -280,24 +320,40 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     var ntmp = names;
   describe('RAD + GUN', function(){
+    this.timeout(1000 * 9);
     var ochunk = 1000;
+    Gun.on('opt', function(root){
+        root.opt.localStorage = false;
+        Gun.window && console.log("RAD disabling localStorage during tests.");
+        this.to.next(root);
+    })
     var gun = Gun({chunk: ochunk});
 
-    it('write same', function(done){
+    /*it('deleting old tests (may take long time)', function(done){
+        done(); // Mocha doesn't print test until after its done, so show this first.
+    }); it('deleted', function(done){
+        this.timeout(60 * 1000);
+        if(!Gun.window){ return done() }
+        indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });*/
+
+    /*it('write same', function(done){
         var all = {}, to, start, tmp;
         var names = [], c = 285;
         while(--c){ names.push('bob') }
         names.forEach(function(v,i){
             all[++i] = true;
             tmp = v.toLowerCase();
+            //console.only.i=1;console.log("save", tmp, v, i);
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
+                //console.log("???", ack);
                 expect(ack.err).to.not.be.ok();
                 delete all[i];
-                if(!Gun.obj.empty(all)){ return }
+                if(!Object.empty(all)){ return }
                 done();
             })
         });
-    });
+    });*/
 
     it('write contacts', function(done){
         var all = {}, to, start, tmp;
@@ -307,19 +363,104 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             gun.get('names').get(tmp).put({name: v, age: i}, function(ack){
                 expect(ack.err).to.not.be.ok();
                 delete all[i];
-                if(!Gun.obj.empty(all)){ return }
+                if(!Object.empty(all)){ return }
                 done();
             })
         })
     });
 
     it('read one', function(done){
+        var g = Gun({chunk: ochunk});
         //gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
-        gun.get('names').get('stu').once(function(data, key){
+        g.get('names').get('stu').once(function(data, key){ // on this chunk setting, Stu should be split between 2 files.
+            if(done.c){ return } done.c = 1;
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             done();
         });
+    });
+
+    it('small range', function(done){
+        var check = {};
+        gun.get('users').get('alice').put({cool: 'beans'});
+        gun.get('users').get('alexander').put({nice: 'beans'});
+        gun.get('users').get('bob').put({lol: 'beans'});
+        //console.log("=================");console.only.i=1;
+        gun.get('users').get({'.': {'*': 'a'}, '%': 1000 * 100}).map().on(function(d,k){
+            //console.log("small range:", k, d);
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+    });
+
+    /*it.only('small range once TEST', function(done){
+        var gun = Gun({file: 'yuio'});
+        var check = {};
+        gun.get('people').get('alice').put({cool: 'beans'});
+        gun.get('people').get('alexander').put({nice: 'beans'});
+        gun.get('people').get('bob').put({lol: 'beans'});
+        //setTimeout(function(){
+        console.only.i=1;
+        console.log("==================");
+        console.log("==================");
+        console.log("==================");
+        gun.get('people').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            console.log("***********", k,d);
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+        //},500);
+    });*/
+
+    it('small range once', function(done){
+        var check = {};
+        gun.get('people').get('alice').put({cool: 'beans'});
+        gun.get('people').get('alexander').put({nice: 'beans'});
+        gun.get('people').get('bob').put({lol: 'beans'});
+        gun.get('people').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            expect('a' === k[0]).to.be.ok();
+            check[k] = d;
+            if(check.alice && check.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+    });
+    
+    it('small range twice', function(done){
+        var check = {};
+        var gun = Gun();
+        gun.get('peoplez').get('alice').put({cool: 'beans'});
+        gun.get('peoplez').get('alexander').put({nice: 'beans'});
+        gun.get('peoplez').get('bob').put({lol: 'beans'});
+        gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            expect('a' === k[0]).to.be.ok();
+            check[k] = (check[k] || 0) + 1;
+            expect(check[k]).to.be(1);
+            if(check.alice && check.alexander){
+                if(next.c){ return } next.c = 1;
+                next();
+            }
+        });
+        function next(){
+        var neck = {};
+        gun.get('peoplez').get({'.': {'*': 'a'}, '%': 1000 * 100}).once().map().once(function(d,k){
+            expect('a' === k[0]).to.be.ok();
+            neck[k] = d;
+            if(neck.alice && neck.alexander){
+                if(done.c){ return } done.c = 1;
+                done();
+            }
+        });
+        }
     });
 
     it('read contacts', function(done){
@@ -328,18 +469,17 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        //console.log("<<<<<<<<<");
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
+            expect('m' == key[0]).to.be.ok();
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.be.ok();
+                expect(Object.empty(all)).to.be.ok();
                 done();
             },100);
         });
-        //console.log(">>>>>>>>>");
     });
 
     it('read contacts again', function(done){
@@ -349,14 +489,15 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             if(v.indexOf(find) == 0){ all[v] = true }
         });
         gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+            //console.log("*******", key, data, this._.back.get);
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.be.ok();
+                expect(Object.empty(all)).to.be.ok();
                 done();
-            },100);
+            },300);
         });
     });
 
@@ -367,19 +508,26 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             v = v.toLowerCase();
             if(v.indexOf(find) == 0){ all[v] = true }
         });
-        gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+        gun.get('names').map().once(function(data, key){
             expect(data.name).to.be.ok();
             expect(data.age).to.be.ok();
             delete all[key];
+            if(!Object.empty(all)){ return }
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.be.ok();
+                expect(Object.empty(all)).to.be.ok();
                 done();
+                setTimeout(function(){
+        gun.get('names').get({'.': {'*': find}, '%': 1000 * 100}).once().map().once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+        });
+                },500);
             },100);
         });
     });
 
-    it.skip('read contacts smaller than cursor', function(done){ // TODO!!!
+    it('read contacts smaller than cursor', function(done){ // TODO!!!
         var all = {}, cursor = 'm', to;
         names.forEach(function(v){
             v = v.toLowerCase();
@@ -393,21 +541,24 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(Gun.obj.empty(all)).to.be.ok();
+                expect(Object.empty(all)).to.be.ok();
                 done();
             },100);
         });
     });
 
-    it.skip('read contacts in descending order', function(done){ // TURN THIS BACK ON AFTER FIX IN-MEMORY ISSUE!
-        var to; 
-        const filtered = names.filter(v => v.startsWith('M'));
-
-        gun.get('names').get({'.': { '*': 'm' }, '%': 1000 * 100, '-': 1}).map().once(function(data){
-            expect(filtered.pop()).to.be(data.name);
+    it.skip('read contacts in descending order', function(done){ // TODO!!!
+        var all = {}, to;
+        names.forEach(function(v){
+            all[v] = true;
+        });
+        gun.get('names').get({'.': {'-': 1}, '%': 1000 * 100, '-': 1}).once().map().once(function(data, key){
+            expect(data.name).to.be.ok();
+            expect(data.age).to.be.ok();
+            delete all[key];
             clearTimeout(to);
             to = setTimeout(function(){
-                expect(filtered.length).to.be(0);
+                expect(Object.empty(all)).to.be.ok();
                 done();
             },100);
         });

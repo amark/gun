@@ -6,11 +6,11 @@
 
     if(typeof window !== "undefined"){ module.window = window }
 
-    var tmp = module.window || module;
+    var tmp = module.window || module, u;
     var SEA = tmp.SEA || {};
 
     if(SEA.window = module.window){ SEA.window.SEA = SEA }
 
-    try{ if(typeof MODULE !== "undefined"){ MODULE.exports = SEA } }catch(e){}
+    try{ if(u+'' !== typeof MODULE){ MODULE.exports = SEA } }catch(e){}
     module.exports = SEA;
   

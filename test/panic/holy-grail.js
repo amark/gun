@@ -1,7 +1,9 @@
+// <-- PANIC template, copy & paste, tweak a few settings if needed...
+var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
-	IP: require('ip').address(),
+	IP: ip || 'localhost',
 	port: 8765,
-	servers: 2,
+	relays: 2,
 	browsers: 2,
 	route: {
 		'/': __dirname + '/index.html',
@@ -10,7 +12,8 @@ var config = {
 	}
 }
 
-var panic = require('panic-server');
+var panic; try{ panic = require('panic-server') } catch(e){ console.log("PANIC not installed! `npm install panic-server panic-manager panic-client`") }
+
 panic.server().on('request', function(req, res){
 	config.route[req.url] && require('fs').createReadStream(config.route[req.url]).pipe(res);
 }).listen(config.port);
@@ -19,7 +22,7 @@ var clients = panic.clients;
 var manager = require('panic-manager')();
 
 manager.start({
-    clients: Array(config.servers).fill().map(function(u, i){
+    clients: Array(config.relays).fill().map(function(u, i){
 			return {
 				type: 'node',
 				port: config.port + (i + 1)
@@ -28,40 +31,55 @@ manager.start({
     panic: 'http://' + config.IP + ':' + config.port
 });
 
-var servers = clients.filter('Node.js');
-var server = servers.pluck(1);
-var spawn = servers.excluding(server).pluck(1);
-var browsers = clients.excluding(servers);
+var relays = clients.filter('Node.js');
+var relay = relays.pluck(1);
+var spawn = relays.excluding(relay).pluck(1);
+var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var bob = browsers.excluding(alice).pluck(1);
 var again = {};
 
+// continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
 describe("The Holy Grail Test!", function(){
 	//this.timeout(5 * 60 * 1000);
 	this.timeout(10 * 60 * 1000);
 
-	it("Servers have joined!", function(){
-		return servers.atLeast(config.servers);
+	it("relays have joined!", function(){
+		return relays.atLeast(config.relays);
 	});
 
 	it("GUN started!", function(){
-		return server.run(function(test){
+		return relay.run(function(test){
 			var env = test.props;
+			var port = env.config.port + env.i;
 			test.async();
+
+			if (process.env.ROD_PATH) {
+				console.log('testing with rod');
+				const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', port, '--sled-storage=false']);
+				sp.stdout.on('data', function(data){
+					console.log(data.toString());
+				});
+				sp.stderr.on('data', function(data){
+					console.log(data.toString());
+				});
+				test.done();
+				return;
+			}
+
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
 			try{ require('fs').unlinkSync((env.i+1)+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')((env.i+1)+'data') }catch(e){}
-			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
-			var Gun = require('gun');
+			var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
 			var gun = Gun({file: env.i+'data', web: server});
 			server.listen(port, function(){
 				test.done();
 			});
-		}, {i: 1, config: config}); 
+		}, {i: 1, config: config});
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
@@ -73,18 +91,20 @@ describe("The Holy Grail Test!", function(){
 		var tests = [], i = 0;
 		browsers.each(function(client, id){
 			tests.push(client.run(function(test){
+				window.ENV = test.props;
 				localStorage.clear();
-				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun');
-				window.ref = gun.get('holy').get('grail');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
+// end PANIC template --> 
 
 	it("Write initial value", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], file: 'alicedata'});
+			window.ref = gun.get('holy').get('grail');
 			ref.put("value");
 			setTimeout(test.async(), 2000);
 		});
@@ -93,6 +113,9 @@ describe("The Holy Grail Test!", function(){
 	it("Read initial value", function(){
 		return bob.run(function(test){
 			console.log("I AM BOB");
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun'], file: 'bobdata'});
+			window.ref = gun.get('holy').get('grail');
 			test.async();
 			ref.on(function(data){
 				if("value" === data){
@@ -102,8 +125,8 @@ describe("The Holy Grail Test!", function(){
 		})
 	});
 
-	it("Server has crashed and been wiped!", function(){
-		return server.run(function(test){
+	it("Relay has crashed and been wiped!", function(){
+		return relay.run(function(test){
 			console.log(3);
 			var env = test.props;
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
@@ -124,7 +147,7 @@ describe("The Holy Grail Test!", function(){
 				var err;
 				try{ new WebSocket('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun') }catch(e){ err = e }
 				if(!err){
-					test.fail("Server did not crash.");
+					test.fail("Relay did not crash.");
 				}
 			}
 			ref.put("Alice");
@@ -139,7 +162,7 @@ describe("The Holy Grail Test!", function(){
 				var err;
 				try{ new WebSocket('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun') }catch(e){ err = e }
 				if(!err){
-					test.fail("Server did not crash.");
+					test.fail("Relay did not crash.");
 				}
 			}
 			ref.put("Bob");
@@ -177,10 +200,25 @@ describe("The Holy Grail Test!", function(){
 	it("GUN spawned!", function(){
 		return spawn.run(function(test){
 			var env = test.props;
+			var port = env.config.port + env.i;
 			test.async();
+
+			if (process.env.ROD_PATH) {
+				console.log('testing with rod');
+				const sp = require('child_process').spawn(process.env.ROD_PATH, ['start', '--port', port, '--sled-storage=false']);
+				sp.stdout.on('data', function(data){
+					console.log(data.toString());
+				});
+				sp.stderr.on('data', function(data){
+					console.log(data.toString());
+				});
+				test.done();
+				return;
+			}
+
+
 			try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
 			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
-			var port = env.config.port + env.i;
 			var server = require('http').createServer(function(req, res){
 				res.end("I am "+ env.i +"!");
 			});
@@ -192,36 +230,45 @@ describe("The Holy Grail Test!", function(){
 		}, {i: 2, config: config}); 
 	});
 
-	it("Browsers re-initialized gun!", function(){
+	it("Browsers ready!", function(){
 		var tests = [], i = 0;
 		new panic.ClientList([again.alice, again.bob]).each(function(client, id){
 			tests.push(client.run(function(test){
+				window.ENV = test.props;
 				// NOTE: WE DO NOT CLEAR localStorage!
-				console.log(localStorage['gun/holy']);
-				var env = test.props;
-				var gun = Gun('http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun');
-				window.ref = gun.get('holy').get('grail');
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
 	});
 
+	it("Alice re-initialized gun!", function(){
+		return again.alice.run(function(test){
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun'], file: 'alicedata'});
+			window.ref = gun.get('holy').get('grail');
+		});
+	});
+
+	it("Bob re-initialized gun!", function(){
+		return again.bob.run(function(test){
+			var env = window.ENV;
+			var gun = Gun({peers: ['http://'+ env.config.IP + ':' + (env.config.port + 2) + '/gun'], file: 'bobdata'});
+			window.ref = gun.get('holy').get('grail');
+		});
+	});
+
 	it("Alice conflict.", function(){
 		return again.alice.run(function(test){
 			test.async();
-			var c = 0;
 			ref.on(function(data){
 				console.log("======", data);
 				window.stay = data;
-				if(!c){
-					c++;
-					if("Alice" == data){
-						setTimeout(function(){
-							window.ALICE = true;
-							test.done();
-						}, 2000);
-					}
-					return;
+				if("Bob" == data){
+					setTimeout(function(){
+						if(window.ALICE){ return }
+						window.ALICE = true;
+						test.done();
+					}, 1000);
 				}
 			});
 		});
@@ -230,22 +277,18 @@ describe("The Holy Grail Test!", function(){
 	it("Bob converged.", function(){
 		return again.bob.run(function(test){
 			test.async();
-			var c = 0;
 			ref.on(function(data){
 				console.log("======", data);
-				//return;
 				window.stay = data;
 				if("Bob" != data){
 					test.fail("wrong local value!");
 					return;
 				}
 				setTimeout(function(){
-					if(c){ return }
-					c++;
-					if("Bob" === data){
-						test.done();
-					}
-				}, 2000);
+					if(window.BOB){ return }
+					window.BOB = true;
+					test.done();
+				}, 1000);
 			});
 		});
 	});
@@ -268,8 +311,9 @@ describe("The Holy Grail Test!", function(){
 
 	after("Everything shut down.", function(){
 		require('./util/open').cleanup();
-		return servers.run(function(){
+		return relays.run(function(){
 			process.exit();
 		});
 	});
 });
+

@@ -60,7 +60,7 @@ $('#add').on('submit', function(event){
   if(!(event.what = what.value)){ return err.innerText = "No description!" }
   if(!(event.where = where.value)){ return err.innerText = "No location!" }
   var day = gun.get(name+now(event.when));
-  day.get(id.value || Gun.text.random(9)).put(event);
+  day.get(id.value || String.random(9)).put(event);
   what.value = where.value = id.value = err.innerText = '';
   go.value = 'add';
   schedule(event.when);

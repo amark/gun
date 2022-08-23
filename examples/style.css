@@ -4,6 +4,7 @@ html, body {
 	position: relative;
   line-height: 1.5;
   font-size: 18pt;
+  f-ont-size: max(18pt, 2?vw);
 }
 
 div, ul, ol, li, p, span, form, button, input, textarea, img {
@@ -14,6 +15,7 @@ div, ul, ol, li, p, span, form, button, input, textarea, img {
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   box-sizing: border-box;
+  font: inherit;
 }
 
 a, button, input, textarea {
@@ -21,18 +23,33 @@ a, button, input, textarea {
   border: inherit;
   color: inherit;
   text-decoration: inherit;
+  outline: none;
+}
+input:not([type=button]):not([type=submit]), textarea {
+	width: 100%;
 }
 
-input, textarea {
-	width: 100%;
+a:focus, button:focus, input[type=button]:focus, input[type=submit]:focus {
+  animation: pulse 2s infinite;
 }
 
 ul, li {
   list-style: none;
 }
 
+p {
+  padding: 0;
+}
+p + p {
+  padding-top: 0;
+}
+
 [contenteditable=true]:empty:before {
   content: attr(placeholder);
+}
+::placeholder, .hint {
+  color: inherit;
+  opacity: 0.3;
 }
 
 .model, .none { display: none }
@@ -42,11 +59,10 @@ ul, li {
   transition: all 2s;
 }
 
-.full, .page {
+.full {
   width: 100%;
   min-height: 100vh;
 }
-
 .max {
   max-width: 48em;
 }
@@ -60,6 +76,25 @@ ul, li {
   min-width: 12em;
 }
 
+.row {
+  width: 100%;
+}
+.row::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+.col {
+  max-width: 24em;
+  min-width: 12em;
+}
+
+.center {
+  text-align: center;
+  vertical-align: middle;
+  margin-left: auto;
+  margin-right: auto;
+}
 .right {
   float: right;
   text-align: right;
@@ -67,12 +102,6 @@ ul, li {
 .left {
   float: left;
   text-align: left;
-}
-.center {
-  text-align: center;
-  vertical-align: middle;
-  margin-left: auto;
-  margin-right: auto;
 }
 .mid { 
   margin-left: auto;
@@ -85,17 +114,14 @@ ul, li {
   vertical-align: bottom;
 }
 
-.rim { margin: 2%; }
-.gap { padding: 3%; }
+.rim { margin: 1%; }
+.gap {
+  padding: 3%;
+  padding: clamp(0.5em, 3%, 1.5em);
+}
 .stack { line-height: 0; }
 .crack { margin-bottom: 1%; }
 .sit { margin-bottom: 0; }
-
-.row { width: 100%; }
-.col {
-  max-width: 24em;
-  min-width: 12em;
-}
 
 .focus {
   margin-left: auto;
@@ -103,16 +129,12 @@ ul, li {
   float: none;
   clear: both;
 }
-.unit, .symbol {
-  display: inline-block;
-  vertical-align: inherit;
-}
 
 .leak { overflow: visible; }
 .hold { overflow: hidden; }
 
 .act {
-  display: block;
+  /*display: block;*/
   font-weight: normal;
   text-decoration: none;
   -webkit-transition: all 0.3s;
@@ -120,6 +142,10 @@ ul, li {
   cursor: pointer;
 }
 
+.unit, .symbol {
+  display: inline-block;
+  vertical-align: inherit;
+}
 .sap { border-radius: 0.1em; }
 .jot { border-bottom: 1px dashed #95B2CA; }
 
@@ -130,7 +156,6 @@ ul, li {
   font-size: 36pt;
   font-size: 6.5vmax;
 }
-
 
 .red { background: #ea3224; }
 .green { background: #33cc33; }

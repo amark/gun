@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<ul id='list'></ul>
+<form id='form'>
+  <input id='who' placeholder='name'>
+  <input id='what' placeholder='say'>
+  <input type='submit' value='send'>
+</form>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/axe.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emojione@4.0.0/lib/js/emojione.min.js"></script>
+<script>
+gun = GUN(), chat = gun.get("note" + location.hash.replace('#','/')), view = document;
+form.onsubmit = (eve) => { chat.set(who.value+': '+what.value), eve.preventDefault(what.value = "") }
+chat.map().on(function show(data, id){
+  (view.line = view.getElementById(id) || view.createElement("li")).id = id;
+  list.appendChild(view.line).innerText = emojione.shortnameToUnicode(data);
+  window.scroll(0, list.offsetHeight);
+  (list.beep = new SpeechSynthesisUtterance()).text = "new";
+  list.beep.rate = 10, list.beep.pitch = 2, window.speechSynthesis.speak(list.beep);
+});
+</script>

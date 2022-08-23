@@ -1,6 +1,5 @@
 {
   "name": "gun-server",
-  "stack": "heroku-18",
   "website": "http://gun.eco/",
   "repository": "https://github.com/amark/gun",
   "logo": "https://avatars3.githubusercontent.com/u/8811914",
@@ -8,7 +7,7 @@
   "description": "Javascript, Offline-First Javascript Graph Database Server Peer",
   "env": {
     "NPM_CONFIG_PRODUCTION": {
-      "description": "If you don't want to serve the Gun landing page, set to \"true\".",
+      "description": "If you do not want default features, set to \"true\".",
       "value": "false"
     },
     "PEERS": {

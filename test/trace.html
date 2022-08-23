@@ -1,0 +1,166 @@
+<html>
+<head>
+<title>Gun Msg Trace</title>
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0 0;
+  font-family: monospace;
+  padding: 10px 15px;
+  color: white;
+}
+body {
+  background: rgba(0,0,0,0.7);
+}
+#trace {
+}
+#editor {
+  width: 90%;
+  height: 90%;
+  background: gray;
+}
+
+#diagram {
+/*   width: 100%; */
+/*   height: 100%; */
+  margin: 0 auto;
+/*   background: #d2d2d2; */
+/*   position: absolute; */
+  top:0;
+  left:0;
+}
+/*#diagram svg {
+  width: 100%;
+  height: 100%;
+}*/
+#diagram svg text {
+  fill: #79ce7f;
+  f-ill: black;
+  f-ill: red;
+}
+#diagram svg text:hover {
+  fill: #20ff3b;
+  cursor: pointer;
+}
+#diagram svg .note rect, #diagram svg .note path {
+    fill: #666666;
+}
+#diagram svg .title rect,
+#diagram svg .title path,
+#diagram svg .actor rect,
+#diagram svg .actor path {
+    fill: #ffffff;
+    position: fixed;
+    top: 1em;
+}
+#diagram svg .actor {
+  opacity: 0;
+}
+#diagram svg .actor text {
+    fill: #000000;
+}
+#diagram svg .actor line {
+    fill: #000000;
+    stroke-width: 5px;
+}
+#diagram svg line {
+  stroke: rgba(0,0,0,0.5);
+/*   stroke-width: 5px; */
+}
+.method {
+  font-size: 140%;
+  display: block;
+  background: black;
+  color: white;
+  padding: 0.3em;
+  top: 7em;
+}
+</style>
+</head>
+<body>
+<div id="trace">
+  <h1>Gun Msg Trace</h1>
+  <h2></h2>
+  <div id="diagram"></div>
+</div>
+<script src="../gun.js"></script>
+<script src="../sea.js"></script>
+<script src="./trace.js"></script>
+
+<script src="../examples/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/bramp/js-sequence-diagrams/test/webfont-mock.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/snapsvg@0.5.1/dist/snap.svg.min.js"></script>
+<script src="https://pagecdn.io/lib/underscore/1.11.0/underscore.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/bramp/js-sequence-diagrams/dist/sequence-diagram-min.js"></script>
+<script>
+;(function(){
+  // OVERLOAD GUN FUNCTIONS THAT WE WANT TO TRACE:
+  
+  /// GUN protocolo
+  var _get = Gun.on._get; Gun.on._get = function(a,b,c,d,e){ Trace.log('GET', a); _get.call(this, a,b,c,d,e) } /// PROTOCOL
+  var _put = Gun.on.put; Gun.on.put = function(a,b,c,d,e){ Trace.log('PUT', a); _put.call(this, a,b,c,d,e) } /// PROTOCOL
+  
+  /// GUN chain
+//   var get = Gun.chain.get; Gun.chain.get = function(a,b,c,d,e){ Trace.log('.get', a); return get.call(this, a,b,c,d,e) } /// chain
+//   var put = Gun.chain.put; Gun.chain.put = function(a,b,c,d,e){ Trace.log('.put', a); return put.call(this, a,b,c,d,e) } /// chain
+//   var map = Gun.chain.map; Gun.chain.map = function(a,b,c,d,e){ Trace.log('.map', a); return map.call(this, a,b,c,d,e) } /// chain
+//   var once = Gun.chain.once; Gun.chain.once = function(a,b,c,d,e){ Trace.log('.once', a); return once.call(this, a,b,c,d,e) } /// chain
+//   var on = Gun.chain.on; Gun.chain.on = function(a,b,c,d,e){ Trace.log('.on', a); return on.call(this, a,b,c,d,e) } /// chain
+
+  /// GUN events
+  var input = Gun.on.in; Gun.on.in = function(a,b,c,d,e){ Trace.log('in', a); input.call(this, a,b,c,d,e) } /// EVENT
+
+  var output = Gun.on.out; Gun.on.out = function(a,b,c,d,e){ Trace.log('out', a); output.call(this, a,b,c,d,e) } /// EVENT
+
+//   var only = console.only; console.only = function(a,b,c,d,e,f,g){ Trace.log('ONLY'); return only.apply(console,arguments) }
+//   var start = +new Date;
+//   setTimeout(function log(){
+//     if((+new Date - start) > 100){ return }
+//     setTimeout(log, 0);
+//     Trace.log("ASYNC");
+//   },0);
+}());
+
+;(function(){ // PASTE YOUR UNIT TEST INTO HERE TO TRACE IT!
+// if (typeof localStorage!=='undefined') { localStorage.clear(); }
+// var goff = Gun();
+// Gun.statedisk = function(o,s,cb){ goff.get(s).put(o, cb, {turn: function(fn){fn()}}); };
+
+var gun = Gun();
+var bob = {age: 29, name: "Bob!"};
+var cat = {name: "Fluffy", species: "kitty"};
+var user = {bob: bob};
+bob.pet = cat;
+cat.slave = bob;
+Trace.log('START');
+// Gun.statedisk(user, 'nodecircle', function(){
+console.only.i=1;console.log("=============", gun);
+
+// gun.get('nodecircle').put(user, function(ack) { Trace.log('ACK', ack); });
+// gun.get('nodecircle').on(function(ack) { Trace.log('END', ack); });
+gun.get('nodecircle').once(function(ack) { Trace.log('END', ack); });
+//       gun.get('nodecircle').get('a').get('b').get('c').on(function(v,k){
+//       gun.get('nodecircle').get('bob').on(function(v,k){
+//       gun.get('nodecircle').get('bob').get('pet').get('slave').once(function(v,k){
+// });
+}());
+
+// Gun.on('trace.end', function(msg){
+setTimeout(function(){
+  console.log('_____TOTAL LOGS: ',Trace.traces.length, new Date());
+  var id, code = Trace.traces.join('\n');
+  $('h2:first').text(`Total of steps: ${Trace.traces.length}`);
+  $('title:first').text(`(${Trace.traces.length}) steps | Gun Msg Trace`);
+  var diagram = Diagram.parse(code);
+  diagram.drawSVG(id||'diagram', {theme: 'simple'});
+  setTimeout(function(){
+    $('.actor').each(function(){
+      var pos = $(this).offset();
+      $("<span class='method'>").text($(this).text()).css({position: 'fixed', left: pos.left}).appendTo('body');
+    });
+  });
+}, 2000);
+</script>
+</body>
+</html>

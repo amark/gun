@@ -33,9 +33,9 @@
 		age: 23,
 		type: "human"
 	}).back.set({
-		name: "Amber Nadal",
-		age: 23,
-		type: "human"
+		name: "Timber Nadal",
+		age: 3,
+		type: "cat"
 	}).back.set({
 		name: "Hobbes",
 		age: 4,
