@@ -622,7 +622,7 @@
 				if(at.lex){ Object.keys(at.lex).forEach(function(k){ tmp[k] = at.lex[k] }, tmp = msg.get = msg.get || {}) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
-					root.graph[get['#']] = root.graph[get['#']] || {_:{'#':get['#'],'>':{}}};
+					//root.graph[get['#']] = root.graph[get['#']] || {_:{'#':get['#'],'>':{}}};
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 					back = (root.$.get(get['#'])._);
 					if(!(get = get['.'])){ // soul
