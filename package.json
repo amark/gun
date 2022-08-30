@@ -12,7 +12,8 @@
     "debug": "node --prof-process --preprocess -j isolate*.log > v8data.json && rm isolate*.log && echo 'drag & drop ./v8data.json into https://mapbox.github.io/flamebearer/'",
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
-    "test": "echo 'Did you run PANIC holy-grail, 1~X, on-recover, etc.?' && mocha",
+    "testRequest": "echo 'Did you run PANIC holy-grail, 1~X, on-recover, etc.?'",
+    "test": "npm run testRequest && nyc mocha",
     "testsea": "mocha test/sea/sea.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
@@ -65,10 +66,11 @@
     "@peculiar/webcrypto": "^1.1.1"
   },
   "devDependencies": {
-    "mocha": "^6.2.0",
-    "ip": "^1.1.5",
     "aws-sdk": "^2.528.0",
     "emailjs": "^2.2.0",
+    "ip": "^1.1.5",
+    "mocha": "^6.2.0",
+    "nyc": "^15.1.0",
     "uglify-js": "^3.6.0"
   }
 }
