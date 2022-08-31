@@ -1088,6 +1088,7 @@ const OPT_DEFAULTS = {
   }
 
   function unpersist(opt) {
+    log('(removing db)');
     opt = opt || { file: PATH_TO_TEST_DB };
     opt.file = opt.file || PATH_TO_TEST_DB;
     delete RFS[opt.file];
@@ -1112,6 +1113,7 @@ const OPT_DEFAULTS = {
 
   function buildRad(overrides = {}) {
     const opts = buildOpt(overrides);
+    log('(new Radisk)')
     // console.log('building Radisk with', opts);
     return Radisk(opts);
   }
