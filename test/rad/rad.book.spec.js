@@ -291,14 +291,14 @@ const OPT_DEFAULTS = {
 
     describe('api misuse', () => {
       it('rad(string) with no callback', done => {
-      r = buildRad();
-      r('initialize', true, () => {
-        r('initialize');
-        r('test', '2', () => {
+        r = buildRad();
+        r('initialize', true, () => {
+          r('initialize');
+          r('test', '2', () => {
             r('test'); // TODO? mark - should this throw an error?
             done();
+          });
         });
-      });
       });
     });
 
@@ -310,6 +310,7 @@ const OPT_DEFAULTS = {
           r = buildRad();
           done();
         });
+        // after(() => unpersist());
         it('writes initial value', done => {
           r('initial', 'value', () => {
             r('initial', (err, page, book) => {
@@ -347,14 +348,16 @@ const OPT_DEFAULTS = {
           })
         })
       });
-      [true, false].forEach(reset => {
+      let once = false;
+      [true, false].forEach((reset) => {
         [false, true].forEach(readonly => {
           // FIXME these combinations are all broken in slightly different ways
           // If more than one word is present in a file, it will fail to read
           // However, if the data is large enough to be given its own file, it reads fine
           describe(`consecutive ${readonly ? 'read' : 'write+read'} using ${reset ? 'new' : 'existing'} Radisk`, () => {
-            if (!reset && !readonly) {
+            if (!once || (!reset && !readonly)) {
               before(() => unpersist());
+              once = true;
             }
             (reset ? beforeEach : before)(() => {
               r = buildRad();
@@ -362,12 +365,20 @@ const OPT_DEFAULTS = {
             if (!readonly) {
               it('writes a', done => {
                 r('a', 'a', () => {
-                  r('a', done);
+                  r('a', (err, page) => {
+                    expect(err).to.not.be.ok();
+                    expect(page).to.be.ok();
+                    expect(page.book('a')).to.eql('a');
+                    done();
+                  });
                 })
               });
               it('writes b', done => {
                 r('b', 'b', () => {
                   r('b', (err, page, book) => {
+                    expect(err).to.not.be.ok();
+                    expect(page).to.be.ok();
+                    expect(page.book('b')).to.eql('b');
                     done();
                   });
                 })
@@ -375,27 +386,18 @@ const OPT_DEFAULTS = {
             }
             it('reads a', done => {
               r('a', (err, page, book) => {
+                expect(err).to.not.be.ok();
+                expect(page).to.be.ok();
                 expect(page.book('a')).to.eql('a');
                 done();
               })
             });
-            it('reads b (using test wrapper)', done => {
+            it('reads b', done => {
               r('b', (err, page, book) => {
-                const v = getValueFromPage('b', page);
-                if (v !== 'b') {
-                  done('values did not match');
-                  return;
-                }
-                done();
-              })
-            });
-            it('reads b (using page.book())', done => {
-              r('b', (err, page, book) => {
-                const v = page.book('b', page);
-                if (v !== 'b') {
-                  done('values did not match');
-                  return;
-                }
+                expect(err).to.not.be.ok();
+                expect(page).to.be.ok();
+                const v = page.book('b');
+                expect(v).to.eql('b');
                 done();
               })
             });
@@ -491,7 +493,7 @@ const OPT_DEFAULTS = {
             const soul = PATH_SEGMENTS.join(s);
             r(soul, soul);
             r(soul, (err, page, book) => {
-              expect(getValueFromPage(soul, page)).to.eql(soul);
+              expect(page.book(soul)).to.eql(soul);
               done();
             });
           });
@@ -501,7 +503,7 @@ const OPT_DEFAULTS = {
             let data = `data for '${soul}' ${seq}`;
             r(soul, data);
             r(soul, (err, res, o) => {
-              const rd = getValueFromPage(soul, res);
+              const rd = page.book(soul);
               expect(rd).to.be.ok();
               expect(rd).to.eql(data);
               done();
@@ -708,7 +710,7 @@ const OPT_DEFAULTS = {
       it('can write & read objects', done => {
         r('object', { test: 'works' }, () => {
           r('object', (err, page, book) => {
-            const harnessValue = getValueFromPage('object', page);
+            const harnessValue = page.book('object');
             expect(harnessValue).to.be.ok();
             expect(harnessValue.test).to.eql('works');
             const value = page.book('object');
@@ -921,7 +923,7 @@ const OPT_DEFAULTS = {
                 done(err);
                 return;
               }
-              const value = page.book(soul); // getValueFromPage(soul, res); // TODO mark fix this
+              const value = page.book(soul);
               if (value !== data) {
                 console.log(`values didn't match`);
                 const bookKeys = Object.keys(book.all);
