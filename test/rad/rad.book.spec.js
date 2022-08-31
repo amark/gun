@@ -289,16 +289,17 @@ const OPT_DEFAULTS = {
       });
     });
 
-    it('rad(string)', done => {
+    describe('api misuse', () => {
+      it('rad(string) with no callback', done => {
       r = buildRad();
       r('initialize', true, () => {
         r('initialize');
         r('test', '2', () => {
-          r('test');
+            r('test'); // TODO? mark - should this throw an error?
+            done();
         });
       });
-      // r('initialize');
-      done();
+      });
     });
 
     describe('path', () => {
