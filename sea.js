@@ -1,5 +1,7 @@
 ;(function(){
 
+  var window = this || self || window;
+
   /* UNBUILD */
   function USE(arg, req){
     return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
