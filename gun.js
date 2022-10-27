@@ -1272,6 +1272,10 @@
 				}
 			}
 			// TODO: delete cat.one[map.id]?
+			if (tmp = cat.any) {
+				delete cat.any;
+				cat.any = {};
+			}
 			if(tmp = cat.ask){
 				delete tmp[at.get];
 			}
