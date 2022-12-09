@@ -48,8 +48,8 @@ GUN is *super easy* to get started with:
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
 // import GUN from 'gun'; // in ESM
-// GUN = require('gun'); // in NodeJS
-// GUN = require('gun/gun'); // in React
+// const GUN = require('gun'); // in NodeJS
+// const GUN = require('gun/gun'); // in React
 gun = GUN();
 
 gun.get('mark').put({
