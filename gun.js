@@ -467,7 +467,9 @@
 				}*/
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
-				//console.log("GET:", get, node, has);
+				//console.log("GET:", get, node, has, at);
+				//if(!node && !at){ return root.on('get', msg) }
+				//if(has && node){ // replace 2 below lines to continue dev?
 				if(!node){ return root.on('get', msg) }
 				if(has){
 					if('string' != typeof has || u === node[has]){
