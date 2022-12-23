@@ -104,10 +104,12 @@ describe("Dedup load balancing GETs", function(){
 					return;
 				}
 
-				var gun = Gun({peers: peers, web: server, rad: false, radisk: false, file: false, localStorage: false, axe: false});
+				var gun = Gun({peers: peers, web: server, rad: false, radisk: false, file: false, localStorage: false});
 				server.listen(port, function(){
 					test.done();
 				});
+
+				//gun.get('test').put({tmp: 1}); // temporary workaround for bug.
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -168,7 +170,6 @@ describe("Dedup load balancing GETs", function(){
 						return;
 					}
 					if(Math.random() > (ok['@'] / ok['/'])){ return }
-					console.log('ack?', JSON.stringify(msg));
 					//console.log("WAS THE SPECIAL ONE TO ACK!", JSON.stringify(msg));
 					gun.on('out', {'@': msg['#'], ok: {yay: 1}});
 				});

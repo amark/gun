@@ -1,7 +1,5 @@
 ;(function(){
 
-  var window = this || self || window;
-
   /* UNBUILD */
   function USE(arg, req){
     return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
@@ -21,6 +19,7 @@
     // IT IS IMPLEMENTED IN A POLYFILL/SHIM APPROACH.
     // THIS IS AN EARLY ALPHA!
 
+    if(typeof self !== "undefined"){ module.window = self } // should be safe for at least browser/worker/nodejs, need to check other envs like RN etc.
     if(typeof window !== "undefined"){ module.window = window }
 
     var tmp = module.window || module, u;
@@ -179,10 +178,10 @@
     })}
 
     if(SEA.window){
-      api.crypto = window.crypto || window.msCrypto
+      api.crypto = SEA.window.crypto || SEA.window.msCrypto
       api.subtle = (api.crypto||o).subtle || (api.crypto||o).webkitSubtle;
-      api.TextEncoder = window.TextEncoder;
-      api.TextDecoder = window.TextDecoder;
+      api.TextEncoder = SEA.window.TextEncoder;
+      api.TextDecoder = SEA.window.TextDecoder;
       api.random = (len) => api.Buffer.from(api.crypto.getRandomValues(new Uint8Array(api.Buffer.alloc(len))));
     }
     if(!api.TextDecoder)
@@ -846,7 +845,7 @@
   })(USE, './user');
 
   ;USE(function(module){
-    var u, Gun = (''+u != typeof window)? (window.Gun||{chain:{}}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
+    var u, Gun = (''+u != typeof GUN)? (GUN||{chain:{}}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     Gun.chain.then = function(cb, opt){
       var gun = this, p = (new Promise(function(res, rej){
         gun.once(res, opt);
@@ -951,7 +950,7 @@
       }
       if(SEA.window){
         try{var sS = {};
-        sS = window.sessionStorage;
+        sS = SEA.window.sessionStorage;
         delete sS.recall;
         delete sS.pair;
         }catch(e){};
@@ -1040,7 +1039,7 @@
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
           try{var sS = {};
-          sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
+          sS = SEA.window.sessionStorage; // TODO: FIX BUG putting on `.is`!
           sS.recall = true;
           sS.pair = JSON.stringify(pair); // auth using pair is more reliable than alias/pass
           }catch(e){}
@@ -1131,7 +1130,7 @@
         if(SEA.window){
           try{
             var sS = {};
-            sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
+            sS = SEA.window.sessionStorage; // TODO: FIX BUG putting on `.is`!
             if(sS){
               (root._).opt.remember = true;
               ((gun.back('user')._).opt||opt).remember = true;
@@ -1289,7 +1288,7 @@
 
   ;USE(function(module){
     var SEA = USE('./sea'), S = USE('./settings'), noop = function() {}, u;
-    var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
+    var Gun = (SEA.window||'').GUN || USE((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
