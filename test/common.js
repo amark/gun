@@ -3012,7 +3012,7 @@ describe('Gun', function(){
 			setTimeout(function(){
 				var gun2 = Gun();
 				//console.log(require('fs').readFileSync('./radata/!').toString());
-				gun2.get('stef').get('address').once(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "adress"
+				gun2.get('stef').get('address').once(function(data){ // Object {_: Object, country: "Netherlands", zip: "1766KP"} "address"
 					//console.log("******", data);return;
 					done.a = true;
 					expect(data.country).to.be('Netherlands');
