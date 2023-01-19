@@ -5,7 +5,7 @@ var Gun;
   if(typeof global !== 'undefined'){ env = global }
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
-  try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
+  //try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
   //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
@@ -53,11 +53,32 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     it('deleting old RAD tests (may take long time)', function(done){
         done(); // Mocha doesn't print test until after its done, so show this first.
     });
+
     it('deleted', function(done){
         this.timeout(60 * 1000);
         if(!Gun.window){ return done() }
+        root.localStorage && root.localStorage.clear();
         //await new Promise(function(res){ indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ res() } } );
         indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
+    });
+
+    describe('BASIC API', function(done){
+
+        it('write', function(done){
+            rad('hello', 'world', function(err, ok){
+                expect(err).to.not.be.ok();
+                done();
+            });
+        });
+
+        it('read', function(done){
+            rad('hello', function(err, page){
+                var val = page.book('hello');
+                expect(val).to.be('world');
+                console.log('read:', val);
+                done();
+            })
+        });
     });
 
     var prim = [
@@ -75,23 +96,21 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     var prim = ['alice', 'bob'];
     root.rad = rad;
 
-    describe.only('can write & read all primitives', done => {
-      prim.forEach(function(type){
+    describe('can write & read all primitives', done => { prim.forEach(function(type){
         var r = rad;
-        it('save '+type, done => {
-          r('type-'+type, type, function(err, ok){
-            expect(err).to.not.be.ok();
-            r('type-'+type, function(err, page){
-              var val = page.book('type-'+type);
-              console.log("we loaded", page, val);
-              expect(val).to.be(type);
-              done();
+        it('save '+type, done => { setTimeout(function(){
+            console.log("how many times is this called?", type);
+            r('type-'+type, type, function(err, ok){
+                expect(err).to.not.be.ok();
+                r('type-'+type, function(err, page){
+                    var val = page.book('type-'+type);
+                    console.log("we loaded", page, val);
+                    expect(val).to.be(type);
+                    done();
+                });
             });
-          });
-        });
-
-      });
-    });
+        },1); });
+    });});
 
   });
 
