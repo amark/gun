@@ -1,0 +1,54 @@
+<html>
+	<head>
+		<title>Gun Tests</title>
+		<link rel="stylesheet" href="../mocha.css"/>
+		<style>
+		</style>
+	  </head>
+	</head>
+	<body>
+		Gun Tests
+		<div id="debug"></div>
+		<div id="mocha"></div>
+		
+		<script src="../json2.js"></script>
+		<script src="../mocha.js"></script>
+		<script>mocha.setup({ui:'bdd',globals:[]});</script>
+		<script src="../expect.js"></script>
+		<script></script>
+		<script src="../../gun.js"></script>
+		<script src="../../lib/book.js"></script>
+		<script src="../../lib/radisk3.js"></script>
+
+		<script src="./book.js"></script>
+		<script>
+		if(location.search){
+			Gun.debug = true;
+			console.log('async?', Gun.debug);
+		}
+		var run = mocha.run(function(a,b,c){
+			document.body.prepend("TODO: localStorage gun/gap ???");return;
+			var yes = confirm("REFRESH BROWSER FOR ASYNC TESTS?");
+			if(yes){
+				if(location.search){
+					location.search = '';
+				} else {
+					location.search = '?async';
+				}
+				return;
+			}
+			/*console.log("???????????", a);
+			//if(a !== 0){ return }
+			document.getElementById('mocha-stats').id = 'mocha-stats2';
+			document.getElementById('mocha-report').style.display = 'none';
+			document.getElementById('mocha-report').id = 'mocha-report2';
+			Gun.debug = false;
+			mocha.run();*/
+		});
+		run.on("fail", function(test, err){
+			console.log("!!!!!!!!!!!", test, err);
+			//alert(5);
+		})
+		</script>
+	</body>
+</html>
