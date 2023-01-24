@@ -5,7 +5,7 @@ var Gun;
   if(typeof global !== 'undefined'){ env = global }
   if(typeof window !== 'undefined'){ env = window }
   root = env.window? env.window : global;
-  //try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
+  try{ env.window && root.localStorage && root.localStorage.clear() }catch(e){}
   //try{ indexedDB.deleteDatabase('radatatest') }catch(e){}
   if(root.Gun){
     root.Gun = root.Gun;
@@ -73,9 +73,8 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
         it('read', function(done){
             rad('hello', function(err, page){
-                var val = page.book('hello');
+                var val = page.get('hello');
                 expect(val).to.be('world');
-                console.log('read:', val);
                 done();
             })
         });
@@ -96,15 +95,23 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     var prim = ['alice', 'bob'];
     root.rad = rad;
 
-    describe('can write & read all primitives', done => { prim.forEach(function(type){
+    describe('can in-memory write & read all primitives', done => { prim.forEach(function(type){
+        var b = setTimeout.Book();
+        it('save '+type, done => { setTimeout(function(){
+            b('type-'+type, type);
+            var val = b('type-'+type);
+            expect(val).to.be(type);
+            done();
+        },1); });
+    });});
+
+    describe('can disk write & read all primitives', done => { prim.forEach(function(type){
         var r = rad;
         it('save '+type, done => { setTimeout(function(){
-            console.log("how many times is this called?", type);
             r('type-'+type, type, function(err, ok){
                 expect(err).to.not.be.ok();
                 r('type-'+type, function(err, page){
-                    var val = page.book('type-'+type);
-                    console.log("we loaded", page, val);
+                    var val = page.get('type-'+type);
                     expect(val).to.be(type);
                     done();
                 });
@@ -115,7 +122,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   });
 
     var ntmp = names;
-  describe.skip('RAD + GUN', function(){
+  describe.skip('RAD + GUN', function(){ return;
     this.timeout(1000 * 9);
     var ochunk = 1000;
     Gun.on('opt', function(root){
