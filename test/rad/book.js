@@ -32,10 +32,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
   var opt = {};
   opt.file = 'radatatest';
-  var Radisk = (setTimeout.RAD) || require('../../lib/radisk');
+  var RAD = (setTimeout.RAD) || require('../../lib/radisk');
   //opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
   opt.chunk = 1000;
-  var rad = Radisk(opt), esc = String.fromCharCode(27);
+  var rad = RAD(opt), esc = String.fromCharCode(27);
 
   describe('Book', function(){
     this.timeout(1000 * 9);
@@ -89,10 +89,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
       false,
       -Infinity,
       Infinity,
-      NaN,
       -0
     ];
-    var prim = ['alice', 'bob'];
+    //var prim = ['alice', 'bob'];
+    //var prim = [null];
     root.rad = rad;
 
     describe('can in-memory write & read all primitives', done => { prim.forEach(function(type){
@@ -106,11 +106,10 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });});
 
     describe('can disk write & read all primitives', done => { prim.forEach(function(type){
-        var r = rad;
         it('save '+type, done => { setTimeout(function(){
-            r('type-'+type, type, function(err, ok){
+            rad('type-'+type, type, function(err, ok){
                 expect(err).to.not.be.ok();
-                r('type-'+type, function(err, page){
+                rad('type-'+type, function(err, page){
                     var val = page.get('type-'+type);
                     expect(val).to.be(type);
                     done();
@@ -118,6 +117,81 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             });
         },1); });
     });});
+
+    describe('error on invalid primitives', function(){
+        it('test invalid', done => {
+            rad('type-NaN', NaN, function(err, ok){
+                expect(err).to.be.ok();
+                done();
+            });
+        });
+    });
+
+    describe('Async Race Conditions', function(){
+
+        it('make sure word does not get duplicated when data is re-saved after read', done => {
+            var opt = {file: 'zadata'}
+            var prev = RAD(opt);
+
+            prev('helloz', 'world', function(err, ok){
+
+                prev('helloz', function(err, page){
+                    prev('zalice', 'yay', function(err){
+                        expect(page.text.split('helloz').length).to.be(2);
+                        done();
+                    });
+                });
+            });
+            /*
+                (A) READ ONLY: we receive a message, we READ only - parseless is important.
+                (B) READ & WRITE: we write a page, and it already exists on disk.
+                (C) WRITE ONLY: we write a page, and it is new to disk.
+            */
+        });
+
+        it('test if adding an in-memory word merges with previously written disk data', done => {
+            var prev = RAD(opt);
+
+            prev('pa-alice', 'hello', function(err, ok){
+                expect(err).to.not.be.ok();
+
+                setTimeout(function(){
+                    var rad = RAD(opt);
+
+                    rad('pa-bob', 'banana', function(err, ok){
+                        expect(err).to.not.be.ok();
+                        //console.log("COMPARE:", rad.book.list[0].text, 'vs', prev.book.list[0].text);
+                        var text = rad.book.list[0].text;
+                        var i = text.indexOf('pa-alice');
+                        expect(i).to.not.be(-1);
+                        var ii = text.indexOf('hello');
+                        expect((ii - i) < 10).to.be.ok();
+                        done();
+                    })
+                },99);
+            });
+        });
+
+        it('test if updating an in-memory word merges with previously written disk data', done => {
+            var prev = RAD(opt);
+            prev('pu-alice', 'hello', function(err, ok){
+                expect(err).to.not.be.ok();
+
+                var rad = RAD(opt);
+
+                rad('pu-alice', 'cool', function(err, ok){
+                    expect(err).to.not.be.ok();
+
+                    var next = RAD(opt);
+                    next('pu-alice', function(err, page){
+                        expect('cool').to.be(page.get('pu-alice'));
+                        done();
+                    })
+                });
+            });
+        });
+
+    });
 
   });
 
