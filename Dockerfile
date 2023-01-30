@@ -1,5 +1,5 @@
 # install packages
-FROM node:14-alpine as builder
+FROM node:lts-alpine as builder
 RUN mkdir /work
 WORKDIR /work
 RUN apk add --no-cache alpine-sdk python3
@@ -8,7 +8,7 @@ RUN mkdir -p node_modules
 RUN npm ci --only=production
 
 # fresh image without dev packages
-FROM node:14-alpine
+FROM node:lts-alpine
 # build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
