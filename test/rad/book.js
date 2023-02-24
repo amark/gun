@@ -33,6 +33,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
   var opt = {};
   opt.file = 'radatatest';
   var RAD = (setTimeout.RAD) || require('../../lib/radisk');
+  var Book = (setTimeout.Book) || require('../../lib/book');
   //opt.store = ((Gun.window && Gun.window.RindexedDB) || require('../../lib/rfs'))(opt);
   opt.chunk = 1000;
   var rad = RAD(opt), esc = String.fromCharCode(27);
@@ -62,6 +63,27 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
     });
 
+    describe('Book Format', function(done){
+        var B = Book;
+        it.skip('encode decode', function(){
+            expect(B.decode(B.encode(null))).to.be(null);
+            expect(B.decode(B.encode(false))).to.be(false);
+            expect(B.decode(B.encode(true))).to.be(true);
+            expect(B.decode(B.encode(0))).to.be(0);
+            expect(B.decode(B.encode(-Infinity))).to.be(-Infinity);
+            expect(B.decode(B.encode(Infinity))).to.be(Infinity);
+            expect(B.decode(B.encode(1))).to.be(1);
+            expect(B.decode(B.encode(2))).to.be(2);
+            expect(B.decode(B.encode(1.2))).to.be(1.2);
+            expect(B.decode(B.encode(1234.56789))).to.be(1234.56789);
+            console.log("RESUME HERE!"); return;
+            expect(B.decode(B.encode(''))).to.be('');
+            expect(B.decode(B.encode("hello world"))).to.be("hello world");
+            expect(B.decode(B.encode("he||o"))).to.be("he||o");
+            expect(B.decode(B.encode("ho|y ha|o"))).to.be("ho|y ha|o");
+        });
+
+    });
     describe('BASIC API', function(done){
 
         it('write', function(done){
@@ -190,6 +212,73 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 });
             });
         });
+
+    });
+
+    describe('Recursive Book Lookups', function(){
+
+        function gen(val){ return val + String.random(99,'a') }
+        var opt = {file: 'gen'}
+        //var rad = window.names = Book();
+        var rad = window.names = RAD(opt);
+        it('Generate more than 1 page', done => {
+
+            var i = 0;
+            names.forEach(function(name){
+                name = name.toLowerCase();
+                rad(name, gen(name));
+
+                clearTimeout(done.c)
+                done.c = setTimeout(done, 99);
+            });
+
+        });
+
+        it('Make sure parseless lookup works with incrementally parsed values', done => {
+
+            rad = RAD(opt);
+            rad('adora', function(err, page){
+                var n = page.get('adora');
+                expect(gen('adora')).to.be(n);
+
+                rad('aia', function(err, page){
+                    var n = page.get('aia');
+                    expect(gen('aia')).to.be(n);
+                    done();
+                });
+            });
+
+        });
+
+        it('Read across the pages', done => {
+
+            rad = RAD(opt);
+            names.forEach(function(name){
+                name = name.toLowerCase();
+                rad(name, function(err, page){
+                    var n = page.get(name);
+                    expect(gen(name)).to.be(n);
+
+                    clearTimeout(done.c);
+                    done.c = setTimeout(done, 99);
+                });
+            });
+
+        });
+
+
+        /*it.skip('Correctly calculate size', done => {
+
+            var r = String.random(1000);
+            rad('a', r);
+
+            r = String.random(2000);
+            rad('b', r);
+
+            r = String.random(3000);
+            rad('c', r);
+
+        });*/
 
     });
 
