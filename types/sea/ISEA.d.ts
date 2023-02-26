@@ -152,7 +152,7 @@ export interface ISEA {
    * Derive shared secret from other's pub and my epub/epriv
    *
    * @param key other's public encryption key
-   * @param pair encyption key pair from `.pair`
+   * @param pair encryption key pair from `.pair`
    * @param callback A callback function that runs after a secret is created
    */
   secret(

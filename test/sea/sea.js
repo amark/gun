@@ -658,7 +658,7 @@ describe('SEA', function(){
       var alice = await SEA.pair()
       var bob = await SEA.pair()
       var cert = await SEA.certify(bob, {"*": "private"}, alice, null, {
-        expiry: Gun.state() - 100, // expired 100 miliseconds ago
+        expiry: Gun.state() - 100, // expired 100 milliseconds ago
       })
 
       user.leave()

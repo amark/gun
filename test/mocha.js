@@ -1660,7 +1660,7 @@ exports.colors = {
 exports.symbols = {
   ok: '?',
   err: '?',
-  dot: '·'
+  dot: 'ï¿½'
 };
 
 // With node.js on Windows: use symbols available in terminal default fonts
@@ -1734,7 +1734,7 @@ exports.cursor = {
 };
 
 /**
- * Outut the given `failures` as a list.
+ * Output the given `failures` as a list.
  *
  * @param {Array} failures
  * @api public
@@ -3000,9 +3000,9 @@ function Landing(runner) {
     stream.write('\u001b[' + (width + 1) + 'D\u001b[2A');
     stream.write(runway());
     stream.write('\n  ');
-    stream.write(color('runway', Array(col).join('·')));
+    stream.write(color('runway', Array(col).join('ï¿½')));
     stream.write(plane);
-    stream.write(color('runway', Array(width - col).join('·') + '\n'));
+    stream.write(color('runway', Array(width - col).join('ï¿½') + '\n'));
     stream.write(runway());
     stream.write('\u001b[0m');
   });
@@ -4731,7 +4731,7 @@ Runner.prototype.runTests = function(suite, fn) {
     }
     if (!match) {
       // Run immediately only if we have defined a grep. When we
-      // define a grep — It can cause maximum callstack error if
+      // define a grep ï¿½ It can cause maximum callstack error if
       // the grep is doing a large recursive loop by neglecting
       // all tests. The run immediately function also comes with
       // a performance cost. So we don't want to run immediately
@@ -8474,7 +8474,7 @@ process.nextTick = function (fun) {
     }
 };
 
-// v8 likes predictible objects
+// v8 likes predictable objects
 function Item(fun, array) {
     this.fun = fun;
     this.array = array;

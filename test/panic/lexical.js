@@ -100,7 +100,7 @@ describe('RAD Lexical search Test!           ', function() {
       }, 1000);
     });
   });
-  it('Query server - Beetween(< item <)      ', function() {
+  it('Query server - Between(< item <)      ', function() {
     var i=0;
     return server.run(function(test) {
       var env = test.props;
@@ -118,7 +118,7 @@ describe('RAD Lexical search Test!           ', function() {
         if (results_unique.length === len) {
           test.done();
         } else {
-          console.log('RESULTS Query server - Beetween(< item <): ', results_unique.length, results_unique.join(', '));
+          console.log('RESULTS Query server - Between(< item <): ', results_unique.length, results_unique.join(', '));
           test.fail('Error: get ' + results_unique.length + ' attributes.');
         }
       }, env.config.wait_map);
@@ -146,7 +146,7 @@ describe('RAD Lexical search Test!           ', function() {
           test.done();
         } else {
           console.log('RESULTS Query server - Higher(>): ', results_unique.length, results_unique.join(', '));
-          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
         }
       }, env.config.wait_map);
     }, {
@@ -173,7 +173,7 @@ describe('RAD Lexical search Test!           ', function() {
           test.done();
         } else {
           console.log('RESULTS Query server - Lower(<): ', results_unique.length, results_unique.join(', '));
-          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
         }
       }, env.config.wait_map);
     }, {
@@ -200,7 +200,7 @@ describe('RAD Lexical search Test!           ', function() {
           test.done();
         } else {
           console.log('RESULTS Query server - Exact match(=): ', results_unique.length, results_unique.join(', '));
-          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
         }
       }, env.config.wait_map);
     }, {
@@ -227,7 +227,7 @@ describe('RAD Lexical search Test!           ', function() {
           test.done();
         } else {
           console.log('RESULTS Query server - Prefix match(*): ', results_unique.length, results_unique);
-          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
         }
       }, env.config.wait_map);
     }, {
@@ -281,7 +281,7 @@ describe('RAD Lexical search Test!           ', function() {
     return Promise.all(tests);
   });
 
-  it('Query browser - Beetween(< item <)     ', function() {
+  it('Query browser - Between(< item <)     ', function() {
     var tests = [], i = 0;
     browsers.each(function(client, id) {
       tests.push(client.run(function(test) {
@@ -300,8 +300,8 @@ describe('RAD Lexical search Test!           ', function() {
           if (results_unique.length === len) {
             test.done();
           } else {
-            console.log('RESULTS Query browser - Beetween(< item <): ', results_unique.length, results_unique.join(', '));
-            test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+            console.log('RESULTS Query browser - Between(< item <): ', results_unique.length, results_unique.join(', '));
+            test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
           }
         }, env.config.wait_map);
       }, { i: i += 1, config: config }));
@@ -328,7 +328,7 @@ describe('RAD Lexical search Test!           ', function() {
           test.done();
         } else {
           console.log('RESULTS Query browser - Higher(>): ', results_unique.length, results_unique.join(', '));
-          test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+          test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
         }
       }, env.config.wait_map);
     }, {
@@ -358,7 +358,7 @@ describe('RAD Lexical search Test!           ', function() {
             test.done();
           } else {
             console.log('RESULTS Query browser - Lower(<): ', results_unique.length, results_unique.join(', '));
-            test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+            test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
           }
         }, env.config.wait_map);
       }, {
@@ -388,7 +388,7 @@ describe('RAD Lexical search Test!           ', function() {
             test.done();
           } else {
             console.log('RESULTS Query browser - Exact match(=): ', results_unique.length, results_unique.join(', '));
-            test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+            test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
           }
         }, env.config.wait_map);
       }, {
@@ -418,7 +418,7 @@ describe('RAD Lexical search Test!           ', function() {
             test.done();
           } else {
             console.log('RESULTS Query browser - Prefix match(*): ', results_unique.length, results_unique);
-            test.fail('Error: get ' + results_unique.length + ' attributes istead of '+len);
+            test.fail('Error: get ' + results_unique.length + ' attributes instead of '+len);
           }
         }, env.config.wait_map);
       }, {

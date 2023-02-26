@@ -237,7 +237,7 @@ Gun().user && describe('Gun', function(){
     var pass = 'my secret password';
     var gun = Gun();
     var user = gun.user();
-    Gun.log.off = true;  // Supress all console logging
+    Gun.log.off = true;  // Suppress all console logging
 
     const throwOutUser = (wipeStorageData, done) => {
       // Get rid of authenticated Gun user
@@ -282,7 +282,7 @@ Gun().user && describe('Gun', function(){
       });
 
       it('conflict', function(done){
-        Gun.log.off = true;  // Supress all console logging
+        Gun.log.off = true;  // Suppress all console logging
         var check = function(ack){
           try{
             expect(ack).to.not.be(undefined);
@@ -972,7 +972,7 @@ Gun().user && describe('Gun', function(){
               expect(usr).to.not.have.key('err');
               expect(usr).to.have.key('put');
             }catch(e){ done(e); return }
-            // Gun.user.alive - keeps/checks User authentiation state
+            // Gun.user.alive - keeps/checks User authentication state
             user.alive().then(check).catch(done);
           }).catch(done);
         }).catch(done);

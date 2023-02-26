@@ -10,7 +10,7 @@ import { fromObjects, toObjects } from './asyncSerialize';
 import { subtle } from './compat';
 export function parse(text) {
     return __awaiter(this, void 0, void 0, function* () {
-        // need decodeURIComponent so binary strings are transfered properly
+        // need decodeURIComponent so binary strings are transferred properly
         const deocodedText = unescape(text);
         const objects = JSON.parse(deocodedText);
         return fromObjects(serializers(true), objects);
@@ -19,7 +19,7 @@ export function parse(text) {
 export function stringify(value, waitForArrayBufferView = true) {
     return __awaiter(this, void 0, void 0, function* () {
         const serialized = yield toObjects(serializers(waitForArrayBufferView), value);
-        // need encodeURIComponent so binary strings are transfered properly
+        // need encodeURIComponent so binary strings are transferred properly
         const message = JSON.stringify(serialized);
         return escape(message);
     });

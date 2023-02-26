@@ -5,7 +5,7 @@ import { pick } from 'underscore';
 export function on$(node, cleanup = true): Observable<any> {
     return Observable.fromEventPattern(
         h => {
-            // there is no way to off() an on() until at least one value is trigerred
+            // there is no way to off() an on() until at least one value is triggered
             // so that we can access the event listener to off() it
             const signal = { stop: false };
             node.on((data, key, at, ev) => {
