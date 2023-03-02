@@ -65,7 +65,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     describe('Book Format', function(done){
         var B = Book;
-        it.skip('encode decode', function(){
+        it('encode decode', function(){
             expect(B.decode(B.encode(null))).to.be(null);
             expect(B.decode(B.encode(false))).to.be(false);
             expect(B.decode(B.encode(true))).to.be(true);
@@ -76,14 +76,18 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             expect(B.decode(B.encode(2))).to.be(2);
             expect(B.decode(B.encode(1.2))).to.be(1.2);
             expect(B.decode(B.encode(1234.56789))).to.be(1234.56789);
-            console.log("RESUME HERE!"); return;
             expect(B.decode(B.encode(''))).to.be('');
             expect(B.decode(B.encode("hello world"))).to.be("hello world");
             expect(B.decode(B.encode("he||o"))).to.be("he||o");
             expect(B.decode(B.encode("ho|y ha|o"))).to.be("ho|y ha|o");
+            expect(B.decode(B.encode("he||||y"))).to.be("he||||y");
+            expect(B.decode(B.encode("ho|\|ow"))).to.be("ho|\|ow");
+            expect(B.decode(B.encode("so\\rrow"))).to.be("so\\rrow");
+            expect(B.decode(B.encode("bo\\|\|row"))).to.be("bo\\|\|row");
+            expect(B.decode(B.encode("||\áãbbçcddéẽffǵghhíĩj́jḱkĺlḿmńñóõṕpqqŕrśsttẃwúǘũxxýỹźzàbcdèfghìjklm̀ǹòpqrstùǜẁxỳz|"))).to.be("||\áãbbçcddéẽffǵghhíĩj́jḱkĺlḿmńñóõṕpqqŕrśsttẃwúǘũxxýỹźzàbcdèfghìjklm̀ǹòpqrstùǜẁxỳz|");
         });
-
     });
+
     describe('BASIC API', function(done){
 
         it('write', function(done){
@@ -182,7 +186,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
                     rad('pa-bob', 'banana', function(err, ok){
                         expect(err).to.not.be.ok();
-                        //console.log("COMPARE:", rad.book.list[0].text, 'vs', prev.book.list[0].text);
                         var text = rad.book.list[0].text;
                         var i = text.indexOf('pa-alice');
                         expect(i).to.not.be(-1);
