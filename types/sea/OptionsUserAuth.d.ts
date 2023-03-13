@@ -1,1 +1,1 @@
-export type OptionsUserAuth = { change: 'newPassword' };
+export type OptionsUserAuth = { change: string };
