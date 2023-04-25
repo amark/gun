@@ -11,6 +11,7 @@
 # If you are on Windows, http://nodejs.org/download/ has
 # an installer that will automatically do it for you.
 # curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
+# wget -O - https://raw.githubusercontent.com/amark/gun/master/examples/install.sh| bash
 
 #debian/ubuntu
 cd ~
@@ -41,7 +42,7 @@ git checkout $VERSION
 git pull
 npm install .
 
-service relay stop >> /dev/null
+service relay stop
 cp ./examples/relay.service /lib/systemd/system/relay.service
 echo $PWD >> /lib/systemd/system/relay.service
 echo "fs.file-max = 999999" >> /etc/sysctl.conf
