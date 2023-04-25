@@ -111,6 +111,27 @@
 		// tbd later
 		return chart;
   }
+  ;(function(){
+  if('https' != (''+location).slice(0,5) && "localhost" != location.hostname){
+    $('body').append("<button id='https'>click here to try generating https certs</button>");
+    if(/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(location.hostname)){
+      $('#https').text("Link this IP address to a Domain by adding an `A Record` to your DNS settings that point to `"+ location.hostname +"` (we recommend the `name/host` be any subdomain you want, like `relay`, but if you want the root domain itself to directly point here use `*`). Then come back here on the domain & click this button to generate HTTPS certificates.");
+      return;
+    }
+    $('body').append("<input id='email' placeholder='email'/>");
+    $('#https').on('click', function(){
+      $(this).text("look at console.log for errors, if none, try https");
+      var gun = GUN(location.origin + '/gun');
+      if(!$('#email').val()){
+        $(this).text("email necessary for certs! Type it in & click here again.");
+        return;
+      }
+      setTimeout(function(){
+        gun._.opt.mesh.say({dam: 'service', try: 'https', email: $('#email').val(), domain: location.hostname});
+      }, 999);
+    });
+  }
+  }());
 /*
   Notes to Self about Debugging:
   1. Read Disks can spike up to 1min, I suspect other operations are blocking it from resolving as fast as it otherwise would.
@@ -122,5 +143,6 @@
   7. Watch out for get/put loops times, maybe indicating (5) issues?
 */
 </script>
+<script src="../gun.js"></script>
 </body>
 </html>
