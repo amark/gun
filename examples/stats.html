@@ -128,6 +128,10 @@
       }
       setTimeout(function(){
         gun._.opt.mesh.say({dam: 'service', try: 'https', email: $('#email').val(), domain: location.hostname});
+        setTimeout(function(){
+          if(gun._.opt.mesh.near){ return }
+          $('#https').text("It might have worked! try HTTPS!");
+        }, 2000);
       }, 999);
     });
   }
