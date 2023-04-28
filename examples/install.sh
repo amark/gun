@@ -11,18 +11,18 @@
 # If you are on Windows, http://nodejs.org/download/ has
 # an installer that will automatically do it for you.
 # curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
-# wget -O - https://raw.githubusercontent.com/amark/gun/master/examples/install.sh| bash
+# wget -O - https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
 
 #debian/ubuntu
 cd ~
 apt-get install sudo -y
 sudo apt-get update -y
-sudo apt-get install git git-core systemd -y
+sudo apt-get install curl git git-core systemd -y
 sudo apt-get install systemctl -y
 #fedora/openSUSE
 sudo yum check-update -y
-sudo yum install git git-core systemd -y
-sudo yum install systemctl -y
+sudo yum install curl git git-core systemd -y
+sudo yum install curl systemctl -y
 
 #screen -S install # You can safely CTRL+A+D to escape without stopping the process. `screen -R install` to resume. Stop all with `killall screen`. Note: May need to `sudo apt-get install screen`
 
