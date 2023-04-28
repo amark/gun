@@ -36,13 +36,13 @@ git clone https://github.com/isaacs/nave.git
 mkdir node_modules
 git clone https://github.com/amark/gun.git
 cd gun
+git checkout .
 git pull
 git checkout master
 git checkout $VERSION
 git pull
 npm install .
 
-service relay stop
 cp ./examples/relay.service /lib/systemd/system/relay.service
 echo $PWD >> /lib/systemd/system/relay.service
 echo "fs.file-max = 999999" >> /etc/sysctl.conf
@@ -50,4 +50,4 @@ ulimit -u unlimited
 sysctl -p /etc/sysctl.conf
 systemctl daemon-reload
 systemctl enable relay
-service relay start
+systemctl restart relay
