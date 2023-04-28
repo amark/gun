@@ -22,7 +22,7 @@ sudo apt-get install systemctl -y
 #fedora/openSUSE
 sudo yum check-update -y
 sudo yum install curl git git-core systemd -y
-sudo yum install curl systemctl -y
+sudo yum install systemctl -y
 
 #screen -S install # You can safely CTRL+A+D to escape without stopping the process. `screen -R install` to resume. Stop all with `killall screen`. Note: May need to `sudo apt-get install screen`
 
