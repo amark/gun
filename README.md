@@ -156,7 +156,8 @@ Thanks to:
 <a href="https://github.com/JacobMillner">Jacob Millner</a>,
 <a href="https://github.com/b-lack">Gerrit Balindt</a>,
 <a href="https://github.com/gabriellemon">Gabriel Lemon</a>,
-<a href="https://github.com/murageyun">Murage Martin</a>
+<a href="https://github.com/murageyun">Murage Martin</a>,
+<a href="https://github.com/octalmage">Jason Stallings</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
