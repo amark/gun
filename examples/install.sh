@@ -14,8 +14,8 @@
 #debian/ubuntu
 su -
 apt-get install sudo -y
-sudo apt-get update -y
-sudo apt-get install curl git git-core screen -y
+apt-get update -y
+apt-get install curl git git-core screen -y
 #fedora/openSUSE
 sudo yum check-update -y
 sudo yum install curl git git-core screen -y
