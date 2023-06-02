@@ -12,13 +12,19 @@
 # curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
 
 #debian/ubuntu
-su -
-apt-get install sudo -y
-apt-get update -y
-apt-get install curl git git-core screen -y
+if [[ $(id -u) -ne 0 ]]; then
+    SUDO='sudo'
+else
+    SUDO=''
+fi
+
+${SUDO} apt-get install sudo -y
+${SUDO} apt-get update -y
+${SUDO} apt-get install curl git git-core screen -y
+
 #fedora/openSUSE
-sudo yum check-update -y
-sudo yum install curl git git-core screen -y
+${SUDO} yum check-update -y
+${SUDO} yum install curl git git-core screen -y
 
 # install nodejs
 git clone http://github.com/isaacs/nave.git
