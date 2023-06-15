@@ -306,7 +306,7 @@
 			}
 			function put(msg){
 				if(!msg){ return }
-				var ctx = msg._||'', root = ctx.root = ((ctx.$ = msg.$||'')._||'').root, opt = root.opt;
+				var ctx = msg._||'', root = ctx.root = ((ctx.$ = msg.$||'')._||'').root;
 				if(msg['@'] && ctx.faith && !ctx.miss){ // TODO: AXE may split/route based on 'put' what should we do here? Detect @ in AXE? I think we don't have to worry, as DAM will route it on @.
 					msg.out = universe;
 					root.on('out', msg);
@@ -350,9 +350,6 @@
 						if(u === state){ err = ERR+cut(key)+"on"+cut(soul)+"no state."; break }
 						if(!valid(val)){ err = ERR+cut(key)+"on"+cut(soul)+"bad "+(typeof val)+cut(val); break }
 						//ctx.all++; //ctx.ack[soul+key] = '';
-						if( opt.validate && opt.validate.dataIn && !opt.validate.dataIn( val, key, soul, state, msg) ){
-              err = ERR+`Invalid data: ${cut(soul)}.${cut(key)}:${cut(val)}`; break
-            }
 						ham(val, key, soul, state, msg);
 						++C; // courtesy count;
 					}
