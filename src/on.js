@@ -83,7 +83,7 @@ Gun.chain.once = function(cb, opt){ opt = opt || {}; // avoid rewriting
 	return gun;
 }
 function none(gun,opt,chain){
-	Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+	Gun.warn.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 	(chain = gun.chain())._.nix = gun.once(function(data, key){ chain._.on('in', this._) });
 	chain._.lex = gun._.lex; // TODO: Better approach in future? This is quick for now.
 	return chain;

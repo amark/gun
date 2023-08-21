@@ -11,7 +11,7 @@
       "cb": A callback function after all things are done.
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.block is set, SEA will look for block before syncing.
       */
-      console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
+      console.warn('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
@@ -32,7 +32,7 @@
         return
       })()
 
-      if (!certificants) return console.log("No certificant found.")
+      if (!certificants) return console.warn("No certificant found.")
 
       const expiry = opt.expiry && (typeof opt.expiry === 'number' || typeof opt.expiry === 'string') ? parseFloat(opt.expiry) : null
       const readPolicy = (policy || {}).read ? policy.read : null
@@ -43,7 +43,7 @@
       const readBlock = block.read && (typeof block.read === 'string' || (block.read || {})['#']) ? block.read : null
       const writeBlock = typeof block === 'string' ? block : block.write && (typeof block.write === 'string' || block.write['#']) ? block.write : null
 
-      if (!readPolicy && !writePolicy) return console.log("No policy found.")
+      if (!readPolicy && !writePolicy) return console.warn("No policy found.")
 
       // reserved keys: c, e, r, w, rb, wb
       const data = JSON.stringify({
@@ -59,7 +59,7 @@
 
       var r = certificate
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
       SEA.err = e;

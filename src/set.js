@@ -14,7 +14,7 @@ Gun.chain.set = function(item, cb, opt){
 	}
 	gun.put(function(go){
 		item.get(function(soul, o, msg){ // TODO: BUG! We no longer have this option? & go error not handled?
-			if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
+			if(!soul){ return cb.call(gun, {err: Gun.warn('Only a node can be linked! Not "' + msg.put + '"!')}) }
 			(tmp = {})[soul] = {'#': soul}; go(tmp);
 		},true);
 	})

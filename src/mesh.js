@@ -4,12 +4,14 @@ require('./shim');
 var noop = function(){}
 var parse = JSON.parseAsync || function(t,cb,r){ var u, d = +new Date; try{ cb(u, JSON.parse(t,r), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
 var json = JSON.stringifyAsync || function(v,cb,r,s){ var u, d = +new Date; try{ cb(u, JSON.stringify(v,r,s), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
-json.sucks = function(d){ if(d > 99){ console.log("Warning: JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
+json.sucks = function(d){ if(d > 99){ console.warn("JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
 
 function Mesh(root){
 	var mesh = function(){};
 	var opt = root.opt || {};
 	opt.log = opt.log || console.log;
+	opt.warn = opt.warn || console.warn;
+	opt.error = opt.error || console.error;
 	opt.gap = opt.gap || opt.wait || 0;
 	opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 	opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
@@ -237,7 +239,7 @@ function Mesh(root){
 		if(!tmp){ return }
 		if(t? 3 > tmp.length : !tmp.length){ return } // TODO: ^
 		if(!t){try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
-		}catch(e){return opt.log('DAM JSON stringify error', e)}}
+		}catch(e){return opt.error('DAM JSON stringify error', e)}}
 		if(!tmp){ return }
 		send(tmp, peer);
 	}
@@ -285,7 +287,7 @@ function Mesh(root){
 		var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 		mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
 	}
-	mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
+	mesh.hear['!'] = function(msg, peer){ opt.error('Error:', msg.err) }
 	mesh.hear['?'] = function(msg, peer){
 		if(msg.pid){
 			if(!peer.pid){ peer.pid = msg.pid }
@@ -326,7 +328,7 @@ function Mesh(root){
 		if(tmp = console.STAT){ tmp.peers = mesh.near }
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
 		var souls = Object.keys(root.next||''); // TODO: .keys( is slow
-		if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+		if(souls.length > 9999 && !console.SUBS){ console.warn(console.SUBS = "You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
 		setTimeout.each(souls, function(soul){ var node = root.next[soul];
 			if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
 			setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }

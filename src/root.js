@@ -193,7 +193,7 @@ Gun.ask = require('./ask');
 	var ERR = "Error: Invalid graph!";
 	var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 	var L = JSON.stringify, MD = 2147483647, State = Gun.state;
-	var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
+	var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.warn("You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
 
 }());
 
@@ -290,7 +290,11 @@ Gun.ask = require('./ask');
 var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = String.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
+Gun.warn = function(){ return (!Gun.log.off && !Gun.warn.off && C.warn.apply(C, arguments)), [].slice.call(arguments).join(' ') };
+Gun.error = function(){ return (!Gun.log.off && !Gun.error.off && C.error.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
+Gun.warn.once = function(w,s,o){ return (o = Gun.warn.once)[w] = o[w] || 0, o[w]++ || Gun.warn(s) };
+Gun.error.once = function(w,s,o){ return (o = Gun.error.once)[w] = o[w] || 0, o[w]++ || Gun.error(s) };
 
 if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 try{ if(typeof MODULE !== "undefined"){ MODULE.exports = Gun } }catch(e){}

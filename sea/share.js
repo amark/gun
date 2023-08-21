@@ -10,7 +10,7 @@
     }
     // If authenticated user wants to delete his/her account, let's support it!
     User.prototype.delete = async function(alias, pass, cb){
-      console.log("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
+      console.warn("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
       var gun = this, root = gun.back(-1), user = gun.back('user');
       try {
         user.auth(alias, pass, function(ack){
@@ -22,7 +22,7 @@
           (cb || noop)({ok: 0});
         });
       } catch (e) {
-        Gun.log('User.delete failed! Error:', e);
+        Gun.error('User.delete failed! Error:', e);
       }
       return gun;
     }

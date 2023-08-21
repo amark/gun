@@ -42,7 +42,7 @@ if (!isElectron && ('serviceWorker' in navigator)) {
     navigator.serviceWorker.register('iris/serviceworker.js')
     .catch(function(err) {
       // registration failed :(
-      console.log('ServiceWorker registration failed: ', err);
+      console.warn('ServiceWorker registration failed: ', err);
     });
   });
 }
