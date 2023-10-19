@@ -1,6 +1,6 @@
 <p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![](https://data.jsdelivr.com/v1/package/gh/amark/gun/badge?style=rounded)](https://data.jsdelivr.com/v1/package/gh/amark/gun/stats)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge)](https://www.jsdelivr.com/package/npm/gun)
 ![Build](https://github.com/amark/gun/actions/workflows/ci.yml/badge.svg)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
@@ -42,7 +42,7 @@ GUN is *super easy* to get started with:
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
-- An online demo of the examples are available here: http://gunjs.herokuapp.com/
+- An online demo of the examples are available here: http://try.axe.eco/
 - Or write a quick app: ([try now in a playground](https://jsbin.com/kadobamevo/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
