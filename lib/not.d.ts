@@ -7,11 +7,11 @@ declare module '../types/gun/IGunChain' {
      *  through it, then you have a pretty reasonable assurance that a not found means that
      *  the data doesn't exist yet. Just be mindful of how you use it
      *
-     * @param callack If there's reason to believe the data doesn't exist, the callback will be
+     * @param callback If there's reason to believe the data doesn't exist, the callback will be
      *  invoked. This can be used as a check to prevent implicitly writing data
      */
     not(
-      callack: (key: string) => void
+      callback: (key: string) => void
     ): IGunChain<TNode, TChainParent, TGunInstance, TKey>;
   }
 }

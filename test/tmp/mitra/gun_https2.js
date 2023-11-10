@@ -34,7 +34,7 @@ var server = h.createServer((req, res) => {
 });
 
 
-//TODO-GUN put this into a seperate require
+//TODO-GUN put this into a separate require
 function hijack(cb) {
     /* Intercept outgoing message and replace result with
         result from cb({soul, key, msg, original})

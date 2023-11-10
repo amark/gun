@@ -97,7 +97,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });
 
     describe('BASIC API', function(done){
-
         // TODO: Mark return here, slot("") slot("ab") causes infinite loop with heal, so need to detect not corrupted yet.
 
         it('write', function(done){

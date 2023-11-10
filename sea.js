@@ -968,7 +968,8 @@
       var pass = (alias || (pair && !(pair.priv && pair.epriv))) && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+      var retries = typeof opt.retries === 'number' ? opt.retries : 9;
+
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
@@ -977,7 +978,7 @@
       }
       cat.ing = true;
       
-      var act = {}, u, tries = 9;
+      var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
         if(!data.pub){
@@ -991,7 +992,7 @@
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
-          if(alias && tries--){
+          if(alias && retries--){
             root.get('~@'+alias).once(act.a);
             return;
           }
