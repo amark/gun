@@ -2,7 +2,8 @@
 
   /* UNBUILD */
   function USE(arg, req){
-    return req? require(arg) : arg.slice? USE[R(arg)] : function(mod, path){
+    var $req = require;
+    return req? $req(arg) : arg.slice? USE[R(arg)] : function(mod, path){
       arg(mod = {exports: {}});
       USE[R(path)] = mod.exports;
     }
