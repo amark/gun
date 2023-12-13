@@ -8,7 +8,7 @@
 ;(function(window, undefined) {
   'use strict';
 
-  /** Used to assign each benchmark an incrimented id */
+  /** Used to assign each benchmark an incremented id */
   var counter = 0;
 
   /** Detect DOM document object */
@@ -536,7 +536,7 @@
    *
    * In Opera < 9.50 and some older/beta Mobile Safari versions using `unshift()`
    * generically to augment the `arguments` object will pave the value at index 0
-   * without incrimenting the other values's indexes.
+   * without incrementing the other values's indexes.
    * https://github.com/documentcloud/underscore/issues/9
    *
    * Rhino and environments it powers, like Narwhal and RingoJS, may have
@@ -963,7 +963,7 @@
    *
    * @private
    * @param {Function} fn The function.
-   * @param {String} altSource A string used when a function's source code is unretrievable.
+   * @param {String} altSource A string used when a function's source code is irretrievable.
    * @returns {String} The function's source code.
    */
   function getSource(fn, altSource) {
@@ -2311,7 +2311,7 @@
     if (me == other) {
       return 0;
     }
-    // reject the null hyphothesis the two samples come from the
+    // reject the null hypothesis the two samples come from the
     // same population (i.e. have the same median) if...
     if (size1 + size2 > 30) {
       // ...the z-stat is greater than 1.96 or less than -1.96
@@ -2945,7 +2945,7 @@
         if (!clocked && (divisor = divisors[clone.cycles]) != null) {
           count = floor(4e6 / divisor);
         }
-        // calculate how many more iterations it will take to achive the `minTime`
+        // calculate how many more iterations it will take to archive the `minTime`
         if (count <= clone.count) {
           count += Math.ceil((minTime - clocked) / period);
         }

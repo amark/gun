@@ -1,12 +1,12 @@
 <p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![](https://data.jsdelivr.com/v1/package/gh/amark/gun/badge?style=rounded)](https://data.jsdelivr.com/v1/package/gh/amark/gun/stats)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge)](https://www.jsdelivr.com/package/npm/gun)
 ![Build](https://github.com/amark/gun/actions/workflows/ci.yml/badge.svg)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
 **GUN** is an [ecosystem](https://gun.eco/docs/Ecosystem) of **tools** that let you build [community run](https://www.nbcnews.com/tech/tech-news/these-technologists-think-internet-broken-so-they-re-building-another-n1030136) and [encrypted applications](https://gun.eco/docs/Cartoon-Cryptography) - like an Open Source Firebase or a Decentralized Dropbox.
 
-The [Internet Archive](https://news.ycombinator.com/item?id=17685682) and [100s of other apps](https://github.com/amark/gun/wiki/awesome-gun) run GUN in-production. GUN is also part of [Twitter's Bluesky](https://blueskycommunity.net/) initiative!
+The [Internet Archive](https://news.ycombinator.com/item?id=17685682) and [100s of other apps](https://github.com/amark/gun/wiki/awesome-gun) run GUN in-production. GUN was also part of [Twitter's bluesky](https://blueskycommunity.net/) initiative!
 
  + Multiplayer by default with realtime p2p state synchronization!
  + Graph data lets you use key/value, tables, documents, videos, & more!
@@ -42,7 +42,7 @@ GUN is *super easy* to get started with:
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
-- An online demo of the examples are available here: http://gunjs.herokuapp.com/
+- An online demo of the examples are available here: http://try.axe.eco/
 - Or write a quick app: ([try now in a playground](https://jsbin.com/kadobamevo/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
@@ -153,7 +153,11 @@ Thanks to:
 <a href="https://github.com/hibas123">Fabian Stamm</a>,
 <a href="https://twitter.com/mikestaub">Mike Staub</a>,
 <a href="https://hunterowens.com/">Hunter Owens</a>,
-<a href="https://github.com/JacobMillner">Jacob Millner</a>
+<a href="https://github.com/JacobMillner">Jacob Millner</a>,
+<a href="https://github.com/b-lack">Gerrit Balindt</a>,
+<a href="https://github.com/gabriellemon">Gabriel Lemon</a>,
+<a href="https://github.com/murageyun">Murage Martin</a>,
+<a href="https://github.com/octalmage">Jason Stallings</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
@@ -209,7 +213,7 @@ This would not be possible without **community contributors**, big shout out to:
 
 **[ajmeyghani](https://github.com/ajmeyghani) ([Learn GUN Basics with Diagrams](https://medium.com/@ajmeyghani/gundb-a-graph-database-in-javascript-3860a08d873c))**; **[anywhichway](https://github.com/anywhichway) ([Block Storage](https://github.com/anywhichway/gun-block))**; **[beebase](https://github.com/beebase) ([Quasar](https://github.com/beebase/gun-vuex-quasar))**; **[BrockAtkinson](https://github.com/BrockAtkinson) ([brunch config](https://github.com/BrockAtkinson/brunch-gun))**; **[Brysgo](https://github.com/brysgo) ([GraphQL](https://github.com/brysgo/graphql-gun))**; **[d3x0r](https://github.com/d3x0r) ([SQLite](https://github.com/d3x0r/gun-db))**; **[forrestjt](https://github.com/forrestjt) ([file.js](https://github.com/amark/gun/blob/master/lib/file.js))**; **[hillct](https://github.com/hillct) (Docker)**; **[JosePedroDias](https://github.com/josepedrodias) ([graph visualizer](http://acor.sl.pt:9966))**; **[JuniperChicago](https://github.com/JuniperChicago) ([cycle.js bindings](https://github.com/JuniperChicago/cycle-gun))**; **[jveres](https://github.com/jveres) ([todoMVC](https://github.com/jveres/todomvc))**; **[kristianmandrup](https://github.com/kristianmandrup) ([edge](https://github.com/kristianmandrup/gun-edge))**; **[Lightnet](https://github.com/Lightnet)** ([Awesome Vue User Examples](https://glitch.com/edit/#!/jsvuegunui?path=README.md:1:0) & [User Kitchen Sink Playground](https://gdb-auth-vue-node.glitch.me/)); **[lmangani](https://github.com/lmangani) ([Cytoscape Visualizer](https://github.com/lmangani/gun-scape), [Cassandra](https://github.com/lmangani/gun-cassandra), [Fastify](https://github.com/lmangani/fastify-gundb), [LetsEncrypt](https://github.com/lmangani/polyGun-letsencrypt))**; **[mhelander](https://github.com/mhelander) ([SEA](https://github.com/amark/gun/blob/master/sea.js))**; [omarzion](https://github.com/omarzion) ([Sticky Note App](https://github.com/omarzion/stickies)); [PsychoLlama](https://github.com/PsychoLlama) ([LevelDB](https://github.com/PsychoLlama/gun-level)); **[RangerMauve](https://github.com/RangerMauve) ([schema](https://github.com/gundb/gun-schema))**; **[robertheessels](https://github.com/swifty) ([gun-p2p-auth](https://github.com/swifty/gun-p2p-auth))**; **[rogowski](https://github.com/rogowski) (AXE)**; [sbeleidy](https://github.com/sbeleidy); **[sbiaudet](https://github.com/sbiaudet) ([C# Port](https://github.com/sbiaudet/cs-gun))**; **[Sean Matheson](https://github.com/ctrlplusb) ([Observable/RxJS/Most.js bindings](https://github.com/ctrlplusb/gun-most))**; **[Shadyzpop](https://github.com/Shadyzpop) ([React Native example](https://github.com/amark/gun/tree/master/examples/react-native))**; **[sjones6](https://github.com/sjones6) ([Flint](https://github.com/sjones6/gun-flint))**; RIP **[Stefdv](https://github.com/stefdv) (Polymer/web components)**; **[zrrrzzt](https://github.com/zrrrzzt) ([JWT Auth](https://gist.github.com/zrrrzzt/6f88dc3cedee4ee18588236756d2cfce))**; **[xmonader](https://github.com/xmonader) ([Python Port](https://github.com/xmonader/pygundb))**; 
 
-I am missing many others, apologies, will be adding them soon! This list is infintiely old & way out of date, if you want to be listed in it please make a PR! :)
+I am missing many others, apologies, will be adding them soon! This list is infinitely old & way out of date, if you want to be listed in it please make a PR! :)
 
 ## Testing
 
@@ -256,6 +260,11 @@ curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh 
 You can now safely `CTRL+A+D` to escape without stopping the peer. To stop everything `killall screen` or `killall node`.
 
 Environment variables may need to be set like `export HTTPS_CERT=~/cert.pem HTTPS_KEY=~/key.pem PORT=443`. You can also look at a sample [nginx](https://gun.eco/docs/nginx) config. For production deployments, you probably will want to use something like `pm2` or better to keep the peer alive after machine reboots.
+
+### [Dome](https://www.trydome.io/)
+[Deploy GUN in one-click](https://app.trydome.io/signup?package=gun) with [Dome](https://trydome.io) and receive a free trial:
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=gun)
 
 ### [Heroku](https://www.heroku.com/)
 

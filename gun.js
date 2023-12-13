@@ -61,12 +61,18 @@
 			for(var k in o){ if(has.call(o, k)){ l.push(k) } }
 			return l;
 		}
-		;(function(){ // max ~1ms or before stack overflow 
-			var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-			sT.hold = sT.hold || 9;
-			sT.poll = sT.poll || function(f){ //f(); return; // for testing
-				if((sT.hold >= (+new Date - l)) && c++ < 3333){ f(); return }
-				sI(function(){ l = +new Date; f() },c=0)
+		;(function(){
+			var u, sT = setTimeout, l = 0, c = 0
+			, sI = (typeof setImmediate !== ''+u && setImmediate) || (function(c,f){
+				if(typeof MessageChannel == ''+u){ return sT }
+				(c = new MessageChannel()).port1.onmessage = function(e){ ''==e.data && f() }
+				return function(q){ f=q;c.port2.postMessage('') }
+			}()), check = sT.check = sT.check || (typeof performance !== ''+u && performance)
+			|| {now: function(){ return +new Date }};
+			sT.hold = sT.hold || 9; // half a frame benchmarks faster than < 1ms?
+			sT.poll = sT.poll || function(f){
+				if((sT.hold >= (check.now() - l)) && c++ < 3333){ f(); return }
+				sI(function(){ l = check.now(); f() },c=0)
 			}
 		}());
 		;(function(){ // Too many polls block, this "threads" them in turns over a single thread in time.
@@ -189,6 +195,7 @@
 				var it = s[id] || (s[id] = {});
 				it.was = dup.now = +new Date;
 				if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
+				if(dt.ed){ dt.ed(id) }
 				return it;
 			}
 			dup.drop = function(age){
@@ -364,7 +371,7 @@
 					console.STAT && console.STAT(((DBG||ctx).Hf = +new Date), tmp, 'future');
 					return;
 				}
-				if(state < was){ /*old;*/ if(!ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding.
+				if(state < was){ /*old;*/ if(true || !ctx.miss){ return } } // but some chains have a cache miss that need to re-fire. // TODO: Improve in future. // for AXE this would reduce rebroadcast, but GUN does it on message forwarding. // TURNS OUT CACHE MISS WAS NOT NEEDED FOR NEW CHAINS ANYMORE!!! DANGER DANGER DANGER, ALWAYS RETURN! (or am I missing something?)
 				if(!ctx.faith){ // TODO: BUG? Can this be used for cache miss as well? // Yes this was a bug, need to check cache miss for RAD tests, but should we care about the faith check now? Probably not.
 					if(state === was && (val === known || L(val) <= L(known))){ /*console.log("same");*/ /*same;*/ if(!ctx.miss){ return } } // same
 				}
@@ -378,8 +385,13 @@
 				var DBG; if(DBG = (msg._||'').DBG){ DBG.pa = +new Date; DBG.pm = DBG.pm || +new Date}
       	var eve = this, root = eve.as, graph = root.graph, ctx = msg._, put = msg.put, soul = put['#'], key = put['.'], val = put[':'], state = put['>'], id = msg['#'], tmp;
       	if((tmp = ctx.msg) && (tmp = tmp.put) && (tmp = tmp[soul])){ state_ify(tmp, key, state, val, soul) } // necessary! or else out messages do not get SEA transforms.
+      	//var bytes = ((graph[soul]||'')[key]||'').length||1;
 				graph[soul] = state_ify(graph[soul], key, state, val, soul);
-				if(tmp = (root.next||'')[soul]){ tmp.on('in', msg) }
+				if(tmp = (root.next||'')[soul]){
+					//tmp.bytes = (tmp.bytes||0) + ((val||'').length||1) - bytes;
+					//if(tmp.bytes > 2**13){ Gun.log.once('byte-limit', "Note: In the future, GUN peers will enforce a ~4KB query limit. Please see https://gun.eco/docs/Page") }
+					tmp.on('in', msg)
+				}
 				fire(ctx);
 				eve.to.next(msg);
 			}
@@ -432,6 +444,9 @@
 			Gun.on.get = function(msg, gun){
 				var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'];
 				var next = root.next || (root.next = {}), at = next[soul];
+
+				// TODO: Azarattum bug, what is in graph is not same as what is in next. Fix!
+
 				// queue concurrent GETs?
 				// TODO: consider tagging original message into dup for DAM.
 				// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
@@ -452,10 +467,14 @@
 				}*/
 				var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 				DBG && (DBG.g = +new Date);
-				//console.log("GET:", get, node, has);
+				//console.log("GET:", get, node, has, at);
+				//if(!node && !at){ return root.on('get', msg) }
+				//if(has && node){ // replace 2 below lines to continue dev?
 				if(!node){ return root.on('get', msg) }
 				if(has){
-					if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
+					if('string' != typeof has || u === node[has]){
+						if(!((at||'').next||'')[has]){ root.on('get', msg); return }
+					}
 					node = state_ify({}, has, state_is(node, has), node[has], soul);
 					// If we have a key in-memory, do we really need to fetch?
 					// Maybe... in case the in-memory key we have is a local write
@@ -482,7 +501,7 @@
 					tmp = keys.length;
 					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
-					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
+					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG, FOO: 1});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					if(!tmp){ return }
 					setTimeout.turn(go);
@@ -605,6 +624,7 @@
 				if(at.lex){ Object.keys(at.lex).forEach(function(k){ tmp[k] = at.lex[k] }, tmp = msg.get = msg.get || {}) }
 				if(get['#'] || at.soul){
 					get['#'] = get['#'] || at.soul;
+					//root.graph[get['#']] = root.graph[get['#']] || {_:{'#':get['#'],'>':{}}};
 					msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 					back = (root.$.get(get['#'])._);
 					if(!(get = get['.'])){ // soul
@@ -938,6 +958,7 @@
 			next[at.get = key] = at;
 			if(back === cat.root.$){
 				at.soul = key;
+				//at.put = {};
 			} else
 			if(cat.soul || cat.has){
 				at.has = key;
@@ -1253,6 +1274,10 @@
 				}
 			}
 			// TODO: delete cat.one[map.id]?
+			if (tmp = cat.any) {
+				delete cat.any;
+				cat.any = {};
+			}
 			if(tmp = cat.ask){
 				delete tmp[at.get];
 			}
@@ -1435,12 +1460,17 @@
 				if(tmp = msg.ok){ msg._.near = tmp['/'] }
 				var S = +new Date;
 				DBG && (DBG.is = S); peer.SI = id;
+				dup_track.ed = function(d){
+					if(id !== d){ return }
+					dup_track.ed = 0;
+					if(!(d = dup.s[id])){ return }
+					d.via = peer;
+					if(msg.get){ d.it = msg }
+				}
 				root.on('in', mesh.last = msg);
-				//ECHO = msg.put || ECHO; !(msg.ok !== -3740) && mesh.say({ok: -3740, put: ECHO, '@': msg['#']}, peer);
 				DBG && (DBG.hd = +new Date);
 				console.STAT && console.STAT(S, +new Date - S, msg.get? 'msg get' : msg.put? 'msg put' : 'msg');
-				(tmp = dup_track(id)).via = peer; // don't dedup message ID till after, cause GUN has internal dedup check.
-				if(msg.get){ tmp.it = msg }
+				dup_track(id); // in case 'in' does not call track.
 				if(ash){ dup_track(ash) } //dup.track(tmp+hash, true).it = it(msg);
 				mesh.leap = mesh.last = null; // warning! mesh.leap could be buggy.
 			}
@@ -1480,12 +1510,13 @@
 					!loop && dup_track(id);//.it = it(msg); // track for 9 seconds, default. Earth<->Mars would need more! // always track, maybe move this to the 'after' logic if we split function.
 					//if(msg.put && (msg.err || (dup.s[id]||'').err)){ return false } // TODO: in theory we should not be able to stun a message, but for now going to check if it can help network performance preventing invalid data to relay.
 					if(!(hash = msg['##']) && u !== msg.put && !meta.via && ack){ mesh.hash(msg, peer); return } // TODO: Should broadcasts be hashed?
-					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this.
+					if(!peer && ack){ peer = ((tmp = dup.s[ack]) && (tmp.via || ((tmp = tmp.it) && (tmp = tmp._) && tmp.via))) || ((tmp = mesh.last) && ack === tmp['#'] && mesh.leap) } // warning! mesh.leap could be buggy! mesh last check reduces this. // TODO: CLEAN UP THIS LINE NOW? `.it` should be reliable.
 					if(!peer && ack){ // still no peer, then ack daisy chain 'tunnel' got lost.
 						if(dup.s[ack]){ return } // in dups but no peer hints that this was ack to ourself, ignore.
 						console.STAT && console.STAT(+new Date, ++SMIA, 'total no peer to ack to'); // TODO: Delete this now. Dropping lost ACKs is protocol fine now.
 						return false;
 					} // TODO: Temporary? If ack via trace has been lost, acks will go to all peers, which trashes browser bandwidth. Not relaying the ack will force sender to ask for ack again. Note, this is technically wrong for mesh behavior.
+					if(ack && !msg.put && !hash && ((dup.s[ack]||'').it||'')['##']){ return false } // If we're saying 'not found' but a relay had data, do not bother sending our not found. // Is this correct, return false? // NOTE: ADD PANIC TEST FOR THIS!
 					if(!peer && mesh.way){ return mesh.way(msg) }
 					DBG && (DBG.yh = +new Date);
 					if(!(raw = meta.raw)){ mesh.raw(msg, peer); return }
@@ -1500,7 +1531,7 @@
 							//Type.obj.map(peer || opt.peers, each); // in case peer is a peer list.
 							loop = 1; var wr = meta.raw; meta.raw = raw; // quick perf hack
 							var i = 0, p; while(i < 9 && (p = (pl||'')[i++])){
-								if(!(p = ps[p])){ continue }
+								if(!(p = ps[p] || (peer||'')[p])){ continue }
 								mesh.say(msg, p);
 							}
 							meta.raw = wr; loop = 0;
@@ -1546,7 +1577,7 @@
 					var hash = msg['##'], ack = msg['@'];
 					if(hash && ack){
 						if(!meta.via && dup_check(ack+hash)){ return false } // for our own out messages, memory & storage may ack the same thing, so dedup that. Tho if via another peer, we already tracked it upon hearing, so this will always trigger false positives, so don't do that!
-						if((tmp = (dup.s[ack]||'').it) || ((tmp = mesh.last) && ack === tmp['#'])){
+						if(tmp = (dup.s[ack]||'').it){
 							if(hash === tmp['##']){ return false } // if ask has a matching hash, acking is optional.
 							if(!tmp['##']){ tmp['##'] = hash } // if none, add our hash to ask so anyone we relay to can dedup. // NOTE: May only check against 1st ack chunk, 2nd+ won't know and still stream back to relaying peers which may then dedup. Any way to fix this wasted bandwidth? I guess force rate limiting breaking change, that asking peer has to ask for next lexical chunk.
 						}
@@ -1613,7 +1644,7 @@
 				if(peer.id){
 					opt.peers[peer.url || peer.id] = peer;
 				} else {
-					tmp = peer.id = peer.id || String.random(9);
+					tmp = peer.id = peer.id || peer.url || String.random(9);
 					mesh.say({dam: '?', pid: root.opt.pid}, opt.peers[tmp] = peer);
 					delete dup.s[peer.last]; // IMPORTANT: see https://gun.eco/docs/DAM#self
 				}
@@ -1647,7 +1678,7 @@
 			}
 			mesh.hear['mob'] = function(msg, peer){ // NOTE: AXE will overload this with better logic.
 				if(!msg.peers){ return }
-				var peers = Object.keys(msg.peers), one = peers[Math.floor(Math.random()*peers.length)];
+				var peers = Object.keys(msg.peers), one = peers[(Math.random()*peers.length) >> 0];
 				if(!one){ return }
 				mesh.bye(peer);
 				mesh.hi(one);
@@ -1675,11 +1706,16 @@
 			});
 			root.on('hi', function(peer, tmp){ this.to.next(peer);
 				if(tmp = console.STAT){ tmp.peers = mesh.near }
-				if(!(tmp = peer.url) || !gets[tmp]){ return } delete gets[tmp];
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
-				setTimeout.each(Object.keys(root.next), function(soul){ var node = root.next[soul]; // TODO: .keys( is slow
-					tmp = {}; tmp[soul] = root.graph[soul]; tmp = String.hash(tmp); // TODO: BUG! This is broken.
-					mesh.say({'##': tmp, get: {'#': soul}}, peer);
+				var souls = Object.keys(root.next||''); // TODO: .keys( is slow
+				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+				setTimeout.each(souls, function(soul){ var node = root.next[soul];
+					if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
+					setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
+						// is the lack of ## a !onion hint?
+						mesh.say({'##': String.hash((root.graph[soul]||'')[key]), get: {'#': soul, '.': key}}, peer);
+						// TODO: Switch this so Book could route?
+					})
 				});
 			});
 
@@ -1718,10 +1754,10 @@
 				var url = peer.url.replace(/^http/, 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
-					opt.mesh.bye(peer);
 					reconnect(peer);
+					opt.mesh.bye(peer);
 				};
-				wire.onerror = function(error){
+				wire.onerror = function(err){
 					reconnect(peer);
 				};
 				wire.onopen = function(){
@@ -1732,7 +1768,7 @@
 					opt.mesh.hear(msg.data || msg, peer);
 				};
 				return wire;
-			}catch(e){}}
+			}catch(e){ opt.mesh.bye(peer) }}
 
 			setTimeout(function(){ !opt.super && root.on('out', {dam:'hi'}) },1); // it can take a while to open a socket, so maybe no longer lazy load for perf reasons?
 

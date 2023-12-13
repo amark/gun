@@ -46,12 +46,18 @@ Object.keys = Object.keys || function(o){
 	for(var k in o){ if(has.call(o, k)){ l.push(k) } }
 	return l;
 }
-;(function(){ // max ~1ms or before stack overflow 
-	var u, sT = setTimeout, l = 0, c = 0, sI = (typeof setImmediate !== ''+u && setImmediate) || sT; // queueMicrotask faster but blocks UI
-	sT.hold = sT.hold || 9;
-	sT.poll = sT.poll || function(f){ //f(); return; // for testing
-		if((sT.hold >= (+new Date - l)) && c++ < 3333){ f(); return }
-		sI(function(){ l = +new Date; f() },c=0)
+;(function(){
+	var u, sT = setTimeout, l = 0, c = 0
+	, sI = (typeof setImmediate !== ''+u && setImmediate) || (function(c,f){
+		if(typeof MessageChannel == ''+u){ return sT }
+		(c = new MessageChannel()).port1.onmessage = function(e){ ''==e.data && f() }
+		return function(q){ f=q;c.port2.postMessage('') }
+	}()), check = sT.check = sT.check || (typeof performance !== ''+u && performance)
+	|| {now: function(){ return +new Date }};
+	sT.hold = sT.hold || 9; // half a frame benchmarks faster than < 1ms?
+	sT.poll = sT.poll || function(f){
+		if((sT.hold >= (check.now() - l)) && c++ < 3333){ f(); return }
+		sI(function(){ l = check.now(); f() },c=0)
 	}
 }());
 ;(function(){ // Too many polls block, this "threads" them in turns over a single thread in time.

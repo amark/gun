@@ -86,10 +86,30 @@ describe("Dedup load balancing GETs", function(){
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 					}
 				}
-				var gun = Gun({peers: peers, web: server, rad: false, radisk: false, file: false, localStorage: false, axe: false});
+
+				if (process.env.ROD_PATH) {
+					console.log('testing with rod');
+					var args = ['start', '--port', port, '--sled-storage=false'];
+					if (peers.length) {
+						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
+					}
+					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+
+				var gun = Gun({peers: peers, web: server, rad: false, radisk: false, file: false, localStorage: false});
 				server.listen(port, function(){
 					test.done();
 				});
+
+				//gun.get('test').put({tmp: 1}); // temporary workaround for bug.
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -150,7 +170,6 @@ describe("Dedup load balancing GETs", function(){
 						return;
 					}
 					if(Math.random() > (ok['@'] / ok['/'])){ return }
-					console.log('ack?', JSON.stringify(msg));
 					//console.log("WAS THE SPECIAL ONE TO ACK!", JSON.stringify(msg));
 					gun.on('out', {'@': msg['#'], ok: {yay: 1}});
 				});

@@ -26,7 +26,7 @@ If it does, the test passes.
 
 (Note: At the end of this test, it uses GUN to sync data about what peers are connected to whom. While this is useful in that it also verifies that sync between b1 <-> b3 works regardless of whether direct or indirect connections, as such it could result in errors: If GUN has a bug, the AXE test may fail even if it is not the fault of AXE, and likewise - the usage of GUN in this test is contrived, it passing has 0 correlation that GUN is correctly handling the sync logic. In fact, assume it is not, make sure you use another test to verify that.)
 
-Thanks @Drader for helping with these tests!!!!
+Thanks @Draeder for helping with these tests!!!!
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
@@ -86,19 +86,50 @@ describe("Mob test.", function(){
 		relays.each(function(client){
 			tests.push(client.run(function(test){
 				var env = test.props;
-				test.async();
-				try{ require('fs').unlinkSync(env.i+'data') }catch(e){}
-  			try{ require('gun/lib/fsrm')(env.i+'data') }catch(e){}
-				var server = require('http').createServer(function(req, res){
-					res.end("I am "+ env.i +"!");
-				});
 				var port = env.config.port + env.i;
-				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
+				test.async();
+
 				var peers = [], i = env.config.relays;
 				while(i--){ // make sure to connect to self/same.
 					var tmp = (env.config.port + (i + 1));
 					peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 				}
+
+				if (process.env.ROD_PATH) {
+					console.log('testing with rod');
+					var args = ['start', '--port', port, '--sled-storage=false'];
+					if (peers.length) {
+						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
+					}
+					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+
+				try {
+					require('fs').unlinkSync(env.i + 'data')
+				} catch (e) {
+				}
+				try {
+					require('gun/lib/fsrm')(env.i + 'data')
+				} catch (e) {
+				}
+				var server = require('http').createServer(function (req, res) {
+					res.end("I am " + env.i + "!");
+				});
+				var Gun;
+				try {
+					Gun = require('gun')
+				} catch (e) {
+					console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.")
+				}
+
 				console.log(port, " connect to ", peers);
 				var gun = Gun({file: env.i+'data', peers: peers, web: server, mob: 3, multicast: false});
 				global.gun = gun;
@@ -107,7 +138,7 @@ describe("Mob test.", function(){
 				});
 				
 				gun.get('a').on(function(){ }); // TODO: Wrong! This is an example of the test using GUN in weird ways to work around bugs at the time of writing. This line should not be necessary, AXE should still pass even if this line is commented out, however if it fails then that is a bug in GUN's logic, not AXE.
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});
@@ -151,7 +182,7 @@ describe("Mob test.", function(){
 					test.done();
 				}
 				gun.TO = setTimeout(end, 3000);
-			}, {i: i += 1, config: config})); 
+			}, {i: i += 1, config: config}));
 		});
 		return Promise.all(tests);
 	});

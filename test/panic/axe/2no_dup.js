@@ -65,6 +65,24 @@ describe("Put ACK", function(){
 				}
 				global.peerID = String.fromCharCode(64 + env.i);
 				console.log(env.i, port, " connect to ", peers);
+
+				if (process.env.ROD_PATH) {
+					console.log('testing with rod');
+					var args = ['start', '--port', port, '--sled-storage=false'];
+					if (peers.length) {
+						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
+					}
+					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
+					sp.stdout.on('data', function(data){
+						console.log(data.toString());
+					});
+					sp.stderr.on('data', function(data){
+						console.log(data.toString());
+					});
+					test.done();
+					return;
+				}
+				// TODO what should gun be when testing on rod?
 				var gun = Gun({file: env.i+'data', pid: peerID, peers: peers, web: server});
 				global.gun = gun;
 				server.listen(port, function(){

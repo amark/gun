@@ -1,9 +1,13 @@
 /*
-This test is almost the opposite of the first test.
+This test is similar to GUN/2getget test, but we add in routing & subscriptions:
 1. Alice saves data ""offline"" so nobody knows it exists.
 2. Then Carl & Dave simultaneously ask for it, even tho they are not connected to Alice and Bob does not know where it is.
-3. They must receive the data, and their requests must not conflict or cause the other's to drop.
-4. Optionally: Then Ed comes along and asks for the data again, he must receive it from the closest cached peer.
+3. They must receive the data, and their requests must not conflict or cause the other's to drop, and they must be subscribed to the data.
+4. Ed must not get pushed the data or be subscribed.
+
+..F--Bob--E
+./...|\....
+A....C.D...
 */
 
 // <-- PANIC template, copy & paste, tweak a few settings if needed...
@@ -11,12 +15,12 @@ var ip; try{ ip = require('ip').address() }catch(e){}
 var config = {
 	IP: ip || 'localhost',
 	port: 8765,
-	relays: 1,
-	browsers: 4,
+	relays: 3,
+	browsers: 3,
 	route: {
-		'/': __dirname + '/index.html',
-		'/gun.js': __dirname + '/../../gun.js',
-		'/jquery.js': __dirname + '/../../examples/jquery.js'
+		'/': __dirname + '/../index.html',
+		'/gun.js': __dirname + '/../../../gun.js',
+		'/jquery.js': __dirname + '/../../../examples/jquery.js'
 	}
 }
 
@@ -41,12 +45,13 @@ manager.start({
 
 var relays = clients.filter('Node.js');
 var bob = relays.pluck(1);
+var fred = relays.excluding(bob).pluck(1);
+var ed = relays.excluding([bob, fred]).pluck(1);
 var browsers = clients.excluding(relays);
 var alice = browsers.pluck(1);
 var carl = browsers.excluding(alice).pluck(1);
 var dave = browsers.excluding([alice, carl]).pluck(1);
 var cd = new panic.ClientList([carl, dave]);
-var ed = browsers.excluding([alice, carl, dave]).pluck(1);
 
 // continue boiler plate, tweak a few defaults if needed, but give descriptive test names...
 describe("GET GET", function(){
@@ -70,6 +75,7 @@ describe("GET GET", function(){
 				});
 				var port = env.config.port + env.i;
 				var Gun; try{ Gun = require('gun') }catch(e){ console.log("GUN not found! You need to link GUN to PANIC. Nesting the `gun` repo inside a `node_modules` parent folder often fixes this.") }
+				
 				var peers = [], i = env.config.relays;
 				while(i--){
 					var tmp = (env.config.port + (i + 1));
@@ -77,37 +83,14 @@ describe("GET GET", function(){
 						peers.push('http://'+ env.config.IP + ':' + tmp + '/gun');
 					}
 				}
+				Object.PORT = port;
 				console.log(port, " connect to ", peers);
-
-				if (process.env.ROD_PATH) {
-					console.log('testing with rod');
-					var args = ['start', '--port', port, '--sled-storage=false'];
-					if (peers.length) {
-						args.push('--peers=' + peers.join(',').replaceAll('http', 'ws'));
-					}
-					const sp = require('child_process').spawn(process.env.ROD_PATH, args);
-					sp.stdout.on('data', function(data){
-						console.log(data.toString());
-					});
-					sp.stderr.on('data', function(data){
-						console.log(data.toString());
-					});
-					test.done();
-					return;
-				}
-
-				var gun = Gun({file: env.i+'data', peers: peers, web: server});
+				var gun = Gun({file: env.i+'data', peers: peers, web: server, multicast: false});
 				server.listen(port, function(){
 					test.done();
 				});
-
-				/* BELOW IS HACKY NON-STANDARD TEST STUFF, DO NOT REUSE */
-				setInterval(function(){
-					var tmp = gun._.graph.a;
-					if(!tmp || !tmp.hello){ return }
-					tmp.hello = "bob_cache";
-				}, 1);
-				// END HACKY STUFF.
+				global.gun = gun;
+				global.WHO = port;
 
 			}, {i: i += 1, config: config})); 
 		});
@@ -115,7 +98,7 @@ describe("GET GET", function(){
 	});
 
 	it(config.browsers +" browser(s) have joined!", function(){
-		require('./util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
+		require('../util/open').web(config.browsers, "http://"+ config.IP +":"+ config.port);
 		return browsers.atLeast(config.browsers);
 	});
 
@@ -126,9 +109,11 @@ describe("GET GET", function(){
 				try{ localStorage.clear() }catch(e){}
 				try{ indexedDB.deleteDatabase('radata') }catch(e){}
 				var env = test.props;
-				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + 1) + '/gun', localStorage: false});
+				window.ID = test.props.i;
+
+				var gun = Gun({peers: 'http://'+ env.config.IP + ':' + (env.config.port + ((ID === 1)? 2 : 1)) + '/gun', localStorage: false});
 				window.gun = gun;
-				window.ref = gun.get('a');
+				window.ref = gun.get('a');//.on(function(){ });
 			}, {i: i += 1, config: config})); 
 		});
 		return Promise.all(tests);
@@ -138,6 +123,7 @@ describe("GET GET", function(){
 	it("connect", function(){
 		return alice.run(function(test){
 			console.log("I AM ALICE");
+			window.WHO = "Alice";
 			test.async();
 			gun.get('random').get(function(ack){
 				setTimeout(function(){
@@ -161,6 +147,8 @@ describe("GET GET", function(){
 				if(c){ return should_not_have_ack } // make sure there were none.
 				dam.say = say; // restore normal code
 				test.done();
+
+				gun.get('a').on(function(data){ });
 			}, 1000);
 		});
 	});
@@ -169,6 +157,7 @@ describe("GET GET", function(){
 		return cd.run(function(test){
 			test.async();
 			console.log("I am Carl or Dave");
+			window.WHO = "Carl";
 			ref.get(function(ack){ // this makes sure data was found p2p, even without subscription knowledge.
 				if(ack.put){
 					test.done();
@@ -177,18 +166,44 @@ describe("GET GET", function(){
 		});
 	});
 
-	it("Get Cached", function(){
+	it("Dave pushes changes", function(){
+		return dave.run(function(test){
+			window.WHO = "Dave";
+			test.async();
+			ref.put({hello: "dave"});
+			setTimeout(test.done, 2 * 1000);
+		});
+	});
+
+	it("All updated, but not Ed.", function(){
+		var tests = [], i = 0;
+		clients.excluding(ed).each(function(client, id){
+			tests.push(client.run(function(test){
+
+				test.async();
+				console.log(WHO, "cache:", JSON.stringify(gun._.graph.a));
+				if("dave" !== gun._.graph.a.hello){
+					throw new Error("not_updated");
+					return not_updated;
+				}
+				test.done();
+
+			})); 
+		});
+		return Promise.all(tests);
+	});
+
+	it("Ed NOT subscribed", function(){
 		return ed.run(function(test){
 			test.async();
 
-			ref.get(function(ack){ // the data should reply from a cache in the daisy chain now.
-				if(test.c){ return }
-				if(ack.put.hello !== 'bob_cache'){
-					console.log("FAIL: we_want_bob_only");
-					return we_want_bob_only;
-				}
-				test.done();test.c=1;
-			});
+			console.log("Ed's cache:", JSON.stringify(gun._.graph.a));
+			if(gun._.graph.a){
+				throw new Error("was_updated");
+				return was_updated;
+			}
+			test.done();
+
 		});
 	});
 
@@ -200,7 +215,7 @@ describe("GET GET", function(){
 	});
 
 	after("Everything shut down.", function(){
-		require('./util/open').cleanup();
+		require('../util/open').cleanup();
 		return relays.run(function(){
 			process.exit();
 		});
