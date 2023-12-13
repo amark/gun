@@ -1162,15 +1162,27 @@
 
 	;USE(function(module){
 		var Gun = USE('./root');
+		USE('./shim');
+		USE('./onto');
+		USE('./valid');
+		USE('./state');
+		USE('./dup');
+		USE('./ask');
 		USE('./chain');
 		USE('./back');
 		USE('./put');
 		USE('./get');
+		USE('./on');
+		USE('./map');
+		USE('./set');
+		USE('./mesh');
+		USE('./websocket');
+		USE('./localStorage');
 		module.exports = Gun;
 	})(USE, './index');
 
 	;USE(function(module){
-		var Gun = USE('./index');
+		var Gun = USE('./root');
 		Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 			var gun = this, cat = gun._, root = cat.root, act, off, id, tmp;
 			if(typeof tag === 'string'){
@@ -1306,7 +1318,7 @@
 	})(USE, './on');
 
 	;USE(function(module){
-		var Gun = USE('./index'), next = Gun.chain.get.next;
+		var Gun = USE('./root'), next = Gun.chain.get.next;
 		Gun.chain.get.next = function(gun, lex){ var tmp;
 			if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
 			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
@@ -1351,7 +1363,7 @@
 	})(USE, './map');
 
 	;USE(function(module){
-		var Gun = USE('./index');
+		var Gun = USE('./root');
 		Gun.chain.set = function(item, cb, opt){
 			var gun = this, root = gun.back(-1), soul, tmp;
 			cb = cb || function(){};
@@ -1728,7 +1740,7 @@
 	})(USE, './mesh');
 
 	;USE(function(module){
-		var Gun = USE('./index');
+		var Gun = USE('./root');
 		Gun.Mesh = USE('./mesh');
 
 		// TODO: resync upon reconnect online/offline
