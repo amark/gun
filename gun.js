@@ -1162,16 +1162,22 @@
 
 	;USE(function(module){
 		var Gun = USE('./root');
+		USE('./chain');
+		USE('./back');
+		USE('./put');
+		USE('./get');
+		module.exports = Gun;
+	})(USE, './core');
+
+	;USE(function(module){
+		var Gun = USE('./root');
 		USE('./shim');
 		USE('./onto');
 		USE('./valid');
 		USE('./state');
 		USE('./dup');
 		USE('./ask');
-		USE('./chain');
-		USE('./back');
-		USE('./put');
-		USE('./get');
+		USE('./core');
 		USE('./on');
 		USE('./map');
 		USE('./set');
