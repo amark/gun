@@ -1807,7 +1807,7 @@
 	})(USE, './websocket');
 
 	;USE(function(module){
-		if(typeof Gun === 'undefined'){ return }
+		if(!(typeof Gun === 'undefined')){
 
 		var noop = function(){}, store, u;
 		try{store = (Gun.window||noop).localStorage}catch(e){}
@@ -1872,6 +1872,8 @@
 			}
 		
 		});
+		
+		}
 	})(USE, './localStorage');
 
 }());
