@@ -86,9 +86,18 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             expect(B.decode(B.encode("bo\\|\|row"))).to.be("bo\\|\|row");
             expect(B.decode(B.encode("||\áãbbçcddéẽffǵghhíĩj́jḱkĺlḿmńñóõṕpqqŕrśsttẃwúǘũxxýỹźzàbcdèfghìjklm̀ǹòpqrstùǜẁxỳz|"))).to.be("||\áãbbçcddéẽffǵghhíĩj́jḱkĺlḿmńñóõṕpqqŕrśsttẃwúǘũxxýỹźzàbcdèfghìjklm̀ǹòpqrstùǜẁxỳz|");
         });
+        it('heal', function(){
+            //var obj = {a: null, b: false, c: true, d: 0, e: 42, f: Infinity, h: "hello"};
+            var page = '| |-|+|'+B.encode('he||o!')+'|+0|+42.69|'+B.encode('he|p')+'|+Infinity|';
+            expect(B.slot(page)).to.be.eql([' ', '-', '+', '|2"he||o!', '+0', '+42.69', '|1"he|p', '+Infinity']);
+        });
+        it.skip('encode decode object', function(){
+            expect(B.decode(B.encode({foo: 'bar', a: 1}))).to.be.eql({foo: 'bar', a: 1})
+        });
     });
 
     describe('BASIC API', function(done){
+        // TODO: Mark return here, slot("") slot("ab") causes infinite loop with heal, so need to detect not corrupted yet.
 
         it('write', function(done){
             rad('hello', 'world', function(err, ok){
@@ -160,9 +169,26 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             var prev = RAD(opt);
 
             prev('helloz', 'world', function(err, ok){
-
                 prev('helloz', function(err, page){
                     prev('zalice', 'yay', function(err){
+                        expect(page.text.split('helloz').length).to.be(2);
+                        done();
+                    });
+                });
+            });
+            /*
+                (A) READ ONLY: we receive a message, we READ only - parseless is important.
+                (B) READ & WRITE: we write a page, and it already exists on disk.
+                (C) WRITE ONLY: we write a page, and it is new to disk.
+            */
+        });
+        it('make sure word does not get duplicated when data is re-saved after read <', done => {
+            var opt = {file: 'azadata'}
+            var prev = RAD(opt);
+
+            prev('helloz', 'world', function(err, ok){
+                prev('helloz', function(err, page){
+                    prev('azalice', 'yay', function(err){
                         expect(page.text.split('helloz').length).to.be(2);
                         done();
                     });
@@ -183,14 +209,60 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
                 setTimeout(function(){
                     var rad = RAD(opt);
-
                     rad('pa-bob', 'banana', function(err, ok){
                         expect(err).to.not.be.ok();
                         var text = rad.book.list[0].text;
                         var i = text.indexOf('pa-alice');
                         expect(i).to.not.be(-1);
                         var ii = text.indexOf('hello');
-                        expect((ii - i) < 10).to.be.ok();
+                        expect((ii - i) < ('pa-alice'.length + 3)).to.be.ok();
+                        done();
+                    })
+                },99);
+            });
+        });
+
+        it('test if adding an in-memory word merges with previously written disk data <', done => {
+            var opt = {file: 'azadatab'}
+            var prev = RAD(opt);
+
+            prev('pa-alice', 'hello', function(err, ok){
+                expect(err).to.not.be.ok();
+
+                setTimeout(function(){
+                    var rad = RAD(opt);
+                    rad('pa-alex', 'banana', function(err, ok){
+                        expect(err).to.not.be.ok();
+                        var text = rad.book.list[0].text;
+                        var i = text.indexOf('pa-alice');
+                        expect(i).to.not.be(-1);
+                        var ii = text.indexOf('hello');
+                        expect((ii - i) < ('pa-alice'.length + 3)).to.be.ok();
+                        done();
+                    })
+                },99);
+            });
+        });
+
+        it('test if adding an in-memory escaped word merges with previously written disk data', done => {
+            var opt = {file:'badata'};
+            var prev = RAD(opt);
+
+            prev('ba-bob', 'hello', function(err, ok){
+                expect(err).to.not.be.ok();
+
+                setTimeout(function(){
+                    var rad = RAD(opt);
+                    rad('ba-a|ice', 'banana', function(err, ok){
+                        expect(err).to.not.be.ok();
+                        var text = rad.book.list[0].text;
+                        var i = text.indexOf('ba-a|ice');
+                        expect(i).to.not.be(-1);
+                        var ii = text.indexOf('banana');
+                        expect((ii - i) < ('ba-a|ice'.length + 3)).to.be.ok();
+                        var iii = text.indexOf('ba-bob');
+                        if(iii < i){ console.log("ERROR! Escaped word not sorted correctly!!!") }
+                        expect(iii > i).to.be.ok();
                         done();
                     })
                 },99);
@@ -198,15 +270,17 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
 
         it('test if updating an in-memory word merges with previously written disk data', done => {
+            var opt = {file:'pu-data'};
             var prev = RAD(opt);
+            prev('pu-zach', 'zap');
+            prev('pu-alex', 'yay');
             prev('pu-alice', 'hello', function(err, ok){
                 expect(err).to.not.be.ok();
 
                 var rad = RAD(opt);
-
                 rad('pu-alice', 'cool', function(err, ok){
                     expect(err).to.not.be.ok();
-
+                    //return;
                     var next = RAD(opt);
                     next('pu-alice', function(err, page){
                         expect('cool').to.be(page.get('pu-alice'));
@@ -266,6 +340,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                     done.c = setTimeout(done, 99);
                 });
             });
+            console.log("TODO: BUG!!! MARK & ROGOWSKI COME BACK HERE: NOTICED THAT INDEX IS NOT ESCAPED ALTHO THERE MAY BE OTHER THINGS TO DO FIRST!!!");
 
         });
 
