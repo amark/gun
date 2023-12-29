@@ -19,3 +19,4 @@ isolate*.log
 !/types/**/*.test-d.ts
 /gun.ts
 /temp/
+.nyc_output/
