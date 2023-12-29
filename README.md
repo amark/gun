@@ -261,6 +261,11 @@ You can now safely `CTRL+A+D` to escape without stopping the peer. To stop every
 
 Environment variables may need to be set like `export HTTPS_CERT=~/cert.pem HTTPS_KEY=~/key.pem PORT=443`. You can also look at a sample [nginx](https://gun.eco/docs/nginx) config. For production deployments, you probably will want to use something like `pm2` or better to keep the peer alive after machine reboots.
 
+### [Dome](https://www.trydome.io/)
+[Deploy GUN in one-click](https://app.trydome.io/signup?package=gun) with [Dome](https://trydome.io) and receive a free trial:
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=gun)
+
 ### [Heroku](https://www.heroku.com/)
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amark/gun)
