@@ -1,6 +1,6 @@
 ;(function(){ // RAD
 	console.log("Warning: Experimental rewrite of RAD to use Book. It is not API compatible with RAD yet and is very alpha.");
-	var sT = setTimeout, Book = sT.Book || require('gun/lib/book'), RAD = sT.RAD || (sT.RAD = function(opt){
+	var sT = setTimeout, Book = sT.Book || require('gun/src/book'), RAD = sT.RAD || (sT.RAD = function(opt){
 		opt = opt || {};
 		opt.file = String(opt.file || 'radata');
 		var log = opt.log || nope;
