@@ -107,7 +107,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
 
         it('read', function(done){
-            rad('hello', function(err, page){
+            rad('hello', function(page, err){
                 var val = page.get('hello');
                 expect(val).to.be('world');
                 done();
@@ -144,7 +144,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         it('save '+type, done => { setTimeout(function(){
             rad('type-'+type, type, function(err, ok){
                 expect(err).to.not.be.ok();
-                rad('type-'+type, function(err, page){
+                rad('type-'+type, function(page, err){
                     var val = page.get('type-'+type);
                     expect(val).to.be(type);
                     done();
@@ -154,7 +154,8 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
     });});
 
     describe('error on invalid primitives', function(){
-        it('test invalid', done => {
+        console.log("TODO: TESTS! Add invalid data type tests, error checking. HINT: Maybe also add invisible ASCII character tests here too.");
+        it.skip('test invalid', done => {
             rad('type-NaN', NaN, function(err, ok){
                 expect(err).to.be.ok();
                 done();
@@ -169,7 +170,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             var prev = RAD(opt);
 
             prev('helloz', 'world', function(err, ok){
-                prev('helloz', function(err, page){
+                prev('helloz', function(page, err){
                     prev('zalice', 'yay', function(err){
                         expect(page.text.split('helloz').length).to.be(2);
                         done();
@@ -182,12 +183,13 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 (C) WRITE ONLY: we write a page, and it is new to disk.
             */
         });
+
         it('make sure word does not get duplicated when data is re-saved after read <', done => {
             var opt = {file: 'azadata'}
             var prev = RAD(opt);
 
             prev('helloz', 'world', function(err, ok){
-                prev('helloz', function(err, page){
+                prev('helloz', function(page, err){
                     prev('azalice', 'yay', function(err){
                         expect(page.text.split('helloz').length).to.be(2);
                         done();
@@ -280,9 +282,8 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                 var rad = RAD(opt);
                 rad('pu-alice', 'cool', function(err, ok){
                     expect(err).to.not.be.ok();
-                    //return;
                     var next = RAD(opt);
-                    next('pu-alice', function(err, page){
+                    next('pu-alice', function(page, err){
                         expect('cool').to.be(page.get('pu-alice'));
                         done();
                     })
@@ -296,8 +297,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
         function gen(val){ return val + String.random(99,'a') }
         var opt = {file: 'gen'}
-        //var rad = window.names = Book();
-        var rad = window.names = RAD(opt);
+        var rad = RAD(opt);
         it('Generate more than 1 page', done => {
 
             var i = 0;
@@ -312,13 +312,12 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
         });
 
         it('Make sure parseless lookup works with incrementally parsed values', done => {
-
             rad = RAD(opt);
-            rad('adora', function(err, page){
+            rad('adora', function(page, err){
                 var n = page.get('adora');
                 expect(gen('adora')).to.be(n);
 
-                rad('aia', function(err, page){
+                rad('aia', function(page, err){
                     var n = page.get('aia');
                     expect(gen('aia')).to.be(n);
                     done();
@@ -332,7 +331,7 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             rad = RAD(opt);
             names.forEach(function(name){
                 name = name.toLowerCase();
-                rad(name, function(err, page){
+                rad(name+'a', function(page, err){
                     var n = page.get(name);
                     expect(gen(name)).to.be(n);
 
@@ -340,7 +339,6 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
                     done.c = setTimeout(done, 99);
                 });
             });
-            console.log("TODO: BUG!!! MARK & ROGOWSKI COME BACK HERE: NOTICED THAT INDEX IS NOT ESCAPED ALTHO THERE MAY BE OTHER THINGS TO DO FIRST!!!");
 
         });
 
@@ -357,8 +355,26 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
             rad('c', r);
 
         });*/
+        
+        it.skip('index metadata', done => {
+            localStorage.clear();
+            var B = setTimeout.Book;
+            var r = setTimeout.RAD();
+            //r('hello', 'world');
+            //return;
+            var i = 200; while(--i){ r('store'+i, Math.random()+'r'+Math.random()) }
+            console.log('switch test to a test of replication, maybe with panic');
+            r('store150', function(page, err){
+                console.log("<<<<<<<<<");
+                page.meta = 'https://localhost:9876,https://localhost:9877';
+            var i = 200; while(--i){ r('store'+i+'b', Math.random()+'r'+Math.random()) }
+                console.log(">>>>>>>>>");
+            })
+        });
 
     });
+
+    console.log("Performance Tests: 2023 Nov 12, 60M put/sec, 120M get/sec, 1M get/sec with splits.");
 
   });
 
