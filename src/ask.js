@@ -1,3 +1,4 @@
+;(function(){
 
 // request / response module, for asking and acking messages.
 require('./onto'); // depends upon onto!
@@ -25,3 +26,4 @@ module.exports = function ask(cb, as){
 }
 var random = String.random || function(){ return Math.random().toString(36).slice(2) }
 	
+}());

@@ -1,3 +1,4 @@
+;(function(){
 
     var shim = require('./shim');
     module.exports = async function(d, o){
@@ -6,3 +7,4 @@
       return shim.Buffer.from(hash);
     }
   
+}());

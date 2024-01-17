@@ -1,3 +1,4 @@
+;(function(){
 
     var shim = require('./shim');
     // Practical examples about usage found in tests.
@@ -16,7 +17,7 @@
     // For documentation see https://nodejs.org/api/buffer.html
     SEA.Buffer = SEA.Buffer || require('./buffer');
 
-    // These SEA functions support now only Promises or
+    // These SEA functions support now ony Promises or
     // async/await (compatible) code, use those like Promises.
     //
     // Creates a wrapper library around Web Crypto API
@@ -45,7 +46,7 @@
     // Obviously it is missing MANY necessary features. This is only an alpha release.
     // Please experiment with it, audit what I've done so far, and complain about what needs to be added.
     // SEA should be a full suite that is easy and seamless to use.
-    // Again, scroll near the top, where I provide an EXAMPLE of how to create a user and sign in.
+    // Again, scroll naer the top, where I provide an EXAMPLE of how to create a user and sign in.
     // Once logged in, the rest of the code you just read handled automatically signing/validating data.
     // But all other behavior needs to be equally easy, like opinionated ways of
     // Adding friends (trusted public keys), sending private messages, etc.
@@ -56,3 +57,4 @@
     // -------------- END SEA MODULES --------------------
     // -- BEGIN SEA+GUN MODULES: BUNDLED BY DEFAULT UNTIL OTHERS USE SEA ON OWN -------
   
+}());

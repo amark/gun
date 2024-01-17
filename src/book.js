@@ -1,4 +1,5 @@
- ;(function(){
+;(function(){
+
 // TODO: BUG! Unbuild will make these globals... CHANGE unbuild to wrap files in a function.
 // Book is a replacement for JS objects, maps, dictionaries.
 var sT = setTimeout, B = sT.Book || (sT.Book = function(text){
@@ -210,5 +211,5 @@ function decord(t){
 }
 
 try{module.exports=B}catch(e){}
-}());//delete later.
 	
+}());

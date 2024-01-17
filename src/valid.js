@@ -1,9 +1,10 @@
+;(function(){
 
 // Valid values are a subset of JSON: null, binary, number (!Infinity), text,
 // or a soul relation. Arrays need special algorithms to handle concurrency,
 // so they are not supported directly. Use an extension that supports them if
 // needed but research their problems first.
-module.exports = function (v) {
+module.exports = function(v){
   // "deletes", nulling out keys.
   return v === null ||
 	"string" === typeof v ||
@@ -14,3 +15,4 @@ module.exports = function (v) {
 	(!!v && "string" == typeof v["#"] && Object.keys(v).length === 1 && v["#"]);
 }
 	
+}());

@@ -1,3 +1,4 @@
+;(function(){
 
 // Shim for generic javascript utilities.
 String.random = function(l, c){
@@ -83,3 +84,4 @@ Object.keys = Object.keys || function(o){
 	}())})();
 }());
 	
+}());

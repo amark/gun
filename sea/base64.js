@@ -1,3 +1,4 @@
+;(function(){
 
     var u;
     if(u+''== typeof btoa){
@@ -8,3 +9,4 @@
       global.atob = function(data){ return Buffer.from(data, "base64").toString("binary") };
     }
   
+}());

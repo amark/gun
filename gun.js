@@ -136,7 +136,7 @@
 		};
 	})(USE, './onto');
 
-	;USE(function(module){ ;(function(){
+	;USE(function(module){
 		// TODO: BUG! Unbuild will make these globals... CHANGE unbuild to wrap files in a function.
 		// Book is a replacement for JS objects, maps, dictionaries.
 		var sT = setTimeout, B = sT.Book || (sT.Book = function(text){
@@ -348,7 +348,6 @@
 		}
 
 		try{module.exports=B}catch(e){}
-		}());//delete later.
 	})(USE, './book');
 
 	;USE(function(module){
@@ -716,7 +715,7 @@
 					tmp = keys.length;
 					console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 					DBG && (DBG.ga = +new Date);
-					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG, FOO: 1});
+					root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
 					console.STAT && console.STAT(S, +new Date - S, 'got in');
 					if(!tmp){ return }
 					setTimeout.turn(go);
@@ -1388,6 +1387,7 @@
 		var Gun = USE('./root');
 		USE('./shim');
 		USE('./onto');
+		USE('./book');
 		USE('./valid');
 		USE('./state');
 		USE('./dup');
