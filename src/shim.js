@@ -7,23 +7,12 @@ String.random = function(l, c){
 	while(l-- > 0){ s += c.charAt(Math.floor(Math.random() * c.length)) }
 	return s;
 }
-String.match = function(t, o){ var tmp, u;
-	if('string' !== typeof t){ return false }
-	if('string' == typeof o){ o = {'=': o} }
-	o = o || {};
-	tmp = (o['='] || o['*'] || o['>'] || o['<']);
-	if(t === tmp){ return true }
-	if(u !== o['=']){ return false }
-	tmp = (o['*'] || o['>']);
-	if(t.slice(0, (tmp||'').length) === tmp){ return true }
-	if(u !== o['*']){ return false }
-	if(u !== o['>'] && u !== o['<']){
-		return (t >= o['>'] && t <= o['<'])? true : false;
-	}
-	if(u !== o['>'] && t >= o['>']){ return true }
-	if(u !== o['<'] && t <= o['<']){ return true }
-	return false;
-}
+String.match = (t, o) =>
+  'string' === typeof t &&
+  ((t === o['='] ?? o) ||
+    (t.slice(0, o['*']?.length ?? 0) === o['*'] &&
+      t >= (o['>'] ?? t) &&
+      t <= (o['<'] ?? t)));
 String.hash = function(s, c){ // via SO
 	if(typeof s !== 'string'){ return }
 	    c = c || 0; // CPU schedule hashing by
