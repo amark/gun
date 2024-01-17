@@ -6,7 +6,7 @@
 		var log = opt.log || nope;
 
 		var has = (sT.RAD.has || (sT.RAD.has = {}))[opt.file];
-		if(has){ return has }
+		if(has){ return has } // TODO: BUG? Not reuses same instance?
 		var r = function rad(word, is, reply){ r.word = word;
 			if(!b){ start(word, is, reply); return r }
 			if(is === undefined || 'function' == typeof is){ // THIS IS A READ:
@@ -35,29 +35,18 @@
 			})
 		}
 
-		async function write(word, reply){
-			log('write() word', word);
+		function write(word, reply){
 			var p = b.page(word), tmp;
-			if(tmp = p.saving){ reply && tmp.push(reply); return } p.saving = [reply];
-			var S = +new Date; log("   writing", p.substring(), 'since last', S - p.saved, RAD.c, 'records', env.count++, 'mid-swap.');
+			if(tmp=p.saving){(reply||!tmp.length)&&(p.saving=tmp.concat(reply));return} // TODO: PERF! Rogowski points out concat is slow. BUG??? I HAVE NO clue how/why this if statement being called from recursion yet not set to 0.
+			p.saving = ('function' == typeof reply)? [reply] : reply || [];
 			get(p, function(err, disk){
-				if(err){ log("ERR! in write() get() cb ", err); return }
-				log('      get() - p.saving ', (p.saving || []).length);
-				if(p.from && disk){
-					log("      get() merge: p.from ", p.toString().slice(0, 40), " disk.length", disk?.length || 0);
-				}
+				if(err){ log("ERR! in write() get() cb ", err); return } // TODO: BUG!!! Unhandled, no callbacks called.
 				p.from = disk || p.from;
-				// p.list = p.text = p.from = 0;
-				// p.first = p.first.word || p.first;
 				tmp = p.saving; p.saving = [];
-				put(p, '' + p, function(err, ok){
-					env.count--; p.saved = +new Date; log("      ...wrote %d bytes in %dms", ('' + p).length, (p.saved = +new Date) - S);
-					// TODO: BUG: Confirmed! Only calls back first. Need to fix + use perf hack from old RAD.
+				put(p, ''+p, function(err, ok){
 					sT.each(tmp, function(cb){ cb && cb(err, ok) });
-					if(!p.saving.length){ p.saving = 0; return; } //p.saving = 0; // what?
-					// log({ tmp });
-					console.log("hm?", word, reply+'');
-					write(word, reply);
+					tmp = p.saving; p.saving = 0;
+					if(tmp.length){ write(word, tmp) }
 				});
 			}, p);
 		}
@@ -71,13 +60,13 @@
 		function get(file, cb){
 			var tmp;
 			if(!file){ return } // TODO: HANDLE ERROR!!
-			if(file.from){ cb(null, file.from); return } // IS THIS LINE SAFE? ADD TESTS!
+			if(file.from){ cb(null, file.from); return }
 			if(b&&1==b.list.length){ file.first = (file.first < '!')? file.first : '!'; } // TODO: BUG!!!! This cleanly makes for a common first file, but SAVING INVISIBLE ASCII KEYS IS COMPLETELY UNTESTED and guaranteed to have bugs/corruption issues.
 			if(tmp = put[file = fname(file)]){ cb(u, tmp.data); return }
 			if(tmp = get[file]){ tmp.push(cb); return } get[file] = [cb];
 			RAD.get(file, function(err, data){
 				tmp = get[file]||''; delete get[file];
-				var i = -1, f; while (f = tmp[++i]){ f(err, data) } // TODO: BUG! CPU SCHEDULE?
+				sT.each(tmp, function(cb){ cb && cb(err, data) });
 			}, opt);
 		};
 
@@ -104,7 +93,6 @@
 				return t;
 			}
 			b.split = function(next, page){
-				log("SPLIT!!!!", b.list.length);
 				put(' ', '' + b.list, function(err, ok){
 					if(err){ console.log("ERR!"); return }
 					// ??
@@ -116,12 +104,6 @@
 		function ename(t){ return encodeURIComponent(t).replace(/\*/g, '%2A').slice(0, 250) }
 		//function fname(p){ return opt.file + '/' + ename(p.substring()) }
 		function fname(p){ return ename(p.substring()) }
-
-
-		function valid(word, is, reply){
-			if(is !== is){ reply(word +" cannot be NaN!"); return }
-			return true;
-		}
 
 		function valid(word, is, reply){
 			if(is !== is){ reply(word +" cannot be NaN!"); return }
@@ -210,7 +192,7 @@
 		cb(401)
 	}
 	RAD.get = async function(file, cb, opt){ get && get(file, cb, opt);
-		var t = (await (await fetch('http://localhost:8766/gun/1data/'+file)).text());
+		var t = (await (await fetch('http://localhost:8765/gun/authorsData/'+file)).text());
 		if('404' == t){ cb(); return }
 		cb(null, t);
 	}

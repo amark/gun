@@ -183,7 +183,7 @@
 		}
 		function got(word, page){
 			var b = page.book, l, has, a, i;
-			if(l = from(page)){ has = l[got.i = i = spot(word, l, B.decode)]; } // TODO: POTENTIAL BUG! This assumes that each word on a page uses the same serializer/formatter/structure.
+			if(l = from(page)){ has = l[got.i = i = spot(word, l, B.decode)]; } // TODO: POTENTIAL BUG! This assumes that each word on a page uses the same serializer/formatter/structure. // TOOD: BUG!!! Not actually, but if we want to do non-exact radix-like closest-word lookups on a page, we need to check limbo & potentially sort first.
 			// parseless may return -1 from actual value, so we may need to test both. // TODO: Double check? I think this is correct.
 			if(has && word == has.word){ return (b.all[word] = has).is }
 			if('string' != typeof has){ has = l[got.i = i+=1] }
@@ -208,14 +208,14 @@
 
 		function from(a, t, l){
 			if('string' != typeof a.from){ return a.from }
-			//(l = a.from = (t = a.from||'').substring(1, t.length-1).split(t[0])).toString = join; // slot
-			(l = a.from = slot(t = t||a.from||'')).toString = join;
+			//(l = a.from = (t = a.from||'').substring(1, t.length-1).split(t[0])); // slot
+			(l = a.from = slot(t = t||a.from||''));
 			return l;
 		}
 		function list(each){ each = each || function(x){return x} 
-			// TODO: BUG!!! in limbo items need to get situated before calling this, if there are any. (obviously, we shouldn't do it again if limbo has previously been sorted).
-			var i = 0, l = from(this)||[], w, r = [], p = this.book.parse || function(){};
-			while(w = l[i++]){ r.push(each(slot(w)[1],p(w)||w,this)) }
+			var i = 0, l = sort(this), w, r = [], p = this.book.parse || function(){};
+			//while(w = l[i++]){ r.push(each(slot(w)[1], p(w)||w, this)) }
+			while(w = l[i++]){ r.push(each(this.get(w = w.word||p(w)||w), w, this)) } // TODO: BUG! PERF?
 			return r;
 		}
 
@@ -230,7 +230,7 @@
 			// MUST be an insert:
 			has = b.all[word] = {word: word, is: is, page: page, substring: subt, toString: tot};
 			page.first = (page.first < word)? page.first : word;
-			if(!page.limbo){ (page.limbo = []).toString = join }
+			if(!page.limbo){ (page.limbo = []) }
 			page.limbo.push(has);
 			b(word, is);
 			page.size += size(word) + size(is);
@@ -240,24 +240,18 @@
 
 		function split(p, b){ // TODO: use closest hash instead of half.
 			//console.time();
-			// TODO: BUG???? May need to do a SORTED merge with FROM.
-			var i = 0, L = p.limbo, tmp;
-			//while(tmp = L[i++]){  }
-			var L = p.limbo = sort(p.limbo), l = L.length, i = l/2 >> 0, j = i, half = L[j], tmp;
+			var L = sort(p), l = L.length, i = l/2 >> 0, j = i, half = L[j], tmp;
 			//console.timeEnd();
-			var next = {limbo: [], first: half.substring(), size: 0, substring: sub, toString: to, book: b, get: b, read: list}, nl = next.limbo;
-			nl.toString = join;
+			var next = {first: half.substring(), size: 0, substring: sub, toString: to, book: b, get: b, read: list}, f = next.from = [];
 			//console.time();
 			while(tmp = L[i++]){
-				nl.push(tmp);
+				f.push(tmp);
 				next.size += (tmp.is||'').length||1;
 				tmp.page = next;
 			}
-			//console.timeEnd();
-			//console.time();
-			p.limbo = p.limbo.slice(0, j);
+			//console.timeEnd(); console.time();
+			p.from = p.from.slice(0, j);
 			p.size -= next.size;
-			p.sort = 0;
 			b.list.splice(spot(next.first, b.list)+1, 0, next); // TODO: BUG! Make sure next.first is decoded text. // TODO: BUG! spot may need parse too?
 			//console.timeEnd();
 			if(b.split){ b.split(next, p) }
@@ -285,27 +279,29 @@
 		}
 		function sub(i,j){ return (this.first||this.word||B.decode((from(this)||'')[0]||'')).substring(i,j) }
 		function to(){ return this.text = this.text || text(this) }
-		function join(){ return this.join('|') }
-		function text(p){ var l = p.limbo; // TODO: BUG??? Shouldn't any stringify cause limbo to be reset?
-			if(!l){ return (typeof p.from == 'string')? (p.from||'')+'' : '|'+p.from+'|' }
-			if(!p.from){ return p.limbo = null, '|'+((l && sort(l).join('|'))||'')+'|' } // TODO: p.limbo should be reset each time we "flush".
-			return '|'+mix(l, from(p), p).join('|')+'|'; // commenting out this sub-portion of code fixed a more basic test, but will probably cause a bug with a FROM + MEMORY.
+		function text(p){ // PERF: read->[*] : text->"*" no edit waste 1 time perf.
+			if(p.limbo){ sort(p) } // TODO: BUG? Empty page meaning? undef, '', '||'?
+			return ('string' == typeof p.from)? p.from : '|'+(p.from||[]).join('|')+'|';
 		}
-		function mix(l, f, p){ // TODO: IMPROVE PERFORMANCE!!!! l[j] = i is 5X+ faster than .push(
-			var j = 0, i;
+
+		function sort(p, l){
+			var f = p.from = ('string' == typeof p.from)? slot(p.from) : p.from||[];
+			if(!(l = l || p.limbo)){ return f }
+			return mix(p).sort(function(a,b){
+				return (a.word||B.decode(''+a)) < (b.word||B.decode(''+b))? -1:1;
+			});
+		}
+		function mix(p, l){ // TODO: IMPROVE PERFORMANCE!!!! l[j] = i is 5X+ faster than .push(
+			l = l || p.limbo || []; p.limbo = null;
+			var j = 0, i, f = p.from;
 			while(i = l[j++]){
 				if(got(i.word, p)){
-					f[got.i] = i;
+					f[got.i] = i; // TODO: Trick: allow for a GUN'S HAM CRDT hook here.
 				} else {
 					f.push(i); 
 				}
 			}
-			return sort(f);
-		}
-		function sort(l){ //return l.sort();
-			return l.sort(function(a,b){
-				return (a.word||B.decode(''+a)) < (b.word||B.decode(''+b))? -1:1;
-			});
+			return f;
 		}
 
 		B.encode = function(d, s, u){ s = s || "|"; u = u || String.fromCharCode(32);

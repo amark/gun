@@ -374,6 +374,25 @@ var names = ["Adalard","Adora","Aia","Albertina","Alfie","Allyn","Amabil","Ammam
 
     });
 
+    describe('API usage checks', function(){
+        var opt = {file: 'search'}
+        var search = RAD(opt);
+        var b = Book();
+        it('read results from in-memory data', async done => {
+            b('hello', '1data');
+            var r = b.page('wat').read();
+            expect(r).to.be.eql(['1data']);
+            b('hello', '1dataZ');
+            r = b.page('wat').read();
+            expect(r).to.be.eql(['1dataZ']);
+            b('new', '2data');
+            r = b.page('wat').read();
+            expect(r).to.be.eql(['1dataZ','2data']);
+            done();
+        });
+
+    });
+
     console.log("Performance Tests: 2023 Nov 12, 60M put/sec, 120M get/sec, 1M get/sec with splits.");
 
   });
