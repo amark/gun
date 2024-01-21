@@ -3,7 +3,7 @@
 	var sT = setTimeout, Book = sT.Book || require('gun/src/book'), RAD = sT.RAD || (sT.RAD = function(opt){
 		opt = opt || {};
 		opt.file = String(opt.file || 'radata');
-		var log = opt.log || nope;
+		var log = opt.log || console.log
 
 		var has = (sT.RAD.has || (sT.RAD.has = {}))[opt.file];
 		if(has){ return has } // TODO: BUG? Not reuses same instance?
@@ -115,7 +115,7 @@
 	sT.each = sT.each || function(l,f){l.forEach(f)};
 
 	try { module.exports = RAD } catch (e){ }
-
+/*
 	// junk below that needs to be cleaned up and corrected for the actual correct RAD API.
 	var env = {}, nope = function(){ }, nah = function(){ return nope }, u;
 	env.require = (typeof require !== '' + u && require) || nope;
@@ -141,7 +141,7 @@
 		stats.memory.used = env.process.memoryUsage().rss / 1024 / 1024; // in MB
 		console.log(stats.memory);
 	}, 9);
-
+*/
 }());
 
 
