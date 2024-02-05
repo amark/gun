@@ -10,10 +10,8 @@ We provide security updates for the following versions of our project:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 0.2020.x| :white_check_mark: |
+| < 0.2020| :x:                |
 
 ## Reporting a Vulnerability
 
@@ -47,4 +45,3 @@ We will communicate any security updates through our standard communication chan
 ## Conclusion
 
 We greatly value the work of security researchers and believe that responsible disclosure of vulnerabilities is a valuable contribution to the security of the Internet. We encourage users to contribute to the security of our project by reporting any security-related issues to us.
-
