@@ -184,7 +184,7 @@
 
 ;(function(){ return;
 	var get;
-	try { get = fetch } catch (e){ console.log("WARNING! need `npm install node-fetch@2.6`"); get = fetch = require('node-fetch') };
+	try { get = fetch } catch (e){ console.warn("need `npm install node-fetch@2.6`"); get = fetch = require('node-fetch') };
 	if(!get){ return }
 
 	var sT = setTimeout, RAD = sT.RAD, put = RAD.put, get = RAD.get;
