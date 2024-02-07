@@ -1,3 +1,4 @@
+;(function(){
 
     var User = require('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
 
@@ -94,7 +95,7 @@
       }
       if(SEA.window){
         try{var sS = {};
-        sS = window.sessionStorage;
+        sS = SEA.window.sessionStorage;
         delete sS.recall;
         delete sS.pair;
         }catch(e){};
@@ -102,3 +103,4 @@
       return gun;
     }
   
+}());

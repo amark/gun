@@ -1,3 +1,4 @@
+;(function(){
 
 require('./shim');
 function State(){
@@ -26,3 +27,4 @@ State.ify = function(n, k, s, v, soul){ // put a key's state on a node.
 }
 module.exports = State;
 	
+}());

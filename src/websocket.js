@@ -1,5 +1,6 @@
+;(function(){
 
-var Gun = require('./index');
+var Gun = require('./root');
 Gun.Mesh = require('./mesh');
 
 // TODO: resync upon reconnect online/offline
@@ -58,3 +59,4 @@ Gun.on('opt', function(root){
 });
 var noop = function(){}, u;
 	
+}());

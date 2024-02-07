@@ -1,3 +1,4 @@
+;(function(){
 
     var User = require('./user'), SEA = User.SEA, Gun = User.GUN, noop = function(){};
     User.prototype.pair = function(){
@@ -134,3 +135,4 @@
     */
     module.exports = User
   
+}());

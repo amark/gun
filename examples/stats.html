@@ -44,6 +44,7 @@
 <script src="./jquery.js"></script>
 <script src="./smoothie.js" charset="utf-8"></script>
 <script>
+  if(window.location.search){url.value = window.location.search.split("?")[1]}
   var up, br = 0, bt = 0, tmp;
   var fetchData = async function(){
     // fetch the data from server

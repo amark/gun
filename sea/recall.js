@@ -1,3 +1,4 @@
+;(function(){
 
     var User = require('./user'), SEA = User.SEA, Gun = User.GUN;
     User.prototype.recall = function(opt, cb){
@@ -7,7 +8,7 @@
         if(SEA.window){
           try{
             var sS = {};
-            sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
+            sS = SEA.window.sessionStorage; // TODO: FIX BUG putting on `.is`!
             if(sS){
               (root._).opt.remember = true;
               ((gun.back('user')._).opt||opt).remember = true;
@@ -25,3 +26,4 @@
       return gun;
     }
   
+}());

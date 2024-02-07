@@ -1,5 +1,6 @@
+;(function(){
 
-var Gun = require('./index');
+var Gun = require('./root');
 Gun.chain.set = function(item, cb, opt){
 	var gun = this, root = gun.back(-1), soul, tmp;
 	cb = cb || function(){};
@@ -21,3 +22,4 @@ Gun.chain.set = function(item, cb, opt){
 	return item;
 }
 	
+}());

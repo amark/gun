@@ -1,3 +1,4 @@
+;(function(){
 
     require('./base64');
     // This is Array extended to have .toString(['utf8'|'hex'|'base64'])
@@ -23,3 +24,4 @@
     }
     module.exports = SeaArray;
   
+}());

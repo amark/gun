@@ -1,3 +1,4 @@
+;(function(){
 
 var Gun = require('./root');
 Gun.chain.get = function(key, cb, as){
@@ -110,6 +111,7 @@ function cache(key, back){
 	next[at.get = key] = at;
 	if(back === cat.root.$){
 		at.soul = key;
+		//at.put = {};
 	} else
 	if(cat.soul || cat.has){
 		at.has = key;
@@ -154,3 +156,4 @@ function rid(at){
 }
 var empty = {}, valid = Gun.valid, u;
 	
+}());

@@ -1,5 +1,6 @@
+;(function(){
 
-var Gun = require('./index'), next = Gun.chain.get.next;
+var Gun = require('./root'), next = Gun.chain.get.next;
 Gun.chain.get.next = function(gun, lex){ var tmp;
 	if(!Object.plain(lex)){ return (next||noop)(gun, lex) }
 	if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
@@ -42,3 +43,4 @@ function map(msg){ this.to.next(msg);
 }
 var noop = function(){}, event = {stun: noop, off: noop}, u;
 	
+}());

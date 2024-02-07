@@ -37,7 +37,9 @@
       if(location.protocol.indexOf('s') < 0
       && location.host.indexOf('localhost') < 0
       && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
-      && location.protocol.indexOf('file:') < 0){
+      && location.protocol.indexOf('blob:') < 0
+      && location.protocol.indexOf('file:') < 0
+      && location.origin != 'null'){
         console.warn('HTTPS needed for WebCrypto in SEA, redirecting...');
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
@@ -1387,7 +1389,7 @@
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
             // "data.c" = a list of certificants/certified users
             // "data.w" = lex WRITE permission, in the future, there will be "data.r" which means lex READ permission
-            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
+            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*') > -1 || data.c.indexOf(certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
               String.match = String.match || Gun.text.match

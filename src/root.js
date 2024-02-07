@@ -1,3 +1,4 @@
+;(function(){
 
 
 function Gun(o){
@@ -201,6 +202,9 @@ Gun.ask = require('./ask');
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'];
 		var next = root.next || (root.next = {}), at = next[soul];
+
+		// TODO: Azarattum bug, what is in graph is not same as what is in next. Fix!
+
 		// queue concurrent GETs?
 		// TODO: consider tagging original message into dup for DAM.
 		// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
@@ -221,10 +225,14 @@ Gun.ask = require('./ask');
 		}*/
 		var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 		DBG && (DBG.g = +new Date);
-		//console.log("GET:", get, node, has);
+		//console.log("GET:", get, node, has, at);
+		//if(!node && !at){ return root.on('get', msg) }
+		//if(has && node){ // replace 2 below lines to continue dev?
 		if(!node){ return root.on('get', msg) }
 		if(has){
-			if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
+			if('string' != typeof has || u === node[has]){
+				if(!((at||'').next||'')[has]){ root.on('get', msg); return }
+			}
 			node = state_ify({}, has, state_is(node, has), node[has], soul);
 			// If we have a key in-memory, do we really need to fetch?
 			// Maybe... in case the in-memory key we have is a local write
@@ -306,3 +314,4 @@ module.exports = Gun;
 ;"Please do not remove welcome log unless you are paying for a monthly sponsorship, thanks!";
 Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, please ask for help on http://chat.gun.eco if anything takes you longer than 5min to figure out!");
 	
+}());

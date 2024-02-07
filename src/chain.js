@@ -1,3 +1,4 @@
+;(function(){
 
 // WARNING: GUN is very simple, but the JavaScript chaining API around GUN
 // is complicated and was extremely hard to build. If you port GUN to another
@@ -28,6 +29,7 @@ function output(msg){
 		if(at.lex){ Object.keys(at.lex).forEach(function(k){ tmp[k] = at.lex[k] }, tmp = msg.get = msg.get || {}) }
 		if(get['#'] || at.soul){
 			get['#'] = get['#'] || at.soul;
+			//root.graph[get['#']] = root.graph[get['#']] || {_:{'#':get['#'],'>':{}}};
 			msg['#'] || (msg['#'] = text_rand(9)); // A3120 ?
 			back = (root.$.get(get['#'])._);
 			if(!(get = get['.'])){ // soul
@@ -248,3 +250,4 @@ function ack(msg, ev){
 
 var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
 	
+}());
