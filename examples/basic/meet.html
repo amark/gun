@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<center>must press play or unmute on new videos to accept meeting</center>
+<center id="videos">
+<video id="me" width="100%" controls autoplay playsinline muted></video>
+</center>
+<center>Stream <select id="select"><option id="from">from</option></select></center>
+
+<script src="../jquery.js"></script>
+<script src="../../../gun/gun.js"></script>
+<script src="../../../gun/sea.js"></script>
+<script src="../../../gun/lib/webrtc.js"></script>
+
+<script>;(async function(){
+streams = {}, gun = Gun(location.origin + '/gun'); //gun = GUN();
+mesh = gun.back('opt.mesh');
+
+(await (me.stream = navigator.mediaDevices).enumerateDevices()).forEach((device,i) => {
+  if('videoinput' !== device.kind){ return }
+  var opt = $(from).clone().prependTo('select').get(0);
+  $(opt).text(opt.id = device.label || 'Camera '+i);
+  opt.value = device.deviceId;
+});
+
+$('select').on('change', async eve => { $(from).text('Off'); // update label
+  if('Off' == select.value){ return me.srcObject.getTracks()[0].stop() }
+  mesh.hi(me.srcObject = await me.stream.getUserMedia({ audio: true,
+    video: (select.value && {deviceId: {exact: select.value}}) || {facingMode: "environment"}
+  }));
+});
+
+gun.on('rtc', async function(eve){ var ui, src;
+  console.log("?RTC?", eve.peer && eve.peer.connectionState, eve);
+  if(!(src = eve.streams)){ return }
+  ui = $('#v'+(src=src[0]).id).get(0) || $(me).clone().attr('id', 'v'+src.id).prependTo('#videos').get(0); // reuse or create video element
+  ui.srcObject = src;
+});
+}());</script>
