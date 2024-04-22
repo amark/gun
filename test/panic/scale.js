@@ -69,7 +69,7 @@ describe("Stress test GUN with SEA users causing PANIC!", function(){
 				// As a result, we have to manually pass it scope.
 				test.async();
 				// Clean up from previous test.
-				try{ require('fs').unlinkSync(env.i+'data') }catch(e){ console.log("!!! WARNING !!!! MUST MANUALLY REMOVE OLD DATA!!!!, e") }
+				try{ require('fs').unlinkSync(env.i+'data') }catch(e){ console.warn("MUST MANUALLY REMOVE OLD DATA!!!!, e") }
 				var purl = 'https://'+env.config.IP+':'+env.config.port;
 				require('gun/test/https/test')(env.config.port + env.i, env.i+'data', function(){
 					// This server peer is now done with the test!
