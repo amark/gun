@@ -220,6 +220,7 @@
 		}
 
 		function set(word, is){
+			// TODO: Perf on random write is decent, but short keys or seq seems significantly slower.
 			var b = this, has = b.all[word];
 			if(has){ return b(word, is) } // updates to in-memory items will always match exactly.
 			var page = b.page(word=''+word), tmp; // before we assume this is an insert tho, we need to check
@@ -240,21 +241,22 @@
 
 		function split(p, b){ // TODO: use closest hash instead of half.
 			//console.time();
+			//var S = performance.now();
 			var L = sort(p), l = L.length, i = l/2 >> 0, j = i, half = L[j], tmp;
 			//console.timeEnd();
 			var next = {first: half.substring(), size: 0, substring: sub, toString: to, book: b, get: b, read: list}, f = next.from = [];
-			//console.time();
 			while(tmp = L[i++]){
 				f.push(tmp);
 				next.size += (tmp.is||'').length||1;
 				tmp.page = next;
 			}
-			//console.timeEnd(); console.time();
 			p.from = p.from.slice(0, j);
 			p.size -= next.size;
 			b.list.splice(spot(next.first, b.list)+1, 0, next); // TODO: BUG! Make sure next.first is decoded text. // TODO: BUG! spot may need parse too?
 			//console.timeEnd();
 			if(b.split){ b.split(next, p) }
+			//console.log(S = (performance.now() - S), 'split');
+			//console.BIG = console.BIG > S? console.BIG : S;
 		}
 
 		function slot(t){ return heal((t=t||'').substring(1, t.length-1).split(t[0]), t[0]) } B.slot = slot; // TODO: check first=last & pass `s`.
@@ -1684,10 +1686,10 @@
 				if((tmp = msg['><']) && 'string' == typeof tmp){ tmp.slice(0,99).split(',').forEach(function(k){ this[k] = 1 }, (msg._).yo = {}) } // Peers already sent to, do not resend.
 				// DAM ^
 				if(tmp = msg.dam){
+					(dup_track(id)||{}).via = peer;
 					if(tmp = mesh.hear[tmp]){
 						tmp(msg, peer, root);
 					}
-					dup_track(id);
 					return;
 				}
 				if(tmp = msg.ok){ msg._.near = tmp['/'] }
@@ -1980,10 +1982,10 @@
 
 			var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
 
-			var wire = mesh.wire || opt.wire;
+			var wired = mesh.wire || opt.wire;
 			mesh.wire = opt.wire = open;
 			function open(peer){ try{
-				if(!peer || !peer.url){ return wire && wire(peer) }
+				if(!peer || !peer.url){ return wired && wired(peer) }
 				var url = peer.url.replace(/^http/, 'ws');
 				var wire = peer.wire = new opt.WebSocket(url);
 				wire.onclose = function(){
