@@ -38,7 +38,7 @@
         const hash = shim.Buffer.from(sha1, 'binary')
         return hash.toString('hex', hash.length - 8)  // 16-bit ID as hex
       } catch (e) {
-        console.log(e)
+        console.warn(e)
         throw e
       }
     });
