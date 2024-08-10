@@ -1547,7 +1547,7 @@
 			if(tmp = ((tmp = lex['#'])||'')['='] || tmp){ return gun.get(tmp) }
 			(tmp = gun.chain()._).lex = lex; // LEX!
 			gun.on('in', function(eve){
-				if(String.match(eve.get|| (eve.put||'')['.'], lex['.'] || lex['#'] || lex)){
+				if(String.match((eve.put||'')['.'] || eve.get, lex['.'] || lex['#'] || lex)){
 					tmp.on('in', eve);
 				}
 				this.to.next(eve);
