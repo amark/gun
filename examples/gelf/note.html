@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<style>html, body, textarea { width: 100%; height: 100%; padding: 0; margin: 0; }</style>
+<gelf-note></gelf-note>
+<script type="module">
+  import gelf from './gelf.js'
+
+  const context = {
+    seed: location.hash.replace('#','') || 1
+  }
+
+  const $ = gelf.call(context, 'gelf-note')
+
+  $.draw((target) => {
+    const { value } = $.learn()
+
+    if(!target.innerHTML) {
+      target.innerHTML = `<textarea id="view" placeholder="write here..."></textarea>`
+      target.view = target.querySelector('#view')
+    }
+
+    target.view.value = value
+  })
+
+  $.when('input', 'textarea', ({target}) => $.teach({
+    value: target.value
+  }))
+</script>
