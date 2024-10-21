@@ -1,4 +1,5 @@
 import '../../../gun/gun.js'
+import '../../lib/open.js'
 const gun = window.Gun(location.origin + '/gun');
 
 const database = {}
@@ -36,8 +37,9 @@ function update(link, target, compositor, lifeCycle={}) {
 function draw(link, compositor, lifeCycle={}) {
   insight('module:draw', link)
   listen(CREATE_EVENT, link, (event) => {
-    this.get(link).on(cache => {
-      database[link] = JSON.parse(cache) || {}
+    this.get(link).open(cache => {
+      debugger
+      database[link] = cache || {}
       update(link, event.target, compositor, lifeCycle)
     })
   })
@@ -61,10 +63,11 @@ export function learn(link) {
 
 export function teach(link, knowledge, nuance = (s, p) => ({...s,...p})) {
   insight('module:teach', link)
-  this.get(link).once(cache => {
-    const data = cache ? JSON.parse(cache) : {}
-    const latest = nuance(data, knowledge);
-    this.get(link).put(JSON.stringify(latest))
+  const process = this.get(link).open(cache => {
+    debugger
+    const latest = nuance(cache, knowledge);
+    this.get(link).put(latest)
+    process.off()
   })
 }
 
