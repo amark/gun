@@ -36,7 +36,7 @@ function update(link, target, compositor, lifeCycle={}) {
 function draw(link, compositor, lifeCycle={}) {
   insight('module:draw', link)
   listen(CREATE_EVENT, link, (event) => {
-    gun.get(this.seed).get(link).on(cache => {
+    this.get(link).on(cache => {
       database[link] = JSON.parse(cache) || {}
       update(link, event.target, compositor, lifeCycle)
     })
@@ -61,10 +61,10 @@ export function learn(link) {
 
 export function teach(link, knowledge, nuance = (s, p) => ({...s,...p})) {
   insight('module:teach', link)
-  gun.get(this.seed).get(link).once(cache => {
+  this.get(link).once(cache => {
     const data = cache ? JSON.parse(cache) : {}
     const latest = nuance(data, knowledge);
-    gun.get(this.seed).get(link).put(JSON.stringify(latest))
+    this.get(link).put(JSON.stringify(latest))
   })
 }
 
@@ -76,15 +76,17 @@ export function when(link1, type, link2, callback) {
 
 export default function module(link, initialState = {}) {
   insight('module', link)
-  teach.call(this, link, initialState)
 
+  const seed = this && this.seed ? this.seed : 'root'
+  const root = gun.get(seed)
+  teach.call(root, link, initialState)
   return {
     link,
-    learn: learn.bind(this, link),
-    draw: draw.bind(this, link),
-    style: style.bind(this, link),
-    when: when.bind(this, link),
-    teach: teach.bind(this, link),
+    learn: learn.bind(root, link),
+    draw: draw.bind(root, link),
+    style: style.bind(root, link),
+    when: when.bind(root, link),
+    teach: teach.bind(root, link),
   }
 }
 
