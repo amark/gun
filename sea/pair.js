@@ -15,51 +15,101 @@
       return;
     }});
 
-    //SEA.pair = async (data, proof, cb) => { try {
     SEA.pair = SEA.pair || (async (cb, opt) => { try {
-
       var ecdhSubtle = shim.ossl || shim.subtle;
-      // First: ECDSA keys for signing/verifying...
-      var sa = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ])
-      .then(async (keys) => {
-        // privateKey scope doesn't leak out from here!
-        //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
+
+      // Generate deterministic keys if opt.seed is provided
+      if (opt && opt.seed) {
+        const encoder = new shim.TextEncoder();
+        
+        // Generate deterministic private keys using SHA-256
+        const signPrivateKeyBytes = new Uint8Array(
+          await shim.subtle.digest('SHA-256', encoder.encode(opt.seed + '-sign'))
+        );
+        const encryptPrivateKeyBytes = new Uint8Array(
+          await shim.subtle.digest('SHA-256', encoder.encode(opt.seed + '-encrypt'))
+        );
+
+        // Convert to base64url format
+        const toBase64Url = buffer => 
+          shim.Buffer.from(buffer)
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
+
+        // Format private keys
+        const signPriv = toBase64Url(signPrivateKeyBytes).slice(0, 43);
+        const encryptPriv = toBase64Url(encryptPrivateKeyBytes).slice(0, 43);
+
+        // Generate public key components deterministically
+        const signPubXBytes = await shim.subtle.digest(
+          'SHA-256',
+          encoder.encode(signPriv + '-x')
+        );
+        const signPubYBytes = await shim.subtle.digest(
+          'SHA-256',
+          encoder.encode(signPriv + '-y')
+        );
+        const encryptPubXBytes = await shim.subtle.digest(
+          'SHA-256',
+          encoder.encode(encryptPriv + '-x')
+        );
+        const encryptPubYBytes = await shim.subtle.digest(
+          'SHA-256',
+          encoder.encode(encryptPriv + '-y')
+        );
+
+        // Format public keys
+        const signPubX = toBase64Url(signPubXBytes).slice(0, 43);
+        const signPubY = toBase64Url(signPubYBytes).slice(0, 43);
+        const encryptPubX = toBase64Url(encryptPubXBytes).slice(0, 43);
+        const encryptPubY = toBase64Url(encryptPubYBytes).slice(0, 43);
+
+        // Format the result
+        var r = {
+          pub: signPubX + '.' + signPubY,
+          priv: signPriv,
+          epub: encryptPubX + '.' + encryptPubY,
+          epriv: encryptPriv
+        };
+
+        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+        return r;
+      }
+
+      // If no seed provided, generate random keys (existing logic)
+      var sa = await shim.subtle.generateKey(
+        {name: 'ECDSA', namedCurve: 'P-256'},
+        true,
+        ['sign', 'verify']
+      ).then(async (keys) => {
         var key = {};
         key.priv = (await shim.subtle.exportKey('jwk', keys.privateKey)).d;
         var pub = await shim.subtle.exportKey('jwk', keys.publicKey);
-        //const pub = Buff.from([ x, y ].join(':')).toString('base64') // old
-        key.pub = pub.x+'.'+pub.y; // new
-        // x and y are already base64
-        // pub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
-        // but split on a non-base64 letter.
+        key.pub = pub.x+'.'+pub.y;
         return key;
-      })
+      });
       
-      // To include PGPv4 kind of keyId:
-      // const pubId = await SEA.keyid(keys.pub)
-      // Next: ECDH keys for encryption/decryption...
-
       try{
-      var dh = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey'])
-      .then(async (keys) => {
-        // privateKey scope doesn't leak out from here!
-        var key = {};
-        key.epriv = (await ecdhSubtle.exportKey('jwk', keys.privateKey)).d;
-        var pub = await ecdhSubtle.exportKey('jwk', keys.publicKey);
-        //const epub = Buff.from([ ex, ey ].join(':')).toString('base64') // old
-        key.epub = pub.x+'.'+pub.y; // new
-        // ex and ey are already base64
-        // epub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
-        // but split on a non-base64 letter.
-        return key;
-      })
+        var dh = await ecdhSubtle.generateKey(
+          {name: 'ECDH', namedCurve: 'P-256'},
+          true,
+          ['deriveKey']
+        ).then(async (keys) => {
+          var key = {};
+          key.epriv = (await ecdhSubtle.exportKey('jwk', keys.privateKey)).d;
+          var pub = await ecdhSubtle.exportKey('jwk', keys.publicKey);
+          key.epub = pub.x+'.'+pub.y;
+          return key;
+        });
       }catch(e){
         if(SEA.window){ throw e }
         if(e == 'Error: ECDH is not a supported algorithm'){ console.log('Ignoring ECDH...') }
         else { throw e }
       } dh = dh || {};
 
-      var r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
+      var r = { pub: sa.pub, priv: sa.priv, epub: dh.epub, epriv: dh.epriv }
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) {
