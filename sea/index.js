@@ -1,6 +1,7 @@
+;(function(){
 
     var SEA = require('./sea'), S = require('./settings'), noop = function() {}, u;
-    var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : require((''+u === typeof MODULE?'.':'')+'./gun', 1);
+    var Gun = (SEA.window||'').GUN || require((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
@@ -66,7 +67,7 @@
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
-    check.hash = function(eve, msg, val, key, soul, at, no){
+    check.hash = function(eve, msg, val, key, soul, at, no){ // mark unbuilt @i001962 's epic hex contrib!
       SEA.work(val, null, function(data){
         function hexToBase64(hexStr) {
           let base64 = "";
@@ -246,3 +247,4 @@
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
 
   
+}());

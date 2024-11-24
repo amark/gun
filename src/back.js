@@ -1,3 +1,4 @@
+;(function(){
 
 var Gun = require('./root');
 Gun.chain.back = function(n, opt){ var tmp;
@@ -38,3 +39,4 @@ Gun.chain.back = function(n, opt){ var tmp;
 }
 var empty = {}, u;
 	
+}());

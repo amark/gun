@@ -1,6 +1,6 @@
 <p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
-[![](https://data.jsdelivr.com/v1/package/gh/amark/gun/badge?style=rounded)](https://data.jsdelivr.com/v1/package/gh/amark/gun/stats)
+[![](https://data.jsdelivr.com/v1/package/npm/gun/badge)](https://www.jsdelivr.com/package/npm/gun)
 ![Build](https://github.com/amark/gun/actions/workflows/ci.yml/badge.svg)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
@@ -42,7 +42,7 @@ GUN is *super easy* to get started with:
 > **Note:** If you don't have [node](http://nodejs.org/) or [npm](https://www.npmjs.com/), read [this](https://github.com/amark/gun/blob/master/examples/install.sh) first.
 > If the `npm` command line didn't work, you may need to `mkdir node_modules` first or use `sudo`.
 
-- An online demo of the examples are available here: http://gunjs.herokuapp.com/
+- An online demo of the examples are available here: http://try.axe.eco/
 - Or write a quick app: ([try now in a playground](https://jsbin.com/kadobamevo/edit?js,console))
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
@@ -156,7 +156,8 @@ Thanks to:
 <a href="https://github.com/JacobMillner">Jacob Millner</a>,
 <a href="https://github.com/b-lack">Gerrit Balindt</a>,
 <a href="https://github.com/gabriellemon">Gabriel Lemon</a>,
-<a href="https://github.com/murageyun">Murage Martin</a>
+<a href="https://github.com/murageyun">Murage Martin</a>,
+<a href="https://github.com/octalmage">Jason Stallings</a>
 </p>
 
  - Join others in sponsoring code: https://www.patreon.com/gunDB !
@@ -259,6 +260,11 @@ curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh 
 You can now safely `CTRL+A+D` to escape without stopping the peer. To stop everything `killall screen` or `killall node`.
 
 Environment variables may need to be set like `export HTTPS_CERT=~/cert.pem HTTPS_KEY=~/key.pem PORT=443`. You can also look at a sample [nginx](https://gun.eco/docs/nginx) config. For production deployments, you probably will want to use something like `pm2` or better to keep the peer alive after machine reboots.
+
+### [Dome](https://www.trydome.io/)
+[Deploy GUN in one-click](https://app.trydome.io/signup?package=gun) with [Dome](https://trydome.io) and receive a free trial:
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=gun)
 
 ### [Heroku](https://www.heroku.com/)
 

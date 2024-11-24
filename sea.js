@@ -37,7 +37,9 @@
       if(location.protocol.indexOf('s') < 0
       && location.host.indexOf('localhost') < 0
       && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
-      && location.protocol.indexOf('file:') < 0){
+      && location.protocol.indexOf('blob:') < 0
+      && location.protocol.indexOf('file:') < 0
+      && location.origin != 'null'){
         console.warn('HTTPS needed for WebCrypto in SEA, redirecting...');
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
@@ -968,7 +970,8 @@
       var pass = (alias || (pair && !(pair.priv && pair.epriv))) && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+      var retries = typeof opt.retries === 'number' ? opt.retries : 9;
+
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
@@ -977,7 +980,7 @@
       }
       cat.ing = true;
       
-      var act = {}, u, tries = 9;
+      var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
         if(!data.pub){
@@ -991,7 +994,7 @@
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
           if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
-          if(alias && tries--){
+          if(alias && retries--){
             root.get('~@'+alias).once(act.a);
             return;
           }
@@ -1386,7 +1389,7 @@
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
             // "data.c" = a list of certificants/certified users
             // "data.w" = lex WRITE permission, in the future, there will be "data.r" which means lex READ permission
-            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
+            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*') > -1 || data.c.indexOf(certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
               String.match = String.match || Gun.text.match

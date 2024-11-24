@@ -1,3 +1,4 @@
+;(function(){
 
     var shim = require('./shim');
     var S = require('./settings');
@@ -14,3 +15,4 @@
     }
     module.exports = importGen;
   
+}());

@@ -1,3 +1,4 @@
+;(function(){
 
     var SEA = require('./root');
     var shim = require('./shim');
@@ -71,3 +72,4 @@
 
     module.exports = SEA.pair;
   
+}());

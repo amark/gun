@@ -1,3 +1,4 @@
+;(function(){
 
     require('./base64');
     // This is Buffer implementation used in SEA. Functionality is mostly
@@ -77,3 +78,4 @@
 
     module.exports = SafeBuffer;
   
+}());

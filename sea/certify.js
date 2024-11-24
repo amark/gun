@@ -1,3 +1,4 @@
+;(function(){
 
     var SEA = require('./root');
     // This is to certify that a group of "certificants" can "put" anything at a group of matched "paths" to the certificate authority's graph
@@ -70,3 +71,4 @@
 
     module.exports = SEA.certify;
   
+}());

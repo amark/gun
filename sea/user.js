@@ -1,3 +1,4 @@
+;(function(){
 
     var SEA = require('./sea'), Gun, u;
     if(SEA.window){
@@ -39,3 +40,4 @@
     User.SEA = Gun.SEA = SEA;
     module.exports = User;
   
+}());

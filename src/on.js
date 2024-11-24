@@ -1,5 +1,6 @@
+;(function(){
 
-var Gun = require('./index');
+var Gun = require('./root');
 Gun.chain.on = function(tag, arg, eas, as){ // don't rewrite!
 	var gun = this, cat = gun._, root = cat.root, act, off, id, tmp;
 	if(typeof tag === 'string'){
@@ -103,6 +104,10 @@ Gun.chain.off = function(){
 		}
 	}
 	// TODO: delete cat.one[map.id]?
+	if (tmp = cat.any) {
+		delete cat.any;
+		cat.any = {};
+	}
 	if(tmp = cat.ask){
 		delete tmp[at.get];
 	}
@@ -129,3 +134,4 @@ Gun.chain.off = function(){
 }
 var empty = {}, noop = function(){}, u;
 	
+}());

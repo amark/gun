@@ -1,3 +1,4 @@
+;(function(){
 
 var Gun = require('./root');
 Gun.chain.put = function(data, cb, as){ // I rewrote it :)
@@ -153,3 +154,4 @@ function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || type
 var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
 var iife = function(fn,as){fn.call(as||empty)}
 	
+}());
