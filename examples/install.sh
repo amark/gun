@@ -33,7 +33,7 @@ git clone https://github.com/isaacs/nave.git
 # If you just want nodejs and npm but not gun, stop here.
 #npm install gun@latest
 #cd ./node_modules/gun
-> relay.env
+>> relay.env
 mkdir node_modules
 git clone https://github.com/amark/gun.git
 cd gun
