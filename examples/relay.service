@@ -8,9 +8,10 @@ WantedBy=multi-user.target
 
 [Service]
 Environment=PATH=/usr/bin:/usr/local/bin
+EnvironmentFile=%h/relay.env
 LimitNOFILE=infinity
 LimitNPROC=infinity
-LimitCORE=infinity
+LimitCORE=0
 StartLimitBurst=999999
 StartLimitIntervalSec=999999
 Restart=always
