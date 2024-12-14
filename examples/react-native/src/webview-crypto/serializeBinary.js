@@ -147,7 +147,7 @@ const CryptoKeySerializer = {
         };
     }),
     fromObject: (cks) => __awaiter(this, void 0, void 0, function* () {
-        // if we don't have access to to a real crypto implementation, just return
+        // if we don't have access to a real crypto implementation, just return
         // the serialized crypto key
         if (crypto.fake) {
             const newCks = Object.assign({}, cks);
