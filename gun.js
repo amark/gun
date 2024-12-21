@@ -275,8 +275,8 @@
 		function tot(){ var tmp = {};
 			//if((tmp = this.page) && tmp.saving){ delete tmp.book.all[this.word]; } // TODO: BUG! Book can't know about RAD, this was from RAD, so this MIGHT be correct but we need to refactor. Make sure to add tests that will re-trigger this.
 			return this.text = this.text || ":"+B.encode(this.word)+":"+B.encode(this.is)+":";
-			tmp[this.word] = this.is;
-			return this.text = this.text || B.encode(tmp,'|',':').slice(1,-1);
+			//tmp[this.word] = this.is;
+			//return this.text = this.text || B.encode(tmp,'|',':').slice(1,-1);
 			//return this.text = this.text || "'"+(this.word)+"'"+(this.is)+"'";
 		}
 		function sub(i,j){ return (this.first||this.word||B.decode((from(this)||'')[0]||'')).substring(i,j) }
@@ -1311,11 +1311,12 @@
 				}
 				test.run = test.run || as.run;
 				test.stun = test.stun || as.stun; return;
-				if(this.to.to){
+/*				if(this.to.to){
 					this.the.last.next(test);
 					return;
 				}
 				test.stun = as.stun;
+				*/
 			});
 		}
 
@@ -1360,14 +1361,14 @@
 			as.via.put(as.data, as.ack, as);
 			
 
-			return;
+			return;/*
 			if(at.get && at.back.soul){
 				tmp = as.data;
 				as.via = at.back.$;
 				(as.data = {})[at.get] = tmp; 
 				as.via.put(as.data, as.ack, as);
 				return;
-			}
+			}*/
 		}
 		function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
