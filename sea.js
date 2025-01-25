@@ -231,7 +231,7 @@
       if(d){ jwk.d = d }
       return jwk;
     };
-    
+
     s.keyToJwk = function(keyBytes) {
       const keyB64 = keyBytes.toString('base64');
       const k = keyB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '');
@@ -320,7 +320,6 @@
   ;USE(function(module){
     var SEA = USE('./root');
     var shim = USE('./shim');
-    var S = USE('./settings');
 
     SEA.name = SEA.name || (async (cb, opt) => { try {
       if(cb){ try{ cb() }catch(e){console.log(e)} }
@@ -337,45 +336,57 @@
     SEA.pair = SEA.pair || (async (cb, opt) => { try {
 
       var ecdhSubtle = shim.ossl || shim.subtle;
-      // First: ECDSA keys for signing/verifying...
-      var sa = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ])
-      .then(async (keys) => {
-        // privateKey scope doesn't leak out from here!
-        //const { d: priv } = await shim.subtle.exportKey('jwk', keys.privateKey)
-        var key = {};
-        key.priv = (await shim.subtle.exportKey('jwk', keys.privateKey)).d;
-        var pub = await shim.subtle.exportKey('jwk', keys.publicKey);
-        //const pub = Buff.from([ x, y ].join(':')).toString('base64') // old
-        key.pub = pub.x+'.'+pub.y; // new
-        // x and y are already base64
-        // pub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
-        // but split on a non-base64 letter.
-        return key;
-      })
-      
-      // To include PGPv4 kind of keyId:
-      // const pubId = await SEA.keyid(keys.pub)
-      // Next: ECDH keys for encryption/decryption...
+      var sa;
+      var dh = {};
 
-      try{
-      var dh = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey'])
-      .then(async (keys) => {
-        // privateKey scope doesn't leak out from here!
-        var key = {};
-        key.epriv = (await ecdhSubtle.exportKey('jwk', keys.privateKey)).d;
-        var pub = await ecdhSubtle.exportKey('jwk', keys.publicKey);
-        //const epub = Buff.from([ ex, ey ].join(':')).toString('base64') // old
-        key.epub = pub.x+'.'+pub.y; // new
-        // ex and ey are already base64
-        // epub is UTF8 but filename/URL safe (https://www.ietf.org/rfc/rfc3986.txt)
-        // but split on a non-base64 letter.
-        return key;
-      })
-      }catch(e){
-        if(SEA.window){ throw e }
-        if(e == 'Error: ECDH is not a supported algorithm'){ console.log('Ignoring ECDH...') }
-        else { throw e }
-      } dh = dh || {};
+      if(opt && opt.seed){
+        const e = new shim.TextEncoder();
+        const h = await shim.subtle.digest('SHA-256', e.encode(opt.seed+'-sign'));
+        sa = {
+          priv: shim.Buffer.from(h).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43)
+        };
+        const [x,y,eh] = await Promise.all([
+          shim.subtle.digest('SHA-256', e.encode(sa.priv+'-x')),
+          shim.subtle.digest('SHA-256', e.encode(sa.priv+'-y')),
+          shim.subtle.digest('SHA-256', e.encode(opt.seed+'-encrypt'))
+        ]);
+        sa.pub = shim.Buffer.from(x).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43) + 
+                 '.' + 
+                 shim.Buffer.from(y).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43);
+
+        dh.epriv = shim.Buffer.from(eh).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43);
+        const [ex,ey] = await Promise.all([
+          shim.subtle.digest('SHA-256', e.encode(dh.epriv+'-x')),
+          shim.subtle.digest('SHA-256', e.encode(dh.epriv+'-y'))
+        ]);
+        dh.epub = shim.Buffer.from(ex).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43) + 
+                  '.' + 
+                  shim.Buffer.from(ey).toString('base64').replace(/[+/=]/g,c=>({'+':'-','/':'_','=':''})[c]).slice(0,43);
+      } else {
+        // First: ECDSA keys for signing/verifying...
+        const keys = await shim.subtle.generateKey({name: 'ECDSA', namedCurve: 'P-256'}, true, [ 'sign', 'verify' ]);
+        const priv = await shim.subtle.exportKey('jwk', keys.privateKey);
+        const pub = await shim.subtle.exportKey('jwk', keys.publicKey);
+        sa = {
+          priv: priv.d,
+          pub: pub.x + '.' + pub.y
+        };
+
+        // Next: ECDH keys for encryption/decryption...
+        try {
+          const dhKeys = await ecdhSubtle.generateKey({name: 'ECDH', namedCurve: 'P-256'}, true, ['deriveKey']);
+          const dhPriv = await ecdhSubtle.exportKey('jwk', dhKeys.privateKey);
+          const dhPub = await ecdhSubtle.exportKey('jwk', dhKeys.publicKey);
+          dh = {
+            epriv: dhPriv.d,
+            epub: dhPub.x + '.' + dhPub.y
+          };
+        } catch(e) {
+          if(SEA.window){ throw e }
+          if(e == 'Error: ECDH is not a supported algorithm'){ console.log('Ignoring ECDH...') }
+          else { throw e }
+        }
+      }
 
       var r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
@@ -514,7 +525,6 @@
       return r;
     }
     SEA.opt.fallback = 2;
-
   })(USE, './verify');
 
   ;USE(function(module){
@@ -527,7 +537,7 @@
       opt = opt || {};
       const combo = key + (salt || shim.random(8)).toString('utf8'); // new
       const hash = shim.Buffer.from(await sha256hash(combo), 'binary')
-      
+
       const jwkKey = S.keyToJwk(hash)      
       return await shim.subtle.importKey('jwk', jwkKey, {name:'AES-GCM'}, false, ['encrypt', 'decrypt'])
     }
@@ -866,7 +876,7 @@
       var pass = pair && (pair.pub || pair.epub) ? pair : alias && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      
+
       var gun = this, cat = (gun._), root = gun.back(-1);
       cb = cb || noop;
       opt = opt || {};
@@ -973,13 +983,13 @@
       var retries = typeof opt.retries === 'number' ? opt.retries : 9;
 
       var gun = this, cat = (gun._), root = gun.back(-1);
-      
+
       if(cat.ing){
         (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      
+
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
@@ -1340,7 +1350,7 @@
           return; // omit!
         }
       }
-      
+
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -1357,18 +1367,23 @@
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
-    check.hash = function(eve, msg, val, key, soul, at, no){ // mark unbuilt @i001962 's epic hex contrib!
-      SEA.work(val, null, function(data){
-        function hexToBase64(hexStr) {
-          let base64 = "";
-          for(let i = 0; i < hexStr.length; i++) {
-            base64 += !(i - 1 & 1) ? String.fromCharCode(parseInt(hexStr.substring(i - 1, i + 1), 16)) : ""}
-          return btoa(base64);}  
-        if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
-          else if (data && data === hexToBase64(key.split('#').slice(-1)[0])){ 
-          return eve.to.next(msg) }
+    // Verify content-addressed data matches its hash
+    check.hash = function (eve, msg, val, key, soul, at, no) {
+      function base64ToHex(data) {
+        var binaryStr = atob(data);
+        var a = [];
+        for (var i = 0; i < binaryStr.length; i++) {
+          var hex = binaryStr.charCodeAt(i).toString(16);
+          a.push(hex.length === 1 ? "0" + hex : hex);
+        }
+        return a.join("");
+      }
+      var hash = key.split('#').pop();
+      SEA.work(val, null, function (b64hash) {
+        var hexhash = base64ToHex(b64hash), b64slice = b64hash.slice(-20), hexslice = hexhash.slice(-20);
+        if ([b64hash, b64slice, hexhash, hexslice].some(item => item.endsWith(hash))) return eve.to.next(msg);
         no("Data hash not same as hash!");
-      }, {name: 'SHA-256'});
+      }, { name: 'SHA-256' });
     }
     check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
       if(!val){ return no("Data must exist!") } // data MUST exist
@@ -1415,7 +1430,7 @@
           })
         return
       }
-      
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
@@ -1427,7 +1442,7 @@
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
-  
+
             // if writing to own graph, just allow it
             if (pub === user.is.pub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
@@ -1438,7 +1453,7 @@
               })
               return
             }
-  
+
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
             if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
@@ -1465,7 +1480,7 @@
           data = SEA.opt.unpack(data);
           if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
           if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-          
+
           // check if cert ('+') and putter's pub ('*') exist
           if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
             // now verify certificate
@@ -1535,6 +1550,6 @@
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
-
   })(USE, './index');
+
 }());

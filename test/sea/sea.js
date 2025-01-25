@@ -57,6 +57,23 @@ describe('SEA', function(){
         done()
       })
     })*/
+    it('generates deterministic key pairs from seed', async function () {
+      this.timeout(5000); // Extend timeout if needed for async operations
+      
+      // Seed 1
+      const pair1 = await SEA.pair(null, { seed: "my secret seed" });
+      const pair2 = await SEA.pair(null, { seed: "my secret seed" });
+      const pair3 = await SEA.pair(null, { seed: "not my seed" });
+
+      // Check if pairs with same seed are identical
+      const sameKeys = pair1.priv === pair2.priv && pair1.pub === pair2.pub && pair1.epriv === pair2.epriv && pair1.epub === pair2.epub;
+
+      // Check if pairs with different seeds are different
+      const differentKeys = pair1.priv !== pair3.priv && pair1.pub !== pair3.pub && pair1.epriv !== pair3.epriv && pair1.epub !== pair3.epub;
+
+      expect(sameKeys).to.be(true);
+      expect(differentKeys).to.be(true);
+    });
     it('quickstart', function(done){
       SEA.pair(function(pair){
       SEA.encrypt('hello self', pair, function(enc){
@@ -750,7 +767,7 @@ describe('SEA', function(){
 
   });
 
-  describe.skip('Frozen', function () {
+  describe('Frozen', function () {
     it('Across spaces', function(done){
       var gun = Gun();
       var user = gun.user();
@@ -763,11 +780,11 @@ describe('SEA', function(){
 
         var data = "hello world";
         var hash = await SEA.work(data, null, null, {name: "SHA-256"});
-        gun.get('#users').get(hash).put(data);
-
-        console.log(1);
-        gun.get('#users').map()/*.get('country')*/.on(data => console.log(data));
-
+        hash = hash.slice(-20);
+        await gun.get('#users').get(hash).put(data);
+        var test = await gun.get('#users').get(hash);
+        expect(test).to.be(data);
+        done();
       });
     });
   });
