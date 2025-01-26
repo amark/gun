@@ -1,3 +1,6 @@
+const exp = require('constants');
+const expect = require('../expect');
+
 var root;
 var Gun;
 (function(){
@@ -73,6 +76,24 @@ describe('SEA', function(){
 
       expect(sameKeys).to.be(true);
       expect(differentKeys).to.be(true);
+    });
+    it('generate key pairs from private key', async function () {
+      var gun = Gun()
+      var user = gun.user()
+      const test1 = await SEA.pair(null, { seed: "seed" });
+      const test2 = await SEA.pair(null, { priv: test1.priv });
+      expect(test2.priv).to.be(test1.priv);
+      expect(test2.pub).to.be(test1.pub);
+      await user.auth(test2);
+      expect(user.is.pub).to.be(test2.pub);
+      expect(user.is.pub).to.be(test1.pub);
+      user.leave();
+      const test3 = await SEA.pair(null, { epriv: test2.epriv });
+      expect(test3.epriv).to.be(test2.epriv);
+      await user.auth(test3);
+      expect(user.is.epub).to.be(test3.epub);
+      expect(user.is.epub).to.be(test2.epub);
+      user.leave();
     });
     it('quickstart', function(done){
       SEA.pair(function(pair){
