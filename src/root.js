@@ -306,8 +306,5 @@ module.exports = Gun;
 
 (Gun.window||{}).console = (Gun.window||{}).console || {log: function(){}};
 (C = console).only = function(i, s){ return (C.only.i && i === C.only.i && C.only.i++) && (C.log.apply(C, arguments) || s) };
-
-;"Please do not remove welcome log unless you are paying for a monthly sponsorship, thanks!";
-Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, please ask for help on http://chat.gun.eco if anything takes you longer than 5min to figure out!");
 	
 }());
