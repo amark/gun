@@ -50,7 +50,7 @@
           return; // omit!
         }
       }
-      
+
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -130,7 +130,7 @@
           })
         return
       }
-      
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
@@ -142,7 +142,7 @@
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
-  
+
             // if writing to own graph, just allow it
             if (pub === user.is.pub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
@@ -153,7 +153,7 @@
               })
               return
             }
-  
+
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
             if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
@@ -180,7 +180,7 @@
           data = SEA.opt.unpack(data);
           if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
           if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-          
+
           // check if cert ('+') and putter's pub ('*') exist
           if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
             // now verify certificate
@@ -250,6 +250,5 @@
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
-
   
 }());
