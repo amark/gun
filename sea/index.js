@@ -96,7 +96,7 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = async function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
-      const raw = await S.parse(val) || {}
+      const opt = (msg._.msg || {}).opt || {}
       const verify = (certificate, certificant, cb) => {
         if (certificate.m && certificate.s && certificant && pub)
           // now verify certificate
@@ -131,42 +131,45 @@
         return
       }
 
+      const next = () => {
+        JSON.stringifyAsync(msg.put[':'], function(err,s){
+          if(err){ return no(err || "Stringify error.") }
+          msg.put[':'] = s;
+          return eve.to.next(msg);
+        })
+      }
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
 
-      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.msg || {}).opt || {}).cert))){
+      const raw = await S.parse(val) || {}
+      if ((user.is || opt.authenticator) && (tmp = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub) && tmp && !raw['*'] && !raw['+'] && (pub === tmp || (pub !== tmp && opt.cert))){
         SEA.opt.pack(msg.put, packed => {
-          SEA.sign(packed, (user._).sea, async function(data) {
+          const authenticator = opt.authenticator || (user._).sea;
+          const upub = tmp;
+          SEA.sign(packed, authenticator, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
 
             // if writing to own graph, just allow it
-            if (pub === user.is.pub) {
+            if (pub === upub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-              JSON.stringifyAsync(msg.put[':'], function(err,s){
-                if(err){ return no(err || "Stringify error.") }
-                msg.put[':'] = s;
-                return eve.to.next(msg);
-              })
+              next()
               return
             }
 
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-            if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
+            if (pub !== upub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
               // even if cert exists, we must verify it
               if (cert && cert.m && cert.s)
-                verify(cert, user.is.pub, _ => {
+                verify(cert, upub, _ => {
                   msg.put[':']['+'] = cert // '+' is a certificate
-                  msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
-                  JSON.stringifyAsync(msg.put[':'], function(err,s){
-                    if(err){ return no(err || "Stringify error.") }
-                    msg.put[':'] = s;
-                    return eve.to.next(msg);
-                  })
+                  msg.put[':']['*'] = upub // '*' is pub of the user who puts
+                  next()
                   return
                 })
             }

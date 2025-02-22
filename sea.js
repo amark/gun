@@ -386,33 +386,61 @@
 
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       opt = opt || {};
-      if(!(pair||opt).priv){
+
+      // Format and return the final response
+      async function next(r, opt, cb) {
+        try {
+          if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
+          if(cb){ try{ cb(r) }catch(e){} }
+          return r;
+        } catch(e) {
+          console.warn('SEA.sign response error', e);
+          return r;
+        }
+      }
+
+      // Validate inputs
+      if(u === data){ throw '`undefined` not allowed.' }
+      if(!(pair||opt).priv && typeof pair !== 'function'){
         if(!SEA.I){ throw 'No signing key.' }
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
       }
-      if(u === data){ throw '`undefined` not allowed.' }
+
       var json = await S.parse(data);
       var check = opt.check = opt.check || json;
+
+      // Return early if already signed
       if(SEA.verify && (SEA.opt.check(check) || (check && check.s && check.m))
-      && u !== await SEA.verify(check, pair)){ // don't sign if we already signed it.
-        var r = await S.parse(check);
-        if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
-        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
-        return r;
+      && u !== await SEA.verify(check, pair)){
+        return next(await S.parse(check), opt, cb);
       }
-      var pub = pair.pub;
-      var priv = pair.priv;
-      var jwk = S.jwk(pub, priv);
+
+      // Handle WebAuthn
+      if(typeof pair === 'function'){
+        const response = await pair(data);
+        var r = {
+          m: json,
+          s: response.signature ? shim.Buffer.from(response.signature, 'binary').toString(opt.encode || 'base64') : undefined,
+          a: response.authenticatorData ? shim.Buffer.from(response.authenticatorData, 'binary').toString('base64') : undefined,
+          c: response.clientDataJSON ? shim.Buffer.from(response.clientDataJSON, 'binary').toString('base64') : undefined
+        };
+        if (!r.s || !r.a || !r.c) { throw "WebAuthn signature invalid"; }
+        return next(r, opt, cb);
+      }
+
+      // Handle regular signing
+      var jwk = S.jwk(pair.pub, pair.priv);
       var hash = await sha(json);
       var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
-      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash))) // privateKey scope doesn't leak out from here!
-      var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
-      if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
+      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash)))
+      .catch(e => { throw new Error('SEA signature failed: ' + e.message) });
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
-      return r;
+      return next({
+        m: json, 
+        s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')
+      }, opt, cb);
+
     } catch(e) {
-      console.log(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -433,18 +461,107 @@
       var json = await S.parse(data);
       if(false === pair){ // don't verify!
         var raw = await S.parse(json.m);
-        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(raw) }catch(e){} }
         return raw;
       }
       opt = opt || {};
       // SEA.I // verify is free! Requires no user permission.
       var pub = pair.pub || pair;
-      var key = SEA.opt.slow_leak? await SEA.opt.slow_leak(pub) : await (shim.ossl || shim.subtle).importKey('jwk', S.jwk(pub), {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
+
+      // Extract and process the coordinates
+      var [x, y] = pub.split('.');
+
+      // Create proper JWK format
+      var jwk = {
+        kty: 'EC',
+        crv: 'P-256',
+        x: x,
+        y: y,
+        ext: true,
+        key_ops: ['verify']
+      };
+
+      var key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, 
+        {name: 'ECDSA', namedCurve: 'P-256'}, 
+        false, 
+        ['verify']
+      );
+
       var hash = await sha(json.m);
-      var buf, sig, check, tmp; try{
+
+      var buf, sig, check; try{
         buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
         sig = new Uint8Array(buf);
-        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash));
+
+        // Handle WebAuthn signature differently
+        if(json.a && json.c){
+          // Convert authenticator from base64 to buffer
+          const authenticator = new Uint8Array(shim.Buffer.from(json.a, 'base64'));
+
+          // Handle clientDataJSON correctly
+          const client = shim.Buffer.from(json.c, 'base64').toString('utf8');
+
+          // Verify the challenge matches our data
+          const message = new TextEncoder().encode(json.m);
+          const expected = btoa(String.fromCharCode(...new Uint8Array(message))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+          if (JSON.parse(client).challenge !== expected) {
+            throw "Challenge verification failed";
+          }
+
+          // Hash the client data JSON with SHA-256
+          const hash = await (shim.ossl || shim.subtle).digest(
+            {name: 'SHA-256'},
+            new TextEncoder().encode(client)
+          );
+
+          // Concatenate authenticator data and client data hash correctly
+          const signed = new Uint8Array(authenticator.length + hash.byteLength);
+          signed.set(authenticator);
+          signed.set(new Uint8Array(hash), authenticator.length);
+
+          // Parse DER signature more carefully
+          const der = sig;
+          if (der[0] !== 0x30) {
+            throw "Invalid DER signature format";
+          }
+
+          let offset = 2;
+          let rLength = der[offset + 1];
+          offset += 2;
+
+          // Handle potential padding
+          if (der[offset] === 0x00) {
+            offset++;
+            rLength--;
+          }
+
+          const r = new Uint8Array(32).fill(0);
+          r.set(der.slice(offset, offset + rLength), 32 - rLength);
+
+          offset += rLength;
+          let sLength = der[offset + 1];
+          offset += 2;
+
+          // Handle potential padding
+          if (der[offset] === 0x00) {
+            offset++;
+            sLength--;
+          }
+
+          const s = new Uint8Array(32).fill(0);
+          s.set(der.slice(offset, offset + sLength), 32 - sLength);
+
+          // Combine r and s into 64-byte signature
+          const raw = new Uint8Array(64);
+          raw.set(r);
+          raw.set(s, 32);
+
+          // Verify the signature
+          check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key,raw,signed);
+        } else {
+          check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash));
+        }
         if(!check){ throw "Signature did not match." }
       }catch(e){
         if(SEA.opt.fallback){
@@ -453,10 +570,9 @@
       }
       var r = check? await S.parse(json.m) : u;
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){} }
       return r;
     } catch(e) {
-      console.log(e); // mismatched owner FOR MARTTI
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -1370,7 +1486,7 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = async function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
-      const raw = await S.parse(val) || {}
+      const opt = (msg._.msg || {}).opt || {}
       const verify = (certificate, certificant, cb) => {
         if (certificate.m && certificate.s && certificant && pub)
           // now verify certificate
@@ -1405,42 +1521,45 @@
         return
       }
 
+      const next = () => {
+        JSON.stringifyAsync(msg.put[':'], function(err,s){
+          if(err){ return no(err || "Stringify error.") }
+          msg.put[':'] = s;
+          return eve.to.next(msg);
+        })
+      }
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
 
-      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.msg || {}).opt || {}).cert))){
+      const raw = await S.parse(val) || {}
+      if ((user.is || opt.authenticator) && (tmp = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub) && tmp && !raw['*'] && !raw['+'] && (pub === tmp || (pub !== tmp && opt.cert))){
         SEA.opt.pack(msg.put, packed => {
-          SEA.sign(packed, (user._).sea, async function(data) {
+          const authenticator = opt.authenticator || (user._).sea;
+          const upub = tmp;
+          SEA.sign(packed, authenticator, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
 
             // if writing to own graph, just allow it
-            if (pub === user.is.pub) {
+            if (pub === upub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-              JSON.stringifyAsync(msg.put[':'], function(err,s){
-                if(err){ return no(err || "Stringify error.") }
-                msg.put[':'] = s;
-                return eve.to.next(msg);
-              })
+              next()
               return
             }
 
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-            if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
+            if (pub !== upub && ((msg._.msg || {}).opt || {}).cert) {
               const cert = await S.parse(msg._.msg.opt.cert)
               // even if cert exists, we must verify it
               if (cert && cert.m && cert.s)
-                verify(cert, user.is.pub, _ => {
+                verify(cert, upub, _ => {
                   msg.put[':']['+'] = cert // '+' is a certificate
-                  msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
-                  JSON.stringifyAsync(msg.put[':'], function(err,s){
-                    if(err){ return no(err || "Stringify error.") }
-                    msg.put[':'] = s;
-                    return eve.to.next(msg);
-                  })
+                  msg.put[':']['*'] = upub // '*' is pub of the user who puts
+                  next()
                   return
                 })
             }

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="/gun/gun.js"></script>
+		<script src="/gun/sea.js"></script>
+        <script>
+            var gun = new Gun();
+            var user = gun.user();
+        </script>
+    </head>
+    <body>
+        <h1>WebAuthn Example</h1>
+        <button id="create">Create keypass to get public key</button>
+        <button id="sign">Sign data using passkey</button>
+        <button id="verify">Verify signature of passkey</button>
+        <button id="put">Put to self's graph</button>
+        <script src="./webauthn.js"></script>
+    </body>
+</html>
