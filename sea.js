@@ -388,58 +388,81 @@
       opt = opt || {};
 
       // Format and return the final response
-      async function next(r, opt, cb) {
-        try {
-          if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
-          if(cb){ try{ cb(r) }catch(e){} }
-          return r;
-        } catch(e) {
-          console.warn('SEA.sign response error', e);
-          return r;
-        }
+    async function next(r) {
+      try {
+        if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
+        if(cb){ try{ cb(r) }catch(e){} }
+        return r;
+      } catch(e) {
+        console.warn('SEA.sign response error', e);
+        return r;
       }
+    }
 
-      // Validate inputs
-      if(u === data){ throw '`undefined` not allowed.' }
-      if(!(pair||opt).priv && typeof pair !== 'function'){
-        if(!SEA.I){ throw 'No signing key.' }
-        pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
+    // WebAuthn
+    async function wa(res, json) {
+      var r = {
+        m: json,
+        s: res.signature ? shim.Buffer.from(res.signature, 'binary').toString(opt.encode || 'base64') : undefined,
+        a: shim.Buffer.from(res.authenticatorData, 'binary').toString('base64'),
+        c: shim.Buffer.from(res.clientDataJSON, 'binary').toString('base64')
+      };
+      if (!r.s || !r.a || !r.c) throw "WebAuthn signature invalid";
+      return next(r);
+    }
+
+    // External auth fn
+    async function ea(res, json) {
+      if (!res) throw new Error('Empty auth response');
+      if (typeof res === 'string') {
+        return next({ m: json, s: res });
       }
-
-      var json = await S.parse(data);
-      var check = opt.check = opt.check || json;
-
-      // Return early if already signed
-      if(SEA.verify && (SEA.opt.check(check) || (check && check.s && check.m))
-      && u !== await SEA.verify(check, pair)){
-        return next(await S.parse(check), opt, cb);
-      }
-
-      // Handle WebAuthn
-      if(typeof pair === 'function'){
-        const response = await pair(data);
-        var r = {
+      if (res.signature) {
+        return next({
           m: json,
-          s: response.signature ? shim.Buffer.from(response.signature, 'binary').toString(opt.encode || 'base64') : undefined,
-          a: response.authenticatorData ? shim.Buffer.from(response.authenticatorData, 'binary').toString('base64') : undefined,
-          c: response.clientDataJSON ? shim.Buffer.from(response.clientDataJSON, 'binary').toString('base64') : undefined
-        };
-        if (!r.s || !r.a || !r.c) { throw "WebAuthn signature invalid"; }
-        return next(r, opt, cb);
+          s: shim.Buffer.from(res.signature, 'binary').toString(opt.encode || 'base64')
+        });
       }
+      throw new Error('Invalid auth format');
+    }
 
-      // Handle regular signing
+    // Key pair
+    async function kp(pair, json) {
       var jwk = S.jwk(pair.pub, pair.priv);
+      if (!jwk) throw new Error('Invalid key pair');
+
       var hash = await sha(json);
       var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
       .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash)))
       .catch(e => { throw new Error('SEA signature failed: ' + e.message) });
 
       return next({
-        m: json, 
+        m: json,
         s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')
-      }, opt, cb);
+      });
+    }
 
+      if(u === data) throw '`undefined` not allowed.';
+      if(!(pair||opt).priv && typeof pair !== 'function'){
+        if(!SEA.I) throw 'No signing key.';
+        pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
+      }
+
+      var json = await S.parse(data);
+      var check = opt.check = opt.check || json;
+
+      if(SEA.verify && (SEA.opt.check(check) || (check && check.s && check.m))
+      && u !== await SEA.verify(check, pair)){
+        return next(await S.parse(check));
+      }
+
+      if(typeof pair === 'function') {
+        const response = await pair(data);
+        const fn = response.authenticatorData ? wa : ea;
+        return fn(response, json);
+      }
+
+      return kp(pair, json);
     } catch(e) {
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -1537,10 +1560,16 @@
       const raw = await S.parse(val) || {}
       if ((user.is || opt.authenticator) && (tmp = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub) && tmp && !raw['*'] && !raw['+'] && (pub === tmp || (pub !== tmp && opt.cert))){
         SEA.opt.pack(msg.put, packed => {
-          const authenticator = opt.authenticator || (user._).sea;
+          // Determine the authenticator to use - external or user's
+          const authenticator = typeof opt.authenticator === 'function' ? opt.authenticator : (opt.authenticator || (user._).sea);
           const upub = tmp;
+          // Validate authenticator
+          if (!authenticator) return no("Missing authenticator");
           SEA.sign(packed, authenticator, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
+            // Validate signature format
+            if (!data.m || !data.s) return no('Invalid signature format')
+
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
 

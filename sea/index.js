@@ -147,10 +147,16 @@
       const raw = await S.parse(val) || {}
       if ((user.is || opt.authenticator) && (tmp = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub) && tmp && !raw['*'] && !raw['+'] && (pub === tmp || (pub !== tmp && opt.cert))){
         SEA.opt.pack(msg.put, packed => {
-          const authenticator = opt.authenticator || (user._).sea;
+          // Determine the authenticator to use - external or user's
+          const authenticator = typeof opt.authenticator === 'function' ? opt.authenticator : (opt.authenticator || (user._).sea);
           const upub = tmp;
+          // Validate authenticator
+          if (!authenticator) return no("Missing authenticator");
           SEA.sign(packed, authenticator, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
+            // Validate signature format
+            if (!data.m || !data.s) return no('Invalid signature format')
+            
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
 

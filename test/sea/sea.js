@@ -328,6 +328,32 @@ describe('SEA', function(){
   describe('User', function(){
     var gun = Gun(), gtmp;
 
+    it("put to user graph without having to be authenticated (provide pair)", function(done){(async function(){
+      var bob = await SEA.pair();
+      gun.get(`~${bob.pub}`).get('test').put('this is Bob', (ack) => {
+        gun.get(`~${bob.pub}`).get('test').once((data) => {
+          expect(ack.err).to.not.be.ok()
+          expect(data).to.be('this is Bob')
+          done();
+        })
+      }, {opt: {authenticator: bob}})
+    })()});
+
+    it("put to user graph using external authenticator (nested SEA.sign)", function(done){(async function(){
+      var bob = await SEA.pair();
+      async function authenticator(data) {
+        const sig = await SEA.sign(data, bob)
+        return sig
+      }
+      gun.get(`~${bob.pub}`).get('test').put('this is Bob', (ack) => {
+        gun.get(`~${bob.pub}`).get('test').once((data) => {
+          expect(ack.err).to.not.be.ok()
+          expect(data).to.be('this is Bob')
+          done();
+        })
+      }, {opt: {authenticator: authenticator}})
+    })()});
+
     it('test', function(done){
       var g = Gun();
       user = g.user();

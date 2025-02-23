@@ -72,12 +72,16 @@ document.getElementById('create').onclick = async () => {
                     name: "Example User",
                     displayName: "Example User"
                 },
+                // See the list of algos: https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                // The 2 algos below are required in order to work with SEA
                 pubKeyCredParams: [
-                    { type: "public-key", alg: -7 },
-                    { type: "public-key", alg: -257 },
-                    { type: "public-key", alg: -37 }
+                    { type: "public-key", alg: -7 }, // ECDSA, P-256 curve, for signing
+                    { type: "public-key", alg: -25 }, // ECDH, P-256 curve, for creating shared secrets using SEA.secret
+                    { type: "public-key", alg: -257 }
                 ],
-                authenticatorSelection: { userVerification: "preferred" },
+                authenticatorSelection: {
+                    userVerification: "preferred"
+                },
                 timeout: 60000,
                 attestation: "none"
             }
@@ -118,9 +122,9 @@ const authenticator = async (data) => {
             timeout: 60000
         }
     };
-    console.log("Auth options:", options);
     
     const assertion = await navigator.credentials.get(options);
+    console.log("SIGNED:", {options, assertion});
     return assertion.response;
 };
 
@@ -156,6 +160,16 @@ document.getElementById('put').onclick = async () => {
     gun.get(`~${pub}`).get('test').put("hello world", null, { opt: { authenticator }})
     setTimeout(() => {
         gun.get(`~${pub}`).get('test').once((data) => {
+            console.log("Data:", data);
+        })
+    }, 2000)
+}
+
+document.getElementById('put-with-pair').onclick = async () => {
+    const bob = await SEA.pair()
+    gun.get(`~${bob.pub}`).get('test').put("this is bob", null, { opt: { authenticator: bob }})
+    setTimeout(() => {
+        gun.get(`~${bob.pub}`).get('test').once((data) => {
             console.log("Data:", data);
         })
     }, 2000)
