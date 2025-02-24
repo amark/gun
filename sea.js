@@ -384,85 +384,59 @@
     var sha = USE('./sha256');
     var u;
 
+    async function n(r, o, c) {
+      try {
+        if(!o.raw){ r = 'SEA' + await shim.stringify(r) }
+        if(c){ try{ c(r) }catch(e){} }
+        return r;
+      } catch(e) { return r }
+    }
+
+    async function w(r, j, o, c) {
+      var x = {
+        m: j,
+        s: r.signature ? shim.Buffer.from(r.signature, 'binary').toString(o.encode || 'base64') : u,
+        a: shim.Buffer.from(r.authenticatorData, 'binary').toString('base64'),
+        c: shim.Buffer.from(r.clientDataJSON, 'binary').toString('base64')
+      };
+      if (!x.s || !x.a || !x.c) throw "WebAuthn signature invalid";
+      return n(x, o, c);
+    }
+
+    async function k(p, j, o, c) {
+      var x = S.jwk(p.pub, p.priv);
+      if (!x) throw "Invalid key pair";
+      var h = await sha(j);
+      var s = await (shim.ossl || shim.subtle).importKey('jwk', x, S.ecdsa.pair, false, ['sign'])
+      .then((k) => (shim.ossl || shim.subtle).sign(S.ecdsa.sign, k, new Uint8Array(h)))
+      .catch(() => { throw "SEA signature failed" });
+      return n({m: j, s: shim.Buffer.from(s, 'binary').toString(o.encode || 'base64')}, o, c);
+    }
+
     SEA.sign = SEA.sign || (async (data, pair, cb, opt) => { try {
       opt = opt || {};
-
-      // Format and return the final response
-    async function next(r) {
-      try {
-        if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
-        if(cb){ try{ cb(r) }catch(e){} }
-        return r;
-      } catch(e) {
-        console.warn('SEA.sign response error', e);
-        return r;
-      }
-    }
-
-    // WebAuthn
-    async function wa(res, json) {
-      var r = {
-        m: json,
-        s: res.signature ? shim.Buffer.from(res.signature, 'binary').toString(opt.encode || 'base64') : undefined,
-        a: shim.Buffer.from(res.authenticatorData, 'binary').toString('base64'),
-        c: shim.Buffer.from(res.clientDataJSON, 'binary').toString('base64')
-      };
-      if (!r.s || !r.a || !r.c) throw "WebAuthn signature invalid";
-      return next(r);
-    }
-
-    // External auth fn
-    async function ea(res, json) {
-      if (!res) throw new Error('Empty auth response');
-      if (typeof res === 'string') {
-        return next({ m: json, s: res });
-      }
-      if (res.signature) {
-        return next({
-          m: json,
-          s: shim.Buffer.from(res.signature, 'binary').toString(opt.encode || 'base64')
-        });
-      }
-      throw new Error('Invalid auth format');
-    }
-
-    // Key pair
-    async function kp(pair, json) {
-      var jwk = S.jwk(pair.pub, pair.priv);
-      if (!jwk) throw new Error('Invalid key pair');
-
-      var hash = await sha(json);
-      var sig = await (shim.ossl || shim.subtle).importKey('jwk', jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['sign'])
-      .then((key) => (shim.ossl || shim.subtle).sign({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, new Uint8Array(hash)))
-      .catch(e => { throw new Error('SEA signature failed: ' + e.message) });
-
-      return next({
-        m: json,
-        s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')
-      });
-    }
-
       if(u === data) throw '`undefined` not allowed.';
       if(!(pair||opt).priv && typeof pair !== 'function'){
         if(!SEA.I) throw 'No signing key.';
         pair = await SEA.I(null, {what: data, how: 'sign', why: opt.why});
       }
 
-      var json = await S.parse(data);
-      var check = opt.check = opt.check || json;
+      var j = await S.parse(data);
+      var c = opt.check = opt.check || j;
 
-      if(SEA.verify && (SEA.opt.check(check) || (check && check.s && check.m))
-      && u !== await SEA.verify(check, pair)){
-        return next(await S.parse(check));
+      if(SEA.verify && (S.check(c) || (c && c.s && c.m))
+      && u !== await SEA.verify(c, pair)){
+        return n(await S.parse(c), opt, cb);
       }
 
       if(typeof pair === 'function') {
-        const response = await pair(data);
-        const fn = response.authenticatorData ? wa : ea;
-        return fn(response, json);
+        var r = await pair(data);
+        return r.authenticatorData ? w(r, j, opt, cb) : 
+          n({m: j, s: typeof r === 'string' ? r : 
+            r.signature && shim.Buffer.from(r.signature, 'binary').toString(opt.encode || 'base64')}, opt, cb);
       }
 
-      return kp(pair, json);
+      return k(pair, j, opt, cb);
     } catch(e) {
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -480,121 +454,70 @@
     var sha = USE('./sha256');
     var u;
 
-    SEA.verify = SEA.verify || (async (data, pair, cb, opt) => { try {
-      var json = await S.parse(data);
-      if(false === pair){ // don't verify!
-        var raw = await S.parse(json.m);
-        if(cb){ try{ cb(raw) }catch(e){} }
-        return raw;
+    async function w(j, k, s) {
+      var a = new Uint8Array(shim.Buffer.from(j.a, 'base64'));
+      var c = shim.Buffer.from(j.c, 'base64').toString('utf8');
+      var m = new TextEncoder().encode(j.m);
+      var e = btoa(String.fromCharCode(...new Uint8Array(m))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      if (JSON.parse(c).challenge !== e) throw "Challenge verification failed";
+      var h = await (shim.ossl || shim.subtle).digest(
+          {name: 'SHA-256'},
+          new TextEncoder().encode(c)
+      );
+      var d = new Uint8Array(a.length + h.byteLength);
+      d.set(a);
+      d.set(new Uint8Array(h), a.length);
+      if (s[0] !== 0x30) throw "Invalid DER signature format";
+      var o = 2, r = new Uint8Array(64);
+      for(var i = 0; i < 2; i++) {
+        var l = s[o + 1];
+        o += 2;
+        if (s[o] === 0x00) { o++; l--; }
+        var p = new Uint8Array(32).fill(0);
+        p.set(s.slice(o, o + l), 32 - l);
+        r.set(p, i * 32);
+        o += l;
       }
-      opt = opt || {};
-      // SEA.I // verify is free! Requires no user permission.
-      var pub = pair.pub || pair;
+      return (shim.ossl || shim.subtle).verify({ name: 'ECDSA', hash: {name: 'SHA-256'} }, k, r, d);
+    }
 
-      // Extract and process the coordinates
+    async function v(j, k, s, h) {
+      return (shim.ossl || shim.subtle).verify(
+        {name: 'ECDSA', hash: {name: 'SHA-256'}}, 
+        k, s, new Uint8Array(h)
+      );
+    }
+
+    SEA.verify = SEA.verify || (async (d, p, cb, o) => { try {
+      var j = await S.parse(d);
+      if(false === p) return cb ? cb(await S.parse(j.m)) : await S.parse(j.m);
+
+      o = o || {};
+      var pub = p.pub || p;
       var [x, y] = pub.split('.');
 
-      // Create proper JWK format
-      var jwk = {
-        kty: 'EC',
-        crv: 'P-256',
-        x: x,
-        y: y,
-        ext: true,
-        key_ops: ['verify']
-      };
+      try {
+        var k = await (shim.ossl || shim.subtle).importKey('jwk', {
+            kty: 'EC', crv: 'P-256', x, y, ext: true, key_ops: ['verify']
+        }, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
 
-      var key = await (shim.ossl || shim.subtle).importKey('jwk', jwk, 
-        {name: 'ECDSA', namedCurve: 'P-256'}, 
-        false, 
-        ['verify']
-      );
+        var h = await sha(j.m);
+        var s = new Uint8Array(shim.Buffer.from(j.s || '', o.encode || 'base64'));
 
-      var hash = await sha(json.m);
+        var c = j.a && j.c ? await w(j, k, s) : await v(j, k, s, h);
 
-      var buf, sig, check; try{
-        buf = shim.Buffer.from(json.s, opt.encode || 'base64'); // NEW DEFAULT!
-        sig = new Uint8Array(buf);
+        if(!c) throw "Signature did not match";
 
-        // Handle WebAuthn signature differently
-        if(json.a && json.c){
-          // Convert authenticator from base64 to buffer
-          const authenticator = new Uint8Array(shim.Buffer.from(json.a, 'base64'));
-
-          // Handle clientDataJSON correctly
-          const client = shim.Buffer.from(json.c, 'base64').toString('utf8');
-
-          // Verify the challenge matches our data
-          const message = new TextEncoder().encode(json.m);
-          const expected = btoa(String.fromCharCode(...new Uint8Array(message))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-          if (JSON.parse(client).challenge !== expected) {
-            throw "Challenge verification failed";
-          }
-
-          // Hash the client data JSON with SHA-256
-          const hash = await (shim.ossl || shim.subtle).digest(
-            {name: 'SHA-256'},
-            new TextEncoder().encode(client)
-          );
-
-          // Concatenate authenticator data and client data hash correctly
-          const signed = new Uint8Array(authenticator.length + hash.byteLength);
-          signed.set(authenticator);
-          signed.set(new Uint8Array(hash), authenticator.length);
-
-          // Parse DER signature more carefully
-          const der = sig;
-          if (der[0] !== 0x30) {
-            throw "Invalid DER signature format";
-          }
-
-          let offset = 2;
-          let rLength = der[offset + 1];
-          offset += 2;
-
-          // Handle potential padding
-          if (der[offset] === 0x00) {
-            offset++;
-            rLength--;
-          }
-
-          const r = new Uint8Array(32).fill(0);
-          r.set(der.slice(offset, offset + rLength), 32 - rLength);
-
-          offset += rLength;
-          let sLength = der[offset + 1];
-          offset += 2;
-
-          // Handle potential padding
-          if (der[offset] === 0x00) {
-            offset++;
-            sLength--;
-          }
-
-          const s = new Uint8Array(32).fill(0);
-          s.set(der.slice(offset, offset + sLength), 32 - sLength);
-
-          // Combine r and s into 64-byte signature
-          const raw = new Uint8Array(64);
-          raw.set(r);
-          raw.set(s, 32);
-
-          // Verify the signature
-          check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key,raw,signed);
-        } else {
-          check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash));
-        }
-        if(!check){ throw "Signature did not match." }
-      }catch(e){
+        var r = await S.parse(j.m);
+        if(cb){ try{ cb(r) }catch(e){} }
+        return r;
+      } catch(e) {
         if(SEA.opt.fallback){
-          return await SEA.opt.fall_verify(data, pair, cb, opt);
+            return await SEA.opt.fall_verify(d, p, cb, o);
         }
+        if(cb){ cb() }
+        return;
       }
-      var r = check? await S.parse(json.m) : u;
-
-      if(cb){ try{ cb(r) }catch(e){} }
-      return r;
     } catch(e) {
       SEA.err = e;
       if(SEA.throw){ throw e }
@@ -603,38 +526,47 @@
     }});
 
     module.exports = SEA.verify;
-    // legacy & ossl memory leak mitigation:
 
     var knownKeys = {};
-    var keyForPair = SEA.opt.slow_leak = pair => {
+    SEA.opt.slow_leak = pair => {
       if (knownKeys[pair]) return knownKeys[pair];
       var jwk = S.jwk(pair);
       knownKeys[pair] = (shim.ossl || shim.subtle).importKey("jwk", jwk, {name: 'ECDSA', namedCurve: 'P-256'}, false, ["verify"]);
       return knownKeys[pair];
     };
 
-    var O = SEA.opt;
     SEA.opt.fall_verify = async function(data, pair, cb, opt, f){
-      if(f === SEA.opt.fallback){ throw "Signature did not match" } f = f || 1;
+      if(f === SEA.opt.fallback){ throw "Signature did not match" }
       var tmp = data||'';
       data = SEA.opt.unpack(data) || data;
-      var json = await S.parse(data), pub = pair.pub || pair, key = await SEA.opt.slow_leak(pub);
-      var hash = (f <= SEA.opt.fallback)? shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, new shim.TextEncoder().encode(await S.parse(json.m)))) : await sha(json.m); // this line is old bad buggy code but necessary for old compatibility.
-      var buf; var sig; var check; try{
-        buf = shim.Buffer.from(json.s, opt.encode || 'base64') // NEW DEFAULT!
-        sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
-        if(!check){ throw "Signature did not match." }
-      }catch(e){ try{
-        buf = shim.Buffer.from(json.s, 'utf8') // AUTO BACKWARD OLD UTF8 DATA!
-        sig = new Uint8Array(buf)
-        check = await (shim.ossl || shim.subtle).verify({name: 'ECDSA', hash: {name: 'SHA-256'}}, key, sig, new Uint8Array(hash))
-        }catch(e){
-        if(!check){ throw "Signature did not match." }
-        }
+      var json = await S.parse(data), key = await SEA.opt.slow_leak(pair.pub || pair);
+      var hash = (!f || f <= SEA.opt.fallback)? 
+        shim.Buffer.from(await shim.subtle.digest({name: 'SHA-256'}, 
+          new shim.TextEncoder().encode(await S.parse(json.m)))) : await sha(json.m);
+
+      try {
+        var buf = shim.Buffer.from(json.s, opt.encode || 'base64');
+        var sig = new Uint8Array(buf);
+        var check = await (shim.ossl || shim.subtle).verify(
+          {name: 'ECDSA', hash: {name: 'SHA-256'}}, 
+          key, sig, new Uint8Array(hash)
+        );
+        if(!check) throw "";
+      } catch(e) {
+        try {
+          buf = shim.Buffer.from(json.s, 'utf8');
+          sig = new Uint8Array(buf);
+          check = await (shim.ossl || shim.subtle).verify(
+            {name: 'ECDSA', hash: {name: 'SHA-256'}}, 
+            key, sig, new Uint8Array(hash)
+          );
+          if(!check) throw "";
+        } catch(e){ throw "Signature did not match." }
       }
-      var r = check? await S.parse(json.m) : u;
-      O.fall_soul = tmp['#']; O.fall_key = tmp['.']; O.fall_val = data; O.fall_state = tmp['>'];
+
+      var r = check ? await S.parse(json.m) : u;
+      SEA.opt.fall_soul = tmp['#']; SEA.opt.fall_key = tmp['.'];
+      SEA.opt.fall_val = data; SEA.opt.fall_state = tmp['>'];
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     }
