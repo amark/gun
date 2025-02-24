@@ -1441,7 +1441,6 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = async function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
-      const opt = (msg._.msg || {}).opt || {}
       const verify = (certificate, certificant, cb) => {
         if (certificate.m && certificate.s && certificant && pub)
           // now verify certificate
@@ -1484,17 +1483,21 @@
         })
       }
 
+      // Localize some opt props, and delete the original refs to prevent possible attacks
+      const opt = (msg._.msg || {}).opt || {}
+      const authenticator = opt.authenticator || (user._).sea;
+      const upub = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub;
+      const cert = opt.cert;
+      delete opt.authenticator; delete opt.pub;
+      const raw = await S.parse(val) || {}
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
 
-      const raw = await S.parse(val) || {}
-      if ((user.is || opt.authenticator) && (tmp = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub) && tmp && !raw['*'] && !raw['+'] && (pub === tmp || (pub !== tmp && opt.cert))){
+      if ((user.is || authenticator) && upub && !raw['*'] && !raw['+'] && (pub === upub || (pub !== upub && cert))){
         SEA.opt.pack(msg.put, packed => {
-          // Determine the authenticator to use - external or user's
-          const authenticator = typeof opt.authenticator === 'function' ? opt.authenticator : (opt.authenticator || (user._).sea);
-          const upub = tmp;
           // Validate authenticator
           if (!authenticator) return no("Missing authenticator");
           SEA.sign(packed, authenticator, async function(data) {
@@ -1507,18 +1510,18 @@
 
             // if writing to own graph, just allow it
             if (pub === upub) {
-              if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
+              // if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
               next()
               return
             }
 
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-            if (pub !== upub && ((msg._.msg || {}).opt || {}).cert) {
-              const cert = await S.parse(msg._.msg.opt.cert)
+            if (pub !== upub && cert) {
+              const _cert = await S.parse(cert)
               // even if cert exists, we must verify it
-              if (cert && cert.m && cert.s)
-                verify(cert, upub, _ => {
-                  msg.put[':']['+'] = cert // '+' is a certificate
+              if (_cert && _cert.m && _cert.s)
+                verify(_cert, upub, _ => {
+                  msg.put[':']['+'] = _cert // '+' is a certificate
                   msg.put[':']['*'] = upub // '*' is pub of the user who puts
                   next()
                   return
