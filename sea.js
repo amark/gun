@@ -1485,7 +1485,7 @@
 
       // Localize some opt props, and delete the original refs to prevent possible attacks
       const opt = (msg._.msg || {}).opt || {}
-      const authenticator = opt.authenticator || (user._).sea;
+      const authenticator = opt.authenticator || (user._ || {}).sea;
       const upub = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub;
       const cert = opt.cert;
       delete opt.authenticator; delete opt.pub;
@@ -1510,7 +1510,7 @@
 
             // if writing to own graph, just allow it
             if (pub === upub) {
-              // if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
+              if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
               next()
               return
             }
