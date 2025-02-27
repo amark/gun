@@ -60,6 +60,17 @@ describe('SEA', function(){
         done()
       })
     })*/
+    it('hash array buffer', async function () {
+      this.timeout(5000); // Extend timeout for async operations
+      
+      const textEncoder = new TextEncoder();
+      const buffer1 = textEncoder.encode("lorem ipsum dolor sit amet").buffer;
+      const buffer2 = textEncoder.encode("lorem ipsum dolor sit amet").buffer;
+      
+      const hash1 = await SEA.work(buffer1);
+      const hash2 = await SEA.work(buffer2);
+      expect(typeof hash1 === 'string' && typeof hash2 === 'string' && hash1 !== hash2).to.be(true);
+    });
     it('create random pair if no seed', async function () {
       this.timeout(5000); // Extend timeout for async operations
       
