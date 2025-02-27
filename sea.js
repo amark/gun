@@ -338,7 +338,11 @@
       let r = {};
 
       if(opt && opt.seed){
-        r = { priv: await h(opt.seed+'-sign'), epriv: await h(opt.seed+'-encrypt') };
+        let seed = opt.seed;
+        if(seed instanceof ArrayBuffer) {
+          seed = String.fromCharCode.apply(null, new Uint8Array(seed));
+        }
+        r = { priv: await h(seed+'-sign'), epriv: await h(seed+'-encrypt') };
       }
       else if(opt && opt.priv){
         r = { priv: opt.priv, epriv: opt.epriv || await h(opt.priv+'-encrypt') };

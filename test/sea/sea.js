@@ -60,6 +60,14 @@ describe('SEA', function(){
         done()
       })
     })*/
+    it('create random pair if no seed', async function () {
+      this.timeout(5000); // Extend timeout for async operations
+      
+      const pair1 = await SEA.pair();
+      const pair2 = await SEA.pair();
+
+      expect(pair1.pub !== pair2.pub && pair1.priv !== pair2.priv && pair1.epub !== pair2.epub && pair1.epriv !== pair2.epriv).to.be(true);
+    });
     it('generates deterministic key pairs from seed', async function () {
       this.timeout(5000); // Extend timeout if needed for async operations
       
@@ -74,6 +82,42 @@ describe('SEA', function(){
       // Check if pairs with different seeds are different
       const differentKeys = pair1.priv !== pair3.priv && pair1.pub !== pair3.pub && pair1.epriv !== pair3.epriv && pair1.epub !== pair3.epub;
 
+      expect(sameKeys).to.be(true);
+      expect(differentKeys).to.be(true);
+    });
+    it('generates deterministic key pairs from ArrayBuffer seed', async function () {
+      this.timeout(5000); // Extend timeout for async operations
+      
+      // Create ArrayBuffer seeds
+      const textEncoder = new TextEncoder();
+      const seedData1 = textEncoder.encode("my secret seed");  // Convert string to Uint8Array
+      const seedBuffer1 = seedData1.buffer;  // Get the underlying ArrayBuffer
+      
+      // Create a second identical seed
+      const seedData2 = textEncoder.encode("my secret seed");
+      const seedBuffer2 = seedData2.buffer;
+      
+      // Create a different seed
+      const seedData3 = textEncoder.encode("not my seed");
+      const seedBuffer3 = seedData3.buffer;
+      
+      // Generate key pairs using ArrayBuffer seeds
+      const pair1 = await SEA.pair(null, { seed: seedBuffer1 });
+      const pair2 = await SEA.pair(null, { seed: seedBuffer2 });
+      const pair3 = await SEA.pair(null, { seed: seedBuffer3 });
+      
+      // Check if pairs with same seed content are identical
+      const sameKeys = pair1.priv === pair2.priv && 
+                       pair1.pub === pair2.pub && 
+                       pair1.epriv === pair2.epriv && 
+                       pair1.epub === pair2.epub;
+      
+      // Check if pairs with different seeds are different
+      const differentKeys = pair1.priv !== pair3.priv && 
+                            pair1.pub !== pair3.pub && 
+                            pair1.epriv !== pair3.epriv && 
+                            pair1.epub !== pair3.epub;
+      
       expect(sameKeys).to.be(true);
       expect(differentKeys).to.be(true);
     });
