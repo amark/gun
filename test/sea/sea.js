@@ -1,5 +1,6 @@
 const exp = require('constants');
 const expect = require('../expect');
+const SeaArray = require('../../sea/array.js');
 
 var root;
 var Gun;
@@ -199,6 +200,32 @@ describe('SEA', function(){
       done();
       });});});
     })*/
+
+    it('hash array buffer', function(done) {
+      (async function() {
+        // Create a random ArrayBuffer (buffer 1)
+        var buff1 = new ArrayBuffer(16);
+        var view1 = new Uint8Array(buff1); // Use a Uint8Array to modify the buffer
+        for (var i = 0; i < view1.length; i++) {
+          view1[i] = Math.floor(Math.random() * 256);
+        }
+        var hash1 = await SEA.work(buff1, "salt");
+        console.log("Hash 1:", hash1);
+    
+        // Create another random ArrayBuffer (buffer 2)
+        var buff2 = new ArrayBuffer(16);
+        var view2 = new Uint8Array(buff2);
+        for (var i = 0; i < view2.length; i++) {
+          view2[i] = Math.floor(Math.random() * 256);
+        }
+        var hash2 = await SEA.work(buff2, "salt");
+        console.log("Hash 2:", hash2);
+    
+        // Ensure the hashes are strings and different from each other
+        expect(typeof hash1 === "string" && typeof hash2 === "string" && hash1 !== hash2).to.be(true);
+        done(); // Signal that the test is complete
+      })();
+    });
     
     it('legacy', function(done){ (async function(){
       var pw = 'test123';

@@ -287,6 +287,10 @@
         cb = salt;
         salt = u;
       }
+      // Check if data is an ArrayBuffer, if so use Uint8Array to access the data
+      if(data instanceof ArrayBuffer){
+        data = new Uint8Array(data);
+      }
       data = (typeof data == 'string')? data : await shim.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
