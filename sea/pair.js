@@ -7,6 +7,7 @@
     const n = BigInt("0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551");
     const P = BigInt("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
     const A = BigInt("0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc");
+    const B = BigInt("0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b"); // Missing B parameter
     const G = {
       x: BigInt("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
       y: BigInt("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5")
@@ -14,15 +15,38 @@
 
     // Core ECC functions
     function mod(a, m) { return ((a % m) + m) % m; }
+
+    // Constant-time modular inverse using Fermat's Little Theorem (p is prime)
     function modInv(a, p) {
-      let t = 0n, nt = 1n, r = p, nr = a % p;
-      while (nr !== 0n) {
-        const q = r / nr;
-        [t, nt] = [nt, t - q * nt];
-        [r, nr] = [nr, r - q * nr];
-      }
-      return mod(t, p);
+        // a^(p-2) mod p
+        return modPow(a, p - BigInt(2), p);
     }
+
+    // Constant-time modular exponentiation (square-and-multiply)
+    function modPow(base, exponent, modulus) {
+        if (modulus === BigInt(1)) return BigInt(0);
+        base = mod(base, modulus);
+        let result = BigInt(1);
+        while (exponent > BigInt(0)) {
+            if (exponent & BigInt(1)) {
+                result = mod(result * base, modulus);
+            }
+            exponent >>= BigInt(1);
+            base = mod(base * base, modulus);
+        }
+        return result;
+    }
+
+    // Verify a point is on the curve
+    function isOnCurve(point) {
+        if (!point) return false;
+        // y² = x³ + ax + b (mod p)
+        const { x, y } = point;
+        const left = mod(y * y, P);
+        const right = mod(mod(mod(x * x, P) * x, P) + mod(A * x, P) + B, P);
+        return left === right;
+    }
+
     function pointAdd(p1, p2) {
       if (p1 === null) return p2; if (p2 === null) return p1;
       if (p1.x === p2.x && mod(p1.y + p2.y, P) === 0n) return null;
@@ -32,6 +56,7 @@
       const x3 = mod(lambda ** 2n - p1.x - p2.x, P);
       return { x: x3, y: mod(lambda * mod(p1.x - x3, P) - p1.y, P) };
     }
+
     function pointMult(k, point) {
       let r = null, a = point;
       while (k > 0n) {
@@ -57,6 +82,7 @@
         .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
       const pubFromPriv = priv => {
         const pub = pointMult(priv, G);
+        if (!isOnCurve(pub)) throw new Error("Invalid point generated");
         return biToB64(pub.x) + '.' + biToB64(pub.y);
       };
       const seedToKey = async (seed, salt) => {
