@@ -150,7 +150,7 @@
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
-      
+
       if ((user.is || authenticator) && upub && !raw['*'] && !raw['+'] && (pub === upub || (pub !== upub && cert))){
         SEA.opt.pack(msg.put, packed => {
           // Validate authenticator
@@ -159,7 +159,7 @@
             if (u === data) return no(SEA.err || 'Signature fail.')
             // Validate signature format
             if (!data.m || !data.s) return no('Invalid signature format')
-            
+
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
 

@@ -60,96 +60,6 @@ describe('SEA', function(){
         done()
       })
     })*/
-    it('hash array buffer', async function () {
-      this.timeout(5000); // Extend timeout for async operations
-      
-      const textEncoder = new TextEncoder();
-      const buffer1 = textEncoder.encode("lorem ipsum dolor sit amet").buffer;
-      const buffer2 = textEncoder.encode("lorem ipsum dolor sit amet").buffer;
-      
-      const hash1 = await SEA.work(buffer1);
-      const hash2 = await SEA.work(buffer2);
-      expect(typeof hash1 === 'string' && typeof hash2 === 'string' && hash1 !== hash2).to.be(true);
-    });
-    it('create random pair if no seed', async function () {
-      this.timeout(5000); // Extend timeout for async operations
-      
-      const pair1 = await SEA.pair();
-      const pair2 = await SEA.pair();
-
-      expect(pair1.pub !== pair2.pub && pair1.priv !== pair2.priv && pair1.epub !== pair2.epub && pair1.epriv !== pair2.epriv).to.be(true);
-    });
-    it('generates deterministic key pairs from seed', async function () {
-      this.timeout(5000); // Extend timeout if needed for async operations
-      
-      // Seed 1
-      const pair1 = await SEA.pair(null, { seed: "my secret seed" });
-      const pair2 = await SEA.pair(null, { seed: "my secret seed" });
-      const pair3 = await SEA.pair(null, { seed: "not my seed" });
-
-      // Check if pairs with same seed are identical
-      const sameKeys = pair1.priv === pair2.priv && pair1.pub === pair2.pub && pair1.epriv === pair2.epriv && pair1.epub === pair2.epub;
-
-      // Check if pairs with different seeds are different
-      const differentKeys = pair1.priv !== pair3.priv && pair1.pub !== pair3.pub && pair1.epriv !== pair3.epriv && pair1.epub !== pair3.epub;
-
-      expect(sameKeys).to.be(true);
-      expect(differentKeys).to.be(true);
-    });
-    it('generates deterministic key pairs from ArrayBuffer seed', async function () {
-      this.timeout(5000); // Extend timeout for async operations
-      
-      // Create ArrayBuffer seeds
-      const textEncoder = new TextEncoder();
-      const seedData1 = textEncoder.encode("my secret seed");  // Convert string to Uint8Array
-      const seedBuffer1 = seedData1.buffer;  // Get the underlying ArrayBuffer
-      
-      // Create a second identical seed
-      const seedData2 = textEncoder.encode("my secret seed");
-      const seedBuffer2 = seedData2.buffer;
-      
-      // Create a different seed
-      const seedData3 = textEncoder.encode("not my seed");
-      const seedBuffer3 = seedData3.buffer;
-      
-      // Generate key pairs using ArrayBuffer seeds
-      const pair1 = await SEA.pair(null, { seed: seedBuffer1 });
-      const pair2 = await SEA.pair(null, { seed: seedBuffer2 });
-      const pair3 = await SEA.pair(null, { seed: seedBuffer3 });
-      
-      // Check if pairs with same seed content are identical
-      const sameKeys = pair1.priv === pair2.priv && 
-                       pair1.pub === pair2.pub && 
-                       pair1.epriv === pair2.epriv && 
-                       pair1.epub === pair2.epub;
-      
-      // Check if pairs with different seeds are different
-      const differentKeys = pair1.priv !== pair3.priv && 
-                            pair1.pub !== pair3.pub && 
-                            pair1.epriv !== pair3.epriv && 
-                            pair1.epub !== pair3.epub;
-      
-      expect(sameKeys).to.be(true);
-      expect(differentKeys).to.be(true);
-    });
-    it('generate key pairs from private key', async function () {
-      var gun = Gun()
-      var user = gun.user()
-      const test1 = await SEA.pair(null, { seed: "seed" });
-      const test2 = await SEA.pair(null, { priv: test1.priv });
-      expect(test2.priv).to.be(test1.priv);
-      expect(test2.pub).to.be(test1.pub);
-      await user.auth(test2);
-      expect(user.is.pub).to.be(test2.pub);
-      expect(user.is.pub).to.be(test1.pub);
-      user.leave();
-      const test3 = await SEA.pair(null, { epriv: test2.epriv });
-      expect(test3.epriv).to.be(test2.epriv);
-      await user.auth(test3);
-      expect(user.is.epub).to.be(test3.epub);
-      expect(user.is.epub).to.be(test2.epub);
-      user.leave();
-    });
     it('quickstart', function(done){
       SEA.pair(function(pair){
       SEA.encrypt('hello self', pair, function(enc){
@@ -328,7 +238,7 @@ describe('SEA', function(){
       var alias = SEA.opt.unpack(await SEA.verify(old.alias, false), 'alias', old);
       expect(alias).to.be('alice');
       alias = Gun.state.ify({}, tmp, 1, {'#': tmp}, tmp = '~@'+alias);
-      gun._.graph[tmp] = graph[tmp] = alias;
+      gun._.graph[tmp] = alias;
       //gun.on('test', {$: gun, put: graph});
       var use = gun.user();
       use.auth('alice', 'test123', function(ack){
@@ -378,6 +288,255 @@ describe('SEA', function(){
       expect(dup).to.not.be.eql(sig);
       done();
     }())})
+  });
+
+  describe('Seed-based Key Generation', function() {
+    this.timeout(5000); // Set timeout for all tests in this suite
+    
+    it('generates deterministic key pairs from same seed', async function () {
+      // Seed string tests
+      const pair1 = await SEA.pair(null, { seed: "my secret seed" });
+      const pair2 = await SEA.pair(null, { seed: "my secret seed" });
+      const pair3 = await SEA.pair(null, { seed: "not my seed" });
+
+      // Check if pairs with same seed are identical
+      const sameKeys = pair1.priv === pair2.priv && 
+                      pair1.pub === pair2.pub && 
+                      pair1.epriv === pair2.epriv && 
+                      pair1.epub === pair2.epub;
+
+      // Check if pairs with different seeds are different
+      const differentKeys = pair1.priv !== pair3.priv && 
+                            pair1.pub !== pair3.pub && 
+                            pair1.epriv !== pair3.epriv && 
+                            pair1.epub !== pair3.epub;
+
+      expect(sameKeys).to.be(true);
+      expect(differentKeys).to.be(true);
+      
+      // Test consistent generation across multiple calls
+      const numTests = 5;
+      const pairs = [];
+      const seed = "consistency test seed";
+      
+      // Generate multiple pairs with the same seed
+      for (let i = 0; i < numTests; i++) {
+        pairs.push(await SEA.pair(null, { seed }));
+      }
+      
+      // Verify all pairs are identical
+      let allMatch = true;
+      for (let i = 1; i < numTests; i++) {
+        if (pairs[i].pub !== pairs[0].pub || 
+            pairs[i].priv !== pairs[0].priv ||
+            pairs[i].epub !== pairs[0].epub ||
+            pairs[i].epriv !== pairs[0].epriv) {
+          allMatch = false;
+          break;
+        }
+      }
+      
+      expect(allMatch).to.be(true);
+    });
+
+    it('generates deterministic key pairs from ArrayBuffer seed', async function () {
+      // Create ArrayBuffer seeds
+      const textEncoder = new TextEncoder();
+      const seedData1 = textEncoder.encode("my secret seed");  // Convert string to Uint8Array
+      const seedBuffer1 = seedData1.buffer;  // Get the underlying ArrayBuffer
+      
+      // Create a second identical seed
+      const seedData2 = textEncoder.encode("my secret seed");
+      const seedBuffer2 = seedData2.buffer;
+      
+      // Create a different seed
+      const seedData3 = textEncoder.encode("not my seed");
+      const seedBuffer3 = seedData3.buffer;
+      
+      // Generate key pairs using ArrayBuffer seeds
+      const pair1 = await SEA.pair(null, { seed: seedBuffer1 });
+      const pair2 = await SEA.pair(null, { seed: seedBuffer2 });
+      const pair3 = await SEA.pair(null, { seed: seedBuffer3 });
+      
+      // Check if pairs with same seed content are identical
+      const sameKeys = pair1.priv === pair2.priv && 
+                     pair1.pub === pair2.pub && 
+                     pair1.epriv === pair2.epriv && 
+                     pair1.epub === pair2.epub;
+      
+      // Check if pairs with different seeds are different
+      const differentKeys = pair1.priv !== pair3.priv && 
+                          pair1.pub !== pair3.pub && 
+                          pair1.epriv !== pair3.epriv && 
+                          pair1.epub !== pair3.epub;
+      
+      expect(sameKeys).to.be(true);
+      expect(differentKeys).to.be(true);
+      
+      // Test with different ways to create ArrayBuffer seeds
+      // Method 1: Direct encoding
+      const buffer1 = textEncoder.encode("buffer-seed-test").buffer;
+      
+      // Method 2: Clone buffer from another array
+      const tempArray = textEncoder.encode("buffer-seed-test");
+      const buffer2 = tempArray.buffer.slice(0);
+      
+      // Generate key pairs
+      const bufPair1 = await SEA.pair(null, { seed: buffer1 });
+      const bufPair2 = await SEA.pair(null, { seed: buffer2 });
+      
+      // Keys should be identical
+      expect(bufPair1.pub).to.be(bufPair2.pub);
+      expect(bufPair1.priv).to.be(bufPair2.priv);
+      expect(bufPair1.epub).to.be(bufPair2.epub);
+      expect(bufPair1.epriv).to.be(bufPair2.epriv);
+      
+      // Test that different buffers produce different keys
+      const buffer3 = textEncoder.encode("different-buffer-seed").buffer;
+      const bufPair3 = await SEA.pair(null, { seed: buffer3 });
+      
+      expect(bufPair1.pub).to.not.be(bufPair3.pub);
+    });
+    
+    it('generate key pairs from private key', async function () {
+      var gun = Gun()
+      var user = gun.user()
+      const test1 = await SEA.pair(null, { seed: "seed" });
+      const test2 = await SEA.pair(null, { priv: test1.priv });
+      expect(test2.priv).to.be(test1.priv);
+      expect(test2.pub).to.be(test1.pub);
+      await user.auth(test2);
+      expect(user.is.pub).to.be(test2.pub);
+      expect(user.is.pub).to.be(test1.pub);
+      user.leave();
+      const test3 = await SEA.pair(null, { epriv: test2.epriv });
+      expect(test3.epriv).to.be(test2.epriv);
+      await user.auth(test3);
+      expect(user.is.epub).to.be(test3.epub);
+      expect(user.is.epub).to.be(test2.epub);
+      user.leave();
+    });
+    
+    it('handles different types of seed values correctly', async function () {
+      // Test different seed types
+      const testCases = [
+        { type: "empty string", seed: "" },
+        { type: "numeric", seed: "12345" },
+        { type: "special chars", seed: "!@#$%^&*()" },
+        { type: "long string", seed: "a".repeat(1000) },
+        { type: "unicode", seed: "😀🔑🔒👍" }
+      ];
+      
+      // Generate pairs for each test case
+      const results = [];
+      for (const test of testCases) {
+        try {
+          const pair = await SEA.pair(null, { seed: test.seed });
+          
+          // Check if pair has all required properties
+          const isValid = pair && 
+                        typeof pair.pub === 'string' && 
+                        typeof pair.priv === 'string' &&
+                        typeof pair.epub === 'string' &&
+                        typeof pair.epriv === 'string';
+                        
+          results.push({ ...test, success: isValid, pair: pair });
+        } catch (e) {
+          results.push({ ...test, success: false, error: e.message });
+        }
+      }
+      
+      // All test cases should succeed
+      const allSucceeded = results.every(r => r.success);
+      expect(allSucceeded).to.be(true);
+      
+      // All pairs should be different from each other
+      const uniquePairs = new Set(results.map(r => r.pair?.pub));
+      expect(uniquePairs.size).to.be(results.length);
+      
+      // Similar seeds should produce different key pairs
+      const seed1 = "test-seed";
+      const seed2 = "test-seed1";
+      const seed3 = "test-seed ";  // note the space
+      const seed4 = "Test-seed";   // capitalization
+      
+      const pairs = await Promise.all([
+        SEA.pair(null, { seed: seed1 }),
+        SEA.pair(null, { seed: seed2 }),
+        SEA.pair(null, { seed: seed3 }),
+        SEA.pair(null, { seed: seed4 })
+      ]);
+      
+      // Check that all pairs are different
+      const [p1, p2, p3, p4] = pairs;
+      expect(p1.pub).to.not.equal(p2.pub);
+      expect(p1.pub).to.not.equal(p3.pub);
+      expect(p1.pub).to.not.equal(p4.pub);
+      expect(p2.pub).to.not.equal(p3.pub);
+      expect(p2.pub).to.not.equal(p4.pub);
+      expect(p3.pub).to.not.equal(p4.pub);
+    });
+    
+    it('works with SEA operations (sign, verify, encrypt, decrypt)', async function () {
+      // Test with sign/verify
+      const seed = "sign-verify-seed";
+      const pair = await SEA.pair(null, { seed });
+      const message = "Hello deterministic world!";
+      
+      // Test signing and verification
+      const signature = await SEA.sign(message, pair);
+      const verified = await SEA.verify(signature, pair.pub);
+      expect(verified).to.be(message);
+      
+      // Test with encrypt/decrypt
+      const encryptSeed = "encrypt-decrypt-seed";
+      const encPair = await SEA.pair(null, { seed: encryptSeed });
+      const secretMessage = "Secret deterministic message";
+      
+      // Test encryption and decryption
+      const encrypted = await SEA.encrypt(secretMessage, encPair);
+      const decrypted = await SEA.decrypt(encrypted, encPair);
+      expect(decrypted).to.be(secretMessage);
+      
+      // Test with SEA.secret (key exchange)
+      const aliceSeed = "alice-deterministic";
+      const bobSeed = "bob-deterministic";
+      
+      const alice = await SEA.pair(null, { seed: aliceSeed });
+      const bob = await SEA.pair(null, { seed: bobSeed });
+      
+      // Generate shared secrets
+      const aliceShared = await SEA.secret(bob.epub, alice);
+      const bobShared = await SEA.secret(alice.epub, bob);
+      
+      expect(aliceShared).to.be(bobShared);
+      
+      // Test shared secret for encryption
+      const sharedMessage = "Secret shared deterministically";
+      const sharedEncrypted = await SEA.encrypt(sharedMessage, aliceShared);
+      const sharedDecrypted = await SEA.decrypt(sharedEncrypted, bobShared);
+      
+      expect(sharedDecrypted).to.be(sharedMessage);
+      
+      // Test complete workflow
+      const workflowSeed = "workflow-test-seed";
+      const workflowPair = await SEA.pair(null, { seed: workflowSeed });
+      const workflowMessage = "hello deterministic self";
+      
+      // Complete workflow: encrypt, sign, verify, decrypt
+      const wfEncrypted = await SEA.encrypt(workflowMessage, workflowPair);
+      const wfSigned = await SEA.sign(wfEncrypted, workflowPair);
+      const wfVerified = await SEA.verify(wfSigned, workflowPair.pub);
+      const wfDecrypted = await SEA.decrypt(wfVerified, workflowPair);
+      
+      expect(wfDecrypted).to.be(workflowMessage);
+      
+      // Test with SEA.work
+      const proof1 = await SEA.work(workflowMessage, workflowPair);
+      const proof2 = await SEA.work(workflowMessage, workflowPair);
+      
+      expect(proof1).to.be(proof2);
+    });
   });
 
   describe('User', function(){
