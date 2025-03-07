@@ -298,6 +298,7 @@
         return rsha;
       }
       if (typeof salt === "number") salt = salt.toString();
+      if (typeof opt.salt === "number") opt.salt = opt.salt.toString();
       salt = salt || shim.random(9);
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({
