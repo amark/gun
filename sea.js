@@ -297,6 +297,7 @@
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
+      if (typeof salt === "number") salt = salt.toString();
       salt = salt || shim.random(9);
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({
