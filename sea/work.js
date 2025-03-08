@@ -16,7 +16,7 @@
       // Check if data is an ArrayBuffer, if so use Uint8Array to access the data
       if(data instanceof ArrayBuffer){
         data = new Uint8Array(data);
-        data = new TextDecoder("utf-8").decode(data);
+        data = new shim.TextDecoder("utf-8").decode(data);
       }
       data = (typeof data == 'string') ? data : await shim.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
