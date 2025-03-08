@@ -13,11 +13,12 @@
     "https": "HTTPS_KEY=test/https/server.key HTTPS_CERT=test/https/server.crt npm start",
     "prepublishOnly": "npm run unbuild",
     "test": "echo 'Did you run PANIC holy-grail, 1~X, on-recover, etc.?' && mocha",
-    "testsea": "mocha test/sea/sea.js",
+    "testSea": "mocha test/sea/sea.js",
     "e2e": "mocha e2e/distributed.js",
     "docker": "hooks/build",
     "minify": "uglifyjs gun.js -o gun.min.js -c -m",
     "unbuild": "node lib/unbuild.js & npm run minify",
+    "buildSea": "node lib/build.js sea",
     "unbuildSea": "node lib/unbuild.js sea",
     "unbuildMeta": "node lib/unbuild.js lib/meta"
   },

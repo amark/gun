@@ -50,7 +50,7 @@
           return; // omit!
         }
       }
-      
+
       if('~@' === soul){  // special case for shared system data, the list of aliases.
         check.alias(eve, msg, val, key, soul, at, no); return;
       }
@@ -67,18 +67,23 @@
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
-    check.hash = function(eve, msg, val, key, soul, at, no){ // mark unbuilt @i001962 's epic hex contrib!
-      SEA.work(val, null, function(data){
-        function hexToBase64(hexStr) {
-          let base64 = "";
-          for(let i = 0; i < hexStr.length; i++) {
-            base64 += !(i - 1 & 1) ? String.fromCharCode(parseInt(hexStr.substring(i - 1, i + 1), 16)) : ""}
-          return btoa(base64);}  
-        if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
-          else if (data && data === hexToBase64(key.split('#').slice(-1)[0])){ 
-          return eve.to.next(msg) }
+    // Verify content-addressed data matches its hash
+    check.hash = function (eve, msg, val, key, soul, at, no) {
+      function base64ToHex(data) {
+        var binaryStr = atob(data);
+        var a = [];
+        for (var i = 0; i < binaryStr.length; i++) {
+          var hex = binaryStr.charCodeAt(i).toString(16);
+          a.push(hex.length === 1 ? "0" + hex : hex);
+        }
+        return a.join("");
+      }
+      var hash = key.split('#').pop();
+      SEA.work(val, null, function (b64hash) {
+        var hexhash = base64ToHex(b64hash), b64slice = b64hash.slice(-20), hexslice = hexhash.slice(-20);
+        if ([b64hash, b64slice, hexhash, hexslice].some(item => item.endsWith(hash))) return eve.to.next(msg);
         no("Data hash not same as hash!");
-      }, {name: 'SHA-256'});
+      }, { name: 'SHA-256' });
     }
     check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
       if(!val){ return no("Data must exist!") } // data MUST exist
@@ -91,7 +96,6 @@
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };
     check.pub = async function(eve, msg, val, key, soul, at, no, user, pub){ var tmp // Example: {_:#~asdf, hello:'world'~fdsa}}
-      const raw = await S.parse(val) || {}
       const verify = (certificate, certificant, cb) => {
         if (certificate.m && certificate.s && certificant && pub)
           // now verify certificate
@@ -99,7 +103,7 @@
             if (u !== data && u !== data.e && msg.put['>'] && msg.put['>'] > parseFloat(data.e)) return no("Certificate expired.") // certificate expired
             // "data.c" = a list of certificants/certified users
             // "data.w" = lex WRITE permission, in the future, there will be "data.r" which means lex READ permission
-            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*' || certificant) > -1)) {
+            if (u !== data && data.c && data.w && (data.c === certificant || data.c.indexOf('*') > -1 || data.c.indexOf(certificant) > -1)) {
               // ok, now "certificant" is in the "certificants" list, but is "path" allowed? Check path
               let path = soul.indexOf('/') > -1 ? soul.replace(soul.substring(0, soul.indexOf('/') + 1), '') : ''
               String.match = String.match || Gun.text.match
@@ -125,43 +129,56 @@
           })
         return
       }
-      
+
+      const next = () => {
+        JSON.stringifyAsync(msg.put[':'], function(err,s){
+          if(err){ return no(err || "Stringify error.") }
+          msg.put[':'] = s;
+          return eve.to.next(msg);
+        })
+      }
+
+      // Localize some opt props, and delete the original refs to prevent possible attacks
+      const opt = (msg._.msg || {}).opt || {}
+      const authenticator = opt.authenticator || (user._ || {}).sea;
+      const upub = opt.authenticator ? (opt.pub || (user.is || {}).pub || pub) : (user.is || {}).pub;
+      const cert = opt.cert;
+      delete opt.authenticator; delete opt.pub;
+      const raw = await S.parse(val) || {}
+
       if ('pub' === key && '~' + pub === soul) {
         if (val === pub) return eve.to.next(msg) // the account MUST match `pub` property that equals the ID of the public key.
         return no("Account not same!")
       }
 
-      if ((tmp = user.is) && tmp.pub && !raw['*'] && !raw['+'] && (pub === tmp.pub || (pub !== tmp.pub && ((msg._.msg || {}).opt || {}).cert))){
+      if ((user.is || authenticator) && upub && !raw['*'] && !raw['+'] && (pub === upub || (pub !== upub && cert))){
         SEA.opt.pack(msg.put, packed => {
-          SEA.sign(packed, (user._).sea, async function(data) {
+          // Validate authenticator
+          if (!authenticator) return no("Missing authenticator");
+          SEA.sign(packed, authenticator, async function(data) {
             if (u === data) return no(SEA.err || 'Signature fail.')
+            // Validate signature format
+            if (!data.m || !data.s) return no('Invalid signature format')
+
             msg.put[':'] = {':': tmp = SEA.opt.unpack(data.m), '~': data.s}
             msg.put['='] = tmp
-  
+
             // if writing to own graph, just allow it
-            if (pub === user.is.pub) {
+            if (pub === upub) {
               if (tmp = link_is(val)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-              JSON.stringifyAsync(msg.put[':'], function(err,s){
-                if(err){ return no(err || "Stringify error.") }
-                msg.put[':'] = s;
-                return eve.to.next(msg);
-              })
+              next()
               return
             }
-  
+
             // if writing to other's graph, check if cert exists then try to inject cert into put, also inject self pub so that everyone can verify the put
-            if (pub !== user.is.pub && ((msg._.msg || {}).opt || {}).cert) {
-              const cert = await S.parse(msg._.msg.opt.cert)
+            if (pub !== upub && cert) {
+              const _cert = await S.parse(cert)
               // even if cert exists, we must verify it
-              if (cert && cert.m && cert.s)
-                verify(cert, user.is.pub, _ => {
-                  msg.put[':']['+'] = cert // '+' is a certificate
-                  msg.put[':']['*'] = user.is.pub // '*' is pub of the user who puts
-                  JSON.stringifyAsync(msg.put[':'], function(err,s){
-                    if(err){ return no(err || "Stringify error.") }
-                    msg.put[':'] = s;
-                    return eve.to.next(msg);
-                  })
+              if (_cert && _cert.m && _cert.s)
+                verify(_cert, upub, _ => {
+                  msg.put[':']['+'] = _cert // '+' is a certificate
+                  msg.put[':']['*'] = upub // '*' is pub of the user who puts
+                  next()
                   return
                 })
             }
@@ -175,7 +192,7 @@
           data = SEA.opt.unpack(data);
           if (u === data) return no("Unverified data.") // make sure the signature matches the account it claims to be on. // reject any updates that are signed with a mismatched account.
           if ((tmp = link_is(data)) && pub === SEA.opt.pub(tmp)) (at.sea.own[tmp] = at.sea.own[tmp] || {})[pub] = 1
-          
+
           // check if cert ('+') and putter's pub ('*') exist
           if (raw['+'] && raw['+']['m'] && raw['+']['s'] && raw['*'])
             // now verify certificate
@@ -245,6 +262,5 @@
     SEA.opt.shuffle_attack = 1546329600000; // Jan 1, 2019
     var fl = Math.floor; // TODO: Still need to fix inconsistent state issue.
     // TODO: Potential bug? If pub/priv key starts with `-`? IDK how possible.
-
   
 }());

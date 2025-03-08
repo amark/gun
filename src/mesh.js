@@ -76,10 +76,10 @@ function Mesh(root){
 		if((tmp = msg['><']) && 'string' == typeof tmp){ tmp.slice(0,99).split(',').forEach(function(k){ this[k] = 1 }, (msg._).yo = {}) } // Peers already sent to, do not resend.
 		// DAM ^
 		if(tmp = msg.dam){
+			(dup_track(id)||{}).via = peer;
 			if(tmp = mesh.hear[tmp]){
 				tmp(msg, peer, root);
 			}
-			dup_track(id);
 			return;
 		}
 		if(tmp = msg.ok){ msg._.near = tmp['/'] }

@@ -11,13 +11,13 @@
       var retries = typeof opt.retries === 'number' ? opt.retries : 9;
 
       var gun = this, cat = (gun._), root = gun.back(-1);
-      
+
       if(cat.ing){
         (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
-      
+
       var act = {}, u;
       act.a = function(data){
         if(!data){ return act.b() }
