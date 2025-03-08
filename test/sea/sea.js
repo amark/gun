@@ -210,8 +210,6 @@ describe('SEA', function(){
           view1[i] = Math.floor(Math.random() * 256);
         }
         var hash1 = await SEA.work(buff1, "salt");
-        console.log("Hash 1:", hash1);
-    
         // Create another random ArrayBuffer (buffer 2)
         var buff2 = new ArrayBuffer(16);
         var view2 = new Uint8Array(buff2);
@@ -219,10 +217,18 @@ describe('SEA', function(){
           view2[i] = Math.floor(Math.random() * 256);
         }
         var hash2 = await SEA.work(buff2, "salt");
-        console.log("Hash 2:", hash2);
-    
         // Ensure the hashes are strings and different from each other
         expect(typeof hash1 === "string" && typeof hash2 === "string" && hash1 !== hash2).to.be(true);
+        
+        // Compare 2 hashes of the same ArrayBuffer
+        var hash3 = await SEA.work(buff1, "salt");
+        var hash4 = await SEA.work(buff1, "salt");
+        expect(hash3 === hash4).to.be(true);
+        
+        var hash5 = await SEA.work(buff2, 0);
+        var hash6 = await SEA.work(buff2, 0);
+        expect(hash5 === hash6).to.be(true);
+        
         done(); // Signal that the test is complete
       })();
     });
