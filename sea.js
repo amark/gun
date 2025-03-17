@@ -625,7 +625,33 @@
 
         if(!c) throw "Signature did not match";
 
+        // Parse the message content
         var r = await S.parse(j.m);
+
+        // Handle encrypted data consistently
+        // SEA encrypted data can be in two formats:
+        // 1. A string starting with 'SEA' followed by JSON (e.g., 'SEA{"ct":"...","iv":"...","s":"..."}')
+        // 2. An object with ct, iv, and s properties
+
+        // Case 1: Original message was already in SEA string format
+        if(typeof j.m === 'string' && j.m.startsWith('SEA{')) {
+          if(cb){ try{ cb(j.m) }catch(e){} }
+          return j.m;
+        }
+
+        // Case 2: Result is an encrypted data object
+        // This ensures consistent formatting of encrypted data as SEA strings
+        if(r && typeof r === 'object' && 
+           typeof r.ct === 'string' && 
+           typeof r.iv === 'string' && 
+           typeof r.s === 'string') {
+          // Format as standard SEA encrypted string
+          var seaStr = 'SEA' + JSON.stringify(r);
+          if(cb){ try{ cb(seaStr) }catch(e){} }
+          return seaStr;
+        }
+
+        // Default case: Return parsed result as is
         if(cb){ try{ cb(r) }catch(e){} }
         return r;
       } catch(e) {

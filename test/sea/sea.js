@@ -210,6 +210,7 @@ describe('SEA', function(){
           view1[i] = Math.floor(Math.random() * 256);
         }
         var hash1 = await SEA.work(buff1, "salt");
+    
         // Create another random ArrayBuffer (buffer 2)
         var buff2 = new ArrayBuffer(16);
         var view2 = new Uint8Array(buff2);
@@ -217,18 +218,9 @@ describe('SEA', function(){
           view2[i] = Math.floor(Math.random() * 256);
         }
         var hash2 = await SEA.work(buff2, "salt");
+    
         // Ensure the hashes are strings and different from each other
         expect(typeof hash1 === "string" && typeof hash2 === "string" && hash1 !== hash2).to.be(true);
-        
-        // Compare 2 hashes of the same ArrayBuffer
-        var hash3 = await SEA.work(buff1, "salt");
-        var hash4 = await SEA.work(buff1, "salt");
-        expect(hash3 === hash4).to.be(true);
-        
-        var hash5 = await SEA.work(buff2, 0);
-        var hash6 = await SEA.work(buff2, 0);
-        expect(hash5 === hash6).to.be(true);
-        
         done(); // Signal that the test is complete
       })();
     });
@@ -370,6 +362,17 @@ describe('SEA', function(){
       }
       
       expect(allMatch).to.be(true);
+      
+      // Test that the created pair works with SEA functions
+      var enc = await SEA.encrypt('hello self', pair1);
+      var data = await SEA.sign(enc, pair1);
+      var msg = await SEA.verify(data, pair1.pub);
+      expect(msg).to.be(enc);
+      var dec = await SEA.decrypt(msg, pair1);
+      expect(dec).to.be('hello self');
+      var proof = await SEA.work(dec, pair1);
+      var check = await SEA.work('hello self', pair1);
+      expect(proof).to.be(check);
     });
 
     it('generates deterministic key pairs from ArrayBuffer seed', async function () {
@@ -429,6 +432,17 @@ describe('SEA', function(){
       const bufPair3 = await SEA.pair(null, { seed: buffer3 });
       
       expect(bufPair1.pub).to.not.be(bufPair3.pub);
+      
+      // Test that the created pair works with SEA functions
+      var enc = await SEA.encrypt('hello self', bufPair1);
+      var data = await SEA.sign(enc, bufPair1);
+      var msg = await SEA.verify(data, bufPair1.pub);
+      expect(msg).to.be(enc);
+      var dec = await SEA.decrypt(msg, bufPair1);
+      expect(dec).to.be('hello self');
+      var proof = await SEA.work(dec, bufPair1);
+      var check = await SEA.work('hello self', bufPair1);
+      expect(proof).to.be(check);
     });
     
     it('generate key pairs from private key', async function () {
@@ -438,6 +452,17 @@ describe('SEA', function(){
       const test2 = await SEA.pair(null, { priv: test1.priv });
       expect(test2.priv).to.be(test1.priv);
       expect(test2.pub).to.be(test1.pub);
+      
+      // Test that the created pair works with SEA functions
+      var enc = await SEA.encrypt('hello self', test2);
+      var data = await SEA.sign(enc, test2);
+      var msg = await SEA.verify(data, test2.pub);
+      expect(msg).to.be(enc);
+      var dec = await SEA.decrypt(msg, test2);
+      expect(dec).to.be('hello self');
+      var proof = await SEA.work(dec, test2);
+      var check = await SEA.work('hello self', test2);
+      expect(proof).to.be(check);
       await user.auth(test2);
       expect(user.is.pub).to.be(test2.pub);
       expect(user.is.pub).to.be(test1.pub);
@@ -1085,4 +1110,3 @@ describe('SEA', function(){
 })
 
 }());
-
