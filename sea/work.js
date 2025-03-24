@@ -13,12 +13,19 @@
         cb = salt;
         salt = u;
       }
-      data = (typeof data == 'string')? data : await shim.stringify(data);
+      // Check if data is an ArrayBuffer, if so use Uint8Array to access the data
+      if(data instanceof ArrayBuffer){
+        data = new Uint8Array(data);
+        data = new shim.TextDecoder("utf-8").decode(data);
+      }
+      data = (typeof data == 'string') ? data : await shim.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
         if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
         return rsha;
       }
+      if (typeof salt === "number") salt = salt.toString();
+      if (typeof opt.salt === "number") opt.salt = opt.salt.toString();
       salt = salt || shim.random(9);
       var key = await (shim.ossl || shim.subtle).importKey('raw', new shim.TextEncoder().encode(data), {name: opt.name || 'PBKDF2'}, false, ['deriveBits']);
       var work = await (shim.ossl || shim.subtle).deriveBits({

@@ -5,8 +5,7 @@
     // IT IS IMPLEMENTED IN A POLYFILL/SHIM APPROACH.
     // THIS IS AN EARLY ALPHA!
 
-    if(typeof self !== "undefined"){ module.window = self } // should be safe for at least browser/worker/nodejs, need to check other envs like RN etc.
-    if(typeof window !== "undefined"){ module.window = window }
+    module.window = (typeof globalThis !== "undefined" && typeof window === "undefined" && typeof WorkerGlobalScope !== "undefined") ? globalThis : (typeof window !== "undefined" ? window : undefined);
 
     var tmp = module.window || module, u;
     var SEA = tmp.SEA || {};
