@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gun Stream</title>
+</head>
+<body>
 <center>
   <img id="img" width="100%"><br/>
   Stream <select id="select"><option id="from">from</option></select>
@@ -7,6 +12,7 @@
   resolution <input id="res" value="240" step="32" max="1080" type="number" style="width:3em;">
   or <input id="upload" type="file">
 </center>
+
 <video id="video" width="100%" controls autoplay style="display: none;"></video>
 <canvas id="canvas" width="0" style="display: none;"></canvas>
 
@@ -15,41 +21,112 @@
 <script src="../../../gun/sea.js"></script>
 <script src="../../../gun/lib/webrtc.js"></script>
 
-<script>;(async function(){
-gun = Gun(location.origin + '/gun'); //gun = GUN();
+<script>
+(async function(){
+  const gun = Gun(location.origin + '/gun');
+  const stream = canvas.getContext('2d');
+  stream.from = navigator.mediaDevices;
 
-stream = canvas.getContext('2d'), stream.from = navigator.mediaDevices;
-
-(await stream.from.enumerateDevices()).forEach((device,i) => {
-  if('videoinput' !== device.kind){ return }
-  var opt = $(from).clone().prependTo('select').get(0);
-  $(opt).text(opt.id = device.label || 'Camera '+i);
-  opt.value = device.deviceId;
-});
-
-$('select').on('change', async eve => { $(from).text('Off'); // update label
-  if('Off' == select.value){ return video.srcObject.getTracks()[0].stop() }
-  video.srcObject = await stream.from.getUserMedia({ audio: false,
-    video: (select.value && {deviceId: {exact: select.value}}) || {facingMode: "environment"}
+  (await stream.from.enumerateDevices()).forEach((device,i) => {
+    if('videoinput' !== device.kind){ return }
+    var opt = $(from).clone().prependTo('select').get(0);
+    $(opt).text(opt.id = device.label || 'Camera '+i);
+    opt.value = device.deviceId;
   });
-});
-$('#upload').on('change', async eve => { console.log("Check ./upload.html") })
 
-setInterval(async tmp => {
-  if(!(video.srcObject||'').active){ return }
-  var size = parseInt(res.value);
-  stream.drawImage(video, 0,0,
-    canvas.width = size || video.videoWidth * 0.1,
-    canvas.height = (size * (video.videoHeight/video.videoWidth)) || video.videoHeight * 0.1
-  );
-  var b64 = canvas.toDataURL('image/jpeg');
-  if(pass.value){ b64 = await SEA.encrypt(b64, pass.value) }
-  gun.get('test').get('video').put(b64);
-}, 99);
+  $('select').on('change', async () => {
+    $(from).text('Off');
+    if(select.value === 'Off') { return video.srcObject.getTracks()[0].stop() }
+    video.srcObject = await stream.from.getUserMedia({ audio: false,
+      video: (select.value && {deviceId: {exact: select.value}}) || {facingMode: "environment"}
+    });
+  });
 
-gun.get('test').get('video').on(async data => {
-  if(pass.value){ data = await SEA.decrypt(data, pass.value) }
-  img.src = data; // Beware: Some browsers memory leak fast src updates.
-});
+  $('#upload').on('change', () => {
+    console.log("Check ./upload.html");
+  });
 
-}());</script>
+  setInterval(async () => {
+    if(!(video.srcObject||'').active){ return }
+    var size = parseInt(res.value);
+    stream.drawImage(video, 0,0,
+      canvas.width = size || video.videoWidth * 0.1,
+      canvas.height = (size * (video.videoHeight/video.videoWidth)) || video.videoHeight * 0.1
+    );
+    var b64 = canvas.toDataURL('image/jpeg');
+    if(pass.value){ b64 = await SEA.encrypt(b64, pass.value) }
+    gun.get('test').get('video').put(b64);
+  }, 99);
+
+  gun.get('test').get('video').on(async data => {
+    if(pass.value){ data = await SEA.decrypt(data, pass.value) }
+    img.src = data;
+  });
+
+  // AUDIO STREAMING START
+  const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaStreamSource(audioStream);
+  const processor = audioCtx.createScriptProcessor(2048, 1, 1);
+
+  source.connect(processor);
+  processor.connect(audioCtx.destination);
+
+  processor.onaudioprocess = async (e) => {
+    const input = e.inputBuffer.getChannelData(0);
+    const output = new Float32Array(input.length);
+
+    const fade = 128;
+    for (let i = 0; i < fade; i++) {
+      output[i] = input[i] * (i / fade);
+    }
+    for (let i = fade; i < input.length - fade; i++) {
+      output[i] = input[i];
+    }
+    for (let i = input.length - fade; i < input.length; i++) {
+      output[i] = input[i] * ((input.length - i) / fade);
+    }
+
+    const int16 = new Int16Array(output.length);
+    for (let i = 0; i < output.length; i++) {
+      int16[i] = Math.max(-32768, Math.min(32767, output[i] * 32768));
+    }
+
+    let audioB64 = btoa(String.fromCharCode(...new Uint8Array(int16.buffer)));
+    if (pass.value) {
+      audioB64 = await SEA.encrypt(audioB64, pass.value);
+    }
+
+    gun.get('test').get('audio').put(audioB64);
+  };
+
+  gun.get('test').get('audio').on(async (data) => {
+    if (!data) return;
+    if (pass.value) {
+      data = await SEA.decrypt(data, pass.value);
+    }
+
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const audioBuffer = audioCtx.createBuffer(1, bytes.length / 2, 44100);
+    const channel = audioBuffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i++) {
+      const sample = (bytes[i * 2 + 1] << 8) | bytes[i * 2];
+      channel[i] = (sample > 32767 ? sample - 65536 : sample) / 32768;
+    }
+
+    const player = audioCtx.createBufferSource();
+    player.buffer = audioBuffer;
+    player.connect(audioCtx.destination);
+    player.start();
+  });
+  // AUDIO STREAMING END
+
+})();
+</script>
+</body>
+</html>
