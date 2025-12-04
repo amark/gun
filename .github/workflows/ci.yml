@@ -1,81 +1,78 @@
 name: ci
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
 
 jobs:
-
   test:
     strategy:
       matrix:
-        node-version: [ 14.x ]
-        os: [ ubuntu-latest ]
+        node-version: [14.x]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # checkout the code
+      - name: Checkout
+        uses: actions/checkout@v4  # Updated to v4 (latest as of 2025)
 
-    # checkout the code
-    - name: Checkout
-      uses: actions/checkout@v2
+      # verify the version in package.json matches the release tag
+      - name: Version
+        uses: tcurdt/action-verify-version-npm@master  # No version update as it's using @master
 
-    # verify the version in package.json matches the release tag
-    - name: Version
-      uses: tcurdt/action-verify-version-npm@master
+      # setup the node version
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4  # Updated to v4 (latest as of 2025)
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    # setup the node version
-    - name: Setup Node ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      # cache node_modules if we can
+      - name: Cache
+        id: cache-modules
+        uses: actions/cache@v4  # Updated to v4 (latest as of 2025)
+        with:
+          path: node_modules
+          key: ${{ matrix.node-version }}-${{ runner.os }}-build-${{ hashFiles('package.json') }}
 
-    # cache node_modules if we can
-    - name: Cache
-      id: cache-modules
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: ${{ matrix.node-version }}-${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+      # otherwise run install
+      - name: Install
+        if: steps.cache-modules.outputs.cache-hit != 'true'
+        run: npm install
 
-    # ottherweise run install
-    - name: Install
-      if: steps.cache-modules.outputs.cache-hit != 'true'
-      run: npm install
-
-    # run tests
-    - name: Test
-      run: npm test
+      # run tests
+      - name: Test
+        run: npm test
 
   # create github release
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [ test ]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
-
-    # create github release (which triggers the release workflows)
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      # env:
-      #   GITHUB_TOKEN: ${{ secrets.PAT }}
+      # create github release (which triggers the release workflows)
+      - name: Release
+        uses: softprops/action-gh-release@v2  # Updated to v2 (latest stable version as of 2025)
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.PAT }}
 
 #   # publish latest master or release to dockerhub
 #   dockerhub:
 #     if: github.event_name == 'push'
-#     needs: [ test ]
+#     needs: [test]
 #     runs-on: ubuntu-latest
 #     env:
 #       image: ${{ secrets.DOCKERHUB_USERNAME }}/gun
 #     steps:
-
+#
 #     - name: Checkout
-#       uses: actions/checkout@v2
-
+#       uses: actions/checkout@v4  # Updated to v4
+#
 #     - name: Login
 #       env:
 #         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 #         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 #       run: echo -n ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-
+#
 #     - name: Build
 #       run: |
 #         echo "SHA=$GITHUB_SHA"
@@ -89,26 +86,23 @@ jobs:
 #           --tag ${{ env.image }}:${GITHUB_REF##*/} \
 #           --tag ${{ env.image }}:latest \
 #           .
-
+#
 #     - name: Push
 #       run: docker push ${{ env.image }}
-
 
   # publish release to npm
   npm:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [ test ]
-    # needs: [ release ]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # Updated to v4
 
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: Publish
-      env:
-        NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-      run: |
-        npm config set //registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN
-        npm install
-        npm publish --access=public
+      - name: Publish
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN
+          npm install
+          npm publish --access=public

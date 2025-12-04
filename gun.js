@@ -1212,7 +1212,6 @@
 			//if(!map || !(tmp = map[at]) || !(tmp = tmp.at)){ return }
 			if(tmp = (seen = this.seen || (this.seen = {}))[at]){ return true }
 			seen[at] = true;
-			return;
 			//tmp.echo[cat.id] = {}; // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 			//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 			return;

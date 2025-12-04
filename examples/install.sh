@@ -3,6 +3,7 @@
 # README
 # This will install nodejs and npm on your system,
 # should work on most places other than Windows.
+# For it to run on boot as a server, a recent OS is needed.
 # Set any environment variables before you run this,
 # like `export RAD=false` to disable storage, or
 # pass file paths of `HTTPS_CERT` & `HTTPS_KEY`, etc.
@@ -10,26 +11,43 @@
 # If you are on Windows, http://nodejs.org/download/ has
 # an installer that will automatically do it for you.
 # curl -o- https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
+# wget -O - https://raw.githubusercontent.com/amark/gun/master/examples/install.sh | bash
 
 #debian/ubuntu
-su -
+cd ~
 apt-get install sudo -y
 sudo apt-get update -y
-sudo apt-get install curl git git-core screen -y
+sudo apt-get install curl git git-core systemd -y
+sudo apt-get install systemctl -y
 #fedora/openSUSE
 sudo yum check-update -y
-sudo yum install curl git git-core screen -y
+sudo yum install curl git git-core systemd -y
+sudo yum install systemctl -y
+
+#screen -S install # You can safely CTRL+A+D to escape without stopping the process. `screen -R install` to resume. Stop all with `killall screen`. Note: May need to `sudo apt-get install screen`
 
 # install nodejs
-git clone http://github.com/isaacs/nave.git
-sudo ./nave/nave.sh usemain stable
-# If you just want nodejs and npm but not gun, stop here.
+git clone https://github.com/isaacs/nave.git
+./nave/nave.sh usemain stable
 
-npm install gun
-cd ./node_modules/gun
+# If you just want nodejs and npm but not gun, stop here.
+#npm install gun@latest
+#cd ./node_modules/gun
+mkdir node_modules
+git clone https://github.com/amark/gun.git
+cd gun
+git checkout .
+git pull
+git checkout master
+git checkout $VERSION
+git pull
 npm install .
 
-# to start the gun examples:
-screen -S relay
-sudo npm start 80 # change `80` to `443` for https or `8765` for development purposes.
-# You can now safely CTRL+A+D to escape without stopping the peer. To stop `killall screen` or `killall node`.
+cp ./examples/relay.service /lib/systemd/system/relay.service
+echo $PWD >> /lib/systemd/system/relay.service
+echo "fs.file-max = 999999" >> /etc/sysctl.conf
+ulimit -u unlimited
+sysctl -p /etc/sysctl.conf
+systemctl daemon-reload
+systemctl enable relay
+systemctl restart relay

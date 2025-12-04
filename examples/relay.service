@@ -1,0 +1,19 @@
+[Unit]
+Description=GUN relay
+Documentation=https://gun.eco
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Environment=PATH=/usr/bin:/usr/local/bin
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+StartLimitBurst=999999
+StartLimitIntervalSec=999999
+Restart=always
+ExecStart=node examples/http.js 80
+# Environment=NODE_ENV=production
+WorkingDirectory=
