@@ -293,14 +293,14 @@
 				return (a.word||B.decode(''+a)) < (b.word||B.decode(''+b))? -1:1;
 			});
 		}
-		function mix(p, l){ // TODO: IMPROVE PERFORMANCE!!!! l[j] = i is 5X+ faster than .push(
+		function mix(p, l){ // merge limbo items into from array
 			l = l || p.limbo || []; p.limbo = null;
-			var j = 0, i, f = p.from;
+			var j = 0, k, i, f = p.from; k = f.length; // k tracks next index for appending
 			while(i = l[j++]){
 				if(got(i.word, p)){
 					f[got.i] = i; // TODO: Trick: allow for a GUN'S HAM CRDT hook here.
 				} else {
-					f.push(i); 
+					f[k++] = i; // direct index assignment is 5X+ faster than .push()
 				}
 			}
 			return f;
