@@ -539,7 +539,7 @@
 				ctx.stun = 1;
 				var nl = Object.keys(put);//.sort(); // TODO: This is unbounded operation, large graphs will be slower. Write our own CPU scheduled sort? Or somehow do it in below? Keys itself is not O(1) either, create ES5 shim over ?weak map? or custom which is constant.
 				console.STAT && console.STAT(S, ((DBG||ctx).pk = +new Date) - S, 'put sort');
-				var ni = 0, nj, kl, soul, node, states, err, tmp;
+				var ni = 0, nj, kl, ki, soul, node, states, err, tmp;
 				(function pop(o){
 					if(nj != ni){ nj = ni;
 						if(!(soul = nl[ni])){
@@ -551,7 +551,7 @@
 						if(!(tmp = node._)){ err = ERR+cut(soul)+"no meta." } else
 						if(soul !== tmp['#']){ err = ERR+cut(soul)+"soul not same." } else
 						if(!(states = tmp['>'])){ err = ERR+cut(soul)+"no state." }
-						kl = Object.keys(node||{}); // TODO: .keys( is slow
+						kl = Object.keys(node||{}); ki = 0; // TODO: .keys( is slow
 					}
 					if(err){
 						msg.err = ctx.err = err; // invalid data should error and stun the message.
@@ -559,8 +559,8 @@
 						//console.log("handle error!", err) // handle!
 						return;
 					}
-					var i = 0, key; o = o || 0;
-					while(o++ < 9 && (key = kl[i++])){
+					var key; o = o || 0;
+					while(o++ < 9 && ki < kl.length && (key = kl[ki++])){
 						if('_' === key){ continue }
 						var val = node[key], state = states[key];
 						if(u === state){ err = ERR+cut(key)+"on"+cut(soul)+"no state."; break }
@@ -569,8 +569,8 @@
 						ham(val, key, soul, state, msg);
 						++C; // courtesy count;
 					}
-					if((kl = kl.slice(i)).length){ turn(pop); return }
-					++ni; kl = null; pop(o);
+					if(ki < kl.length){ turn(pop); return }
+					++ni; ki = 0; kl = null; pop(o);
 				}());
 			} Gun.on.put = put;
 			// TODO: MARK!!! clock below, reconnect sync, SEA certify wire merge, User.auth taking multiple times, // msg put, put, say ack, hear loop...
