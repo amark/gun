@@ -1,0 +1,1372 @@
+<!-- SimpleChat demo page -->
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SimpleChat</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { height: 100%;overflow: hidden; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    header { padding: 12px 16px; border-bottom: 1px solid #ddd; }
+    h1 { margin: 0; font-size: 18px; }
+    .desc { font-size: 12px; opacity: 0.8; }
+    .wrap { max-width: 100vw; margin: 0 auto;width: 90%; }
+    main.wrap { flex: 1; display: flex; flex-direction: column; width: 95%; max-width: 100vw; }
+    #log { flex: 1; min-height: 0; max-height: 70vh; overflow-y: auto; min-width: 90%; }
+    .msg { padding: 10px 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; }
+    .who { font-weight: 600; margin-right: 8px; }
+    .time { font-size: 12px; opacity: 0.6; margin-left: 8px; }
+    .text { margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+    .msg-actions { margin-top: 8px; display: flex; gap: 8px; }
+    .msg-actions button { font-size: 12px; padding: 4px 8px; cursor: pointer; }
+    form { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #ddd; }
+    input, button { font-size: 14px; padding: 10px 12px; }
+    input { flex: 1; }
+    .name { flex: 0 0 200px; }
+    .status { font-size: 12px; opacity: 0.7; padding: 0 16px 12px; }
+    .config { display: flex; gap: 8px; padding: 8px 0 4px; align-items: center; }
+    .config input { flex: 1; font-size: 13px; padding: 8px 10px; }
+    .config button { font-size: 13px; padding: 8px 10px; }
+    .discover-btn { margin-left: auto; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #9e9e9e; margin-right: 8px; display:inline-block; }
+    .status-dot.connected { background: #2dd36f; }
+    .peer-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px dashed #ddd; }
+    .peer-url { font-size: 13px; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1e1e1e; }
+    }
+  </style>
+  <script src="../../gun.js"></script>
+  <script src="../../sea.js"></script>
+  <script src="../../lib/rel.js"></script>
+</head>
+<body>
+  <header class="wrap">
+    <h1 id="appTitle">SimpleChat -便携式加密聊天</h1>
+
+    <div class="config">
+      <div><span id="myPubText">我的公钥：</span><code id="myPub">(生成中...)</code> <button id="copyMyPub" type="button">复制</button></div>
+    </div>
+    <div class="config" style="justify-content: flex-end">
+      <button id="toggleLang" type="button">中文</button>
+      <button id="openSettings" type="button">打开设置</button>
+      <button id="openDiscover" type="button">打开发现列表</button>
+      <button id="exitPrivate" type="button" style="display:none">退出私聊</button>
+      <button id="clearChat" type="button">清空聊天</button>
+    </div>
+    <div id="status" class="status"></div>
+  </header>
+
+  <main class="wrap">
+    <div id="log" aria-live="polite" aria-busy="false"></div>
+  </main>
+
+  <form id="send" autocomplete="off" class="wrap">
+    <input id="text" type="text" placeholder="输入消息并回车/发送" />
+    <button id="sendBtn" type="submit">发送</button>
+  </form>
+
+
+  <div id="discoverModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35);">
+    <div style="background:var(--bg,#fff); color:inherit; border-radius:8px; max-width:600px; margin:10vh auto; box-shadow:0 10px 30px rgba(0,0,0,.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #ddd;">
+        <strong id="discoverTitle">发现列表（在线用户）</strong>
+        <div>
+          <button id="closeDiscover" type="button">关闭</button>
+        </div>
+      </div>
+      <div class="config" style="padding:12px 16px; border-bottom:1px solid #ddd;">
+        <input id="manualPeerPubInput" type="text" placeholder="输入对方公钥（pub）" />
+        <button id="enterPrivByPub" type="button">按公钥私聊</button>
+      </div>
+      <div id="discoverList" style="max-height:50vh; overflow:auto; padding:12px 16px;"></div>
+    </div>
+  </div>
+
+
+  <div id="settingsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35);">
+    <div style="background:var(--bg,#fff); color:inherit; border-radius:8px; max-width:720px; margin:8vh auto; box-shadow:0 10px 30px rgba(0,0,0,.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #ddd;">
+        <strong id="settingsTitle">设置</strong>
+        <div>
+          <button id="closeSettings" type="button">关闭</button>
+        </div>
+      </div>
+      <div style="padding:12px 16px; display:flex; flex-direction:column; gap:12px;">
+        <section>
+          <h3 id="profileTitle" style="margin:0 0 6px; font-size:14px;">昵称设置</h3>
+          <div class="config">
+            <input id="name" class="name" type="text" placeholder="你的昵称（可选）" />
+          </div>
+        </section>
+        <section>
+          <h3 id="keyMgmtTitle" style="margin:0 0 6px; font-size:14px;">密钥管理</h3>
+          <div class="config">
+            <input id="keypairInput" type="text" placeholder='当前密钥（JSON），如：{"pub":"...","priv":"...","epub":"...","epriv":"..."}' />
+            <button id="applyKeypair" type="button">应用密钥</button>
+            <button id="generateKeypair" type="button">生成随机密钥</button>
+          </div>
+        </section>
+        <section>
+          <h3 id="nodesTitle" style="margin:0 0 6px; font-size:14px;">节点设置</h3>
+          <div class="config">
+            <input id="newPeerInput" type="text" placeholder="添加单个节点：wss://host/gun" />
+            <button id="addPeer" type="button">添加节点</button>
+          </div>
+          <div style="margin-top:6px;">
+            <div id="peersListLabel" style="font-size:12px; opacity:.7; margin-bottom:4px;">当前节点（绿点=已连接且启用，灰点=未连接或禁用）：</div>
+            <div id="peersList" style="max-height:200px; overflow:auto;"></div>
+          </div>
+        </section>
+        <section>
+          <h3 id="roomTitle" style="margin:0 0 6px; font-size:14px;">房间设置</h3>
+          <div class="config">
+            <input id="roomInput" type="text" placeholder="房间名，例如：tf-public-chat" />
+            <button id="applyRoom" type="button">应用房间</button>
+            <button id="resetRoom" type="button">恢复默认房间</button>
+          </div>
+        </section>
+        <section>
+          <h3 id="roomKeyTitle" style="margin:0 0 6px; font-size:14px;">房间密钥</h3>
+          <div class="config">
+            <input id="roomKeyInput" type="text" placeholder='房间密钥（JSON），如：{"pub":"...","priv":"...","epub":"...","epriv":"..."}' />
+            <button id="applyRoomKey" type="button">应用房间密钥</button>
+            <button id="resetRoomKey" type="button">重置默认</button>
+            <button id="copyRoomKey" type="button">复制房间密钥</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_PEERS = [ 'ws://localhost:8765/gun' ];
+    const LS_KEY_PEERS = 'tf_public_chat_peers';
+    const LS_KEY_ENABLED_PEERS = 'tf_public_chat_enabled_peers';
+    const LS_KEY_LANG = 'tf_public_chat_lang';
+    const LS_KEY_ROOM = 'tf_public_chat_room';
+    const LS_KEY_PAIR = 'tf_public_chat_keypair';
+    const LS_KEY_ROOM_PAIR = 'tf_public_chat_roomkeypair';
+    const PRESENCE_ROOT = 'presence';
+
+
+    const i18n = {
+      en: {
+        app_title: 'SimpleChat - Portable Encrypted Chat',
+        header_my_pub_label: 'My public key:',
+        btn_open_settings: 'Open Settings',
+        btn_open_discover: 'Open Discovery',
+        btn_exit_private: 'Exit Private',
+        btn_clear_chat: 'Clear Chat',
+        toggle_to_zh: '中文',
+        form_name_placeholder: 'Your nickname (optional)',
+        form_text_placeholder: 'Type a message and press Enter/Send',
+        btn_send: 'Send',
+        modal_discover_title: 'Discovery (Online Users)',
+        btn_close: 'Close',
+        settings_title: 'Settings',
+        section_profile: 'Profile',
+        section_key_management: 'Key Management',
+        keypair_input_placeholder: 'Current keypair (JSON), e.g.: {"pub":"...","priv":"...","epub":"...","epriv":"..."}',
+        btn_apply_keypair: 'Apply Keypair',
+        btn_generate_keypair: 'Generate Random Keypair',
+        section_nodes: 'Relay Nodes',
+        new_peer_input_placeholder: 'Add single relay: wss://host/gun',
+        btn_add_peer: 'Add Node',
+        peers_list_label: 'Current relays (green=connected+enabled, gray=disconnected/disabled):',
+        section_room_settings: 'Room Settings',
+        room_input_placeholder: 'Room name, e.g.: tf-public-chat',
+        btn_apply_room: 'Apply Room',
+        btn_reset_room: 'Reset to Default',
+        section_room_key: 'Room Key',
+        room_key_input_placeholder: 'Room keypair (JSON), e.g.: {"pub":"...","priv":"...","epub":"...","epriv":"..."}',
+        btn_apply_room_key: 'Apply Room Key',
+        btn_reset_room_key: 'Reset to Default',
+        btn_copy_room_key: 'Copy Room Key',
+        manual_peer_pub_placeholder: 'Peer pub or paste JSON {"pub","epub"}',
+        btn_enter_priv_by_pub: 'Private via Pub/JSON',
+        btn_copy_my_pub: 'Copy My Pub',
+        my_pub_copied: 'My public key copied to clipboard',
+        anonymous: 'Anonymous',
+        me: 'Me',
+        private_chat: 'Private Chat',
+        unnamed: '(Unnamed)',
+        enable: 'Enable',
+        delete: 'Delete',
+        btn_edit: 'Edit',
+        btn_delete: 'Delete',
+        confirm_delete_message: 'Delete this message?',
+        edit_prompt: 'Edit message',
+        room_key_applied: 'Room key applied',
+        room_key_reset: 'Reset to default room key',
+        room_key_copied: 'Room key copied to clipboard',
+        missing_peer_epub: 'Recipient missing encryption pubkey (epub). Cannot send encrypted message.',
+        confirm_clear_chat: 'Are you sure you want to clear all messages in this room? Online users will also clear at the same time.',
+        status_connected_label: 'Connected',
+        status_messages_label: 'Messages',
+        status_room_label: 'Room',
+        status_mode_label: 'Mode',
+        mode_public: 'Public',
+        mode_private: 'Private'
+      },
+      zh: {
+        app_title: 'SimpleChat -便携式加密聊天',
+        header_my_pub_label: '我的公钥：',
+        btn_open_settings: '打开设置',
+        btn_open_discover: '打开发现列表',
+        btn_exit_private: '退出私聊',
+        btn_clear_chat: '清空聊天',
+        toggle_to_zh: 'EN',
+        form_name_placeholder: '你的昵称（可选）',
+        form_text_placeholder: '输入消息并回车/发送',
+        btn_send: '发送',
+        modal_discover_title: '发现列表（在线用户）',
+        btn_close: '关闭',
+        settings_title: '设置',
+        section_profile: '昵称设置',
+        section_key_management: '密钥管理',
+        keypair_input_placeholder: '当前密钥（JSON），如：{"pub":"...","priv":"...","epub":"...","epriv":"..."}',
+        btn_apply_keypair: '应用密钥',
+        btn_generate_keypair: '生成随机密钥',
+        section_nodes: '节点设置',
+        new_peer_input_placeholder: '添加单个节点：wss://host/gun',
+        btn_add_peer: '添加节点',
+        peers_list_label: '当前节点（绿点=已连接且启用，灰点=未连接或禁用）：',
+        section_room_settings: '房间设置',
+        room_input_placeholder: '房间名，例如：tf-public-chat',
+        btn_apply_room: '应用房间',
+        btn_reset_room: '恢复默认房间',
+        section_room_key: '房间密钥',
+        room_key_input_placeholder: '房间密钥（JSON），如：{"pub":"...","priv":"...","epub":"...","epriv":"..."}',
+        btn_apply_room_key: '应用房间密钥',
+        btn_reset_room_key: '重置默认',
+        btn_copy_room_key: '复制房间密钥',
+        manual_peer_pub_placeholder: '粘贴完整 JSON（含 pub/epub）或仅输入 pub',
+        btn_enter_priv_by_pub: '按公钥/JSON 私聊',
+        btn_copy_my_pub: '复制我的公钥',
+        my_pub_copied: '我的公钥已复制到剪贴板',
+        anonymous: '匿名',
+        me: '我',
+        private_chat: '私聊',
+        unnamed: '(未命名)',
+        enable: '启用',
+        delete: '删除',
+        btn_edit: '编辑',
+        btn_delete: '删除',
+        confirm_delete_message: '确定删除这条消息吗？',
+        edit_prompt: '编辑消息',
+        room_key_applied: '房间密钥已应用',
+        room_key_reset: '已重置为默认房间密钥',
+        room_key_copied: '房间密钥已复制到剪贴板',
+        missing_peer_epub: '对方缺少加密公钥（epub），无法加密发送',
+        confirm_clear_chat: '确定要清空当前房间的所有聊天记录吗？这会让在线用户同时清空。',
+        status_connected_label: '已连接',
+        status_messages_label: '消息数',
+        status_room_label: '房间',
+        status_mode_label: '模式',
+        mode_public: '公共',
+        mode_private: '私聊'
+      }
+    };
+
+    function loadLang() {
+      try { return localStorage.getItem(LS_KEY_LANG) || 'en'; } catch { return 'en'; }
+    }
+    function saveLang(v) {
+      try { localStorage.setItem(LS_KEY_LANG, v || 'en'); } catch {}
+    }
+    let lang = loadLang();
+    function t(k) {
+      return (i18n[lang] && i18n[lang][k]) || i18n.en[k] || k;
+    }
+
+    const DEFAULT_ROOM_PAIR = {
+      "pub":"oBVimf9AkK4Qgoh09mngSEOGiJZHSkSqORcpnyFKDcw.qVqrCt3pKFJGEF07liwgB8YOyZW_lWagZxNoqfPMmls",
+      "priv":"Xn3mbHp-k2O-g4eo8RvdXKjo9HgPZ9OuWedEKadWTIs",
+      "epub":"0T8SOtfn8oByP-SC8I8u2ZoYXxt8kj9gdiNXwKCbA3I.bx9uWnfyAvFYJae49LfWYKUwT_XzxmrQEVSgXITXSi0",
+      "epriv":"BLDeKLEg7uPdK7Sbjis1HQVfbwLuXlc1Wu89UHwF-f8"
+    };
+
+    function normalizePeerUrl(url) {
+      const u = (url || '').trim();
+      if (!u) return u;
+      if (u.startsWith('https://')) return 'wss://' + u.slice('https://'.length);
+      if (u.startsWith('http://')) return 'ws://' + u.slice('http://'.length);
+      return u;
+    }
+
+    function parsePeersInput(raw) {
+      const s = String(raw || '').trim();
+      if (!s) return [];
+      return [...new Set(s.split(/[,\n\s]+/).map(normalizePeerUrl).filter(Boolean))];
+    }
+
+    function loadPeers() {
+      try {
+        const raw = localStorage.getItem(LS_KEY_PEERS);
+        const base = DEFAULT_PEERS.map(normalizePeerUrl);
+        const arr = raw ? parsePeersInput(raw) : base;
+        const merged = [...new Set([...base, ...arr].map(normalizePeerUrl).filter(Boolean))];
+        return merged.length ? merged : base;
+      } catch {
+        return DEFAULT_PEERS.map(normalizePeerUrl);
+      }
+    }
+
+    function savePeers(arr) {
+      try {
+        localStorage.setItem(LS_KEY_PEERS, arr.join(', '));
+      } catch {}
+    }
+
+    let peersList = loadPeers();
+    function loadEnabledPeers() {
+      try {
+        const raw = localStorage.getItem(LS_KEY_ENABLED_PEERS);
+        const arr = raw ? parsePeersInput(raw) : peersList.slice();
+        const merged = [...new Set([...peersList, ...arr].map(normalizePeerUrl).filter(Boolean))];
+        return merged.length ? merged : peersList.slice();
+      } catch {
+        return peersList.slice();
+      }
+    }
+    function saveEnabledPeers(arr) {
+      try { localStorage.setItem(LS_KEY_ENABLED_PEERS, arr.join(', ')); } catch {}
+    }
+    let peers = loadEnabledPeers(); // 当前启用的节点集合
+    const gun = Gun({ peers });
+    const user = gun.user();
+    let userAuthPromise = null;
+    
+    function safeRoom(s) {
+      const r = String(s || '').trim();
+      return r || 'tf-public-chat';
+    }
+
+    function loadRoom() {
+      try { return safeRoom(localStorage.getItem(LS_KEY_ROOM)); } catch { return 'tf-public-chat'; }
+    }
+
+    function saveRoom(r) {
+      try { localStorage.setItem(LS_KEY_ROOM, safeRoom(r)); } catch {}
+    }
+
+    function loadRoomPair() {
+      try {
+        const raw = localStorage.getItem(LS_KEY_ROOM_PAIR);
+        return raw ? JSON.parse(raw) : DEFAULT_ROOM_PAIR;
+      } catch {
+        return DEFAULT_ROOM_PAIR;
+      }
+    }
+    function saveRoomPair(pair) {
+      try { localStorage.setItem(LS_KEY_ROOM_PAIR, JSON.stringify(pair)); } catch {}
+    }
+
+    let room = loadRoom();
+    let roomPair = loadRoomPair();
+    const MESSAGE_SCHEMA = {
+      type: 'rel',
+      name: 'messages',
+      primary: 'id',
+      autoInc: true,
+      indexes: ['ts', 'from', 'to']
+    };
+    const PAGE_SIZE = 20;
+    let messageRel = null;
+    let clearRef = null;
+    let clearedAt = 0;
+    let messageMap = new Map();
+    let loadingOlder = false;
+    let canLoadOlder = true;
+    let oldestId = null;
+    let latestId = null;
+    let dirty = false;
+    let liveMap = null;
+    let liveRows = new Map();
+    let liveMinId = null;
+
+    function padId(id, size) {
+      let s = '' + id;
+      while (s.length < size) { s = '0' + s; }
+      return s;
+    }
+
+    function seqSoul(name) {
+      return 'rel:' + name + ':seq';
+    }
+
+    function idxSoul(name, field) {
+      return 'rel:' + name + ':idx:' + field;
+    }
+
+    function userRowSoul(roomName, pub, id) {
+      return '~' + pub + '/rel:' + roomName + ':row:' + id;
+    }
+
+    function userRowRef(roomName, id) {
+      return user.get('rel:' + roomName + ':row:' + id);
+    }
+
+    function readSeq(seqRef) {
+      return new Promise((resolve) => {
+        seqRef.get('value').once((val) => {
+          const num = parseInt(val, 10);
+          if (!num && num !== 0) {
+            seqRef.once((raw) => {
+              let data = raw;
+              if (data && typeof data === 'object' && data.value !== undefined && data.value !== null) {
+                data = data.value;
+              }
+              const fallback = parseInt(data, 10);
+              if (!fallback && fallback !== 0) { resolve(0); return; }
+              resolve(fallback);
+            });
+            return;
+          }
+          resolve(num);
+        });
+      });
+    }
+
+    function ensureUserAuth() {
+      if (userAuthPromise) return userAuthPromise;
+      userAuthPromise = new Promise((resolve) => {
+        user.auth(myPair, (ack) => {
+          if (ack && ack.err) {
+            userAuthPromise = null;
+            resolve(false);
+            return;
+          }
+          resolve(true);
+        });
+      });
+      return userAuthPromise;
+    }
+
+    async function nextRelId(roomName) {
+      const seqRef = gun.get(seqSoul(roomName));
+      const current = await readSeq(seqRef);
+      const id = (current || 0) + 1;
+      await new Promise((resolve) => {
+        seqRef.get('value').put(id, () => resolve());
+      });
+      return id;
+    }
+
+    function writeIndexes(roomName, payload, id, soul) {
+      const key = 'id:' + padId(id, 10);
+      gun.get(idxSoul(roomName, 'primary')).get(key).put({ '#': soul });
+      ['ts', 'from', 'to'].forEach((field) => {
+        const value = payload[field];
+        if (value === undefined || value === null) return;
+        const idxKey = field + ':' + value + ':' + padId(id, 10);
+        gun.get(idxSoul(roomName, field)).get(idxKey).put({ '#': soul });
+      });
+    }
+
+    function removeIndexes(roomName, payload, id) {
+      const key = 'id:' + padId(id, 10);
+      gun.get(idxSoul(roomName, 'primary')).get(key).put(null);
+      ['ts', 'from', 'to'].forEach((field) => {
+        const value = payload[field];
+        if (value === undefined || value === null) return;
+        const idxKey = field + ':' + value + ':' + padId(id, 10);
+        gun.get(idxSoul(roomName, field)).get(idxKey).put(null);
+      });
+    }
+
+    async function insertUserMessage(roomName, payload) {
+      if (!messageRel) return null;
+      const ok = await ensureUserAuth();
+      if (!ok) return null;
+      const id = await nextRelId(roomName);
+      const data = Object.assign({}, payload, { id });
+      const soul = userRowSoul(roomName, myPair.pub, id);
+      await new Promise((resolve) => {
+        userRowRef(roomName, id).put(data, () => resolve());
+      });
+      writeIndexes(roomName, data, id, soul);
+      return { id, soul };
+    }
+
+    async function upsertUserMessage(roomName, id, payload) {
+      if (!messageRel) return false;
+      const ok = await ensureUserAuth();
+      if (!ok) return false;
+      const data = Object.assign({}, payload, { id });
+      const soul = userRowSoul(roomName, myPair.pub, id);
+      await new Promise((resolve) => {
+        userRowRef(roomName, id).put(data, () => resolve());
+      });
+      writeIndexes(roomName, data, id, soul);
+      return true;
+    }
+
+    async function deleteUserMessage(roomName, id, payload) {
+      if (!messageRel) return false;
+      const ok = await ensureUserAuth();
+      if (!ok) return false;
+      await new Promise((resolve) => {
+        userRowRef(roomName, id).put(null, () => resolve());
+      });
+      removeIndexes(roomName, payload, id);
+      return true;
+    }
+
+    function relClearRef(roomName) {
+      return gun.get('rel:' + roomName + ':clear');
+    }
+
+    function relPrimaryIdxRef(roomName) {
+      return gun.get('rel:' + roomName + ':idx:primary');
+    }
+
+    function stopLiveSync() {
+      if (liveMap && liveMap.off) { try { liveMap.off(); } catch {} }
+      liveMap = null;
+      liveRows.forEach((ref) => { if (ref && ref.off) { try { ref.off(); } catch {} } });
+      liveRows.clear();
+      liveMinId = null;
+    }
+
+    function stopRowWatch(id) {
+      const num = Number(id);
+      if (Number.isNaN(num)) return;
+      const ref = liveRows.get(num);
+      if (ref && ref.off) { try { ref.off(); } catch {} }
+      liveRows.delete(num);
+    }
+
+    function watchRowSoul(id, soul) {
+      if (id !== null && id !== undefined) {
+        const num = Number(id);
+        if (!Number.isNaN(num) && liveRows.has(num)) return;
+      }
+      const ref = gun.get(soul);
+      const rowId = (id !== null && id !== undefined && !Number.isNaN(Number(id))) ? Number(id) : null;
+      if (rowId !== null) liveRows.set(rowId, ref);
+      ref.on((data) => {
+        if (!data) return;
+        ingestItems([data], { stickBottom: isNearBottom() });
+      });
+    }
+
+    function startLiveSync(roomName, minId) {
+      stopLiveSync();
+      liveMap = relPrimaryIdxRef(roomName);
+      liveMinId = (minId !== undefined && minId !== null) ? Number(minId) : null;
+      liveMap.on((node) => {
+        if (!node) return;
+        Object.keys(node).forEach((key) => {
+          if (!key || key.indexOf('id:') !== 0) return;
+          const link = node[key];
+          const id = parseInt(String(key).slice(3), 10);
+          if (link && link['#']) {
+            if (liveMinId !== null && !Number.isNaN(id) && id <= liveMinId) return;
+            watchRowSoul(id, link['#']);
+            return;
+          }
+          if (link === null && !Number.isNaN(id)) {
+            if (messageMap.has(id)) {
+              messageMap.delete(id);
+              if (id === oldestId || id === latestId) {
+                const ids = Array.from(messageMap.keys()).map(Number).filter(n => !Number.isNaN(n));
+                oldestId = ids.length ? Math.min(...ids) : null;
+                latestId = ids.length ? Math.max(...ids) : null;
+              }
+              scheduleRender({ preserve: true });
+            }
+            stopRowWatch(id);
+          }
+        });
+      });
+    }
+
+    function setRoomRel(roomName) {
+      messageRel = gun.rel(roomName, MESSAGE_SCHEMA);
+      if (clearRef && clearRef.off) { try { clearRef.off(); } catch {} }
+      clearRef = relClearRef(roomName);
+      clearRef.on((evt) => {
+        if (!evt || !evt.ts) return;
+        clearedAt = Number(evt.ts) || Date.now();
+        resetMessages();
+        loadLatestPage();
+      });
+    }
+
+    let msgCount = 0;
+    let mode = 'public';
+
+    let myPair = null; // { pub, priv, epub, epriv }
+    async function loadOrGenPair() {
+      try {
+        const raw = localStorage.getItem(LS_KEY_PAIR);
+        if (raw) {
+          myPair = JSON.parse(raw);
+        }
+      } catch {}
+      if (!myPair || !myPair.pub || !myPair.priv) {
+        myPair = await Gun.SEA.pair();
+        try { localStorage.setItem(LS_KEY_PAIR, JSON.stringify(myPair)); } catch {}
+      }
+      await ensureUserAuth();
+    }
+
+    const $log = document.getElementById('log');
+    const $name = document.getElementById('name');
+    const $text = document.getElementById('text');
+    const $form = document.getElementById('send');
+    const $status = document.getElementById('status');
+    const $appTitle = document.getElementById('appTitle');
+    const $myPubText = document.getElementById('myPubText');
+    const $myPub = document.getElementById('myPub');
+    const $copyMyPub = document.getElementById('copyMyPub');
+    const $keypairInput = document.getElementById('keypairInput');
+    const $applyKeypair = document.getElementById('applyKeypair');
+    const $generateKeypair = document.getElementById('generateKeypair');
+    const $sendBtn = document.getElementById('sendBtn');
+    const $toggleLang = document.getElementById('toggleLang');
+    const $roomInput = document.getElementById('roomInput');
+    const $applyRoom = document.getElementById('applyRoom');
+    const $resetRoom = document.getElementById('resetRoom');
+    const $roomKeyInput = document.getElementById('roomKeyInput');
+    const $applyRoomKey = document.getElementById('applyRoomKey');
+    const $resetRoomKey = document.getElementById('resetRoomKey');
+    const $copyRoomKey = document.getElementById('copyRoomKey');
+    const $newPeerInput = document.getElementById('newPeerInput');
+    const $addPeer = document.getElementById('addPeer');
+    const $peersListView = document.getElementById('peersList');
+    const $peersListLabel = document.getElementById('peersListLabel');
+    const $openDiscover = document.getElementById('openDiscover');
+    const $closeDiscover = document.getElementById('closeDiscover');
+    const $discoverModal = document.getElementById('discoverModal');
+    const $discoverList = document.getElementById('discoverList');
+    const $discoverTitle = document.getElementById('discoverTitle');
+    const $manualPeerPubInput = document.getElementById('manualPeerPubInput');
+    const $enterPrivByPub = document.getElementById('enterPrivByPub');
+    const $exitPrivate = document.getElementById('exitPrivate');
+    const $clearChat = document.getElementById('clearChat');
+    const $openSettings = document.getElementById('openSettings');
+    const $settingsModal = document.getElementById('settingsModal');
+    const $closeSettings = document.getElementById('closeSettings');
+    const $settingsTitle = document.getElementById('settingsTitle');
+    const $profileTitle = document.getElementById('profileTitle');
+    const $keyMgmtTitle = document.getElementById('keyMgmtTitle');
+    const $nodesTitle = document.getElementById('nodesTitle');
+    const $roomTitle = document.getElementById('roomTitle');
+    const $roomKeyTitle = document.getElementById('roomKeyTitle');
+
+    $roomInput.value = room;
+    try { $roomKeyInput.value = JSON.stringify(roomPair); } catch {}
+    updateStatusText();
+    applyLangToUI();
+    setRoomRel(room);
+    loadLatestPage();
+
+    try {
+    $openSettings.addEventListener('click', () => { $settingsModal.style.display = 'block'; });
+    $closeSettings.addEventListener('click', () => { $settingsModal.style.display = 'none'; });
+  } catch {}
+
+    function joinSegments(segs) {
+      return (lang === 'zh') ? segs.join('，') : segs.join(', ');
+    }
+    function updateStatusText(count) {
+      const n = (typeof count === 'number') ? count : msgCount;
+      const segs = [
+        `${t('status_connected_label')}: ${peers.join(', ')}`,
+        `${t('status_messages_label')}: ${n}`,
+        `${t('status_room_label')}: ${room}`,
+        `${t('status_mode_label')}: ${mode === 'public' ? t('mode_public') : t('mode_private')}`
+      ];
+      $status.textContent = joinSegments(segs);
+    }
+
+    function applyLangToUI() {
+      try {
+        document.title = t('app_title');
+        $appTitle.textContent = t('app_title');
+        $myPubText.textContent = t('header_my_pub_label');
+        $openSettings.textContent = t('btn_open_settings');
+        $openDiscover.textContent = t('btn_open_discover');
+        $exitPrivate.textContent = t('btn_exit_private');
+        $clearChat.textContent = t('btn_clear_chat');
+        $toggleLang.textContent = (lang === 'en') ? t('toggle_to_zh') : t('toggle_to_zh');
+        $name.placeholder = t('form_name_placeholder');
+        $text.placeholder = t('form_text_placeholder');
+        $sendBtn.textContent = t('btn_send');
+        $discoverTitle.textContent = t('modal_discover_title');
+        $closeDiscover.textContent = t('btn_close');
+        if ($manualPeerPubInput) $manualPeerPubInput.placeholder = t('manual_peer_pub_placeholder');
+        if ($enterPrivByPub) $enterPrivByPub.textContent = t('btn_enter_priv_by_pub');
+        if ($copyMyPub) $copyMyPub.textContent = t('btn_copy_my_pub');
+        $settingsTitle.textContent = t('settings_title');
+        $closeSettings.textContent = t('btn_close');
+        if ($profileTitle) $profileTitle.textContent = t('section_profile');
+        $keyMgmtTitle.textContent = t('section_key_management');
+        $keypairInput.placeholder = t('keypair_input_placeholder');
+        $applyKeypair.textContent = t('btn_apply_keypair');
+        $generateKeypair.textContent = t('btn_generate_keypair');
+        $nodesTitle.textContent = t('section_nodes');
+        $newPeerInput.placeholder = t('new_peer_input_placeholder');
+        $addPeer.textContent = t('btn_add_peer');
+        $peersListLabel.textContent = t('peers_list_label');
+        $roomTitle.textContent = t('section_room_settings');
+        $roomInput.placeholder = t('room_input_placeholder');
+        $applyRoom.textContent = t('btn_apply_room');
+        $resetRoom.textContent = t('btn_reset_room');
+        $roomKeyTitle.textContent = t('section_room_key');
+        $roomKeyInput.placeholder = t('room_key_input_placeholder');
+        $applyRoomKey.textContent = t('btn_apply_room_key');
+        $resetRoomKey.textContent = t('btn_reset_room_key');
+        $copyRoomKey.textContent = t('btn_copy_room_key');
+      } catch {}
+      try { renderPeersList(); } catch {}
+      try { renderDiscovery(); } catch {}
+      updateStatusText();
+    }
+
+    $toggleLang.addEventListener('click', () => {
+      lang = (lang === 'en') ? 'zh' : 'en';
+      saveLang(lang);
+      applyLangToUI();
+    });
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function fmt(ts) {
+      try { return new Date(ts || Date.now()).toLocaleString(); } catch { return '' }
+    }
+
+    function shortPub(s, n = 10) {
+      const str = String(s || '');
+      return str.length > n ? (str.slice(0, n) + '…') : str;
+    }
+
+    let activePeerPub = null;
+    let activePeerEpub = null;
+    let activePeerName = null;
+    const secretCache = new Map();
+
+    function resetMessages() {
+      messageMap.clear();
+      oldestId = null;
+      latestId = null;
+      canLoadOlder = true;
+      renderMessages({ stickBottom: true });
+    }
+
+    function isNearBottom() {
+      return ($log.scrollHeight - $log.scrollTop - $log.clientHeight) < 40;
+    }
+
+    function renderMessages(opts) {
+      dirty = false;
+      const preserve = opts && opts.preserve;
+      const stickBottom = opts && opts.stickBottom;
+      const prevHeight = $log.scrollHeight;
+      const prevTop = $log.scrollTop;
+      const frag = document.createDocumentFragment();
+      const items = Array.from(messageMap.values())
+        .filter(x => x && x.text)
+        .sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+      $log.textContent = '';
+      for (const x of items) {
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<span class="who">${esc(x.name || t('anonymous'))}</span>` +
+                        `<span class="time">${esc(fmt(x.ts))}</span>` +
+                        `<div class="text">${esc(x.text)}</div>`;
+        const canEdit = !!(myPair && x.from && myPair.pub && x.from === myPair.pub);
+        if (canEdit) {
+          const actions = document.createElement('div');
+          actions.className = 'msg-actions';
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.textContent = t('btn_edit');
+          editBtn.addEventListener('click', () => {
+            const next = prompt(t('edit_prompt'), x.text || '');
+            if (next === null) return;
+            const trimmed = String(next).trim();
+            if (!trimmed) return;
+            updateMessageText(x.id, trimmed);
+          });
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.textContent = t('btn_delete');
+          delBtn.addEventListener('click', () => {
+            deleteMessageById(x.id);
+          });
+          actions.appendChild(editBtn);
+          actions.appendChild(delBtn);
+          div.appendChild(actions);
+        }
+        frag.appendChild(div);
+      }
+      $log.appendChild(frag);
+      if (preserve) {
+        const nextHeight = $log.scrollHeight;
+        $log.scrollTop = nextHeight - prevHeight + prevTop;
+      } else if (stickBottom) {
+        $log.scrollTop = $log.scrollHeight;
+      }
+      msgCount = items.length;
+      updateStatusText(items.length);
+    }
+
+    function scheduleRender(opts) {
+      if (dirty) return;
+      dirty = true;
+      requestAnimationFrame(() => renderMessages(opts));
+    }
+
+    function debounce(fn, wait) {
+      let timer = null;
+      return function() {
+        const args = arguments;
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(null, args), wait);
+      };
+    }
+
+    function resolveName(data) {
+      if (mode === 'private') {
+        return (data.from === myPair.pub) ? t('me') : (activePeerName || t('anonymous'));
+      }
+      return data.name || t('anonymous');
+    }
+
+    async function decodeText(data) {
+      if (data && data.cipher) {
+        if (mode === 'private') {
+          if (!activePeerEpub) return '';
+          const secret = await getSecretForPeer(activePeerEpub);
+          return await Gun.SEA.decrypt(data.cipher, secret) || '';
+        }
+        if (data.fromEpub) {
+          const secret = await Gun.SEA.secret(data.fromEpub, roomPair);
+          return await Gun.SEA.decrypt(data.cipher, secret) || '';
+        }
+      }
+      return data && data.text ? data.text : '';
+    }
+
+    async function ingestItems(items, opts) {
+      const list = items || [];
+      for (const data of list) {
+        if (!data || !data.id) continue;
+        if (data.deleted) {
+          messageMap.delete(data.id);
+          continue;
+        }
+        const ts = Number(data.ts) || Date.now();
+        if (clearedAt && ts < clearedAt) continue;
+        const text = await decodeText(data);
+        if (!text) continue;
+        messageMap.set(data.id, {
+          id: data.id,
+          name: resolveName(data),
+          nameRaw: data.name || '',
+          text,
+          ts,
+          from: data.from || '',
+          fromEpub: data.fromEpub || '',
+          to: data.to || '',
+          cipher: data.cipher || ''
+        });
+      }
+      const ids = Array.from(messageMap.keys()).map(Number).filter(n => !Number.isNaN(n));
+      if (ids.length) {
+        oldestId = Math.min(...ids);
+        latestId = Math.max(...ids);
+      }
+      scheduleRender(opts);
+    }
+
+    async function updateMessageText(id, nextText) {
+      const item = messageMap.get(id);
+      if (!item) return;
+      if (!myPair || !myPair.pub || item.from !== myPair.pub) return;
+      try {
+        const ts = Number(item.ts) || Date.now();
+        const from = item.from || myPair?.pub || '';
+        const fromEpub = item.fromEpub || myPair?.epub || '';
+        let cipher = '';
+        if (mode === 'public') {
+          const secret = await Gun.SEA.secret(roomPair.epub, myPair);
+          cipher = await Gun.SEA.encrypt(nextText, secret);
+        } else {
+          if (!activePeerEpub) return;
+          const secret = await getSecretForPeer(activePeerEpub);
+          cipher = await Gun.SEA.encrypt(nextText, secret);
+        }
+        const payload = { from, fromEpub, cipher, ts };
+        if (item.nameRaw) payload.name = item.nameRaw;
+        if (item.to) payload.to = item.to;
+        const ok = await upsertUserMessage(room, id, payload);
+        if (!ok) return;
+        messageMap.set(id, Object.assign({}, item, { text: nextText, cipher }));
+        scheduleRender({ preserve: true });
+      } catch {}
+    }
+
+    async function deleteMessageById(id) {
+      const item = messageMap.get(id);
+      if (!item) return;
+      if (!myPair || !myPair.pub || item.from !== myPair.pub) return;
+      const ok = confirm(t('confirm_delete_message'));
+      if (!ok) return;
+      try {
+        const ts = Number(item.ts) || Date.now();
+        const from = item.from || myPair?.pub || '';
+        const fromEpub = item.fromEpub || myPair?.epub || '';
+        const payload = { from, fromEpub, ts };
+        if (item.nameRaw) payload.name = item.nameRaw;
+        if (item.to) payload.to = item.to;
+        const ok2 = await deleteUserMessage(room, id, payload);
+        if (!ok2) return;
+        messageMap.delete(id);
+        if (id === oldestId || id === latestId) {
+          const ids = Array.from(messageMap.keys()).map(Number).filter(n => !Number.isNaN(n));
+          oldestId = ids.length ? Math.min(...ids) : null;
+          latestId = ids.length ? Math.max(...ids) : null;
+        }
+        scheduleRender({ preserve: true });
+      } catch {}
+    }
+
+    async function loadLatestPage() {
+      if (!messageRel) return;
+      const res = await messageRel.page({ limit: PAGE_SIZE, reverse: true });
+      const items = (res.items || []).slice().reverse();
+      canLoadOlder = items.length === PAGE_SIZE;
+      await ingestItems(items, { stickBottom: true });
+      startLiveSync(room, latestId);
+    }
+
+    async function loadOlderPage() {
+      if (loadingOlder || !canLoadOlder || oldestId === null) return;
+      loadingOlder = true;
+      const res = await messageRel.page({
+        startId: oldestId,
+        limit: PAGE_SIZE,
+        reverse: true
+      });
+      const items = (res.items || []).slice().reverse();
+      canLoadOlder = items.length === PAGE_SIZE;
+      await ingestItems(items, { preserve: true });
+      loadingOlder = false;
+    }
+
+    const debouncedLoadOlder = debounce(() => loadOlderPage(), 160);
+    $log.addEventListener('scroll', () => {
+      if ($log.scrollTop <= 20) {
+        debouncedLoadOlder();
+      }
+    });
+
+    function applyEnabledPeers(nextEnabled) {
+      const uniq = [...new Set(nextEnabled.map(normalizePeerUrl).filter(Boolean))];
+      peers = uniq;
+      saveEnabledPeers(peers);
+      try { gun.opt({ peers }); } catch {}
+      try { gun.get('key').get('heartbeat').put('heartbeat'); } catch {}
+      updateStatusText();
+      scheduleRender();
+      try { renderPeersList(); } catch {}
+    }
+
+    function applyRoom(next) {
+      const newRoom = safeRoom(next);
+      if (!newRoom) return;
+      if (newRoom === room) return;
+      room = newRoom;
+      saveRoom(room);
+      clearedAt = 0; 
+      resetMessages();
+      setRoomRel(room);
+      $roomInput.value = room;
+      mode = 'public'; activePeerPub = null; activePeerName = null; $exitPrivate.style.display = 'none';
+      updateStatusText();
+      try { renderPeersList(); } catch {}
+      loadLatestPage();
+    }
+
+    $applyRoom.addEventListener('click', () => {
+      applyRoom($roomInput.value);
+    });
+
+    $resetRoom.addEventListener('click', () => {
+      applyRoom('tf-public-chat');
+    });
+
+    function getConnectedPeersSet() {
+      try {
+        const optPeers = gun.back('opt.peers') || {};
+        const urls = Object.entries(optPeers)
+          .filter(([, peer]) => peer && peer.wire && peer.wire.readyState === 1 && peer.wire.OPEN === 1 && peer.wire.constructor?.name === 'WebSocket')
+          .map(([url]) => normalizePeerUrl(url));
+        return new Set(urls);
+      } catch {
+        return new Set();
+      }
+    }
+
+    function setPeerEnabled(url, enabled) {
+      const u = normalizePeerUrl(url);
+      const enabledSet = new Set(peers);
+      if (enabled) { enabledSet.add(u); } else { enabledSet.delete(u); }
+      applyEnabledPeers([...enabledSet]);
+    }
+
+    function removePeer(url) {
+      const u = normalizePeerUrl(url);
+      peersList = peersList.filter(x => normalizePeerUrl(x) !== u);
+      savePeers(peersList);
+      const enabledSet = new Set(peers);
+      enabledSet.delete(u);
+      applyEnabledPeers([...enabledSet]);
+    }
+
+    function renderPeersList() {
+      const connected = getConnectedPeersSet();
+      try { $peersListView.textContent = ''; } catch {}
+      const frag = document.createDocumentFragment();
+      for (const url of peersList) {
+        const item = document.createElement('div');
+        item.className = 'peer-item';
+        const dot = document.createElement('span');
+        const isEnabled = peers.includes(normalizePeerUrl(url));
+        const isConnected = connected.has(normalizePeerUrl(url));
+        dot.className = 'status-dot' + (isEnabled && isConnected ? ' connected' : '');
+        const label = document.createElement('code');
+        label.className = 'peer-url';
+        label.textContent = url;
+        const enableBox = document.createElement('input');
+        enableBox.type = 'checkbox';
+        enableBox.checked = isEnabled;
+        enableBox.title = t('enable');
+        enableBox.addEventListener('change', () => setPeerEnabled(url, !!enableBox.checked));
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.textContent = t('delete');
+        delBtn.addEventListener('click', () => removePeer(url));
+        item.appendChild(dot);
+        item.appendChild(label);
+        item.appendChild(enableBox);
+        item.appendChild(delBtn);
+        frag.appendChild(item);
+      }
+      $peersListView.appendChild(frag);
+    }
+
+    $addPeer?.addEventListener('click', () => {
+      const u = normalizePeerUrl(($newPeerInput?.value || '').trim());
+      if (!u) return;
+      if (!peersList.includes(u)) {
+        peersList = [...peersList, u];
+        savePeers(peersList);
+      }
+      try { $newPeerInput.value = ''; } catch {}
+      try { renderPeersList(); } catch {}
+    });
+
+    setInterval(() => { try { renderPeersList(); } catch {} }, 2000);
+
+    function applyRoomKeyFromInput() {
+      const raw = ($roomKeyInput.value || '').trim();
+      if (!raw) return;
+      try {
+        const next = JSON.parse(raw);
+        if (!next || !next.pub || !next.priv || !next.epub || !next.epriv) return;
+        roomPair = next;
+        saveRoomPair(roomPair);
+        alert(t('room_key_applied'));
+      } catch {}
+    }
+    $applyRoomKey.addEventListener('click', applyRoomKeyFromInput);
+    $resetRoomKey.addEventListener('click', () => {
+      try {
+        roomPair = DEFAULT_ROOM_PAIR;
+        $roomKeyInput.value = JSON.stringify(roomPair);
+        saveRoomPair(roomPair);
+        alert(t('room_key_reset'));
+      } catch {}
+    });
+    $copyRoomKey.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(roomPair));
+        alert(t('room_key_copied'));
+      } catch {}
+    });
+
+    async function clearRoomHistory() {
+      const ts = Date.now();
+      clearedAt = ts;
+      try { clearRef.put({ by: myPair?.pub || 'unknown', ts }); } catch {}
+      resetMessages();
+    }
+
+    $clearChat.addEventListener('click', () => {
+      const ok = confirm(t('confirm_clear_chat'));
+      if (!ok) return;
+      clearRoomHistory();
+    });
+
+    $form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = ($name.value || '').trim() || t('anonymous');
+      const text = ($text.value || '').trim();
+      if (!text) return;
+      if (mode === 'public') {
+        const sendPub = async () => {
+          try {
+            const ts = Date.now();
+            const secret = await Gun.SEA.secret(roomPair.epub, myPair);
+            const cipher = await Gun.SEA.encrypt(text, secret);
+            const payload = { name, from: myPair.pub, fromEpub: myPair.epub, cipher, ts };
+            const res = await insertUserMessage(room, payload);
+            if (!res) return;
+            messageMap.set(res.id, {
+              id: res.id,
+              name,
+              nameRaw: name,
+              text,
+              ts,
+              from: myPair.pub,
+              fromEpub: myPair.epub,
+              to: '',
+              cipher
+            });
+            latestId = res.id;
+            if (oldestId === null) oldestId = res.id;
+            scheduleRender({ stickBottom: true });
+          } catch {}
+        };
+        sendPub();
+      } else if (mode === 'private' && activePeerPub) {
+        const sendPriv = async () => {
+          try {
+            if (!activePeerEpub) { alert(t('missing_peer_epub')); return; }
+            const ts = Date.now();
+            const secret = await getSecretForPeer(activePeerEpub);
+            const cipher = await Gun.SEA.encrypt(text, secret);
+            const payload = { from: myPair.pub, fromEpub: myPair.epub, to: activePeerPub, cipher, ts };
+            const res = await insertUserMessage(room, payload);
+            if (!res) return;
+            messageMap.set(res.id, {
+              id: res.id,
+              name: t('me'),
+              nameRaw: '',
+              text,
+              ts,
+              from: myPair.pub,
+              fromEpub: myPair.epub,
+              to: activePeerPub,
+              cipher
+            });
+            latestId = res.id;
+            if (oldestId === null) oldestId = res.id;
+            scheduleRender({ stickBottom: true });
+          } catch {}
+        };
+        sendPriv();
+      }
+      $text.value = '';
+      $text.focus();
+    });
+
+    window.addEventListener('load', () => {
+      try { $text.focus(); } catch {}
+    });
+
+    const presenceStore = new Map(); // pub -> { pub, name, ts, epub }
+    function renderDiscovery() {
+      const now = Date.now();
+      const items = Array.from(presenceStore.values())
+        .filter(x => x && x.pub && (now - (Number(x.ts) || 0) < 300000)) 
+        .filter(x => !myPair || x.pub !== myPair.pub) 
+        .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
+      const frag = document.createDocumentFragment();
+      $discoverList.textContent = '';
+      for (const x of items) {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.justifyContent = 'space-between';
+        div.style.border = '1px solid #ddd';
+        div.style.borderRadius = '6px';
+        div.style.padding = '8px 10px';
+        div.style.margin = '6px 0';
+        const left = document.createElement('div');
+        const displayName = String(x.name || '').trim();
+        const displayPub = shortPub(x.pub);
+        left.innerHTML = `${esc(displayName || t('unnamed'))} <code style="opacity:.75">${esc(displayPub)}</code>`;
+        left.title = x.pub || '';
+        const right = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = t('private_chat');
+        btn.dataset.pub = x.pub;
+        btn.onclick = () => { enterPrivateChat(x.pub, x.name, x.epub); try { $discoverModal.style.display = 'none'; } catch {} };
+        right.appendChild(btn);
+        div.appendChild(left);
+        div.appendChild(right);
+        frag.appendChild(div);
+      }
+      $discoverList.appendChild(frag);
+    }
+
+    function heartbeatPresence() {
+      const name = ($name.value || '').trim();
+      try {
+        gun.get(PRESENCE_ROOT).get(myPair.pub).put({ pub: myPair.pub, epub: myPair.epub, name, ts: Date.now() });
+      } catch {}
+      try {
+        presenceStore.set(myPair.pub, { pub: myPair.pub, epub: myPair.epub, name, ts: Date.now() });
+        renderDiscovery();
+      } catch {}
+    }
+
+    function startPresence() {
+      gun.get(PRESENCE_ROOT).map().on((data, pub) => {
+        if (!data || !pub) return;
+        presenceStore.set(pub, { pub, epub: data.epub || '', name: data.name || '', ts: Number(data.ts) || Date.now() });
+        renderDiscovery();
+      });
+      heartbeatPresence();
+      setInterval(heartbeatPresence, 15000);
+    }
+
+    async function getSecretForPeer(peerEpub) {
+      const key = String(peerEpub || '');
+      if (!key) throw new Error('缺少对方 epub');
+      if (secretCache.has(key)) return secretCache.get(key);
+      const secret = await Gun.SEA.secret(peerEpub, myPair);
+      secretCache.set(key, secret);
+      return secret;
+    }
+
+    function enterPrivateChat(peerPub, peerName, peerEpub) {
+      if (!peerPub) return;
+      activePeerPub = peerPub;
+      activePeerEpub = peerEpub || '';
+      activePeerName = peerName || peerPub;
+      mode = 'private';
+      clearedAt = 0;
+      resetMessages();
+      const pairKey = [myPair.pub, peerPub].sort().join('|');
+      room = 'priv-' + pairKey;
+      setRoomRel(room);
+      $exitPrivate.style.display = '';
+      $roomInput.value = room;
+      loadLatestPage();
+    }
+
+    $openDiscover.addEventListener('click', () => {
+      $discoverModal.style.display = 'block';
+      try { renderDiscovery(); } catch {}
+    });
+    $closeDiscover.addEventListener('click', () => {
+      $discoverModal.style.display = 'none';
+    });
+    $enterPrivByPub?.addEventListener('click', () => {
+      const pubRaw = ($manualPeerPubInput?.value || '').trim();
+      if (!pubRaw) return;
+      let pub = pubRaw;
+      let epubFromJson = '';
+      if (pubRaw.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(pubRaw);
+          if (parsed && typeof parsed === 'object') {
+            if (parsed.pub) pub = String(parsed.pub);
+            if (parsed.epub) epubFromJson = String(parsed.epub);
+          }
+        } catch {}
+      } else if (pubRaw.includes('pub') && pubRaw.includes('epub')) {
+        try {
+          const mPub = pubRaw.match(/\"pub\"\s*:\s*\"([^\"]+)\"/);
+          const mEpub = pubRaw.match(/\"epub\"\s*:\s*\"([^\"]+)\"/);
+          if (mPub) pub = mPub[1];
+          if (mEpub) epubFromJson = mEpub[1];
+        } catch {}
+      }
+      const info = presenceStore.get(pub);
+      const name = info?.name || '';
+      const epub = epubFromJson || info?.epub || '';
+      enterPrivateChat(pub, name, epub);
+      try { $discoverModal.style.display = 'none'; } catch {}
+    });
+    $exitPrivate.addEventListener('click', () => {
+      $discoverModal.style.display = 'none';
+      activePeerEpub = null;
+      applyRoom('tf-public-chat');
+    });
+
+    (async () => {
+      await loadOrGenPair();
+      try {
+        const pub = myPair.pub || '';
+        $myPub.textContent = pub ? shortPub(pub) : '(无)';
+        $myPub.title = pub || '';
+      } catch {}
+      try { $keypairInput.value = JSON.stringify(myPair); } catch {}
+      startPresence();
+    })();
+
+    $copyMyPub?.addEventListener('click', async () => {
+      try {
+        const pub = myPair?.pub || '';
+        const epub = myPair?.epub || '';
+        if (!pub) return;
+        await navigator.clipboard.writeText(JSON.stringify({ pub, epub }));
+        alert(t('my_pub_copied'));
+      } catch {}
+    });
+
+    function applyKeypairFromInput() {
+      const raw = ($keypairInput.value || '').trim();
+      if (!raw) return;
+      try {
+        const next = JSON.parse(raw);
+        if (!next || !next.pub || !next.priv) return;
+        myPair = next;
+        secretCache.clear();
+        userAuthPromise = null;
+        try { localStorage.setItem(LS_KEY_PAIR, JSON.stringify(myPair)); } catch {}
+        const pub = myPair.pub || '';
+        $myPub.textContent = pub ? shortPub(pub) : '(无)';
+        $myPub.title = pub || '';
+        $discoverModal.style.display = 'none';
+        applyRoom('tf-public-chat');
+        heartbeatPresence();
+        ensureUserAuth();
+      } catch {}
+    }
+    $applyKeypair.addEventListener('click', applyKeypairFromInput);
+
+    $generateKeypair.addEventListener('click', async () => {
+      try {
+        myPair = await Gun.SEA.pair();
+        secretCache.clear();
+        userAuthPromise = null;
+        try { localStorage.setItem(LS_KEY_PAIR, JSON.stringify(myPair)); } catch {}
+        const pub2 = myPair.pub || '';
+        $myPub.textContent = pub2 ? shortPub(pub2) : '(无)';
+        $myPub.title = pub2 || '';
+        $keypairInput.value = JSON.stringify(myPair);
+        $discoverModal.style.display = 'none';
+        applyRoom('tf-public-chat');
+        heartbeatPresence();
+        ensureUserAuth();
+      } catch {}
+    });
+  </script>
+</body>
+</html>
