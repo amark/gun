@@ -12,6 +12,7 @@ require('./core');
 require('./on');
 require('./map');
 require('./set');
+require('./rel');
 require('./mesh');
 require('./websocket');
 require('./localStorage');
