@@ -52,4 +52,56 @@ gun.get('test').get('video').on(async data => {
   img.src = data; // Beware: Some browsers memory leak fast src updates.
 });
 
+// === AUDIO STREAMING WITH FADE-IN/OUT ===
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const mic = await stream.from.getUserMedia({ audio: true });
+const src = audioCtx.createMediaStreamSource(mic);
+const proc = audioCtx.createScriptProcessor(2048, 1, 1);
+
+src.connect(proc);
+proc.connect(audioCtx.destination);
+
+proc.onaudioprocess = async e => {
+  const input = e.inputBuffer.getChannelData(0);
+  const output = new Float32Array(input.length);
+  const fade = 128;
+
+  for (let i = 0; i < fade; i++) {
+    output[i] = input[i] * (i / fade); // fade in
+  }
+  for (let i = fade; i < input.length - fade; i++) {
+    output[i] = input[i]; // middle
+  }
+  for (let i = input.length - fade; i < input.length; i++) {
+    output[i] = input[i] * ((input.length - i) / fade); // fade out
+  }
+
+  const int16 = new Int16Array(output.length);
+  for (let i = 0; i < output.length; i++) {
+    int16[i] = Math.max(-32768, Math.min(32767, output[i] * 32768));
+  }
+
+  let b64 = btoa(String.fromCharCode(...new Uint8Array(int16.buffer)));
+  if(pass.value){ b64 = await SEA.encrypt(b64, pass.value) }
+  gun.get('test').get('audio').put(b64);
+};
+
+gun.get('test').get('audio').on(async data => {
+  if(!data) return;
+  if(pass.value){ data = await SEA.decrypt(data, pass.value) }
+  const bin = atob(data);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0; i<bin.length; i++){ bytes[i] = bin.charCodeAt(i) }
+  const buf = audioCtx.createBuffer(1, bytes.length / 2, 44100);
+  const chan = buf.getChannelData(0);
+  for(let i=0; i<chan.length; i++){
+    const s = (bytes[i*2+1] << 8) | bytes[i*2];
+    chan[i] = (s > 32767 ? s - 65536 : s) / 32768;
+  }
+  const player = audioCtx.createBufferSource();
+  player.buffer = buf;
+  player.connect(audioCtx.destination);
+  player.start();
+});
+
 }());</script>
