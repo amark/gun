@@ -37,7 +37,7 @@
       record.ing.start()
     }
 
-    function error(err) { console.log(err) }
+    function error(err) { console.error(err) }
 
     if (type === 'Camera') {
       navigator.getMedia({ video: true, audio: true }, load, error)

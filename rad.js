@@ -1,5 +1,5 @@
 ;(function(){ // RAD
-	console.log("Warning: Experimental rewrite of RAD to use Book. It is not API compatible with RAD yet and is very alpha.");
+	console.warn("Experimental rewrite of RAD to use Book. It is not API compatible with RAD yet and is very alpha.");
 	var sT = setTimeout, Book = sT.Book || require('gun/src/book'), RAD = sT.RAD || (sT.RAD = function(opt){
 		opt = opt || {};
 		opt.file = String(opt.file || 'radata');
@@ -184,7 +184,7 @@
 
 ;(function(){ return;
 	var get;
-	try { get = fetch } catch (e){ console.log("WARNING! need `npm install node-fetch@2.6`"); get = fetch = require('node-fetch') };
+	try { get = fetch } catch (e){ console.warn("need `npm install node-fetch@2.6`"); get = fetch = require('node-fetch') };
 	if(!get){ return }
 
 	var sT = setTimeout, RAD = sT.RAD, put = RAD.put, get = RAD.get;

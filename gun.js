@@ -652,7 +652,7 @@
 			var ERR = "Error: Invalid graph!";
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 			var L = JSON.stringify, MD = 2147483647, State = Gun.state;
-			var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
+			var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.warn("You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
 
 		}());
 
@@ -756,7 +756,11 @@
 		var obj_each = function(o,f){ Object.keys(o).forEach(f,o) }, text_rand = String.random, turn = setTimeout.turn, valid = Gun.valid, state_is = Gun.state.is, state_ify = Gun.state.ify, u, empty = {}, C;
 
 		Gun.log = function(){ return (!Gun.log.off && C.log.apply(C, arguments)), [].slice.call(arguments).join(' ') };
+		Gun.warn = function(){ return (!Gun.log.off && !Gun.warn.off && C.warn.apply(C, arguments)), [].slice.call(arguments).join(' ') };
+		Gun.error = function(){ return (!Gun.log.off && !Gun.error.off && C.error.apply(C, arguments)), [].slice.call(arguments).join(' ') };
 		Gun.log.once = function(w,s,o){ return (o = Gun.log.once)[w] = o[w] || 0, o[w]++ || Gun.log(s) };
+		Gun.warn.once = function(w,s,o){ return (o = Gun.warn.once)[w] = o[w] || 0, o[w]++ || Gun.warn(s) };
+		Gun.error.once = function(w,s,o){ return (o = Gun.error.once)[w] = o[w] || 0, o[w]++ || Gun.error(s) };
 
 		if(typeof window !== "undefined"){ (window.GUN = window.Gun = Gun).window = window }
 		try{ if(typeof MODULE !== "undefined"){ MODULE.exports = Gun } }catch(e){}
@@ -912,7 +916,7 @@
 			var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 			if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || (u === tmp[':'] && u === tmp['=']) || u === tmp['>'])){ // convert from old format
 				if(!valid(tmp)){
-					if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
+					if(!(soul = ((tmp||'')._||'')['#'])){ console.warn("chain not yet supported for", tmp, '...', msg, cat); return; }
 					gun = cat.root.$.get(soul);
 					return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 						if('_' == k || u === (state = state_is(tmp, k))){ return }
@@ -1068,7 +1072,7 @@
 			var gun, tmp;
 			if(typeof key === 'string'){
 				if(key.length == 0) {	
-					(gun = this.chain())._.err = {err: Gun.log('0 length key!', key)};
+					(gun = this.chain())._.err = {err: Gun.warn('0 length key!', key)};
 					if(cb){ cb.call(gun, gun._.err) }
 					return gun;
 				}
@@ -1159,7 +1163,7 @@
 				gun = tmp(this, key);
 			}
 			if(!gun){
-				(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+				(gun = this.chain())._.err = {err: Gun.warn('Invalid get request!', key)}; // CLEAN UP
 				if(cb){ cb.call(gun, gun._.err) }
 				return gun;
 			}
@@ -1488,7 +1492,7 @@
 			return gun;
 		}
 		function none(gun,opt,chain){
-			Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+			Gun.warn.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			(chain = gun.chain())._.nix = gun.once(function(data, key){ chain._.on('in', this._) });
 			chain._.lex = gun._.lex; // TODO: Better approach in future? This is quick for now.
 			return chain;
@@ -1563,7 +1567,7 @@
 				gun.on('in', map, chain._);
 				return chain;
 			}
-			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+			Gun.warn.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			chain = gun.chain();
 			gun.map().on(function(data, key, msg, eve){
 				var next = (cb||noop).call(this, data, key, msg, eve);
@@ -1600,7 +1604,7 @@
 			}
 			gun.put(function(go){
 				item.get(function(soul, o, msg){ // TODO: BUG! We no longer have this option? & go error not handled?
-					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
+					if(!soul){ return cb.call(gun, {err: Gun.warn('Only a node can be linked! Not "' + msg.put + '"!')}) }
 					(tmp = {})[soul] = {'#': soul}; go(tmp);
 				},true);
 			})
@@ -1614,12 +1618,14 @@
 		var noop = function(){}
 		var parse = JSON.parseAsync || function(t,cb,r){ var u, d = +new Date; try{ cb(u, JSON.parse(t,r), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
 		var json = JSON.stringifyAsync || function(v,cb,r,s){ var u, d = +new Date; try{ cb(u, JSON.stringify(v,r,s), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
-		json.sucks = function(d){ if(d > 99){ console.log("Warning: JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
+		json.sucks = function(d){ if(d > 99){ console.warn("JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
 
 		function Mesh(root){
 			var mesh = function(){};
 			var opt = root.opt || {};
 			opt.log = opt.log || console.log;
+			opt.warn = opt.warn || console.warn;
+			opt.error = opt.error || console.error;
 			opt.gap = opt.gap || opt.wait || 0;
 			opt.max = opt.max || (opt.memory? (opt.memory * 999 * 999) : 300000000) * 0.3;
 			opt.pack = opt.pack || (opt.max * 0.01 * 0.01);
@@ -1853,7 +1859,7 @@
 				if(!tmp){ return }
 				if(t? 3 > tmp.length : !tmp.length){ return } // TODO: ^
 				if(!t){try{tmp = (1 === tmp.length? tmp[0] : JSON.stringify(tmp));
-				}catch(e){return opt.log('DAM JSON stringify error', e)}}
+				}catch(e){return opt.error('DAM JSON stringify error', e)}}
 				if(!tmp){ return }
 				send(tmp, peer);
 			}
@@ -1901,7 +1907,7 @@
 				var tmp = +(new Date); tmp = (tmp - (peer.met||tmp));
 				mesh.bye.time = ((mesh.bye.time || tmp) + tmp) / 2;
 			}
-			mesh.hear['!'] = function(msg, peer){ opt.log('Error:', msg.err) }
+			mesh.hear['!'] = function(msg, peer){ opt.error('Error:', msg.err) }
 			mesh.hear['?'] = function(msg, peer){
 				if(msg.pid){
 					if(!peer.pid){ peer.pid = msg.pid }
@@ -1942,7 +1948,7 @@
 				if(tmp = console.STAT){ tmp.peers = mesh.near }
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
 				var souls = Object.keys(root.next||''); // TODO: .keys( is slow
-				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+				if(souls.length > 9999 && !console.SUBS){ console.warn(console.SUBS = "You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
 				setTimeout.each(souls, function(soul){ var node = root.next[soul];
 					if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
 					setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
@@ -2028,7 +2034,7 @@
 		var noop = function(){}, store, u;
 		try{store = (Gun.window||noop).localStorage}catch(e){}
 		if(!store){
-			Gun.log("Warning: No localStorage exists to persist data to!");
+			Gun.warn("No localStorage exists to persist data to!");
 			store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 		}
 
@@ -2075,7 +2081,7 @@
 					try{!err && store.setItem(opt.prefix, tmp);
 					}catch(e){ err = stop = e || "localStorage failure" }
 					if(err){
-						Gun.log(err + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
+						Gun.error(err + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 						root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 					}
 					size = tmp.length;
@@ -2096,7 +2102,7 @@
 ;(function(){
 	var u;
 	if(''+u == typeof Gun){ return }
-	var DEP = function(n){ console.warn("Warning! Deprecated internal utility will break in next version:", n) }
+	var DEP = function(n){ console.warn("Deprecated internal utility will break in next version:", n) }
 	// Generic javascript utilities.
 	var Type = Gun;
 	//Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}

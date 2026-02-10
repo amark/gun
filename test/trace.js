@@ -11,7 +11,7 @@ Trace.log = function(evname, msg) {
 //     Trace.on('trace.end', {code: Trace.traces.join('\n')});
 //   }, 1000);
   if (!msg) {
-    //console.log('WARN, empty message: ',msg);
+    //console.warn('Empty message: ',msg);
 //         msg=evname;
 //         evname = 'GUN';
   }

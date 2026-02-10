@@ -10,7 +10,7 @@
       var json = await S.parse(data);
       if(false === pair){ // don't verify!
         var raw = await S.parse(json.m);
-        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(raw) }catch(e){console.warn(e)} }
         return raw;
       }
       opt = opt || {};
@@ -30,10 +30,10 @@
       }
       var r = check? await S.parse(json.m) : u;
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e); // mismatched owner FOR MARTTI
+      console.warn(e); // mismatched owner FOR MARTTI
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -73,7 +73,7 @@
       }
       var r = check? await S.parse(json.m) : u;
       O.fall_soul = tmp['#']; O.fall_key = tmp['.']; O.fall_val = data; O.fall_state = tmp['>'];
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     }
     SEA.opt.fallback = 2;
