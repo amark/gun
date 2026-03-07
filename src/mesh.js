@@ -332,14 +332,37 @@ function Mesh(root){
 	root.on('hi', function(peer, tmp){ this.to.next(peer);
 		if(tmp = console.STAT){ tmp.peers = mesh.near }
 		if(opt.super){ return } // temporary (?) until we have better fix/solution?
-		var souls = Object.keys(root.next||''); // TODO: .keys( is slow
-		if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
-		setTimeout.each(souls, function(soul){ var node = root.next[soul];
-			if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
+		// Iterate over all souls in the local graph and request them from the new peer.
+		// This ensures a more complete data handshake upon connection/reconnection.
+		var souls_in_graph = Object.keys(root.graph || '');
+		if(souls_in_graph.length > 1000 && !console.GRAPHSYNC){ console.log(console.GRAPHSYNC = "Warning: Graph sync on 'hi' has over 1000 souls. This might be intensive.") }
+		setTimeout.each(souls_in_graph, function(soul){
+			// For each soul in our graph, tell the new peer to get it.
+			// This ensures that if the peer has a newer version or we missed something, we'll get it.
+			// And reciprocally, the other peer will do the same for its graph.
+			mesh.say({get: {'#': soul}}, peer);
+		});
+
+		// Additionally, ensure that any specific interests from root.next are also requested,
+		// especially if they involve specific fields rather than whole nodes.
+		// This part handles more fine-grained existing subscriptions.
+		var souls_in_next = Object.keys(root.next||'');
+		if(souls_in_next.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+		setTimeout.each(souls_in_next, function(soul){ var node = root.next[soul];
+			// If we're already getting the whole soul from the graph sync, skip redundant full GET.
+			// However, specific field GETs might still be useful if graph[soul] was a stub.
+			if(souls_in_graph.includes(soul) && (opt.super || (node.ask||'')[''])){
+				// Already covered by graph sync's full soul GET.
+			} else if(opt.super || (node.ask||'')['']){
+				mesh.say({get: {'#': soul}}, peer); return
+			}
+			
 			setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
-				// is the lack of ## a !onion hint?
+				// If the soul was part of graph sync, we expect a full PUT, so hashed GET for a field might conflict or be redundant.
+				// However, if graph[soul] was missing or this is a very specific field subscription, it might still be needed.
+				// For simplicity and to ensure all interests are covered, let this proceed.
+				// AXE/DAM should handle deduping if data is already incoming.
 				mesh.say({'##': String.hash((root.graph[soul]||'')[key]), get: {'#': soul, '.': key}}, peer);
-				// TODO: Switch this so Book could route?
 			})
 		});
 	});
