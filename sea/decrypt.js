@@ -29,10 +29,10 @@
         }
       }
       var r = await S.parse(new shim.TextDecoder('utf8').decode(ct));
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) { 
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
