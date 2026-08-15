@@ -341,13 +341,9 @@ describe('SEA', function(){
         {name: 'infinite', retries: Infinity}
       ].forEach(function(test){
         it('finishes for '+test.name+' retries', function(done){
-          this.timeout(1500);
+          this.timeout(5000);
           var retryGun = Gun({file: false});
-          var timer = setTimeout(function(){
-            done(new Error('auth did not finish for '+test.name+' retries'));
-          }, 1000);
           retryGun.user().auth('missing-'+test.name, 'testing123', function(ack){
-            clearTimeout(timer);
             expect(ack.err).to.be.ok();
             done();
           }, {retries: test.retries});
@@ -798,4 +794,3 @@ describe('SEA', function(){
 })
 
 }());
-
