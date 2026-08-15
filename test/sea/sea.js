@@ -750,6 +750,79 @@ describe('SEA', function(){
 
   });
 
+  describe('SEA.share', function() {
+    it('shares with multiple recipients (string data)', function(done){(async function(){
+      var alice = await SEA.pair();
+      var bob = await SEA.pair();
+      var carol = await SEA.pair();
+      var capsule = await SEA.share('top secret', alice, [bob, carol]);
+      expect(capsule).to.be.ok();
+      expect(capsule.e).to.be(alice.epub);
+      expect(Object.keys(capsule.s)).to.have.length(2);
+      var b = await SEA.unshare(capsule, bob);
+      expect(b).to.be('top secret');
+      var c = await SEA.unshare(capsule, carol);
+      expect(c).to.be('top secret');
+      done();
+    }())})
+
+    it('shares objects and JSON-serializable data', function(done){(async function(){
+      var alice = await SEA.pair();
+      var bob = await SEA.pair();
+      var data = { msg: 'hello', n: 42, list: [1, 2, 3], nested: { deep: true } };
+      var capsule = await SEA.share(data, alice, bob);
+      var round = await SEA.unshare(capsule, bob);
+      expect(round).to.be.eql(data);
+      // capsule itself must be storable (JSON-safe) so it can live in a Gun graph
+      expect(JSON.parse(JSON.stringify(capsule)).c).to.be(capsule.c);
+      done();
+    }())})
+
+    it('accepts bare epub strings as recipients', function(done){(async function(){
+      var alice = await SEA.pair();
+      var bob = await SEA.pair();
+      var capsule = await SEA.share('for bob only', alice, bob.epub);
+      expect(capsule.s[bob.epub]).to.be.ok();
+      expect(await SEA.unshare(capsule, bob)).to.be('for bob only');
+      done();
+    }())})
+
+    it('blocks recipients without a key slot', function(done){(async function(){
+      var alice = await SEA.pair();
+      var bob = await SEA.pair();
+      var eve = await SEA.pair();
+      var capsule = await SEA.share('secret', alice, bob);
+      expect(await SEA.unshare(capsule, eve)).to.be(undefined);
+      done();
+    }())})
+
+    it('blocks tampered capsules', function(done){(async function(){
+      var alice = await SEA.pair();
+      var bob = await SEA.pair();
+      var capsule = await SEA.share('secret', alice, bob);
+      var tampered = { e: capsule.e, s: capsule.s, c: capsule.c.slice(0, 10) + capsule.c.slice(11) };
+      expect(await SEA.unshare(tampered, bob)).to.be(undefined);
+      done();
+    }())})
+
+    it('supports callback style', function(done){
+      SEA.pair(function(alice){
+      SEA.pair(function(bob){
+      SEA.share('cb secret', alice, bob, function(capsule){
+      SEA.unshare(capsule, bob, function(data){
+      expect(data).to.be('cb secret');
+      done();
+      });});});});
+    })
+
+    it('supports self-share (sender as recipient)', function(done){(async function(){
+      var alice = await SEA.pair();
+      var capsule = await SEA.share('to myself', alice, alice);
+      expect(await SEA.unshare(capsule, alice)).to.be('to myself');
+      done();
+    }())})
+  });
+
   describe.skip('Frozen', function () {
     it('Across spaces', function(done){
       var gun = Gun();
