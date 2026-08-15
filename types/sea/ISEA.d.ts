@@ -134,7 +134,9 @@ export interface ISEA {
    */
   decrypt<T extends unknown = any>(
     message: string,
-    pair: { epriv: string }
+    pair: { epriv: string },
+    callback?: ((data: T | undefined) => void) | null,
+    options?: { skipParse?: boolean }
   ): Promise<T>;
 
   /**
@@ -145,7 +147,9 @@ export interface ISEA {
    */
   decrypt<T extends unknown = any>(
     message: string,
-    passphrase: string
+    passphrase: string,
+    callback?: ((data: T | undefined) => void) | null,
+    options?: { skipParse?: boolean }
   ): Promise<T>;
 
   /**

@@ -28,7 +28,8 @@
           return await SEA.decrypt(data, pair, cb, opt);
         }
       }
-      var r = await S.parse(new shim.TextDecoder('utf8').decode(ct));
+      var raw = new shim.TextDecoder('utf8').decode(ct);
+      var r = opt.skipParse ? raw : await S.parse(raw);
       if(cb){ try{ cb(r) }catch(e){console.log(e)} }
       return r;
     } catch(e) { 
