@@ -34,7 +34,7 @@
 		root.on('bye', function(peer){
 			this.to.next(peer);
 			if(!peer.url){ return } // ignore WebRTC disconnects for now.
-			if(!nav.onLine){ peer.retry = 1 }
+			if(false === nav.onLine){ peer.retry = 1 } else { peer.retry = 0 }
 			if(peer.retry){ return }
 			if(axe.fall){ delete axe.fall[peer.url || peer.id] }
 			(function next(){
