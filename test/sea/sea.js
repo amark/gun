@@ -1,4 +1,4 @@
-var root;
+﻿var root;
 var Gun;
 (function(){
   var env;
@@ -748,6 +748,87 @@ describe('SEA', function(){
       }
     }())})
 
+  });
+
+  describe('SEA.role', function() {
+    it('grants and verifies a role token', function(done){(async function(){
+      var admin = await SEA.pair();
+      var bob = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'editor', null, { expiry: Date.now() + 86400000 });
+      expect(token).to.be.ok();
+      var payload = await SEA.role.verify(token, admin.pub);
+      expect(payload.u).to.be(bob.pub);
+      expect(payload.r).to.be('editor');
+      expect(payload.exp).to.be.above(Date.now());
+      expect(payload.iat).to.be.above(0);
+      done();
+    }())})
+
+    it('has() matches role and user', function(done){(async function(){
+      var admin = await SEA.pair();
+      var bob = await SEA.pair();
+      var eve = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'editor');
+      expect(await SEA.role.has(token, 'editor', bob.pub, admin.pub)).to.be(true);
+      expect(await SEA.role.has(token, 'admin', bob.pub, admin.pub)).to.be(false);
+      expect(await SEA.role.has(token, 'editor', eve.pub, admin.pub)).to.be(false);
+      done();
+    }())})
+
+    it('tokens without expiry never expire', function(done){(async function(){
+      var admin = await SEA.pair();
+      var bob = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'viewer');
+      var payload = await SEA.role.verify(token, admin.pub);
+      expect(payload.exp).to.be(0);
+      expect(await SEA.role.verify(token, admin.pub, null, { now: Date.now() + 1000 * 60 * 60 * 24 * 365 * 100 })).to.be.ok();
+      done();
+    }())})
+
+    it('blocks tokens from the wrong administrator', function(done){(async function(){
+      var admin = await SEA.pair();
+      var mallory = await SEA.pair();
+      var bob = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'admin');
+      expect(await SEA.role.verify(token, mallory.pub)).to.be(undefined);
+      done();
+    }())})
+
+    it('blocks expired tokens', function(done){(async function(){
+      var admin = await SEA.pair();
+      var bob = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'viewer', null, { expiry: Date.now() - 1000 });
+      expect(await SEA.role.verify(token, admin.pub)).to.be(undefined);
+      done();
+    }())})
+
+    it('blocks tampered tokens', function(done){(async function(){
+      var admin = await SEA.pair();
+      var bob = await SEA.pair();
+      var token = await SEA.role.grant(admin, bob.pub, 'editor');
+      var tampered = token.slice(0, 20) + token.slice(21);
+      expect(await SEA.role.verify(tampered, admin.pub)).to.be(undefined);
+      done();
+    }())})
+
+    it('supports callback style', function(done){
+      SEA.pair(function(admin){
+      SEA.pair(function(bob){
+      SEA.role.grant(admin, bob.pub, 'editor', function(token){
+      SEA.role.verify(token, admin.pub, function(payload){
+      expect(payload.r).to.be('editor');
+      done();
+      });});});});
+    })
+
+    it('rejects missing arguments', function(done){(async function(){
+      var admin = await SEA.pair();
+      expect(await SEA.role.grant(null, 'x', 'editor')).to.be(undefined);
+      expect(await SEA.role.grant(admin, null, 'editor')).to.be(undefined);
+      expect(await SEA.role.grant(admin, 'x', null)).to.be(undefined);
+      expect(await SEA.role.verify(undefined, admin.pub)).to.be(undefined);
+      done();
+    }())})
   });
 
   describe.skip('Frozen', function () {
