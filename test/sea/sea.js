@@ -750,6 +750,74 @@ describe('SEA', function(){
 
   });
 
+  describe('SEA.timelock', function() {
+    it('locks and unlocks after solving the puzzle (string data)', function(done){(async function(){
+      var capsule = await SEA.timelock('time secret', null, null, { rounds: 1000, until: Date.now() + 86400000 });
+      expect(capsule).to.be.ok();
+      expect(capsule.rounds).to.be(1000);
+      expect(capsule.until).to.be.above(Date.now());
+      expect(capsule.seed).to.be.ok();
+      expect(capsule.c.indexOf('SEA')).to.be(0); // ciphertext, not plaintext
+      expect(await SEA.timelock.unlock(capsule)).to.be('time secret');
+      done();
+    }())})
+
+    it('locks and unlocks object data', function(done){(async function(){
+      var data = { msg: 'hello', n: 42, list: [1, 2, 3] };
+      var capsule = await SEA.timelock(data, null, null, { rounds: 1000 });
+      var round = await SEA.timelock.unlock(capsule);
+      expect(round).to.be.eql(data);
+      done();
+    }())})
+
+    it('capsule contains no key material', function(done){(async function(){
+      var capsule = await SEA.timelock('no key leak', null, null, { rounds: 1000 });
+      var flat = JSON.stringify(capsule);
+      expect(flat.indexOf('no key leak')).to.be(-1);
+      done();
+    }())})
+
+    it('blocks tampered ciphertext', function(done){(async function(){
+      var capsule = await SEA.timelock('secret', null, null, { rounds: 1000 });
+      var tampered = Object.assign({}, capsule, { c: capsule.c.slice(0, 10) + capsule.c.slice(11) });
+      expect(await SEA.timelock.unlock(tampered)).to.be(undefined);
+      done();
+    }())})
+
+    it('blocks capsules with the wrong seed', function(done){(async function(){
+      var capsule = await SEA.timelock('secret', null, null, { rounds: 1000 });
+      var wrong = Object.assign({}, capsule, { seed: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' });
+      expect(await SEA.timelock.unlock(wrong)).to.be(undefined);
+      done();
+    }())})
+
+    it('signs metadata and blocks forged metadata', function(done){(async function(){
+      var alice = await SEA.pair();
+      var capsule = await SEA.timelock('signed', alice, null, { rounds: 1000 });
+      expect(capsule.sig).to.be.ok();
+      expect(capsule.pub).to.be(alice.pub);
+      expect(await SEA.timelock.unlock(capsule)).to.be('signed');
+      var forged = Object.assign({}, capsule, { until: 1 });
+      expect(await SEA.timelock.unlock(forged)).to.be(undefined);
+      done();
+    }())})
+
+    it('enforces opt.max as an anti-DoS guard', function(done){(async function(){
+      var capsule = await SEA.timelock('secret', null, null, { rounds: 1000 });
+      expect(await SEA.timelock.unlock(capsule, null, { max: 100 })).to.be(undefined);
+      expect(await SEA.timelock.unlock(capsule, null, { max: 10000 })).to.be('secret');
+      done();
+    }())})
+
+    it('supports callback style', function(done){
+      SEA.timelock('cb lock', null, function(capsule){
+      SEA.timelock.unlock(capsule, function(data){
+      expect(data).to.be('cb lock');
+      done();
+      });}, { rounds: 1000 });
+    })
+  });
+
   describe.skip('Frozen', function () {
     it('Across spaces', function(done){
       var gun = Gun();
