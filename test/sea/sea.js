@@ -331,6 +331,26 @@ describe('SEA', function(){
       })
     })
 
+    describe('auth retry bounds', function(){
+      [
+        {name: 'default', retries: undefined},
+        {name: 'zero', retries: 0},
+        {name: 'one', retries: 1},
+        {name: 'negative', retries: -1},
+        {name: 'fractional', retries: 0.5},
+        {name: 'infinite', retries: Infinity}
+      ].forEach(function(test){
+        it('finishes for '+test.name+' retries', function(done){
+          this.timeout(5000);
+          var retryGun = Gun({file: false});
+          retryGun.user().auth('missing-'+test.name, 'testing123', function(ack){
+            expect(ack.err).to.be.ok();
+            done();
+          }, {retries: test.retries});
+        });
+      });
+    });
+
     it('logout, login via {pub}', function(done){
       var pub = user.is.pub;
       user.leave();
@@ -774,4 +794,3 @@ describe('SEA', function(){
 })
 
 }());
-
