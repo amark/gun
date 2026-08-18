@@ -101,7 +101,7 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 	var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 	if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || (u === tmp[':'] && u === tmp['=']) || u === tmp['>'])){ // convert from old format
 		if(!valid(tmp)){
-			if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
+			if(!(soul = ((tmp||'')._||'')['#'])){ console.warn("chain not yet supported for", tmp, '...', msg, cat); return; }
 			gun = cat.root.$.get(soul);
 			return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if('_' == k || u === (state = state_is(tmp, k))){ return }

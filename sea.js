@@ -50,7 +50,7 @@
     var u;
     if(u+''== typeof btoa){
       if(u+'' == typeof Buffer){
-        try{ global.Buffer = USE("buffer", 1).Buffer }catch(e){ console.log("Please `npm install buffer` or add it to your package.json !") }
+        try{ global.Buffer = USE("buffer", 1).Buffer }catch(e){ console.warn("Please `npm install buffer` or add it to your package.json !") }
       }
       global.btoa = function(data){ return Buffer.from(data, "binary").toString("base64") };
       global.atob = function(data){ return Buffer.from(data, "base64").toString("binary") };
@@ -205,7 +205,7 @@
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
+      console.warn("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
     }}
 
     module.exports = api
@@ -291,7 +291,7 @@
       data = (typeof data == 'string')? data : await shim.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
-        if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(rsha) }catch(e){console.warn(e)} }
         return rsha;
       }
       salt = salt || shim.random(9);
@@ -304,10 +304,10 @@
       }, key, opt.length || (S.pbkdf2.ks * 8))
       data = shim.random(data.length)  // Erase data in case of passphrase
       var r = shim.Buffer.from(work, 'binary').toString(opt.encode || 'base64')
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) { 
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -323,10 +323,10 @@
     var S = USE('./settings');
 
     SEA.name = SEA.name || (async (cb, opt) => { try {
-      if(cb){ try{ cb() }catch(e){console.log(e)} }
+      if(cb){ try{ cb() }catch(e){console.warn(e)} }
       return;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -378,10 +378,10 @@
       } dh = dh || {};
 
       var r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -411,7 +411,7 @@
       && u !== await SEA.verify(check, pair)){ // don't sign if we already signed it.
         var r = await S.parse(check);
         if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
-        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
         return r;
       }
       var pub = pair.pub;
@@ -423,10 +423,10 @@
       var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
       if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -447,7 +447,7 @@
       var json = await S.parse(data);
       if(false === pair){ // don't verify!
         var raw = await S.parse(json.m);
-        if(cb){ try{ cb(raw) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(raw) }catch(e){console.warn(e)} }
         return raw;
       }
       opt = opt || {};
@@ -467,10 +467,10 @@
       }
       var r = check? await S.parse(json.m) : u;
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e); // mismatched owner FOR MARTTI
+      console.warn(e); // mismatched owner FOR MARTTI
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -510,7 +510,7 @@
       }
       var r = check? await S.parse(json.m) : u;
       O.fall_soul = tmp['#']; O.fall_key = tmp['.']; O.fall_val = data; O.fall_state = tmp['>'];
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     }
     SEA.opt.fallback = 2;
@@ -562,10 +562,10 @@
       }
       if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) { 
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -605,10 +605,10 @@
         }
       }
       var r = await S.parse(new shim.TextDecoder('utf8').decode(ct));
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) { 
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -644,10 +644,10 @@
         return ecdhSubtle.exportKey('jwk', derivedKey).then(({ k }) => k);
       })
       var r = derived;
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -685,7 +685,7 @@
       "cb": A callback function after all things are done.
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.block is set, SEA will look for block before syncing.
       */
-      console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
+      console.warn('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
@@ -706,7 +706,7 @@
         return
       })()
 
-      if (!certificants) return console.log("No certificant found.")
+      if (!certificants) return console.warn("No certificant found.")
 
       const expiry = opt.expiry && (typeof opt.expiry === 'number' || typeof opt.expiry === 'string') ? parseFloat(opt.expiry) : null
       const readPolicy = (policy || {}).read ? policy.read : null
@@ -717,7 +717,7 @@
       const readBlock = block.read && (typeof block.read === 'string' || (block.read || {})['#']) ? block.read : null
       const writeBlock = typeof block === 'string' ? block : block.write && (typeof block.write === 'string' || block.write['#']) ? block.write : null
 
-      if (!readPolicy && !writePolicy) return console.log("No policy found.")
+      if (!readPolicy && !writePolicy) return console.warn("No policy found.")
 
       // reserved keys: c, e, r, w, rb, wb
       const data = JSON.stringify({
@@ -733,7 +733,7 @@
 
       var r = certificate
       if(!opt.raw){ r = 'SEA'+JSON.stringify(r) }
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
       SEA.err = e;
@@ -784,7 +784,7 @@
         const hash = shim.Buffer.from(sha1, 'binary')
         return hash.toString('hex', hash.length - 8)  // 16-bit ID as hex
       } catch (e) {
-        console.log(e)
+        console.warn(e)
         throw e
       }
     });
@@ -875,12 +875,12 @@
         if(!alias){ err = "No user." }
         if((pass||'').length < 8){ err = "Password too short!" }
         if(err){
-          cb({err: Gun.log(err)});
+          cb({err: Gun.error(err)});
           return gun;
         }
       }
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.error("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -889,7 +889,7 @@
         act.pubs = pubs;
         if(pubs && !opt.already){
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-          var ack = {err: Gun.log('User already created!')};
+          var ack = {err: Gun.error('User already created!')};
           cat.ing = false;
           (cb || noop)(ack);
           gun.leave();
@@ -975,7 +975,7 @@
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.warn("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -1053,7 +1053,7 @@
           } else { setTimeout(function(){ (root._).on('auth', at) },1) } // if not, hackily add a timeout.
           //at.on('auth', at) // Arrgh, this doesn't work without event "merge" code, but "merge" code causes stack overflow and crashes after logging in & trying to write data.
         }catch(e){
-          Gun.log("Your 'auth' callback crashed with:", e);
+          Gun.warn("Your 'auth' callback crashed with:", e);
         }
       }
       act.h = function(data){
@@ -1089,7 +1089,7 @@
         root.get('~'+act.pair.pub).get('auth').put(auth, cb || noop);
       }
       act.err = function(e){
-        var ack = {err: Gun.log(e || 'User cannot be found!')};
+        var ack = {err: Gun.error(e || 'User cannot be found!')};
         cat.ing = false;
         (cb || noop)(ack);
       }
@@ -1164,7 +1164,7 @@
     }
     // If authenticated user wants to delete his/her account, let's support it!
     User.prototype.delete = async function(alias, pass, cb){
-      console.log("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
+      console.warn("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
       var gun = this, root = gun.back(-1), user = gun.back('user');
       try {
         user.auth(alias, pass, function(ack){
@@ -1176,7 +1176,7 @@
           (cb || noop)({ok: 0});
         });
       } catch (e) {
-        Gun.log('User.delete failed! Error:', e);
+        Gun.error('User.delete failed! Error:', e);
       }
       return gun;
     }

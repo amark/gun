@@ -5,7 +5,7 @@ if(typeof Gun === 'undefined'){ return }
 var noop = function(){}, store, u;
 try{store = (Gun.window||noop).localStorage}catch(e){}
 if(!store){
-	Gun.log("Warning: No localStorage exists to persist data to!");
+	Gun.warn("No localStorage exists to persist data to!");
 	store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 }
 
@@ -52,7 +52,7 @@ Gun.on('create', function lg(root){
 			try{!err && store.setItem(opt.prefix, tmp);
 			}catch(e){ err = stop = e || "localStorage failure" }
 			if(err){
-				Gun.log(err + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
+				Gun.error(err + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 				root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 			}
 			size = tmp.length;

@@ -23,7 +23,7 @@ Gun.chain.map = function(cb, opt, t){
 		gun.on('in', map, chain._);
 		return chain;
 	}
-	Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
+	Gun.warn.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 	chain = gun.chain();
 	gun.map().on(function(data, key, msg, eve){
 		var next = (cb||noop).call(this, data, key, msg, eve);

@@ -18,12 +18,12 @@
         if(!alias){ err = "No user." }
         if((pass||'').length < 8){ err = "Password too short!" }
         if(err){
-          cb({err: Gun.log(err)});
+          cb({err: Gun.error(err)});
           return gun;
         }
       }
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.error("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -32,7 +32,7 @@
         act.pubs = pubs;
         if(pubs && !opt.already){
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-          var ack = {err: Gun.log('User already created!')};
+          var ack = {err: Gun.error('User already created!')};
           cat.ing = false;
           (cb || noop)(ack);
           gun.leave();

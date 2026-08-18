@@ -16,7 +16,7 @@
       data = (typeof data == 'string')? data : await shim.stringify(data);
       if('sha' === (opt.name||'').toLowerCase().slice(0,3)){
         var rsha = shim.Buffer.from(await sha(data, opt.name), 'binary').toString(opt.encode || 'base64')
-        if(cb){ try{ cb(rsha) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(rsha) }catch(e){console.warn(e)} }
         return rsha;
       }
       salt = salt || shim.random(9);
@@ -29,10 +29,10 @@
       }, key, opt.length || (S.pbkdf2.ks * 8))
       data = shim.random(data.length)  // Erase data in case of passphrase
       var r = shim.Buffer.from(work, 'binary').toString(opt.encode || 'base64')
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) { 
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }

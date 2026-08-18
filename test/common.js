@@ -4001,7 +4001,7 @@ describe('Gun', function(){
 			        }
 			        return false;
 			      } else {
-			        console.warn('filter should be an Array');
+			        console.warn('Filter should be an Array');
 			        return false;
 			      }
 			    }
@@ -7490,7 +7490,7 @@ describe('Gun', function(){
 									return cb.call(gun, null, data);
 								}, opt);
 							} else {
-								//console.Log("Warning! You have no persistence layer to save to!");
+								//console.warn("You have no persistence layer to save to!");
 								cb.call(gun, null); // This is in memory success, hardly "success" at all.
 							}
 						});

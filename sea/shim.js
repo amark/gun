@@ -41,7 +41,7 @@
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
     catch(e){
-      console.log("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
+      console.warn("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
     }}
 
     module.exports = api

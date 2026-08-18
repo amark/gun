@@ -5,10 +5,10 @@
     var S = require('./settings');
 
     SEA.name = SEA.name || (async (cb, opt) => { try {
-      if(cb){ try{ cb() }catch(e){console.log(e)} }
+      if(cb){ try{ cb() }catch(e){console.warn(e)} }
       return;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
@@ -60,10 +60,10 @@
       } dh = dh || {};
 
       var r = { pub: sa.pub, priv: sa.priv, /* pubId, */ epub: dh.epub, epriv: dh.epriv }
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }

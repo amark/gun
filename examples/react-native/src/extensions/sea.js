@@ -894,7 +894,7 @@
           (cb || noop)({ok: 0});
         });
       } catch (e) {
-        Gun.log('User.delete failed! Error:', e);
+        Gun.error('User.delete failed! Error:', e);
       }
       return gun;
     }

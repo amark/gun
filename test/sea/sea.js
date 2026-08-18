@@ -50,7 +50,7 @@ describe('SEA', function(){
         indexedDB.deleteDatabase('radatatest').onsuccess = function(e){ done() }
     });
     /*it('generates aeskey from jwk', function(done) { // DEPRECATED!!!
-      console.log("WARNING: THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
+      console.warn("THIS DOES NOT WORK IN BROWSER!!!! NEEDS FIX");
       SEA.opt.aeskey('x','x').then(k => {
         //console.log("DATA", k.data);
         expect(k.data.toString('base64')).to.be('Xd6JaIf2dUybFb/jpEGuSAbfL96UABMR4IvxEGIuC74=')

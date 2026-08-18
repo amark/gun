@@ -19,7 +19,7 @@
       && u !== await SEA.verify(check, pair)){ // don't sign if we already signed it.
         var r = await S.parse(check);
         if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
-        if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+        if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
         return r;
       }
       var pub = pair.pub;
@@ -31,10 +31,10 @@
       var r = {m: json, s: shim.Buffer.from(sig, 'binary').toString(opt.encode || 'base64')}
       if(!opt.raw){ r = 'SEA' + await shim.stringify(r) }
 
-      if(cb){ try{ cb(r) }catch(e){console.log(e)} }
+      if(cb){ try{ cb(r) }catch(e){console.warn(e)} }
       return r;
     } catch(e) {
-      console.log(e);
+      console.warn(e);
       SEA.err = e;
       if(SEA.throw){ throw e }
       if(cb){ cb() }
