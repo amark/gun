@@ -1,6 +1,7 @@
 <p id="readme"><a href="https://gun.eco/"><img width="40%" src="https://cldup.com/TEy9yGh45l.svg"/></a><img width="50%" align="right" vspace="25" src="https://gun.eco/see/demo.gif"/></p>
 
 [![](https://data.jsdelivr.com/v1/package/npm/gun/badge)](https://www.jsdelivr.com/package/npm/gun)
+[![npm](https://img.shields.io/npm/v/gun.svg)](https://www.npmjs.com/package/gun)
 ![Build](https://github.com/amark/gun/actions/workflows/ci.yml/badge.svg)
 [![Gitter](https://img.shields.io/gitter/room/amark/gun.js.svg)](http://chat.gun.eco)
 
