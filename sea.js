@@ -970,7 +970,10 @@
       var pass = (alias || (pair && !(pair.priv && pair.epriv))) && typeof args[1] === 'string' ? args[1] : null;
       var cb = args.filter(arg => typeof arg === 'function')[0] || null; // cb now can stand anywhere, after alias/pass or pair
       var opt = args && args.length > 1 && typeof args[args.length-1] === 'object' ? args[args.length-1] : {}; // opt is always the last parameter which typeof === 'object' and stands after cb
-      var retries = typeof opt.retries === 'number' ? opt.retries : 9;
+      var retries = 9;
+      if(typeof opt.retries === 'number' && isFinite(opt.retries)){
+        retries = Math.max(0, Math.floor(opt.retries));
+      }
 
       var gun = this, cat = (gun._), root = gun.back(-1);
       
