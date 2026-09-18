@@ -16,7 +16,7 @@
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.warn("User is already being created or authenticated!"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -94,7 +94,7 @@
           } else { setTimeout(function(){ (root._).on('auth', at) },1) } // if not, hackily add a timeout.
           //at.on('auth', at) // Arrgh, this doesn't work without event "merge" code, but "merge" code causes stack overflow and crashes after logging in & trying to write data.
         }catch(e){
-          Gun.log("Your 'auth' callback crashed with:", e);
+          Gun.warn("Your 'auth' callback crashed with:", e);
         }
       }
       act.h = function(data){
@@ -130,7 +130,7 @@
         root.get('~'+act.pair.pub).get('auth').put(auth, cb || noop);
       }
       act.err = function(e){
-        var ack = {err: Gun.log(e || 'User cannot be found!')};
+        var ack = {err: Gun.error(e || 'User cannot be found!')};
         cat.ing = false;
         (cb || noop)(ack);
       }

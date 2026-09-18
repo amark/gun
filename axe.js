@@ -27,7 +27,7 @@
 		tmp = peers[id = 'http://localhost:8765/gun'] = peers[id] || {};
 		tmp.id = tmp.url = id; tmp.retry = tmp.retry || 0;
 		Gun.log.once("AXE", "AXE enabled: Trying to find network via (1) local peer (2) last used peers (3) a URL parameter, and last (4) hard coded peers.");
-		Gun.log.once("AXEWarn", "Warning: AXE is in alpha, use only for testing!");
+		Gun.warn.once("AXEWarn", "AXE is in alpha, use only for testing!");
 		var last = lS.peers || ''; if(last){ last += ' ' }
 		last += ((loc.search||'').split('peers=')[1]||'').split('&')[0];
 
