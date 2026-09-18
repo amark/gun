@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GUN reliable network read example</title>
+  <style>
+    body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.5 system-ui, sans-serif; }
+    button { padding: .65rem 1rem; margin-right: .5rem; }
+    code, pre { background: #f3f3f3; border-radius: .3rem; }
+    code { padding: .1rem .25rem; }
+    pre { padding: 1rem; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Reliable network reads</h1>
+  <p>
+    <code>.once()</code> is useful for a quick snapshot, but a local-first GUN client may have an
+    empty or older cached value before a peer responds. When an application must wait for a
+    particular revision, subscribe with <code>.on()</code>, ignore values that do not match, and
+    stop the subscription after the expected value arrives or a timeout expires.
+  </p>
+  <p>
+    This example also writes a manifest last and tags every part with the same revision. A fresh
+    cache-free GUN instance then reconstructs the record. This is useful when “another client can
+    read the complete value” is a stronger success condition than receiving a local write callback.
+  </p>
+
+  <button id="write">Write and verify</button>
+  <button id="read">Read latest</button>
+  <pre id="output">Ready.</pre>
+
+  <script src="../gun.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const peer = params.get('peer') || `${location.origin}/gun`;
+    const rootKey = params.get('key') || 'gun-reliable-network-read-example';
+    const gun = Gun({ peers: [peer] });
+    const root = gun.get(rootKey);
+    const output = document.getElementById('output');
+
+    function show(value) {
+      output.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    }
+
+    function waitForValue(node, predicate, timeout = 5000) {
+      return new Promise((resolve, reject) => {
+        let finished = false;
+        let subscription;
+        const timer = setTimeout(() => finish(new Error('Timed out waiting for the expected peer value.')), timeout);
+
+        function finish(error, value) {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          try {
+            if (subscription && typeof subscription.off === 'function') subscription.off();
+            else if (typeof node.off === 'function') node.off();
+          } catch (_) {}
+          if (error) reject(error);
+          else resolve(value);
+        }
+
+        const chain = node.on(value => {
+          let accepted = false;
+          try { accepted = predicate(value); } catch (_) {}
+          if (accepted) finish(null, value);
+        });
+        subscription = chain;
+        if (finished && chain && typeof chain.off === 'function') chain.off();
+      });
+    }
+
+    function put(node, value, timeout = 5000) {
+      return new Promise((resolve, reject) => {
+        let finished = false;
+        const timer = setTimeout(() => finish(new Error('Write callback timed out.')), timeout);
+        function finish(error) {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          if (error) reject(error);
+          else resolve();
+        }
+        node.put(value, ack => {
+          if (ack && ack.err) finish(new Error(ack.err));
+          else finish();
+        });
+      });
+    }
+
+    async function readRevision(source, expectedRevision = '') {
+      const manifest = await waitForValue(
+        source.get('manifest'),
+        value => Boolean(value && (!expectedRevision || value.revision === expectedRevision))
+      );
+      const count = Number(manifest.parts || 0);
+      if (!count || count > 100) throw new Error('Invalid manifest.');
+
+      const parts = await Promise.all(Array.from({ length: count }, (_, index) => waitForValue(
+        source.get('parts').get(String(index)),
+        value => Boolean(value && value.revision === manifest.revision && typeof value.text === 'string')
+      )));
+      return {
+        revision: manifest.revision,
+        value: JSON.parse(parts.map(part => part.text).join(''))
+      };
+    }
+
+    async function writeAndVerify() {
+      const revision = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const value = {
+        message: 'This complete record was reconstructed by a fresh GUN client.',
+        writtenAt: new Date().toISOString()
+      };
+      const serialized = JSON.stringify(value);
+      const partSize = Math.max(1, Math.ceil(serialized.length / 2));
+      const parts = serialized.match(new RegExp(`.{1,${partSize}}`, 'gs')) || [];
+
+      show('Writing revision-tagged parts…');
+      await Promise.all(parts.map((text, index) => put(
+        root.get('parts').get(String(index)),
+        { revision, index, text }
+      )));
+
+      // Publish the commit marker only after every part has a successful callback.
+      await put(root.get('manifest'), {
+        revision,
+        parts: parts.length,
+        updatedAt: Date.now()
+      });
+
+      show('Verifying through a fresh cache-free GUN instance…');
+      const verifier = Gun({ peers: [peer], localStorage: false, radisk: false });
+      const verified = await readRevision(verifier.get(rootKey), revision);
+      if (JSON.stringify(verified.value) !== serialized) throw new Error('Verified value did not match the write.');
+      show(verified);
+    }
+
+    document.getElementById('write').onclick = () => writeAndVerify().catch(error => show(error.message));
+    document.getElementById('read').onclick = () => readRevision(root).then(show).catch(error => show(error.message));
+  </script>
+</body>
+</html>
