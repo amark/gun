@@ -187,6 +187,23 @@ describe('SEA', function(){
       });});});});});});});});});});});});});});});});});});});});});});});});});});});
     })
     
+    it('decrypt skipParse preserves string payloads', async function(){
+      var pair = await SEA.pair();
+      var values = [
+        '[hello there]',
+        '{"a":1}',
+        'true',
+        '1',
+        '[]'
+      ];
+
+      for(var i = 0; i < values.length; i++){
+        var enc = await SEA.encrypt(values[i], pair);
+        var dec = await SEA.decrypt(enc, pair, null, {skipParse: true});
+        expect(dec).to.be(values[i]);
+      }
+    })
+
     /*it('DOESNT DECRYPT SCIENTIFIC NOTATION', function(done){
       var pair, s, v;
       SEA.pair(function(pair){
