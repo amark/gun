@@ -1,0 +1,738 @@
+<!-- 用途：gun.rel 多表分页与增删改查交互演示 -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>gun.rel Relational Demo</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    header { padding: 16px; border-bottom: 1px solid #ddd; }
+    header .row { justify-content: space-between; }
+    main { padding: 16px; }
+    .panel { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    label { font-size: 12px; opacity: 0.8; }
+    input, select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 160px; }
+    button { padding: 6px 10px; border-radius: 6px; border: 1px solid #888; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+    th { background: rgba(0,0,0,0.04); }
+    .muted { opacity: 0.7; font-size: 12px; }
+    .actions { display: flex; gap: 8px; }
+    .hidden { display: none; }
+    .error { color: #b00020; font-size: 12px; }
+    .pill { padding: 2px 8px; border-radius: 999px; border: 1px solid #bbb; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <div id="appTitle">gun.rel Relational Demo</div>
+        <div class="muted" id="appSubtitle">Tables, auto-increment, paging, CRUD</div>
+      </div>
+      <div>
+        <button id="toggleLang" type="button">中文</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="panel" id="schemaPanel">
+      <div class="row">
+        <div>
+          <label id="tableNameLabel">Table Name</label><br />
+          <input id="tableName" placeholder="e.g. orders" />
+        </div>
+        <div>
+          <label id="fieldsLabel">Fields</label><br />
+          <input id="fieldsInput" placeholder="e.g. userId,total,ts" />
+        </div>
+        <div>
+          <label id="indexesLabel">Indexes (optional)</label><br />
+          <input id="indexesInput" placeholder="e.g. userId,ts" />
+        </div>
+        <div>
+          <label id="pageSizeLabel">Page Size</label><br />
+          <input id="pageSize" type="number" value="10" min="1" />
+        </div>
+        <div>
+          <label id="tableSelectLabel">Existing Tables</label><br />
+          <select id="tableSelect"></select>
+        </div>
+        <div>
+          <button id="createTable">Create Table</button>
+        </div>
+        <div>
+          <button id="loadTable" type="button">Load Table</button>
+        </div>
+      </div>
+      <div class="error" id="schemaError"></div>
+    </section>
+
+    <section class="panel hidden" id="dataPanel">
+      <div class="row">
+        <div class="muted" id="tableInfo"></div>
+      </div>
+      <div class="row">
+        <div>
+          <label id="newFieldLabel">Add Field</label><br />
+          <input id="newFieldInput" placeholder="e.g. price or detail.note" />
+        </div>
+        <div>
+          <button id="addFieldBtn" type="button">Add Field</button>
+        </div>
+        <div>
+          <label id="newIndexLabel">Add Index</label><br />
+          <input id="newIndexInput" placeholder="e.g. userId or detail.note" />
+        </div>
+        <div>
+          <button id="addIndexBtn" type="button">Add Index</button>
+        </div>
+      </div>
+      <form id="rowForm" class="row" autocomplete="off"></form>
+      <div class="row">
+        <button id="submitRow" type="button">Add</button>
+        <button id="cancelEdit" type="button" class="hidden">Cancel</button>
+        <div class="error" id="rowError"></div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button id="loadLatest" type="button">Latest Page</button>
+        <button id="loadOlder" type="button">Prev Page</button>
+        <button id="loadNewer" type="button">Next Page</button>
+        <div class="muted" id="pageInfo"></div>
+      </div>
+      <table>
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="../../gun.js"></script>
+  <script src="../../lib/rel.js"></script>
+  <script>
+    const gun = Gun({ peers: ['ws://localhost:8765/gun'] });
+    const $schemaPanel = document.getElementById('schemaPanel');
+    const $dataPanel = document.getElementById('dataPanel');
+    const $appTitle = document.getElementById('appTitle');
+    const $appSubtitle = document.getElementById('appSubtitle');
+    const $toggleLang = document.getElementById('toggleLang');
+    const $tableName = document.getElementById('tableName');
+    const $fieldsInput = document.getElementById('fieldsInput');
+    const $indexesInput = document.getElementById('indexesInput');
+    const $pageSize = document.getElementById('pageSize');
+    const $schemaError = document.getElementById('schemaError');
+    const $tableInfo = document.getElementById('tableInfo');
+    const $rowForm = document.getElementById('rowForm');
+    const $submitRow = document.getElementById('submitRow');
+    const $cancelEdit = document.getElementById('cancelEdit');
+    const $rowError = document.getElementById('rowError');
+    const $tableNameLabel = document.getElementById('tableNameLabel');
+    const $fieldsLabel = document.getElementById('fieldsLabel');
+    const $indexesLabel = document.getElementById('indexesLabel');
+    const $pageSizeLabel = document.getElementById('pageSizeLabel');
+    const $tableSelectLabel = document.getElementById('tableSelectLabel');
+    const $newFieldLabel = document.getElementById('newFieldLabel');
+    const $newIndexLabel = document.getElementById('newIndexLabel');
+    const $createTable = document.getElementById('createTable');
+    const $loadTable = document.getElementById('loadTable');
+    const $newFieldInput = document.getElementById('newFieldInput');
+    const $newIndexInput = document.getElementById('newIndexInput');
+    const $addFieldBtn = document.getElementById('addFieldBtn');
+    const $addIndexBtn = document.getElementById('addIndexBtn');
+    const $tableHead = document.getElementById('tableHead');
+    const $tableBody = document.getElementById('tableBody');
+    const $pageInfo = document.getElementById('pageInfo');
+    const $loadLatest = document.getElementById('loadLatest');
+    const $loadOlder = document.getElementById('loadOlder');
+    const $loadNewer = document.getElementById('loadNewer');
+    const $tableSelect = document.getElementById('tableSelect');
+
+    let rel = null;
+    let fields = [];
+    let indexes = [];
+    let editingId = null;
+    let currentMinId = null;
+    let currentMaxId = null;
+    let currentTableName = '';
+    let currentItems = new Map();
+    let liveMap = null;
+    let liveRows = new Map();
+    let liveTimer = null;
+    let currentView = 'latest';
+    let registryMap = null;
+    const tablesRegistry = new Map();
+    const REGISTRY_SOUL = 'app:rel:registry';
+
+    const LANG_KEY = 'rel_demo_lang';
+    const i18n = {
+      en: {
+        app_title: 'gun.rel Relational Demo',
+        app_subtitle: 'Tables, auto-increment, paging, CRUD',
+        table_name: 'Table Name',
+        fields: 'Fields',
+        indexes: 'Indexes (optional)',
+        page_size: 'Page Size',
+        existing_tables: 'Existing Tables',
+        create_table: 'Create Table',
+        load_table: 'Load Table',
+        add_field: 'Add Field',
+        add_index: 'Add Index',
+        add: 'Add',
+        save: 'Save',
+        cancel: 'Cancel',
+        edit: 'Edit',
+        delete: 'Delete',
+        latest_page: 'Latest Page',
+        prev_page: 'Prev Page',
+        next_page: 'Next Page',
+        id: 'ID',
+        actions: 'Actions',
+        select_table: 'Select a table',
+        empty_table: 'No tables',
+        ph_table: 'e.g. orders',
+        ph_fields: 'e.g. userId,total,ts',
+        ph_indexes: 'e.g. userId,ts',
+        ph_new_field: 'e.g. price or detail.note',
+        ph_new_index: 'e.g. userId or detail.note',
+        err_table_name: 'Please enter table name',
+        err_fields: 'Please enter at least one field',
+        err_row: 'Please enter at least one field value',
+        table_info: (name, f, i) => `Table: ${name} | Fields: ${f} | Indexes: ${i || 'None'}`,
+        page_info: (count, min, max) => `Rows ${count} | ID ${min} - ${max}`,
+        toggle_lang: '中文'
+      },
+      zh: {
+        app_title: 'gun.rel 关系型数据演示',
+        app_subtitle: '建表、自增主键、分页、增删改查',
+        table_name: '表名',
+        fields: '字段列表',
+        indexes: '索引字段（可选）',
+        page_size: '分页大小',
+        existing_tables: '已有表',
+        create_table: '建表',
+        load_table: '加载表',
+        add_field: '添加字段',
+        add_index: '添加索引',
+        add: '新增',
+        save: '保存',
+        cancel: '取消编辑',
+        edit: '编辑',
+        delete: '删除',
+        latest_page: '最新一页',
+        prev_page: '上一页（更旧）',
+        next_page: '下一页（更新）',
+        id: 'ID',
+        actions: '操作',
+        select_table: '选择已有表',
+        empty_table: '暂无表',
+        ph_table: '例如：orders',
+        ph_fields: '例如：userId,total,ts',
+        ph_indexes: '例如：userId,ts',
+        ph_new_field: '例如：price 或 detail.note',
+        ph_new_index: '例如：userId 或 detail.note',
+        err_table_name: '请填写表名',
+        err_fields: '请填写至少一个字段',
+        err_row: '请输入至少一个字段值',
+        table_info: (name, f, i) => `表：${name} | 字段：${f} | 索引：${i || '无'}`,
+        page_info: (count, min, max) => `当前 ${count} 条 | ID 范围 ${min} - ${max}`,
+        toggle_lang: 'EN'
+      }
+    };
+
+    function loadLang() {
+      try { return localStorage.getItem(LANG_KEY) || 'en'; } catch { return 'en'; }
+    }
+
+    function saveLang(v) {
+      try { localStorage.setItem(LANG_KEY, v); } catch {}
+    }
+
+    let lang = loadLang();
+
+    function t(key) {
+      return (i18n[lang] && i18n[lang][key]) || i18n.en[key] || key;
+    }
+
+    function applyLangToUI() {
+      document.documentElement.lang = lang;
+      $appTitle.textContent = t('app_title');
+      $appSubtitle.textContent = t('app_subtitle');
+      $tableNameLabel.textContent = t('table_name');
+      $fieldsLabel.textContent = t('fields');
+      $indexesLabel.textContent = t('indexes');
+      $pageSizeLabel.textContent = t('page_size');
+      $tableSelectLabel.textContent = t('existing_tables');
+      $createTable.textContent = t('create_table');
+      $loadTable.textContent = t('load_table');
+      $newFieldLabel.textContent = t('add_field');
+      $newIndexLabel.textContent = t('add_index');
+      $addFieldBtn.textContent = t('add_field');
+      $addIndexBtn.textContent = t('add_index');
+      $submitRow.textContent = editingId !== null ? t('save') : t('add');
+      $cancelEdit.textContent = t('cancel');
+      $loadLatest.textContent = t('latest_page');
+      $loadOlder.textContent = t('prev_page');
+      $loadNewer.textContent = t('next_page');
+      $tableName.placeholder = t('ph_table');
+      $fieldsInput.placeholder = t('ph_fields');
+      $indexesInput.placeholder = t('ph_indexes');
+      $newFieldInput.placeholder = t('ph_new_field');
+      $newIndexInput.placeholder = t('ph_new_index');
+      $toggleLang.textContent = t('toggle_lang');
+      updateTableInfo();
+      renderTableSelect();
+      buildTableHeader();
+      setPageInfo(Array.from(currentItems.values()).sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0)));
+    }
+
+    function parseList(raw) {
+      return String(raw || '')
+        .split(/[,\n\s]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function renderTableSelect() {
+      $tableSelect.innerHTML = '';
+      const names = Array.from(tablesRegistry.keys()).sort();
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = names.length ? t('select_table') : t('empty_table');
+      $tableSelect.appendChild(emptyOption);
+      names.forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (name === currentTableName) opt.selected = true;
+        $tableSelect.appendChild(opt);
+      });
+    }
+
+    function stopLiveSync() {
+      if (liveMap && liveMap.off) { try { liveMap.off(); } catch {} }
+      liveMap = null;
+      liveRows.forEach((ref) => { if (ref && ref.off) { try { ref.off(); } catch {} } });
+      liveRows.clear();
+      if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; }
+    }
+
+    function scheduleRefresh() {
+      if (liveTimer) return;
+      liveTimer = setTimeout(() => {
+        liveTimer = null;
+        loadLatest();
+      }, 200);
+    }
+
+    function watchRow(id, allowOutOfRange) {
+      const num = Number(id);
+      if (Number.isNaN(num) || liveRows.has(num)) return;
+      const ref = gun.get('rel:' + currentTableName + ':row:' + num);
+      liveRows.set(num, ref);
+      ref.on((data) => {
+        if (!data) {
+          currentItems.delete(num);
+          renderCurrentItems();
+          return;
+        }
+        if (!allowOutOfRange && currentMinId !== null && currentMaxId !== null) {
+          if (num < currentMinId || num > currentMaxId) return;
+        }
+        currentItems.set(num, data);
+        renderCurrentItems();
+      });
+    }
+
+    function startLiveSync() {
+      stopLiveSync();
+      if (!currentTableName) return;
+      liveMap = gun.get('rel:' + currentTableName + ':idx:primary');
+      liveMap.on((node) => {
+        if (!node) return;
+        Object.keys(node).forEach((key) => {
+          if (!key || key.indexOf('id:') !== 0) return;
+          const link = node[key];
+          const id = parseInt(String(key).slice(3), 10);
+          if (link && link['#']) {
+            if (currentView === 'latest') {
+              watchRow(id, true);
+              return;
+            }
+            if (currentMinId !== null && currentMaxId !== null) {
+              if (id < currentMinId || id > currentMaxId) {
+                scheduleRefresh();
+                return;
+              }
+            }
+            watchRow(id, false);
+            return;
+          }
+          if (link === null && !Number.isNaN(id)) {
+            currentItems.delete(id);
+            renderCurrentItems();
+          }
+        });
+      });
+    }
+
+    function resetErrors() {
+      $schemaError.textContent = '';
+      $rowError.textContent = '';
+    }
+
+    function buildRowInputs() {
+      $rowForm.innerHTML = '';
+      fields.forEach((name) => {
+        const wrap = document.createElement('div');
+        const label = document.createElement('label');
+        label.textContent = name;
+        const input = document.createElement('input');
+        input.name = name;
+        input.placeholder = name;
+        wrap.appendChild(label);
+        wrap.appendChild(document.createElement('br'));
+        wrap.appendChild(input);
+        $rowForm.appendChild(wrap);
+      });
+    }
+
+    function buildTableHeader() {
+      $tableHead.innerHTML = '';
+      const thId = document.createElement('th');
+      thId.textContent = t('id');
+      $tableHead.appendChild(thId);
+      fields.forEach((name) => {
+        const th = document.createElement('th');
+        th.textContent = name;
+        $tableHead.appendChild(th);
+      });
+      const thActions = document.createElement('th');
+      thActions.textContent = t('actions');
+      $tableHead.appendChild(thActions);
+    }
+
+    function updateTableInfo() {
+      if (!currentTableName) {
+        $tableInfo.textContent = '';
+        return;
+      }
+      $tableInfo.textContent = t('table_info')(currentTableName, fields.join(', '), indexes.join(', '));
+    }
+
+    function setPageInfo(items) {
+      const count = items.length;
+      const min = count ? items[0].id : '-';
+      const max = count ? items[items.length - 1].id : '-';
+      $pageInfo.textContent = t('page_info')(count, min, max);
+    }
+
+    function renderCurrentItems() {
+      const items = Array.from(currentItems.values())
+        .filter(x => x && x.id !== undefined && x.id !== null)
+        .sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+      renderRows(items);
+      setPageInfo(items);
+    }
+
+    function renderRows(items) {
+      $tableBody.innerHTML = '';
+      items.forEach((row) => {
+        const tr = document.createElement('tr');
+        const tdId = document.createElement('td');
+        tdId.textContent = row.id;
+        tr.appendChild(tdId);
+        fields.forEach((name) => {
+          const td = document.createElement('td');
+          td.textContent = row[name] ?? '';
+          tr.appendChild(td);
+        });
+        const tdActions = document.createElement('td');
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.textContent = t('edit');
+        editBtn.addEventListener('click', () => startEdit(row));
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.textContent = t('delete');
+        delBtn.addEventListener('click', () => deleteRow(row.id));
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        tdActions.appendChild(actions);
+        tr.appendChild(tdActions);
+        $tableBody.appendChild(tr);
+      });
+    }
+
+    function getPageSize() {
+      const n = parseInt($pageSize.value, 10);
+      return Number.isNaN(n) || n <= 0 ? 10 : n;
+    }
+
+    async function loadLatest() {
+      if (!rel) return;
+      currentView = 'latest';
+      const limit = getPageSize();
+      const res = await rel.page({ limit, reverse: true });
+      const items = (res.items || []).slice().reverse();
+      currentMinId = items.length ? items[0].id : null;
+      currentMaxId = items.length ? items[items.length - 1].id : null;
+      currentItems = new Map(items.map(x => [Number(x.id), x]));
+      renderCurrentItems();
+      items.forEach((row) => watchRow(row.id));
+      startLiveSync();
+    }
+
+    async function loadOlder() {
+      if (!rel || currentMinId === null) return;
+      currentView = 'older';
+      const limit = getPageSize();
+      const res = await rel.page({ startId: currentMinId, limit, reverse: true });
+      const items = (res.items || []).slice().reverse();
+      currentMinId = items.length ? items[0].id : currentMinId;
+      currentMaxId = items.length ? items[items.length - 1].id : currentMaxId;
+      currentItems = new Map(items.map(x => [Number(x.id), x]));
+      renderCurrentItems();
+      items.forEach((row) => watchRow(row.id));
+    }
+
+    async function loadNewer() {
+      if (!rel || currentMaxId === null) return;
+      currentView = 'newer';
+      const limit = getPageSize();
+      const res = await rel.page({ startId: currentMaxId, limit, reverse: false });
+      const items = (res.items || []);
+      currentMinId = items.length ? items[0].id : currentMinId;
+      currentMaxId = items.length ? items[items.length - 1].id : currentMaxId;
+      currentItems = new Map(items.map(x => [Number(x.id), x]));
+      renderCurrentItems();
+      items.forEach((row) => watchRow(row.id));
+    }
+
+    function getFormData() {
+      const data = {};
+      fields.forEach((name) => {
+        const input = $rowForm.querySelector(`[name="${name}"]`);
+        data[name] = input ? input.value : '';
+      });
+      return data;
+    }
+
+    function fillFormData(row) {
+      fields.forEach((name) => {
+        const input = $rowForm.querySelector(`[name="${name}"]`);
+        if (input) input.value = row[name] ?? '';
+      });
+    }
+
+    function clearFormData() {
+      fields.forEach((name) => {
+        const input = $rowForm.querySelector(`[name="${name}"]`);
+        if (input) input.value = '';
+      });
+    }
+
+    function startEdit(row) {
+      editingId = row.id;
+      fillFormData(row);
+      $submitRow.textContent = t('save');
+      $cancelEdit.classList.remove('hidden');
+    }
+
+    function stopEdit() {
+      editingId = null;
+      clearFormData();
+      $submitRow.textContent = t('add');
+      $cancelEdit.classList.add('hidden');
+    }
+
+    async function deleteRow(id) {
+      if (!rel) return;
+      await rel.delete(id);
+      if (editingId === id) stopEdit();
+      loadLatest();
+    }
+
+    $submitRow.addEventListener('click', async () => {
+      if (!rel) return;
+      resetErrors();
+      const data = getFormData();
+      const hasValue = Object.values(data).some(v => String(v).trim() !== '');
+      if (!hasValue) {
+        $rowError.textContent = t('err_row');
+        return;
+      }
+      if (editingId !== null) {
+        await rel.upsert(editingId, data);
+        stopEdit();
+      } else {
+        await rel.insert(data);
+        clearFormData();
+      }
+      loadLatest();
+    });
+
+    $cancelEdit.addEventListener('click', () => stopEdit());
+
+    $loadLatest.addEventListener('click', () => loadLatest());
+    $loadOlder.addEventListener('click', () => loadOlder());
+    $loadNewer.addEventListener('click', () => loadNewer());
+
+    $addFieldBtn.addEventListener('click', () => {
+      const name = String($newFieldInput.value || '').trim();
+      if (!name) return;
+      if (fields.includes(name)) return;
+      fields.push(name);
+      $newFieldInput.value = '';
+      updateTableMeta();
+    });
+
+    $addIndexBtn.addEventListener('click', () => {
+      const name = String($newIndexInput.value || '').trim();
+      if (!name) return;
+      if (indexes.includes(name)) return;
+      indexes.push(name);
+      $newIndexInput.value = '';
+      updateTableMeta();
+    });
+
+    function applyTable(name, nextFields, nextIndexes) {
+      currentTableName = name;
+      fields = nextFields.slice();
+      indexes = nextIndexes.slice();
+      const tableNode = gun.get(name);
+      tableNode.put({ name, fields: fields.join(','), indexes: indexes.join(','), ts: Date.now() });
+      rel = tableNode.rel(name, {
+        type: 'rel',
+        name,
+        primary: 'id',
+        autoInc: true,
+        indexes
+      });
+      $tableName.value = name;
+      $fieldsInput.value = fields.join(', ');
+      $indexesInput.value = indexes.join(', ');
+      updateTableInfo();
+      buildRowInputs();
+      buildTableHeader();
+      $dataPanel.classList.remove('hidden');
+      stopEdit();
+      renderTableSelect();
+      loadLatest();
+    }
+
+    function updateTableMeta() {
+      if (!currentTableName) return;
+      const name = currentTableName;
+      gun.get(name).put({ name, fields: fields.join(','), indexes: indexes.join(','), ts: Date.now() });
+      saveRegistry(name, fields, indexes);
+      $fieldsInput.value = fields.join(', ');
+      $indexesInput.value = indexes.join(', ');
+      updateTableInfo();
+      buildRowInputs();
+      buildTableHeader();
+    }
+
+    function saveRegistry(name, nextFields, nextIndexes) {
+      gun.get(REGISTRY_SOUL).get(name).put({
+        name,
+        fields: nextFields.join(','),
+        indexes: nextIndexes.join(','),
+        ts: Date.now()
+      });
+    }
+
+    function startRegistrySync() {
+      registryMap = gun.get(REGISTRY_SOUL);
+      registryMap.once((node) => scanRegistryNode(node));
+      registryMap.map().on((data, key) => {
+        if (!data || !key || key === '_') return;
+        if (data && data['#']) {
+          gun.get(data['#']).once((node) => ingestRegistryEntry(node, key));
+          return;
+        }
+        ingestRegistryEntry(data, key);
+      });
+    }
+
+    function scanRegistryNode(node) {
+      if (!node || typeof node !== 'object') return;
+      Object.keys(node).forEach((key) => {
+        if (!key || key === '_') return;
+        const data = node[key];
+        if (data && data['#']) {
+          gun.get(data['#']).once((child) => ingestRegistryEntry(child, key));
+          return;
+        }
+        ingestRegistryEntry(data, key);
+      });
+    }
+
+    function ingestRegistryEntry(data, key) {
+      if (!data) return;
+      const name = data.name || key;
+      const nextFields = Array.isArray(data.fields) ? data.fields : parseList(data.fields || '');
+      const nextIndexes = Array.isArray(data.indexes) ? data.indexes : parseList(data.indexes || '');
+      if (!name || !nextFields.length) return;
+      gun.get(name).put({ name, fields: nextFields.join(','), indexes: nextIndexes.join(','), ts: Date.now() });
+      tablesRegistry.set(name, { name, fields: nextFields, indexes: nextIndexes });
+      renderTableSelect();
+      if (!currentTableName) {
+        applyTable(name, nextFields, nextIndexes);
+      }
+    }
+
+    document.getElementById('createTable').addEventListener('click', async () => {
+      resetErrors();
+      const name = String($tableName.value || '').trim();
+      const nextFields = parseList($fieldsInput.value);
+      const nextIndexes = parseList($indexesInput.value);
+      if (!name) {
+        $schemaError.textContent = t('err_table_name');
+        return;
+      }
+      if (!nextFields.length) {
+        $schemaError.textContent = t('err_fields');
+        return;
+      }
+      saveRegistry(name, nextFields, nextIndexes);
+      tablesRegistry.set(name, { name, fields: nextFields, indexes: nextIndexes });
+      renderTableSelect();
+      applyTable(name, nextFields, nextIndexes);
+    });
+
+    $tableSelect.addEventListener('change', () => {
+      const name = $tableSelect.value;
+      if (!name) return;
+      const entry = tablesRegistry.get(name);
+      if (!entry) return;
+      stopLiveSync();
+      applyTable(name, entry.fields, entry.indexes);
+    });
+
+    document.getElementById('loadTable').addEventListener('click', () => {
+      const name = $tableSelect.value;
+      if (!name) return;
+      const entry = tablesRegistry.get(name);
+      if (!entry) return;
+      stopLiveSync();
+      applyTable(name, entry.fields, entry.indexes);
+    });
+
+    $toggleLang.addEventListener('click', () => {
+      lang = (lang === 'en') ? 'zh' : 'en';
+      saveLang(lang);
+      applyLangToUI();
+    });
+
+    applyLangToUI();
+    startRegistrySync();
+  </script>
+</body>
+</html>
