@@ -19,3 +19,6 @@ isolate*.log
 !/types/**/*.test-d.ts
 /gun.ts
 /temp/
+azuretet.js
+azurecreds.env
+.azurecreds.env
