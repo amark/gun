@@ -1,6 +1,7 @@
 ;(function(){
 
     var shim = require('./shim');
+    var sha1hash = require('./sha1');
     // Practical examples about usage found in tests.
     var SEA = require('./root');
     SEA.work = require('./work');

@@ -270,7 +270,7 @@
     const __shim = USE('./shim')
     const subtle = __shim.subtle
     const ossl = __shim.ossl ? __shim.ossl : subtle
-    const sha1hash = (b) => ossl.digest({name: 'SHA-1'}, new ArrayBuffer(b))
+    const sha1hash = (b) => ossl.digest({name: 'SHA-1'}, b)
     module.exports = sha1hash
   })(USE, './sha1');
 
@@ -748,6 +748,7 @@
 
   ;USE(function(module){
     var shim = USE('./shim');
+    var sha1hash = USE('./sha1');
     // Practical examples about usage found in tests.
     var SEA = USE('./root');
     SEA.work = USE('./work');
