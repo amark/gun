@@ -1,0 +1,25 @@
+<array-test></array-test>
+<script type="module">
+  import gelf from './gelf.js'
+
+  const $ = gelf('array-test', {list: []})
+
+  let i = 0
+  $.draw((target) => {
+    const { list } = $.learn()
+
+    return `
+      <button>add</button>
+      ${list.join('')}
+    `
+  })
+
+  $.when('click', 'button', function addArrayItem(event) {
+    $.teach(++i, (state, payload) => {
+      return {
+        ...state,
+        list: [...state.list, payload]
+      }
+    })
+  })
+</script>
