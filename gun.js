@@ -2094,8 +2094,9 @@
 
 /* BELOW IS TEMPORARY FOR OLD INTERNAL COMPATIBILITY, THEY ARE IMMEDIATELY DEPRECATED AND WILL BE REMOVED IN NEXT VERSION */
 ;(function(){
+	var Gun = (typeof window !== 'undefined'? window.Gun : (typeof module !== 'undefined'? module.exports : null)) || (typeof Gun !== 'undefined'? Gun : null);
 	var u;
-	if(''+u == typeof Gun){ return }
+	if(!Gun){ return }
 	var DEP = function(n){ console.warn("Warning! Deprecated internal utility will break in next version:", n) }
 	// Generic javascript utilities.
 	var Type = Gun;
