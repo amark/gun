@@ -1644,6 +1644,10 @@
 				var S = peer.SH = +new Date;
 				var tmp = raw[0], msg;
 				//raw && raw.slice && console.log("hear:", ((peer.wire||'').headers||'').origin, raw.length, raw.slice && raw.slice(0,50)); //tc-iamunique-tc-package-ds1
+				if( opt.validate && opt.validate.peerIn && !opt.validate.peerIn( raw, peer, root ) ){ 
+					return mesh.say({ dam: '!', err: "Message invalid."}, peer) 
+				}
+					
 				if('[' === tmp){
 					parse(raw, function(err, msg){
 						if(err || !msg){ return mesh.say({dam: '!', err: "DAM JSON parse error."}, peer) }
@@ -1782,6 +1786,9 @@
 					if(id === peer.last){ return } peer.last = id;  // was it just sent?
 					if(peer === meta.via){ return false } // don't send back to self.
 					if((tmp = meta.yo) && (tmp[peer.url] || tmp[peer.pid] || tmp[peer.id]) /*&& !o*/){ return false }
+					if( opt.validate && opt.validate.peerOut && !opt.validate.peerOut( raw, peer, msg  ) ){ 
+						return false
+					}				 
 					console.STAT && console.STAT(S, ((DBG||meta).yp = +new Date) - (meta.y || S), 'say prep');
 					!loop && ack && dup_track(ack); // streaming long responses needs to keep alive the ack.
 					if(peer.batch){
