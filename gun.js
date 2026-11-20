@@ -2061,6 +2061,7 @@
 			root.on('put', function(msg){
 				this.to.next(msg); // remember to call next middleware adapter
 				var put = msg.put, soul = put['#'], key = put['.'], id = msg['#'], ok = msg.ok||'', tmp; // pull data off wire envelope
+				if (!(root.next || '')[soul]){ return } // fix https://github.com/amark/gun/issues/1377
 				disk[soul] = Gun.state.ify(disk[soul], key, put['>'], put[':'], soul); // merge into disk object
 				if(stop && size > (4999880)){ root.on('in', {'@': id, err: "localStorage max!"}); return; }
 				//if(!msg['@']){ acks.push(id) } // then ack any non-ack write. // TODO: use batch id.
